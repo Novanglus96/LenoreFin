@@ -13,8 +13,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc
+RUN apt-get update && apt-get install -y --no-install-recommends gcc
 
 # lint
 RUN pip install --upgrade pip
@@ -26,13 +25,15 @@ RUN flake8 --ignore=E501,F401 ./backend
 COPY ./requirements.txt .
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
 
-
 #########
 # FINAL #
 #########
 
 # pull official base image
 FROM python:3.11.4-slim-buster
+
+LABEL maintainer="John Adams"
+LABEL version="1.0"
 
 # create directory for the app user
 RUN mkdir -p /home/app
@@ -57,13 +58,13 @@ RUN pip install --no-cache /wheels/*
 
 # copy entrypoint.sh
 COPY ./entrypoint.sh .
-RUN sed -i 's/\r$//g'  $APP_HOME/entrypoint.sh
-RUN chmod +x  $APP_HOME/entrypoint.sh
+RUN sed -i 's/\r$//g' $APP_HOME/entrypoint.sh
+RUN chmod +x $APP_HOME/entrypoint.sh
 
 # copy start.sh
 COPY ./start.sh .
-RUN sed -i 's/\r$//g'  $APP_HOME/start.sh
-RUN chmod +x  $APP_HOME/start.sh
+RUN sed -i 's/\r$//g' $APP_HOME/start.sh
+RUN chmod +x $APP_HOME/start.sh
 
 # copy project
 COPY . $APP_HOME

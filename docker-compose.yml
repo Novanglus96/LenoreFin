@@ -1,15 +1,15 @@
-version: '3.8'
+version: "3.8"
 
 services:
   frontend:
     build: ./frontend
     networks:
       - default
-    labels:
-      - "traefik.enable=false"
     restart: unless-stopped
     expose:
       - 80
+    image: money_frontend:development
+    container_name: money_frontend_dev
   backend:
     build:
       context: ./backend
@@ -23,10 +23,10 @@ services:
       - db
     networks:
       - default
-    labels:
-      - "traefik.enable=false"
     env_file:
       - ./.env
+    image: money_backend:development
+    container_name: money_backend_dev
   db:
     image: postgres:15
     volumes:
@@ -35,10 +35,9 @@ services:
       - ./.env.db
     networks:
       - default
-    labels:
-      - "traefik.enable=false"
+    container_name: money_db_dev
   nginx:
-    build: ./nginx
+    image: registry.danielleandjohn.love/django_vue_proxy:latest
     volumes:
       - static_volume:/home/app/web/staticfiles
       - media_volume:/home/app/web/mediafiles
@@ -46,22 +45,10 @@ services:
       - backend
       - frontend
     networks:
-      - web
       - default
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.template2.rule=Host(`template2.danielleandjohn.love`)"
-      - "traefik.http.routers.template2.entrypoints=websecure"
-      - "traefik.http.services.template2.loadbalancer.server.port=80"
-      - "traefik.http.routers.template2.service=template2"
-      - "traefik.http.routers.template2.tls.certresolver=myresolver"
-      - "traefik.http.routers.template2.middlewares=authelia,secure-headers@file,rate-limit@file,geo-block@file"
-      - "traefik.docker.network=web"
-
-networks:
-  web:
-    name: web
-    external: true
+    ports:
+      - 7000:80
+    container_name: money_proxy_dev
 
 volumes:
   postgres_data:
