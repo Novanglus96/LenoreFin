@@ -1,0 +1,11 @@
+[
+  {
+    "model": "api.Option",
+    "pk": 1,
+    "fields": {
+        "log_level": 2,
+        "alert_balance": 100,
+        "alert_period": 3
+    }
+  }
+]

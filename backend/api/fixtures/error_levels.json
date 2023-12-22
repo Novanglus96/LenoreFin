@@ -1,0 +1,30 @@
+[
+  {
+    "model": "api.ErrorLevel",
+    "pk": 0,
+    "fields": {
+        "error_level": "Debug"
+    }
+  },
+  {
+    "model": "api.ErrorLevel",
+    "pk": 1,
+    "fields": {
+        "error_level": "Information"
+    }
+  },
+  {
+    "model": "api.ErrorLevel",
+    "pk": 2,
+    "fields": {
+        "error_level": "Warning"
+    }
+  },
+  {
+    "model": "api.ErrorLevel",
+    "pk": 3,
+    "fields": {
+        "error_level": "Error"
+    }
+  }
+]
