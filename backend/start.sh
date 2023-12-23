@@ -19,5 +19,7 @@ python manage.py loaddata options
 python manage.py loaddata repeats
 python manage.py loaddata transaction_statuses
 python manage.py loaddata transaction_types
+python manage.py populate_calendar
+python manage.py loaddata calendar_fixture
 
 gunicorn backend.wsgi:application --bind 0.0.0.0:8000
