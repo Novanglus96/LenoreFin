@@ -30,7 +30,7 @@ class CalendarDate(models.Model):
     datefield = models.DateField(unique=True)
     
     def __str__(self):
-        return self.datefield
+        return str(self.datefield)
 
 class Tag(models.Model):
     tag_name = models.CharField(max_length=254, unique=True)
