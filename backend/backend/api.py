@@ -72,6 +72,15 @@ class ErrorLevelOut(Schema):
     error_level: str
 
 
+class TransactionTypeIn(Schema):
+    transaction_type: str
+
+
+class TransactionTypeOut(Schema):
+    id: int
+    transaction_type: str
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -94,6 +103,12 @@ def create_tag(request, payload: TagIn):
 def create_errorlevel(request, payload: ErrorLevelIn):
     errorlevel = ErrorLevel.objects.create(**payload.dict())
     return {"id": errorlevel.id}
+
+
+@api.post("/transactions/types")
+def create_transaction_type(request, payload: TransactionTypeIn):
+    transaction_type = TransactionType.objects.create(**payload.dict())
+    return {"id": transaction_type.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -120,6 +135,12 @@ def get_errorlevel(request, errorlevel_id: int):
     return errorlevel
 
 
+@api.get("/transactions/types/{transaction_type_id}", response=TransactionTypeOut)
+def get_transaction_type(request, transaction_type_id: int):
+    transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
+    return transaction_type
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -141,6 +162,12 @@ def list_tags(request):
 @api.get("/errorlevels", response=List[ErrorLevelOut])
 def list_errorlevels(request):
     qs = ErrorLevel.objects.all()
+    return qs
+
+
+@api.get("/transactions/types", response=List[TransactionTypeOut])
+def list_transaction_types(request):
+    qs = TransactionType.objects.all()
     return qs
 
 
@@ -188,6 +215,14 @@ def update_errorlevel(request, errorlevel_id: int, payload: ErrorLevelIn):
     return {"success": True}
 
 
+@api.put("/transactions/types/{transaction_type_id}")
+def update_transaction_type(request, transaction_type_id: int, payload: TransactionTypeIn):
+    transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
+    transaction_type.transaction_type = payload.transaction_type
+    transaction_type.save()
+    return {"success": True}
+
+
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -213,4 +248,11 @@ def delete_tag(request, tag_id: int):
 def delete_errorlevel(request, errorlevel_id: int):
     errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
     errorlevel.delete()
+    return {"success": True}
+
+
+@api.delete("/transactions/types/{transaction_type_id}")
+def delete_transaction_type(request, transaction_type_id: int):
+    transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
+    transaction_type.delete()
     return {"success": True}
