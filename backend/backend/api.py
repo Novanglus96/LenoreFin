@@ -52,6 +52,17 @@ class AccountOut(Schema):
     rewards_amount: Optional[Decimal] = Field(max_digits=2, decimal_places=2)
 
 
+class TagIn(Schema):
+    tag_name: str
+    parent_id: Optional[int] = None
+
+
+class TagOut(Schema):
+    id: int
+    tag_name: str
+    parent_id: Optional[int] = None
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -62,6 +73,12 @@ def create_account_type(request, payload: AccountTypeIn):
 def create_account(request, payload: AccountIn):
     account = Account.objects.create(**payload.dict())
     return {"id": account.id}
+
+
+@api.post("/tags")
+def create_tag(request, payload: TagIn):
+    tag = Tag.objects.create(**payload.dict())
+    return {"id": tag.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -76,6 +93,12 @@ def get_account(request, account_id: int):
     return account
 
 
+@api.get("/tags/{tag_id}", response=TagOut)
+def get_tag(request, tag_id: int):
+    tag = get_object_or_404(Tag, id=tag_id)
+    return tag
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -85,6 +108,12 @@ def list_account_types(request):
 @api.get("/accounts", response=List[AccountOut])
 def list_accounts(request):
     qs = Account.objects.all()
+    return qs
+
+
+@api.get("/tags", response=List[TagOut])
+def list_tags(request):
+    qs = Tag.objects.all()
     return qs
 
 
@@ -111,6 +140,17 @@ def update_account(request, account_id: int, payload: AccountIn):
     account.next_cycle_date = payload.next_cycle_date
     account.statement_cycle_length = payload.statement_cycle_length
     account.rewards_amount = payload.rewards_amount
+    account.save()
+    return {"sucess": True}
+
+
+@api.put("/tags/{tag_id}")
+def update_tag(request, tag_id: int, payload: TagIn):
+    tag = get_object_or_404(Tag, id=tag_id)
+    tag.tag_name = payload.tag_name
+    tag.parent_id = payload.parent_id
+    tag.save()
+    return {"sucess": True}
 
 
 @api.delete("/accounts/types/{accounttype_id}")
@@ -124,4 +164,11 @@ def delete_account_type(request, accounttype_id: int):
 def delete_account(request, account_id: int):
     account = get_object_or_404(Account, id=account_id)
     account.delete()
+    return {"success": True}
+
+
+@api.delete("/tags/{tag_id}")
+def delete_tag(request, tag_id: int):
+    tag = get_object_or_404(Tag, id=tag_id)
+    tag.delete()
     return {"success": True}
