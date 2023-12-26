@@ -27,29 +27,29 @@ class AccountTypeOut(Schema):
 
 class AccountIn(Schema):
     account_name: str
-    account_type: AccountTypeOut
-    opening_balance: Decimal = Field(max_digits=10, decimal_places=2)
-    apy: Decimal = Field(max_digits=2, decimal_places=2)
+    account_type_id: int
+    opening_balance: Decimal = Field(whole_digits=10, decimal_places=2)
+    apy: Decimal = Field(whole_digits=2, decimal_places=2)
     due_date: Optional[date]
     active: bool
     open_date: date
     next_cycle_date: Optional[date]
     statement_cycle_length: Optional[int]
-    rewards_amount: Optional[Decimal] = Field(max_digits=2, decimal_places=2)
+    rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
 
 
 class AccountOut(Schema):
     id: int
     account_name: str
     account_type: AccountTypeOut
-    opening_balance: Decimal = Field(max_digits=10, decimal_places=2)
-    apy: Decimal = Field(max_digits=2, decimal_places=2)
+    opening_balance: Decimal = Field(whole_digits=10, decimal_places=2)
+    apy: Decimal = Field(whole_digits=2, decimal_places=2)
     due_date: Optional[date]
     active: bool
     open_date: date
     next_cycle_date: Optional[date]
     statement_cycle_length: Optional[int]
-    rewards_amount: Optional[Decimal] = Field(max_digits=2, decimal_places=2)
+    rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
 
 
 class TagIn(Schema):
@@ -98,6 +98,33 @@ class RepeatOut(Schema):
     years: Optional[int] = 0
 
 
+class ReminderIn(Schema):
+    tag_id: int
+    amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    reminder_source_account_id: int
+    reminder_destination_account_id: Optional[int]
+    description: str
+    transaction_type_id: int
+    start_date: date
+    end_date: date
+    repeat_id: int
+    auto_add: bool
+
+
+class ReminderOut(Schema):
+    id: int
+    tag: TagOut
+    amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    reminder_source_account: AccountOut
+    reminder_destination_account: Optional[AccountOut]
+    description: str
+    transaction_type: TransactionTypeOut
+    start_date: date
+    end_date: date
+    repeat: RepeatOut
+    auto_add: bool
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -132,6 +159,12 @@ def create_transaction_type(request, payload: TransactionTypeIn):
 def create_repeat(request, payload: RepeatIn):
     repeat = Repeat.objects.create(**payload.dict())
     return {"id": repeat.id}
+
+
+@api.post("/reminders")
+def create_reminder(request, payload: ReminderIn):
+    reminder = Reminder.objects.create(**payload.dict())
+    return {"id": reminder.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -170,6 +203,12 @@ def get_repeat(request, repeat_id: int):
     return repeat
 
 
+@api.get("/reminders/{reminder_id}", response=ReminderOut)
+def get_reminder(request, reminder_id: int):
+    reminder = get_object_or_404(Reminder, id=reminder_id)
+    return reminder
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -206,6 +245,12 @@ def list_repeats(request):
     return qs
 
 
+@api.get("/reminders", response=List[ReminderOut])
+def list_reminders(request):
+    qs = Reminder.objects.all()
+    return qs
+
+
 @api.put("/accounts/types/{accounttype_id}")
 def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -220,7 +265,7 @@ def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
 def update_account(request, account_id: int, payload: AccountIn):
     account = get_object_or_404(Account, id=account_id)
     account.account_name = payload.account_name
-    account.account_type = payload.account_type
+    account.account_type_id = payload.account_type_id
     account.opening_balance = payload.opening_balance
     account.apy = payload.apy
     account.due_date = payload.due_date
@@ -270,6 +315,23 @@ def update_repeat(request, repeat_id: int, payload: RepeatIn):
     return {"success": True}
 
 
+@api.put("/reminders/{reminder_id}")
+def update_reminder(request, reminder_id: int, payload: ReminderIn):
+    reminder = get_object_or_404(Reminder, id=reminder_id)
+    reminder.tag_id = payload.tag_id
+    reminder.amount = payload.amount
+    reminder.reminder_source_account_id = payload.reminder_source_account_id
+    reminder.reminder_destination_account_id = payload.reminder_destination_account_id
+    reminder.description = payload.description
+    reminder.transaction_type_id = payload.transaction_type_id
+    reminder.start_date = payload.start_date
+    reminder.end_date = payload.end_date
+    reminder.repeat_id = payload.repeat_id
+    reminder.auto_add = payload.auto_add
+    reminder.save()
+    return {"success": True}
+
+
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -309,4 +371,11 @@ def delete_transaction_type(request, transaction_type_id: int):
 def delete_repeat(request, repeat_id: int):
     repeat = get_object_or_404(Repeat, id=repeat_id)
     repeat.delete()
+    return {"success": True}
+
+
+@api.delete("/reminders/{reminder_id}")
+def delete_reminder(request, reminder_id: int):
+    reminder = get_object_or_404(Reminder, id=reminder_id)
+    reminder.delete()
     return {"success": True}
