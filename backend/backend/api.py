@@ -81,6 +81,23 @@ class TransactionTypeOut(Schema):
     transaction_type: str
 
 
+class RepeatIn(Schema):
+    repeat_name: str
+    days: Optional[int] = 0
+    weeks: Optional[int] = 0
+    months: Optional[int] = 0
+    years: Optional[int] = 0
+
+
+class RepeatOut(Schema):
+    id: int
+    repeat_name: str
+    days: Optional[int] = 0
+    weeks: Optional[int] = 0
+    months: Optional[int] = 0
+    years: Optional[int] = 0
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -109,6 +126,12 @@ def create_errorlevel(request, payload: ErrorLevelIn):
 def create_transaction_type(request, payload: TransactionTypeIn):
     transaction_type = TransactionType.objects.create(**payload.dict())
     return {"id": transaction_type.id}
+
+
+@api.post("/reminders/repeats")
+def create_repeat(request, payload: RepeatIn):
+    repeat = Repeat.objects.create(**payload.dict())
+    return {"id": repeat.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -141,6 +164,12 @@ def get_transaction_type(request, transaction_type_id: int):
     return transaction_type
 
 
+@api.get("/reminders/repeats/{repeat_id}", response=RepeatOut)
+def get_repeat(request, repeat_id: int):
+    repeat = get_object_or_404(Repeat, id=repeat_id)
+    return repeat
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -168,6 +197,12 @@ def list_errorlevels(request):
 @api.get("/transactions/types", response=List[TransactionTypeOut])
 def list_transaction_types(request):
     qs = TransactionType.objects.all()
+    return qs
+
+
+@api.get("/reminders/repeats", response=List[RepeatOut])
+def list_repeats(request):
+    qs = Repeat.objects.all()
     return qs
 
 
@@ -223,6 +258,18 @@ def update_transaction_type(request, transaction_type_id: int, payload: Transact
     return {"success": True}
 
 
+@api.put("/reminders/repeats/{repeat_id}")
+def update_repeat(request, repeat_id: int, payload: RepeatIn):
+    repeat = get_object_or_404(Repeat, id=repeat_id)
+    repeat.repeat_name = payload.repeat_name
+    repeat.days = payload.days
+    repeat.weeks = payload.weeks
+    repeat.months = payload.months
+    repeat.years = payload.years
+    repeat.save()
+    return {"success": True}
+
+
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -255,4 +302,11 @@ def delete_errorlevel(request, errorlevel_id: int):
 def delete_transaction_type(request, transaction_type_id: int):
     transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
     transaction_type.delete()
+    return {"success": True}
+
+
+@api.delete("/reminders/repeats/{repeat_id}")
+def delete_repeat(request, repeat_id: int):
+    repeat = get_object_or_404(Repeat, id=repeat_id)
+    repeat.delete()
     return {"success": True}
