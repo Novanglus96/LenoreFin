@@ -63,6 +63,15 @@ class TagOut(Schema):
     parent_id: Optional[int] = None
 
 
+class ErrorLevelIn(Schema):
+    error_level: str
+
+
+class ErrorLevelOut(Schema):
+    id: int
+    error_level: str
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -79,6 +88,12 @@ def create_account(request, payload: AccountIn):
 def create_tag(request, payload: TagIn):
     tag = Tag.objects.create(**payload.dict())
     return {"id": tag.id}
+
+
+@api.post("/errorlevels")
+def create_errorlevel(request, payload: ErrorLevelIn):
+    errorlevel = ErrorLevel.objects.create(**payload.dict())
+    return {"id": errorlevel.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -99,6 +114,12 @@ def get_tag(request, tag_id: int):
     return tag
 
 
+@api.get("/errorlevels/{errorlevel_id}", response=ErrorLevelOut)
+def get_errorlevel(request, errorlevel_id: int):
+    errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
+    return errorlevel
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -114,6 +135,12 @@ def list_accounts(request):
 @api.get("/tags", response=List[TagOut])
 def list_tags(request):
     qs = Tag.objects.all()
+    return qs
+
+
+@api.get("/errorlevels", response=List[ErrorLevelOut])
+def list_errorlevels(request):
+    qs = ErrorLevel.objects.all()
     return qs
 
 
@@ -141,7 +168,7 @@ def update_account(request, account_id: int, payload: AccountIn):
     account.statement_cycle_length = payload.statement_cycle_length
     account.rewards_amount = payload.rewards_amount
     account.save()
-    return {"sucess": True}
+    return {"success": True}
 
 
 @api.put("/tags/{tag_id}")
@@ -150,7 +177,15 @@ def update_tag(request, tag_id: int, payload: TagIn):
     tag.tag_name = payload.tag_name
     tag.parent_id = payload.parent_id
     tag.save()
-    return {"sucess": True}
+    return {"success": True}
+
+
+@api.put("/errorlevels/{errorlevel_id}")
+def update_errorlevel(request, errorlevel_id: int, payload: ErrorLevelIn):
+    errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
+    errorlevel.error_level = payload.error_level
+    errorlevel.save()
+    return {"success": True}
 
 
 @api.delete("/accounts/types/{accounttype_id}")
@@ -171,4 +206,11 @@ def delete_account(request, account_id: int):
 def delete_tag(request, tag_id: int):
     tag = get_object_or_404(Tag, id=tag_id)
     tag.delete()
+    return {"success": True}
+
+
+@api.delete("/errorlevels/{errorlevel_id}")
+def delete_errorlevel(request, errorlevel_id: int):
+    errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
+    errorlevel.delete()
     return {"success": True}
