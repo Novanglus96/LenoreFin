@@ -5,8 +5,18 @@ from django.shortcuts import get_object_or_404
 from decimal import Decimal
 from datetime import date
 from pydantic import BaseModel, Field
+from ninja.security import HttpBearer
+from decouple import config
 
-api = NinjaAPI()
+
+class GlobalAuth(HttpBearer):
+    def authenticate(self, request, token):
+        api_key = config("API_KEY", default=None)
+        if token == api_key:
+            return token
+
+
+api = NinjaAPI(auth=GlobalAuth())
 api.title = "Money API"
 api.version = "1.0.0"
 api.description = "API documentation for Money"
