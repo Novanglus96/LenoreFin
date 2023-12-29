@@ -254,6 +254,19 @@ class TransactionOut(Schema):
     reminder: Optional[ReminderOut] = None
 
 
+class TransactionDetailIn(Schema):
+    transaction_id: int
+    detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+    tag_id: int
+
+
+class TransactionDetailOut(Schema):
+    id: int
+    transaction: TransactionOut
+    detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+    tag: TagOut
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -336,6 +349,12 @@ def create_payee(request, payload: PayeeIn):
 def create_transaction(request, payload: TransactionIn):
     transaction = Transaction.objects.create(**payload.dict())
     return {"id": transaction.id}
+
+
+@api.post("/transactions/details")
+def create_transaction_detail(request, payload: TransactionDetailIn):
+    transaction_detail = TransactionDetail.objects.create(**payload.dict())
+    return {"id": transaction_detail.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -422,6 +441,12 @@ def get_transaction(request, transaction_id: int):
     return transaction
 
 
+@api.get("/transactions/details/{transactiondetail_id}", response=TransactionDetailOut)
+def get_transaction_detail(request, transactiondetail_id: int):
+    transaction_detail = get_object_or_404(TransactionDetail, id=transactiondetail_id)
+    return transaction_detail
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -503,6 +528,12 @@ def list_payees(request):
 @api.get("/transactions", response=List[TransactionOut])
 def list_transactions(request):
     qs = Transaction.objects.all()
+    return qs
+
+
+@api.get("/transactions/details", response=List[TransactionDetailOut])
+def list_transactiondetails(request):
+    qs = TransactionDetail.objects.all()
     return qs
 
 
@@ -671,6 +702,16 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
     return {"success": True}
 
 
+@api.put("/transactions/details/{transactiondetail_id}")
+def update_transaction_detail(request, transactiondetail_id: int, payload: TransactionDetailIn):
+    transaction_detail = get_object_or_404(TransactionDetail, id=transactiondetail_id)
+    transaction_detail.transaction_id = payload.transaction_id
+    transaction_detail.detail_amt = payload.detail_amt
+    transaction_detail.tag_id = payload.tag_id
+    transaction_detail.save()
+    return {"success": True}
+
+
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -766,4 +807,11 @@ def delete_payee(request, payee_id: int):
 def delete_transaction(request, transaction_id: int):
     transaction = get_object_or_404(Transaction, id=transaction_id)
     transaction.delete()
+    return {"success": True}
+
+
+@api.delete("/transactions/details/{transactiondetail_id}")
+def delete_transaction_detail(request, transactiondetail_id: int):
+    transaction_detail = get_object_or_404(TransactionDetail, id=transactiondetail_id)
+    transaction_detail.delete()
     return {"success": True}
