@@ -165,6 +165,17 @@ class ReminderOut(Schema):
     auto_add: bool
 
 
+class NoteIn(Schema):
+    note_text: str
+    note_date: date
+
+
+class NoteOut(Schema):
+    id: int
+    note_text: str
+    note_date: date
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -217,6 +228,12 @@ def create_repeat(request, payload: RepeatIn):
 def create_reminder(request, payload: ReminderIn):
     reminder = Reminder.objects.create(**payload.dict())
     return {"id": reminder.id}
+
+
+@api.post("/planning/notes")
+def create_note(request, payload: NoteIn):
+    note = Note.objects.create(**payload.dict())
+    return {"id": note.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -273,6 +290,12 @@ def get_reminder(request, reminder_id: int):
     return reminder
 
 
+@api.get("/planning/notes/{note_id}", response=NoteOut)
+def get_note(request, note_id: int):
+    note = get_object_or_404(Note, id=note_id)
+    return note
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -324,6 +347,12 @@ def list_repeats(request):
 @api.get("/reminders", response=List[ReminderOut])
 def list_reminders(request):
     qs = Reminder.objects.all()
+    return qs
+
+
+@api.get("/planning/notes", response=List[NoteOut])
+def list_notes(request):
+    qs = Note.objects.all()
     return qs
 
 
@@ -430,6 +459,15 @@ def update_reminder(request, reminder_id: int, payload: ReminderIn):
     return {"success": True}
 
 
+@api.put("/planning/notes/{note_id}")
+def update_note(request, note_id: int, payload: NoteIn):
+    note = get_object_or_404(Note, id=note_id)
+    note.note_text = payload.note_text
+    note.note_date = payload.note_date
+    note.save()
+    return {"success": True}
+
+
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -490,4 +528,11 @@ def delete_repeat(request, repeat_id: int):
 def delete_reminder(request, reminder_id: int):
     reminder = get_object_or_404(Reminder, id=reminder_id)
     reminder.delete()
+    return {"success": True}
+
+
+@api.delete("/planning/notes/{note_id}")
+def delete_note(request, note_id: int):
+    note = get_object_or_404(Note, id=note_id)
+    note.delete()
     return {"success": True}
