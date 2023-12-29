@@ -73,6 +73,36 @@ class TagOut(Schema):
     parent_id: Optional[int] = None
 
 
+class ContribRuleIn(Schema):
+    rule: str
+    cap: Optional[str] = None
+
+
+class ContribRuleOut(Schema):
+    id: int
+    rule: str
+    cap: Optional[str] = None
+
+
+class ContributionIn(Schema):
+    contribution: str
+    per_paycheck: Decimal = Field(whole_digits=10, decimal_places=2)
+    emergency_diff: Decimal = Field(whole_digits=10, decimal_places=2)
+    emergency_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+    cap: Decimal = Field(whole_digits=10, decimal_places=2)
+    active: bool
+
+
+class ContributionOut(Schema):
+    id: int
+    contribution: str
+    per_paycheck: Decimal = Field(whole_digits=10, decimal_places=2)
+    emergency_diff: Decimal = Field(whole_digits=10, decimal_places=2)
+    emergency_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+    cap: Decimal = Field(whole_digits=10, decimal_places=2)
+    active: bool
+
+
 class ErrorLevelIn(Schema):
     error_level: str
 
@@ -153,6 +183,18 @@ def create_tag(request, payload: TagIn):
     return {"id": tag.id}
 
 
+@api.post("/planning/contribrules")
+def create_contrib_rule(request, payload: ContribRuleIn):
+    contrib_rule = ContribRule.objects.create(**payload.dict())
+    return {"id": contrib_rule.id}
+
+
+@api.post("/planning/contributions")
+def create_contribution(request, payload: ContributionIn):
+    contribution = Contribution.objects.create(**payload.dict())
+    return {"id": contribution.id}
+
+
 @api.post("/errorlevels")
 def create_errorlevel(request, payload: ErrorLevelIn):
     errorlevel = ErrorLevel.objects.create(**payload.dict())
@@ -195,6 +237,18 @@ def get_tag(request, tag_id: int):
     return tag
 
 
+@api.get("/planning/contribrules/{contribrule_id}", response=ContribRuleOut)
+def get_contribrule(request, contribrule_id: int):
+    contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
+    return contrib_rule
+
+
+@api.get("/planning/contributions/{contribution_id}", response=ContributionOut)
+def get_contribution(request, contribution_id: int):
+    contribution = get_object_or_404(Contribution, id=contribution_id)
+    return contribution
+
+
 @api.get("/errorlevels/{errorlevel_id}", response=ErrorLevelOut)
 def get_errorlevel(request, errorlevel_id: int):
     errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
@@ -234,6 +288,18 @@ def list_accounts(request):
 @api.get("/tags", response=List[TagOut])
 def list_tags(request):
     qs = Tag.objects.all()
+    return qs
+
+
+@api.get("/planning/contribrules", response=List[ContribRuleOut])
+def list_contrib_rules(request):
+    qs = ContribRule.objects.all()
+    return qs
+
+
+@api.get("/planning/contributions", response=List[ContributionOut])
+def list_contributions(request):
+    qs = Contribution.objects.all()
     return qs
 
 
@@ -294,6 +360,28 @@ def update_tag(request, tag_id: int, payload: TagIn):
     tag.tag_name = payload.tag_name
     tag.parent_id = payload.parent_id
     tag.save()
+    return {"success": True}
+
+
+@api.put("/planning/contribrules/{contribrule_id}")
+def update_contrib_rule(request, contribrule_id: int, payload: ContribRuleIn):
+    contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
+    contrib_rule.rule = payload.rule
+    contrib_rule.cap = payload.cap
+    contrib_rule.save()
+    return {"success": True}
+
+
+@api.put("/planning/contributions/{contribution_id}")
+def update_contribution(request, contribution_id: int, payload: ContributionIn):
+    contribution = get_object_or_404(Contribution, id=contribution_id)
+    contribution.contribution = payload.contribution
+    contribution.per_paycheck = payload.per_paycheck
+    contribution.emergency_amt = payload.emergency_amt
+    contribution.emergency_diff = payload.emergency_diff
+    contribution.cap = payload.cap
+    contribution.active = payload.active
+    contribution.save()
     return {"success": True}
 
 
@@ -360,6 +448,20 @@ def delete_account(request, account_id: int):
 def delete_tag(request, tag_id: int):
     tag = get_object_or_404(Tag, id=tag_id)
     tag.delete()
+    return {"success": True}
+
+
+@api.delete("/planning/contribrules/{contribrule_id}")
+def delete_contrib_rule(request, contribrule_id: int):
+    contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
+    contrib_rule.delete()
+    return {"success": True}
+
+
+@api.delete("/planning/contributions/{contribution_id}")
+def delete_contribution(request, contribution_id: int):
+    contribution = get_object_or_404(Contribution, id=contribution_id)
+    contribution.delete()
     return {"success": True}
 
 
