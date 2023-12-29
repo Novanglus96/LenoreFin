@@ -267,6 +267,26 @@ class TransactionDetailOut(Schema):
     tag: TagOut
 
 
+class LogEntryIn(Schema):
+    log_date: date
+    log_entry: str
+    account_id: Optional[int] = None
+    reminder_id: Optional[int] = None
+    transaction_id: Optional[int] = None
+    error_num: Optional[int] = None
+    error_level_id: Optional[int] = None
+
+
+class LogEntryOut(Schema):
+    log_date: date
+    log_entry: str
+    account: Optional[AccountOut] = None
+    reminder: Optional[ReminderOut] = None
+    transaction: Optional[TransactionOut] = None
+    error_num: Optional[int] = None
+    error_level: Optional[ErrorLevelOut] = None
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -355,6 +375,12 @@ def create_transaction(request, payload: TransactionIn):
 def create_transaction_detail(request, payload: TransactionDetailIn):
     transaction_detail = TransactionDetail.objects.create(**payload.dict())
     return {"id": transaction_detail.id}
+
+
+@api.post("/logentries")
+def create_log_entry(request, payload: LogEntryIn):
+    log_entry = LogEntry.objects.create(**payload.dict())
+    return {"id": log_entry.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -447,6 +473,12 @@ def get_transaction_detail(request, transactiondetail_id: int):
     return transaction_detail
 
 
+@api.get("/logentries/{logentry_id}", response=LogEntryOut)
+def get_log_entry(request, logentry_id: int):
+    log_entry = get_object_or_404(LogEntry, id=logentry_id)
+    return log_entry
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -534,6 +566,12 @@ def list_transactions(request):
 @api.get("/transactions/details", response=List[TransactionDetailOut])
 def list_transactiondetails(request):
     qs = TransactionDetail.objects.all()
+    return qs
+
+
+@api.get("/logentries", response=List[LogEntryOut])
+def list_log_entries(request):
+    qs = LogEntry.objects.all()
     return qs
 
 
@@ -712,6 +750,20 @@ def update_transaction_detail(request, transactiondetail_id: int, payload: Trans
     return {"success": True}
 
 
+@api.put("/logentries/{logentry_id}")
+def update_log_entry(request, logentry_id: int, payload: LogEntryIn):
+    log_entry = get_object_or_404(LogEntry, id=logentry_id)
+    log_entry.log_date = payload.log_date
+    log_entry.log_entry = payload.log_entry
+    log_entry.account_id = payload.account_id
+    log_entry.reminder_id = payload.reminder_id
+    log_entry.transaction_id = payload.transaction_id
+    log_entry.error_num = payload.error_num
+    log_entry.error_level_id = payload.error_level_id
+    log_entry.save()
+    return {"success": True}
+
+
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -814,4 +866,11 @@ def delete_transaction(request, transaction_id: int):
 def delete_transaction_detail(request, transactiondetail_id: int):
     transaction_detail = get_object_or_404(TransactionDetail, id=transactiondetail_id)
     transaction_detail.delete()
+    return {"success": True}
+
+
+@api.delete("/logentries/{logentry_id}")
+def delete_log_entry(request, logentry_id: int):
+    log_entry = get_object_or_404(LogEntry, id=logentry_id)
+    log_entry.delete()
     return {"success": True}
