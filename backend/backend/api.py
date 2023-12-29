@@ -176,6 +176,19 @@ class NoteOut(Schema):
     note_date: date
 
 
+class OptionIn(Schema):
+    log_level_id: int
+    alert_balance: Decimal = Field(whole_digits=10, decimal_places=2)
+    alert_period: int
+
+
+class OptionOut(Schema):
+    id: int
+    log_level: ErrorLevelOut
+    alert_balance: Decimal = Field(whole_digits=10, decimal_places=2)
+    alert_period: int
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -234,6 +247,12 @@ def create_reminder(request, payload: ReminderIn):
 def create_note(request, payload: NoteIn):
     note = Note.objects.create(**payload.dict())
     return {"id": note.id}
+
+
+@api.post("/options")
+def create_option(request, payload: OptionIn):
+    option = Option.objects.create(**payload.dict())
+    return {"id": option.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -296,6 +315,12 @@ def get_note(request, note_id: int):
     return note
 
 
+@api.get("/options/{option_id}", response=OptionOut)
+def get_option(request, option_id: int):
+    option = get_object_or_404(Option, id=option_id)
+    return option
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -353,6 +378,12 @@ def list_reminders(request):
 @api.get("/planning/notes", response=List[NoteOut])
 def list_notes(request):
     qs = Note.objects.all()
+    return qs
+
+
+@api.get("/options", response=List[OptionOut])
+def list_options(request):
+    qs = Option.objects.all()
     return qs
 
 
@@ -468,6 +499,16 @@ def update_note(request, note_id: int, payload: NoteIn):
     return {"success": True}
 
 
+@api.put("/options/{option_id}")
+def update_option(request, option_id: int, payload: OptionIn):
+    option = get_object_or_404(Option, id=option_id)
+    option.log_level_id = payload.log_level_id
+    option.alert_balance = payload.alert_balance
+    option.alert_period = payload.alert_period
+    option.save()
+    return {"success": True}
+
+
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -535,4 +576,11 @@ def delete_reminder(request, reminder_id: int):
 def delete_note(request, note_id: int):
     note = get_object_or_404(Note, id=note_id)
     note.delete()
+    return {"success": True}
+
+
+@api.delete("/options/{option_id}")
+def delete_option(request, option_id: int):
+    option = get_object_or_404(Option, id=option_id)
+    option.delete()
     return {"success": True}
