@@ -1,5 +1,5 @@
 from ninja import NinjaAPI, Schema
-from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry
+from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
@@ -198,6 +198,62 @@ class TransactionStatusOut(Schema):
     transaction_status: str
 
 
+class PayeeIn(Schema):
+    payee_name: str
+
+
+class PayeeOut(Schema):
+    id: int
+    payee_name: str
+
+
+class TransactionIn(Schema):
+    transaction_date: date
+    total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    status_id: int
+    memo: str
+    description: str
+    edit_date: date
+    add_date: date
+    transaction_type_id: int
+    transaction_source_account_id: int
+    transaction_destination_account_id: Optional[int] = None
+    p_gross: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_taxes: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_health: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_pension: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_fsa: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_dca: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_union_dues: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_457b: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_payee_id: Optional[int] = None
+    reminder_id: Optional[int] = None
+
+
+class TransactionOut(Schema):
+    id: int
+    transaction_date: date
+    total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    status: TransactionStatusOut
+    memo: str
+    description: str
+    edit_date: date
+    add_date: date
+    transaction_type: TransactionTypeOut
+    transaction_source_account: AccountOut
+    transaction_destination_account: Optional[AccountOut] = None
+    p_gross: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_taxes: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_health: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_pension: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_fsa: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_dca: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_union_dues: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_457b: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_payee: Optional[PayeeOut] = None
+    reminder: Optional[ReminderOut] = None
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -268,6 +324,18 @@ def create_option(request, payload: OptionIn):
 def create_transaction_status(request, payload: TransactionStatusIn):
     transaction_status = TransactionStatus.objects.create(**payload.dict())
     return {"id": transaction_status.id}
+
+
+@api.post("/payees")
+def create_payee(request, payload: PayeeIn):
+    payee = Payee.objects.create(**payload.dict())
+    return {"id": payee.id}
+
+
+@api.post("/transactions")
+def create_transaction(request, payload: TransactionIn):
+    transaction = Transaction.objects.create(**payload.dict())
+    return {"id": transaction.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -342,6 +410,18 @@ def get_transaction_status(request, transactionstatus_id: int):
     return transaction_status
 
 
+@api.get("/payees/{payee_id}", response=PayeeOut)
+def get_payee(request, payee_id: int):
+    payee = get_object_or_404(Payee, id=payee_id)
+    return payee
+
+
+@api.get("/transactions/{transaction_id}", response=TransactionOut)
+def get_transaction(request, transaction_id: int):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+    return transaction
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -411,6 +491,18 @@ def list_options(request):
 @api.get("/transactions/statuses", response=List[TransactionStatusOut])
 def list_transaction_statuses(request):
     qs = TransactionStatus.objects.all()
+    return qs
+
+
+@api.get("/payees", response=List[PayeeOut])
+def list_payees(request):
+    qs = Payee.objects.all()
+    return qs
+
+
+@api.get("/transactions", response=List[TransactionOut])
+def list_transactions(request):
+    qs = Transaction.objects.all()
     return qs
 
 
@@ -544,6 +636,41 @@ def update_transaction_status(request, transationstatus_id: int, payload: Transa
     return {"success": True}
 
 
+@api.put("/payees/{payee_id}")
+def update_payee(request, payee_id: int, payload: PayeeIn):
+    payee = get_object_or_404(Payee, id=payee_id)
+    payee.payee_name = payload.payee_name
+    payee.save()
+    return {"success": True}
+
+
+@api.put("/transactions/{transaction_id}")
+def update_transaction(request, transaction_id: int, payload: TransactionIn):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+    transaction.transaction_date = payload.transaction_date
+    transaction.total_amount = payload.total_amount
+    transaction.status_id = payload.status_id
+    transaction.memo = payload.memo
+    transaction.description = payload.description
+    transaction.edit_date = payload.edit_date
+    transaction.add_date = payload.add_date
+    transaction.transaction_type_id = payload.transaction_type_id
+    transaction.transaction_source_account_id = payload.transaction_source_account_id
+    transaction.transaction_destination_account_id = payload.transaction_destination_account_id
+    transaction.p_gross = payload.p_gross
+    transaction.p_taxes = payload.p_taxes
+    transaction.p_health = payload.p_health
+    transaction.p_pension = payload.p_pension
+    transaction.p_fsa = payload.p_fsa
+    transaction.p_dca = payload.p_dca
+    transaction.p_union_dues = payload.p_union_dues
+    transaction.p_457b = payload.p_457b
+    transaction.p_payee_id = payload.p_payee_id
+    transaction.reminder_id = payload.reminder_id
+    transaction.save()
+    return {"success": True}
+
+
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -625,4 +752,18 @@ def delete_option(request, option_id: int):
 def delete_transaction_status(request, transactionstatus_id: int):
     transaction_status = get_object_or_404(TransactionStatus, id=transactionstatus_id)
     transaction_status.delete()
+    return {"success": True}
+
+
+@api.delete("/payees/{payee_id}")
+def delete_payee(request, payee_id: int):
+    payee = get_object_or_404(Payee, id=payee_id)
+    payee.delete()
+    return {"success": True}
+
+
+@api.delete("/transactions/{transaction_id}")
+def delete_transaction(request, transaction_id: int):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+    transaction.delete()
     return {"success": True}
