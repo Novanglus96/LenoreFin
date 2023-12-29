@@ -162,5 +162,8 @@ class LogEntry(models.Model):
     error_num = models.IntegerField(default=None, null=True, blank=True)
     error_level = models.ForeignKey(ErrorLevel, on_delete=models.SET_NULL, null=True, blank=True)
     
+    class Meta:
+        verbose_name_plural = "Log entries"
+    
     def __str__(self):
         return self.log_entry
