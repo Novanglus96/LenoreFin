@@ -189,6 +189,15 @@ class OptionOut(Schema):
     alert_period: int
 
 
+class TransactionStatusIn(Schema):
+    transaction_status: str
+
+
+class TransactionStatusOut(Schema):
+    id: int
+    transaction_status: str
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -253,6 +262,12 @@ def create_note(request, payload: NoteIn):
 def create_option(request, payload: OptionIn):
     option = Option.objects.create(**payload.dict())
     return {"id": option.id}
+
+
+@api.post("/transactions/statuses")
+def create_transaction_status(request, payload: TransactionStatusIn):
+    transaction_status = TransactionStatus.objects.create(**payload.dict())
+    return {"id": transaction_status.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -321,6 +336,12 @@ def get_option(request, option_id: int):
     return option
 
 
+@api.get("/transactions/statuses/{transactionstatus_id}", response=TransactionStatusOut)
+def get_transaction_status(request, transactionstatus_id: int):
+    transaction_status = get_object_or_404(TransactionStatus, id=transactionstatus_id)
+    return transaction_status
+
+
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
     qs = AccountType.objects.all()
@@ -384,6 +405,12 @@ def list_notes(request):
 @api.get("/options", response=List[OptionOut])
 def list_options(request):
     qs = Option.objects.all()
+    return qs
+
+
+@api.get("/transactions/statuses", response=List[TransactionStatusOut])
+def list_transaction_statuses(request):
+    qs = TransactionStatus.objects.all()
     return qs
 
 
@@ -509,6 +536,14 @@ def update_option(request, option_id: int, payload: OptionIn):
     return {"success": True}
 
 
+@api.put("/transactions/statuses/{transactionstatus_id}")
+def update_transaction_status(request, transationstatus_id: int, payload: TransactionStatusIn):
+    transaction_status = get_object_or_404(TransactionStatus, id=transationstatus_id)
+    transaction_status.transaction_status = payload.transaction_status
+    transaction_status.save()
+    return {"success": True}
+
+
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -583,4 +618,11 @@ def delete_note(request, note_id: int):
 def delete_option(request, option_id: int):
     option = get_object_or_404(Option, id=option_id)
     option.delete()
+    return {"success": True}
+
+
+@api.delete("/transactions/statuses/{transactionstatus_id}")
+def delete_transaction_status(request, transactionstatus_id: int):
+    transaction_status = get_object_or_404(TransactionStatus, id=transactionstatus_id)
+    transaction_status.delete()
     return {"success": True}
