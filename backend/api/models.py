@@ -119,6 +119,13 @@ class TransactionStatus(models.Model):
     def __str__(self):
         return self.transaction_status
 
+
+class Payee(models.Model):
+    payee_name = models.CharField(max_length=254, unique=True)
+    
+    def __str__(self):
+        return self.payee_name
+
 class Transaction(models.Model):
     transaction_date = models.DateField(default=date.today)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -127,7 +134,7 @@ class Transaction(models.Model):
     description = models.CharField(max_length=254)
     edit_date = models.DateField(default=date.today)
     add_date = models.DateField(default=date.today)
-    trnsacation_type = models.ForeignKey(TransactionType, on_delete=models.SET_NULL, null=True, blank=True)
+    transaction_type = models.ForeignKey(TransactionType, on_delete=models.SET_NULL, null=True, blank=True)
     transaction_source_account = models.ForeignKey(Account, on_delete=models.CASCADE, null=True, blank=True, default=None, related_name='transaction_source_account')
     transaction_destination_account = models.ForeignKey(Account, on_delete=models.CASCADE, null=True, blank=True, default=None, related_name='transaction_destination_account')
     p_gross = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -138,8 +145,8 @@ class Transaction(models.Model):
     p_dca = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     p_union_dues = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     p_457b = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    p_payee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    reminder = models.ForeignKey(Reminder, on_delete=models.CASCADE, null=True, blank=True)
+    p_payee = models.ForeignKey(Payee, on_delete=models.SET_NULL, null=True, blank=True, default=None)
+    reminder = models.ForeignKey(Reminder, on_delete=models.CASCADE, null=True, blank=True, default=None)
     
 class TransactionDetail(models.Model):
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
