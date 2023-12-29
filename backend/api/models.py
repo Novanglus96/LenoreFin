@@ -53,7 +53,7 @@ class ContribRule(models.Model):
 class Contribution(models.Model):
     contribution = models.CharField(max_length=20, unique=True)
     per_paycheck = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    emergencey_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    emergency_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     emergency_diff = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     cap = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     active = models.BooleanField(default=True)
