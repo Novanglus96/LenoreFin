@@ -1,5 +1,5 @@
-from ninja import NinjaAPI, Schema
-from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee
+from ninja import NinjaAPI, Schema, Query
+from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
@@ -62,15 +62,26 @@ class AccountOut(Schema):
     rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
 
 
+class TagTypeIn(Schema):
+    tag_type: str
+
+
+class TagTypeOut(Schema):
+    id: int
+    tag_type: str
+
+
 class TagIn(Schema):
     tag_name: str
     parent_id: Optional[int] = None
+    tag_type_id: Optional[int] = None
 
 
 class TagOut(Schema):
     id: int
     tag_name: str
-    parent_id: Optional[int] = None
+    parent: Optional['TagOut'] = None
+    tag_type: Optional[TagTypeOut] = None
 
 
 class ContribRuleIn(Schema):
@@ -481,97 +492,118 @@ def get_log_entry(request, logentry_id: int):
 
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
-    qs = AccountType.objects.all()
+    qs = AccountType.objects.all().order_by('id')
     return qs
 
 
 @api.get("/accounts", response=List[AccountOut])
-def list_accounts(request):
+def list_accounts(request, account_type: Optional[int] = Query(None)):
     qs = Account.objects.all()
+
+    if account_type is not None:
+        qs = qs.filter(account_type__id=account_type)
+
+    qs = qs.order_by('account_type__id', 'account_name')
     return qs
 
 
 @api.get("/tags", response=List[TagOut])
-def list_tags(request):
+def list_tags(request, tag_type: Optional[int] = Query(None)):
     qs = Tag.objects.all()
+
+    if tag_type is not None:
+        qs = qs.filter(tag_type__id=tag_type)
+
+    qs = qs.order_by('parent__tag_name', 'tag_name')
     return qs
 
 
 @api.get("/planning/contribrules", response=List[ContribRuleOut])
 def list_contrib_rules(request):
-    qs = ContribRule.objects.all()
+    qs = ContribRule.objects.all().order_by('id')
     return qs
 
 
 @api.get("/planning/contributions", response=List[ContributionOut])
 def list_contributions(request):
-    qs = Contribution.objects.all()
+    qs = Contribution.objects.all().order_by('id')
     return qs
 
 
 @api.get("/errorlevels", response=List[ErrorLevelOut])
 def list_errorlevels(request):
-    qs = ErrorLevel.objects.all()
+    qs = ErrorLevel.objects.all().order_by('id')
     return qs
 
 
 @api.get("/transactions/types", response=List[TransactionTypeOut])
 def list_transaction_types(request):
-    qs = TransactionType.objects.all()
+    qs = TransactionType.objects.all().order_by('id')
     return qs
 
 
 @api.get("/reminders/repeats", response=List[RepeatOut])
 def list_repeats(request):
-    qs = Repeat.objects.all()
+    qs = Repeat.objects.all().order_by('id')
     return qs
 
 
 @api.get("/reminders", response=List[ReminderOut])
 def list_reminders(request):
-    qs = Reminder.objects.all()
+    qs = Reminder.objects.all().order_by('id')
     return qs
 
 
 @api.get("/planning/notes", response=List[NoteOut])
 def list_notes(request):
-    qs = Note.objects.all()
+    qs = Note.objects.all().order_by('-note_date')
     return qs
 
 
 @api.get("/options", response=List[OptionOut])
 def list_options(request):
-    qs = Option.objects.all()
+    qs = Option.objects.all().order_by('id')
     return qs
 
 
 @api.get("/transactions/statuses", response=List[TransactionStatusOut])
 def list_transaction_statuses(request):
-    qs = TransactionStatus.objects.all()
+    qs = TransactionStatus.objects.all().order_by('id')
     return qs
 
 
 @api.get("/payees", response=List[PayeeOut])
 def list_payees(request):
-    qs = Payee.objects.all()
+    qs = Payee.objects.all().order_by('payee_name')
     return qs
 
 
 @api.get("/transactions", response=List[TransactionOut])
-def list_transactions(request):
+def list_transactions(request, account: Optional[int] = Query(None), start_date: Optional[date] = Query(None), end_date: Optional[date] = Query(None)):
     qs = Transaction.objects.all()
+
+    if account is not None:
+        qs = qs.filter(transaction_source_account__id=account) | qs.filter(transaction_destination_account__id=account)
+
+    if start_date is not None:
+        qs = qs.filter(transaction_date__lte=start_date)
+
+    if end_date is not None:
+        qs = qs.filter(transaction_date__gt=end_date)
+
+    qs = qs.order_by('-transaction_date')
     return qs
 
 
 @api.get("/transactions/details", response=List[TransactionDetailOut])
 def list_transactiondetails(request):
-    qs = TransactionDetail.objects.all()
+    qs = TransactionDetail.objects.all().order_by('id')
     return qs
 
 
 @api.get("/logentries", response=List[LogEntryOut])
 def list_log_entries(request):
-    qs = LogEntry.objects.all()
+    qs = LogEntry.objects.all().order_by('-log_date')
     return qs
 
 
@@ -607,6 +639,7 @@ def update_tag(request, tag_id: int, payload: TagIn):
     tag = get_object_or_404(Tag, id=tag_id)
     tag.tag_name = payload.tag_name
     tag.parent_id = payload.parent_id
+    tag.tag_type_id = payload.tag_type_id
     tag.save()
     return {"success": True}
 
@@ -698,8 +731,8 @@ def update_option(request, option_id: int, payload: OptionIn):
 
 
 @api.put("/transactions/statuses/{transactionstatus_id}")
-def update_transaction_status(request, transationstatus_id: int, payload: TransactionStatusIn):
-    transaction_status = get_object_or_404(TransactionStatus, id=transationstatus_id)
+def update_transaction_status(request, transactionstatus_id: int, payload: TransactionStatusIn):
+    transaction_status = get_object_or_404(TransactionStatus, id=transactionstatus_id)
     transaction_status.transaction_status = payload.transaction_status
     transaction_status.save()
     return {"success": True}
