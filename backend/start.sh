@@ -21,5 +21,6 @@ python manage.py loaddata transaction_statuses
 python manage.py loaddata transaction_types
 python manage.py populate_calendar
 python manage.py loaddata calendar_fixture
+python manage.py loaddata tag_types
 
 gunicorn backend.wsgi:application --bind 0.0.0.0:8000

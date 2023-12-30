@@ -32,9 +32,16 @@ class CalendarDate(models.Model):
     def __str__(self):
         return str(self.datefield)
 
+class TagType(models.Model):
+    tag_type = models.CharField(max_length=254, unique=True)
+    
+    def __str__(self):
+        return self.tag_type
+
 class Tag(models.Model):
     tag_name = models.CharField(max_length=254, unique=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
+    tag_type = models.ForeignKey(TagType, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     
     def __str__(self):
         return self.tag_name
