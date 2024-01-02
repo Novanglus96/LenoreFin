@@ -9,7 +9,12 @@
 
                     <v-list>
                         <v-list-item v-for="(account, i) in checking_accounts" :key="i">
-                            <v-list-item-title>{{ account.account_name }} {{ account.balance }} </v-list-item-title>
+                            <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+                            <v-list-item-subtitle>{{ account.balance }}</v-list-item-subtitle>
+                        </v-list-item>
+                        <v-divider></v-divider>
+                        <v-list-item prepend-icon="mdi-plus-circle" base-color="accent">
+                            <v-list-item-title>Add Account</v-list-item-title>
                         </v-list-item>
                     </v-list>
                 </v-menu>
@@ -20,7 +25,12 @@
 
                     <v-list>
                         <v-list-item v-for="(account, i) in savings_accounts" :key="i">
-                            <v-list-item-title>{{ account.account_name }} {{ account.balance }}</v-list-item-title>
+                            <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+                            <v-list-item-subtitle>{{ account.balance }}</v-list-item-subtitle>
+                        </v-list-item>
+                        <v-divider></v-divider>
+                        <v-list-item prepend-icon="mdi-plus-circle" base-color="accent">
+                            <v-list-item-title>Add Account</v-list-item-title>
                         </v-list-item>
                     </v-list>
                 </v-menu>
@@ -31,7 +41,12 @@
 
                     <v-list>
                         <v-list-item v-for="(account, i) in cc_accounts" :key="i">
-                            <v-list-item-title>{{ account.account_name }} {{ account.balance }}</v-list-item-title>
+                            <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+                            <v-list-item-subtitle>{{ account.balance }}</v-list-item-subtitle>
+                        </v-list-item>
+                        <v-divider></v-divider>
+                        <v-list-item prepend-icon="mdi-plus-circle" base-color="accent">
+                            <v-list-item-title>Add Account</v-list-item-title>
                         </v-list-item>
                     </v-list>
                 </v-menu>
@@ -42,7 +57,12 @@
 
                     <v-list>
                         <v-list-item v-for="(account, i) in investment_accounts" :key="i">
-                            <v-list-item-title>{{ account.account_name }} {{ account.balance }}</v-list-item-title>
+                            <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+                            <v-list-item-subtitle>{{ account.balance }}</v-list-item-subtitle>
+                        </v-list-item>
+                        <v-divider></v-divider>
+                        <v-list-item prepend-icon="mdi-plus-circle" base-color="accent">
+                            <v-list-item-title>Add Account</v-list-item-title>
                         </v-list-item>
                     </v-list>
                 </v-menu>
@@ -53,7 +73,12 @@
 
                     <v-list>
                         <v-list-item v-for="(account, i) in loan_accounts" :key="i">
-                            <v-list-item-title>{{ account.account_name }} {{ account.balance }}</v-list-item-title>
+                            <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+                            <v-list-item-subtitle>{{ account.balance }}</v-list-item-subtitle>
+                        </v-list-item>
+                        <v-divider></v-divider>
+                        <v-list-item prepend-icon="mdi-plus-circle" base-color="accent">
+                            <v-list-item-title>Add Account</v-list-item-title>
                         </v-list-item>
                     </v-list>
                 </v-menu>
@@ -82,52 +107,113 @@
 import { ref } from 'vue'
 const checking_accounts = ref([
     {
-        account_name: 'Checking Account',
+        id: 1,
+        account_name: 'Checking Account # 1',
         balance: "$1,000"
+    },
+    {
+        id: 2,
+        account_name: 'Checking Account # 2',
+        balance: "$1,100"
+    },
+    {
+        id: 3,
+        account_name: 'Checking Account # 3',
+        balance: "$1,200"
     },
 ])
 const savings_accounts = ref([
     {
-        account_name: 'Savings Account',
+        id: 1,
+        account_name: 'Savings Account # 1',
         balance: "$2,000"
+    },
+    {
+        id: 2,
+        account_name: 'Savings Account # 2',
+        balance: "$2,100"
+    },
+    {
+        id: 3,
+        account_name: 'Savings Account # 3',
+        balance: "-$2,200"
     },
 ])
 const cc_accounts = ref([
     {
-        account_name: 'Credit Card',
+        id: 1,
+        account_name: 'Credit Card # 1',
         balance: "$3,000"
+    },
+    {
+        id: 2,
+        account_name: 'Credit Card # 2',
+        balance: "$3,100"
+    },
+    {
+        id: 3,
+        account_name: 'Credit Card # 3',
+        balance: "-$3,200"
     },
 ])
 const investment_accounts = ref([
     {
-        account_name: 'Investment Account',
+        id: 1,
+        account_name: 'Investment Account # 1',
         balance: "$4,000"
+    },
+    {
+        id: 2,
+        account_name: 'Investment Account # 2',
+        balance: "$4,100"
+    },
+    {
+        id: 3,
+        account_name: 'Investment Account # 3',
+        balance: "-$4,200"
     },
 ])
 const loan_accounts = ref([
     {
-        account_name: 'Loan Account',
+        id: 1,
+        account_name: 'Loan Account # 1',
         balance: "$5,000"
+    },
+    {
+        id: 2,
+        account_name: 'Loan Account # 2',
+        balance: "$5,100"
+    },
+    {
+        id: 3,
+        account_name: 'Loan Account # 3',
+        balance: "-$5,200"
     },
 ])
 const planning_menu = ref([
     {
-        title: 'Pay'
+        title: 'Pay',
+        link: "/"
     },
     {
-        title: 'Expenses'
+        title: 'Expenses',
+        link: "/"
     },
     {
-        title: 'Contributions'
+        title: 'Contributions',
+        link: "/"
     },
     {
-        title: 'Retirement'
+        title: 'Retirement',
+        link: "/"
     },
     {
-        title: 'Christmas'
+        title: 'Christmas',
+        link: "/"
     },
     {
-        title: 'Notes'
+        title: 'Notes',
+        link: "/"
     },
 ])
 </script>
