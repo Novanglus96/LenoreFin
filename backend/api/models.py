@@ -135,7 +135,8 @@ class Payee(models.Model):
 
 class Transaction(models.Model):
     transaction_date = models.DateField(default=date.today)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    source_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    destination_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     status = models.ForeignKey(TransactionStatus, on_delete=models.SET_NULL, null=True, blank=True)
     memo = models.CharField(max_length=254)
     description = models.CharField(max_length=254)

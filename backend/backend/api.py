@@ -7,6 +7,8 @@ from datetime import date
 from pydantic import BaseModel, Field
 from ninja.security import HttpBearer
 from decouple import config
+from django.db.models import Case, When
+from django.db import models
 
 
 class GlobalAuth(HttpBearer):
@@ -220,7 +222,8 @@ class PayeeOut(Schema):
 
 class TransactionIn(Schema):
     transaction_date: date
-    total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    source_total: Decimal = Field(whole_digits=10, decimal_places=2)
+    destination_total: Decimal = Field(whole_digits=10, decimal_places=2)
     status_id: int
     memo: str
     description: str
@@ -244,7 +247,8 @@ class TransactionIn(Schema):
 class TransactionOut(Schema):
     id: int
     transaction_date: date
-    total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    source_total: Decimal = Field(whole_digits=10, decimal_places=2)
+    destination_total: Decimal = Field(whole_digits=10, decimal_places=2)
     status: TransactionStatusOut
     memo: str
     description: str
@@ -263,6 +267,8 @@ class TransactionOut(Schema):
     p_457b: Decimal = Field(whole_digits=10, decimal_places=2)
     p_payee: Optional[PayeeOut] = None
     reminder: Optional[ReminderOut] = None
+    balance: Optional[Decimal] = Field(default=None, whole_digits=10, decimal_places=2)
+    pretty_total: Decimal = Field(whole_digits=10, decimal_places=2)
 
 
 class TransactionDetailIn(Schema):
@@ -579,20 +585,47 @@ def list_payees(request):
 
 
 @api.get("/transactions", response=List[TransactionOut])
-def list_transactions(request, account: Optional[int] = Query(None), start_date: Optional[date] = Query(None), end_date: Optional[date] = Query(None)):
+def list_transactions(request, account: Optional[int] = Query(None)):
     qs = Transaction.objects.all()
 
     if account is not None:
         qs = qs.filter(transaction_source_account__id=account) | qs.filter(transaction_destination_account__id=account)
+        custom_order = Case(
+            When(status_id=3, then=0),
+            When(status_id=2, then=0),
+            When(status_id=1, then=1),
+            output_field=models.IntegerField(),
+        )
+        qs = qs.order_by(custom_order, 'transaction_date', '-id')
+        transactions = []
+        balance = Decimal(0)  # Initialize the balance
 
-    if start_date is not None:
-        qs = qs.filter(transaction_date__lte=start_date)
+        for transaction in qs:
+            # Calculate balance for each transaction
+            if transaction.transaction_source_account.id == account:
+                pretty_total = transaction.source_total
+                balance += transaction.source_total
+            elif transaction.transaction_destination_account.id == account:
+                pretty_total = transaction.destination_total
+                balance += transaction.destination_total
 
-    if end_date is not None:
-        qs = qs.filter(transaction_date__gt=end_date)
-
-    qs = qs.order_by('-transaction_date')
-    return qs
+            # Update the balance in the transaction and append to the list
+            transaction.balance = balance
+            transaction.pretty_total = pretty_total
+            transactions.append(TransactionOut.from_orm(transaction))
+        transactions.reverse()
+        return transactions
+    else:
+        custom_order = Case(
+            When(status_id=1, then=0),
+            When(status_id=2, then=1),
+            When(status_id=3, then=1),
+            output_field=models.IntegerField(),
+        )
+        qs = qs.order_by(custom_order, '-transaction_date', 'id')
+        for transaction in qs:
+            transaction.pretty_total = transaction.source_total
+        return qs
 
 
 @api.get("/transactions/details", response=List[TransactionDetailOut])
@@ -750,7 +783,8 @@ def update_payee(request, payee_id: int, payload: PayeeIn):
 def update_transaction(request, transaction_id: int, payload: TransactionIn):
     transaction = get_object_or_404(Transaction, id=transaction_id)
     transaction.transaction_date = payload.transaction_date
-    transaction.total_amount = payload.total_amount
+    transaction.source_total = payload.source_total
+    transaction.destination_total = payload.destination_total
     transaction.status_id = payload.status_id
     transaction.memo = payload.memo
     transaction.description = payload.description
