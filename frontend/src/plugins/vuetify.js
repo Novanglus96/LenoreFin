@@ -10,7 +10,7 @@ const myCustomLightTheme = {
     colors: {
         primary: '#ECFDF5',
         secondary: '#00bcd4',
-        accent: '#ffeb3b',
+        accent: '#06966A',
         error: '#FF3407',
         warning: '#ffc107',
         info: '#795548',
