@@ -1,10 +1,25 @@
 <template>
 <v-app>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-    <v-btn color="primary">Test</v-btn>
-  </nav>
-  <router-view/>
+  <AppNavigationVue/>
+  <v-main>
+    <v-container>
+      <router-view/>
+    </v-container>
+    <v-snackbar
+      v-model="mainstore.snackbar"
+      :color="mainstore.snackbarColor"
+      :timeout="mainstore.snackbarTimeout"
+      content-class="centered-text"
+    >
+      {{ mainstore.snackbarText }}
+    </v-snackbar>
+  </v-main>
 </v-app>
 </template>
+<script setup>
+import AppNavigationVue from "@/views/AppNavigationVue"
+import { useMainStore } from "@/stores/main"
+
+const mainstore = useMainStore();
+
+</script>
