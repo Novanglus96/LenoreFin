@@ -8,11 +8,11 @@ import '@mdi/font/css/materialdesignicons.css'
 const myCustomLightTheme = {
     dark: false,
     colors: {
-        primary: '#2196f3',
+        primary: '#ECFDF5',
         secondary: '#00bcd4',
         accent: '#ffeb3b',
-        error: '#ffc107',
-        warning: '#ff9800',
+        error: '#FF3407',
+        warning: '#ffc107',
         info: '#795548',
         success: '#4caf50',
     },
