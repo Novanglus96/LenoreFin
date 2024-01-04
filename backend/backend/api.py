@@ -62,6 +62,7 @@ class AccountOut(Schema):
     next_cycle_date: Optional[date]
     statement_cycle_length: Optional[int]
     rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    balance: Decimal = Field(whole_digits=10, decimal_places=2)
 
 
 class TagTypeIn(Schema):
@@ -409,7 +410,28 @@ def get_account_type(request, accounttype_id: int):
 @api.get("/accounts/{account_id}", response=AccountOut)
 def get_account(request, account_id: int):
     account = get_object_or_404(Account, id=account_id)
-    return account
+    transactions = Transaction.objects.exclude(status_id=1)
+    calc_balance = account.opening_balance
+    for transaction in transactions:
+        if transaction.transaction_source_account_id == account.id:
+            calc_balance += transaction.source_total
+        elif transaction.transaction_destination_account_id == account.id:
+            calc_balance += transaction.destination_total
+    account_out = AccountOut(
+        id=account.id,
+        account_name=account.account_name,
+        account_type=AccountTypeOut(id=account.account_type.id, account_type=account.account_type.account_type, color=account.account_type.color, icon=account.account_type.icon),
+        opening_balance=account.opening_balance,
+        apy=account.apy,
+        due_date=account.due_date,
+        active=account.active,
+        open_date=account.open_date,
+        next_cycle_date=account.next_cycle_date,
+        statement_cycle_length=account.statement_cycle_length,
+        rewards_amount=account.rewards_amount,
+        balance=calc_balance
+    )
+    return account_out
 
 
 @api.get("/tags/{tag_id}", response=TagOut)
@@ -508,9 +530,35 @@ def list_accounts(request, account_type: Optional[int] = Query(None)):
 
     if account_type is not None:
         qs = qs.filter(account_type__id=account_type)
-
     qs = qs.order_by('account_type__id', 'account_name')
-    return qs
+
+    transactions = Transaction.objects.exclude(status_id=1)
+
+    account_list = []
+    for account in qs:
+        calc_balance = account.opening_balance
+        for transaction in transactions:
+            if transaction.transaction_source_account.id == account.id:
+                calc_balance += transaction.source_total
+            elif transaction.transaction_destination_account.id == account.id:
+                calc_balance += transaction.destination_total
+        account_out = AccountOut(
+            id=account.id,
+            account_name=account.account_name,
+            account_type=AccountTypeOut(id=account.account_type.id, account_type=account.account_type.account_type, color=account.account_type.color, icon=account.account_type.icon),
+            opening_balance=account.opening_balance,
+            apy=account.apy,
+            due_date=account.due_date,
+            active=account.active,
+            open_date=account.open_date,
+            next_cycle_date=account.next_cycle_date,
+            statement_cycle_length=account.statement_cycle_length,
+            rewards_amount=account.rewards_amount,
+            balance=calc_balance
+        )
+        account_list.append(account_out)
+
+    return account_list
 
 
 @api.get("/tags", response=List[TagOut])
