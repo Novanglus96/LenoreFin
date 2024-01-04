@@ -12,6 +12,7 @@
                     flat
                     size="xs"
                     v-bind="props"
+                    :disabled="isLoading"
                     >
                     </v-btn>
                 </template>
@@ -24,7 +25,14 @@
             <span class="text-subtitle-2 text-accent">Money Pile Expenses</span>
         </template>
         <template v-slot:text>
-            <Pie :data="data" :options="options" />
+            <v-progress-circular
+                color="accent"
+                indeterminate
+                :size="300"
+                :width="12"
+                v-if="isLoading"
+            >Loading...</v-progress-circular>
+            <Pie :data="data" :options="options" v-else/>
         </template>
     </v-card>
 </template>

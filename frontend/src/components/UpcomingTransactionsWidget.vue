@@ -25,6 +25,7 @@
         </template>
         <template v-slot:text>
             <v-data-table
+                :loading="isLoading"
                 :headers="headers"
                 :items="items"
                 density="compact"
@@ -32,19 +33,23 @@
                 no-filter
             >
                 <template v-slot:item="{ item }">
-                        <tr>
-                            <td class="text-center" width="10%">{{ item.date }}</td>
-                            <td class="text-center" width="10%"><span :class="item.amount >= 0 ? 'text-green' : 'text-red'">${{ item.amount }}</span></td>
-                            <td width="20%">{{ item.description }}</td>
-                            <td width="10%"><v-icon icon="mdi-tag" size="xs"></v-icon>{{ item.tag }}</td>
-                            <td width="100%">{{ item.account }}</td>
-                        </tr>
-                    </template>
+                    <tr>
+                        <td class="text-center" width="10%">{{ item.date }}</td>
+                        <td class="text-center" width="10%"><span :class="item.amount >= 0 ? 'text-green' : 'text-red'">${{ item.amount }}</span></td>
+                        <td width="20%">{{ item.description }}</td>
+                        <td width="10%"><v-icon icon="mdi-tag" size="xs"></v-icon>{{ item.tag }}</td>
+                        <td width="100%">{{ item.account }}</td>
+                    </tr>
+                </template>
+                <template v-slot:loading>
+                    <v-skeleton-loader type="table-row@10"></v-skeleton-loader>
+                </template>
             </v-data-table>
         </template>
     </v-card>
 </template>
 <script setup>
+
 const headers = [
     {
         title: 'Date',

@@ -25,6 +25,7 @@
         </template>
         <template v-slot:text>
             <v-data-table
+                :loading="isLoading"
                 :headers="headers"
                 :items="items"
                 :item-value="reminder"
@@ -39,11 +40,15 @@
                         <td width="100%">{{ item.reminder }}</td>
                     </tr>
                 </template>
+                <template v-slot:loading>
+                    <v-skeleton-loader type="table-row@5"></v-skeleton-loader>
+                </template>
             </v-data-table>
         </template>
     </v-card>
 </template>
 <script setup>
+
 const headers = [
     {
         title: 'Date',
