@@ -6,6 +6,18 @@ export const useMainStore = defineStore('main', {
         snackbarColor: '',
         snackbar: false,
         snackbarTimeout: 1500,
+        graphColors: [
+            '#7fb1b1',
+            '#597c7c',
+            '#7f8cb1',
+            '#7fb17f',
+            '#597c59',
+            '#b17fa5',
+            '#7c5973',
+            '#b1a77f',
+            '#edffff',
+            '#dbffff',
+        ]
     }),
     getters: {
     },

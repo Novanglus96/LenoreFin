@@ -20,9 +20,11 @@
 import { Pie } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { ref } from 'vue'
+import { useMainStore } from '@/stores/main'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
+const mainstore = useMainStore();
 const data = ref({
     labels: [
         'Eating Out',
@@ -30,18 +32,7 @@ const data = ref({
     datasets: [{
         label: 'Money Pile Expenses',
         data: [8.79],
-        backgroundColor: [
-            '#7fb1b1',
-            '#597c7c',
-            '#7f8cb1',
-            '#7fb17f',
-            '#597c59',
-            '#b17fa5',
-            '#7c5973',
-            '#b1a77f',
-            '#edffff',
-            '#dbffff',
-        ],
+        backgroundColor: mainstore.graphColors,
         hoverOffset: 4
     }]
 })
