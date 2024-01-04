@@ -2,7 +2,7 @@
 <v-app>
   <AppNavigationVue/>
   <v-main>
-    <v-container class="h-100" fluid>
+    <v-container class="bg-primary h-100" fluid>
       <router-view/>
     </v-container>
     <v-snackbar

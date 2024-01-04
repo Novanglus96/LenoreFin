@@ -1,17 +1,17 @@
 <template>
     <div>
-        <v-row class="bg-accent pa-1 ga-1">
-            <v-col class="bg-white rounded custom-height text-center">
+        <v-row class="pa-1 ga-1" no-gutters>
+            <v-col class="rounded text-center">
                 <MainExpensesWidget />
             </v-col>
-            <v-col class="bg-white rounded custom-height text-center"> <KidsExpensesWidget/> </v-col>
-            <v-col class="bg-white rounded custom-height text-center"> <MoneyPileExpensesWidget/> </v-col>
+            <v-col class="rounded text-center"> <KidsExpensesWidget/> </v-col>
+            <v-col class="rounded text-center"> <MoneyPileExpensesWidget/> </v-col>
         </v-row>
-        <v-row class="bg-accent pa-1 ga-1 rounded">
-            <v-col class="bg-white rounded"> <RemindersWidget/> </v-col>
+        <v-row class="pa-1 ga-1 rounded" no-gutters>
+            <v-col class="rounded"> <RemindersWidget/> </v-col>
         </v-row>
-        <v-row class="bg-accent pa-1 ga-1 rounded">
-            <v-col class="bg-white rounded"> <UpcomingTransactionsWidget/> </v-col>
+        <v-row class="pa-1 ga-1 rounded" no-gutters>
+            <v-col class="rounded"> <UpcomingTransactionsWidget/> </v-col>
         </v-row>
     </div>
 </template>

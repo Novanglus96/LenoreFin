@@ -1,14 +1,19 @@
 <template>
-    <v-container class="ma-0 pa-0 ga-0">
-        <v-row dense>
-            <v-col><v-span class="text-subtitle-2 text-accent">Money Pile Expenses</v-span></v-col><v-col cols=1 class="text-right"><v-btn icon="mdi-cog" size="xs" flat></v-btn></v-col>
-        </v-row>
-        <v-row dense>
-            <v-col>
-                <Pie :data="data" :options="options" />
-            </v-col>
-        </v-row>
-    </v-container>
+    <v-card
+        variant="outlined"
+        :elevation="4"
+        class="bg-white"
+    >
+        <template v-slot:append>
+            <v-btn icon="mdi-cog" to="/" flat size="xs"></v-btn>
+        </template>
+        <template v-slot:title>
+            <span class="text-subtitle-2 text-accent">Money Pile Expenses</span>
+        </template>
+        <template v-slot:text>
+            <Pie :data="data" :options="options" />
+        </template>
+    </v-card>
 </template>
 
 <script setup>
