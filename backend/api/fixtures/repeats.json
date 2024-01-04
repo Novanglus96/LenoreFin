@@ -1,0 +1,79 @@
+[
+  {
+    "model": "api.Repeat",
+    "pk": 1,
+    "fields": {
+        "repeat_name": "Every Month",
+        "days": 0,
+        "weeks": 0,
+        "months": 1,
+        "years": 0
+    }
+  },
+  {
+    "model": "api.Repeat",
+    "pk": 2,
+    "fields": {
+        "repeat_name": "Every 2 Weeks",
+        "days": 0,
+        "weeks": 2,
+        "months": 0,
+        "years": 0
+    }
+  },
+  {
+    "model": "api.Repeat",
+    "pk": 3,
+    "fields": {
+        "repeat_name": "Every Week",
+        "days": 0,
+        "weeks": 1,
+        "months": 0,
+        "years": 0
+    }
+  },
+  {
+    "model": "api.Repeat",
+    "pk": 4,
+    "fields": {
+        "repeat_name": "Every Year",
+        "days": 0,
+        "weeks": 0,
+        "months": 0,
+        "years": 1
+    }
+  },
+  {
+    "model": "api.Repeat",
+    "pk": 5,
+    "fields": {
+        "repeat_name": "Every Day",
+        "days": 1,
+        "weeks": 0,
+        "months": 0,
+        "years": 0
+    }
+  },
+  {
+    "model": "api.Repeat",
+    "pk": 6,
+    "fields": {
+        "repeat_name": "Never",
+        "days": 0,
+        "weeks": 0,
+        "months": 0,
+        "years": 0
+    }
+  },
+  {
+    "model": "api.Repeat",
+    "pk": 7,
+    "fields": {
+        "repeat_name": "Every 2 Months",
+        "days": 0,
+        "weeks": 0,
+        "months": 2,
+        "years": 0
+    }
+  }
+]

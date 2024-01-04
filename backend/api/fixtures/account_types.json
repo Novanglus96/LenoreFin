@@ -1,0 +1,47 @@
+[
+  {
+    "model": "api.AccountType",
+    "pk": 1,
+    "fields": {
+        "account_type": "Credit Card",
+        "color":  "#e84d08",
+        "icon": "mdi-credit-card"
+    }
+  },
+  {
+    "model": "api.AccountType",
+    "pk": 2,
+    "fields": {
+        "account_type": "Checking",
+        "color":  "#059669",
+        "icon": "mdi-checkbook"
+    }
+  },
+  {
+    "model": "api.AccountType",
+    "pk": 3,
+    "fields": {
+        "account_type": "Savings",
+        "color":  "#60a5fa",
+        "icon": "mdi-piggy-bank"
+    }
+  },
+  {
+    "model": "api.AccountType",
+    "pk": 4,
+    "fields": {
+        "account_type": "Investment",
+        "color":  "#231f20",
+        "icon": "mdi-chart-areaspline"
+    }
+  },
+  {
+    "model": "api.AccountType",
+    "pk": 5,
+    "fields": {
+        "account_type": "Loan",
+        "color":  "eab308",
+        "icon": "mdi-car-back"
+    }
+  }
+]
