@@ -47,12 +47,10 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 
 const mainstore = useMainStore();
 const data = ref({
-    labels: [
-        'Eating Out',
-    ],
+    labels: mainstore.money_pile_expenses_widget.labels, // Data point for labels
     datasets: [{
         label: 'Money Pile Expenses',
-        data: [8.79],
+        data: mainstore.money_pile_expenses_widget.data, // Data point for data
         backgroundColor: mainstore.graphColors,
         hoverOffset: 4
     }]

@@ -48,7 +48,9 @@
     </v-card>
 </template>
 <script setup>
+import { useMainStore } from '@/stores/main'
 
+const mainstore = useMainStore()
 const headers = [
     {
         title: 'Date',
@@ -72,31 +74,5 @@ const headers = [
         removable: false,
     },
 ]
-const items = [
-    {
-        date: 'January 5th, 2024',
-        amount: '-400.00',
-        reminder: 'Transfer to Kids',
-    },
-    {
-        date: 'January 5th, 2024',
-        amount: '-200.00',
-        reminder: 'Transfer to Money Pile',
-    },
-    {
-        date: 'January 5th, 2024',
-        amount: '991.48',
-        reminder: 'Primepoint Payroll - Danielle',
-    },
-    {
-        date: 'January 5th, 2024',
-        amount: '192.30',
-        reminder: 'Dependent Care Contribution',
-    },
-    {
-        date: 'January 5th, 2024',
-        amount: '-100.00',
-        reminder: 'Transfer to Reno',
-    },
-]
+const items = mainstore.reminder_items // Data point for data
 </script>

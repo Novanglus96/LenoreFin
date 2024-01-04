@@ -47,12 +47,10 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 
 const mainstore = useMainStore();
 const data = ref({
-    labels: [
-        'Child Care',
-    ],
+    labels: mainstore.kids_expenses_widget.labels, // Data point for labels
     datasets: [{
         label: 'Kids Expenses',
-        data: [1530],
+        data: mainstore.kids_expenses_widget.data, // Data point for data
         backgroundColor: mainstore.graphColors,
         hoverOffset: 4
     }]

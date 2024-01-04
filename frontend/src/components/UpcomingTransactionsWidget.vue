@@ -49,7 +49,9 @@
     </v-card>
 </template>
 <script setup>
+import { useMainStore } from '@/stores/main'
 
+const mainstore = useMainStore()
 const headers = [
     {
         title: 'Date',
@@ -87,41 +89,5 @@ const headers = [
         removable: false,
     },
 ]
-const items = [
-    {
-        date: '3rd Jan 2024',
-        amount: '-950.00',
-        description: 'Rent',
-        tag: 'Rent',
-        account: 'Our Checking Account',
-    },
-    {
-        date: '4th Jan 2024',
-        amount: '-503.36',
-        description: 'Transfer from Savings (Christmas)',
-        tag: 'Transfer',
-        account: 'Ally - Christmas => Our Checking Account',
-    },
-    {
-        date: '4th Jan 2024',
-        amount: '-1660.46',
-        description: 'Transfer to Checking (Kids)',
-        tag: 'Transfer',
-        account: 'Ally - Kids => Our Checking Account',
-    },
-    {
-        date: '4th Jan 2024',
-        amount: '-1530.00',
-        description: 'Zelle Payment to Lilys Ducklings',
-        tag: 'Kids/Child Care',
-        account: 'Our Checking Account',
-    },
-    {
-        date: '4th Jan 2024',
-        amount: '-20.00',
-        description: 'Transfer to Checking (Charity)',
-        tag: 'Transfer',
-        account: 'Ally - Charity => Our Checking Account',
-    },
-]
+const items = mainstore.transaction_items // Data point for data
 </script>
