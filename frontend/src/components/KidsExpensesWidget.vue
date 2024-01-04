@@ -5,7 +5,20 @@
         class="bg-white"
     >
         <template v-slot:append>
-            <v-btn icon="mdi-cog" to="/" flat size="xs"></v-btn>
+            <v-menu location="start">
+                <template v-slot:activator="{ props }">
+                    <v-btn
+                    icon="mdi-cog"
+                    flat
+                    size="xs"
+                    v-bind="props"
+                    >
+                    </v-btn>
+                </template>
+                <v-card width="100">
+                    <v-card-text>Test</v-card-text>
+                </v-card>
+            </v-menu>
         </template>
         <template v-slot:title>
             <span class="text-subtitle-2 text-accent">Kids Expenses</span>
