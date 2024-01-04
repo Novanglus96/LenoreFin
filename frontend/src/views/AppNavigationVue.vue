@@ -1,6 +1,11 @@
 <template>
     <v-app-bar color="primary" density="compact">
-        <v-btn icon="mdi-view-dashboard" to="/"></v-btn>
+        <v-btn flat to="/"><v-img
+            :width="32"
+            aspect-ratio="1/1"
+            cover
+            src="Logo.png"
+        ></v-img></v-btn>
         <v-menu>
             <template v-slot:activator="{ props }">
                 <v-btn prepend-icon="mdi-checkbook" v-bind="props">Checking</v-btn>
