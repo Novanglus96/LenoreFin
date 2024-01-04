@@ -26,10 +26,16 @@ const data = ref({
         label: 'Kids Expenses',
         data: [1530],
         backgroundColor: [
-            '#06966A',
-            '#ECFDF5',
-            'green',
-            'blue',
+            '#7fb1b1',
+            '#597c7c',
+            '#7f8cb1',
+            '#7fb17f',
+            '#597c59',
+            '#b17fa5',
+            '#7c5973',
+            '#b1a77f',
+            '#edffff',
+            '#dbffff',
         ],
         hoverOffset: 4
     }]
