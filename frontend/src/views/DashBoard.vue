@@ -25,7 +25,7 @@ import UpcomingTransactionsWidget from '@/components/UpcomingTransactionsWidget.
 </script>
 <style scoped>
 .custom-height {
-    height: 350px;
+    height: 340px;
     /* Adjust the height as needed */
     overflow-y: hidden;
     /* Add this if you want a vertical scrollbar for overflow */
