@@ -112,13 +112,10 @@
 </template>
 <script setup>
 import { ref } from 'vue'
+import { useAccounts } from '@/composables/accountsComposable'
 
+const { checking_accounts, cc_accounts, savings_accounts, investment_accounts, loan_accounts } = useAccounts()
 const add_account_link = ref("/accounts/add")
-const checking_accounts = ref([])
-const savings_accounts = ref([])
-const cc_accounts = ref([])
-const investment_accounts = ref([])
-const loan_accounts = ref([])
 const planning_menu = ref([
     {
         title: 'Pay',
