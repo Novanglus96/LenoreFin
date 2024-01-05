@@ -415,7 +415,7 @@ def get_account(request, account_id: int):
     for transaction in transactions:
         if transaction.transaction_source_account_id == account.id:
             calc_balance += transaction.source_total
-        elif transaction.transaction_destination_account_id == account.id:
+        elif transaction.transaction_destination_account and transaction.transaction_destination_account_id == account.id:
             calc_balance += transaction.destination_total
     account_out = AccountOut(
         id=account.id,
@@ -540,7 +540,7 @@ def list_accounts(request, account_type: Optional[int] = Query(None)):
         for transaction in transactions:
             if transaction.transaction_source_account.id == account.id:
                 calc_balance += transaction.source_total
-            elif transaction.transaction_destination_account.id == account.id:
+            elif transaction.transaction_destination_account and transaction.transaction_destination_account.id == account.id:
                 calc_balance += transaction.destination_total
         account_out = AccountOut(
             id=account.id,
