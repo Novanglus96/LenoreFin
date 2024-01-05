@@ -1,12 +1,24 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DashBoard from '@/views/DashBoard.vue'
 import FourView from '../views/FourView.vue'
+import AccountsView from '@/views/AccountsView.vue'
+import PlanningView from '@/views/PlanningView.vue'
 
 const routes = [
   {
     path: '/',
     name: 'dashboard',
     component: DashBoard
+  },
+  {
+    path: '/accounts',
+    name: 'accounts',
+    component: AccountsView
+  },
+  {
+    path: '/planning',
+    name: 'planning',
+    component: PlanningView
   },
   { 
     path: '/:catchAll(.*)', 
