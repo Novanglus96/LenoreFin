@@ -6,7 +6,7 @@
             cover
             src="Logo.png"
         ></v-img></v-btn>
-        <v-menu>
+        <v-menu open-on-hover>
             <template v-slot:activator="{ props }">
                 <v-btn prepend-icon="mdi-checkbook" v-bind="props">Checking</v-btn>
             </template>
@@ -23,7 +23,7 @@
                 </v-list-item>
             </v-list>
         </v-menu>
-        <v-menu>
+        <v-menu open-on-hover>
             <template v-slot:activator="{ props }">
                 <v-btn prepend-icon="mdi-piggy-bank" v-bind="props">Savings</v-btn>
             </template>
@@ -40,7 +40,7 @@
                 </v-list-item>
             </v-list>
         </v-menu>
-        <v-menu>
+        <v-menu open-on-hover>
             <template v-slot:activator="{ props }">
                 <v-btn prepend-icon="mdi-credit-card" v-bind="props">Credit Cards</v-btn>
             </template>
@@ -57,7 +57,7 @@
                 </v-list-item>
             </v-list>
         </v-menu>
-        <v-menu>
+        <v-menu open-on-hover>
             <template v-slot:activator="{ props }">
                 <v-btn prepend-icon="mdi-finance" v-bind="props">Investments</v-btn>
             </template>
@@ -74,7 +74,7 @@
                 </v-list-item>
             </v-list>
         </v-menu>
-        <v-menu>
+        <v-menu open-on-hover>
             <template v-slot:activator="{ props }">
                 <v-btn prepend-icon="mdi-car-back" v-bind="props">Loans</v-btn>
             </template>
@@ -93,7 +93,7 @@
         </v-menu>
         <v-btn prepend-icon="mdi-chart-bar" to="/forecast">Forecast</v-btn>
         <v-btn prepend-icon="mdi-bell" to="/reminders">Reminders</v-btn>
-        <v-menu>
+        <v-menu open-on-hover>
             <template v-slot:activator="{ props }">
                 <v-btn prepend-icon="mdi-folder" v-bind="props">Planning</v-btn>
             </template>
