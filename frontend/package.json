@@ -10,6 +10,8 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.16",
     "@heroicons/vue": "^2.0.18",
+    "@tanstack/vue-query": "^5.17.1",
+    "@tanstack/vue-query-devtools": "^5.17.1",
     "axios": "^1.5.0",
     "chart.js": "^4.4.1",
     "pinia": "^2.1.6",
