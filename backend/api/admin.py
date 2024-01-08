@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType
+from .models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType, Bank
 
 # Register your models here.
 
@@ -22,3 +22,4 @@ admin.site.register(TransactionDetail)
 admin.site.register(LogEntry)
 admin.site.register(Payee)
 admin.site.register(TagType)
+admin.site.register(Bank)

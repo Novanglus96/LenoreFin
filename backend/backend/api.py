@@ -1,5 +1,5 @@
 from ninja import NinjaAPI, Schema, Query
-from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType
+from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType, Bank
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
@@ -37,6 +37,15 @@ class AccountTypeOut(Schema):
     icon: str
 
 
+class BankIn(Schema):
+    bank_name: str
+
+
+class BankOut(Schema):
+    id: int
+    bank_name: str
+
+
 class AccountIn(Schema):
     account_name: str
     account_type_id: int
@@ -47,7 +56,10 @@ class AccountIn(Schema):
     open_date: date
     next_cycle_date: Optional[date]
     statement_cycle_length: Optional[int]
+    statement_cycle_period: Optional[str]
     rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    bank_id: int
 
 
 class AccountOut(Schema):
@@ -61,8 +73,12 @@ class AccountOut(Schema):
     open_date: date
     next_cycle_date: Optional[date]
     statement_cycle_length: Optional[int]
+    statement_cycle_period: Optional[str]
     rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    available_credit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     balance: Decimal = Field(whole_digits=10, decimal_places=2)
+    bank: BankOut
 
 
 class TagTypeIn(Schema):
@@ -311,6 +327,12 @@ def create_account_type(request, payload: AccountTypeIn):
     return {"id": account_type.id}
 
 
+@api.post("/accounts/banks")
+def create_bank(request, payload: BankIn):
+    bank = Bank.objects.create(**payload.dict())
+    return {"id": bank.id}
+
+
 @api.post("/accounts")
 def create_account(request, payload: AccountIn):
     account = Account.objects.create(**payload.dict())
@@ -407,6 +429,12 @@ def get_account_type(request, accounttype_id: int):
     return account_type
 
 
+@api.get("/accounts/banks/{bank_id}", response=BankOut)
+def get_bank(request, bank_id: int):
+    bank = get_object_or_404(Bank, id=bank_id)
+    return bank
+
+
 @api.get("/accounts/{account_id}", response=AccountOut)
 def get_account(request, account_id: int):
     account = get_object_or_404(Account, id=account_id)
@@ -428,8 +456,12 @@ def get_account(request, account_id: int):
         open_date=account.open_date,
         next_cycle_date=account.next_cycle_date,
         statement_cycle_length=account.statement_cycle_length,
+        statement_cycle_period=account.statement_cycle_period,
         rewards_amount=account.rewards_amount,
-        balance=calc_balance
+        credit_limit=account.credit_limit,
+        available_credit=account.credit_limit + calc_balance,
+        balance=calc_balance,
+        bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name)
     )
     return account_out
 
@@ -524,6 +556,12 @@ def list_account_types(request):
     return qs
 
 
+@api.get("/accounts/banks", response=List[BankOut])
+def list_banks(request):
+    qs = Bank.objects.all().order_by('bank_name')
+    return qs
+
+
 @api.get("/accounts", response=List[AccountOut])
 def list_accounts(request, account_type: Optional[int] = Query(None)):
     qs = Account.objects.all()
@@ -553,8 +591,12 @@ def list_accounts(request, account_type: Optional[int] = Query(None)):
             open_date=account.open_date,
             next_cycle_date=account.next_cycle_date,
             statement_cycle_length=account.statement_cycle_length,
+            statement_cycle_period=account.statement_cycle_period,
             rewards_amount=account.rewards_amount,
-            balance=calc_balance
+            credit_limit=account.credit_limit,
+            available_credit=account.credit_limit + calc_balance,
+            balance=calc_balance,
+            bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name)
         )
         account_list.append(account_out)
 
@@ -698,6 +740,14 @@ def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
     return {"success": True}
 
 
+@api.put("/accounts/banks/{bank_id}")
+def update_bank(request, bank_id: int, payload: BankIn):
+    bank = get_object_or_404(Bank, id=bank_id)
+    bank.bank_name = payload.bank_name
+    bank.save()
+    return {"success": True}
+
+
 @api.put("/accounts/{account_id}")
 def update_account(request, account_id: int, payload: AccountIn):
     account = get_object_or_404(Account, id=account_id)
@@ -710,7 +760,10 @@ def update_account(request, account_id: int, payload: AccountIn):
     account.open_date = payload.open_date
     account.next_cycle_date = payload.next_cycle_date
     account.statement_cycle_length = payload.statement_cycle_length
+    account.statement_cycle_period = payload.statement_cycle_period
     account.rewards_amount = payload.rewards_amount
+    account.credit_limit = payload.credit_limit
+    account.bank_id = payload.bank_id
     account.save()
     return {"success": True}
 
@@ -883,6 +936,13 @@ def update_log_entry(request, logentry_id: int, payload: LogEntryIn):
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
     account_type.delete()
+    return {"success": True}
+
+
+@api.delete("/accounts/banks/{bank_id}")
+def delete_bank(request, bank_id: int):
+    bank = get_object_or_404(Bank, id=bank_id)
+    bank.delete()
     return {"success": True}
 
 

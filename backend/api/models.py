@@ -11,6 +11,14 @@ class AccountType(models.Model):
     def __str__(self):
         return self.account_type
 
+
+class Bank(models.Model):
+    bank_name = models.CharField(max_length=254, unique=True)
+    
+    def __str__(self):
+        return self.bank_name
+
+
 class Account(models.Model):
     account_name = models.CharField(max_length=254, unique=True)
     account_type = models.ForeignKey(AccountType, null=True, on_delete=models.SET_NULL)
@@ -21,7 +29,10 @@ class Account(models.Model):
     open_date = models.DateField(default=date.today)
     next_cycle_date = models.DateField(default=date.today, null=True)
     statement_cycle_length = models.IntegerField(default=0, null=True)
+    statement_cycle_period = models.CharField(max_length=1, null=True, default='d')
     rewards_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
+    credit_limit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
+    bank = models.ForeignKey(Bank, on_delete=models.CASCADE)
     
     def __str__(self):
         return self.account_name
