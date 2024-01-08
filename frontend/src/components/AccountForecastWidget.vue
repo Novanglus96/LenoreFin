@@ -61,12 +61,12 @@ ChartJS.register(
 )
 
 const data = ref({
-    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+    labels: ['Dec 06', 'Dec 07', 'Dec 08', 'Dec 09', 'Dec 10', 'Dec 11', 'Dec 12', 'Dec 13', 'Dec 14', 'Dec 15', 'Dec 16', 'Dec 17', 'Dec 18', 'Dec 19', 'Dec 20', 'Dec 21', 'Dec 22', 'Dec 23'],
     datasets: [
         {
             label: 'Data One',
             backgroundColor: '#f87979',
-            data: [40, 39, 10, 40, 39, 80, 40],
+            data: [10, 10, 10, 10, 39, 80, 40],
             fill: {
                 target: 1,
                 above: 'rgb(255, 0, 0)',   // Area will be red above the origin
