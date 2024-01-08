@@ -66,7 +66,7 @@ const data = ref({
         {
             label: 'Data One',
             backgroundColor: '#f87979',
-            data: [10, 10, 10, 10, 39, 80, 40],
+            data: [10, 10, 10, 10, 39, 80, 40, 1000, 2000, 30000, 400],
             fill: {
                 target: 1,
                 above: 'rgb(255, 0, 0)',   // Area will be red above the origin

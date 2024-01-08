@@ -20,9 +20,10 @@
                     </template>
                     <template v-slot:text>
                         <v-row desnity="compact">
-                            <v-col col="2" class="text-right text-black">Statement Ending:</v-col><v-col col="2">1/1/24</v-col>
-                            <v-col col="2" class="text-right text-black">Last Statement:</v-col><v-col col="2">$1000.00</v-col>
-                            <v-col col="2" class="text-right text-black">Rewards:</v-col><v-col col="2">$10.00</v-col>
+                            <v-col col="2" class="text-right text-black font-weight-bold">Statement Ending:</v-col><v-col col="2">1/1/24</v-col>
+                            <v-col col="2" class="text-right text-black font-weight-bold">Last Statement:</v-col><v-col col="2">$1000.00</v-col>
+                            <v-col col="2" class="text-right text-black font-weight-bold">Rewards:</v-col><v-col col="2">$10.00</v-col>
+                            <v-col col="2" class="text-right text-black font-weight-bold">Available Credit:</v-col><v-col col="2">$1000.00</v-col>
                         </v-row>
                     </template>
                 </v-card>
