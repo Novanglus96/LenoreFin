@@ -2,40 +2,35 @@
     <div>
         <v-row class="pa-1 ga-1" no-gutters>
             <v-col class="rounded">
-                <v-toolbar density="compact" color="accent" rounded>
-                    <v-toolbar-title>Account Name</v-toolbar-title>
-                    <span class="text-subtitle-2 text-black">Balance:</span> <span class="text-subtitle">$1000.00</span>
-                    <v-spacer></v-spacer>
-                    <v-btn icon>
-                        <v-icon>mdi-cash-edit</v-icon>
-                    </v-btn>
-
-                    <v-btn icon>
-                        <v-icon>mdi-application-edit</v-icon>
-                    </v-btn>
-
-                    <v-btn icon>
-                        <v-icon color="red">mdi-bank-remove</v-icon>
-                    </v-btn>
-                </v-toolbar>
+                <v-card
+                    variant="outlined"
+                    :elevation="4"
+                    class="bg-accent"
+                >
+                    <template v-slot:append>
+                        <v-btn icon="mdi-cash-edit" flat variant="plain"/>
+                        <v-btn icon="mdi-application-edit" flat variant="plain"/>
+                        <v-btn icon="mdi-bank-remove" color="red" flat variant="plain"/>
+                    </template>
+                    <template v-slot:title>
+                        Account Name
+                    </template>
+                    <template v-slot:subtitle>
+                        $1000.00
+                    </template>
+                    <template v-slot:text>
+                        <v-row desnity="compact">
+                            <v-col col="2" class="text-right text-black">Statement Ending:</v-col><v-col col="2">1/1/24</v-col>
+                            <v-col col="2" class="text-right text-black">Last Statement:</v-col><v-col col="2">$1000.00</v-col>
+                            <v-col col="2" class="text-right text-black">Rewards:</v-col><v-col col="2">$10.00</v-col>
+                        </v-row>
+                    </template>
+                </v-card>
             </v-col>
         </v-row>
         <v-row class="pa-1 ga-1" no-gutters>
             <v-col class="rounded text-center">
                 <AccountForecastWidget/>
-            </v-col>
-        </v-row>
-        <v-row class="pa-1 ga-1" no-gutters>
-            <v-col class="rounded bg-white">
-                <v-toolbar density="compact" color="accent" rounded elevation="2">
-                    <v-spacer></v-spacer>
-                        <span class="text-subtitle-2 text-black">Statement Ending:</span> <span class="text-subtitle-2">1/1/24</span>
-                    <v-spacer></v-spacer>
-                        <span class="text-subtitle-2 text-black">Last Statement:</span> <span class="text-subtitle-2">$1000.00</span>
-                    <v-spacer></v-spacer>
-                        <span class="text-subtitle-2 text-black">Rewards:</span> <span class="text-subtitle-2">$10.00</span>
-                    <v-spacer></v-spacer>
-                </v-toolbar>
             </v-col>
         </v-row>
         <v-row class="pa-1 ga-1 rounded" no-gutters>
