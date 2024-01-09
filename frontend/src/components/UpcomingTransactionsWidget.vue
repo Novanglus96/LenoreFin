@@ -27,19 +27,20 @@
             <v-data-table
                 :loading="isLoading"
                 :headers="headers"
-                :items="items"
+                :items="transactions"
                 density="compact"
                 items-per-page="10"
                 no-filter
+                item-value="id"
             >
-                <template v-slot:item="{ item }">
-                    <tr>
-                        <td class="text-center" width="10%">{{ item.date }}</td>
-                        <td class="text-center" width="10%"><span :class="item.amount >= 0 ? 'text-green' : 'text-red'">${{ item.amount }}</span></td>
-                        <td width="20%">{{ item.description }}</td>
-                        <td width="10%"><v-icon icon="mdi-tag" size="xs"></v-icon>{{ item.tag }}</td>
-                        <td width="100%">{{ item.account }}</td>
-                    </tr>
+                <template v-slot:item.pretty_total="{ value }"><!-- eslint-disable-line -->
+                    <span :class="value >= 0 ? 'text-green' : 'text-red'">${{ value }}</span>
+                </template>
+                <template v-slot:item.status="{ value }"><!-- eslint-disable-line -->
+                    <v-icon icon="mdi-cash" :color="value.id == '1' ? 'grey' : 'green'"></v-icon>
+                </template>
+                <template v-slot:item.tags="{ value }"><!-- eslint-disable-line -->
+                    <div v-for="tag in value" :key="tag"><v-icon icon="mdi-tag"></v-icon> {{ tag }} </div>
                 </template>
                 <template v-slot:loading>
                     <v-skeleton-loader type="table-row@10"></v-skeleton-loader>
@@ -49,21 +50,21 @@
     </v-card>
 </template>
 <script setup>
-import { useMainStore } from '@/stores/main'
+import { useTransactions } from '@/composables/transactionsComposable'
 
-const mainstore = useMainStore()
+const { isLoading, transactions } = useTransactions()
 const headers = [
     {
         title: 'Date',
         align: 'center',
-        key: 'date',
+        key: 'transaction_date',
         sortable: false,
         removable: false,
     },
     {
         title: 'Amount',
         align: 'center',
-        key: 'amount',
+        key: 'pretty_total',
         sortable: false,
         removable: false,
     },
@@ -77,17 +78,17 @@ const headers = [
     {
         title: 'Tag',
         align: 'start',
-        key: 'tag',
+        key: 'tags',
         sortable: false,
         removable: false,
     },
     {
         title: 'Account',
         align: 'start',
-        key: 'account',
+        key: 'pretty_account',
         sortable: false,
         removable: false,
     },
 ]
-const items = mainstore.transaction_items // Data point for data
+
 </script>
