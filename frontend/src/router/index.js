@@ -4,6 +4,7 @@ import FourView from '../views/FourView.vue'
 import AccountsView from '@/views/AccountsView.vue'
 import PlanningView from '@/views/PlanningView.vue'
 import AccountDetailView from '@/views/AccountDetailView.vue'
+import AddAccount from '@/views/AddAccount.vue'
 
 const routes = [
   {
@@ -15,6 +16,11 @@ const routes = [
     path: '/accounts',
     name: 'accounts',
     component: AccountsView
+  },
+  {
+    path: '/accounts/add',
+    name: 'addaccount',
+    component: AddAccount
   },
   {
     path: '/accounts/:accountID',
