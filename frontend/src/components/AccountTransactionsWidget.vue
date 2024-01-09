@@ -35,7 +35,7 @@
                     <span :class="value >= 0 ? 'text-green' : 'text-red'">${{ value }}</span>
                 </template>
                 <template v-slot:item.status="{ value }"><!-- eslint-disable-line -->
-                    <v-icon icon="mdi-cash" :color="value == 'Pending' ? 'yellow' : 'green'"></v-icon>
+                    <v-icon icon="mdi-cash" :color="value == 'Pending' ? 'grey' : 'green'"></v-icon>
                 </template>
                 <template v-slot:item.tag="{ value }"><!-- eslint-disable-line -->
                     <v-icon icon="mdi-tag"></v-icon> {{ value }}
