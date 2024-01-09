@@ -724,7 +724,6 @@ def list_transactions(request, account: Optional[int] = Query(None)):
         transactions.reverse()
         return transactions
     else:
-        tags = []
         custom_order = Case(
             When(status_id=1, then=0),
             When(status_id=2, then=1),
@@ -733,6 +732,7 @@ def list_transactions(request, account: Optional[int] = Query(None)):
         )
         qs = qs.order_by(custom_order, '-transaction_date', 'id')
         for transaction in qs:
+            tags = []
             transaction_details = TransactionDetail.objects.filter(transaction=transaction.id)
             for detail in transaction_details:
                 tags.append(detail.tag.tag_name)
