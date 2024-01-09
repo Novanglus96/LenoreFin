@@ -17,7 +17,8 @@
         <template v-slot:text>
             <v-btn icon="mdi-invoice-text-check" flat :disabled="selected.length === 0" variant="plain"></v-btn>
             <v-btn icon="mdi-invoice-text-edit" flat :disabled="selected.length === 0 || selected.length > 1" variant="plain"></v-btn>
-            <v-btn icon="mdi-invoice-remove" flat :disabled="selected.length === 0" variant="plain"></v-btn>
+            <v-btn icon="mdi-invoice-remove" flat :disabled="selected.length === 0" variant="plain" color="error"></v-btn>
+            <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success"></v-btn>
             <v-data-table
                 :loading="isLoading"
                 :headers="headers"
