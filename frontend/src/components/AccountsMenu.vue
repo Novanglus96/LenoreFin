@@ -5,7 +5,7 @@
                 <v-list-item-title>Add Account</v-list-item-title>
             </v-list-item>
         </v-list>
-        <v-list density="compact">
+        <v-list density="compact" nav>
             <v-list-subheader><v-icon icon="mdi-checkbook"></v-icon> CHECKING</v-list-subheader>
             <v-list-item title="No Accounts" v-if="checking_accounts.length == 0"></v-list-item>
             <v-list-item v-for="(account, i) in checking_accounts" :key="i" :to="'/accounts/' + account.id" v-else>
