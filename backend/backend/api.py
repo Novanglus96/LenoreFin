@@ -3,11 +3,11 @@ from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, C
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
-from datetime import date
+from datetime import date, timedelta
 from pydantic import BaseModel, Field
 from ninja.security import HttpBearer
 from decouple import config
-from django.db.models import Case, When
+from django.db.models import Case, When, Q
 from django.db import models
 
 
@@ -681,11 +681,15 @@ def list_payees(request):
 
 
 @api.get("/transactions", response=List[TransactionOut])
-def list_transactions(request, account: Optional[int] = Query(None)):
+def list_transactions(request, account: Optional[int] = Query(None), maxdays: Optional[int] = Query(14)):
     qs = Transaction.objects.all()
 
     if account is not None:
-        qs = qs.filter(transaction_source_account__id=account) | qs.filter(transaction_destination_account__id=account)
+        threshold_date = date.today() + timedelta(days=maxdays)
+        qs = qs.filter(
+            Q(transaction_source_account__id=account) | Q(transaction_destination_account__id=account),
+            transaction_date__lt=threshold_date
+        )
         custom_order = Case(
             When(status_id=3, then=0),
             When(status_id=2, then=0),
@@ -694,20 +698,21 @@ def list_transactions(request, account: Optional[int] = Query(None)):
         )
         qs = qs.order_by(custom_order, 'transaction_date', '-id')
         transactions = []
-        balance = Decimal(0)  # Initialize the balance
-        pretty_account = ''
-        transaction_details = []
-        tags = []
 
         for transaction in qs:
+            balance = Decimal(0)  # Initialize the balance
+            pretty_account = ''
+            transaction_details = []
+            tags = []
+            pretty_total = 0
             transaction_details = TransactionDetail.objects.filter(transaction=transaction.id)
             for detail in transaction_details:
                 tags.append(detail.tag.tag_name)
-            # Calculate balance for each transaction
+            # Calculate balance
             if transaction.transaction_source_account.id == account:
                 pretty_total = transaction.source_total
                 balance += transaction.source_total
-            elif transaction.transaction_destination_account.id == account:
+            elif transaction.transaction_destination_account and transaction.transaction_destination_account.id == account:
                 pretty_total = transaction.destination_total
                 balance += transaction.destination_total
             if transaction.transaction_type.id == 3:
@@ -724,13 +729,14 @@ def list_transactions(request, account: Optional[int] = Query(None)):
         transactions.reverse()
         return transactions
     else:
+        qs = qs.filter(status_id=1)
         custom_order = Case(
             When(status_id=1, then=0),
             When(status_id=2, then=1),
             When(status_id=3, then=1),
             output_field=models.IntegerField(),
         )
-        qs = qs.order_by(custom_order, '-transaction_date', 'id')
+        qs = qs.order_by(custom_order, 'transaction_date', 'id')
         for transaction in qs:
             tags = []
             transaction_details = TransactionDetail.objects.filter(transaction=transaction.id)
