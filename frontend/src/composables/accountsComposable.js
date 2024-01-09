@@ -43,45 +43,56 @@ async function getAccountsFunction(account_type) {
 
 }
 
+async function getAccountByIDFunction(account_id) {
+  try {
+    const response = await apiClient.get('/accounts/' + account_id)
+    return response.data
+      
+    } catch (error) {
+      handleApiError(error, 'Account not fetched: ')
+    }
+
+}
+
 export function useAccounts() {
     const queryClient = useQueryClient()
     const { data: accounts, isLoading } = useQuery({
-        queryKey: ['accounts', 'all'],
+        queryKey: ['accounts', {type: 'all'}],
         queryFn: () => getAccountsFunction('all'),
         select: (response) => response,
         client: queryClient
     })
 
     const { data: cc_accounts, cc_isLoading } = useQuery({
-        queryKey: ['accounts', '1'],
+        queryKey: ['accounts', {type: '1'}],
         queryFn: () => getAccountsFunction('1'),
         select: (response) => response,
         client: queryClient
     })
 
     const { data: checking_accounts, checking_isLoading } = useQuery({
-        queryKey: ['accounts', '2'],
+        queryKey: ['accounts', {type: '2'}],
         queryFn: () => getAccountsFunction('2'),
         select: (response) => response,
         client: queryClient
     })
 
     const { data: savings_accounts, savings_isLoading } = useQuery({
-        queryKey: ['accounts', '3'],
+        queryKey: ['accounts', {type: '3'}],
         queryFn: () => getAccountsFunction('3'),
         select: (response) => response,
         client: queryClient
     })
 
     const { data: investment_accounts, investment_isLoading } = useQuery({
-        queryKey: ['accounts', '4'],
+        queryKey: ['accounts', {type: '4'}],
         queryFn: () => getAccountsFunction('4'),
         select: (response) => response,
         client: queryClient
     })
 
     const { data: loan_accounts, loan_isLoading } = useQuery({
-        queryKey: ['accounts', '5'],
+        queryKey: ['accounts', {type: '5'}],
         queryFn: () => getAccountsFunction('5'),
         select: (response) => response,
         client: queryClient
@@ -101,4 +112,19 @@ export function useAccounts() {
         loan_accounts,
         loan_isLoading
     }
+}
+
+export function useAccountByID(account_id) {
+  const queryClient = useQueryClient()
+  const { data: account, isLoading } = useQuery({
+    queryKey: ['accounts', { id: account_id }],
+    queryFn: () => getAccountByIDFunction(account_id),
+    select: (response) => response,
+    client: queryClient
+  })
+  
+  return {
+    isLoading,
+    account
+  }
 }
