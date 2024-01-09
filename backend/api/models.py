@@ -33,6 +33,7 @@ class Account(models.Model):
     rewards_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
     credit_limit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE)
+    last_statement_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
     
     def __str__(self):
         return self.account_name

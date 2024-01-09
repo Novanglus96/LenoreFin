@@ -60,6 +60,7 @@ class AccountIn(Schema):
     rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     bank_id: int
+    last_statement_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
 
 
 class AccountOut(Schema):
@@ -79,6 +80,7 @@ class AccountOut(Schema):
     available_credit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     balance: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
     bank: BankOut
+    last_statement_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
 
 
 class TagTypeIn(Schema):
@@ -461,7 +463,8 @@ def get_account(request, account_id: int):
         credit_limit=account.credit_limit,
         available_credit=account.credit_limit + calc_balance,
         balance=calc_balance,
-        bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name)
+        bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name),
+        last_statement_amount=account.last_statement_amount
     )
     return account_out
 
@@ -596,7 +599,8 @@ def list_accounts(request, account_type: Optional[int] = Query(None)):
             credit_limit=account.credit_limit,
             available_credit=account.credit_limit + calc_balance,
             balance=calc_balance,
-            bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name)
+            bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name),
+            last_statement_amount=account.last_statement_amount
         )
         account_list.append(account_out)
 
@@ -764,6 +768,7 @@ def update_account(request, account_id: int, payload: AccountIn):
     account.rewards_amount = payload.rewards_amount
     account.credit_limit = payload.credit_limit
     account.bank_id = payload.bank_id
+    account.last_statement_amount = payload.last_statement_amount
     account.save()
     return {"success": True}
 

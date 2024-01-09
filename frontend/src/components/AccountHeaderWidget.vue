@@ -20,7 +20,7 @@
             <template v-slot:text>
                 <v-row desnity="compact" v-if="account.account_type.id == 1">
                     <v-col col="2" class="text-right text-black font-weight-bold">Statement Ending:</v-col><v-col col="2">{{ account.next_cycle_date }}</v-col>
-                    <v-col col="2" class="text-right text-black font-weight-bold">Last Statement:</v-col><v-col col="2">$-1000.00</v-col>
+                    <v-col col="2" class="text-right text-black font-weight-bold">Last Statement:</v-col><v-col col="2">${{ account.last_statement_amount }}</v-col>
                     <v-col col="2" class="text-right text-black font-weight-bold">Rewards:</v-col><v-col col="2">${{ account.rewards_amount }}</v-col>
                     <v-col col="2" class="text-right text-black font-weight-bold">Available Credit:</v-col><v-col col="2">${{ account.available_credit }}</v-col>
                 </v-row>
