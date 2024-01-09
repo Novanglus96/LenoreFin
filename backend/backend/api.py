@@ -288,6 +288,8 @@ class TransactionOut(Schema):
     reminder: Optional[ReminderOut] = None
     balance: Optional[Decimal] = Field(default=None, whole_digits=10, decimal_places=2)
     pretty_total: Decimal = Field(whole_digits=10, decimal_places=2)
+    pretty_account: Optional[str]
+    tags: Optional[List[str]]
 
 
 class TransactionDetailIn(Schema):
@@ -693,8 +695,14 @@ def list_transactions(request, account: Optional[int] = Query(None)):
         qs = qs.order_by(custom_order, 'transaction_date', '-id')
         transactions = []
         balance = Decimal(0)  # Initialize the balance
+        pretty_account = ''
+        transaction_details = []
+        tags = []
 
         for transaction in qs:
+            transaction_details = TransactionDetail.objects.filter(transaction=transaction.id)
+            for detail in transaction_details:
+                tags.append(detail.tag.tag_name)
             # Calculate balance for each transaction
             if transaction.transaction_source_account.id == account:
                 pretty_total = transaction.source_total
@@ -702,14 +710,21 @@ def list_transactions(request, account: Optional[int] = Query(None)):
             elif transaction.transaction_destination_account.id == account:
                 pretty_total = transaction.destination_total
                 balance += transaction.destination_total
+            if transaction.transaction_type.id == 3:
+                pretty_account = transaction.transaction_source_account.account_name + ' => ' + transaction.transaction_destination_account.account_name
+            else:
+                pretty_account = transaction.transaction_source_account.account_name
 
             # Update the balance in the transaction and append to the list
             transaction.balance = balance
             transaction.pretty_total = pretty_total
+            transaction.pretty_account = pretty_account
+            transaction.tags = tags
             transactions.append(TransactionOut.from_orm(transaction))
         transactions.reverse()
         return transactions
     else:
+        tags = []
         custom_order = Case(
             When(status_id=1, then=0),
             When(status_id=2, then=1),
@@ -718,7 +733,15 @@ def list_transactions(request, account: Optional[int] = Query(None)):
         )
         qs = qs.order_by(custom_order, '-transaction_date', 'id')
         for transaction in qs:
+            transaction_details = TransactionDetail.objects.filter(transaction=transaction.id)
+            for detail in transaction_details:
+                tags.append(detail.tag.tag_name)
             transaction.pretty_total = transaction.source_total
+            transaction.tags = tags
+            if transaction.transaction_type.id == 3:
+                transaction.pretty_account = transaction.transaction_source_account.account_name + ' => ' + transaction.transaction_destination_account.account_name
+            else:
+                transaction.pretty_account = transaction.transaction_source_account.account_name
         return qs
 
 
