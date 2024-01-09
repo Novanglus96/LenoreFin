@@ -12,7 +12,7 @@
         </v-row>
         <v-row class="pa-1 ga-1 rounded" no-gutters>
             <v-col class="rounded">
-                <AccountTransactionsWidget/>
+                <AccountTransactionsWidget :key="account_id" :account="account_id"/>
             </v-col>
         </v-row>
     </div>

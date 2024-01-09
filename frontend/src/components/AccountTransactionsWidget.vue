@@ -15,31 +15,38 @@
             <span class="text-subtitle-2 text-accent">Transactions</span>
         </template>
         <template v-slot:text>
-            <v-btn icon="mdi-invoice-text-check" flat :disabled="selected.length === 0" variant="plain"></v-btn>
-            <v-btn icon="mdi-invoice-text-edit" flat :disabled="selected.length === 0 || selected.length > 1" variant="plain"></v-btn>
-            <v-btn icon="mdi-invoice-remove" flat :disabled="selected.length === 0" variant="plain" color="error"></v-btn>
-            <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success"></v-btn>
+            <v-btn icon="mdi-invoice-text-check" flat :disabled="selected.length === 0" variant="plain" @click="clickClearTransaction(selected)"></v-btn>
+            <v-btn icon="mdi-invoice-text-edit" flat :disabled="selected.length === 0 || selected.length > 1" variant="plain" @click="clickEditTransaction(selected)"></v-btn>
+            <v-btn icon="mdi-invoice-remove" flat :disabled="selected.length === 0" variant="plain" color="error" @click="clickRemoveTransaction(selected)"></v-btn>
+            <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success" @click="clickAddTransaction"></v-btn>
             <v-data-table
                 :loading="isLoading"
                 :headers="headers"
-                :items="items"
+                :items="transactions"
                 density="compact"
                 items-per-page="20"
                 no-filter
                 show-select
                 v-model="selected"
                 item-value="id">
-                <template v-slot:item.amount="{ value }"><!-- eslint-disable-line -->
+                <template v-slot:item.pretty_total="{ value }"><!-- eslint-disable-line -->
                     <span :class="value >= 0 ? 'text-green' : 'text-red'">${{ value }}</span>
                 </template>
                 <template v-slot:item.balance="{ value }"><!-- eslint-disable-line -->
                     <span :class="value >= 0 ? 'text-green' : 'text-red'">${{ value }}</span>
                 </template>
                 <template v-slot:item.status="{ value }"><!-- eslint-disable-line -->
-                    <v-icon icon="mdi-cash" :color="value == 'Pending' ? 'grey' : 'green'"></v-icon>
+                    <v-icon icon="mdi-cash" :color="value.id == '1' ? 'grey' : 'green'"></v-icon>
                 </template>
-                <template v-slot:item.tag="{ value }"><!-- eslint-disable-line -->
-                    <v-icon icon="mdi-tag"></v-icon> {{ value }}
+                <template v-slot:item.tags="{ value }"><!-- eslint-disable-line -->
+                    <div v-for="tag in value" :key="tag"><v-icon icon="mdi-tag"></v-icon> {{ tag }} </div>
+                </template>
+                <template v-slot:expanded-row="{ columns, item }">
+                    <tr>
+                        <td :colspan="columns.length">
+                        <span class="font-weight-bold">Memo: </span>{{ item.memo }}
+                        </td>
+                    </tr>
                 </template>
                 <template v-slot:loading>
                     <v-skeleton-loader type="table-row@20"></v-skeleton-loader>
@@ -49,11 +56,15 @@
     </v-card>
 </template>
 <script setup>
-import { useMainStore } from '@/stores/main'
-import { ref } from 'vue'
+import { ref, defineProps, defineEmits } from 'vue'
+import { useTransactions } from '@/composables/transactionsComposable'
 
+const props = defineProps({
+    account: Array
+})
+const emit = defineEmits(['addTransaction', 'removeTransaction', 'editTransaction', 'clearTransaction'])
+const { isLoading, transactions } = useTransactions(props.account)
 const selected = ref([])
-const mainstore = useMainStore()
 const headers = [
     {
         title: 'Status',
@@ -65,14 +76,14 @@ const headers = [
     {
         title: 'Date',
         align: 'center',
-        key: 'date',
+        key: 'transaction_date',
         sortable: false,
         removable: false,
     },
     {
         title: 'Amount',
         align: 'center',
-        key: 'amount',
+        key: 'pretty_total',
         sortable: false,
         removable: false,
     },
@@ -93,17 +104,37 @@ const headers = [
     {
         title: 'Tag',
         align: 'start',
-        key: 'tag',
+        key: 'tags',
         sortable: false,
         removable: false,
     },
     {
         title: 'Account',
         align: 'start',
-        key: 'account',
+        key: 'pretty_account',
         sortable: false,
         removable: false,
     },
+    {
+        title: '',
+        key: 'data-table-expand'
+    }
 ]
-const items = mainstore.transaction_items // Data point for data
+
+const clickAddTransaction = async () => {
+    emit('addTransaction', props.account)
+}
+
+const clickRemoveTransaction = async (transaction_id) => {
+    emit('removeTransaction', transaction_id)
+}
+
+const clickClearTransaction = async (transaction_id) => {
+    emit('clearTransaction', transaction_id)
+}
+
+const clickEditTransaction = async (transaction_id) => {
+    emit('editTransaction', transaction_id)
+}
+
 </script>
