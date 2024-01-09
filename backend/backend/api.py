@@ -77,7 +77,7 @@ class AccountOut(Schema):
     rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     available_credit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
-    balance: Decimal = Field(whole_digits=10, decimal_places=2)
+    balance: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
     bank: BankOut
 
 
