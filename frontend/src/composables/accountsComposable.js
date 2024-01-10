@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from 'axios'
 import { useMainStore } from '@/stores/main'
 
@@ -54,6 +54,18 @@ async function getAccountByIDFunction(account_id) {
 
 }
 
+async function createAccountFunction(newAccount) {
+  const chorestore = useMainStore();
+  try {
+    const response = await apiClient.post('/accounts', newAccount)
+    chorestore.showSnackbar('Account created successfully!', 'success')
+    return response.data
+  } catch (error) {
+    handleApiError(error, 'Account not created: ')
+  }
+
+}
+
 export function useAccounts() {
     const queryClient = useQueryClient()
     const { data: accounts, isLoading } = useQuery({
@@ -97,6 +109,18 @@ export function useAccounts() {
         select: (response) => response,
         client: queryClient
     })
+  
+    const createAccountMutation = useMutation({
+      mutationFn: createAccountFunction,
+      onSuccess: () => {
+        console.log('Success adding account')
+        queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      }
+    })
+  
+    async function addAccount(newAccount) {
+      createAccountMutation.mutate(newAccount);
+    }
 
     return {
         accounts,
@@ -110,7 +134,8 @@ export function useAccounts() {
         investment_accounts,
         investment_isLoading,
         loan_accounts,
-        loan_isLoading
+        loan_isLoading,
+        addAccount
     }
 }
 
