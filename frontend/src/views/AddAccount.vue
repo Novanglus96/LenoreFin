@@ -21,7 +21,7 @@
                     </v-row>
                     <v-row dense>
                         <v-col>
-                            <v-btn>Don't see your bank?</v-btn>
+                            <AddBankForm />
                         </v-col>
                     </v-row>
                     <v-row dense>
@@ -178,6 +178,7 @@ import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 import { useMainStore } from '@/stores/main';
 import { useRouter } from 'vue-router';
+import AddBankForm from '@/components/AddBankForm.vue'
 
 const router = useRouter();
 const today = new Date();
@@ -209,6 +210,7 @@ const formData = ref({
     credit_limit: 0,
     bank_id: null
 })
+
 const submitDisabled = ref(true)
 const page1 = ref(true)
 const next1 = ref(true)
@@ -227,6 +229,7 @@ const goBack = async () => {
     formData.value.rewards_amount = 0
     formData.value.credit_limit = 0
 }
+
 const checkNext = async () => {
     if (formData.value.account_name !== null && formData.value.bank_id !== null && formData.value.account_name !== '' && formData.value.account_type_id !== null) {
         next1.value = false

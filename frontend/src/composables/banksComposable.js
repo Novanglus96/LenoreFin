@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from 'axios'
 import { useMainStore } from '@/stores/main'
 
@@ -38,6 +38,18 @@ async function getBanksFunction() {
 
 }
 
+async function createBankFunction(newBank) {
+  const chorestore = useMainStore();
+  try {
+    const response = await apiClient.post('/accounts/banks', newBank)
+    chorestore.showSnackbar('Bank created successfully!', 'success')
+    return response.data
+  } catch (error) {
+    handleApiError(error, 'Bank not created: ')
+  }
+
+}
+
 export function useBanks() {
   const queryClient = useQueryClient()
   const { data: banks, isLoading } = useQuery({
@@ -45,10 +57,23 @@ export function useBanks() {
     queryFn: () => getBanksFunction(),
     select: (response) => response,
     client: queryClient
-  })
-  
-  return {
-    isLoading,
-    banks
-  }
+})
+
+const createBankMutation = useMutation({
+    mutationFn: createBankFunction,
+    onSuccess: () => {
+      console.log('Success adding bank')
+      queryClient.invalidateQueries({ queryKey: ['banks'] })
+    }
+})
+
+async function addBank(newBank) {
+  createBankMutation.mutate(newBank);
+}
+
+return {
+  isLoading,
+  banks,
+  addBank
+}
 }
