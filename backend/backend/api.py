@@ -49,11 +49,11 @@ class BankOut(Schema):
 class AccountIn(Schema):
     account_name: str
     account_type_id: int
-    opening_balance: Decimal = Field(whole_digits=10, decimal_places=2)
-    apy: Decimal = Field(whole_digits=2, decimal_places=2)
+    opening_balance: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
+    apy: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     due_date: Optional[date]
     active: bool
-    open_date: date
+    open_date: Optional[date]
     next_cycle_date: Optional[date]
     statement_cycle_length: Optional[int]
     statement_cycle_period: Optional[str]

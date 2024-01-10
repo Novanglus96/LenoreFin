@@ -22,11 +22,11 @@ class Bank(models.Model):
 class Account(models.Model):
     account_name = models.CharField(max_length=254, unique=True)
     account_type = models.ForeignKey(AccountType, null=True, on_delete=models.SET_NULL)
-    opening_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    opening_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
     apy = models.DecimalField(max_digits=2, decimal_places=2, default=0.00, null=True)
     due_date = models.DateField(default=date.today, null=True)
     active = models.BooleanField(default=True)
-    open_date = models.DateField(default=date.today)
+    open_date = models.DateField(default=date.today, null=True)
     next_cycle_date = models.DateField(default=date.today, null=True)
     statement_cycle_length = models.IntegerField(default=0, null=True)
     statement_cycle_period = models.CharField(max_length=1, null=True, default='d')
