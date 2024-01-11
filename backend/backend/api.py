@@ -1,5 +1,5 @@
 from ninja import NinjaAPI, Schema, Query
-from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType, Bank
+from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType, Bank, Paycheck
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
@@ -239,61 +239,67 @@ class PayeeOut(Schema):
     payee_name: str
 
 
+class PaycheckIn(Schema):
+    gross: Decimal = Field(whole_digits=10, decimal_places=2)
+    net: Decimal = Field(whole_digits=10, decimal_places=2)
+    taxes: Decimal = Field(whole_digits=10, decimal_places=2)
+    health: Decimal = Field(whole_digits=10, decimal_places=2)
+    pension: Decimal = Field(whole_digits=10, decimal_places=2)
+    fsa: Decimal = Field(whole_digits=10, decimal_places=2)
+    dca: Decimal = Field(whole_digits=10, decimal_places=2)
+    union_dues: Decimal = Field(whole_digits=10, decimal_places=2)
+    four_fifty_seven_b: Decimal = Field(whole_digits=10, decimal_places=2)
+    payee_id: int
+
+
+class PaycheckOut(Schema):
+    id: int
+    gross: Decimal = Field(whole_digits=10, decimal_places=2)
+    net: Decimal = Field(whole_digits=10, decimal_places=2)
+    taxes: Decimal = Field(whole_digits=10, decimal_places=2)
+    health: Decimal = Field(whole_digits=10, decimal_places=2)
+    pension: Decimal = Field(whole_digits=10, decimal_places=2)
+    fsa: Decimal = Field(whole_digits=10, decimal_places=2)
+    dca: Decimal = Field(whole_digits=10, decimal_places=2)
+    union_dues: Decimal = Field(whole_digits=10, decimal_places=2)
+    four_fifty_seven_b: Decimal = Field(whole_digits=10, decimal_places=2)
+    payee: PayeeOut
+
+
 class TransactionIn(Schema):
     transaction_date: date
-    source_total: Decimal = Field(whole_digits=10, decimal_places=2)
-    destination_total: Decimal = Field(whole_digits=10, decimal_places=2)
+    total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
     status_id: int
     memo: str
     description: str
     edit_date: date
     add_date: date
     transaction_type_id: int
-    transaction_source_account_id: int
-    transaction_destination_account_id: Optional[int] = None
-    p_gross: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
-    p_taxes: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
-    p_health: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
-    p_pension: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
-    p_fsa: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
-    p_dca: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
-    p_union_dues: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
-    p_457b: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
-    p_payee_id: Optional[int] = None
     reminder_id: Optional[int] = None
+    paycheck_id: Optional[int] = None
 
 
 class TransactionOut(Schema):
     id: int
     transaction_date: date
-    source_total: Decimal = Field(whole_digits=10, decimal_places=2)
-    destination_total: Decimal = Field(whole_digits=10, decimal_places=2)
+    total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
     status: TransactionStatusOut
     memo: str
     description: str
     edit_date: date
     add_date: date
     transaction_type: TransactionTypeOut
-    transaction_source_account: AccountOut
-    transaction_destination_account: Optional[AccountOut] = None
-    p_gross: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_taxes: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_health: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_pension: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_fsa: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_dca: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_union_dues: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_457b: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_payee: Optional[PayeeOut] = None
     reminder: Optional[ReminderOut] = None
+    paycheck: Optional[PaycheckOut] = None
     balance: Optional[Decimal] = Field(default=None, whole_digits=10, decimal_places=2)
-    pretty_total: Decimal = Field(whole_digits=10, decimal_places=2)
     pretty_account: Optional[str]
     tags: Optional[List[str]]
+    details: List[TransactionDetailOut] = []  # FIXME: how do I refer to another object that comes later
 
 
 class TransactionDetailIn(Schema):
     transaction_id: int
+    account_id: int
     detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     tag_id: int
 
@@ -301,6 +307,7 @@ class TransactionDetailIn(Schema):
 class TransactionDetailOut(Schema):
     id: int
     transaction: TransactionOut
+    account: AccountOut
     detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     tag: TagOut
 
@@ -409,6 +416,12 @@ def create_payee(request, payload: PayeeIn):
     return {"id": payee.id}
 
 
+@api.post("/paychecks")
+def create_paycheck(request, payload: PaycheckIn):
+    paycheck = Paycheck.objects.create(**payload.dict())
+    return {"id": paycheck.id}
+
+
 @api.post("/transactions")
 def create_transaction(request, payload: TransactionIn):
     transaction = Transaction.objects.create(**payload.dict())
@@ -443,12 +456,10 @@ def get_bank(request, bank_id: int):
 def get_account(request, account_id: int):
     account = get_object_or_404(Account, id=account_id)
     transactions = Transaction.objects.exclude(status_id=1)
+    transactions = TransactionDetail.objects.filter(account__id=account_id, transaction__status__id__not_eq=1)
     calc_balance = account.opening_balance
     for transaction in transactions:
-        if transaction.transaction_source_account_id == account.id:
-            calc_balance += transaction.source_total
-        elif transaction.transaction_destination_account and transaction.transaction_destination_account_id == account.id:
-            calc_balance += transaction.destination_total
+        calc_balance += transaction.detail_amt
     account_out = AccountOut(
         id=account.id,
         account_name=account.account_name,
@@ -537,6 +548,12 @@ def get_payee(request, payee_id: int):
     return payee
 
 
+@api.get("/paychecks/{paycheck_id}", response=PaycheckOut)
+def get_paycheck(request, paycheck_id: int):
+    paycheck = get_object_or_404(Paycheck, id=paycheck_id)
+    return paycheck
+
+
 @api.get("/transactions/{transaction_id}", response=TransactionOut)
 def get_transaction(request, transaction_id: int):
     transaction = get_object_or_404(Transaction, id=transaction_id)
@@ -575,16 +592,12 @@ def list_accounts(request, account_type: Optional[int] = Query(None)):
         qs = qs.filter(account_type__id=account_type)
     qs = qs.order_by('account_type__id', 'account_name')
 
-    transactions = Transaction.objects.exclude(status_id=1)
-
     account_list = []
     for account in qs:
         calc_balance = account.opening_balance
+        transactions = TransactionDetail.objects.filter(account__id=account.id, transaction__status__id__not_eq=1)
         for transaction in transactions:
-            if transaction.transaction_source_account.id == account.id:
-                calc_balance += transaction.source_total
-            elif transaction.transaction_destination_account and transaction.transaction_destination_account.id == account.id:
-                calc_balance += transaction.destination_total
+            calc_balance += transaction.detail_amt
         account_out = AccountOut(
             id=account.id,
             account_name=account.account_name,
@@ -680,6 +693,12 @@ def list_payees(request):
     return qs
 
 
+@api.get("/paychecks", response=List[PaycheckOut])
+def list_paychecks(request):
+    qs = Paycheck.objects.all().order_by('id')
+    return qs
+
+
 @api.get("/transactions", response=List[TransactionOut])
 def list_transactions(request, account: Optional[int] = Query(None), maxdays: Optional[int] = Query(14)):
     qs = Transaction.objects.all()
@@ -687,7 +706,7 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
     if account is not None:
         threshold_date = date.today() + timedelta(days=maxdays)
         qs = qs.filter(
-            Q(transaction_source_account__id=account) | Q(transaction_destination_account__id=account),
+            details__account__id=account,
             transaction_date__lt=threshold_date
         )
         custom_order = Case(
@@ -702,27 +721,27 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
         for transaction in qs:
             balance = Decimal(0)  # Initialize the balance
             pretty_account = ''
-            transaction_details = []
             tags = []
-            pretty_total = 0
             transaction_details = TransactionDetail.objects.filter(transaction=transaction.id)
             for detail in transaction_details:
-                tags.append(detail.tag.tag_name)
-            # Calculate balance
-            if transaction.transaction_source_account.id == account:
-                pretty_total = transaction.source_total
-                balance += transaction.source_total
-            elif transaction.transaction_destination_account and transaction.transaction_destination_account.id == account:
-                pretty_total = transaction.destination_total
-                balance += transaction.destination_total
-            if transaction.transaction_type.id == 3:
-                pretty_account = transaction.transaction_source_account.account_name + ' => ' + transaction.transaction_destination_account.account_name
-            else:
-                pretty_account = transaction.transaction_source_account.account_name
+                source_account = ''
+                destination_account = ''
+                if detail.tag.tag_name not in tags:
+                    tags.append(detail.tag.tag_name)
+                if transaction.transaction_type == 3:
+                    if detail.detail_amt < 0:
+                        source_account = detail.account.account_name
+                    else:
+                        destination_account = detail.account.account_name
+                    if detail.account.id == account:
+                        balance += detail.detail_amt
+                    pretty_account = source_account + ' => ' + destination_account
+                else:
+                    pretty_account = detail.account.account_name
+                    balance += transaction.total_amount
 
             # Update the balance in the transaction and append to the list
             transaction.balance = balance
-            transaction.pretty_total = pretty_total
             transaction.pretty_account = pretty_account
             transaction.tags = tags
             transactions.append(TransactionOut.from_orm(transaction))
@@ -739,15 +758,24 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
         qs = qs.order_by(custom_order, 'transaction_date', 'id')
         for transaction in qs:
             tags = []
+            source_account = ''
+            destination_account = ''
+            pretty_account = ''
             transaction_details = TransactionDetail.objects.filter(transaction=transaction.id)
             for detail in transaction_details:
-                tags.append(detail.tag.tag_name)
-            transaction.pretty_total = transaction.source_total
+                if detail.tag.tag_name not in tags:
+                    tags.append(detail.tag.tag_name)
+                if transaction.transaction_type.id == 3:
+                    if detail.detail_amt < 0:
+                        source_account = detail.account.account_name
+                    else:
+                        destination_account = detail.account.account_name
+                    pretty_account = source_account + ' => ' + destination_account
+                else:
+                    pretty_account = detail.account.account_name
             transaction.tags = tags
-            if transaction.transaction_type.id == 3:
-                transaction.pretty_account = transaction.transaction_source_account.account_name + ' => ' + transaction.transaction_destination_account.account_name
-            else:
-                transaction.pretty_account = transaction.transaction_source_account.account_name
+            transaction.pretty_account = pretty_account
+
         return qs
 
 
@@ -914,30 +942,36 @@ def update_payee(request, payee_id: int, payload: PayeeIn):
     return {"success": True}
 
 
+@api.put("/paychecks/{paycheck_id}")
+def update_paycheck(request, paycheck_id: int, payload: PaycheckIn):
+    paycheck = get_object_or_404(Paycheck, id=paycheck_id)
+    paycheck.gross = payload.gross
+    paycheck.net = payload.net
+    paycheck.taxes = payload.taxes
+    paycheck.health = payload.health
+    paycheck.pension = payload.pension
+    paycheck.fsa = payload.fsa
+    paycheck.dca = payload.dca
+    paycheck.union_dues = payload.union_dues
+    paycheck.four_fifty_seven_b = payload.four_fifty_seven_b
+    paycheck.payee_id = payload.payee_id
+    paycheck.save()
+    return {"success": True}
+
+
 @api.put("/transactions/{transaction_id}")
 def update_transaction(request, transaction_id: int, payload: TransactionIn):
     transaction = get_object_or_404(Transaction, id=transaction_id)
     transaction.transaction_date = payload.transaction_date
-    transaction.source_total = payload.source_total
-    transaction.destination_total = payload.destination_total
+    transaction.total_amount = payload.total_amount
     transaction.status_id = payload.status_id
     transaction.memo = payload.memo
     transaction.description = payload.description
     transaction.edit_date = payload.edit_date
     transaction.add_date = payload.add_date
     transaction.transaction_type_id = payload.transaction_type_id
-    transaction.transaction_source_account_id = payload.transaction_source_account_id
-    transaction.transaction_destination_account_id = payload.transaction_destination_account_id
-    transaction.p_gross = payload.p_gross
-    transaction.p_taxes = payload.p_taxes
-    transaction.p_health = payload.p_health
-    transaction.p_pension = payload.p_pension
-    transaction.p_fsa = payload.p_fsa
-    transaction.p_dca = payload.p_dca
-    transaction.p_union_dues = payload.p_union_dues
-    transaction.p_457b = payload.p_457b
-    transaction.p_payee_id = payload.p_payee_id
     transaction.reminder_id = payload.reminder_id
+    transaction.paycheck_id = payload.paycheck_id
     transaction.save()
     return {"success": True}
 
@@ -946,6 +980,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
 def update_transaction_detail(request, transactiondetail_id: int, payload: TransactionDetailIn):
     transaction_detail = get_object_or_404(TransactionDetail, id=transactiondetail_id)
     transaction_detail.transaction_id = payload.transaction_id
+    transaction_detail.account_id = payload.account_id
     transaction_detail.detail_amt = payload.detail_amt
     transaction_detail.tag_id = payload.tag_id
     transaction_detail.save()
@@ -1061,6 +1096,13 @@ def delete_transaction_status(request, transactionstatus_id: int):
 def delete_payee(request, payee_id: int):
     payee = get_object_or_404(Payee, id=payee_id)
     payee.delete()
+    return {"success": True}
+
+
+@api.delete("/paychecks/{paycheck_id}")
+def delete_paycheck(request, paycheck_id: int):
+    paycheck = get_object_or_404(Paycheck, id=paycheck_id)
+    paycheck.delete()
     return {"success": True}
 
 

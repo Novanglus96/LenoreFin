@@ -138,38 +138,39 @@ class TransactionStatus(models.Model):
     def __str__(self):
         return self.transaction_status
 
-
 class Payee(models.Model):
     payee_name = models.CharField(max_length=254, unique=True)
     
     def __str__(self):
         return self.payee_name
 
+class Paycheck(models.Model):
+    gross = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    net = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    taxes = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    health = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    pension = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    fsa = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    dca = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    union_dues = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    four_fifty_seven_b = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    payee = models.ForeignKey(Payee, on_delete=models.SET_NULL, null=True, blank=True, default=None)
+
 class Transaction(models.Model):
     transaction_date = models.DateField(default=date.today)
-    source_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    destination_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     status = models.ForeignKey(TransactionStatus, on_delete=models.SET_NULL, null=True, blank=True)
     memo = models.CharField(max_length=254)
     description = models.CharField(max_length=254)
     edit_date = models.DateField(default=date.today)
     add_date = models.DateField(default=date.today)
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.SET_NULL, null=True, blank=True)
-    transaction_source_account = models.ForeignKey(Account, on_delete=models.CASCADE, null=True, blank=True, default=None, related_name='transaction_source_account')
-    transaction_destination_account = models.ForeignKey(Account, on_delete=models.CASCADE, null=True, blank=True, default=None, related_name='transaction_destination_account')
-    p_gross = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    p_taxes = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    p_health = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    p_pension = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    p_fsa = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    p_dca = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    p_union_dues = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    p_457b = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    p_payee = models.ForeignKey(Payee, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     reminder = models.ForeignKey(Reminder, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    paycheck = models.ForeignKey(Paycheck, on_delete=models.CASCADE, null=True, blank=True, default=None)
     
 class TransactionDetail(models.Model):
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
     detail_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=True)
 
