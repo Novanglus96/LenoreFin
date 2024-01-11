@@ -103,6 +103,7 @@
                     </v-row>
                     <v-row>
                         <v-col>
+                            <!-- TODO: Enable adding tags here -->
                             <v-autocomplete
                                 clearable
                                 label="Tag"
