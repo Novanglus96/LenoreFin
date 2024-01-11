@@ -27,53 +27,53 @@ function handleApiError(error, message) {
   throw error
 }
 
-async function getBanksFunction() {
+async function getTagsFunction() {
   try {
-    const response = await apiClient.get('/accounts/banks')
+    const response = await apiClient.get('/tags')
     return response.data
       
     } catch (error) {
-      handleApiError(error, 'Banks not fetched: ')
+      handleApiError(error, 'Tags not fetched: ')
     }
 
 }
 
-async function createBankFunction(newBank) {
+async function createTagFunction(newTag) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.post('/accounts/banks', newBank)
-    mainstore.showSnackbar('Bank created successfully!', 'success')
+    const response = await apiClient.post('/tags', newTag)
+    mainstore.showSnackbar('Tag created successfully!', 'success')
     return response.data
   } catch (error) {
-    handleApiError(error, 'Bank not created: ')
+    handleApiError(error, 'Tag not created: ')
   }
 
 }
 
-export function useBanks() {
+export function useTags() {
   const queryClient = useQueryClient()
-  const { data: banks, isLoading } = useQuery({
-    queryKey: ['banks'],
-    queryFn: () => getBanksFunction(),
+  const { data: tags, isLoading } = useQuery({
+    queryKey: ['tags'],
+    queryFn: () => getTagsFunction(),
     select: (response) => response,
     client: queryClient
 })
 
-const createBankMutation = useMutation({
-    mutationFn: createBankFunction,
+const createTagMutation = useMutation({
+    mutationFn: createTagFunction,
     onSuccess: () => {
-      console.log('Success adding bank')
-      queryClient.invalidateQueries({ queryKey: ['banks'] })
+      console.log('Success adding tag')
+      queryClient.invalidateQueries({ queryKey: ['tags'] })
     }
 })
 
-async function addBank(newBank) {
-  createBankMutation.mutate(newBank);
+async function addTag(newTag) {
+  createTagMutation.mutate(newTag);
 }
 
 return {
   isLoading,
-  banks,
-  addBank
+  tags,
+  addTag
 }
 }

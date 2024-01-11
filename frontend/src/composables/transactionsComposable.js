@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from 'axios'
 import { useMainStore } from '@/stores/main'
 
@@ -43,6 +43,18 @@ async function getTransactionsFunction(account_id) {
 
 }
 
+async function createTransactionFunction(newTransaction) {
+  const mainstore = useMainStore();
+  try {
+    const response = await apiClient.post('/transactions', newTransaction)
+    mainstore.showSnackbar('Transaction created successfully!', 'success')
+    return response.data
+  } catch (error) {
+    handleApiError(error, 'Transaction not created: ')
+  }
+
+}
+
 export function useTransactions(account_id) {
   const queryClient = useQueryClient()
   const { data: transactions, isLoading } = useQuery({
@@ -50,10 +62,24 @@ export function useTransactions(account_id) {
     queryFn: () => getTransactionsFunction(account_id),
     select: (response) => response,
     client: queryClient
-  })
+})
+
+const createTransactionMutation = useMutation({
+  mutationFn: createTransactionFunction,
+  onSuccess: () => {
+    console.log('Success adding transaction')
+    queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    queryClient.invalidateQueries({ queryKey: ['accounts'] })
+  }
+})
+
+async function addTransaction(newTransaction) {
+  createTransactionMutation.mutate(newTransaction);
+}
   
   return {
     isLoading,
-    transactions
+    transactions,
+    addTransaction
   }
 }
