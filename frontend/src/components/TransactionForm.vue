@@ -183,6 +183,7 @@ const formData = ref({
 })
 
 const amount = ref(null)
+const tag = ref(1)
 
 const props = defineProps({
     itemFormDialog: {
@@ -254,7 +255,8 @@ const submitForm = async () => {
         formData.value.source_total = amount.value
     }
     if (props.isEdit == false) {
-        addTransaction(formData.value)
+        const response = await addTransaction(formData.value) //BUG: Not returning created transaction
+        console.log('transaction', response.id)
     } else {
         console.log('edit')
     }
