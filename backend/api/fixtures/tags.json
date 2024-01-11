@@ -1,0 +1,10 @@
+[
+    {
+        "model": "api.Tag",
+        "pk": 1,
+        "fields": {
+            "tag_name": "Untagged",
+            "tag_type_id": 3
+        }
+    }
+]

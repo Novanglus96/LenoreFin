@@ -12,5 +12,12 @@
     "fields": {
         "tag_type": "Income"
     }
+  },
+  {
+    "model": "api.TagType",
+    "pk": 3,
+    "fields": {
+        "tag_type": "Misc."
+    }
   }
 ]

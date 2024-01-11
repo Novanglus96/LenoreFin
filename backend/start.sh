@@ -23,5 +23,6 @@ python manage.py populate_calendar
 python manage.py loaddata calendar_fixture
 python manage.py loaddata tag_types
 python manage.py loaddata banks
+python manage.py loaddata tags
 
 gunicorn backend.wsgi:application --bind 0.0.0.0:8000
