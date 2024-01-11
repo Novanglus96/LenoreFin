@@ -251,14 +251,14 @@ class TransactionIn(Schema):
     transaction_type_id: int
     transaction_source_account_id: int
     transaction_destination_account_id: Optional[int] = None
-    p_gross: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_taxes: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_health: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_pension: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_fsa: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_dca: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_union_dues: Decimal = Field(whole_digits=10, decimal_places=2)
-    p_457b: Decimal = Field(whole_digits=10, decimal_places=2)
+    p_gross: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
+    p_taxes: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
+    p_health: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
+    p_pension: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
+    p_fsa: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
+    p_dca: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
+    p_union_dues: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
+    p_457b: Optional[Decimal] = Field(whole_digits=10, decimal_places=2, default=0.00)
     p_payee_id: Optional[int] = None
     reminder_id: Optional[int] = None
 
