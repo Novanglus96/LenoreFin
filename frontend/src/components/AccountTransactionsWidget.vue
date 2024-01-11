@@ -16,9 +16,11 @@
         </template>
         <template v-slot:text>
             <v-btn icon="mdi-invoice-text-check" flat :disabled="selected.length === 0" variant="plain" @click="clickClearTransaction(selected)"></v-btn>
-            <v-btn icon="mdi-invoice-text-edit" flat :disabled="selected.length === 0 || selected.length > 1" variant="plain" @click="clickEditTransaction(selected)"></v-btn>
+            <v-btn icon="mdi-invoice-text-edit" flat :disabled="selected.length === 0 || selected.length > 1" variant="plain" @click="transactionEditFormDialog = true"></v-btn>
+            <TransactionForm v-model="transactionEditFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="true" @update-dialog="updateEditDialog"/>
             <v-btn icon="mdi-invoice-remove" flat :disabled="selected.length === 0" variant="plain" color="error" @click="clickRemoveTransaction(selected)"></v-btn>
-            <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success" @click="clickAddTransaction"></v-btn>
+            <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success" @click="transactionAddFormDialog = true"></v-btn>
+            <TransactionForm v-model="transactionAddFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="false" @update-dialog="updateAddDialog"/>
             <v-data-table
                 :loading="isLoading"
                 :headers="headers"
@@ -58,7 +60,10 @@
 <script setup>
 import { ref, defineProps, defineEmits } from 'vue'
 import { useTransactions } from '@/composables/transactionsComposable'
+import TransactionForm from '@/components/TransactionForm'
 
+const transactionAddFormDialog = ref(false)
+const transactionEditFormDialog = ref(false)
 const props = defineProps({
     account: Array
 })
@@ -137,4 +142,11 @@ const clickEditTransaction = async (transaction_id) => {
     emit('editTransaction', transaction_id)
 }
 
+const updateAddDialog = () => {
+    transactionAddFormDialog.value = false
+}
+
+const updateEditDialog = () => {
+    transactionEditFormDialog.value = false
+}
 </script>
