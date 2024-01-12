@@ -279,6 +279,14 @@ class TransactionIn(Schema):
     paycheck_id: Optional[int] = None
 
 
+class TransactionDetailOut(Schema):
+    id: int
+    transaction: 'TransactionOut'
+    account: AccountOut
+    detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+    tag: TagOut
+
+
 class TransactionOut(Schema):
     id: int
     transaction_date: date
@@ -297,19 +305,14 @@ class TransactionOut(Schema):
     details: List[TransactionDetailOut] = []  # FIXME: how do I refer to another object that comes later
 
 
+TransactionDetailOut.update_forward_refs()
+
+
 class TransactionDetailIn(Schema):
     transaction_id: int
     account_id: int
     detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     tag_id: int
-
-
-class TransactionDetailOut(Schema):
-    id: int
-    transaction: TransactionOut
-    account: AccountOut
-    detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
-    tag: TagOut
 
 
 class LogEntryIn(Schema):
@@ -456,7 +459,7 @@ def get_bank(request, bank_id: int):
 def get_account(request, account_id: int):
     account = get_object_or_404(Account, id=account_id)
     transactions = Transaction.objects.exclude(status_id=1)
-    transactions = TransactionDetail.objects.filter(account__id=account_id, transaction__status__id__not_eq=1)
+    transactions = TransactionDetail.objects.filter(account__id=account_id).exclude(transaction__status__id=1)
     calc_balance = account.opening_balance
     for transaction in transactions:
         calc_balance += transaction.detail_amt
@@ -595,7 +598,7 @@ def list_accounts(request, account_type: Optional[int] = Query(None)):
     account_list = []
     for account in qs:
         calc_balance = account.opening_balance
-        transactions = TransactionDetail.objects.filter(account__id=account.id, transaction__status__id__not_eq=1)
+        transactions = TransactionDetail.objects.filter(account__id=account.id).exclude(transaction__status__id=1)
         for transaction in transactions:
             calc_balance += transaction.detail_amt
         account_out = AccountOut(
@@ -706,7 +709,7 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
     if account is not None:
         threshold_date = date.today() + timedelta(days=maxdays)
         qs = qs.filter(
-            details__account__id=account,
+            transactiondetail__account__id=account,
             transaction_date__lt=threshold_date
         )
         custom_order = Case(
