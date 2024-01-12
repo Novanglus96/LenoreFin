@@ -302,7 +302,8 @@ class TransactionOut(Schema):
     balance: Optional[Decimal] = Field(default=None, whole_digits=10, decimal_places=2)
     pretty_account: Optional[str]
     tags: Optional[List[str]]
-    details: List[TransactionDetailOut] = []  # FIXME: how do I refer to another object that comes later
+    details: List[TransactionDetailOut] = []
+    pretty_total: Optional[Decimal] = Field(default=None, whole_digits=10, decimal_places=2)
 
 
 TransactionDetailOut.update_forward_refs()
@@ -720,33 +721,42 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
         )
         qs = qs.order_by(custom_order, 'transaction_date', '-id')
         transactions = []
-
+        balance = Decimal(0)  # Initialize the balance
         for transaction in qs:
-            balance = Decimal(0)  # Initialize the balance
             pretty_account = ''
             tags = []
+            pretty_total = 0
+            source_account = ''
+            destination_account = ''
             transaction_details = TransactionDetail.objects.filter(transaction=transaction.id)
             for detail in transaction_details:
-                source_account = ''
-                destination_account = ''
                 if detail.tag.tag_name not in tags:
                     tags.append(detail.tag.tag_name)
-                if transaction.transaction_type == 3:
+                if transaction.transaction_type.id == 3:
                     if detail.detail_amt < 0:
                         source_account = detail.account.account_name
+                        if detail.account.id == account:
+                            pretty_total = transaction.total_amount
                     else:
                         destination_account = detail.account.account_name
+                        if detail.account.id == account:
+                            pretty_total = -transaction.total_amount
                     if detail.account.id == account:
                         balance += detail.detail_amt
-                    pretty_account = source_account + ' => ' + destination_account
                 else:
-                    pretty_account = detail.account.account_name
+                    pretty_total = transaction.total_amount
+                    source_account = detail.account.account_name
                     balance += transaction.total_amount
+            if transaction.transaction_type.id == 3:
+                pretty_account = source_account + ' => ' + destination_account
+            else:
+                pretty_account = source_account
 
             # Update the balance in the transaction and append to the list
             transaction.balance = balance
             transaction.pretty_account = pretty_account
             transaction.tags = tags
+            transaction.pretty_total = pretty_total
             transactions.append(TransactionOut.from_orm(transaction))
         transactions.reverse()
         return transactions

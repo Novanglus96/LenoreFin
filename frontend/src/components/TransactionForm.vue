@@ -80,7 +80,7 @@
                                 :loading="accounts_isLoading"
                                 item-title="account_name"
                                 item-value="id"
-                                v-model="formData.transaction_source_account_id"
+                                v-model="formData.source_account_id"
                                 :rules="required"
                                 @update:model-value="checkFormComplete"
                             ></v-autocomplete>
@@ -94,7 +94,7 @@
                                 :loading="accounts_isLoading"
                                 item-title="account_name"
                                 item-value="id"
-                                v-model="formData.transaction_destination_account_id"
+                                v-model="formData.destination_account_id"
                                 :rules="required"
                                 @update:model-value="checkFormComplete"
                                 v-if="formData.transaction_type_id == 3"
@@ -111,7 +111,7 @@
                                 :loading="tags_isLoading"
                                 item-title="tag_name"
                                 item-value="id"
-                                v-model="tag"
+                                v-model="formData.tag_id"
                                 v-if="!isEdit"
                             ></v-autocomplete>
                         </v-col>
@@ -173,17 +173,16 @@ const formData = ref({
     status_id: 1,
     transaction_type_id: 1,
     transaction_date: formattedDate,
-    source_total: 0,
-    destination_total: 0,
     memo: "",
-    transaction_source_account_id: null,
-    transaction_destination_account_id: null,
+    source_account_id: null,
+    destination_account_id: null,
     edit_date: formattedDate,
-    add_date: formattedDate
+    add_date: formattedDate,
+    tag_id: 0,
+    total_amount: 0
 })
 
 const amount = ref(null)
-const tag = ref(1)
 
 const props = defineProps({
     itemFormDialog: {
@@ -246,13 +245,10 @@ onMounted(() => {
 })
 
 const submitForm = async () => {
-    if (formData.value.transaction_type_id == 3) {
-        formData.value.source_total = -amount.value
-        formData.value.destination_total = amount.value
-    } else if(formData.value.transaction_type_id == 1) {
-        formData.value.source_total = -amount.value
-    } else if (formData.value.transaction_type_id == 2) {
-        formData.value.source_total = amount.value
+    if (formData.value.transaction_type_id == 2) {
+        formData.value.total_amount = amount.value
+    } else {
+        formData.value.total_amount = -amount.value
     }
     if (props.isEdit == false) {
         const response = await addTransaction(formData.value) //BUG: Not returning created transaction
