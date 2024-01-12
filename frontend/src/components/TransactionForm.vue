@@ -119,7 +119,7 @@
                         <v-col>
                             <v-textarea
                                 clearable
-                                label="Label"
+                                label="Memo"
                                 variant="outlined"
                                 v-model="formData.memo"
                             ></v-textarea>
