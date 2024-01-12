@@ -20,7 +20,7 @@
             <TransactionForm v-model="transactionEditFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="true" @update-dialog="updateEditDialog"/>
             <v-btn icon="mdi-invoice-remove" flat :disabled="selected.length === 0" variant="plain" color="error" @click="clickRemoveTransaction(selected)"></v-btn>
             <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success" @click="transactionAddFormDialog = true"></v-btn>
-            <TransactionForm v-model="transactionAddFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="false" @update-dialog="updateAddDialog"/>
+            <TransactionForm v-model="transactionAddFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="false" @update-dialog="updateAddDialog" :account_id="props.account"/>
             <!-- TODO: Row decorations to distinguish pending vs cleared -->
             <v-data-table
                 :loading="isLoading"
