@@ -18,9 +18,29 @@
             <v-btn icon="mdi-invoice-text-check" flat :disabled="selected.length === 0" variant="plain" @click="clickClearTransaction(selected)"></v-btn>
             <v-btn icon="mdi-invoice-text-edit" flat :disabled="selected.length === 0 || selected.length > 1" variant="plain" @click="transactionEditFormDialog = true"></v-btn>
             <TransactionForm v-model="transactionEditFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="true" @update-dialog="updateEditDialog"/>
-            <v-btn icon="mdi-invoice-remove" flat :disabled="selected.length === 0" variant="plain" color="error" @click="clickRemoveTransaction(selected)"></v-btn>
+            <v-dialog width="500">
+                <template v-slot:activator="{ props }">
+                    <v-btn icon="mdi-invoice-remove" flat :disabled="selected.length === 0" variant="plain" color="error" v-bind="props"></v-btn>
+                </template>
+                <template v-slot:default="{ isActive }">
+                    <v-card title="Dialog">
+                    <v-card-text>
+                        Are you sure you want to delete these {{ selected.length }} transactions?
+                    </v-card-text>
+
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+
+                        <v-btn
+                        text="Confirm"
+                        @click="clickRemoveTransaction(selected);isActive.value = false"
+                        ></v-btn>
+                    </v-card-actions>
+                    </v-card>
+                </template>
+            </v-dialog>
             <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success" @click="transactionAddFormDialog = true"></v-btn>
-            <TransactionForm v-model="transactionAddFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="false" @update-dialog="updateAddDialog"/>
+            <TransactionForm v-model="transactionAddFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="false" @update-dialog="updateAddDialog" :account_id="props.account"/>
             <!-- TODO: Row decorations to distinguish pending vs cleared -->
             <v-data-table
                 :loading="isLoading"
@@ -69,7 +89,7 @@ const props = defineProps({
     account: Array
 })
 const emit = defineEmits(['addTransaction', 'removeTransaction', 'editTransaction', 'clearTransaction'])
-const { isLoading, transactions } = useTransactions(props.account)
+const { isLoading, transactions, removeTransaction } = useTransactions(props.account)
 const selected = ref([])
 const headers = [
     {
@@ -131,8 +151,12 @@ const clickAddTransaction = async () => {
     emit('addTransaction', props.account)
 }
 
-const clickRemoveTransaction = async (transaction_id) => {
-    emit('removeTransaction', transaction_id)
+const clickRemoveTransaction = async (transactions) => {
+    transactions.forEach(transaction => {
+        console.log('transaction_id:', transaction)
+        removeTransaction(transaction)
+        selected.value = []
+    })
 }
 
 const clickClearTransaction = async (transaction_id) => {

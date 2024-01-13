@@ -103,9 +103,10 @@
                     </v-row>
                     <v-row>
                         <v-col>
+                            <!-- TODO: Enable adding tags here -->
                             <v-autocomplete
                                 clearable
-                                label="Tag"
+                                label="Tag*"
                                 :items="tags"
                                 variant="outlined"
                                 :loading="tags_isLoading"
@@ -113,12 +114,14 @@
                                 item-value="id"
                                 v-model="formData.tag_id"
                                 v-if="!isEdit"
+                                :rules="required"
+                                @update:model-value="checkFormComplete"
                             ></v-autocomplete>
                         </v-col>
                         <v-col>
                             <v-textarea
                                 clearable
-                                label="Label"
+                                label="Memo"
                                 variant="outlined"
                                 v-model="formData.memo"
                             ></v-textarea>
@@ -168,6 +171,21 @@ const { transaction_types, isLoading: transaction_types_isLoading } = useTransac
 const { transaction_statuses, isLoading: transaction_statuses_isLoading } = useTransactionStatuses()
 const { tags, isLoading: tags_isLoading } = useTags()
 const { addTransaction } = useTransactions()
+const props = defineProps({
+    itemFormDialog: {
+        type: Boolean,
+        default: false
+    },
+    isEdit: {
+        type: Boolean,
+        default: false
+    },
+    passedFormData: Array,
+    account_id: {
+        type: Number,
+        default: 1
+    }
+})
 const formData = ref({
     id: 0,
     status_id: 1,
@@ -178,23 +196,11 @@ const formData = ref({
     destination_account_id: null,
     edit_date: formattedDate,
     add_date: formattedDate,
-    tag_id: 0,
+    tag_id: 1,
     total_amount: 0
 })
 
 const amount = ref(null)
-
-const props = defineProps({
-    itemFormDialog: {
-        type: Boolean,
-        default: false
-    },
-    isEdit: {
-        type: Boolean,
-        default: false
-    },
-    passedFormData: Array
-})
 const show = ref(props.itemFormDialog)
 const emit = defineEmits(['updateDialog'])
 const watchPassedFormData = () => {
@@ -226,6 +232,8 @@ const checkFormComplete = async () => {
         && amount.value !== null
         && formData.value.transaction_source_account_id !== ''
         && formData.value.transaction_source_account_id !== null
+        && formData.value.tag_id !== ''
+        && formData.value.tag_id !== null
     ) {
         if ((formData.value.status_id == 3 && formData.value.transaction_destination_account_id !== null)
             || (formData.value.status_id !== 3)
@@ -251,8 +259,7 @@ const submitForm = async () => {
         formData.value.total_amount = -amount.value
     }
     if (props.isEdit == false) {
-        const response = await addTransaction(formData.value) //BUG: Not returning created transaction
-        console.log('transaction', response.id)
+        await addTransaction(formData.value)
     } else {
         console.log('edit')
     }

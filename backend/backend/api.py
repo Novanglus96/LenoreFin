@@ -793,6 +793,7 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
                     pretty_account = detail.account.account_name
             transaction.tags = tags
             transaction.pretty_account = pretty_account
+            transaction.pretty_total = transaction.total_amount
 
         return qs
 

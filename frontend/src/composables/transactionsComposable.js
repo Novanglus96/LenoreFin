@@ -95,6 +95,17 @@ async function createTransactionDetailFunction(newTransactionDetail) {
 
 }
 
+async function deleteTransactionFunction(deletedTransaction) {
+  const mainstore = useMainStore();
+  try {
+    const response = await apiClient.delete('/transactions/' + deletedTransaction)
+    mainstore.showSnackbar('Transaction deleted successfully!', 'success')
+    return response.data
+  } catch (error) {
+    handleApiError(error, 'Transaction not deleted: ')
+  }
+}
+
 export function useTransactions(account_id) {
   const queryClient = useQueryClient()
   const { data: transactions, isLoading } = useQuery({
@@ -125,14 +136,28 @@ const createTransactionDetailMutation = useMutation({
     queryClient.invalidateQueries({ queryKey: ['accounts'] })
   }
 })
+  
+const deleteTransactionMutation = useMutation({
+  mutationFn: deleteTransactionFunction,
+  onSuccess: () => {
+    console.log('Success deleting transaction')
+    queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    queryClient.invalidateQueries({ queryKey: ['accounts'] })
+  }
+})
 
 async function addTransaction(newTransaction) {
   createTransactionMutation.mutate(newTransaction);
 }
   
+async function removeTransaction(deletedTransaction) {
+  deleteTransactionMutation.mutate(deletedTransaction);
+}
+  
   return {
     isLoading,
     transactions,
-    addTransaction
+    addTransaction,
+    removeTransaction
   }
 }
