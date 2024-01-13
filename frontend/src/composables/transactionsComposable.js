@@ -106,6 +106,20 @@ async function deleteTransactionFunction(deletedTransaction) {
   }
 }
 
+async function clearTransactionFunction(clearedTransaction) {
+  const mainstore = useMainStore();
+  const payload = {
+    status_id: 2
+  }
+  try {
+    const response = await apiClient.patch('/transactions/clear/' + clearedTransaction, payload)
+    mainstore.showSnackbar('Transaction cleared successfully!', 'success')
+    return response.data
+  } catch (error) {
+    handleApiError(error, 'Transaction not cleared: ')
+  }
+}
+
 export function useTransactions(account_id) {
   const queryClient = useQueryClient()
   const { data: transactions, isLoading } = useQuery({
@@ -145,6 +159,15 @@ const deleteTransactionMutation = useMutation({
     queryClient.invalidateQueries({ queryKey: ['accounts'] })
   }
 })
+  
+const clearTransactionMutation = useMutation({
+  mutationFn: clearTransactionFunction,
+  onSuccess: () => {
+    console.log('Success clearing transaction')
+    queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    queryClient.invalidateQueries({ queryKey: ['accounts'] })
+  }
+})
 
 async function addTransaction(newTransaction) {
   createTransactionMutation.mutate(newTransaction);
@@ -154,10 +177,15 @@ async function removeTransaction(deletedTransaction) {
   deleteTransactionMutation.mutate(deletedTransaction);
 }
   
+async function clearTransaction(clearedTransaction) {
+  clearTransactionMutation.mutate(clearedTransaction);
+}
+  
   return {
     isLoading,
     transactions,
     addTransaction,
-    removeTransaction
+    removeTransaction,
+    clearTransaction
   }
 }

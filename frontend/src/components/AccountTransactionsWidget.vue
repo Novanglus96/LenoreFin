@@ -89,7 +89,7 @@ const props = defineProps({
     account: Array
 })
 const emit = defineEmits(['addTransaction', 'removeTransaction', 'editTransaction', 'clearTransaction'])
-const { isLoading, transactions, removeTransaction } = useTransactions(props.account)
+const { isLoading, transactions, removeTransaction, clearTransaction } = useTransactions(props.account)
 const selected = ref([])
 const headers = [
     {
@@ -153,14 +153,16 @@ const clickAddTransaction = async () => {
 
 const clickRemoveTransaction = async (transactions) => {
     transactions.forEach(transaction => {
-        console.log('transaction_id:', transaction)
         removeTransaction(transaction)
         selected.value = []
     })
 }
 
-const clickClearTransaction = async (transaction_id) => {
-    emit('clearTransaction', transaction_id)
+const clickClearTransaction = async (transactions) => {
+    transactions.forEach(transaction => {
+        clearTransaction(transaction)
+        selected.value = []
+    })
 }
 
 const clickEditTransaction = async (transaction_id) => {

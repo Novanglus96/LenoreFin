@@ -279,9 +279,13 @@ class TransactionIn(Schema):
     paycheck_id: Optional[int] = None
 
 
+def get_today_formatted():
+    return date.today().strftime("%Y-%m-%d")
+
+
 class TransactionClear(Schema):
     status_id: int
-    edit_date: date
+    edit_date: Optional[date] = Field(default_factory=get_today_formatted)
 
 
 class TransactionDetailOut(Schema):
