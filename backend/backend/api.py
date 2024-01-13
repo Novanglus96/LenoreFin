@@ -279,6 +279,11 @@ class TransactionIn(Schema):
     paycheck_id: Optional[int] = None
 
 
+class TransactionClear(Schema):
+    status_id: int
+    edit_date: date
+
+
 class TransactionDetailOut(Schema):
     id: int
     transaction: 'TransactionOut'
@@ -985,6 +990,15 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
     transaction.transaction_type_id = payload.transaction_type_id
     transaction.reminder_id = payload.reminder_id
     transaction.paycheck_id = payload.paycheck_id
+    transaction.save()
+    return {"success": True}
+
+
+@api.patch("/transactions/clear/{transaction_id}")
+def clear_transaction(request, transaction_id: int, payload: TransactionClear):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+    transaction.status_id = payload.status_id
+    transaction.edit_date = payload.edit_date
     transaction.save()
     return {"success": True}
 
