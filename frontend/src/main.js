@@ -6,6 +6,8 @@ import piniaPluginPersistedState from "pinia-plugin-persistedstate"
 import vuetify from './plugins/vuetify'
 import { loadFonts } from './plugins/webfontloader'
 import { VueQueryPlugin } from "@tanstack/vue-query"
+import Vue3EasyDataTable from 'vue3-easy-data-table'
+import 'vue3-easy-data-table/dist/style.css'
 
 loadFonts()
 
@@ -17,5 +19,6 @@ app.use(router)
 app.use(pinia)
 app.use(vuetify)
 app.use(VueQueryPlugin)
+app.component('EasyDataTable', Vue3EasyDataTable)
 app.mount('#app')
   
