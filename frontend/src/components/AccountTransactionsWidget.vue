@@ -42,39 +42,44 @@
             <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success" @click="transactionAddFormDialog = true"></v-btn>
             <TransactionForm v-model="transactionAddFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="false" @update-dialog="updateAddDialog" :account_id="props.account"/>
             <!-- TODO: Row decorations to distinguish pending vs cleared -->
-            <v-data-table
+            <vue3-datatable 
+                :rows="transactions"
+                :columns="columns"
                 :loading="isLoading"
-                :headers="headers"
-                :items="transactions"
-                density="compact"
-                items-per-page="20"
-                no-filter
-                show-select
-                v-model="selected"
-                item-value="id">
-                <template v-slot:item.pretty_total="{ value }"><!-- eslint-disable-line -->
-                    <span :class="value >= 0 ? 'text-green' : 'text-red'">${{ value }}</span>
+                :totalRows="transactions.length"
+                :isServerMode="false"
+                pageSize="20"
+                :hasCheckbox="true"
+                :stickyHeader="true"
+                noDataContent="No transactions"
+                search=""
+                @rowSelect="rowSelected"
+                ref="trans_table"
+                height="810px"
+                skin="bh-table-striped bh-table-compact"
+            ><!--height="280px"-->
+                <template #status.transaction_status="row"><!-- eslint-disable-line -->
+                    <span :class="row.value.status.id == 1 ? 'font-italic text-grey' : 'font-weight-bold text-black'">{{ row.value.status.transaction_status }}</span>
                 </template>
-                <template v-slot:item.balance="{ value }"><!-- eslint-disable-line -->
-                    <span :class="value >= 0 ? 'text-green' : 'text-red'">${{ value }}</span>
+                <template #transaction_date="row"><!-- eslint-disable-line -->
+                    <span :class="row.value.status.id == 1 ? 'font-italic text-grey' : 'font-weight-bold text-black'">{{ row.value.transaction_date }}</span>
                 </template>
-                <template v-slot:item.status="{ value }"><!-- eslint-disable-line -->
-                    <v-icon icon="mdi-cash" :color="value.id == '1' ? 'grey' : 'green'"></v-icon>
+                <template #pretty_total="row"><!-- eslint-disable-line -->
+                    <span :class="getClassForMoney(row.value.pretty_total, row.value.status.id)">${{ row.value.pretty_total }}</span>
                 </template>
-                <template v-slot:item.tags="{ value }"><!-- eslint-disable-line -->
-                    <div v-for="tag in value" :key="tag"><v-icon icon="mdi-tag"></v-icon> {{ tag }} </div>
+                <template #balance="row"><!-- eslint-disable-line -->
+                    <span :class="getClassForMoney(row.value.balance, row.value.status.id)">${{ row.value.balance }}</span>
                 </template>
-                <template v-slot:expanded-row="{ columns, item }">
-                    <tr>
-                        <td :colspan="columns.length">
-                        <span class="font-weight-bold">Memo: </span>{{ item.memo }}
-                        </td>
-                    </tr>
+                <template #description="row"><!-- eslint-disable-line -->
+                    <span :class="row.value.status.id == 1 ? 'font-italic text-grey' : 'font-weight-bold text-black'">{{ row.value.description }}</span>
                 </template>
-                <template v-slot:loading>
-                    <v-skeleton-loader type="table-row@20"></v-skeleton-loader>
+                <template #tags="row"><!-- eslint-disable-line -->
+                    <div v-for="tag in row.value.tags" :key="tag"><v-icon icon="mdi-tag" :color="row.value.status.id == 1 ? 'grey' : 'black'"></v-icon> <span :class="row.value.status.id == 1 ? 'font-italic text-grey' : 'font-weight-bold text-black'">{{ tag }}</span></div>
                 </template>
-            </v-data-table>
+                <template #pretty_account="row"><!-- eslint-disable-line -->
+                    <span :class="row.value.status.id == 1 ? 'font-italic text-grey' : 'font-weight-bold text-black'">{{ row.value.pretty_account }}</span>
+                </template>
+            </vue3-datatable>
         </template>
     </v-card>
 </template>
@@ -82,6 +87,8 @@
 import { ref, defineProps, defineEmits } from 'vue'
 import { useTransactions } from '@/composables/transactionsComposable'
 import TransactionForm from '@/components/TransactionForm'
+import Vue3Datatable from '@bhplugin/vue3-datatable'
+import '@bhplugin/vue3-datatable/dist/style.css'
 
 const transactionAddFormDialog = ref(false)
 const transactionEditFormDialog = ref(false)
@@ -91,61 +98,47 @@ const props = defineProps({
 const emit = defineEmits(['addTransaction', 'removeTransaction', 'editTransaction', 'clearTransaction'])
 const { isLoading, transactions, removeTransaction, clearTransaction } = useTransactions(props.account)
 const selected = ref([])
-const headers = [
-    {
-        title: 'Status',
-        align: 'center',
-        key: 'status',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: 'Date',
-        align: 'center',
-        key: 'transaction_date',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: 'Amount',
-        align: 'center',
-        key: 'pretty_total',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: 'Balance',
-        align: 'center',
-        key: 'balance',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: 'Description',
-        align: 'start',
-        key: 'description',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: 'Tag',
-        align: 'start',
-        key: 'tags',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: 'Account',
-        align: 'start',
-        key: 'pretty_account',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: '',
-        key: 'data-table-expand'
+const columns = ref([
+    { field: 'id', title: 'ID', isUnique: true, hide: true },
+    { field: 'status.transaction_status', title: 'Status', width: '80px'},
+    { field: 'transaction_date', title: 'Date', type: 'date', width: '120px' },
+    { field: 'pretty_total', title: 'Amount', type: 'number', width: '100px' },
+    { field: 'balance', title: 'Balance', width: '100px' },
+    { field: 'description', title: 'Description' },
+    { field: 'tags', title: 'Tag(s)' },
+    { field: 'pretty_account', title: 'Account' },
+])
+const getClassForMoney = (amount, status) => {
+    let color = ''
+    let font = ''
+
+    if (status == 1) {
+        font = "font-italic"
+        if (amount < 0) {
+            color = 'text-red-lighten-1'
+        } else {
+            color = 'text-green-lighten-1'
+        }
+    } else {
+        font = "font-weight-bold"
+        if (amount < 0) {
+            color = 'text-red'
+        } else {
+            color = 'text-green'
+        }
     }
-]
+
+    return color + ' ' + font
+}
+const rowSelected = () => {
+    selected.value = []
+    let selectedrows = trans_table.value.getSelectedRows()
+    for (const selectedrow of selectedrows) {
+        selected.value.push(selectedrow.id)
+    }
+    console.log('selected:', selected.value)
+}
+const trans_table = ref(null);
 
 const clickAddTransaction = async () => {
     emit('addTransaction', props.account)
