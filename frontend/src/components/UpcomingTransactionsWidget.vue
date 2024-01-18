@@ -24,71 +24,85 @@
             <span class="text-subtitle-2 text-accent">Upcoming Transactions</span>
         </template>
         <template v-slot:text>
-            <v-data-table
+            <vue3-datatable 
+                :rows="transactions"
+                :columns="columns"
                 :loading="isLoading"
-                :headers="headers"
-                :items="transactions"
-                density="compact"
-                items-per-page="10"
-                no-filter
-                item-value="id"
-            >
-                <template v-slot:item.pretty_total="{ value }"><!-- eslint-disable-line -->
-                    <span :class="value >= 0 ? 'text-green' : 'text-red'">${{ value }}</span>
+                :totalRows="transactions.length"
+                :isServerMode="false"
+                pageSize="10"
+                :hasCheckbox="false"
+                :stickyHeader="true"
+                noDataContent="No transactions"
+                ref="trans_table"
+                height="405px"
+                skin="bh-table-striped bh-table-compact"
+                :pageSizeOptions="[10]"
+                :showPageSize="false"
+                paginationInfo="Showing {0} to {1} of {2} transactions"
+                class="alt-pagination"
+            ><!--height="280px"-->
+                <template #transaction_date="row"><!-- eslint-disable-line -->
+                    <span :class="row.value.status.id == 1 ? 'font-italic text-grey' : 'font-weight-bold text-black'">{{ row.value.transaction_date }}</span>
                 </template>
-                <template v-slot:item.status="{ value }"><!-- eslint-disable-line -->
-                    <v-icon icon="mdi-cash" :color="value.id == '1' ? 'grey' : 'green'"></v-icon>
+                <template #pretty_total="row"><!-- eslint-disable-line -->
+                    <span :class="getClassForMoney(row.value.pretty_total, row.value.status.id)">${{ row.value.pretty_total }}</span>
                 </template>
-                <template v-slot:item.tags="{ value }"><!-- eslint-disable-line -->
-                    <div v-for="tag in value" :key="tag"><v-icon icon="mdi-tag"></v-icon> {{ tag }} </div>
+                <template #description="row"><!-- eslint-disable-line -->
+                    <span :class="row.value.status.id == 1 ? 'font-italic text-grey' : 'font-weight-bold text-black'">{{ row.value.description }}</span>
                 </template>
-                <template v-slot:loading>
-                    <v-skeleton-loader type="table-row@10"></v-skeleton-loader>
+                <template #tags="row"><!-- eslint-disable-line -->
+                    <div v-for="tag in row.value.tags" :key="tag"><v-icon icon="mdi-tag" :color="row.value.status.id == 1 ? 'grey' : 'black'"></v-icon> <span :class="row.value.status.id == 1 ? 'font-italic text-grey' : 'font-weight-bold text-black'">{{ tag }}</span></div>
                 </template>
-            </v-data-table>
+                <template #pretty_account="row"><!-- eslint-disable-line -->
+                    <span :class="row.value.status.id == 1 ? 'font-italic text-grey' : 'font-weight-bold text-black'">{{ row.value.pretty_account }}</span>
+                </template>
+            </vue3-datatable>
         </template>
     </v-card>
 </template>
 <script setup>
 import { useTransactions } from '@/composables/transactionsComposable'
+import Vue3Datatable from '@bhplugin/vue3-datatable'
+import '@bhplugin/vue3-datatable/dist/style.css'
+import { ref } from 'vue'
 
 const { isLoading, transactions } = useTransactions()
-const headers = [
-    {
-        title: 'Date',
-        align: 'center',
-        key: 'transaction_date',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: 'Amount',
-        align: 'center',
-        key: 'pretty_total',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: 'Description',
-        align: 'start',
-        key: 'description',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: 'Tag',
-        align: 'start',
-        key: 'tags',
-        sortable: false,
-        removable: false,
-    },
-    {
-        title: 'Account',
-        align: 'start',
-        key: 'pretty_account',
-        sortable: false,
-        removable: false,
-    },
-]
+const columns = ref([
+    { field: 'transaction_date', title: 'Date', type: 'date', width: '120px' },
+    { field: 'pretty_total', title: 'Amount', type: 'number', width: '100px' },
+    { field: 'description', title: 'Description' },
+    { field: 'tags', title: 'Tag(s)' },
+    { field: 'pretty_account', title: 'Account' },
+])
+
+const getClassForMoney = (amount, status) => {
+    let color = ''
+    let font = ''
+
+    if (status == 1) {
+        font = "font-italic"
+        if (amount < 0) {
+            color = 'text-red-lighten-1'
+        } else {
+            color = 'text-green-lighten-1'
+        }
+    } else {
+        font = "font-weight-bold"
+        if (amount < 0) {
+            color = 'text-red'
+        } else {
+            color = 'text-green'
+        }
+    }
+
+    return color + ' ' + font
+}
 
 </script>
+<style>
+.alt-pagination .bh-pagination .bh-page-item {
+    background-color: #06966A;
+    color: white;
+}
+</style>

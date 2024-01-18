@@ -41,7 +41,6 @@
             </v-dialog>
             <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success" @click="transactionAddFormDialog = true"></v-btn>
             <TransactionForm v-model="transactionAddFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="false" @update-dialog="updateAddDialog" :account_id="props.account"/>
-            <!-- TODO: Row decorations to distinguish pending vs cleared -->
             <vue3-datatable 
                 :rows="transactions"
                 :columns="columns"
@@ -57,6 +56,10 @@
                 ref="trans_table"
                 height="810px"
                 skin="bh-table-striped bh-table-compact"
+                :pageSizeOptions="[20]"
+                :showPageSize="false"
+                paginationInfo="Showing {0} to {1} of {2} transactions"
+                class="alt-pagination"
             ><!--height="280px"-->
                 <template #status.transaction_status="row"><!-- eslint-disable-line -->
                     <span :class="row.value.status.id == 1 ? 'font-italic text-grey' : 'font-weight-bold text-black'">{{ row.value.status.transaction_status }}</span>
@@ -170,3 +173,9 @@ const updateEditDialog = () => {
     transactionEditFormDialog.value = false
 }
 </script>
+<style>
+.alt-pagination .bh-pagination .bh-page-item {
+    background-color: #06966A;
+    color: white;
+}
+</style>
