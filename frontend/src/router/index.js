@@ -5,6 +5,7 @@ import AccountsView from '@/views/AccountsView.vue'
 import PlanningView from '@/views/PlanningView.vue'
 import AccountDetailView from '@/views/AccountDetailView.vue'
 import AddAccount from '@/views/AddAccount.vue'
+import ForecastView from '@/views/ForecastView.vue'
 
 const routes = [
   {
@@ -26,6 +27,11 @@ const routes = [
     path: '/accounts/:accountID',
     name: 'account_detail',
     component: AccountDetailView,
+  },
+  {
+    path: '/forecast',
+    name: 'forecast',
+    component: ForecastView,
   },
   {
     path: '/planning',
