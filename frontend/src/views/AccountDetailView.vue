@@ -7,7 +7,7 @@
         </v-row>
         <v-row class="pa-1 ga-1" no-gutters>
             <v-col class="rounded text-center">
-                <AccountForecastWidget/>
+                <AccountForecastWidget :key="account_id" :account="account_id"/>
             </v-col>
         </v-row>
         <v-row class="pa-1 ga-1 rounded" no-gutters>

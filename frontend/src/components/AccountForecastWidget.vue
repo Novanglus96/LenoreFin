@@ -32,12 +32,12 @@
                     :width="12"
                     v-if="isLoading"
                 >Loading...</v-progress-circular>
-                <Line :data="data" :options="options" v-else/>
+                <Line :data="account_forecast" :options="options" v-if="!isLoading" ref="Forecast" aria-label="Account Forecast">Unable to load forecast</Line>
             </template>
         </v-card>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, defineProps } from 'vue'
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -46,9 +46,17 @@ import {
     LineElement,
     Title,
     Tooltip,
-    Legend
+    Legend,
+    Filler
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
+import { useAccountForecasts } from '@/composables/forecastsComposable'
+
+const props = defineProps({
+    account: Array
+})
+
+const { isLoading, account_forecast } = useAccountForecasts(props.account, 14, 90)
 
 ChartJS.register(
     CategoryScale,
@@ -57,28 +65,44 @@ ChartJS.register(
     LineElement,
     Title,
     Tooltip,
-    Legend
+    Legend,
+    Filler
 )
-
-const data = ref({
-    labels: ['Dec 06', 'Dec 07', 'Dec 08', 'Dec 09', 'Dec 10', 'Dec 11', 'Dec 12', 'Dec 13', 'Dec 14', 'Dec 15', 'Dec 16', 'Dec 17', 'Dec 18', 'Dec 19', 'Dec 20', 'Dec 21', 'Dec 22', 'Dec 23'],
-    datasets: [
-        {
-            label: 'Data One',
-            backgroundColor: '#f87979',
-            data: [10, 10, 10, 10, 39, 80, 40, 1000, 2000, 30000, 400],
-            fill: {
-                target: 1,
-                above: 'rgb(255, 0, 0)',   // Area will be red above the origin
-                below: 'rgb(0, 0, 255)'    // And blue below the origin
-            }
-        }
-    ]
-})
 
 const options = ref({
     responsive: true,
-    maintainAspectRatio: false
+    maintainAspectRatio: true,
+    aspectRatio: "5",
+    plugins: {
+        tooltip: {
+            callbacks: {
+                label: function (context) {
+                    let label = context.dataset.label || '';
+
+                    if (label) {
+                        label += ': ';
+                    }
+                    if (context.parsed.y !== null) {
+                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                    }
+                    return label;
+                }
+            }
+        },
+        legend: {
+            display: false,
+        }
+    },
+    scales: {
+        y: {
+            ticks: {
+                // Include a dollar sign in the ticks
+                callback: function (value) {
+                    return '$' + value;
+                }
+            }
+        }
+    }
 })
 
 </script>

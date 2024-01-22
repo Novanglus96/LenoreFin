@@ -135,6 +135,7 @@ const createTransactionMutation = useMutation({
     console.log('Success adding transaction', data)
     queryClient.invalidateQueries({ queryKey: ['transactions'] })
     queryClient.invalidateQueries({ queryKey: ['accounts'] })
+    queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
 
     for (const detail of data) {
       createTransactionDetailMutation.mutate(detail)
@@ -148,6 +149,7 @@ const createTransactionDetailMutation = useMutation({
     console.log('Success adding transaction detail')
     queryClient.invalidateQueries({ queryKey: ['transactions'] })
     queryClient.invalidateQueries({ queryKey: ['accounts'] })
+    queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
   }
 })
   
@@ -157,6 +159,7 @@ const deleteTransactionMutation = useMutation({
     console.log('Success deleting transaction')
     queryClient.invalidateQueries({ queryKey: ['transactions'] })
     queryClient.invalidateQueries({ queryKey: ['accounts'] })
+    queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
   }
 })
   
@@ -166,6 +169,7 @@ const clearTransactionMutation = useMutation({
     console.log('Success clearing transaction')
     queryClient.invalidateQueries({ queryKey: ['transactions'] })
     queryClient.invalidateQueries({ queryKey: ['accounts'] })
+    queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
   }
 })
 
