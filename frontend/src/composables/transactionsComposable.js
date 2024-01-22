@@ -27,10 +27,17 @@ function handleApiError(error, message) {
   throw error
 }
 
-async function getTransactionsFunction(account_id) {
+async function getTransactionsFunction(account_id, maxdays, forecast) {
   try {
     if (account_id) {
-      const response = await apiClient.get('/transactions?account=' + account_id)
+      let querytext = '?account=' + account_id
+      if (maxdays) {
+        querytext = querytext + '&maxdays=' + maxdays
+      }
+      if (forecast) {
+        querytext = querytext + '&forecast=' + forecast
+      }
+      const response = await apiClient.get('/transactions' + querytext)
       return response.data
     } else {
       const response = await apiClient.get('/transactions')
@@ -120,11 +127,11 @@ async function clearTransactionFunction(clearedTransaction) {
   }
 }
 
-export function useTransactions(account_id) {
+export function useTransactions(account_id, maxdays, forecast) {
   const queryClient = useQueryClient()
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['transactions', { account: account_id }],
-    queryFn: () => getTransactionsFunction(account_id),
+    queryFn: () => getTransactionsFunction(account_id, maxdays, forecast),
     select: (response) => response,
     client: queryClient
 })

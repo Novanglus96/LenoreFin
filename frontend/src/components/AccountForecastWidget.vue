@@ -53,10 +53,12 @@ import { Line } from 'vue-chartjs'
 import { useAccountForecasts } from '@/composables/forecastsComposable'
 
 const props = defineProps({
-    account: Array
+    account: Array,
+    start_integer: { type: Number, default: 14 },
+    end_integer: { type: Number, default: 90 }
 })
 
-const { isLoading, account_forecast } = useAccountForecasts(props.account, 14, 90)
+const { isLoading, account_forecast } = useAccountForecasts(props.account, props.start_integer, props.end_integer)
 
 ChartJS.register(
     CategoryScale,

@@ -96,10 +96,12 @@ import '@bhplugin/vue3-datatable/dist/style.css'
 const transactionAddFormDialog = ref(false)
 const transactionEditFormDialog = ref(false)
 const props = defineProps({
-    account: Array
+    account: Array,
+    maxdays: { type: Number, default: 14 },
+    forecast: { type: Boolean, default: false }
 })
 const emit = defineEmits(['addTransaction', 'removeTransaction', 'editTransaction', 'clearTransaction'])
-const { isLoading, transactions, removeTransaction, clearTransaction } = useTransactions(props.account)
+const { isLoading, transactions, removeTransaction, clearTransaction } = useTransactions(props.account, props.maxdays, props.forecast)
 const selected = ref([])
 const columns = ref([
     { field: 'id', title: 'ID', isUnique: true, hide: true },
