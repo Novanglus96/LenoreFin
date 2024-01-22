@@ -12,7 +12,7 @@
     <v-navigation-drawer color="accent" rail permanent v-if="!mdAndUp">
         <v-list density="compact" nav>
             <v-list-item prepend-icon="mdi-view-dashboard" to="/"></v-list-item>
-            <v-list-item prepend-icon="mdi-bank" to="/accounts" ></v-list-item>
+            <v-list-item prepend-icon="mdi-bank" to="/accounts"></v-list-item>
             <v-list-item prepend-icon="mdi-chart-bar" to="/forecast"></v-list-item>
             <v-list-item prepend-icon="mdi-bell" to="/reminders"></v-list-item>
             <v-list-item prepend-icon="mdi-folder" to="/planning"></v-list-item>
@@ -24,13 +24,15 @@
         <v-list density="compact" nav>
             <v-list-item prepend-icon="mdi-view-dashboard" to="/"></v-list-item>
             <v-list-item
+            active-color="white"
+            :active="nav_toggle"
             prepend-icon="mdi-bank"
             @click="nav_toggle = true"
             ></v-list-item>
 
             <v-list-item prepend-icon="mdi-chart-bar" to="/forecast"></v-list-item>
             <v-list-item prepend-icon="mdi-bell" to="/reminders"></v-list-item>
-            <v-list-item prepend-icon="mdi-folder" @click="nav_toggle = false"></v-list-item>
+            <v-list-item active-color="white" :active="!nav_toggle" prepend-icon="mdi-folder" @click="nav_toggle = false"></v-list-item>
             <v-list-item prepend-icon="mdi-tag" to="/tags"></v-list-item>
             <v-list-item prepend-icon="mdi-cog" to="/settings"></v-list-item>
         </v-list>
