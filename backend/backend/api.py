@@ -813,7 +813,7 @@ def list_paychecks(request):
 
 
 @api.get("/transactions", response=List[TransactionOut])
-def list_transactions(request, account: Optional[int] = Query(None), maxdays: Optional[int] = Query(14)):
+def list_transactions(request, account: Optional[int] = Query(None), maxdays: Optional[int] = Query(14), forecast: Optional[bool] = Query(False)):
     qs = Transaction.objects.all()
 
     if account is not None:
@@ -828,7 +828,10 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
             When(status_id=1, then=1),
             output_field=models.IntegerField(),
         )
-        qs = qs.order_by(custom_order, 'transaction_date', '-id')
+        if forecast is False:
+            qs = qs.order_by(custom_order, 'transaction_date', '-id')
+        else:
+            qs = qs.order_by(custom_order, 'transaction_date', 'id')
         transactions = []
         balance = Decimal(0)  # Initialize the balance
         for transaction in qs:
@@ -866,8 +869,13 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
             transaction.pretty_account = pretty_account
             transaction.tags = tags
             transaction.pretty_total = pretty_total
-            transactions.append(TransactionOut.from_orm(transaction))
-        transactions.reverse()
+            if forecast is False:
+                transactions.append(TransactionOut.from_orm(transaction))
+            else:
+                if transaction.transaction_date >= date.today():
+                    transactions.append(TransactionOut.from_orm(transaction))
+        if forecast is False:
+            transactions.reverse()
         return transactions
     else:
         qs = qs.filter(status_id=1)
