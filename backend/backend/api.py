@@ -170,6 +170,28 @@ class RepeatOut(Schema):
     years: Optional[int] = 0
 
 
+class TargetObject(Schema):
+    value: int
+
+
+class FillObject(Schema):
+    target: TargetObject
+    above: str
+    below: str
+
+
+class DatasetObject(Schema):
+    backgroundColor: str
+    data: List[Decimal] = Field(whole_digits=10, decimal_places=2)
+    fill: FillObject
+    pointStyle: bool
+
+
+class ForecastOut(Schema):
+    labels: List[str]
+    datasets: List[DatasetObject]
+
+
 class ReminderIn(Schema):
     tag_id: int
     amount: Decimal = Field(whole_digits=10, decimal_places=2)
@@ -281,6 +303,42 @@ class TransactionIn(Schema):
 
 def get_today_formatted():
     return date.today().strftime("%Y-%m-%d")
+
+
+def get_forecast_start_date(interval):
+    today = date.today()
+    startdate = today - timedelta(days=interval)
+    return startdate
+
+
+def get_forecast_end_date(interval):
+    today = date.today()
+    enddate = today + timedelta(days=interval)
+    return enddate
+
+
+def get_dates_in_range(start_interval, end_interval):
+    date_list = []
+    current_date = get_forecast_start_date(start_interval)
+    end_date = get_forecast_end_date(end_interval)
+
+    while current_date <= end_date:
+        date_list.append(current_date.strftime("%b %d"))
+        current_date += timedelta(days=1)
+
+    return date_list
+
+
+def get_unformatted_dates_in_range(start_interval, end_interval):
+    date_list = []
+    current_date = get_forecast_start_date(start_interval)
+    end_date = get_forecast_end_date(end_interval)
+
+    while current_date <= end_date:
+        date_list.append(current_date)
+        current_date += timedelta(days=1)
+
+    return date_list
 
 
 class TransactionClear(Schema):
@@ -547,6 +605,48 @@ def get_note(request, note_id: int):
 def get_option(request, option_id: int):
     option = get_object_or_404(Option, id=option_id)
     return option
+
+
+@api.get("/accounts/{account_id}/forecast", response=ForecastOut)
+def get_forecast(request, account_id: int, start_interval: int, end_interval: int):
+    labels = get_dates_in_range(start_interval, end_interval)
+    dates = get_unformatted_dates_in_range(start_interval, end_interval)
+    data = []
+    datasets = []
+    account = get_object_or_404(Account, id=account_id)
+    transactions = TransactionDetail.objects.filter(
+        account__id=account_id,
+        transaction__transaction_date__lt=get_forecast_end_date(end_interval))
+    transactions = transactions.order_by('transaction__transaction_date')
+    balance = Decimal(0)
+    balance += account.opening_balance
+    day_balance = Decimal(0)
+    for label in dates:
+        day_balance = balance
+        for transaction in transactions:
+            if transaction.transaction.transaction_date <= label:
+                day_balance += transaction.detail_amt
+        data.append(day_balance)
+    targetobject_out = TargetObject(
+        value=0
+    )
+    fillobject_out = FillObject(
+        target=targetobject_out,
+        above='rgb(236 , 253, 245)',
+        below='rgb(248, 121, 121)'
+    )
+    datasets_out = DatasetObject(
+        backgroundColor='#1f1f1f',
+        data=data,
+        fill=fillobject_out,
+        pointStyle='false'
+    )
+    datasets.append(datasets_out)
+    forecast_out = ForecastOut(
+        labels=labels,
+        datasets=datasets
+    )
+    return forecast_out
 
 
 @api.get("/transactions/statuses/{transactionstatus_id}", response=TransactionStatusOut)
