@@ -17,18 +17,18 @@
                 <v-icon icon="mdi-inbox" v-else></v-icon>
                 </v-btn>
             </template>
-            <v-card width="500">
+            <v-card width="500" density="compact">
                 <v-card-text>
                     <v-list density="compact" nav>
                         <v-list-item :prepend-icon="message.unread ? 'mdi-message-text' : 'mdi-message-text-outline'" v-for="message in messages.messages" :key="message.id"><span :class="message.unread ? 'font-weight-bold' : ''">{{ message.message_date }} - {{ message.message }}</span></v-list-item>
-                        <v-list-item v-if="messages.total_count == 0">No messages</v-list-item>
+                        <v-list-item v-if="messages.total_count == 0">No messages : You're all caught up!</v-list-item>
                     </v-list>
                 </v-card-text>
-                <v-card-actions>
-                    <v-btn color="accent" @click="markRead" v-if="messages.total_count > 0">
+                <v-card-actions v-if="messages.total_count > 0">
+                    <v-btn color="accent" @click="markRead">
                         Mark All Read
                     </v-btn>
-                    <v-btn color="accent" @click="deleteAll" v-if="messages.total_count > 0">
+                    <v-btn color="accent" @click="deleteAll">
                         Delete All
                     </v-btn>
                 </v-card-actions>
