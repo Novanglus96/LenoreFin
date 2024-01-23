@@ -22,7 +22,8 @@
                 </v-menu>
             </template>
             <template v-slot:title>
-                <span class="text-subtitle-2 text-accent">Forecast</span>
+                <span class="text-subtitle-2 text-accent" v-if="props.start_integer == 0">Forecast</span>
+                <span class="text-subtitle-2 text-accent" v-else>Cash Flow</span>
             </template>
             <template v-slot:text>
                 <v-progress-circular
