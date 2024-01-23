@@ -1,5 +1,5 @@
 from ninja import NinjaAPI, Schema, Query
-from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType, Bank, Paycheck
+from api.models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType, Bank, Paycheck, Message
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
@@ -301,6 +301,29 @@ class TransactionIn(Schema):
     paycheck_id: Optional[int] = None
 
 
+class MessageIn(Schema):
+    message_date: date
+    message: str
+    unread: bool
+
+
+class MessageOut(Schema):
+    id: int
+    message_date: date
+    message: str
+    unread: bool
+
+
+class AllMessage(Schema):
+    unread: bool
+
+
+class MessageList(Schema):
+    unread_count: int
+    total_count: int
+    messages: List[MessageOut]
+
+
 def get_today_formatted():
     return date.today().strftime("%Y-%m-%d")
 
@@ -511,6 +534,12 @@ def create_log_entry(request, payload: LogEntryIn):
     return {"id": log_entry.id}
 
 
+@api.post("/messages")
+def create_message(request, payload: MessageIn):
+    message = Message.objects.create(**payload.dict())
+    return {"id": message.id}
+
+
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
 def get_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -683,6 +712,12 @@ def get_transaction_detail(request, transactiondetail_id: int):
 def get_log_entry(request, logentry_id: int):
     log_entry = get_object_or_404(LogEntry, id=logentry_id)
     return log_entry
+
+
+@api.get("/messages/{message_id}", response=MessageOut)
+def get_message(request, message_id: int):
+    message = get_object_or_404(Message, id=message_id)
+    return message
 
 
 @api.get("/accounts/types", response=List[AccountTypeOut])
@@ -922,6 +957,22 @@ def list_log_entries(request):
     return qs
 
 
+@api.get("/messages", response=MessageList)
+def list_messages(request):
+    unread = Message.objects.filter(unread=True).count()
+    total = Message.objects.all().count()
+    messages = Message.objects.all().order_by('-id')
+    message_list = []
+    for message in messages:
+        message_list.append(MessageOut.from_orm(message))
+    message_list_object = MessageList(
+        unread_count=unread,
+        total_count=total,
+        messages=message_list
+    )
+    return message_list_object
+
+
 @api.put("/accounts/types/{accounttype_id}")
 def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -1141,6 +1192,25 @@ def update_log_entry(request, logentry_id: int, payload: LogEntryIn):
     return {"success": True}
 
 
+@api.put("/messages/{message_id}")
+def update_message(request, message_id: int, payload: MessageIn):
+    message = get_object_or_404(Message, id=message_id)
+    message.message_date = payload.message_date
+    message.message = payload.message
+    message.unread = payload.unread
+    message.save()
+    return {"sucess": True}
+
+
+@api.patch("/messages/readall/{message_id}")
+def update_messages(request, message_id: int, payload: AllMessage):
+    messages = Message.objects.all()
+    for message in messages:
+        message.unread = payload.unread
+        message.save()
+    return {"success": True}
+
+
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     account_type = get_object_or_404(AccountType, id=accounttype_id)
@@ -1264,4 +1334,19 @@ def delete_transaction_detail(request, transactiondetail_id: int):
 def delete_log_entry(request, logentry_id: int):
     log_entry = get_object_or_404(LogEntry, id=logentry_id)
     log_entry.delete()
+    return {"success": True}
+
+
+@api.delete("/messages/{message_id}")
+def delete_message(request, message_id: int):
+    message = get_object_or_404(Message, id=message_id)
+    message.delete()
+    return {"success": True}
+
+
+@api.delete("/messages/deleteall/{message_id}")
+def delete_messages(request, message_id: int):
+    messages = Message.objects.all()
+    for message in messages:
+        message.delete()
     return {"success": True}

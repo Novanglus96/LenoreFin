@@ -8,6 +8,32 @@
                     src="Logo.png"
                 ></v-img></v-app-bar-nav-icon>
         <v-app-bar-title>Money v1.0</v-app-bar-title>
+        <v-menu location="start">
+            <template v-slot:activator="{ props }">
+                <v-btn class="text-none" stacked v-bind="props">
+                <v-badge :content="messages.unread_count" color="error" v-if="messages.unread_count > 0">
+                    <v-icon icon="mdi-inbox-full"></v-icon>
+                </v-badge>
+                <v-icon icon="mdi-inbox" v-else></v-icon>
+                </v-btn>
+            </template>
+            <v-card width="500">
+                <v-card-text>
+                    <v-list density="compact" nav>
+                        <v-list-item :prepend-icon="message.unread ? 'mdi-message-text' : 'mdi-message-text-outline'" v-for="message in messages.messages" :key="message.id"><span :class="message.unread ? 'font-weight-bold' : ''">{{ message.message_date }} - {{ message.message }}</span></v-list-item>
+                        <v-list-item v-if="messages.total_count == 0">No messages</v-list-item>
+                    </v-list>
+                </v-card-text>
+                <v-card-actions>
+                    <v-btn color="accent" @click="markRead" v-if="messages.total_count > 0">
+                        Mark All Read
+                    </v-btn>
+                    <v-btn color="accent" @click="deleteAll" v-if="messages.total_count > 0">
+                        Delete All
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-menu>
     </v-app-bar>
     <v-navigation-drawer color="accent" rail permanent v-if="!mdAndUp">
         <v-list density="compact" nav>
@@ -49,7 +75,9 @@ import { ref } from 'vue'
 import { useDisplay } from 'vuetify'
 import AccountsMenu from '@/components/AccountsMenu.vue'
 import PlanningMenu from '@/components/PlanningMenu.vue'
+import { useMessages } from '@/composables/messagesComposable'
 
+const { messages, markRead, deleteAll } = useMessages()
 const { mdAndUp } = useDisplay()
 const nav_toggle = ref(true)
 

@@ -188,3 +188,11 @@ class LogEntry(models.Model):
     
     def __str__(self):
         return self.log_entry
+
+class Message(models.Model):
+    message_date = models.DateField(default=date.today)
+    message = models.CharField(max_length=254)
+    unread = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.message
