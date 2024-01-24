@@ -1,11 +1,10 @@
 from django.contrib import admin
-from .models import Account, AccountType, CalendarDate, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType, Bank, Message
+from .models import Account, AccountType, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType, Bank, Message
 
 # Register your models here.
 
 admin.site.register(Account)
 admin.site.register(AccountType)
-admin.site.register(CalendarDate)
 admin.site.register(Tag)
 admin.site.register(ChristmasGift)
 admin.site.register(ContribRule)
