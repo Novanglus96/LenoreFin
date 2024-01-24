@@ -16,14 +16,34 @@
                         >
                         </v-btn>
                     </template>
-                    <v-card width="100">
-                        <v-card-text>Test</v-card-text>
+                    <v-card width="300">
+                        <v-card-text>
+                            <h2 class="text-h6 mb-2">
+                                Time Frame
+                            </h2>
+
+                            <v-chip-group
+                                v-model="chips"
+                                column
+                                @update:model-value="clickChangeTime()"
+                            >
+                                <v-chip
+                                filter
+                                variant="outlined"
+                                v-for="item in mainstore.time_frames"
+                                :key="item.days"
+                                :value="item.days"
+                                >
+                                {{ item.title }}
+                                </v-chip>
+                            </v-chip-group>
+                        </v-card-text>
                     </v-card>
                 </v-menu>
             </template>
             <template v-slot:title>
-                <span class="text-subtitle-2 text-accent" v-if="props.start_integer == 0">Forecast</span>
-                <span class="text-subtitle-2 text-accent" v-else>Cash Flow</span>
+                <span class="text-subtitle-2 text-accent" v-if="props.start_integer == 0">Forecast  ({{ timeFrame.title }})</span>
+                <span class="text-subtitle-2 text-accent" v-else>Cash Flow ({{ timeFrame.title }})</span>
             </template>
             <template v-slot:text>
                 <v-progress-circular
@@ -38,7 +58,7 @@
         </v-card>
 </template>
 <script setup>
-import { ref, defineProps } from 'vue'
+import { ref, defineProps, defineEmits } from 'vue'
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -52,13 +72,16 @@ import {
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
 import { useAccountForecasts } from '@/composables/forecastsComposable'
+import { useMainStore } from '@/stores/main'
 
+const mainstore = useMainStore()
 const props = defineProps({
     account: Array,
     start_integer: { type: Number, default: 14 },
     end_integer: { type: Number, default: 90 }
 })
-
+const emit = defineEmits(['changeTime'])
+const chips = ref(props.end_integer)
 const { isLoading, account_forecast } = useAccountForecasts(props.account, props.start_integer, props.end_integer)
 
 ChartJS.register(
@@ -108,4 +131,9 @@ const options = ref({
     }
 })
 
+const clickChangeTime = () => {
+    emit('changeTime', chips.value)
+}
+
+const timeFrame = mainstore.time_frames.find(frame => frame.days === props.end_integer)
 </script>
