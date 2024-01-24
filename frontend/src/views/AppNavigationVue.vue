@@ -20,11 +20,17 @@
             <v-card width="500" density="compact">
                 <v-card-text>
                     <v-list density="compact" nav>
-                        <v-list-item :prepend-icon="message.unread ? 'mdi-message-text' : 'mdi-message-text-outline'" v-for="message in messages.messages" :key="message.id"><span :class="message.unread ? 'font-weight-bold' : ''">{{ message.message_date }} - {{ message.message }}</span></v-list-item>
-                        <v-list-item v-if="messages.total_count == 0">No messages : You're all caught up!</v-list-item>
+                        <v-list-item :prepend-icon="message.unread ? 'mdi-message-text' : 'mdi-message-text-outline'" v-for="message in messages.messages" :key="message.id">
+                            <v-list-item-title><span :class="message.unread ? 'font-weight-bold' : ''">{{ message.message }}</span></v-list-item-title>
+                            <v-list-item-subtitle><span :class="message.unread ? 'font-weight-bold' : ''">{{ message.message_date }}</span></v-list-item-subtitle>
+                        </v-list-item>
+                        <v-list-item v-if="messages.total_count == 0">
+                            No messages : You're all caught up!
+                        </v-list-item>
                     </v-list>
                 </v-card-text>
                 <v-card-actions v-if="messages.total_count > 0">
+                    <v-spacer></v-spacer>
                     <v-btn color="accent" @click="markRead">
                         Mark All Read
                     </v-btn>
@@ -37,7 +43,7 @@
     </v-app-bar>
     <v-navigation-drawer color="accent" rail permanent v-if="!mdAndUp">
         <v-list density="compact" nav>
-            <v-list-item prepend-icon="mdi-view-dashboard" to="/"></v-list-item>
+            <v-list-item prepend-icon="mdi-view-dashboard-variant" to="/"></v-list-item>
             <v-list-item prepend-icon="mdi-bank" to="/accounts"></v-list-item>
             <v-list-item prepend-icon="mdi-chart-bar" to="/forecast"></v-list-item>
             <v-list-item prepend-icon="mdi-bell" to="/reminders"></v-list-item>
@@ -48,19 +54,47 @@
     </v-navigation-drawer>
     <v-navigation-drawer color="accent" rail permanent v-if="mdAndUp">
         <v-list density="compact" nav>
-            <v-list-item prepend-icon="mdi-view-dashboard" to="/"></v-list-item>
-            <v-list-item
-            active-color="white"
-            :active="nav_toggle"
-            prepend-icon="mdi-bank"
-            @click="nav_toggle = true"
-            ></v-list-item>
-
-            <v-list-item prepend-icon="mdi-chart-bar" to="/forecast"></v-list-item>
-            <v-list-item prepend-icon="mdi-bell" to="/reminders"></v-list-item>
-            <v-list-item active-color="white" :active="!nav_toggle" prepend-icon="mdi-folder" @click="nav_toggle = false"></v-list-item>
-            <v-list-item prepend-icon="mdi-tag" to="/tags"></v-list-item>
-            <v-list-item prepend-icon="mdi-cog" to="/settings"></v-list-item>
+            <v-tooltip text="Dashboard">
+                <template v-slot:activator="{ props }">
+                <v-list-item prepend-icon="mdi-view-dashboard-variant" to="/" v-bind="props"></v-list-item>
+                </template>
+            </v-tooltip>
+            <v-tooltip text="Accounts">
+                <template v-slot:activator="{ props }">
+                    <v-list-item
+                    active-color="white"
+                    :active="nav_toggle"
+                    prepend-icon="mdi-bank"
+                    @click="nav_toggle = true"
+                    v-bind="props"
+                    ></v-list-item>
+                </template>
+            </v-tooltip>
+            <v-tooltip text="Forecast">
+                <template v-slot:activator="{ props }">
+                    <v-list-item prepend-icon="mdi-chart-bar" to="/forecast" v-bind="props"></v-list-item>
+                </template>
+            </v-tooltip>
+            <v-tooltip text="Reminders">
+                <template v-slot:activator="{ props }">
+                    <v-list-item prepend-icon="mdi-bell" to="/reminders" v-bind="props"></v-list-item>
+                </template>
+            </v-tooltip>
+            <v-tooltip text="Planning">
+                <template v-slot:activator="{ props }">
+                    <v-list-item active-color="white" :active="!nav_toggle" prepend-icon="mdi-folder" @click="nav_toggle = false" v-bind="props"></v-list-item>
+                </template>
+            </v-tooltip>
+            <v-tooltip text="Tags">
+                <template v-slot:activator="{ props }">
+                    <v-list-item prepend-icon="mdi-tag" to="/tags" v-bind="props"></v-list-item>
+                </template>
+            </v-tooltip>
+            <v-tooltip text="Settings">
+                <template v-slot:activator="{ props }">
+                    <v-list-item prepend-icon="mdi-cog" to="/settings" v-bind="props"></v-list-item>
+                </template>
+            </v-tooltip>
         </v-list>
         </v-navigation-drawer>
 
