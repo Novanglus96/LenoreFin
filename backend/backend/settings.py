@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django_filters',
     'dbbackup',
     'ninja',
+    'django_q',
 ]
 
 MIDDLEWARE = [
@@ -165,4 +166,14 @@ LOGGING = {
         'level': 'INFO',
         'handlers': ['console'],
     }
+}
+
+Q_CLUSTER = {
+    'name': 'DjangORM',
+    'workers': 4,
+    'timeout': 90,
+    'retry': 120,
+    'queue_limit': 50,
+    'bulk': 10,
+    'orm': 'default'
 }

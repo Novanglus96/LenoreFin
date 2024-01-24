@@ -27,6 +27,22 @@ services:
       - ./.env
     image: money_backend:development
     container_name: money_backend_dev
+  worker:
+    build:
+      context: ./backend
+    command: /home/app/web/start_worker.sh
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+      - media_volume:/home/app/web/mediafiles
+    depends_on:
+      - db
+      - backend
+    networks:
+      - default
+    env_file:
+      - ./.env
+    image: money_worker:development
+    container_name: money_worker_dev
   db:
     image: postgres:15
     volumes:
