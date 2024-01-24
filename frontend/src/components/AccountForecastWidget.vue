@@ -43,7 +43,7 @@
             </template>
             <template v-slot:title>
                 <span class="text-subtitle-2 text-accent" v-if="props.start_integer == 0">Forecast  ({{ timeFrame.title }})</span>
-                <span class="text-subtitle-2 text-accent" v-else>Cash Flow ({{ timeFrame.title }})</span>
+                <span class="text-subtitle-2 text-accent" v-else>Cash Flow (Last 14 Days + {{ timeFrame.title }})</span>
             </template>
             <template v-slot:text>
                 <v-progress-circular
