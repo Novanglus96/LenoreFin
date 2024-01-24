@@ -346,7 +346,7 @@ def get_dates_in_range(start_interval, end_interval):
     end_date = get_forecast_end_date(end_interval)
 
     while current_date <= end_date:
-        date_list.append(current_date.strftime("%b %d"))
+        date_list.append(current_date.strftime("%b %d, %y"))
         current_date += timedelta(days=1)
 
     return date_list
