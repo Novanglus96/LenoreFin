@@ -6,8 +6,11 @@
             class="bg-accent"
         >
             <template v-slot:text>
-                <v-row desnity="compact">
+                <v-row desnity="compact" class="text-center">
                     <v-col>
+                        <v-btn prepend-icon="mdi-plus" size="small" variant="text">
+                            Add Tag
+                        </v-btn>
                         <v-slide-group
                             v-model="model"
                             class="pa-4"
