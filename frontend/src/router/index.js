@@ -6,6 +6,7 @@ import PlanningView from '@/views/PlanningView.vue'
 import AccountDetailView from '@/views/AccountDetailView.vue'
 import AddAccount from '@/views/AddAccount.vue'
 import ForecastView from '@/views/ForecastView.vue'
+import RemindersView from '@/views/RemindersView.vue'
 
 const routes = [
   {
@@ -37,6 +38,11 @@ const routes = [
     path: '/planning',
     name: 'planning',
     component: PlanningView
+  },
+  {
+    path: '/reminders',
+    name: 'reminders',
+    component: RemindersView
   },
   { 
     path: '/:catchAll(.*)', 
