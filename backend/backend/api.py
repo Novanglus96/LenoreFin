@@ -739,7 +739,7 @@ def list_accounts(request, account_type: Optional[int] = Query(None)):
 
     if account_type is not None:
         qs = qs.filter(account_type__id=account_type)
-    qs = qs.order_by('account_type__id', 'account_name')
+    qs = qs.order_by('account_type__id', 'bank__bank_name', 'account_name')
 
     account_list = []
     for account in qs:

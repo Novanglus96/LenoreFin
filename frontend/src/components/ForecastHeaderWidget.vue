@@ -31,7 +31,7 @@
                                     @click="toggle"
                                     :title="account.account_name"
                                     :subtitle="account.bank.bank_name"
-                                    prepend-icon="mdi-bank"
+                                    :prepend-icon="account.account_type.icon"
                                 >
                                 </v-card>
                             </v-slide-group-item>
