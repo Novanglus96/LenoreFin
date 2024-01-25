@@ -1,6 +1,7 @@
 <template>
     <v-form @submit.prevent>
         <v-card v-if="page1">
+            <!--TODO: use v-stepper here-->
             <v-card-title>What bank is this account with?</v-card-title>
             <v-card-text>
                 <v-row dense>
