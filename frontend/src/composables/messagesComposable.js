@@ -83,7 +83,9 @@ export function useMessages() {
     queryKey: ['messages'],
     queryFn: () => getMessagesFunction(),
     select: (response) => response,
-    client: queryClient
+    client: queryClient,
+    refetchInterval: 180000,
+    refetchIntervalInBackground: true
 })
 
 const createMessageMutation = useMutation({
