@@ -38,6 +38,17 @@ async function getTagsFunction() {
 
 }
 
+async function getParentTagsFunction() {
+  try {
+    const response = await apiClient.get('/tags?parent_only=true')
+    return response.data
+      
+    } catch (error) {
+      handleApiError(error, 'Tags not fetched: ')
+    }
+
+}
+
 async function createTagFunction(newTag) {
   const mainstore = useMainStore();
   try {
@@ -75,5 +86,20 @@ return {
   isLoading,
   tags,
   addTag
+}
+}
+
+export function useParentTags() {
+  const queryClient = useQueryClient()
+  const { data: parent_tags, isLoading } = useQuery({
+    queryKey: ['tags', { parent_only: true }],
+    queryFn: () => getParentTagsFunction(),
+    select: (response) => response,
+    client: queryClient
+})
+
+return {
+  isLoading,
+  parent_tags
 }
 }

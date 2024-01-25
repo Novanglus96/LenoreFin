@@ -10,9 +10,10 @@
                 <v-row desnity="compact">
                     <v-col>
                         <div  class="text-center">
-                            <v-btn prepend-icon="mdi-plus" size="small" variant="text">
+                            <v-btn prepend-icon="mdi-plus" size="small" variant="text" @click="tagAddFormDialog=true">
                                 Add Tag
                             </v-btn>
+                            <TagForm v-model="tagAddFormDialog" @update-dialog="updateAddDialog"/>
                         </div>
                         <v-slide-group
                             v-model="tag_selected"
@@ -51,12 +52,18 @@
 <script setup>
 import { ref, defineEmits } from 'vue'
 import { useTags } from '@/composables/tagsComposable'
+import TagForm from '@/components/TagForm.vue'
 
+const tagAddFormDialog = ref(false)
 const emit = defineEmits(['tagSelected'])
 const tag_selected = ref(null)
 const { tags, isLoading } = useTags()
 
 const clickSelectTag = () => {
     emit('tagSelected', tag_selected.value)
+}
+
+const updateAddDialog = () => {
+    tagAddFormDialog.value = false
 }
 </script>

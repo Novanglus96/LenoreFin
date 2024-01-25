@@ -772,7 +772,7 @@ def list_accounts(request, account_type: Optional[int] = Query(None)):
 
 
 @api.get("/tags", response=List[TagOut])
-def list_tags(request, tag_type: Optional[int] = Query(None)):
+def list_tags(request, tag_type: Optional[int] = Query(None), parent_only: Optional[bool] = False):
     qs = Tag.objects.annotate(
         pretty_name=Case(
             When(parent__isnull=False, then=Concat(F('parent__tag_name'), Value(' / '), F('tag_name'))),
@@ -783,6 +783,9 @@ def list_tags(request, tag_type: Optional[int] = Query(None)):
 
     if tag_type is not None:
         qs = qs.filter(tag_type__id=tag_type)
+
+    if parent_only is True:
+        qs = qs.filter(parent__isnull=True).exclude(tag_type__id=3)
 
     qs = qs.order_by('pretty_name', 'parent__tag_name', 'tag_name')
     return qs
@@ -978,6 +981,12 @@ def list_messages(request):
         messages=message_list
     )
     return message_list_object
+
+
+@api.get("/tagtypes", response=List[TagTypeOut])
+def list_tag_types(request):
+    qs = TagType.objects.exclude(id=3).order_by('id')
+    return qs
 
 
 @api.put("/accounts/types/{accounttype_id}")
