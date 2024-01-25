@@ -4,31 +4,43 @@
             variant="outlined"
             :elevation="4"
             class="bg-accent"
+            v-if="!accounts_isLoading"
         >
             <template v-slot:text>
                 <v-row desnity="compact">
-                    <v-col col="2"></v-col>
-                    <v-col col="2" class="text-center text-black font-weight-bold">
-                        <v-autocomplete
-                            clearable
-                            label="Account for Forecast"
-                            :items="accounts"
-                            variant="outlined"
-                            :loading="accounts_isLoading"
-                            item-title="account_name"
-                            item-value="id"
+                    <v-col col="2">
+                        <v-slide-group
                             v-model="account_selected"
-                            prepend-icon="mdi-arrow-left-bold"
-                            append-icon="mdi-arrow-right-bold"
-                            auto-select-first
-                            base-color="primary"
-                            @update:model-value="clickAccountUpdate"
-                        ></v-autocomplete>
+                            class="pa-4"
+                            selected-class="bg-warning"
+                            show-arrows
+                            center-active
+                        >
+                            <v-slide-group-item
+                                v-for="account in accounts"
+                                :key="account.id"
+                                v-slot="{ toggle, selectedClass }"
+                                :value="account.id"
+                                @group:selected="clickAccountUpdate"
+                            >
+                                <v-card
+                                    color="primary"
+                                    :class="['ma-4', selectedClass]"
+                                    height="75"
+                                    width="350"
+                                    @click="toggle"
+                                    :title="account.account_name"
+                                    :subtitle="account.bank.bank_name"
+                                    prepend-icon="mdi-bank"
+                                >
+                                </v-card>
+                            </v-slide-group-item>
+                        </v-slide-group>
                     </v-col>
-                    <v-col col="2"></v-col>
                 </v-row>
             </template>
         </v-card>
+        <v-skeleton-loader type="card" v-if="accounts_isLoading"></v-skeleton-loader>
     </div>
 </template>
 <script setup>
