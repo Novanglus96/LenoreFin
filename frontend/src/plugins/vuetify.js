@@ -9,12 +9,13 @@ const myCustomLightTheme = {
     dark: false,
     colors: {
         primary: '#ECFDF5',
-        secondary: '#00bcd4',
+        secondary: '#7fb17f',
         accent: '#06966A',
         error: '#FF3407',
         warning: '#ffc107',
         info: '#795548',
         success: '#4caf50',
+        selected: '#7fb17f',
     },
 }
 

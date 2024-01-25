@@ -4,24 +4,29 @@
             variant="outlined"
             :elevation="4"
             class="bg-accent"
+            v-if="!isLoading"
         >
             <template v-slot:text>
-                <v-row desnity="compact" class="text-center">
+                <v-row desnity="compact">
                     <v-col>
-                        <v-btn prepend-icon="mdi-plus" size="small" variant="text">
-                            Add Tag
-                        </v-btn>
+                        <div  class="text-center">
+                            <v-btn prepend-icon="mdi-plus" size="small" variant="text">
+                                Add Tag
+                            </v-btn>
+                        </div>
                         <v-slide-group
-                            v-model="model"
+                            v-model="tag_selected"
                             class="pa-4"
-                            selected-class="bg-warning"
+                            selected-class="bg-secondary"
                             show-arrows
                             center-active
                         >
                         <v-slide-group-item
-                            v-for="n in 15"
-                            :key="n"
+                            v-for="tag in tags"
+                            :key="tag.id"
                             v-slot="{ toggle, selectedClass }"
+                            @group:selected="clickSelectTag"
+                            :value="tag.id"
                         >
                             <v-card
                             color="primary"
@@ -29,8 +34,8 @@
                             height="75"
                             width="200"
                             @click="toggle"
-                            title="Parent Tag"
-                            subtitle="Sub Tag"
+                            :title="tag.parent ? tag.parent.tag_name : tag.tag_name"
+                            :subtitle="!tag.parent ? '' : tag.tag_name"
                             prepend-icon="mdi-tag"
                             >
                             </v-card>
@@ -39,13 +44,13 @@
 
                         <v-expand-transition>
                         <v-sheet
-                            v-if="model != null"
+                            v-if="tag_selected != null"
                             height="150"
                             color="primary"
                         >
                             <div class="d-flex fill-height align-center justify-center">
                             <h3 class="text-h6">
-                                Selected {{ model }}
+                                Selected {{ tag_selected }}
                             </h3>
                             </div>
                         </v-sheet>
@@ -54,10 +59,18 @@
                 </v-row>
             </template>
         </v-card>
+        <v-skeleton-loader type="card" v-if="isLoading"></v-skeleton-loader>
     </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, defineEmits } from 'vue'
+import { useTags } from '@/composables/tagsComposable'
 
-const model = ref(null)
+const emit = defineEmits(['tagSelected'])
+const tag_selected = ref(null)
+const { tags, isLoading } = useTags()
+
+const clickSelectTag = () => {
+    emit('tagSelected', tag_selected.value)
+}
 </script>

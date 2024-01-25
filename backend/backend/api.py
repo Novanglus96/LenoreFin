@@ -7,8 +7,9 @@ from datetime import date, timedelta
 from pydantic import BaseModel, Field
 from ninja.security import HttpBearer
 from decouple import config
-from django.db.models import Case, When, Q
+from django.db.models import Case, When, Q, IntegerField, Value, F, CharField
 from django.db import models
+from django.db.models.functions import Concat
 
 
 class GlobalAuth(HttpBearer):
@@ -772,12 +773,18 @@ def list_accounts(request, account_type: Optional[int] = Query(None)):
 
 @api.get("/tags", response=List[TagOut])
 def list_tags(request, tag_type: Optional[int] = Query(None)):
-    qs = Tag.objects.all()
+    qs = Tag.objects.annotate(
+        pretty_name=Case(
+            When(parent__isnull=False, then=Concat(F('parent__tag_name'), Value(' / '), F('tag_name'))),
+            default=F('tag_name'),
+            output_field=CharField()
+        )
+    )
 
     if tag_type is not None:
         qs = qs.filter(tag_type__id=tag_type)
 
-    qs = qs.order_by('parent__tag_name', 'tag_name')
+    qs = qs.order_by('pretty_name', 'parent__tag_name', 'tag_name')
     return qs
 
 

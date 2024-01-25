@@ -116,7 +116,16 @@
                                 v-if="!isEdit"
                                 :rules="required"
                                 @update:model-value="checkFormComplete"
-                            ></v-autocomplete>
+                            >
+                                <template v-slot:item="{ props, item }">
+                                    <v-list-item
+                                    v-bind="props"
+                                    prepend-icon="mdi-tag"
+                                    :title="item.raw.parent ? item.raw.parent.tag_name : item.raw.tag_name"
+                                    :subtitle="item.raw.parent ? item.raw.tag_name : null"
+                                    ></v-list-item>
+                                </template>
+                            </v-autocomplete>
                         </v-col>
                         <v-col>
                             <v-textarea

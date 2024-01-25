@@ -12,7 +12,7 @@
                         <v-slide-group
                             v-model="account_selected"
                             class="pa-4"
-                            selected-class="bg-warning"
+                            selected-class="bg-secondary"
                             show-arrows
                             center-active
                         >
