@@ -7,29 +7,34 @@
                     color="accent"
                     align-tabs="center"
                 >
-                    <v-tab :value="1">Landscape</v-tab>
-                    <v-tab :value="2">City</v-tab>
-                    <v-tab :value="3">Abstract</v-tab>
+                    <v-tab :value="1">Options</v-tab>
+                    <v-tab :value="2">Fields</v-tab>
+                    <v-tab :value="3">Log</v-tab>
                 </v-tabs>
                 <v-window v-model="tab">
-                    <v-window-item
-                        v-for="n in 3"
-                        :key="n"
-                        :value="n"
-                    >
+                    <v-window-item :key="1" :value="1">
                         <v-container fluid>
                         <v-row>
-                            <v-col
-                            v-for="i in 6"
-                            :key="i"
-                            cols="12"
-                            md="4"
-                            >
-                            <v-img
-                                :src="`https://picsum.photos/500/300?image=${i * n * 5 + 10}`"
-                                :lazy-src="`https://picsum.photos/10/6?image=${i * n * 5 + 10}`"
-                                aspect-ratio="1"
-                            ></v-img>
+                            <v-col>
+                                Options
+                            </v-col>
+                        </v-row>
+                        </v-container>
+                    </v-window-item>
+                    <v-window-item :key="2" :value="2">
+                        <v-container fluid>
+                        <v-row>
+                            <v-col>
+                                Fields
+                            </v-col>
+                        </v-row>
+                        </v-container>
+                    </v-window-item>
+                    <v-window-item :key="3" :value="3">
+                        <v-container fluid>
+                        <v-row>
+                            <v-col>
+                                Log
                             </v-col>
                         </v-row>
                         </v-container>
