@@ -15,12 +15,12 @@
             <span class="text-subtitle-2 text-accent">Transactions</span>
         </template>
         <template v-slot:text>
-            <v-btn icon="mdi-invoice-text-check" flat :disabled="selected.length === 0" variant="plain" @click="clickClearTransaction(selected)"></v-btn>
-            <v-btn icon="mdi-invoice-text-edit" flat :disabled="selected.length === 0 || selected.length > 1" variant="plain" @click="transactionEditFormDialog = true"></v-btn>
+            <v-btn icon="mdi-invoice-text-check" flat :disabled="selected && selected.length === 0" variant="plain" @click="clickClearTransaction(selected)"></v-btn>
+            <v-btn icon="mdi-invoice-text-edit" flat :disabled="selected && selected.length === 0 || selected.length > 1" variant="plain" @click="transactionEditFormDialog = true"></v-btn>
             <TransactionForm v-model="transactionEditFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="true" @update-dialog="updateEditDialog"/>
             <v-dialog width="500">
                 <template v-slot:activator="{ props }">
-                    <v-btn icon="mdi-invoice-remove" flat :disabled="selected.length === 0" variant="plain" color="error" v-bind="props"></v-btn>
+                    <v-btn icon="mdi-invoice-remove" flat :disabled="selected && selected.length === 0" variant="plain" color="error" v-bind="props"></v-btn>
                 </template>
                 <template v-slot:default="{ isActive }">
                     <v-card title="Dialog">
@@ -45,7 +45,7 @@
                 :rows="transactions"
                 :columns="columns"
                 :loading="isLoading"
-                :totalRows="transactions.length"
+                :totalRows="transactions ? transactions.length : 0"
                 :isServerMode="false"
                 pageSize="20"
                 :hasCheckbox="true"
@@ -141,7 +141,7 @@ const rowSelected = () => {
     for (const selectedrow of selectedrows) {
         selected.value.push(selectedrow.id)
     }
-    console.log('selected:', selected.value)
+
 }
 const trans_table = ref(null);
 

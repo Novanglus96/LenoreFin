@@ -28,7 +28,7 @@
                 :rows="items"
                 :columns="columns"
                 :loading="isLoading"
-                :totalRows="items.length"
+                :totalRows="items ? items.length : 0"
                 :isServerMode="false"
                 pageSize="5"
                 :hasCheckbox="false"

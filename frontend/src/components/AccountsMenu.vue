@@ -7,7 +7,7 @@
         </v-list>
         <v-list density="compact" nav>
             <v-list-subheader><v-icon icon="mdi-checkbook"></v-icon> CHECKING</v-list-subheader>
-            <v-list-item title="No Accounts" v-if="checking_accounts.length == 0"></v-list-item>
+            <v-list-item title="No Accounts" v-if="checking_accounts && checking_accounts.length == 0"></v-list-item>
             <v-list-item v-for="(account, i) in checking_accounts" :key="i" :to="'/accounts/' + account.id" v-else>
                 <v-list-item-title>{{ account.account_name }} </v-list-item-title>
                 <v-list-item-subtitle><span
@@ -18,7 +18,7 @@
         <v-divider></v-divider>
         <v-list density="compact" nav>
             <v-list-subheader><v-icon icon="mdi-piggy-bank"></v-icon> SAVINGS</v-list-subheader>
-            <v-list-item title="No Accounts" v-if="savings_accounts.length == 0"></v-list-item>
+            <v-list-item title="No Accounts" v-if="savings_accounts && savings_accounts.length == 0"></v-list-item>
             <v-list-item v-for="(account, i) in savings_accounts" :key="i" :to="'/accounts/' + account.id" v-else>
                 <v-list-item-title>{{ account.account_name }} </v-list-item-title>
                 <v-list-item-subtitle><span
@@ -29,7 +29,7 @@
         <v-divider></v-divider>
         <v-list density="compact" nav>
             <v-list-subheader><v-icon icon="mdi-credit-card"></v-icon> CREDIT CARD</v-list-subheader>
-            <v-list-item title="No Accounts" v-if="cc_accounts.length == 0"></v-list-item>
+            <v-list-item title="No Accounts" v-if="cc_accounts && cc_accounts.length == 0"></v-list-item>
             <v-list-item v-for="(account, i) in cc_accounts" :key="i" :to="'/accounts/' + account.id" v-else>
                 <v-list-item-title>{{ account.account_name }} </v-list-item-title>
                 <v-list-item-subtitle><span
@@ -40,7 +40,7 @@
         <v-divider></v-divider>
         <v-list density="compact" nav>
             <v-list-subheader><v-icon icon="mdi-finance"></v-icon> INVESTMENT</v-list-subheader>
-            <v-list-item title="No Accounts" v-if="investment_accounts.length == 0"></v-list-item>
+            <v-list-item title="No Accounts" v-if="investment_accounts && investment_accounts.length == 0"></v-list-item>
             <v-list-item v-for="(account, i) in investment_accounts" :key="i" :to="'/accounts/' + account.id" v-else>
                 <v-list-item-title>{{ account.account_name }} </v-list-item-title>
                 <v-list-item-subtitle><span
@@ -51,7 +51,7 @@
         <v-divider></v-divider>
         <v-list density="compact" nav>
             <v-list-subheader><v-icon icon="mdi-car-back"></v-icon> LOAN</v-list-subheader>
-            <v-list-item title="No Accounts" v-if="loan_accounts.length == 0"></v-list-item>
+            <v-list-item title="No Accounts" v-if="loan_accounts && loan_accounts.length == 0"></v-list-item>
             <v-list-item v-for="(account, i) in loan_accounts" :key="i" :to="'/accounts/' + account.id" v-else>
                 <v-list-item-title>{{ account.account_name }} </v-list-item-title>
                 <v-list-item-subtitle><span

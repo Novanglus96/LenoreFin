@@ -28,7 +28,7 @@
                 :rows="transactions"
                 :columns="columns"
                 :loading="isLoading"
-                :totalRows="transactions.length"
+                :totalRows="transactions ? transactions.length : 0"
                 :isServerMode="false"
                 pageSize="10"
                 :hasCheckbox="false"

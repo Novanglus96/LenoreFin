@@ -11,7 +11,7 @@
         <v-menu location="start">
             <template v-slot:activator="{ props }">
                 <v-btn class="text-none" stacked v-bind="props">
-                <v-badge :content="messages.unread_count" color="error" v-if="messages.unread_count > 0">
+                <v-badge :content="messages ? messages.unread_count : 0" color="error" v-if="messages && messages.unread_count > 0">
                     <v-icon icon="mdi-inbox-full"></v-icon>
                 </v-badge>
                 <v-icon icon="mdi-inbox" v-else></v-icon>
