@@ -2,7 +2,15 @@ import { defineStore } from 'pinia'
 
 export const useMainStore = defineStore('main', {
     state: () => ({
-        log_level: 0,
+        options: {
+            id: 1,
+            log_level: {
+                id: 2,
+                error_level: "Warning"
+            },
+            alert_balance: "100.00",
+            alert_period: 3
+        },
         units: [
             {
                 name: 'day(s)',
@@ -152,6 +160,6 @@ export const useMainStore = defineStore('main', {
             this.snackbarText = text;
             this.snackbarColor = color;
             this.snackbar = true;
-        },
+        }
     },
 })

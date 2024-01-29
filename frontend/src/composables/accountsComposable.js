@@ -30,6 +30,12 @@ function handleApiError(error, message) {
 async function logToDB(error, message, errorlevel, account_id, reminder_id, transaction_id) {
   const mainstore = useMainStore()
   let error_num = 0
+  let error_level = 0
+  if (mainstore.options) {
+    error_level = mainstore.options.log_level.id
+  } else {
+    error_level = 2
+  }
   if (error) {
     error_num = error.response.status
   } else {
@@ -43,7 +49,7 @@ async function logToDB(error, message, errorlevel, account_id, reminder_id, tran
     error_num: error_num,
     error_level_id: errorlevel
   }
-  if (errorlevel >= mainstore.log_level) {
+  if (errorlevel >= error_level) {
     const response = await apiClient.post('/logentries', logEntry)
     return response.data
   }
@@ -84,7 +90,6 @@ async function createAccountFunction(newAccount) {
   try {
     const response = await apiClient.post('/accounts', newAccount)
     chorestore.showSnackbar('Account created successfully!', 'success')
-    console.log('Account created')
     logToDB(null, 'Account created', 1, response.data.id, null, null)
     return response.data
   } catch (error) {
