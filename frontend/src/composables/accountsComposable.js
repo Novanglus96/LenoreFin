@@ -13,7 +13,7 @@ const apiClient = axios.create({
 })
 
 function handleApiError(error, message) {
-  const mainstore = useMainStore();
+  const mainstore = useMainStore()
   if (error.response) {
     console.error('Response error:', error.response.data)
     console.error('Status code:', error.response.status)
@@ -27,17 +27,42 @@ function handleApiError(error, message) {
   throw error
 }
 
+async function logToDB(error, message, errorlevel, account_id, reminder_id, transaction_id) {
+  const mainstore = useMainStore()
+  let error_num = 0
+  if (error) {
+    error_num = error.response.status
+  } else {
+    error_num = null
+  }
+  const logEntry = {
+    log_entry: message,
+    account_id: account_id,
+    reminder_id: reminder_id,
+    transaction_id: transaction_id,
+    error_num: error_num,
+    error_level_id: errorlevel
+  }
+  if (errorlevel >= mainstore.log_level) {
+    const response = await apiClient.post('/logentries', logEntry)
+    return response.data
+  }
+}
+
 async function getAccountsFunction(account_type) {
   try {
     if (account_type !== 'all') {
       const response = await apiClient.get('/accounts?account_type=' + account_type)
+      logToDB(null, 'Accounts of type ' + account_type + ' fetched', 0, null, null, null)
       return response.data
     } else {
       const response = await apiClient.get('/accounts')
+      logToDB(null, 'All accounts fetched', 0, null, null, null)
       return response.data
     }
       
-    } catch (error) {
+  } catch (error) {
+      logToDB(error, 'Accounts not fetched', 2, null, null, null)
       handleApiError(error, 'Accounts not fetched: ')
     }
 
@@ -59,6 +84,8 @@ async function createAccountFunction(newAccount) {
   try {
     const response = await apiClient.post('/accounts', newAccount)
     chorestore.showSnackbar('Account created successfully!', 'success')
+    console.log('Account created')
+    logToDB(null, 'Account created', 1, response.data.id, null, null)
     return response.data
   } catch (error) {
     handleApiError(error, 'Account not created: ')
