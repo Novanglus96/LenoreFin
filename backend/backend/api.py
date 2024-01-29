@@ -408,7 +408,7 @@ class TransactionDetailIn(Schema):
 
 
 class LogEntryIn(Schema):
-    log_date: date
+    log_date: Optional[date] = get_today_formatted()
     log_entry: str
     account_id: Optional[int] = None
     reminder_id: Optional[int] = None
@@ -962,8 +962,8 @@ def list_transactiondetails(request):
 
 
 @api.get("/logentries", response=List[LogEntryOut])
-def list_log_entries(request):
-    qs = LogEntry.objects.all().order_by('-log_date')
+def list_log_entries(request, log_level: Optional[int] = Query(0)):
+    qs = LogEntry.objects.filter(error_level__id__gte=log_level).order_by('-id')
     return qs
 
 
