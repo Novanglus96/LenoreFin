@@ -34,7 +34,7 @@
                         <v-container fluid>
                         <v-row>
                             <v-col>
-                                Log
+                                <LogTableWidget />
                             </v-col>
                         </v-row>
                         </v-container>
@@ -46,6 +46,7 @@
 </template>
 <script setup>
 import { ref } from 'vue'
+import LogTableWidget from '@/components/LogTableWidget.vue'
 
 const tab = ref(null)
 </script>

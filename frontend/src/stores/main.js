@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 
 export const useMainStore = defineStore('main', {
     state: () => ({
+        log_level: 0,
         units: [
             {
                 name: 'day(s)',
