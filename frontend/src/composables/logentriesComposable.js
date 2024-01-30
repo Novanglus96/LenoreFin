@@ -76,3 +76,31 @@ return {
   addLogEntry
 }
 }
+
+export async function logToDB(error, message, errorlevel, account_id, reminder_id, transaction_id) {
+  const mainstore = useMainStore()
+  let error_num = 0
+  let error_level = 0
+  if (mainstore.options) {
+    error_level = mainstore.options.log_level.id
+  } else {
+    error_level = 2
+  }
+  if (error) {
+    error_num = error.response.status
+  } else {
+    error_num = null
+  }
+  const logEntry = {
+    log_entry: message,
+    account_id: account_id,
+    reminder_id: reminder_id,
+    transaction_id: transaction_id,
+    error_num: error_num,
+    error_level_id: errorlevel
+  }
+  if (errorlevel >= error_level) {
+    const response = await apiClient.post('/logentries', logEntry)
+    return response.data
+  }
+}

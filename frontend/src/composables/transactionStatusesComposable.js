@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import axios from 'axios'
 import { useMainStore } from '@/stores/main'
+import { logToDB } from "./logentriesComposable"
 
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -30,10 +31,12 @@ function handleApiError(error, message) {
 async function getTransactionStatusesFunction() {
   try {
     const response = await apiClient.get('/transactions/statuses')
+    logToDB(null, 'Transaction statuses fetched', 0, null, null, null)
     return response.data
       
     } catch (error) {
-      handleApiError(error, 'Transaction statuses not fetched: ')
+    handleApiError(error, 'Transaction statuses not fetched: ')
+    logToDB(error, 'Transaction statuses not fetched', 2, null, null, null)
     }
 
 }

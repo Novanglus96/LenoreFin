@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from 'axios'
 import { useMainStore } from '@/stores/main'
+import { logToDB } from "./logentriesComposable"
 
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -27,34 +28,6 @@ function handleApiError(error, message) {
   throw error
 }
 
-async function logToDB(error, message, errorlevel, account_id, reminder_id, transaction_id) {
-  const mainstore = useMainStore()
-  let error_num = 0
-  let error_level = 0
-  if (mainstore.options) {
-    error_level = mainstore.options.log_level.id
-  } else {
-    error_level = 2
-  }
-  if (error) {
-    error_num = error.response.status
-  } else {
-    error_num = null
-  }
-  const logEntry = {
-    log_entry: message,
-    account_id: account_id,
-    reminder_id: reminder_id,
-    transaction_id: transaction_id,
-    error_num: error_num,
-    error_level_id: errorlevel
-  }
-  if (errorlevel >= error_level) {
-    const response = await apiClient.post('/logentries', logEntry)
-    return response.data
-  }
-}
-
 async function getAccountsFunction(account_type) {
   try {
     if (account_type !== 'all') {
@@ -77,10 +50,12 @@ async function getAccountsFunction(account_type) {
 async function getAccountByIDFunction(account_id) {
   try {
     const response = await apiClient.get('/accounts/' + account_id)
+    logToDB(null, 'Account fetched', 0, account_id, null, null)
     return response.data
       
     } catch (error) {
-      handleApiError(error, 'Account not fetched: ')
+    handleApiError(error, 'Account not fetched: ')
+    logToDB(error, 'Account not fetched', 2, account_id, null, null)
     }
 
 }
@@ -94,6 +69,7 @@ async function createAccountFunction(newAccount) {
     return response.data
   } catch (error) {
     handleApiError(error, 'Account not created: ')
+    logToDB(error, 'Account not created', 2, null, null, null)
   }
 
 }

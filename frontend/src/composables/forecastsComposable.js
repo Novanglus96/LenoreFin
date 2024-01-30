@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import axios from 'axios'
 import { useMainStore } from '@/stores/main'
+import { logToDB } from "./logentriesComposable"
 
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -30,10 +31,12 @@ function handleApiError(error, message) {
 async function getAccountForecastFunction(account_id, start_integer, end_integer) {
   try {
     const response = await apiClient.get('/accounts/' + account_id + '/forecast?start_interval=' + start_integer + '&end_interval=' + end_integer)
+    logToDB(null, 'Account forecast fetched', 0, account_id, null, null)
     return response.data
       
     } catch (error) {
-      handleApiError(error, 'Account forecast not fetched: ')
+    handleApiError(error, 'Account forecast not fetched: ')
+    logToDB(error, 'Account forecast not fetched', 2, account_id, null, null)
     }
 
 }

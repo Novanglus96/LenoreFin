@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from 'axios'
 import { useMainStore } from '@/stores/main'
+import { logToDB } from "./logentriesComposable"
 
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -30,22 +31,26 @@ function handleApiError(error, message) {
 async function getTagsFunction() {
   try {
     const response = await apiClient.get('/tags')
+    logToDB(null, 'Tags fetched', 0, null, null, null)
     return response.data
       
-    } catch (error) {
-      handleApiError(error, 'Tags not fetched: ')
-    }
+  } catch (error) {
+    handleApiError(error, 'Tags not fetched: ')
+    logToDB(error, 'Tags not fetched', 2, null, null, null)
+  }
 
 }
 
 async function getParentTagsFunction() {
   try {
     const response = await apiClient.get('/tags?parent_only=true')
+    logToDB(null, 'Parent Tags fetched', 0, null, null, null)
     return response.data
       
-    } catch (error) {
-      handleApiError(error, 'Tags not fetched: ')
-    }
+  } catch (error) {
+    handleApiError(error, 'Parent Tags not fetched: ')
+    logToDB(error, 'Parent Tags not fetched', 2, null, null, null)
+  }
 
 }
 
@@ -54,9 +59,11 @@ async function createTagFunction(newTag) {
   try {
     const response = await apiClient.post('/tags', newTag)
     mainstore.showSnackbar('Tag created successfully!', 'success')
+    logToDB(null, 'Tag created: ' + newTag.tag_name, 1, null, null, null)
     return response.data
   } catch (error) {
     handleApiError(error, 'Tag not created: ')
+    logToDB(error, 'Tag not created: ' + newTag.tag_name, 2, null, null, null)
   }
 
 }
