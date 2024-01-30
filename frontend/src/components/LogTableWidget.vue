@@ -1,5 +1,6 @@
 <template>
-    <div>
+    <v-card>
+        <v-card-title>Log Entries</v-card-title>
         <vue3-datatable 
             :rows="log_entries"
             :columns="columns"
@@ -52,7 +53,7 @@
                     </v-btn>
                 </template>
         </vue3-datatable>
-    </div>
+    </v-card>
 </template>
 <script setup>
 import Vue3Datatable from '@bhplugin/vue3-datatable'
