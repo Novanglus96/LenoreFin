@@ -16,7 +16,7 @@
                         <v-container fluid>
                         <v-row>
                             <v-col>
-                                Options
+                                <OptionsWidget />
                             </v-col>
                         </v-row>
                         </v-container>
@@ -25,7 +25,7 @@
                         <v-container fluid>
                         <v-row>
                             <v-col>
-                                Fields
+                                <FieldsWidget />
                             </v-col>
                         </v-row>
                         </v-container>
@@ -47,6 +47,8 @@
 <script setup>
 import { ref } from 'vue'
 import LogTableWidget from '@/components/LogTableWidget.vue'
+import OptionsWidget from '@/components/OptionsWidget.vue'
+import FieldsWidget from '@/components/FieldsWidget.vue'
 
 const tab = ref(null)
 </script>
