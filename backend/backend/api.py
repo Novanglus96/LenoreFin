@@ -10,6 +10,7 @@ from decouple import config
 from django.db.models import Case, When, Q, IntegerField, Value, F, CharField
 from django.db import models
 from django.db.models.functions import Concat
+from django.utils import timezone
 
 
 class GlobalAuth(HttpBearer):
@@ -326,17 +327,18 @@ class MessageList(Schema):
 
 
 def get_today_formatted():
-    return date.today().strftime("%Y-%m-%d")
+    today = timezone.now().date()
+    return today.strftime("%Y-%m-%d")
 
 
 def get_forecast_start_date(interval):
-    today = date.today()
+    today = timezone.now().date()
     startdate = today - timedelta(days=interval)
     return startdate
 
 
 def get_forecast_end_date(interval):
-    today = date.today()
+    today = timezone.now().date()
     enddate = today + timedelta(days=interval)
     return enddate
 
@@ -862,7 +864,7 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
     qs = Transaction.objects.all()
 
     if account is not None:
-        threshold_date = date.today() + timedelta(days=maxdays)
+        threshold_date = timezone.now().date() + timedelta(days=maxdays)
         qs = qs.filter(
             transactiondetail__account__id=account,
             transaction_date__lt=threshold_date
@@ -917,7 +919,7 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
             if forecast is False:
                 transactions.append(TransactionOut.from_orm(transaction))
             else:
-                if transaction.transaction_date >= date.today():
+                if transaction.transaction_date >= timezone.now().date():
                     transactions.append(TransactionOut.from_orm(transaction))
         if forecast is False:
             transactions.reverse()
