@@ -124,6 +124,14 @@ const options = ref({
                         padding: 3,
                         opacity: 0.5
                     }
+                },
+                line2: {
+                    type: 'line',
+                    mode: 'horizontal',
+                    scaleID: 'y',
+                    value: 0,
+                    borderColor: 'black',
+                    borderWidth: 1,
                 }
             },
         },
