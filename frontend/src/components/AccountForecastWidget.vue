@@ -71,6 +71,7 @@ import {
     Filler
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
+import annotationPlugin from 'chartjs-plugin-annotation'
 import { useAccountForecasts } from '@/composables/forecastsComposable'
 import { useMainStore } from '@/stores/main'
 
@@ -92,7 +93,8 @@ ChartJS.register(
     Title,
     Tooltip,
     Legend,
-    Filler
+    Filler,
+    annotationPlugin
 )
 
 const options = ref({
@@ -100,6 +102,31 @@ const options = ref({
     maintainAspectRatio: true,
     aspectRatio: "5",
     plugins: {
+        annotation: {
+            annotations: {
+                line1: {
+                    type: 'line',
+                    mode: 'vertical',
+                    scaleID: 'x',
+                    value: new Date().toLocaleDateString('en-US', {
+                        year: '2-digit',
+                        month: 'short',
+                        day: '2-digit'
+                    }),
+                    borderColor: 'grey',
+                    borderWidth: 1,
+                    borderDash: [2, 2],
+                    label: {
+                        content: 'Today',
+                        display: true,
+                        position: 'start',
+                        rotation: -90,
+                        padding: 3,
+                        opacity: 0.5
+                    }
+                }
+            },
+        },
         tooltip: {
             callbacks: {
                 label: function (context) {

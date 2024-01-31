@@ -183,7 +183,9 @@ class FillObject(Schema):
 
 
 class DatasetObject(Schema):
+    borderColor: str
     backgroundColor: str
+    tension: Decimal = Field(whole_digits=1, decimal_places=1)
     data: List[Decimal] = Field(whole_digits=10, decimal_places=2)
     fill: FillObject
     pointStyle: bool
@@ -668,7 +670,9 @@ def get_forecast(request, account_id: int, start_interval: int, end_interval: in
         below='rgb(248, 121, 121)'
     )
     datasets_out = DatasetObject(
-        backgroundColor='#1f1f1f',
+        borderColor='#06966A',
+        backgroundColor='#06966A',
+        tension=0.1,
         data=data,
         fill=fillobject_out,
         pointStyle='false'
