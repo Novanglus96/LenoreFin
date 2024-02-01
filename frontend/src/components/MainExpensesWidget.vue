@@ -32,7 +32,7 @@
                 :width="12"
                 v-if="isLoading"
             >Loading...</v-progress-circular>
-            <Pie :data="data" :options="options" v-else/>
+            <Pie :data="tag_graph" :options="options" v-else/>
         </template>
     </v-card>
 </template>
@@ -41,20 +41,12 @@
 import { Pie } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { ref } from 'vue'
-import { useMainStore } from '@/stores/main'
+import { useGraphs } from '@/composables/tagsComposable'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
-const mainstore = useMainStore();
-const data = ref({
-    labels: mainstore.main_expenses_widget.labels, // Data point for labels
-    datasets: [{
-        label: 'Main Expenses',
-        data: mainstore.main_expenses_widget.data, // Data point for data
-        backgroundColor: mainstore.graphColors,
-        hoverOffset: 4
-    }]
-})
+const { tag_graph, isLoading } = useGraphs(null, true, 0, [0], 'Main Expenses')
+
 const options = ref({
     responsive: true,
     maintainAspectRatio: false,

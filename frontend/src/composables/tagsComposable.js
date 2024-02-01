@@ -54,6 +54,26 @@ async function getParentTagsFunction() {
 
 }
 
+async function getGraphByTagsFunction(tag_id, expense, month, exclude, graph_name) {
+  try {
+    let query_params = '?graph_name=' + graph_name + '&month=' + month + '&expense=' + expense
+    if (tag_id !== null) {
+      query_params += `&tagID=${tag_id}`
+    }
+    exclude.forEach(id => {
+      query_params += `&exclude=${id}`;
+    })
+    const response = await apiClient.get('/graphs_bytags' + query_params)
+    logToDB(null, 'Graph by tags fetched', 0, null, null, null)
+    return response.data
+      
+  } catch (error) {
+    handleApiError(error, 'Graph by tags not fetched: ')
+    logToDB(error, 'Graph by tags not fetched', 2, null, null, null)
+  }
+
+}
+
 async function createTagFunction(newTag) {
   const mainstore = useMainStore();
   try {
@@ -103,10 +123,25 @@ export function useParentTags() {
     queryFn: () => getParentTagsFunction(),
     select: (response) => response,
     client: queryClient
-})
+  })
 
-return {
-  isLoading,
-  parent_tags
+  return {
+    isLoading,
+    parent_tags
+  }
 }
+
+export function useGraphs(tag_id, expense, month, exclude, graph_name) {
+  const queryClient = useQueryClient()
+    const { data: tag_graph, isLoading } = useQuery({
+      queryKey: ['tag_graph', { tagID: tag_id, expense: expense, month: month, exlude: exclude, graph_name: graph_name }],
+      queryFn: () => getGraphByTagsFunction(tag_id, expense, month, exclude, graph_name),
+      select: (response) => response,
+      client: queryClient
+  })
+
+  return {
+    isLoading,
+    tag_graph
+  }
 }
