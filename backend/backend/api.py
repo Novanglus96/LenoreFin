@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from pydantic import BaseModel, Field
 from ninja.security import HttpBearer
 from decouple import config
-from django.db.models import Case, When, Q, IntegerField, Value, F, CharField
+from django.db.models import Case, When, Q, IntegerField, Value, F, CharField, Sum
 from django.db import models
 from django.db.models.functions import Concat
 from django.utils import timezone
@@ -447,6 +447,18 @@ class TagDetailOut(Schema):
     average_amt: Decimal = Field(whole_digits=10, decimal_places=2)
 
 
+class GraphDataset(Schema):
+    label: str
+    data: List[Decimal] = Field(whole_digits=10, decimal_places=2)
+    backgroundColor: List[str]
+    hoverOffset: int = 4
+
+
+class GraphOut(Schema):
+    labels: List[str]
+    datasets: List[GraphDataset]
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -753,6 +765,51 @@ def list_account_types(request):
 def list_banks(request):
     qs = Bank.objects.all().order_by('bank_name')
     return qs
+
+
+@api.get("/graphs_bytags", response=GraphOut)
+def get_graph(request, graph_name: str, exclude: List[int] = Query(...), tagID: Optional[int] = Query(None), month: Optional[int] = 0, expense: Optional[bool] = Query(True)):
+    today = timezone.now().date()
+    target_date = today - relativedelta(months=month)
+    target_month = target_date.month
+    labels = []
+    values = []
+    datasets = []
+    colors = [
+        '#7fb1b1',
+        '#597c7c',
+        '#7f8cb1',
+        '#7fb17f',
+        '#597c59',
+        '#b17fa5',
+        '#7c5973',
+        '#b1a77f',
+        '#edffff',
+        '#dbffff',
+    ]
+    if tagID is None:
+        tag_type_id = 1 if expense else 2
+        tags = Tag.objects.filter(tag_type__id=tag_type_id, parent=None).exclude(id__in=exclude)
+    else:
+        tags = Tag.objects.filter(id=tagID).exclude(id__in=exclude)
+    for tag in tags:
+        tag_amount = TransactionDetail.objects.filter(Q(tag=tag) | Q(tag__parent=tag), transaction__transaction_date__month=target_month).aggregate(Sum('detail_amt'))['detail_amt__sum'] or 0
+        if tag_amount != 0:
+            labels.append(tag.tag_name)
+            values.append(tag_amount)
+    dataset = GraphDataset(
+        label=graph_name,
+        data=values,
+        backgroundColor=colors,
+        hoverOffset=4
+    )
+    datasets.append(dataset)
+    graph_object = GraphOut(
+        labels=labels,
+        datasets=datasets
+    )
+
+    return graph_object
 
 
 @api.get("/transactions_bytag", response=TagDetailOut)
