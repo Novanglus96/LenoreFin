@@ -11,6 +11,7 @@ from django.db.models import Case, When, Q, IntegerField, Value, F, CharField
 from django.db import models
 from django.db.models.functions import Concat
 from django.utils import timezone
+from dateutil.relativedelta import relativedelta
 
 
 class GlobalAuth(HttpBearer):
@@ -431,6 +432,21 @@ class LogEntryOut(Schema):
     error_level: Optional[ErrorLevelOut] = None
 
 
+class TagTransactionOut(Schema):
+    transaction_id: int
+    transaction_date: date
+    tag_amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    transaction_description: str
+    transaction_memo: str
+    transaction_pretty_account: str
+
+
+class TagDetailOut(Schema):
+    details: List[TagTransactionOut]
+    total_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+    average_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+
+
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
     account_type = AccountType.objects.create(**payload.dict())
@@ -737,6 +753,38 @@ def list_account_types(request):
 def list_banks(request):
     qs = Bank.objects.all().order_by('bank_name')
     return qs
+
+
+@api.get("/transactions_bytag", response=TagDetailOut)
+def list_transactions_bytag(request, tag: int, month: Optional[int] = 0):
+    today = timezone.now().date()
+    target_date = today - relativedelta(months=month)
+    target_month = target_date.month
+    qs = TransactionDetail.objects.filter(tag__id=tag, transaction__transaction_date__month=target_month).order_by('-transaction__transaction_date')
+
+    total_amount = 0
+    average_amount = 0
+    transaction_details = []
+    for detail in qs:
+        total_amount += detail.detail_amt
+        transaction_detail = TagTransactionOut(
+            transaction_id=detail.transaction.id,
+            transaction_date=detail.transaction.transaction_date,
+            tag_amount=detail.detail_amt,
+            transaction_description=detail.transaction.description,
+            transaction_memo=detail.transaction.memo,
+            transaction_pretty_account=detail.account.account_name
+        )
+        transaction_details.append(transaction_detail)
+    if qs.count() != 0:
+        average_amount = total_amount / qs.count()
+
+    tag_detail = TagDetailOut(
+        details=transaction_details,
+        total_amt=total_amount,
+        average_amt=average_amount
+    )
+    return tag_detail
 
 
 @api.get("/accounts", response=List[AccountOut])
