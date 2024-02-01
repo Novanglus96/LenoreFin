@@ -155,7 +155,7 @@ const createTransactionMutation = useMutation({
     queryClient.invalidateQueries({ queryKey: ['transactions'] })
     queryClient.invalidateQueries({ queryKey: ['accounts'] })
     queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
-
+    queryClient.invalidateQueries({ queryKey: ['tag_graph'] })
     for (const detail of data) {
       createTransactionDetailMutation.mutate(detail)
     }
@@ -169,6 +169,7 @@ const createTransactionDetailMutation = useMutation({
     queryClient.invalidateQueries({ queryKey: ['transactions'] })
     queryClient.invalidateQueries({ queryKey: ['accounts'] })
     queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
+    queryClient.invalidateQueries({ queryKey: ['tag_graph'] })
   }
 })
   
@@ -179,6 +180,7 @@ const deleteTransactionMutation = useMutation({
     queryClient.invalidateQueries({ queryKey: ['transactions'] })
     queryClient.invalidateQueries({ queryKey: ['accounts'] })
     queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
+    queryClient.invalidateQueries({ queryKey: ['tag_graph'] })
   }
 })
   
@@ -189,6 +191,7 @@ const clearTransactionMutation = useMutation({
     queryClient.invalidateQueries({ queryKey: ['transactions'] })
     queryClient.invalidateQueries({ queryKey: ['accounts'] })
     queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
+    queryClient.invalidateQueries({ queryKey: ['tag_graph'] })
   }
 })
 
