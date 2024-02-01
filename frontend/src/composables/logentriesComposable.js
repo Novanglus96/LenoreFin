@@ -81,6 +81,11 @@ export async function logToDB(error, message, errorlevel, account_id, reminder_i
   const mainstore = useMainStore()
   let error_num = 0
   let error_level = 0
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  const formattedDate = `${year}-${month}-${day}`
   if (mainstore.options) {
     error_level = mainstore.options.log_level.id
   } else {
@@ -92,6 +97,7 @@ export async function logToDB(error, message, errorlevel, account_id, reminder_i
     error_num = null
   }
   const logEntry = {
+    log_date: formattedDate,
     log_entry: message,
     account_id: account_id,
     reminder_id: reminder_id,
