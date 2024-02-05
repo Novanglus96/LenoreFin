@@ -238,23 +238,23 @@ class NoteOut(Schema):
 
 
 class OptionIn(Schema):
-    log_level_id: int
-    alert_balance: Decimal = Field(whole_digits=10, decimal_places=2)
-    alert_period: int
-    widget1_graph_name: str
+    log_level_id: Optional[int]
+    alert_balance: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
+    alert_period: Optional[int]
+    widget1_graph_name: Optional[str]
     widget1_tag_id: Optional[int] = None
-    widget1_expense: bool = True
-    widget1_month: int = 0
+    widget1_expense: Optional[bool] = True
+    widget1_month: Optional[int] = 0
     widget1_exclude: Optional[str] = '[0]'
-    widget2_graph_name: str
+    widget2_graph_name: Optional[str]
     widget2_tag_id: Optional[int] = None
-    widget2_expense: bool = True
-    widget2_month: int = 0
+    widget2_expense: Optional[bool] = True
+    widget2_month: Optional[int] = 0
     widget2_exclude: Optional[str] = '[0]'
-    widget3_graph_name: str
+    widget3_graph_name: Optional[str]
     widget3_tag_id: Optional[int] = None
-    widget3_expense: bool = True
-    widget3_month: int = 0
+    widget3_expense: Optional[bool] = True
+    widget3_month: Optional[int] = 0
     widget3_exclude: Optional[str] = '[0]'
 
 
@@ -1299,27 +1299,45 @@ def update_note(request, note_id: int, payload: NoteIn):
     return {"success": True}
 
 
-@api.put("/options/{option_id}")
+@api.patch("/options/{option_id}")
 def update_option(request, option_id: int, payload: OptionIn):
     option = get_object_or_404(Option, id=option_id)
-    option.log_level_id = payload.log_level_id
-    option.alert_balance = payload.alert_balance
-    option.alert_period = payload.alert_period
-    option.widget1_graph_name = payload.widget1_graph_name
-    option.widget1_tag_id = payload.widget1_tag_id
-    option.widget1_expense = payload.widget1_expense
-    option.widget1_month = payload.widget1_month
-    option.widget1_exclude = payload.widget1_exclude
-    option.widget2_graph_name = payload.widget2_graph_name
-    option.widget2_tag_id = payload.widget2_tag_id
-    option.widget2_expense = payload.widget2_expense
-    option.widget2_month = payload.widget2_month
-    option.widget2_exclude = payload.widget2_exclude
-    option.widget3_graph_name = payload.widget3_graph_name
-    option.widget3_tag_id = payload.widget3_tag_id
-    option.widget3_expense = payload.widget3_expense
-    option.widget3_month = payload.widget3_month
-    option.widget3_exclude = payload.widget3_exclude
+    if payload.log_level_id is not None:
+        option.log_level_id = payload.log_level_id
+    if payload.alert_balance is not None:
+        option.alert_balance = payload.alert_balance
+    if payload.alert_period is not None:
+        option.alert_period = payload.alert_period
+    if payload.widget1_graph_name is not None:
+        option.widget1_graph_name = payload.widget1_graph_name
+    if payload.widget1_tag_id is not None:
+        option.widget1_tag_id = payload.widget1_tag_id
+    if payload.widget1_expense is not None:
+        option.widget1_expense = payload.widget1_expense
+    if payload.widget1_month is not None:
+        option.widget1_month = payload.widget1_month
+    if payload.widget1_exclude is not None:
+        option.widget1_exclude = payload.widget1_exclude
+    if payload.widget2_graph_name is not None:
+        option.widget2_graph_name = payload.widget2_graph_name
+    if payload.widget2_tag_id is not None:
+        option.widget2_tag_id = payload.widget2_tag_id
+    if payload.widget2_expense is not None:
+        option.widget2_expense = payload.widget2_expense
+    if payload.widget2_month is not None:
+        option.widget2_month = payload.widget2_month
+    if payload.widget2_exclude is not None:
+        option.widget2_exclude = payload.widget2_exclude
+    if payload.widget3_graph_name is not None:
+        option.widget3_graph_name = payload.widget3_graph_name
+    if payload.widget3_tag_id is not None:
+        option.widget3_tag_id = payload.widget3_tag_id
+    if payload.widget3_expense is not None:
+        option.widget3_expense = payload.widget3_expense
+    if payload.widget3_month is not None:
+        option.widget3_month = payload.widget3_month
+    if payload.widget3_exclude is not None:
+        option.widget3_exclude = payload.widget3_exclude
     option.save()
     return {"success": True}
 
