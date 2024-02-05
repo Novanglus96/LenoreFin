@@ -5,7 +5,22 @@
     "fields": {
         "log_level": 2,
         "alert_balance": 100,
-        "alert_period": 3
+        "alert_period": 3,
+        "widget1_graph_name": "Expenses",
+        "widget1_tag_id": null,
+        "widget1_expense": true,
+        "widget1_month": 0,
+        "widget1_exclude": [0],
+        "widget2_graph_name": "Income",
+        "widget2_tag_id": null,
+        "widget2_expense": false,
+        "widget2_month": 0,
+        "widget2_exclude": [0],
+        "widget3_graph_name": "Untagged",
+        "widget3_tag_id": 1,
+        "widget3_expense": true,
+        "widget3_month": 0,
+        "widget3_exclude": [0]
     }
   }
 ]
