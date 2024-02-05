@@ -79,7 +79,6 @@ return {
 
 export async function logToDB(error, message, errorlevel, account_id, reminder_id, transaction_id) {
   let error_num = 0
-  let error_level = 0
   const today = new Date()
   const year = today.getFullYear()
   const month = String(today.getMonth() + 1).padStart(2, '0')
