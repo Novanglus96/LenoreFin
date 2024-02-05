@@ -12,6 +12,8 @@ from django.db import models
 from django.db.models.functions import Concat
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
+import random
+import json
 
 
 class GlobalAuth(HttpBearer):
@@ -801,7 +803,32 @@ def list_banks(request):
 
 
 @api.get("/graphs_bytags", response=GraphOut)
-def get_graph(request, graph_name: str, exclude: List[int] = Query(...), tagID: Optional[int] = Query(None), month: Optional[int] = 0, expense: Optional[bool] = Query(True)):
+def get_graph(request, widget_id: int):
+    graph_name = ''
+    exclude = '[0]'
+    tagID = None
+    month = 0
+    expense = True
+    options = get_object_or_404(Option, id=1)
+    if widget_id == 1:
+        graph_name = options.widget1_graph_name
+        exclude = options.widget1_exclude
+        tagID = options.widget1_tag_id
+        month = options.widget1_month
+        expense = options.widget1_expense
+    if widget_id == 2:
+        graph_name = options.widget2_graph_name
+        exclude = options.widget2_exclude
+        tagID = options.widget2_tag_id
+        month = options.widget2_month
+        expense = options.widget2_expense
+    if widget_id == 3:
+        graph_name = options.widget3_graph_name
+        exclude = options.widget3_exclude
+        tagID = options.widget3_tag_id
+        month = options.widget3_month
+        expense = options.widget3_expense
+    exclude_list = json.loads(exclude)
     today = timezone.now().date()
     target_date = today - relativedelta(months=month)
     target_month = target_date.month
@@ -819,12 +846,26 @@ def get_graph(request, graph_name: str, exclude: List[int] = Query(...), tagID: 
         '#b1a77f',
         '#edffff',
         '#dbffff',
+        '#7c6759',
+        '#b1937f',
+        '#8686b1',
+        '#5e5e7c',
+        '#757c59',
+        '#52573e',
+        '#ffedff',
+        '#573e57',
+        '#fff8db',
+        '#ffe9db',
+        '#e0e0ff',
+        '#9d9db3'
     ]
+    random.seed(today.month * widget_id)
+    random.shuffle(colors)
     if tagID is None:
         tag_type_id = 1 if expense else 2
-        tags = Tag.objects.filter(tag_type__id=tag_type_id, parent=None).exclude(id__in=exclude)
+        tags = Tag.objects.filter(tag_type__id=tag_type_id, parent=None).exclude(id__in=exclude_list)
     else:
-        tags = Tag.objects.filter(id=tagID).exclude(id__in=exclude)
+        tags = Tag.objects.filter(id=tagID).exclude(id__in=exclude_list)
     for tag in tags:
         tag_amount = TransactionDetail.objects.filter(Q(tag=tag) | Q(tag__parent=tag), transaction__transaction_date__month=target_month).aggregate(Sum('detail_amt'))['detail_amt__sum'] or 0
         if tag_amount != 0:

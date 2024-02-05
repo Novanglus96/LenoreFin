@@ -54,17 +54,9 @@ async function getParentTagsFunction() {
 
 }
 
-async function getGraphByTagsFunction(tag_id, expense, month, exclude, graph_name) {
+async function getGraphByTagsFunction(widget_id) {
   try {
-    const exclude_array = JSON.parse(exclude)
-    let query_params = '?graph_name=' + graph_name + '&month=' + month + '&expense=' + expense
-    if (tag_id !== null) {
-      query_params += `&tagID=${tag_id}`
-    }
-    exclude_array.forEach(id => {
-      query_params += `&exclude=${id}`;
-    })
-    const response = await apiClient.get('/graphs_bytags' + query_params)
+    const response = await apiClient.get('/graphs_bytags?widget_id=' + widget_id)
     logToDB(null, 'Graph by tags fetched', 0, null, null, null)
     return response.data
       
@@ -132,11 +124,11 @@ export function useParentTags() {
   }
 }
 
-export function useGraphs(tag_id, expense, month, exclude, graph_name) {
+export function useGraphs(widget_id) {
   const queryClient = useQueryClient()
     const { data: tag_graph, isLoading } = useQuery({
-      queryKey: ['tag_graph', { tagID: tag_id, expense: expense, month: month, exlude: exclude, graph_name: graph_name }],
-      queryFn: () => getGraphByTagsFunction(tag_id, expense, month, exclude, graph_name),
+      queryKey: ['tag_graph', { widgetID: widget_id }],
+      queryFn: () => getGraphByTagsFunction(widget_id),
       select: (response) => response,
       client: queryClient
   })

@@ -4,33 +4,18 @@
             <v-col class="rounded text-center"> 
                 <PieGraphWidget
                     :key="1"
-                    :tag_id="mainstore.options.widget1_tag_id"
-                    :expense="mainstore.options.widget1_expense"
-                    :month="mainstore.options.widget1_month"
-                    :exclude="mainstore.options.widget1_exclude"
-                    :graph_name="mainstore.options.widget1_graph_name"
                     :widget="1"
                 />
             </v-col>
             <v-col class="rounded text-center">
                 <PieGraphWidget
                     :key="2"
-                    :tag_id="mainstore.options.widget2_tag_id"
-                    :expense="mainstore.options.widget2_expense"
-                    :month="mainstore.options.widget2_month"
-                    :exclude="mainstore.options.widget2_exclude"
-                    :graph_name="mainstore.options.widget2_graph_name"
                     :widget="2"
                 />
             </v-col>
             <v-col class="rounded text-center">
                 <PieGraphWidget
                     :key="3"
-                    :tag_id="mainstore.options.widget3_tag_id"
-                    :expense="mainstore.options.widget3_expense"
-                    :month="mainstore.options.widget3_month"
-                    :exclude="mainstore.options.widget3_exclude"
-                    :graph_name="mainstore.options.widget3_graph_name"
                     :widget="3"
                 />
             </v-col>
@@ -47,9 +32,6 @@
 import PieGraphWidget from '@/components/PieGraphWidget.vue'
 import RemindersWidget from '@/components/RemindersWidget.vue'
 import UpcomingTransactionsWidget from '@/components/UpcomingTransactionsWidget.vue'
-import { useMainStore } from '@/stores/main'
-
-const mainstore = useMainStore()
 
 </script>
 <style scoped>

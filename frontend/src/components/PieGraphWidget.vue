@@ -64,26 +64,6 @@ import { useMainStore } from '@/stores/main';
 const mainstore = useMainStore()
 ChartJS.register(ArcElement, Tooltip, Legend)
 const props = defineProps({
-    tag_id: {
-        type: Number,
-        default: null
-    },
-    month: {
-        type: Number,
-        default: 0
-    },
-    expense: {
-        type: Boolean,
-        default: true
-    },
-    exclude: {
-        type: Array,
-        default: () => [0]
-    },
-    graph_name: {
-        type: String,
-        default: 'Graph'
-    },
     widget: {
         type: Number,
         default: 1
@@ -97,7 +77,7 @@ const formData = ref({
     exlude: props.exclude
 })
 const formComplete = ref(false)
-const { tag_graph, isLoading } = useGraphs(props.tag_id, props.expense, props.month, props.exclude, props.graph_name)
+const { tag_graph, isLoading } = useGraphs(props.widget)
 
 const options = ref({
     responsive: true,
