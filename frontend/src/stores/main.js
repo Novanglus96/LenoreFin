@@ -9,7 +9,22 @@ export const useMainStore = defineStore('main', {
                 error_level: "Warning"
             },
             alert_balance: "100.00",
-            alert_period: 3
+            alert_period: 3,
+            widget1_graph_name: "Expenses",
+            widget1_tag_id: null,
+            widget1_expense: true,
+            widget1_month: 0,
+            widget1_exclude: [0],
+            widget2_graph_name: "Income",
+            widget2_tag_id: null,
+            widget2_expense: false,
+            widget2_month: 0,
+            widget2_exclude: [0],
+            widget3_graph_name: "Untagged",
+            widget3_tag_id: 1,
+            widget3_expense: true,
+            widget3_month: 0,
+            widget3_exclude: [0],
         },
         units: [
             {
@@ -72,49 +87,6 @@ export const useMainStore = defineStore('main', {
         snackbarColor: '',
         snackbar: false,
         snackbarTimeout: 1500,
-        graphColors: [
-            '#7fb1b1',
-            '#597c7c',
-            '#7f8cb1',
-            '#7fb17f',
-            '#597c59',
-            '#b17fa5',
-            '#7c5973',
-            '#b1a77f',
-            '#edffff',
-            '#dbffff',
-        ],
-        kids_expenses_widget: { // temporary
-            labels: [
-                'Child Care',
-                'Diapers/Wipes',
-            ],
-            data: [
-                1530.00,
-                12.30,
-            ]
-        },
-        main_expenses_widget: { // temporary
-            labels: [
-                'Money Pile',
-                'Kids',
-                'Rent',
-                'Subscriptions'
-            ],
-            data: [
-                .33,
-                58.05,
-                36.04,
-                5.58]
-        },
-        money_pile_expenses_widget: { // temporary
-            labels: [
-                'Eating Out',
-            ],
-            data: [
-                8.79,
-            ]
-        },
         reminder_items: [ // temporary
             {
                 id: 1,
@@ -162,4 +134,5 @@ export const useMainStore = defineStore('main', {
             this.snackbar = true;
         }
     },
+    persist: true,
 })

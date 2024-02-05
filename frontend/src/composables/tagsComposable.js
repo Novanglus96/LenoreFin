@@ -56,11 +56,12 @@ async function getParentTagsFunction() {
 
 async function getGraphByTagsFunction(tag_id, expense, month, exclude, graph_name) {
   try {
+    const exclude_array = JSON.parse(exclude)
     let query_params = '?graph_name=' + graph_name + '&month=' + month + '&expense=' + expense
     if (tag_id !== null) {
       query_params += `&tagID=${tag_id}`
     }
-    exclude.forEach(id => {
+    exclude_array.forEach(id => {
       query_params += `&exclude=${id}`;
     })
     const response = await apiClient.get('/graphs_bytags' + query_params)
