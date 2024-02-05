@@ -148,11 +148,11 @@ const checkFormComplete = async () => {
 
 const submitForm = () => {
     if (props.widget == 1) {
-        mainstore.widget1 = formData
+        mainstore.options.widget1_graph_name = formData.value.graph_name
     } else if (props.widget == 2) {
-        mainstore.widget2 = formData
+        mainstore.options.widget2_graph_name = formData.value.graph_name
     } else if (props.widget == 3) {
-        mainstore.widget3 = formData
+        mainstore.options.widget3_graph_name = formData.value.graph_name
     }
     formComplete.value = false
 }
