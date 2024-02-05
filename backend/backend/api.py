@@ -593,8 +593,11 @@ def create_transaction_detail(request, payload: TransactionDetailIn):
 
 @api.post("/logentries")
 def create_log_entry(request, payload: LogEntryIn):
-    log_entry = LogEntry.objects.create(**payload.dict())
-    return {"id": log_entry.id}
+    options = get_object_or_404(Option, id=1)
+    if payload.error_level_id >= options.log_level.id:
+        log_entry = LogEntry.objects.create(**payload.dict())
+        return {"id": log_entry.id}
+    return {"id": 0}
 
 
 @api.post("/messages")
