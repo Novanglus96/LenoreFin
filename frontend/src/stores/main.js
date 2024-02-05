@@ -2,30 +2,6 @@ import { defineStore } from 'pinia'
 
 export const useMainStore = defineStore('main', {
     state: () => ({
-        options: {
-            id: 1,
-            log_level: {
-                id: 2,
-                error_level: "Warning"
-            },
-            alert_balance: "100.00",
-            alert_period: 3,
-            widget1_graph_name: "Expenses",
-            widget1_tag_id: null,
-            widget1_expense: true,
-            widget1_month: 0,
-            widget1_exclude: [0],
-            widget2_graph_name: "Income",
-            widget2_tag_id: null,
-            widget2_expense: false,
-            widget2_month: 0,
-            widget2_exclude: [0],
-            widget3_graph_name: "Untagged",
-            widget3_tag_id: 1,
-            widget3_expense: true,
-            widget3_month: 0,
-            widget3_exclude: [0],
-        },
         units: [
             {
                 name: 'day(s)',

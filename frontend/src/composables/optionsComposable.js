@@ -66,6 +66,7 @@ const updateOptionsMutation = useMutation({
   onSuccess: () => {
     console.log('Success updating options')
     queryClient.invalidateQueries({ queryKey: ['options'] })
+    queryClient.invalidateQueries({ queryKey: ['tag_graph'] })
   }
 })
 
