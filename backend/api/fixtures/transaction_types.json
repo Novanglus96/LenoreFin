@@ -19,12 +19,5 @@
     "fields": {
         "transaction_type": "Transfer"
     }
-  },
-  {
-    "model": "api.TransactionType",
-    "pk": 99,
-    "fields": {
-        "transaction_type": "Opening Balance"
-    }
   }
 ]
