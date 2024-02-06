@@ -32,7 +32,7 @@
     "fields": {
         "account_type": "Investment",
         "color":  "#231f20",
-        "icon": "mdi-chart-areaspline"
+        "icon": "mdi-finance"
     }
   },
   {
