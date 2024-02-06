@@ -83,7 +83,19 @@
                                 v-model="formData.source_account_id"
                                 :rules="required"
                                 @update:model-value="checkFormComplete"
-                            ></v-autocomplete>
+                            >
+                                <template v-slot:item="{ props, item }">
+                                    <v-list-item
+                                    v-bind="props"
+                                    :title="item.raw.account_name"
+                                    :subtitle="item.raw.bank.bank_name"
+                                    >
+                                        <template v-slot:prepend>
+                                            <v-icon :icon="item.raw.account_type.icon"></v-icon>
+                                        </template>
+                                    </v-list-item>
+                                </template>
+                            </v-autocomplete>
                         </v-col>
                         <v-col>
                             <v-autocomplete
@@ -98,7 +110,19 @@
                                 :rules="required"
                                 @update:model-value="checkFormComplete"
                                 v-if="formData.transaction_type_id == 3"
-                            ></v-autocomplete>
+                            >
+                                <template v-slot:item="{ props, item }">
+                                    <v-list-item
+                                    v-bind="props"
+                                    :title="item.raw.account_name"
+                                    :subtitle="item.raw.bank.bank_name"
+                                    >
+                                        <template v-slot:prepend>
+                                            <v-icon :icon="item.raw.account_type.icon"></v-icon>
+                                        </template>
+                                    </v-list-item>
+                                </template>
+                            </v-autocomplete>
                         </v-col>
                     </v-row>
                     <v-row>
@@ -120,10 +144,13 @@
                                 <template v-slot:item="{ props, item }">
                                     <v-list-item
                                     v-bind="props"
-                                    prepend-icon="mdi-tag"
                                     :title="item.raw.parent ? item.raw.parent.tag_name : item.raw.tag_name"
                                     :subtitle="item.raw.parent ? item.raw.tag_name : null"
-                                    ></v-list-item>
+                                    >
+                                        <template v-slot:prepend>
+                                            <v-icon icon="mdi-tag" :color="tagColor(item.raw.tag_type.id)"></v-icon>
+                                        </template>
+                                    </v-list-item>
                                 </template>
                             </v-autocomplete>
                         </v-col>
@@ -178,7 +205,6 @@ const formattedDate = `${year}-${month}-${day}`;
 const formComplete = ref(false)
 const { transaction_types, isLoading: transaction_types_isLoading } = useTransactionTypes()
 const { transaction_statuses, isLoading: transaction_statuses_isLoading } = useTransactionStatuses()
-const { tags, isLoading: tags_isLoading } = useTags()
 const { addTransaction } = useTransactions()
 const props = defineProps({
     itemFormDialog: {
@@ -208,7 +234,7 @@ const formData = ref({
     tag_id: 1,
     total_amount: 0
 })
-
+const { tags, isLoading: tags_isLoading } = useTags()
 const amount = ref(null)
 const show = ref(props.itemFormDialog)
 const emit = defineEmits(['updateDialog'])
@@ -279,4 +305,14 @@ const submitForm = async () => {
 const closeDialog = () => {
     emit('updateDialog', false);
 };
+
+const tagColor = (typeID) => {
+    if (typeID == 1) {
+        return 'red'
+    } else if (typeID == 2) {
+        return 'green'
+    } else if (typeID == 3) {
+        return 'grey'
+    }
+}
 </script>
