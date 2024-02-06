@@ -110,22 +110,21 @@ const options = ref({
     plugins: {
         legend: {
             position: 'right'
-        }
-    },
-    tooltip: {
-        callbacks: {
-            label: function (context) {
-                let label = context.dataset.data || '';
-
-                if (label) {
-                    label += ': ';
+        },
+        tooltip: {
+            callbacks: {
+                label: function (tooltipItem) {
+                    var total = tooltipItem.dataset.data.reduce(function (previousValue, currentValue) {
+                        var previousNumber = +previousValue
+                        var currentNumber = +currentValue
+                        return previousNumber + currentNumber;
+                    });
+                    var currentValue = tooltipItem.dataset.data[tooltipItem.dataIndex];
+                    var percentage = Math.floor(((currentValue / total) * 100) + 0.5);
+                    return '$' + currentValue + ' (' + percentage + '%)';
                 }
-                if (context.parsed.x !== null) {
-                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.x);
-                }
-                return label;
             }
-        }
+        },
     },
 })
 
