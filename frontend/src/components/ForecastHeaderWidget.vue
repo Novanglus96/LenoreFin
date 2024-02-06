@@ -4,7 +4,7 @@
             variant="outlined"
             :elevation="4"
             class="bg-accent"
-            v-if="!accounts_isLoading"
+            v-if="!accounts_isLoading && accounts && accounts.length > 0"
         >
             <template v-slot:text>
                 <v-row desnity="compact">
@@ -41,6 +41,13 @@
             </template>
         </v-card>
         <v-skeleton-loader type="card" v-if="accounts_isLoading"></v-skeleton-loader>
+        <v-card
+            variant="outlined"
+            :elevation="4"
+            class="bg-accent"
+            v-if="accounts && accounts.length === 0"
+            title="No Accounts"
+        ></v-card>
     </div>
 </template>
 <script setup>
