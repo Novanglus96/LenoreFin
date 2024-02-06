@@ -28,9 +28,13 @@ function handleApiError(error, message) {
   throw error
 }
 
-async function getTagsFunction() {
+async function getTagsFunction(tag_type) {
   try {
-    const response = await apiClient.get('/tags')
+    let querytext = ''
+    if (tag_type) {
+      querytext = '?tag_type=' + tag_type
+    }
+    const response = await apiClient.get('/tags' + querytext)
     logToDB(null, 'Tags fetched', 0, null, null, null)
     return response.data
       
@@ -94,11 +98,11 @@ async function createTagFunction(newTag) {
 
 }
 
-export function useTags() {
+export function useTags(tag_type) {
   const queryClient = useQueryClient()
   const { data: tags, isLoading } = useQuery({
     queryKey: ['tags'],
-    queryFn: () => getTagsFunction(),
+    queryFn: () => getTagsFunction(tag_type),
     select: (response) => response,
     client: queryClient
 })
