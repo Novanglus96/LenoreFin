@@ -14,5 +14,271 @@
             "tag_name": "Transfer",
             "tag_type_id": 3
         }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 3,
+        "fields": {
+            "tag_name": "Car",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 4,
+        "fields": {
+            "tag_name": "Gasoline",
+            "tag_type_id": 1,
+            "parent_id": 3
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 5,
+        "fields": {
+            "tag_name": "Cash",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 6,
+        "fields": {
+            "tag_name": "Charity",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 7,
+        "fields": {
+            "tag_name": "Christmas",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 8,
+        "fields": {
+            "tag_name": "Credit Card",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 9,
+        "fields": {
+            "tag_name": "Debt",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 10,
+        "fields": {
+            "tag_name": "Car Payment",
+            "tag_type_id": 1,
+            "parent_id": 9
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 11,
+        "fields": {
+            "tag_name": "Family",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 12,
+        "fields": {
+            "tag_name": "Fun",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 13,
+        "fields": {
+            "tag_name": "Groceries",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 14,
+        "fields": {
+            "tag_name": "Home",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 15,
+        "fields": {
+            "tag_name": "Household",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 16,
+        "fields": {
+            "tag_name": "Income",
+            "tag_type_id": 2
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 17,
+        "fields": {
+            "tag_name": "Paycheck",
+            "tag_type_id": 2,
+            "parent_id": 16
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 18,
+        "fields": {
+            "tag_name": "Interest Earned",
+            "tag_type_id": 2
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 19,
+        "fields": {
+            "tag_name": "Interest Charged",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 20,
+        "fields": {
+            "tag_name": "Investment",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 21,
+        "fields": {
+            "tag_name": "Kids",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 22,
+        "fields": {
+            "tag_name": "Child Care",
+            "tag_type_id": 1,
+            "parent_id": 21
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 23,
+        "fields": {
+            "tag_name": "Diapers & Wipes",
+            "tag_type_id": 1,
+            "parent_id": 21
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 24,
+        "fields": {
+            "tag_name": "Kids Clothes",
+            "tag_type_id": 1,
+            "parent_id": 21
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 25,
+        "fields": {
+            "tag_name": "Kids Furniture",
+            "tag_type_id": 1,
+            "parent_id": 21
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 26,
+        "fields": {
+            "tag_name": "Kids Health",
+            "tag_type_id": 1,
+            "parent_id": 21
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 27,
+        "fields": {
+            "tag_name": "Kids Misc.",
+            "tag_type_id": 1,
+            "parent_id": 21
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 28,
+        "fields": {
+            "tag_name": "Toys & Books",
+            "tag_type_id": 1,
+            "parent_id": 21
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 29,
+        "fields": {
+            "tag_name": "Project",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 30,
+        "fields": {
+            "tag_name": "Refund",
+            "tag_type_id": 2
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 31,
+        "fields": {
+            "tag_name": "Rent",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 32,
+        "fields": {
+            "tag_name": "Subscriptions",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 33,
+        "fields": {
+            "tag_name": "Utilities",
+            "tag_type_id": 1
+        }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 34,
+        "fields": {
+            "tag_name": "Vacation",
+            "tag_type_id": 1
+        }
     }
 ]
