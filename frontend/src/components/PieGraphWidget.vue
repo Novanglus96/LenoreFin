@@ -1,57 +1,60 @@
 <template>
-    <v-card
-        variant="outlined"
-        :elevation="4"
-        class="bg-white"
-    >
-        <template v-slot:append>
-            <v-menu location="start" :close-on-content-click="false">
-                <template v-slot:activator="{ props }">
-                    <v-btn
-                    icon="mdi-cog"
-                    flat
-                    size="xs"
-                    v-bind="props"
-                    :disabled="isLoading"
-                    >
-                    </v-btn>
-                </template>
-                <v-card width="350">
-                    <v-card-title>Widget {{ props.widget }}</v-card-title>
-                    <v-card-subtitle>Settings</v-card-subtitle>
-                    <v-card-text>
-                        <v-container>
-                            <v-row dense>
-                                <v-col>
-                                    <v-text-field
-                                        v-model="formData.graph_name"
-                                        variant="outlined"
-                                        label="Graph Name*"
-                                        :rules="required"
-                                        @update:model-value="checkFormComplete"
-                                    ></v-text-field>
-                                </v-col>
-                            </v-row>
-                        </v-container>
-                    </v-card-text>
-                    <v-card-actions><v-btn :disabled="!formComplete" @click="submitForm()">Save</v-btn></v-card-actions>
-                </v-card>
-            </v-menu>
-        </template>
-        <template v-slot:title>
-            <span class="text-subtitle-2 text-accent">{{ props.graph_name }}</span>
-        </template>
-        <template v-slot:text>
-            <v-progress-circular
-                color="accent"
-                indeterminate
-                :size="300"
-                :width="12"
-                v-if="isLoading"
-            >Loading...</v-progress-circular>
-            <Pie :data="tag_graph" :options="options" v-else/>
-        </template>
-    </v-card>
+    <div>
+        <v-card
+            variant="outlined"
+            :elevation="4"
+            class="bg-white"
+            v-if="!isLoading"
+        >
+            <template v-slot:append>
+                <v-menu location="start" :close-on-content-click="false">
+                    <template v-slot:activator="{ props }">
+                        <v-btn
+                        icon="mdi-cog"
+                        flat
+                        size="xs"
+                        v-bind="props"
+                        :disabled="isLoading"
+                        >
+                        </v-btn>
+                    </template>
+                    <v-card width="350">
+                        <v-card-title>Widget {{ props.widget }}</v-card-title>
+                        <v-card-subtitle>Settings</v-card-subtitle>
+                        <v-card-text>
+                            <v-container>
+                                <v-row dense>
+                                    <v-col>
+                                        <v-text-field
+                                            v-model="formData.graph_name"
+                                            variant="outlined"
+                                            label="Graph Name*"
+                                            :rules="required"
+                                            @update:model-value="checkFormComplete"
+                                        ></v-text-field>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+                        </v-card-text>
+                        <v-card-actions><v-btn :disabled="!formComplete" @click="submitForm()">Save</v-btn></v-card-actions>
+                    </v-card>
+                </v-menu>
+            </template>
+            <template v-slot:title>
+                <span class="text-subtitle-2 text-accent">{{ tag_graph ? tag_graph.datasets[0].label : '' }}</span>
+            </template>
+            <template v-slot:text>
+                <Pie :data="tag_graph" :options="options"/>
+            </template>
+        </v-card>
+        <v-progress-circular
+            color="accent"
+            indeterminate
+            :size="300"
+            :width="12"
+            v-else
+        >Loading...</v-progress-circular>
+    </div>
 </template>
 
 <script setup>
@@ -59,9 +62,10 @@ import { Pie } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { ref, defineProps } from 'vue'
 import { useGraphs } from '@/composables/tagsComposable'
-import { useMainStore } from '@/stores/main';
+import { useOptions } from '@/composables/optionsComposable'
 
-const mainstore = useMainStore()
+const { options: appOptions, editOptions } = useOptions()
+const formData = ref(null)
 ChartJS.register(ArcElement, Tooltip, Legend)
 const props = defineProps({
     widget: {
@@ -69,13 +73,34 @@ const props = defineProps({
         default: 1
     }
 })
-const formData = ref({
-    graph_name: props.graph_name,
-    month: props.month,
-    tag_id: props.tag_id,
-    expense: props.expense,
-    exlude: props.exclude
-})
+if (props.widget == 1) {
+    formData.value = ({
+        graph_name: appOptions.widget1_graph_name,
+        month: appOptions.widget1_month,
+        tag_id: appOptions.widget1_tag_id,
+        expense: appOptions.widget1_expense,
+        exlude: appOptions.widget1_exclude
+    })
+}
+if (props.widget == 2) {
+    formData.value = ({
+        graph_name: appOptions.widget2_graph_name,
+        month: appOptions.widget2_month,
+        tag_id: appOptions.widget2_tag_id,
+        expense: appOptions.widget2_expense,
+        exlude: appOptions.widget2_exclude
+    })
+}
+if (props.widget == 3) {
+    formData.value = ({
+        graph_name: appOptions.widget3_graph_name,
+        month: appOptions.widget3_month,
+        tag_id: appOptions.widget3_tag_id,
+        expense: appOptions.widget3_expense,
+        exlude: appOptions.widget3_exclude
+    })
+}
+
 const formComplete = ref(false)
 const { tag_graph, isLoading } = useGraphs(props.widget)
 
@@ -128,11 +153,32 @@ const checkFormComplete = async () => {
 
 const submitForm = () => {
     if (props.widget == 1) {
-        mainstore.options.widget1_graph_name = formData.value.graph_name
+        const updatedOptions = {
+            widget1_graph_name: formData.value.graph_name,
+            widget1_month: formData.value.month,
+            widget1_tag_id: formData.value.tag_id,
+            widget1_expense: formData.value.expense,
+            widget1_exlude: formData.value.exclude
+        }
+        editOptions(updatedOptions)
     } else if (props.widget == 2) {
-        mainstore.options.widget2_graph_name = formData.value.graph_name
+        const updatedOptions = {
+            widget2_graph_name: formData.value.graph_name,
+            widget2_month: formData.value.month,
+            widget2_tag_id: formData.value.tag_id,
+            widget2_expense: formData.value.expense,
+            widget2_exlude: formData.value.exclude
+        }
+        editOptions(updatedOptions)
     } else if (props.widget == 3) {
-        mainstore.options.widget3_graph_name = formData.value.graph_name
+        const updatedOptions = {
+            widget3_graph_name: formData.value.graph_name,
+            widget3_month: formData.value.month,
+            widget3_tag_id: formData.value.tag_id,
+            widget3_expense: formData.value.expense,
+            widget3_exlude: formData.value.exclude
+        }
+        editOptions(updatedOptions)
     }
     formComplete.value = false
 }

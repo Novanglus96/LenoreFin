@@ -1,67 +1,84 @@
 <template>
-    <v-card>
-        <v-card-title>Options</v-card-title>
-        <v-card-text>
-            <v-container>
-                <v-row>
-                    <v-col>
-                        <v-autocomplete
-                            clearable
-                            label="Log Level*"
-                            :items="error_levels"
-                            variant="outlined"
-                            :loading="error_levels_isLoading"
-                            item-title="error_level"
-                            item-value="id"
-                            v-model="formData.log_level_id"
-                            :rules="required"
-                            @update:model-value="checkFormComplete"
-                        ></v-autocomplete>
-                    </v-col>
-                </v-row>
-                <v-row>
-                    <v-col>
-                        <v-text-field
-                            v-model="formData.alert_balance"
-                            variant="outlined"
-                            label="Alert Balance*"
-                            :rules="required"
-                            prefix="$"
-                            @update:model-value="checkFormComplete"
-                        ></v-text-field>
-                    </v-col>
-                    <v-col>
-                        <v-text-field
-                            v-model="formData.alert_period"
-                            variant="outlined"
-                            label="Alert Period(months)*"
-                            :rules="required"
-                            @update:model-value="checkFormComplete"
-                        ></v-text-field>
-                    </v-col>
-                </v-row>
-            </v-container>
-        </v-card-text>
-        <v-card-actions>
-            <v-btn :disabled="!formComplete" @click="submitForm()">
-                Save
-            </v-btn>
-        </v-card-actions>
-    </v-card>
+    <div>
+        <v-card v-if="isFetched">
+            <v-card-title>Options</v-card-title>
+            <v-card-text>
+                <v-container>
+                    <v-row>
+                        <v-col>
+                            <v-autocomplete
+                                clearable
+                                label="Log Level*"
+                                :items="error_levels"
+                                variant="outlined"
+                                :loading="error_levels_isLoading"
+                                item-title="error_level"
+                                item-value="id"
+                                v-model="formData.log_level_id"
+                                :rules="required"
+                                @update:model-value="checkFormComplete"
+                            ></v-autocomplete>
+                        </v-col>
+                    </v-row>
+                    <v-row>
+                        <v-col>
+                            <v-text-field
+                                v-model="formData.alert_balance"
+                                variant="outlined"
+                                label="Alert Balance*"
+                                :rules="required"
+                                prefix="$"
+                                @update:model-value="checkFormComplete"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col>
+                            <v-text-field
+                                v-model="formData.alert_period"
+                                variant="outlined"
+                                label="Alert Period(months)*"
+                                :rules="required"
+                                @update:model-value="checkFormComplete"
+                            ></v-text-field>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-card-text>
+            <v-card-actions>
+                <v-btn :disabled="!formComplete" @click="submitForm()">
+                    Save
+                </v-btn>
+            </v-card-actions>
+        </v-card>
+        <v-skeleton-loader type="card" v-else></v-skeleton-loader>
+    </div>
 </template>
 <script setup>
 import { useErrorLevels } from '@/composables/errorLevelsComposable'
-import { ref } from 'vue'
-import { useMainStore } from '@/stores/main'
+import { ref, onMounted } from 'vue'
 import { useOptions } from '@/composables/optionsComposable'
 
-const mainstore = useMainStore()
 const formComplete = ref(false)
-const { editOptions } = useOptions()
+const { options, editOptions, isFetched } = useOptions()
 const formData = ref({
-    log_level_id: mainstore.options.log_level.id,
-    alert_balance: mainstore.options.alert_balance,
-    alert_period: mainstore.options.alert_period
+    log_level_id: null,
+    alert_balance: null,
+    alert_period: null
+})
+
+onMounted(() => {
+    if (!isFetched.value) {
+        formData.value = {
+            log_level_id: null,
+            alert_balance: null,
+            alert_period: null
+        }
+    } else {
+        formData.value = {
+            log_level_id: options.value.log_level?.id,
+            alert_balance: options.value.alert_balance,
+            alert_period: options.value.alert_period
+        }
+    }
 })
 const { error_levels, isLoading: error_levels_isLoading } = useErrorLevels()
 const checkFormComplete = async () => {

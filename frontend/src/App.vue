@@ -19,7 +19,13 @@
 <script setup>
 import AppNavigationVue from "@/views/AppNavigationVue"
 import { useMainStore } from "@/stores/main"
+import { onMounted } from 'vue'
+import { useOptions } from '@/composables/optionsComposable'
 
 const mainstore = useMainStore();
+const { prefetchOptions } = useOptions()
+onMounted(() => {
+  prefetchOptions()
+})
 
 </script>

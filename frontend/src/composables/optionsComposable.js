@@ -43,7 +43,7 @@ async function getOptionsFunction() {
 
 async function updateOptionsFunction(updatedOptions) {
   try {
-    const response = await apiClient.put('/options/1', updatedOptions)
+    const response = await apiClient.patch('/options/1', updatedOptions)
     logToDB(null, 'Options updated', 1, null, null, null)
     return response.data
   } catch (error) {
@@ -54,13 +54,19 @@ async function updateOptionsFunction(updatedOptions) {
 
 export function useOptions() {
   const queryClient = useQueryClient()
-  const { data: options, isLoading } = useQuery({
+  const { data: options, isLoading , isFetched} = useQuery({
     queryKey: ['options'],
     queryFn: () => getOptionsFunction(),
     select: (response) => response,
     client: queryClient
   })
-  
+
+  const prefetchOptions = async () => {
+    await queryClient.prefetchQuery({
+      queryKey: ['options'],
+      queryFn: () => getOptionsFunction(),
+  })
+}
 const updateOptionsMutation = useMutation({
   mutationFn: updateOptionsFunction,
   onSuccess: () => {
@@ -77,6 +83,8 @@ async function editOptions(updatedOptions) {
 return {
   isLoading,
   options,
-  editOptions
+  editOptions,
+  isFetched,
+  prefetchOptions
 }
 }
