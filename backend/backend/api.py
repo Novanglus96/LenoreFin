@@ -871,6 +871,10 @@ def get_graph(request, widget_id: int):
         if tag_amount != 0:
             labels.append(tag.tag_name)
             values.append(tag_amount)
+    if not values:
+        values.append(0)
+    if not labels:
+        labels.append('None')
     dataset = GraphDataset(
         label=graph_name,
         data=values,
