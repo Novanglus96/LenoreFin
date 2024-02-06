@@ -67,6 +67,19 @@ async function getGraphByTagsFunction(widget_id) {
 
 }
 
+async function getTransactionsByTagsFunction(tag_id, month) {
+  try {
+    const response = await apiClient.get('/transactions_bytag?tag=' + tag_id + '&month=' + month)
+    logToDB(null, 'Transactions by tag fetched', 0, null, null, null)
+    return response.data
+      
+  } catch (error) {
+    handleApiError(error, 'Transactions by tag not fetched: ')
+    logToDB(error, 'Transactions by tag not fetched', 2, null, null, null)
+  }
+
+}
+
 async function createTagFunction(newTag) {
   const mainstore = useMainStore();
   try {
@@ -136,5 +149,20 @@ export function useGraphs(widget_id) {
   return {
     isLoading,
     tag_graph
+  }
+}
+
+export function useGraphTransactions(tag_id, month) {
+  const queryClient = useQueryClient()
+    const { data: tag_transactions, isLoading } = useQuery({
+      queryKey: ['tag_transactions', { tagID: tag_id }],
+      queryFn: () => getTransactionsByTagsFunction(tag_id, month),
+      select: (response) => response,
+      client: queryClient
+  })
+
+  return {
+    isLoading,
+    tag_transactions
   }
 }
