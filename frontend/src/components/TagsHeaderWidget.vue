@@ -35,10 +35,16 @@
                                 height="75"
                                 width="200"
                                 @click="toggle"
-                                :title="tag.parent ? tag.parent.tag_name : tag.tag_name"
-                                :subtitle="!tag.parent ? '' : tag.tag_name"
-                                prepend-icon="mdi-tag"
                                 >
+                                <template v-slot:prepend>
+                                    <v-icon icon="mdi-tag" :color="tagColor(tag.tag_type.id)"></v-icon>
+                                </template>
+                                <template v-slot:title>
+                                    <span>{{ tag.parent ? tag.parent.tag_name : tag.tag_name }}</span>
+                                </template>
+                                <template v-slot:subtitle>
+                                    <span :class="!tag.parent ? 'text-primary' : 'text-black'">{{ !tag.parent ? '-' : tag.tag_name }}</span>
+                                </template>
                                 </v-card>
                             </v-slide-group-item>
                         </v-slide-group>
@@ -65,5 +71,15 @@ const clickSelectTag = () => {
 
 const updateAddDialog = () => {
     tagAddFormDialog.value = false
+}
+
+const tagColor = (typeID) => {
+    if (typeID == 1) {
+        return 'red'
+    } else if (typeID == 2) {
+        return 'green'
+    } else if (typeID == 3) {
+        return 'grey'
+    }
 }
 </script>
