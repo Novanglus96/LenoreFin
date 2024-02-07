@@ -74,6 +74,19 @@ async function createAccountFunction(newAccount) {
 
 }
 
+async function deleteAccountFunction(deletedAccount) {
+  const mainstore = useMainStore();
+  try {
+    const response = await apiClient.delete('/accounts/' + deletedAccount)
+    logToDB(null, 'Account deleted', 1, deletedAccount, null, null)
+    mainstore.showSnackbar('Account deleted successfully!', 'success')
+    return response.data
+  } catch (error) {
+    handleApiError(error, 'Account not deleted: ')
+    logToDB(error, 'Account not deleted', 2, deletedAccount, null, null)
+  }
+}
+
 export function useAccounts() {
     const queryClient = useQueryClient()
     const { data: accounts, isLoading } = useQuery({
@@ -156,8 +169,24 @@ export function useAccountByID(account_id) {
     client: queryClient
   })
   
+  const deleteAccountMutation = useMutation({
+  mutationFn: deleteAccountFunction,
+  onSuccess: () => {
+    console.log('Success deleting account')
+    queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    queryClient.invalidateQueries({ queryKey: ['accounts'] })
+    queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
+    queryClient.invalidateQueries({ queryKey: ['tag_graph'] })
+  }
+})
+
+  async function removeAccount(deletedAccount) {
+    deleteAccountMutation.mutate(deletedAccount);
+  }
+  
   return {
     isLoading,
-    account
+    account,
+    removeAccount
   }
 }

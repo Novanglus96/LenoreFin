@@ -45,7 +45,7 @@
                                 </v-row>
                             </v-container>
                         </v-card-text>
-                        <v-card-actions><v-btn @click="clickAdjustBalance()" color="accent" :disabled="balanceSubmit">Adjust</v-btn><v-btn @click="adjBalDialog = false" color="accent">Close</v-btn></v-card-actions>
+                        <v-card-actions><v-spacer></v-spacer><v-btn @click="adjBalDialog = false" color="accent">Close</v-btn><v-btn @click="clickAdjustBalance()" color="accent" :disabled="balanceSubmit">Adjust</v-btn></v-card-actions>
                     </v-card>
                 </v-dialog>
                 <v-tooltip text="Edit Account" location="top">
@@ -55,9 +55,40 @@
                 </v-tooltip>
                 <v-tooltip text="Delete Account" location="top">
                     <template v-slot:activator="{ props }">
-                        <v-btn icon="mdi-bank-remove" color="red" flat variant="plain" @click="clickRemoveAccount(props.account)" v-bind="props"/>
+                        <v-btn icon="mdi-bank-remove" color="red" flat variant="plain" @click="deleteDialog = true" v-bind="props"/>
                     </template>
                 </v-tooltip>
+                <v-dialog
+                    v-model="deleteDialog"
+                    width="400"
+                >
+                    <v-card>
+                        <v-card-title>Disable/Delete Account?</v-card-title>
+                        <v-card-subtitle>Do you want to disable or delete {{ account.account_name }}?</v-card-subtitle>
+                        <v-card-text>
+                            <v-container>
+                                <v-row density>
+                                    <v-col>
+                                        <v-btn-toggle
+                                            v-model="disableAccount"
+                                            rounded="0"
+                                            color="accent"
+                                            group
+                                        >
+                                            <v-btn :value="true">
+                                                Disable
+                                            </v-btn>
+                                            <v-btn :value="false">
+                                                Delete
+                                            </v-btn>
+                                        </v-btn-toggle>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+                        </v-card-text>
+                        <v-card-actions><v-spacer></v-spacer><v-btn @click="deleteDialog = false" color="accent">Close</v-btn><v-btn @click="clickRemoveAccount()" color="accent" :disabled="deleteSubmit">{{ disableAccount ? 'Disable' : 'Delete' }}</v-btn></v-card-actions>
+                    </v-card>
+                </v-dialog>
             </template>
             <template v-slot:title>
                 {{ account.account_name }}
@@ -82,7 +113,9 @@ import { defineProps, defineEmits } from 'vue'
 import { useAccountByID } from '@/composables/accountsComposable'
 import { ref } from 'vue'
 import { useTransactions } from '@/composables/transactionsComposable'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const { addTransaction } = useTransactions()
 const today = new Date();
 const year = today.getFullYear();
@@ -93,6 +126,8 @@ const adjBalDialog = ref(false)
 const props = defineProps({
     account: Array
 })
+const disableAccount = ref(true)
+const deleteDialog = ref(false)
 
 const new_balance = ref('')
 const balanceForm = ref({
@@ -112,9 +147,9 @@ const balanceForm = ref({
 
 const balanceSubmit = ref(true)
 
-const emit = defineEmits(['removeAccount', 'editAccount'])
+const emit = defineEmits(['editAccount'])
 
-const { account, isLoading } = useAccountByID(props.account)
+const { account, isLoading, removeAccount } = useAccountByID(props.account)
 
 const clickAdjustBalance = async () => {
     if (account.value.balance > new_balance.value) {
@@ -127,8 +162,13 @@ const clickAdjustBalance = async () => {
     adjBalDialog.value = false
 }
 
-const clickRemoveAccount = async (account_id) => {
-    emit('removeAccount', account_id)
+const clickRemoveAccount = async () => {
+    if (disableAccount.value == false) {
+        removeAccount(account.value.id)
+        deleteDialog.value = false
+        router.push('/')
+    }
+    deleteDialog.value = false
 }
 
 const clickEditAccount = async (account_id) => {

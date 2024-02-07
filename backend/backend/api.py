@@ -1094,7 +1094,14 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
                     source_account = detail.account.account_name
                     balance += transaction.total_amount
             if transaction.transaction_type.id == 3:
-                pretty_account = source_account + ' => ' + destination_account
+                if source_account:
+                    pretty_account = source_account
+                else:
+                    pretty_account = 'Deleted Account'
+                if destination_account:
+                    pretty_account += ' => ' + destination_account
+                else:
+                    pretty_account += ' => Deleted Account'
             else:
                 pretty_account = source_account
 
@@ -1134,7 +1141,14 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
                         source_account = detail.account.account_name
                     else:
                         destination_account = detail.account.account_name
-                    pretty_account = source_account + ' => ' + destination_account
+                    if source_account:
+                        pretty_account = source_account
+                    else:
+                        pretty_account = 'Deleted Account'
+                    if destination_account:
+                        pretty_account += ' => ' + destination_account
+                    else:
+                        pretty_account += ' => Deleted Account'
                 else:
                     pretty_account = detail.account.account_name
             transaction.tags = tags
@@ -1466,6 +1480,15 @@ def delete_bank(request, bank_id: int):
 @api.delete("/accounts/{account_id}")
 def delete_account(request, account_id: int):
     account = get_object_or_404(Account, id=account_id)
+    transaction_details = TransactionDetail.objects.filter(account=account)
+    transactions_to_delete = []
+    for detail in transaction_details:
+        transaction = detail.transaction
+        detail.delete()
+        if not transaction.transactiondetail_set.exists():
+            transactions_to_delete.append(transaction)
+    for transaction in transactions_to_delete:
+        transaction.delete()
     account.delete()
     return {"success": True}
 
