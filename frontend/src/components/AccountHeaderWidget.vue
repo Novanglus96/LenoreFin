@@ -7,9 +7,21 @@
             v-if="!isLoading"
         >
             <template v-slot:append>
-                <v-btn icon="mdi-cash-edit" flat variant="plain" @click="clickAdjustBalance(props.account)"/>
-                <v-btn icon="mdi-application-edit" flat variant="plain" @click="clickEditAccount(props.account)"/>
-                <v-btn icon="mdi-bank-remove" color="red" flat variant="plain" @click="clickRemoveAccount(props.account)"/>
+                <v-tooltip text="Adjust Balance" location="top">
+                    <template v-slot:activator="{ props }">
+                        <v-btn icon="mdi-cash-edit" flat variant="plain" @click="clickAdjustBalance(props.account)" v-bind="props"/>
+                    </template>
+                </v-tooltip>
+                <v-tooltip text="Edit Account" location="top">
+                    <template v-slot:activator="{ props }">
+                        <v-btn icon="mdi-application-edit" flat variant="plain" @click="clickEditAccount(props.account)" v-bind="props"/>
+                    </template>
+                </v-tooltip>
+                <v-tooltip text="Delete Account" location="top">
+                    <template v-slot:activator="{ props }">
+                        <v-btn icon="mdi-bank-remove" color="red" flat variant="plain" @click="clickRemoveAccount(props.account)" v-bind="props"/>
+                    </template>
+                </v-tooltip>
             </template>
             <template v-slot:title>
                 {{ account.account_name }}
