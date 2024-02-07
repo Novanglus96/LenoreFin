@@ -68,6 +68,23 @@ class AccountIn(Schema):
     last_statement_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
 
 
+class AccountUpdate(Schema):
+    account_name: Optional[str]
+    account_type_id: Optional[int]
+    opening_balance: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
+    apy: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    due_date: Optional[date]
+    active: Optional[bool]
+    open_date: Optional[date]
+    next_cycle_date: Optional[date]
+    statement_cycle_length: Optional[int]
+    statement_cycle_period: Optional[str]
+    rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    bank_id: Optional[int]
+    last_statement_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+
+
 class AccountOut(Schema):
     id: int
     account_name: str
@@ -1210,23 +1227,37 @@ def update_bank(request, bank_id: int, payload: BankIn):
     return {"success": True}
 
 
-@api.put("/accounts/{account_id}")
-def update_account(request, account_id: int, payload: AccountIn):
+@api.patch("/accounts/{account_id}")
+def update_account(request, account_id: int, payload: AccountUpdate):
     account = get_object_or_404(Account, id=account_id)
-    account.account_name = payload.account_name
-    account.account_type_id = payload.account_type_id
-    account.opening_balance = payload.opening_balance
-    account.apy = payload.apy
-    account.due_date = payload.due_date
-    account.active = payload.active
-    account.open_date = payload.open_date
-    account.next_cycle_date = payload.next_cycle_date
-    account.statement_cycle_length = payload.statement_cycle_length
-    account.statement_cycle_period = payload.statement_cycle_period
-    account.rewards_amount = payload.rewards_amount
-    account.credit_limit = payload.credit_limit
-    account.bank_id = payload.bank_id
-    account.last_statement_amount = payload.last_statement_amount
+    if payload.account_name is not None:
+        account.account_name = payload.account_name
+    if payload.account_type_id is not None:
+        account.account_type_id = payload.account_type_id
+    if payload.opening_balance is not None:
+        account.opening_balance = payload.opening_balance
+    if payload.apy is not None:
+        account.apy = payload.apy
+    if payload.due_date is not None:
+        account.due_date = payload.due_date
+    if payload.active is not None:
+        account.active = payload.active
+    if payload.open_date is not None:
+        account.open_date = payload.open_date
+    if payload.next_cycle_date is not None:
+        account.next_cycle_date = payload.next_cycle_date
+    if payload.statement_cycle_length is not None:
+        account.statement_cycle_length = payload.statement_cycle_length
+    if payload.statement_cycle_period is not None:
+        account.statement_cycle_period = payload.statement_cycle_period
+    if payload.rewards_amount is not None:
+        account.rewards_amount = payload.rewards_amount
+    if payload.credit_limit is not None:
+        account.credit_limit = payload.credit_limit
+    if payload.bank_id is not None:
+        account.bank_id = payload.bank_id
+    if payload.last_statement_amount is not None:
+        account.last_statement_amount = payload.last_statement_amount
     account.save()
     return {"success": True}
 
