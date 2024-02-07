@@ -280,5 +280,13 @@
             "tag_name": "Vacation",
             "tag_type_id": 1
         }
+    },
+    {
+        "model": "api.Tag",
+        "pk": 35,
+        "fields": {
+            "tag_name": "Balance Adjustment",
+            "tag_type_id": 3
+        }
     }
 ]
