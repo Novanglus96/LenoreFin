@@ -59,11 +59,22 @@
                             account.balance }}</span></v-list-item-subtitle>
             </v-list-item>
         </v-list>
+        <v-divider></v-divider>
+        <v-list density="compact" nav>
+            <v-list-subheader><v-icon icon="mdi-bank-off"></v-icon> INACTIVE</v-list-subheader>
+            <v-list-item title="No Accounts" v-if="inactive_accounts && inactive_accounts.length == 0"></v-list-item>
+            <v-list-item v-for="(account, i) in inactive_accounts" :key="i" :to="'/accounts/' + account.id" v-else>
+                <v-list-item-title><span class="font-italic">{{ account.account_name }}</span> </v-list-item-title>
+                <v-list-item-subtitle><span
+                        :class="account.balance >= 0 ? 'text-green font-weight-bold font-italic' : 'text-red font-weight-bold font-italic'">${{
+                            account.balance }}</span></v-list-item-subtitle>
+            </v-list-item>
+        </v-list>
 </div></template>
 <script setup>
 import { useAccounts } from '@/composables/accountsComposable'
 import { ref } from 'vue'
 
-const { checking_accounts, cc_accounts, savings_accounts, investment_accounts, loan_accounts } = useAccounts()
+const { checking_accounts, cc_accounts, savings_accounts, investment_accounts, loan_accounts, inactive_accounts } = useAccounts()
 const add_account_link = ref("/accounts/add")
 </script>

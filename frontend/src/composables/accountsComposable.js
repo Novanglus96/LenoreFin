@@ -28,16 +28,23 @@ function handleApiError(error, message) {
   throw error
 }
 
-async function getAccountsFunction(account_type) {
+async function getAccountsFunction(account_type, inactive) {
   try {
     if (account_type !== 'all') {
       const response = await apiClient.get('/accounts?account_type=' + account_type)
       logToDB(null, 'Accounts of type ' + account_type + ' fetched', 0, null, null, null)
       return response.data
     } else {
-      const response = await apiClient.get('/accounts')
-      logToDB(null, 'All accounts fetched', 0, null, null, null)
-      return response.data
+      if (inactive) {
+        const response = await apiClient.get('/accounts?inactive=true')
+        logToDB(null, 'All inactive accounts fetched', 0, null, null, null)
+        return response.data
+      } else {
+        const response = await apiClient.get('/accounts')
+        logToDB(null, 'All accounts fetched', 0, null, null, null)
+        return response.data
+      }
+      
     }
       
   } catch (error) {
@@ -87,6 +94,17 @@ async function deleteAccountFunction(deletedAccount) {
   }
 }
 
+async function updateAccountFunction(updatedAccount) {
+  try {
+    const response = await apiClient.patch('/accounts/' + updatedAccount.id, updatedAccount)
+    logToDB(null, 'Account updated', 1, updatedAccount.id, null, null)
+    return response.data
+  } catch (error) {
+    handleApiError(error, 'Account not updated: ')
+    logToDB(error, 'Account not updated', 2, updatedAccount.id, null, null)
+  }
+}
+
 export function useAccounts() {
     const queryClient = useQueryClient()
     const { data: accounts, isLoading } = useQuery({
@@ -131,6 +149,13 @@ export function useAccounts() {
         client: queryClient
     })
   
+    const { data: inactive_accounts, inactive_isLoading } = useQuery({
+        queryKey: ['accounts', {inactive: true}],
+        queryFn: () => getAccountsFunction('all', true),
+        select: (response) => response,
+        client: queryClient
+    })
+  
     const createAccountMutation = useMutation({
       mutationFn: createAccountFunction,
       onSuccess: () => {
@@ -156,6 +181,8 @@ export function useAccounts() {
         investment_isLoading,
         loan_accounts,
         loan_isLoading,
+        inactive_accounts,
+        inactive_isLoading,
         addAccount
     }
 }
@@ -178,7 +205,22 @@ export function useAccountByID(account_id) {
     queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
     queryClient.invalidateQueries({ queryKey: ['tag_graph'] })
   }
-})
+  })
+  
+  const updateAccountMutation = useMutation({
+    mutationFn: updateAccountFunction,
+    onSuccess: () => {
+      console.log('Success updating account')
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      queryClient.invalidateQueries({ queryKey: ['account_forecast'] })
+      queryClient.invalidateQueries({ queryKey: ['tag_graph'] })
+    }
+  })
+
+  async function editAccount(updatedAccount) {
+    updateAccountMutation.mutate(updatedAccount)
+  }
 
   async function removeAccount(deletedAccount) {
     deleteAccountMutation.mutate(deletedAccount);
@@ -187,6 +229,7 @@ export function useAccountByID(account_id) {
   return {
     isLoading,
     account,
-    removeAccount
+    removeAccount,
+    editAccount
   }
 }

@@ -940,9 +940,12 @@ def list_transactions_bytag(request, tag: int, month: Optional[int] = 0):
 
 
 @api.get("/accounts", response=List[AccountOut])
-def list_accounts(request, account_type: Optional[int] = Query(None)):
+def list_accounts(request, account_type: Optional[int] = Query(None), inactive: Optional[bool] = Query(None)):
     qs = Account.objects.all()
-
+    if inactive:
+        qs = qs.filter(active=False)
+    else:
+        qs = qs.filter(active=True)
     if account_type is not None:
         qs = qs.filter(account_type__id=account_type)
     qs = qs.order_by('account_type__id', 'bank__bank_name', 'account_name')

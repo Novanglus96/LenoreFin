@@ -3,7 +3,7 @@
         <v-card
             variant="outlined"
             :elevation="4"
-            class="bg-accent"
+            :class="account.active ? 'bg-accent' : 'bg-grey'"
             v-if="!isLoading"
         >
             <template v-slot:append>
@@ -53,9 +53,9 @@
                         <v-btn icon="mdi-application-edit" flat variant="plain" @click="clickEditAccount(props.account)" v-bind="props"/>
                     </template>
                 </v-tooltip>
-                <v-tooltip text="Delete Account" location="top">
+                <v-tooltip :text="account.active ? 'Delete Account' : 'Enable Account'" location="top">
                     <template v-slot:activator="{ props }">
-                        <v-btn icon="mdi-bank-remove" color="red" flat variant="plain" @click="deleteDialog = true" v-bind="props"/>
+                        <v-btn :icon="account.active ? 'mdi-bank-remove' : 'mdi-bank-check'" :color="account.active ? 'red' : 'green'" flat variant="plain" @click="deleteDialog = true" v-bind="props"/>
                     </template>
                 </v-tooltip>
                 <v-dialog
@@ -63,10 +63,10 @@
                     width="400"
                 >
                     <v-card>
-                        <v-card-title>Disable/Delete Account?</v-card-title>
-                        <v-card-subtitle>Do you want to disable or delete {{ account.account_name }}?</v-card-subtitle>
+                        <v-card-title>{{ account.active ? 'Disable/Delete' : 'Enable' }} Account?</v-card-title>
+                        <v-card-subtitle>Do you want to {{ account.active ? 'disable or delete ' + account.account_name : 'enable ' + account.account_name}}?</v-card-subtitle>
                         <v-card-text>
-                            <v-container>
+                            <v-container v-if="account.active">
                                 <v-row density>
                                     <v-col>
                                         <v-btn-toggle
@@ -86,12 +86,12 @@
                                 </v-row>
                             </v-container>
                         </v-card-text>
-                        <v-card-actions><v-spacer></v-spacer><v-btn @click="deleteDialog = false" color="accent">Close</v-btn><v-btn @click="clickRemoveAccount()" color="accent" :disabled="deleteSubmit">{{ disableAccount ? 'Disable' : 'Delete' }}</v-btn></v-card-actions>
+                        <v-card-actions><v-spacer></v-spacer><v-btn @click="deleteDialog = false" color="accent">Close</v-btn><v-btn @click="clickRemoveAccount()" color="accent" :disabled="deleteSubmit">{{ displayButtonText() }}</v-btn></v-card-actions>
                     </v-card>
                 </v-dialog>
             </template>
             <template v-slot:title>
-                {{ account.account_name }}
+                {{ account.active ? account.account_name : account.account_name + ' (Inactive)'}}
             </template>
             <template v-slot:subtitle>
                 ${{ account.balance }}
@@ -149,7 +149,7 @@ const balanceSubmit = ref(true)
 
 const emit = defineEmits(['editAccount'])
 
-const { account, isLoading, removeAccount } = useAccountByID(props.account)
+const { account, isLoading, removeAccount, editAccount } = useAccountByID(props.account)
 
 const clickAdjustBalance = async () => {
     if (account.value.balance > new_balance.value) {
@@ -163,12 +163,27 @@ const clickAdjustBalance = async () => {
 }
 
 const clickRemoveAccount = async () => {
-    if (disableAccount.value == false) {
-        removeAccount(account.value.id)
+    if (account.value.active) {
+        if (disableAccount.value == false) {
+            removeAccount(account.value.id)
+            deleteDialog.value = false
+            router.push('/')
+        } else {
+            const data = {
+                id: account.value.id,
+                active: false
+            }
+            editAccount(data)
+            deleteDialog.value = false
+        }
+    } else {
+        const data = {
+            id: account.value.id,
+            active: true
+        }
+        editAccount(data)
         deleteDialog.value = false
-        router.push('/')
     }
-    deleteDialog.value = false
 }
 
 const clickEditAccount = async (account_id) => {
@@ -190,4 +205,16 @@ const required = [
         return 'This field is required.';
     },
 ];
+
+const displayButtonText = () => {
+    if (!account.value.active) {
+        return 'Enable'
+    } else {
+        if (disableAccount.value) {
+            return 'Disable'
+        } else {
+            return 'Delete'
+        }
+    }
+}
 </script>
