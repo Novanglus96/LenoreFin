@@ -22,18 +22,18 @@ class Bank(models.Model):
 class Account(models.Model):
     account_name = models.CharField(max_length=254, unique=True)
     account_type = models.ForeignKey(AccountType, null=True, on_delete=models.SET_NULL)
-    opening_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
-    apy = models.DecimalField(max_digits=2, decimal_places=2, default=0.00, null=True)
+    opening_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True)
+    apy = models.DecimalField(max_digits=4, decimal_places=2, default=0.00, null=True)
     due_date = models.DateField(default=date.today, null=True)
     active = models.BooleanField(default=True)
     open_date = models.DateField(default=date.today, null=True)
     next_cycle_date = models.DateField(default=date.today, null=True)
     statement_cycle_length = models.IntegerField(default=0, null=True)
     statement_cycle_period = models.CharField(max_length=1, null=True, default='d')
-    rewards_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
-    credit_limit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
+    rewards_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True)
+    credit_limit = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True)
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE)
-    last_statement_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
+    last_statement_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True)
     
     def __str__(self):
         return self.account_name
@@ -53,7 +53,7 @@ class Tag(models.Model):
         return self.tag_name
 
 class ChristmasGift(models.Model):
-    budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    budget = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     tag = models.ForeignKey(Tag, null=True, on_delete=models.SET_NULL)
    
 class ContribRule(models.Model):
@@ -65,10 +65,10 @@ class ContribRule(models.Model):
 
 class Contribution(models.Model):
     contribution = models.CharField(max_length=20, unique=True)
-    per_paycheck = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    emergency_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    emergency_diff = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    cap = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    per_paycheck = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    emergency_amt = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    emergency_diff = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    cap = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     active = models.BooleanField(default=True)
     
     def __str__(self):
@@ -98,7 +98,7 @@ class Repeat(models.Model):
 
 class Reminder(models.Model):
     tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     reminder_source_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='reminder_source_account')
     reminder_destination_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='reminder_destination_account')
     description = models.CharField(max_length=254)
@@ -120,7 +120,7 @@ class Note(models.Model):
 
 class Option(models.Model):
     log_level = models.ForeignKey(ErrorLevel, on_delete=models.SET_NULL, null=True, blank=True)
-    alert_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    alert_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     alert_period = models.IntegerField(default=3)
     widget1_graph_name = models.CharField(max_length=254)
     widget1_tag_id = models.IntegerField(default=None, null=True, blank=True)
@@ -154,20 +154,20 @@ class Payee(models.Model):
         return self.payee_name
 
 class Paycheck(models.Model):
-    gross = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    net = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    taxes = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    health = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    pension = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    fsa = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    dca = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    union_dues = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    four_fifty_seven_b = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    gross = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    net = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    taxes = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    health = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    pension = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    fsa = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    dca = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    union_dues = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    four_fifty_seven_b = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     payee = models.ForeignKey(Payee, on_delete=models.SET_NULL, null=True, blank=True, default=None)
 
 class Transaction(models.Model):
     transaction_date = models.DateField(default=date.today)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     status = models.ForeignKey(TransactionStatus, on_delete=models.SET_NULL, null=True, blank=True)
     memo = models.CharField(max_length=254)
     description = models.CharField(max_length=254)
@@ -180,7 +180,7 @@ class Transaction(models.Model):
 class TransactionDetail(models.Model):
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
-    detail_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    detail_amt = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=True)
 
 class LogEntry(models.Model):
