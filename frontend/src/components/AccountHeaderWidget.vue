@@ -12,83 +12,19 @@
                         <v-btn icon="mdi-cash-edit" flat variant="plain" @click="adjBalDialog = true" v-bind="props"/>
                     </template>
                 </v-tooltip>
-                <v-dialog
-                    v-model="adjBalDialog"
-                    width="400"
-                >
-                    <v-card>
-                        <v-card-title>Adjust Balance</v-card-title>
-                        <v-card-text>
-                            <v-container>
-                                <v-row density>
-                                    <v-col>
-                                        <v-text-field
-                                            v-model="account.balance"
-                                            variant="outlined"
-                                            label="Current Balance"
-                                            prefix="$"
-                                            disabled
-                                        ></v-text-field>
-                                    </v-col>
-                                </v-row>
-                                <v-row density>
-                                    <v-col>
-                                        <v-text-field
-                                            v-model="new_balance"
-                                            variant="outlined"
-                                            label="New Balance*"
-                                            :rules="required"
-                                            prefix="$"
-                                            @update:model-value="checkBalance"
-                                        ></v-text-field>
-                                    </v-col>
-                                </v-row>
-                            </v-container>
-                        </v-card-text>
-                        <v-card-actions><v-spacer></v-spacer><v-btn @click="adjBalDialog = false" color="accent">Close</v-btn><v-btn @click="clickAdjustBalance()" color="accent" :disabled="balanceSubmit">Adjust</v-btn></v-card-actions>
-                    </v-card>
-                </v-dialog>
+                <AdjustBalanceForm v-model="adjBalDialog" :account="account" @update-dialog="updateAdjBalDialog" />
                 <v-tooltip text="Edit Account" location="top">
                     <template v-slot:activator="{ props }">
-                        <v-btn icon="mdi-application-edit" flat variant="plain" @click="clickEditAccount(props.account)" v-bind="props"/>
+                        <v-btn icon="mdi-application-edit" flat variant="plain" @click="editDialog = true" v-bind="props"/>
                     </template>
                 </v-tooltip>
+                <EditAccountForm v-model="editDialog" :account="account" @update-dialog="updateEditDialog"/>
                 <v-tooltip :text="account.active ? 'Delete Account' : 'Enable Account'" location="top">
                     <template v-slot:activator="{ props }">
                         <v-btn :icon="account.active ? 'mdi-bank-remove' : 'mdi-bank-check'" :color="account.active ? 'red' : 'green'" flat variant="plain" @click="deleteDialog = true" v-bind="props"/>
                     </template>
                 </v-tooltip>
-                <v-dialog
-                    v-model="deleteDialog"
-                    width="400"
-                >
-                    <v-card>
-                        <v-card-title>{{ account.active ? 'Disable/Delete' : 'Enable' }} Account?</v-card-title>
-                        <v-card-subtitle>Do you want to {{ account.active ? 'disable or delete ' + account.account_name : 'enable ' + account.account_name}}?</v-card-subtitle>
-                        <v-card-text>
-                            <v-container v-if="account.active">
-                                <v-row density>
-                                    <v-col>
-                                        <v-btn-toggle
-                                            v-model="disableAccount"
-                                            rounded="0"
-                                            color="accent"
-                                            group
-                                        >
-                                            <v-btn :value="true">
-                                                Disable
-                                            </v-btn>
-                                            <v-btn :value="false">
-                                                Delete
-                                            </v-btn>
-                                        </v-btn-toggle>
-                                    </v-col>
-                                </v-row>
-                            </v-container>
-                        </v-card-text>
-                        <v-card-actions><v-spacer></v-spacer><v-btn @click="deleteDialog = false" color="accent">Close</v-btn><v-btn @click="clickRemoveAccount()" color="accent" :disabled="deleteSubmit">{{ displayButtonText() }}</v-btn></v-card-actions>
-                    </v-card>
-                </v-dialog>
+                <DeleteAccountForm v-model="deleteDialog" :account="account" @update-dialog="updateDeleteDialog" />
             </template>
             <template v-slot:title>
                 {{ account.active ? account.account_name : account.account_name + ' (Inactive)'}}
@@ -109,112 +45,30 @@
     </div>
 </template>
 <script setup>
-import { defineProps, defineEmits } from 'vue'
+import { defineProps, ref } from 'vue'
 import { useAccountByID } from '@/composables/accountsComposable'
-import { ref } from 'vue'
-import { useTransactions } from '@/composables/transactionsComposable'
-import { useRouter } from 'vue-router'
+import EditAccountForm from './EditAccountForm.vue'
+import AdjustBalanceForm from './AdjustBalanceForm.vue'
+import DeleteAccountForm from './DeleteAccountForm.vue'
 
-const router = useRouter()
-const { addTransaction } = useTransactions()
-const today = new Date();
-const year = today.getFullYear();
-const month = String(today.getMonth() + 1).padStart(2, '0');
-const day = String(today.getDate()).padStart(2, '0');
-const formattedDate = `${year}-${month}-${day}`;
+
 const adjBalDialog = ref(false)
+const editDialog = ref(false)
+const deleteDialog = ref(false)
+
 const props = defineProps({
     account: Array
 })
-const disableAccount = ref(true)
-const deleteDialog = ref(false)
 
-const new_balance = ref('')
-const balanceForm = ref({
-    id: 0,
-    status_id: 2,
-    transaction_type_id: 1,
-    transaction_date: formattedDate,
-    memo: "",
-    source_account_id: props.account,
-    destination_account_id: null,
-    edit_date: formattedDate,
-    add_date: formattedDate,
-    tag_id: 35,
-    total_amount: '',
-    description: 'Balance Adjustment'
-})
+const { account, isLoading } = useAccountByID(props.account)
 
-const balanceSubmit = ref(true)
-
-const emit = defineEmits(['editAccount'])
-
-const { account, isLoading, removeAccount, editAccount } = useAccountByID(props.account)
-
-const clickAdjustBalance = async () => {
-    if (account.value.balance > new_balance.value) {
-        balanceForm.value.transaction_type_id = 1
-    } else {
-        balanceForm.value.transaction_type_id = 2
-    }
-    balanceForm.value.total_amount = new_balance.value - account.value.balance
-    addTransaction(balanceForm.value)
-    adjBalDialog.value = false
+const updateAdjBalDialog = (value) => {
+    adjBalDialog.value = value
 }
-
-const clickRemoveAccount = async () => {
-    if (account.value.active) {
-        if (disableAccount.value == false) {
-            removeAccount(account.value.id)
-            deleteDialog.value = false
-            router.push('/')
-        } else {
-            const data = {
-                id: account.value.id,
-                active: false
-            }
-            editAccount(data)
-            deleteDialog.value = false
-        }
-    } else {
-        const data = {
-            id: account.value.id,
-            active: true
-        }
-        editAccount(data)
-        deleteDialog.value = false
-    }
+const updateEditDialog = (value) => {
+    editDialog.value = value
 }
-
-const clickEditAccount = async (account_id) => {
-    emit('editAccount', account_id)
-}
-
-const checkBalance = async () => {
-    if (new_balance.value !== '' && new_balance.value !== null) {
-        balanceSubmit.value = false
-    } else {
-        balanceSubmit.value = true
-    }
-}
-
-const required = [
-    value => {
-        if (value) return true;
-
-        return 'This field is required.';
-    },
-];
-
-const displayButtonText = () => {
-    if (!account.value.active) {
-        return 'Enable'
-    } else {
-        if (disableAccount.value) {
-            return 'Disable'
-        } else {
-            return 'Delete'
-        }
-    }
+const updateDeleteDialog = (value) => {
+    deleteDialog.value = value
 }
 </script>
