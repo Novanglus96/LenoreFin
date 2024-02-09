@@ -15,14 +15,24 @@
             <span class="text-subtitle-2 text-accent">Transactions</span>
         </template>
         <template v-slot:text>
-            <v-btn icon="mdi-invoice-text-check" flat :disabled="selected && selected.length === 0" variant="plain" @click="clickClearTransaction(selected)"></v-btn>
-            <v-btn icon="mdi-invoice-text-edit" flat :disabled="selected && selected.length === 0 || selected.length > 1" variant="plain" @click="transactionEditFormDialog = true"></v-btn>
-            <TransactionForm v-model="transactionEditFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="true" @update-dialog="updateEditDialog"/>
-            <v-dialog width="500">
+            <v-tooltip text="Toggle Transaction(s)" location="top">
                 <template v-slot:activator="{ props }">
-                    <v-btn icon="mdi-invoice-remove" flat :disabled="selected && selected.length === 0" variant="plain" color="error" v-bind="props"></v-btn>
+                    <v-btn icon="mdi-invoice-text-clock" flat :disabled="selected && selected.length === 0" variant="plain" @click="clickClearTransaction(selected)" v-bind="props"></v-btn>
                 </template>
-                <template v-slot:default="{ isActive }">
+            </v-tooltip>
+            <v-tooltip text="Edit Transaction" location="top">
+                <template v-slot:activator="{ props }">
+                    <v-btn icon="mdi-invoice-text-edit" flat :disabled="selected && selected.length === 0 || selected.length > 1" variant="plain" @click="transactionEditFormDialog = true" v-bind="props"></v-btn>
+                </template>
+            </v-tooltip>
+            <TransactionForm v-model="transactionEditFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="true" @update-dialog="updateEditDialog"/>
+            
+            <v-tooltip text="Remove Transaction(s)" location="top">
+                <template v-slot:activator="{ props }">
+                    <v-btn icon="mdi-invoice-remove" flat :disabled="selected && selected.length === 0" variant="plain" color="error" v-bind="props" @click="showDeleteDialog = true"></v-btn>
+                </template>
+            </v-tooltip>
+            <v-dialog width="500" v-model="showDeleteDialog">
                     <v-card title="Dialog">
                     <v-card-text>
                         Are you sure you want to delete these {{ selected.length }} transactions?
@@ -33,13 +43,16 @@
 
                         <v-btn
                         text="Confirm"
-                        @click="clickRemoveTransaction(selected);isActive.value = false"
+                        @click="clickRemoveTransaction(selected);showDeleteDialog = false"
                         ></v-btn>
                     </v-card-actions>
                     </v-card>
-                </template>
             </v-dialog>
-            <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success" @click="transactionAddFormDialog = true"></v-btn>
+            <v-tooltip text="Add New Transaction" location="top">
+                <template v-slot:activator="{ props }">
+                    <v-btn icon="mdi-invoice-plus" flat variant="plain" color="success" @click="transactionAddFormDialog = true" v-bind="props"></v-btn>
+                </template>
+            </v-tooltip>
             <TransactionForm v-model="transactionAddFormDialog" @add-transaction="clickAddTransaction" @edit-transaction="clickEditTransaction" :isEdit="false" @update-dialog="updateAddDialog" :account_id="props.account"/>
             <vue3-datatable 
                 :rows="transactions"
@@ -93,6 +106,7 @@ import TransactionForm from '@/components/TransactionForm'
 import Vue3Datatable from '@bhplugin/vue3-datatable'
 import '@bhplugin/vue3-datatable/dist/style.css'
 
+const showDeleteDialog = ref(false)
 const transactionAddFormDialog = ref(false)
 const transactionEditFormDialog = ref(false)
 const props = defineProps({
@@ -161,6 +175,7 @@ const clickClearTransaction = async (transactions) => {
         clearTransaction(transaction)
         selected.value = []
     })
+    trans_table.value.clearSelectedRows()
 }
 
 const clickEditTransaction = async (transaction_id) => {
@@ -174,6 +189,7 @@ const updateAddDialog = () => {
 const updateEditDialog = () => {
     transactionEditFormDialog.value = false
 }
+
 </script>
 <style>
 .alt-pagination .bh-pagination .bh-page-item {
