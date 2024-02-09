@@ -104,7 +104,8 @@ class Reminder(models.Model):
     description = models.CharField(max_length=254)
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.SET_NULL, null=True, blank=True)
     start_date = models.DateField(default=date.today)
-    end_date = models.DateField(default=date.today)
+    next_date = models.DateField(default=None, null=True, blank=True)
+    end_date = models.DateField(default=None, null=True, blank=True)
     repeat = models.ForeignKey(Repeat, on_delete=models.SET_NULL, null=True, blank=True)
     auto_add = models.BooleanField(default=False)
     

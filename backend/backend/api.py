@@ -224,7 +224,8 @@ class ReminderIn(Schema):
     description: str
     transaction_type_id: int
     start_date: date
-    end_date: date
+    next_date: Optional[date]
+    end_date: Optional[date]
     repeat_id: int
     auto_add: bool
 
@@ -238,7 +239,8 @@ class ReminderOut(Schema):
     description: str
     transaction_type: TransactionTypeOut
     start_date: date
-    end_date: date
+    next_date: Optional[date]
+    end_date: Optional[date]
     repeat: RepeatOut
     auto_add: bool
 
@@ -1335,6 +1337,7 @@ def update_reminder(request, reminder_id: int, payload: ReminderIn):
     reminder.description = payload.description
     reminder.transaction_type_id = payload.transaction_type_id
     reminder.start_date = payload.start_date
+    reminder.next_date = payload.next_date
     reminder.end_date = payload.end_date
     reminder.repeat_id = payload.repeat_id
     reminder.auto_add = payload.auto_add
