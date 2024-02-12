@@ -1034,7 +1034,7 @@ def list_repeats(request):
 
 @api.get("/reminders", response=List[ReminderOut])
 def list_reminders(request):
-    qs = Reminder.objects.all().order_by('id')
+    qs = Reminder.objects.all().order_by('next_date', 'id')
     return qs
 
 
