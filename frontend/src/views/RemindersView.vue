@@ -7,7 +7,7 @@
         </v-row>
         <v-row class="pa-1 ga-1 rounded" no-gutters>
             <v-col class="rounded">
-                <RemindersWidget />
+                <RemindersWidget :allowEdit="true"/>
             </v-col>
         </v-row>
     </div>
