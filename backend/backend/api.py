@@ -1,5 +1,35 @@
+"""
+Module: api.py
+Description: Contains django-ninja api schemas and definitions.
+
+Author: John Adams <johnmadams96@gmail.com>
+Date: February 13, 2024
+"""
+
 from ninja import NinjaAPI, Schema, Query
-from api.models import Account, AccountType, Tag, ChristmasGift, ContribRule, Contribution, ErrorLevel, TransactionType, Repeat, Reminder, Note, Option, TransactionStatus, Transaction, TransactionDetail, LogEntry, Payee, TagType, Bank, Paycheck, Message
+from api.models import (
+    Account,
+    AccountType,
+    Tag,
+    ChristmasGift,
+    ContribRule,
+    Contribution,
+    ErrorLevel,
+    TransactionType,
+    Repeat,
+    Reminder,
+    Note,
+    Option,
+    TransactionStatus,
+    Transaction,
+    TransactionDetail,
+    LogEntry,
+    Payee,
+    TagType,
+    Bank,
+    Paycheck,
+    Message,
+)
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
@@ -7,7 +37,16 @@ from datetime import date, timedelta
 from pydantic import BaseModel, Field
 from ninja.security import HttpBearer
 from decouple import config
-from django.db.models import Case, When, Q, IntegerField, Value, F, CharField, Sum
+from django.db.models import (
+    Case,
+    When,
+    Q,
+    IntegerField,
+    Value,
+    F,
+    CharField,
+    Sum,
+)
 from django.db import models
 from django.db.models.functions import Concat
 from django.utils import timezone
@@ -18,6 +57,20 @@ import json
 
 class GlobalAuth(HttpBearer):
     def authenticate(self, request, token):
+        """
+        The function "authenticate" checks if the provided token matches the API key and returns the
+        token if they match.
+
+        Args:
+            request (obj): The `request` parameter is an object that represents the HTTP request being
+                made. It contains information such as the request method, headers, and body.
+            token (str): The `token` parameter is a string that represents the authentication token
+                provided by the user.
+
+        Returns:
+            return: The token is being returned if it matches the API key.
+        """
+
         api_key = config("API_KEY", default=None)
         if token == api_key:
             return token
@@ -29,12 +82,14 @@ api.version = "1.0.0"
 api.description = "API documentation for Money"
 
 
+# The class AccountTypeIn is a schema for validating account types.
 class AccountTypeIn(Schema):
     account_type: str
     color: str
     icon: str
 
 
+# The class AccountTypeOut is a schema for representing account types.
 class AccountTypeOut(Schema):
     id: int
     account_type: str
@@ -42,19 +97,24 @@ class AccountTypeOut(Schema):
     icon: str
 
 
+# The class BankIn is a schema for validating banks.
 class BankIn(Schema):
     bank_name: str
 
 
+# The class BankOut is a schema for representing banks.
 class BankOut(Schema):
     id: int
     bank_name: str
 
 
+# The class AccountIn is a schema for validating accounts.
 class AccountIn(Schema):
     account_name: str
     account_type_id: int
-    opening_balance: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
+    opening_balance: Optional[Decimal] = Field(
+        whole_digits=10, decimal_places=2
+    )
     apy: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     due_date: Optional[date]
     active: bool
@@ -65,13 +125,18 @@ class AccountIn(Schema):
     rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     bank_id: int
-    last_statement_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    last_statement_amount: Optional[Decimal] = Field(
+        whole_digits=2, decimal_places=2
+    )
 
 
+# The class AccountUpdate is a schema for updating account information.
 class AccountUpdate(Schema):
     account_name: Optional[str]
     account_type_id: Optional[int]
-    opening_balance: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
+    opening_balance: Optional[Decimal] = Field(
+        whole_digits=10, decimal_places=2
+    )
     apy: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     due_date: Optional[date]
     active: Optional[bool]
@@ -82,9 +147,12 @@ class AccountUpdate(Schema):
     rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     bank_id: Optional[int]
-    last_statement_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    last_statement_amount: Optional[Decimal] = Field(
+        whole_digits=2, decimal_places=2
+    )
 
 
+# The class AccountOut is a schema for representing accounts.
 class AccountOut(Schema):
     id: int
     account_name: str
@@ -99,45 +167,56 @@ class AccountOut(Schema):
     statement_cycle_period: Optional[str]
     rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
-    available_credit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    available_credit: Optional[Decimal] = Field(
+        whole_digits=2, decimal_places=2
+    )
     balance: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
     bank: BankOut
-    last_statement_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    last_statement_amount: Optional[Decimal] = Field(
+        whole_digits=2, decimal_places=2
+    )
 
 
+# The class TagTypeIn is a schema for validating tag types.
 class TagTypeIn(Schema):
     tag_type: str
 
 
+# The class TagTypeOut is a schema for representing tag types.
 class TagTypeOut(Schema):
     id: int
     tag_type: str
 
 
+# The class TagIn is a schema for validating tags.
 class TagIn(Schema):
     tag_name: str
     parent_id: Optional[int] = None
     tag_type_id: Optional[int] = None
 
 
+# The class TagOut is a schema for representing tags.
 class TagOut(Schema):
     id: int
     tag_name: str
-    parent: Optional['TagOut'] = None
+    parent: Optional["TagOut"] = None
     tag_type: Optional[TagTypeOut] = None
 
 
+# The class ContribRuleIn is a schema for validating Contribution Rules.
 class ContribRuleIn(Schema):
     rule: str
     cap: Optional[str] = None
 
 
+# The class ContribRuleOut is a schema representing Contribution Rules.
 class ContribRuleOut(Schema):
     id: int
     rule: str
     cap: Optional[str] = None
 
 
+# The class ContributionIn is a schema for validating Contributions.
 class ContributionIn(Schema):
     contribution: str
     per_paycheck: Decimal = Field(whole_digits=10, decimal_places=2)
@@ -147,6 +226,7 @@ class ContributionIn(Schema):
     active: bool
 
 
+# The class ContributionOut is a schema for representing Contributions.
 class ContributionOut(Schema):
     id: int
     contribution: str
@@ -157,24 +237,29 @@ class ContributionOut(Schema):
     active: bool
 
 
+# The class ErrorLevelIn is a schema for validating Error Levels.
 class ErrorLevelIn(Schema):
     error_level: str
 
 
+# The class ErrorLevelOut is a schema for representing Error Levels.
 class ErrorLevelOut(Schema):
     id: int
     error_level: str
 
 
+# The class TransactionTypeIn is a schema for validating transaction types.
 class TransactionTypeIn(Schema):
     transaction_type: str
 
 
+# The class TransactionTypeOut is a schema for representing transaction types.
 class TransactionTypeOut(Schema):
     id: int
     transaction_type: str
 
 
+# The class RepeatIn is a schema for validating Repeat Intervals.
 class RepeatIn(Schema):
     repeat_name: str
     days: Optional[int] = 0
@@ -183,6 +268,7 @@ class RepeatIn(Schema):
     years: Optional[int] = 0
 
 
+# The class RepeatOut is a schema for representing Repeat Intervals.
 class RepeatOut(Schema):
     id: int
     repeat_name: str
@@ -192,16 +278,19 @@ class RepeatOut(Schema):
     years: Optional[int] = 0
 
 
+# The class TargetObject is a schema representing a FillObject Target.
 class TargetObject(Schema):
     value: int
 
 
+# The class FillObject is a schema representing a Dataset FillObject.
 class FillObject(Schema):
     target: TargetObject
     above: str
     below: str
 
 
+# The class DatasetObject is a schema representing a Graph Forecast Dataset.
 class DatasetObject(Schema):
     borderColor: str
     backgroundColor: str
@@ -211,11 +300,13 @@ class DatasetObject(Schema):
     pointStyle: bool
 
 
+# The class ForecastOut is a schema for representing forecast graph data.
 class ForecastOut(Schema):
     labels: List[str]
     datasets: List[DatasetObject]
 
 
+# The class ReminderIn is a schema for validating Reminders.
 class ReminderIn(Schema):
     tag_id: int
     amount: Decimal = Field(whole_digits=10, decimal_places=2)
@@ -230,6 +321,7 @@ class ReminderIn(Schema):
     auto_add: bool
 
 
+# The class ReminderOut is a schema for representing Reminders.
 class ReminderOut(Schema):
     id: int
     tag: TagOut
@@ -245,17 +337,20 @@ class ReminderOut(Schema):
     auto_add: bool
 
 
+# The class NoteIn is a schema for validating a Note.
 class NoteIn(Schema):
     note_text: str
     note_date: date
 
 
+# The class NoteOut is a schema for representing a Note.
 class NoteOut(Schema):
     id: int
     note_text: str
     note_date: date
 
 
+# The class OptionIn is a schema for validating Options.
 class OptionIn(Schema):
     log_level_id: Optional[int]
     alert_balance: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
@@ -264,19 +359,20 @@ class OptionIn(Schema):
     widget1_tag_id: Optional[int] = None
     widget1_expense: Optional[bool] = True
     widget1_month: Optional[int] = 0
-    widget1_exclude: Optional[str] = '[0]'
+    widget1_exclude: Optional[str] = "[0]"
     widget2_graph_name: Optional[str]
     widget2_tag_id: Optional[int] = None
     widget2_expense: Optional[bool] = True
     widget2_month: Optional[int] = 0
-    widget2_exclude: Optional[str] = '[0]'
+    widget2_exclude: Optional[str] = "[0]"
     widget3_graph_name: Optional[str]
     widget3_tag_id: Optional[int] = None
     widget3_expense: Optional[bool] = True
     widget3_month: Optional[int] = 0
-    widget3_exclude: Optional[str] = '[0]'
+    widget3_exclude: Optional[str] = "[0]"
 
 
+# The class OptionOut is a schema for representing Options.
 class OptionOut(Schema):
     id: int
     log_level: ErrorLevelOut
@@ -286,37 +382,42 @@ class OptionOut(Schema):
     widget1_tag_id: Optional[int] = None
     widget1_expense: bool = True
     widget1_month: int = 0
-    widget1_exclude: Optional[str] = '[0]'
+    widget1_exclude: Optional[str] = "[0]"
     widget2_graph_name: str
     widget2_tag_id: Optional[int] = None
     widget2_expense: bool = True
     widget2_month: int = 0
-    widget2_exclude: Optional[str] = '[0]'
+    widget2_exclude: Optional[str] = "[0]"
     widget3_graph_name: str
     widget3_tag_id: Optional[int] = None
     widget3_expense: bool = True
     widget3_month: int = 0
-    widget3_exclude: Optional[str] = '[0]'
+    widget3_exclude: Optional[str] = "[0]"
 
 
+# The class TransactionStatusIn is a schema for validating transaction status.
 class TransactionStatusIn(Schema):
     transaction_status: str
 
 
+# The class TransactionStatusOut is a schema for representing transaction status.
 class TransactionStatusOut(Schema):
     id: int
     transaction_status: str
 
 
+# The class PayeeIn is a schema for validating payee information.
 class PayeeIn(Schema):
     payee_name: str
 
 
+# The class PayeeOut is a schema for representing payee information.
 class PayeeOut(Schema):
     id: int
     payee_name: str
 
 
+# The class PayCheckIn is a schema for validating Paycheck information.
 class PaycheckIn(Schema):
     gross: Decimal = Field(whole_digits=10, decimal_places=2)
     net: Decimal = Field(whole_digits=10, decimal_places=2)
@@ -330,6 +431,7 @@ class PaycheckIn(Schema):
     payee_id: int
 
 
+# The class PayCheckOut is a schema for representing Paycheck information.
 class PaycheckOut(Schema):
     id: int
     gross: Decimal = Field(whole_digits=10, decimal_places=2)
@@ -344,6 +446,7 @@ class PaycheckOut(Schema):
     payee: PayeeOut
 
 
+# The class TransactionIn is a schema for validating Transaction information.
 class TransactionIn(Schema):
     transaction_date: date
     total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
@@ -357,12 +460,14 @@ class TransactionIn(Schema):
     paycheck_id: Optional[int] = None
 
 
+# The class MessageIn is a schema for validating Messages.
 class MessageIn(Schema):
     message_date: date
     message: str
     unread: bool
 
 
+# The class MessageOut is a schema for representing Messages.
 class MessageOut(Schema):
     id: int
     message_date: date
@@ -370,10 +475,12 @@ class MessageOut(Schema):
     unread: bool
 
 
+# The class AllMessage is a schema for representing all messages.
 class AllMessage(Schema):
     unread: bool
 
 
+# The class MessageList is a schema for representing a list of Messages with unread and total count.
 class MessageList(Schema):
     unread_count: int
     total_count: int
@@ -381,23 +488,68 @@ class MessageList(Schema):
 
 
 def get_today_formatted():
+    """
+    The function `get_today_formatted` returns the current date in the format "YYYY-MM-DD".
+
+    Returns:
+        return: the current date in the format "YYYY-MM-DD".
+    """
     today = timezone.now().date()
     return today.strftime("%Y-%m-%d")
 
 
 def get_forecast_start_date(interval):
+    """
+    The function `get_forecast_start_date` returns the start date for a forecast based on the given
+    interval.
+
+    Args:
+        interval (int): The interval parameter represents the number of days in the past from today's date.
+
+    Returns:
+        return: the start date for a forecast based on the given interval.
+    """
+
     today = timezone.now().date()
     startdate = today - timedelta(days=interval)
     return startdate
 
 
 def get_forecast_end_date(interval):
+    """
+    The function `get_forecast_end_date` calculates the end date of a forecast based on the given
+    interval.
+
+    Args:
+        interval (int): The interval parameter represents the number of days from today's date for which
+            you want to get the forecast end date.
+
+    Returns:
+        return: the end date of the forecast, which is calculated by adding the specified interval (in
+            days) to the current date.
+    """
+
     today = timezone.now().date()
     enddate = today + timedelta(days=interval)
     return enddate
 
 
 def get_dates_in_range(start_interval, end_interval):
+    """
+    The function `get_dates_in_range` returns a list of dates in a specified range, formatted as month,
+    day, and year.
+
+    Args:
+        start_interval (int): The start_interval parameter represents the starting point of the date range.
+            It could be a specific date or a time interval.
+        end_interval (int): The `end_interval` parameter represents the end of the date range for which you
+            want to generate a list of dates.
+
+    Returns:
+        return: a list of dates in the format "Month Day, Year" that fall within the specified start and
+            end intervals.
+    """
+
     date_list = []
     current_date = get_forecast_start_date(start_interval)
     end_date = get_forecast_end_date(end_interval)
@@ -410,6 +562,19 @@ def get_dates_in_range(start_interval, end_interval):
 
 
 def get_unformatted_dates_in_range(start_interval, end_interval):
+    """
+    The function `get_unformatted_dates_in_range` returns a list of dates within a specified range with no
+    formatting.
+
+    Args:
+        start_interval (int): The start date of the interval for which you want to get unformatted dates.
+        end_interval (int): The `end_interval` parameter represents the end of the date range for which you
+            want to get unformatted dates.
+
+    Returns:
+        return: a list of unformatted dates within the specified range.
+    """
+
     date_list = []
     current_date = get_forecast_start_date(start_interval)
     end_date = get_forecast_end_date(end_interval)
@@ -421,19 +586,22 @@ def get_unformatted_dates_in_range(start_interval, end_interval):
     return date_list
 
 
+# The class TransactionClear is a schema for clearing Transactions.
 class TransactionClear(Schema):
     status_id: int
     edit_date: Optional[date] = Field(default_factory=get_today_formatted)
 
 
+# The class TransactionDetailOut is a schema for representing Transaction Details.
 class TransactionDetailOut(Schema):
     id: int
-    transaction: 'TransactionOut'
+    transaction: "TransactionOut"
     account: AccountOut
     detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     tag: TagOut
 
 
+# The class TransactionOut is a schema for representing Transactions.
 class TransactionOut(Schema):
     id: int
     transaction_date: date
@@ -446,16 +614,21 @@ class TransactionOut(Schema):
     transaction_type: TransactionTypeOut
     reminder: Optional[ReminderOut] = None
     paycheck: Optional[PaycheckOut] = None
-    balance: Optional[Decimal] = Field(default=None, whole_digits=10, decimal_places=2)
+    balance: Optional[Decimal] = Field(
+        default=None, whole_digits=10, decimal_places=2
+    )
     pretty_account: Optional[str]
     tags: Optional[List[str]]
     details: List[TransactionDetailOut] = []
-    pretty_total: Optional[Decimal] = Field(default=None, whole_digits=10, decimal_places=2)
+    pretty_total: Optional[Decimal] = Field(
+        default=None, whole_digits=10, decimal_places=2
+    )
 
 
 TransactionDetailOut.update_forward_refs()
 
 
+# The class TransactionDetailIn is a schema for validating Transaction Details.
 class TransactionDetailIn(Schema):
     transaction_id: int
     account_id: int
@@ -463,6 +636,7 @@ class TransactionDetailIn(Schema):
     tag_id: int
 
 
+# The class LogEntryIn is a schema for validating Log Entries.
 class LogEntryIn(Schema):
     log_date: Optional[date] = get_today_formatted()
     log_entry: str
@@ -473,6 +647,7 @@ class LogEntryIn(Schema):
     error_level_id: Optional[int] = None
 
 
+# The class LogEntryOut is a schema for representing Log Entries.
 class LogEntryOut(Schema):
     log_date: date
     log_entry: str
@@ -483,6 +658,7 @@ class LogEntryOut(Schema):
     error_level: Optional[ErrorLevelOut] = None
 
 
+# The class TagTransactionOut is a schema for representing Transactions by Tag.
 class TagTransactionOut(Schema):
     transaction_id: int
     transaction_date: date
@@ -492,12 +668,14 @@ class TagTransactionOut(Schema):
     transaction_pretty_account: str
 
 
+# The class TagDetailOut is a schema for representing Tag details.
 class TagDetailOut(Schema):
     details: List[TagTransactionOut]
     total_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     average_amt: Decimal = Field(whole_digits=10, decimal_places=2)
 
 
+# The class GraphDataset is a schema for representing graph datasets.
 class GraphDataset(Schema):
     label: str
     data: List[Decimal] = Field(whole_digits=10, decimal_places=2)
@@ -505,6 +683,7 @@ class GraphDataset(Schema):
     hoverOffset: int = 4
 
 
+# The class GraphOut is a schema for representing Graphs.
 class GraphOut(Schema):
     labels: List[str]
     datasets: List[GraphDataset]
@@ -512,108 +691,307 @@ class GraphOut(Schema):
 
 @api.post("/accounts/types")
 def create_account_type(request, payload: AccountTypeIn):
+    """
+    The function `create_account_type` creates an account type
+
+    Args:
+        request ():
+        payload (AccountTypeIn): An object using schema of AccountTypeIn.
+
+    Returns:
+        id: returns the id of the created account type
+    """
+
     account_type = AccountType.objects.create(**payload.dict())
     return {"id": account_type.id}
 
 
 @api.post("/accounts/banks")
 def create_bank(request, payload: BankIn):
+    """
+    The function `create_bank` creates a bank
+
+    Args:
+        request ():
+        payload (BankIn): An object using schema of BankIn.
+
+    Returns:
+        id: returns the id of the created bank
+    """
+
     bank = Bank.objects.create(**payload.dict())
     return {"id": bank.id}
 
 
 @api.post("/accounts")
 def create_account(request, payload: AccountIn):
+    """
+    The function `create_account` creates an account
+
+    Args:
+        request ():
+        payload (AccountIn): An object using schema of AccountIn.
+
+    Returns:
+        id: returns the id of the created account
+    """
+
     account = Account.objects.create(**payload.dict())
     return {"id": account.id}
 
 
 @api.post("/tags")
 def create_tag(request, payload: TagIn):
+    """
+    The function `create_tag` creates a tag
+
+    Args:
+        request ():
+        payload (TagIn): An object using schema of TagIn.
+
+    Returns:
+        id: returns the id of the created tag
+    """
+
     tag = Tag.objects.create(**payload.dict())
     return {"id": tag.id}
 
 
 @api.post("/planning/contribrules")
 def create_contrib_rule(request, payload: ContribRuleIn):
+    """
+    The function `create_contrib_rule` creates a contribution rule
+
+    Args:
+        request ():
+        payload (ContribRuleIn): An object using schema of ContribRuleIn.
+
+    Returns:
+        id: returns the id of the created contribution rule
+    """
+
     contrib_rule = ContribRule.objects.create(**payload.dict())
     return {"id": contrib_rule.id}
 
 
 @api.post("/planning/contributions")
 def create_contribution(request, payload: ContributionIn):
+    """
+    The function `create_contribution` creates a contribution
+
+    Args:
+        request ():
+        payload (ContributionIn): An object using schema of ContributionIn.
+
+    Returns:
+        id: returns the id of the created contribution
+    """
+
     contribution = Contribution.objects.create(**payload.dict())
     return {"id": contribution.id}
 
 
 @api.post("/errorlevels")
 def create_errorlevel(request, payload: ErrorLevelIn):
+    """
+    The function `create_errorlevel` creates an error level
+
+    Args:
+        request ():
+        payload (ErrorLevelIn): An object using schema of ErrorLevelIn.
+
+    Returns:
+        id: returns the id of the created error level
+    """
+
     errorlevel = ErrorLevel.objects.create(**payload.dict())
     return {"id": errorlevel.id}
 
 
 @api.post("/transactions/types")
 def create_transaction_type(request, payload: TransactionTypeIn):
+    """
+    The function `create_transaction_type` creates a transaction type
+
+    Args:
+        request ():
+        payload (TransactionTypeIn): An object using schema of TransactionTypeIn.
+
+    Returns:
+        id: returns the id of the created transaction type
+    """
+
     transaction_type = TransactionType.objects.create(**payload.dict())
     return {"id": transaction_type.id}
 
 
 @api.post("/reminders/repeats")
 def create_repeat(request, payload: RepeatIn):
+    """
+    The function `create_repeat` creates a repeat
+
+    Args:
+        request ():
+        payload (RepeatIn): An object using schema of RepeatIn.
+
+    Returns:
+        id: returns the id of the created repeat
+    """
+
     repeat = Repeat.objects.create(**payload.dict())
     return {"id": repeat.id}
 
 
 @api.post("/reminders")
 def create_reminder(request, payload: ReminderIn):
+    """
+    The function `create_reminder` creates a reminder
+
+    Args:
+        request ():
+        payload (ReminderIn): An object using schema of ReminderIn.
+
+    Returns:
+        id: returns the id of the created reminder
+    """
+
     reminder = Reminder.objects.create(**payload.dict())
     return {"id": reminder.id}
 
 
 @api.post("/planning/notes")
 def create_note(request, payload: NoteIn):
+    """
+    The function `create_note` creates a note
+
+    Args:
+        request ():
+        payload (NoteIn): An object using schema of NoteIn.
+
+    Returns:
+        id: returns the id of the created note
+    """
+
     note = Note.objects.create(**payload.dict())
     return {"id": note.id}
 
 
 @api.post("/options")
 def create_option(request, payload: OptionIn):
+    """
+    The function `create_option` creates an option
+
+    Args:
+        request ():
+        payload (OptionIn): An object using schema of OptionIn.
+
+    Returns:
+        id: returns the id of the created option
+    """
+
     option = Option.objects.create(**payload.dict())
     return {"id": option.id}
 
 
 @api.post("/transactions/statuses")
 def create_transaction_status(request, payload: TransactionStatusIn):
+    """
+    The function `create_transaction_status` creates a transactoin status
+
+    Args:
+        request ():
+        payload (TransactionStatusIn): An object using schema of TransactionStatusIn.
+
+    Returns:
+        id: returns the id of the created transaction status
+    """
+
     transaction_status = TransactionStatus.objects.create(**payload.dict())
     return {"id": transaction_status.id}
 
 
 @api.post("/payees")
 def create_payee(request, payload: PayeeIn):
+    """
+    The function `create_payee` creates a payee
+
+    Args:
+        request ():
+        payload (PayeeIn): An object using schema of PayeeIn.
+
+    Returns:
+        id: returns the id of the created payee
+    """
+
     payee = Payee.objects.create(**payload.dict())
     return {"id": payee.id}
 
 
 @api.post("/paychecks")
 def create_paycheck(request, payload: PaycheckIn):
+    """
+    The function `create_paycheck` creates a paycheck
+
+    Args:
+        request ():
+        payload (PaycheckIn): An object using schema of PaycheckIn.
+
+    Returns:
+        id: returns the id of the created paycheck
+    """
+
     paycheck = Paycheck.objects.create(**payload.dict())
     return {"id": paycheck.id}
 
 
 @api.post("/transactions")
 def create_transaction(request, payload: TransactionIn):
+    """
+    The function `create_transaction` creates a transaction
+
+    Args:
+        request ():
+        payload (TransactionIn): An object using schema of TransactionIn.
+
+    Returns:
+        id: returns the id of the created transaction
+    """
+
     transaction = Transaction.objects.create(**payload.dict())
     return {"id": transaction.id}
 
 
 @api.post("/transactions/details")
 def create_transaction_detail(request, payload: TransactionDetailIn):
+    """
+    The function `create_transaction_detail` creates a transaction detail
+
+    Args:
+        request ():
+        payload (TransactionDetailIn): An object using schema of TransactionDetailIn.
+
+    Returns:
+        id: returns the id of the created transaction detail
+    """
+
     transaction_detail = TransactionDetail.objects.create(**payload.dict())
     return {"id": transaction_detail.id}
 
 
 @api.post("/logentries")
 def create_log_entry(request, payload: LogEntryIn):
+    """
+    The function `create_log_entry` creates a log entry, but only if the log_level_id
+    is greater than the current log_level in options
+
+    Args:
+        request ():
+        payload (LogEntryIn): An object using schema of LogEntryIn.
+
+    Returns:
+        id: returns and id of 0
+    """
+
     options = get_object_or_404(Option, id=1)
     if payload.error_level_id >= options.log_level.id:
         log_entry = LogEntry.objects.create(**payload.dict())
@@ -623,34 +1001,103 @@ def create_log_entry(request, payload: LogEntryIn):
 
 @api.post("/messages")
 def create_message(request, payload: MessageIn):
+    """
+    The function `create_transaction_detail` creates a transaction detail
+
+    Args:
+        request ():
+        payload (TransactionDetailIn): An object using schema of TransactionDetailIn.
+
+    Returns:
+        id: returns the id of the created transaction detail
+    """
+
     message = Message.objects.create(**payload.dict())
     return {"id": message.id}
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
 def get_account_type(request, accounttype_id: int):
+    """
+    The function `get_account_type` retrieves the account type by id
+
+    Args:
+        request (HttpRequest): The HTTP request object
+        accounttype_id (int): The id of the account type to retrieve.
+
+    Returns:
+        AccountTypeOut: the account type object
+
+    Raises:
+        Http404: If the account type with the specified ID does not exist.
+    """
+
     account_type = get_object_or_404(AccountType, id=accounttype_id)
     return account_type
 
 
 @api.get("/accounts/banks/{bank_id}", response=BankOut)
 def get_bank(request, bank_id: int):
+    """
+    The function `get_bank` retrieves the bank by id
+
+    Args:
+        request (HttpRequest): The HTTP request object
+        bank_id (int): The id of the bank to retrieve.
+
+    Returns:
+        BankOut: the bank object
+
+    Raises:
+        Http404: If the bank with the specified ID does not exist.
+    """
+
     bank = get_object_or_404(Bank, id=bank_id)
     return bank
 
 
 @api.get("/accounts/{account_id}", response=AccountOut)
 def get_account(request, account_id: int):
+    """
+    The function `get_account` retrieves the account by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        account_id (int): The id of the account to retrieve.
+
+    Returns:
+        AccountOut: the account object
+
+    Raises:
+        Http404: If the account with the specified ID does not exist.
+    """
+
+    # Retrieve the account object from the database
     account = get_object_or_404(Account, id=account_id)
+
+    # Fetch all transactions exlduing pending
     transactions = Transaction.objects.exclude(status_id=1)
-    transactions = TransactionDetail.objects.filter(account__id=account_id).exclude(transaction__status__id=1)
+
+    # Filter transactions related to account
+    transactions = TransactionDetail.objects.filter(
+        account__id=account_id
+    ).exclude(transaction__status__id=1)
+
+    # Calculate the account balance using transactions
     calc_balance = account.opening_balance
     for transaction in transactions:
         calc_balance += transaction.detail_amt
+
+    # Prepare the AccountOut object
     account_out = AccountOut(
         id=account.id,
         account_name=account.account_name,
-        account_type=AccountTypeOut(id=account.account_type.id, account_type=account.account_type.account_type, color=account.account_type.color, icon=account.account_type.icon),
+        account_type=AccountTypeOut(
+            id=account.account_type.id,
+            account_type=account.account_type.account_type,
+            color=account.account_type.color,
+            icon=account.account_type.icon,
+        ),
         opening_balance=account.opening_balance,
         apy=account.apy,
         due_date=account.due_date,
@@ -664,76 +1111,233 @@ def get_account(request, account_id: int):
         available_credit=account.credit_limit + calc_balance,
         balance=calc_balance,
         bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name),
-        last_statement_amount=account.last_statement_amount
+        last_statement_amount=account.last_statement_amount,
     )
     return account_out
 
 
 @api.get("/tags/{tag_id}", response=TagOut)
 def get_tag(request, tag_id: int):
+    """
+    The function `get_tag` retrieves the tag by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        tag_id (int): The id of the tag to retrieve.
+
+    Returns:
+        TagOut: the tag object
+
+    Raises:
+        Http404: If the tag with the specified ID does not exist.
+    """
+
     tag = get_object_or_404(Tag, id=tag_id)
     return tag
 
 
 @api.get("/planning/contribrules/{contribrule_id}", response=ContribRuleOut)
 def get_contribrule(request, contribrule_id: int):
+    """
+    The function `get_contribrule` retrieves the contribution rule by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        contribrule_id (int): The id of the contribution rule to retrieve.
+
+    Returns:
+        ContribRuleOut: the contribution rule object
+
+    Raises:
+        Http404: If the contribution rule with the specified ID does not exist.
+    """
+
     contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
     return contrib_rule
 
 
 @api.get("/planning/contributions/{contribution_id}", response=ContributionOut)
 def get_contribution(request, contribution_id: int):
+    """
+    The function `get_contribution` retrieves the contribution by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        contribution_id (int): The id of the contribution to retrieve.
+
+    Returns:
+        ContributionOut: the contribution object
+
+    Raises:
+        Http404: If the contribution with the specified ID does not exist.
+    """
+
     contribution = get_object_or_404(Contribution, id=contribution_id)
     return contribution
 
 
 @api.get("/errorlevels/{errorlevel_id}", response=ErrorLevelOut)
 def get_errorlevel(request, errorlevel_id: int):
+    """
+    The function `get_errorlevel` retrieves the error level by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        errorlevel_id (int): The id of the error level to retrieve.
+
+    Returns:
+        ErrorLevelOut: the error level object
+
+    Raises:
+        Http404: If the error level with the specified ID does not exist.
+    """
+
     errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
     return errorlevel
 
 
-@api.get("/transactions/types/{transaction_type_id}", response=TransactionTypeOut)
+@api.get(
+    "/transactions/types/{transaction_type_id}", response=TransactionTypeOut
+)
 def get_transaction_type(request, transaction_type_id: int):
-    transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
+    """
+    The function `get_transaction_type` retrieves the transaction type by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transaction_type_id (int): The id of the transaction type to retrieve.
+
+    Returns:
+        TransactionTypeOut: the transaction type object
+
+    Raises:
+        Http404: If the transaction type with the specified ID does not exist.
+    """
+
+    transaction_type = get_object_or_404(
+        TransactionType, id=transaction_type_id
+    )
     return transaction_type
 
 
 @api.get("/reminders/repeats/{repeat_id}", response=RepeatOut)
 def get_repeat(request, repeat_id: int):
+    """
+    The function `get_repeat` retrieves the repeat by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        repeat_id (int): The id of the repeat to retrieve.
+
+    Returns:
+        RepeatOut: the repeat object
+
+    Raises:
+        Http404: If the repeat with the specified ID does not exist.
+    """
+
     repeat = get_object_or_404(Repeat, id=repeat_id)
     return repeat
 
 
 @api.get("/reminders/{reminder_id}", response=ReminderOut)
 def get_reminder(request, reminder_id: int):
+    """
+    The function `get_reminder` retrieves the reminder by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        reminder_id (int): The id of the reminder to retrieve.
+
+    Returns:
+        ReminderOut: the reminder object
+
+    Raises:
+        Http404: If the reminder with the specified ID does not exist.
+    """
+
     reminder = get_object_or_404(Reminder, id=reminder_id)
     return reminder
 
 
 @api.get("/planning/notes/{note_id}", response=NoteOut)
 def get_note(request, note_id: int):
+    """
+    The function `get_note` retrieves the note by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        note_id (int): The id of the note to retrieve.
+
+    Returns:
+        NoteOut: the note object
+
+    Raises:
+        Http404: If the note with the specified ID does not exist.
+    """
+
     note = get_object_or_404(Note, id=note_id)
     return note
 
 
 @api.get("/options/{option_id}", response=OptionOut)
 def get_option(request, option_id: int):
+    """
+    The function `get_option` retrieves the option by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        option_id (int): The id of the option to retrieve.
+
+    Returns:
+        OptionOut: the option object
+
+    Raises:
+        Http404: If the option with the specified ID does not exist.
+    """
+
     option = get_object_or_404(Option, id=option_id)
     return option
 
 
 @api.get("/accounts/{account_id}/forecast", response=ForecastOut)
-def get_forecast(request, account_id: int, start_interval: int, end_interval: int):
+def get_forecast(
+    request, account_id: int, start_interval: int, end_interval: int
+):
+    """
+    The function `get_forecast` retrieves the forecast data for the account id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        account_id (int): The id of the account to retrieve forecast data.
+        start_interval (int): the number of days before today to start forecast.
+        end_interval (int): the number of days after today to end forecast.
+
+    Returns:
+        ForecastOut: the forecast object
+
+    Raises:
+        Http404: If the account with the specified ID does not exist.
+    """
+
+    # Retrieve the dates in range as labels for forecast
     labels = get_dates_in_range(start_interval, end_interval)
+
     dates = get_unformatted_dates_in_range(start_interval, end_interval)
     data = []
     datasets = []
+
+    # Retrieve the account for the forecast
     account = get_object_or_404(Account, id=account_id)
+
+    # Retrieve the transactions in the date range for the account
     transactions = TransactionDetail.objects.filter(
         account__id=account_id,
-        transaction__transaction_date__lt=get_forecast_end_date(end_interval))
-    transactions = transactions.order_by('transaction__transaction_date')
+        transaction__transaction_date__lt=get_forecast_end_date(end_interval),
+    )
+    transactions = transactions.order_by("transaction__transaction_date")
+
+    # Calculate the daily account balance
     balance = Decimal(0)
     balance += account.opening_balance
     day_balance = Decimal(0)
@@ -743,92 +1347,235 @@ def get_forecast(request, account_id: int, start_interval: int, end_interval: in
             if transaction.transaction.transaction_date <= label:
                 day_balance += transaction.detail_amt
         data.append(day_balance)
-    targetobject_out = TargetObject(
-        value=0
-    )
+
+    # Prepare the graph data for the forecast object
+    targetobject_out = TargetObject(value=0)
     fillobject_out = FillObject(
         target=targetobject_out,
-        above='rgb(236 , 253, 245)',
-        below='rgb(248, 121, 121)'
+        above="rgb(236 , 253, 245)",
+        below="rgb(248, 121, 121)",
     )
     datasets_out = DatasetObject(
-        borderColor='#06966A',
-        backgroundColor='#06966A',
+        borderColor="#06966A",
+        backgroundColor="#06966A",
         tension=0.1,
         data=data,
         fill=fillobject_out,
-        pointStyle='false'
+        pointStyle="false",
     )
     datasets.append(datasets_out)
-    forecast_out = ForecastOut(
-        labels=labels,
-        datasets=datasets
-    )
+    forecast_out = ForecastOut(labels=labels, datasets=datasets)
     return forecast_out
 
 
-@api.get("/transactions/statuses/{transactionstatus_id}", response=TransactionStatusOut)
+@api.get(
+    "/transactions/statuses/{transactionstatus_id}",
+    response=TransactionStatusOut,
+)
 def get_transaction_status(request, transactionstatus_id: int):
-    transaction_status = get_object_or_404(TransactionStatus, id=transactionstatus_id)
+    """
+    The function `get_transaction_status` retrieves the transaction status by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transactionstatus_id (int): The id of the transaction status to retrieve.
+
+    Returns:
+        TransactionStatusOut: the transaction status object
+
+    Raises:
+        Http404: If the transaction status with the specified ID does not exist.
+    """
+
+    transaction_status = get_object_or_404(
+        TransactionStatus, id=transactionstatus_id
+    )
     return transaction_status
 
 
 @api.get("/payees/{payee_id}", response=PayeeOut)
 def get_payee(request, payee_id: int):
+    """
+    The function `get_payee` retrieves the payee by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        payee_id (int): The id of the payee to retrieve.
+
+    Returns:
+        PayeeOut: the payee object
+
+    Raises:
+        Http404: If the payee with the specified ID does not exist.
+    """
+
     payee = get_object_or_404(Payee, id=payee_id)
     return payee
 
 
 @api.get("/paychecks/{paycheck_id}", response=PaycheckOut)
 def get_paycheck(request, paycheck_id: int):
+    """
+    The function `get_paycheck` retrieves the paycheck by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        paycheck_id (int): The id of the paycheck to retrieve.
+
+    Returns:
+        PaycheckOut: the payee object
+
+    Raises:
+        Http404: If the paycheck with the specified ID does not exist.
+    """
+
     paycheck = get_object_or_404(Paycheck, id=paycheck_id)
     return paycheck
 
 
 @api.get("/transactions/{transaction_id}", response=TransactionOut)
 def get_transaction(request, transaction_id: int):
+    """
+    The function `get_transaction` retrieves the transaction by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transaction_id (int): The id of the transaction to retrieve.
+
+    Returns:
+        TransactionOut: the transaction object
+
+    Raises:
+        Http404: If the transaction with the specified ID does not exist.
+    """
+
     transaction = get_object_or_404(Transaction, id=transaction_id)
     return transaction
 
 
-@api.get("/transactions/details/{transactiondetail_id}", response=TransactionDetailOut)
+@api.get(
+    "/transactions/details/{transactiondetail_id}",
+    response=TransactionDetailOut,
+)
 def get_transaction_detail(request, transactiondetail_id: int):
-    transaction_detail = get_object_or_404(TransactionDetail, id=transactiondetail_id)
+    """
+    The function `get_transaction_detail` retrieves the transaction detail by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transactiondetail_id (int): The id of the transaction detail to retrieve.
+
+    Returns:
+        TransactionDetailOut: the transaction detail object
+
+    Raises:
+        Http404: If the transaction detail with the specified ID does not exist.
+    """
+
+    transaction_detail = get_object_or_404(
+        TransactionDetail, id=transactiondetail_id
+    )
     return transaction_detail
 
 
 @api.get("/logentries/{logentry_id}", response=LogEntryOut)
 def get_log_entry(request, logentry_id: int):
+    """
+    The function `get_log_entry` retrieves the log entry by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        logentry_id (int): The id of the log entry to retrieve.
+
+    Returns:
+        LogEntryOut: the log entry object
+
+    Raises:
+        Http404: If the log entry with the specified ID does not exist.
+    """
+
     log_entry = get_object_or_404(LogEntry, id=logentry_id)
     return log_entry
 
 
 @api.get("/messages/{message_id}", response=MessageOut)
 def get_message(request, message_id: int):
+    """
+    The function `get_message` retrieves the message by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        message_id (int): The id of the message to retrieve.
+
+    Returns:
+        MessageOut: the message object
+
+    Raises:
+        Http404: If the message with the specified ID does not exist.
+    """
+
     message = get_object_or_404(Message, id=message_id)
     return message
 
 
 @api.get("/accounts/types", response=List[AccountTypeOut])
 def list_account_types(request):
-    qs = AccountType.objects.all().order_by('id')
+    """
+    The function `list_account_types` retrieves a list of account types,
+    orderd by ID ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        AccountTypeOut: a list of account type objects
+    """
+
+    qs = AccountType.objects.all().order_by("id")
     return qs
 
 
 @api.get("/accounts/banks", response=List[BankOut])
 def list_banks(request):
-    qs = Bank.objects.all().order_by('bank_name')
+    """
+    The function `list_banks` retrieves a list of banks,
+    orderd by bank name ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        BankOut: a list of bank objects
+    """
+
+    qs = Bank.objects.all().order_by("bank_name")
     return qs
 
 
 @api.get("/graphs_bytags", response=GraphOut)
 def get_graph(request, widget_id: int):
-    graph_name = ''
-    exclude = '[0]'
+    """
+    The function `get_graph` retrieves graph data for tags for widget id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        widget_id (int): The widget for graph data
+
+    Returns:
+        GraphOut: the graph data object
+    """
+
+    # Initialize variables
+    graph_name = ""
+    exclude = "[0]"
     tagID = None
     month = 0
     expense = True
+
+    # Load the options for the specified widget ID
     options = get_object_or_404(Option, id=1)
+
+    # Set graph options based on widget options
     if widget_id == 1:
         graph_name = options.widget1_graph_name
         exclude = options.widget1_exclude
@@ -855,67 +1602,99 @@ def get_graph(request, widget_id: int):
     values = []
     datasets = []
     colors = [
-        '#7fb1b1',
-        '#597c7c',
-        '#7f8cb1',
-        '#7fb17f',
-        '#597c59',
-        '#b17fa5',
-        '#7c5973',
-        '#b1a77f',
-        '#edffff',
-        '#dbffff',
-        '#7c6759',
-        '#b1937f',
-        '#8686b1',
-        '#5e5e7c',
-        '#757c59',
-        '#52573e',
-        '#ffedff',
-        '#573e57',
-        '#fff8db',
-        '#ffe9db',
-        '#e0e0ff',
-        '#9d9db3'
+        "#7fb1b1",
+        "#597c7c",
+        "#7f8cb1",
+        "#7fb17f",
+        "#597c59",
+        "#b17fa5",
+        "#7c5973",
+        "#b1a77f",
+        "#edffff",
+        "#dbffff",
+        "#7c6759",
+        "#b1937f",
+        "#8686b1",
+        "#5e5e7c",
+        "#757c59",
+        "#52573e",
+        "#ffedff",
+        "#573e57",
+        "#fff8db",
+        "#ffe9db",
+        "#e0e0ff",
+        "#9d9db3",
     ]
+
+    # Sort colors randomly, seeded to stay the same for this month
     random.seed(today.month * widget_id)
     random.shuffle(colors)
+
+    # If a tag is specified in options, filter by that tag
+    # Otherwise, filter on expense tags or income tags
     if tagID is None:
         tag_type_id = 1 if expense else 2
-        tags = Tag.objects.filter(tag_type__id=tag_type_id, parent=None).exclude(id__in=exclude_list)
+        tags = Tag.objects.filter(
+            tag_type__id=tag_type_id, parent=None
+        ).exclude(id__in=exclude_list)
     else:
         tags = Tag.objects.filter(id=tagID).exclude(id__in=exclude_list)
+
+    # Calculate month totals for each tag
+    # Use the tag name as the label and the total as the value
     for tag in tags:
-        tag_amount = TransactionDetail.objects.filter(Q(tag=tag) | Q(tag__parent=tag), transaction__transaction_date__month=target_month).aggregate(Sum('detail_amt'))['detail_amt__sum'] or 0
+        tag_amount = (
+            TransactionDetail.objects.filter(
+                Q(tag=tag) | Q(tag__parent=tag),
+                transaction__transaction_date__month=target_month,
+            ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
+            or 0
+        )
         if tag_amount != 0:
             labels.append(tag.tag_name)
             values.append(tag_amount)
+
+    # If there are no tags or totals, return None as label and 0 as value
     if not values:
         values.append(0)
     if not labels:
-        labels.append('None')
+        labels.append("None")
+
+    # Prepare the graph data object
     dataset = GraphDataset(
-        label=graph_name,
-        data=values,
-        backgroundColor=colors,
-        hoverOffset=4
+        label=graph_name, data=values, backgroundColor=colors, hoverOffset=4
     )
     datasets.append(dataset)
-    graph_object = GraphOut(
-        labels=labels,
-        datasets=datasets
-    )
+    graph_object = GraphOut(labels=labels, datasets=datasets)
 
     return graph_object
 
 
 @api.get("/transactions_bytag", response=TagDetailOut)
 def list_transactions_bytag(request, tag: int, month: Optional[int] = 0):
+    """
+    The function `list_transactions_bytag` retrieves transactions for a tag id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        tag (int): The tag id to get transactions for.
+        month (int): Optional month integer.  If none is provided, 0
+
+    Returns:
+        TagDetailOut: the tag detail object
+    """
+
+    # Calculate dates based on month
     today = timezone.now().date()
     target_date = today - relativedelta(months=month)
     target_month = target_date.month
-    qs = TransactionDetail.objects.filter(tag__id=tag, transaction__transaction_date__month=target_month).order_by('-transaction__transaction_date')
 
+    # Retrieve transactions details for tag in the calculated month
+    qs = TransactionDetail.objects.filter(
+        tag__id=tag, transaction__transaction_date__month=target_month
+    ).order_by("-transaction__transaction_date")
+
+    # Caculate the month total and average for the tag
     total_amount = 0
     average_amount = 0
     transaction_details = []
@@ -927,41 +1706,79 @@ def list_transactions_bytag(request, tag: int, month: Optional[int] = 0):
             tag_amount=detail.detail_amt,
             transaction_description=detail.transaction.description,
             transaction_memo=detail.transaction.memo,
-            transaction_pretty_account=detail.account.account_name
+            transaction_pretty_account=detail.account.account_name,
         )
         transaction_details.append(transaction_detail)
     if qs.count() != 0:
         average_amount = total_amount / qs.count()
 
+    # Prepare the tag detail object
     tag_detail = TagDetailOut(
         details=transaction_details,
         total_amt=total_amount,
-        average_amt=average_amount
+        average_amt=average_amount,
     )
     return tag_detail
 
 
 @api.get("/accounts", response=List[AccountOut])
-def list_accounts(request, account_type: Optional[int] = Query(None), inactive: Optional[bool] = Query(None)):
+def list_accounts(
+    request,
+    account_type: Optional[int] = Query(None),
+    inactive: Optional[bool] = Query(None),
+):
+    """
+    The function `list_accounts` retrieves a list of accounts,
+    optionally filtered by inactive or account type.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        account_type (int): Optional account type id to filter accounts.
+        inactive (bool): Optional filter on inactive or not
+
+    Returns:
+        AccountOut: a list of Account objects
+    """
+
+    # Retrieve all accounts
     qs = Account.objects.all()
+
+    # If inactive argument is provided, filter by active/inactive
     if inactive:
         qs = qs.filter(active=False)
     else:
         qs = qs.filter(active=True)
+
+    # If account type argument is provided, filter by account type
     if account_type is not None:
         qs = qs.filter(account_type__id=account_type)
-    qs = qs.order_by('account_type__id', 'bank__bank_name', 'account_name')
 
+    # Order accounts by account type id ascending, bank name ascending, and account
+    # name ascending
+    qs = qs.order_by("account_type__id", "bank__bank_name", "account_name")
+
+    # Initialize blank account list
     account_list = []
+
+    # For each account, get related transactions and calculate balance
     for account in qs:
         calc_balance = account.opening_balance
-        transactions = TransactionDetail.objects.filter(account__id=account.id).exclude(transaction__status__id=1)
+        transactions = TransactionDetail.objects.filter(
+            account__id=account.id
+        ).exclude(transaction__status__id=1)
         for transaction in transactions:
             calc_balance += transaction.detail_amt
+
+        # Prepare Account object
         account_out = AccountOut(
             id=account.id,
             account_name=account.account_name,
-            account_type=AccountTypeOut(id=account.account_type.id, account_type=account.account_type.account_type, color=account.account_type.color, icon=account.account_type.icon),
+            account_type=AccountTypeOut(
+                id=account.account_type.id,
+                account_type=account.account_type.account_type,
+                color=account.account_type.color,
+                icon=account.account_type.icon,
+            ),
             opening_balance=account.opening_balance,
             apy=account.apy,
             due_date=account.due_date,
@@ -975,7 +1792,7 @@ def list_accounts(request, account_type: Optional[int] = Query(None), inactive: 
             available_credit=account.credit_limit + calc_balance,
             balance=calc_balance,
             bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name),
-            last_statement_amount=account.last_statement_amount
+            last_statement_amount=account.last_statement_amount,
         )
         account_list.append(account_out)
 
@@ -983,123 +1800,320 @@ def list_accounts(request, account_type: Optional[int] = Query(None), inactive: 
 
 
 @api.get("/tags", response=List[TagOut])
-def list_tags(request, tag_type: Optional[int] = Query(None), parent_only: Optional[bool] = False):
+def list_tags(
+    request,
+    tag_type: Optional[int] = Query(None),
+    parent_only: Optional[bool] = False,
+):
+    """
+    The function `list_tags` retrieves a list of tags,
+    optionally filtered by tag type or if its a parent tag.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        tag_type (int): Optional tag type id to filter tags.
+        parent_only (bool): Optional filter on parent or not
+
+    Returns:
+        TagOut: a list of tag objects
+    """
+
+    # Retrive a list of tags, annotating a pretty_name based on parent tag name
     qs = Tag.objects.annotate(
         pretty_name=Case(
-            When(parent__isnull=False, then=Concat(F('parent__tag_name'), Value(' / '), F('tag_name'))),
-            default=F('tag_name'),
-            output_field=CharField()
+            When(
+                parent__isnull=False,
+                then=Concat(F("parent__tag_name"), Value(" / "), F("tag_name")),
+            ),
+            default=F("tag_name"),
+            output_field=CharField(),
         )
     )
 
+    # Filter tags by tag type if a tag type is specified
     if tag_type is not None:
         qs = qs.filter(tag_type__id=tag_type)
 
+    # Filter tags by parent if parent only is true
     if parent_only is True:
         qs = qs.filter(parent__isnull=True).exclude(tag_type__id=3)
 
-    qs = qs.order_by('pretty_name', 'parent__tag_name', 'tag_name')
+    # Order tags by pretty name ascending, parent tag name ascending, and then tag name
+    # ascending
+    qs = qs.order_by("pretty_name", "parent__tag_name", "tag_name")
     return qs
 
 
 @api.get("/planning/contribrules", response=List[ContribRuleOut])
 def list_contrib_rules(request):
-    qs = ContribRule.objects.all().order_by('id')
+    """
+    The function `list_contrib_rules` retrieves a list of contribution rules,
+    orderd by id ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        ContribRuleOut: a list of contribution rule objects
+    """
+
+    qs = ContribRule.objects.all().order_by("id")
     return qs
 
 
 @api.get("/planning/contributions", response=List[ContributionOut])
 def list_contributions(request):
-    qs = Contribution.objects.all().order_by('id')
+    """
+    The function `list_contributions` retrieves a list of contributions,
+    ordered by id ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        ContributionOut: a list of contribution objects
+    """
+
+    qs = Contribution.objects.all().order_by("id")
     return qs
 
 
 @api.get("/errorlevels", response=List[ErrorLevelOut])
 def list_errorlevels(request):
-    qs = ErrorLevel.objects.all().order_by('id')
+    """
+    The function `list_errorlevels` retrieves a list of error levels,
+    ordered by id ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        ErrorLevelOut: a list of error level objects
+    """
+
+    qs = ErrorLevel.objects.all().order_by("id")
     return qs
 
 
 @api.get("/transactions/types", response=List[TransactionTypeOut])
 def list_transaction_types(request):
-    qs = TransactionType.objects.all().order_by('id')
+    """
+    The function `list_transaction_types` retrieves a list of transaction types,
+    ordered by id ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        TransactionTypeOut: a list of transaction type objects
+    """
+
+    qs = TransactionType.objects.all().order_by("id")
     return qs
 
 
 @api.get("/reminders/repeats", response=List[RepeatOut])
 def list_repeats(request):
-    qs = Repeat.objects.all().order_by('id')
+    """
+    The function `list_repeats` retrieves a list of repeats,
+    ordered by id ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        RepeatOut: a list of repeat objects
+    """
+
+    qs = Repeat.objects.all().order_by("id")
     return qs
 
 
 @api.get("/reminders", response=List[ReminderOut])
 def list_reminders(request):
-    qs = Reminder.objects.all().order_by('next_date', 'id')
+    """
+    The function `list_reminders` retrieves a list of reminders,
+    ordered by next date ascending and then id ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        ReminderOut: a list of reminders objects
+    """
+
+    qs = Reminder.objects.all().order_by("next_date", "id")
     return qs
 
 
 @api.get("/planning/notes", response=List[NoteOut])
 def list_notes(request):
-    qs = Note.objects.all().order_by('-note_date')
+    """
+    The function `list_notes` retrieves a list of notes,
+    ordered by note date descending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        NoteOut: a list of note objects
+    """
+
+    qs = Note.objects.all().order_by("-note_date")
     return qs
 
 
 @api.get("/options", response=List[OptionOut])
 def list_options(request):
-    qs = Option.objects.all().order_by('id')
+    """
+    The function `list_options` retrieves a list of options,
+    ordered by id ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        OptionOut: a list of option objects
+    """
+
+    qs = Option.objects.all().order_by("id")
     return qs
 
 
 @api.get("/transactions/statuses", response=List[TransactionStatusOut])
 def list_transaction_statuses(request):
-    qs = TransactionStatus.objects.all().order_by('id')
+    """
+    The function `list_transaction_statuses` retrieves a list of transaction statuses,
+    ordered by id ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        TransactionStatusOut: a list of transaction status objects
+    """
+
+    qs = TransactionStatus.objects.all().order_by("id")
     return qs
 
 
 @api.get("/payees", response=List[PayeeOut])
 def list_payees(request):
-    qs = Payee.objects.all().order_by('payee_name')
+    """
+    The function `list_payees` retrieves a list of payees,
+    ordered by payee name ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        PayeeOut: a list of payee objects
+    """
+
+    qs = Payee.objects.all().order_by("payee_name")
     return qs
 
 
 @api.get("/paychecks", response=List[PaycheckOut])
 def list_paychecks(request):
-    qs = Paycheck.objects.all().order_by('id')
+    """
+    The function `list_paychecks` retrieves a list of paychecks,
+    ordered by id ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        PaycheckOut: a list of paycheck objects
+    """
+
+    qs = Paycheck.objects.all().order_by("id")
     return qs
 
 
 @api.get("/transactions", response=List[TransactionOut])
-def list_transactions(request, account: Optional[int] = Query(None), maxdays: Optional[int] = Query(14), forecast: Optional[bool] = Query(False)):
+def list_transactions(
+    request,
+    account: Optional[int] = Query(None),
+    maxdays: Optional[int] = Query(14),
+    forecast: Optional[bool] = Query(False),
+):
+    """
+    The function `list_transactions` retrieves a list of transactions,
+    ordered by status, transaction date ascending, and id descending.
+    If this is for a forecast, you can specify the maximum days in the future
+    to display transactions from.  If this is not for a forecast, you can specify the
+    maxmimum days in the past to view transactions from.  If an account is specified,
+    transactions are filtered by that account.  Defaults are no account, 14 days in the past
+    and not a forecast.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        account (int): Optional account to filter transactions by.
+        maxdays (int): Optional days in the past if not a forecast, days in the future
+            if a forecast, default is 14.
+        forecast (bool): Optional boolean wether this request is a forecast or not.
+
+    Returns:
+        TransactionOut: a list of transaction objects
+    """
+
+    # Retrieve all transactions
     qs = Transaction.objects.all()
 
+    # If an account is specified, filter transactions for maximum days and transaction
+    # details that match account
     if account is not None:
         threshold_date = timezone.now().date() + timedelta(days=maxdays)
         qs = qs.filter(
             transactiondetail__account__id=account,
-            transaction_date__lt=threshold_date
+            transaction_date__lt=threshold_date,
         )
+
+        # Set custom status order
         custom_order = Case(
             When(status_id=3, then=0),
             When(status_id=2, then=0),
             When(status_id=1, then=1),
             output_field=models.IntegerField(),
         )
+
+        # If this is a forecast, set sort
         if forecast is False:
-            qs = qs.order_by(custom_order, 'transaction_date', '-id')
+            qs = qs.order_by(custom_order, "transaction_date", "-id")
         else:
-            qs = qs.order_by(custom_order, 'transaction_date', 'id')
+            qs = qs.order_by(custom_order, "transaction_date", "id")
+
+        # Initialize blank list of transactions
         transactions = []
-        balance = Decimal(0)  # Initialize the balance
+
+        # Calculate the running account balance
+        balance = Decimal(0)
         for transaction in qs:
-            pretty_account = ''
+
+            # Initialize transaction details
+            pretty_account = ""
             tags = []
             pretty_total = 0
-            source_account = ''
-            destination_account = ''
-            transaction_details = TransactionDetail.objects.filter(transaction=transaction.id)
+            source_account = ""
+            destination_account = ""
+
+            # Retrieve a list of transaction details for the transaction
+            transaction_details = TransactionDetail.objects.filter(
+                transaction=transaction.id
+            )
+
+            # Process each detail for this transaction
             for detail in transaction_details:
+
+                # If a tag doesn't already exist in the tags list, add it
                 if detail.tag.tag_name not in tags:
                     tags.append(detail.tag.tag_name)
+
+                # If this transaction is a transfer, add the total if the detail
+                # source account matches account, or subtract if it does not
+                # Change the pretty name to be source account => destintation account or
+                # just the source account if this is not a transfer
                 if transaction.transaction_type.id == 3:
                     if detail.detail_amt < 0:
                         source_account = detail.account.account_name
@@ -1119,11 +2133,13 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
                 if source_account:
                     pretty_account = source_account
                 else:
-                    pretty_account = 'Deleted Account'
+                    pretty_account = (
+                        "Deleted Account"  # If the source account was deleted
+                    )
                 if destination_account:
-                    pretty_account += ' => ' + destination_account
+                    pretty_account += " => " + destination_account
                 else:
-                    pretty_account += ' => Deleted Account'
+                    pretty_account += " => Deleted Account"  # If the destination account was deleted
             else:
                 pretty_account = source_account
 
@@ -1140,7 +2156,11 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
         if forecast is False:
             transactions.reverse()
         return transactions
+
+    # If an account was not specified, these should be upcoming transactions
     else:
+
+        # Filter transactions for pending status
         qs = qs.filter(status_id=1)
         custom_order = Case(
             When(status_id=1, then=0),
@@ -1148,16 +2168,33 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
             When(status_id=3, then=1),
             output_field=models.IntegerField(),
         )
-        qs = qs.order_by(custom_order, 'transaction_date', 'id')
+
+        # Set order of transactions
+        qs = qs.order_by(custom_order, "transaction_date", "id")
         for transaction in qs:
+
+            # Initialize transaction details
             tags = []
-            source_account = ''
-            destination_account = ''
-            pretty_account = ''
-            transaction_details = TransactionDetail.objects.filter(transaction=transaction.id)
+            source_account = ""
+            destination_account = ""
+            pretty_account = ""
+
+            # Retrieve transaction details
+            transaction_details = TransactionDetail.objects.filter(
+                transaction=transaction.id
+            )
+
+            # Process the details for this transaction
             for detail in transaction_details:
+
+                # If a tag doesn't already exist in the tags list, add it
                 if detail.tag.tag_name not in tags:
                     tags.append(detail.tag.tag_name)
+
+                # If this transaction is a transfer, add the total if the detail
+                # source account matches account, or subtract if it does not
+                # Change the pretty name to be source account => destintation account or
+                # just the source account if this is not a transfer
                 if transaction.transaction_type.id == 3:
                     if detail.detail_amt < 0:
                         source_account = detail.account.account_name
@@ -1166,11 +2203,11 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
                     if source_account:
                         pretty_account = source_account
                     else:
-                        pretty_account = 'Deleted Account'
+                        pretty_account = "Deleted Account"  # If the source account was deleted
                     if destination_account:
-                        pretty_account += ' => ' + destination_account
+                        pretty_account += " => " + destination_account
                     else:
-                        pretty_account += ' => Deleted Account'
+                        pretty_account += " => Deleted Account"  # If the destination account was deleted
                 else:
                     pretty_account = detail.account.account_name
             transaction.tags = tags
@@ -1182,40 +2219,100 @@ def list_transactions(request, account: Optional[int] = Query(None), maxdays: Op
 
 @api.get("/transactions/details", response=List[TransactionDetailOut])
 def list_transactiondetails(request):
-    qs = TransactionDetail.objects.all().order_by('id')
+    """
+    The function `list_transactiondetails` retrieves a list of transaction details,
+    ordered by id ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        TransactionDetailOut: a list of transaction detail objects
+    """
+
+    qs = TransactionDetail.objects.all().order_by("id")
     return qs
 
 
 @api.get("/logentries", response=List[LogEntryOut])
 def list_log_entries(request, log_level: Optional[int] = Query(0)):
-    qs = LogEntry.objects.filter(error_level__id__gte=log_level).order_by('-id')
+    """
+    The function `list_log_entries` retrieves a list of log entries,
+    ordered by id ascending and filtered by log level id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        log_level (int): Optional log level to filter by, default is 0.
+
+    Returns:
+        LogEntryOut: a list of log entry objects
+    """
+
+    qs = LogEntry.objects.filter(error_level__id__gte=log_level).order_by("-id")
     return qs
 
 
 @api.get("/messages", response=MessageList)
 def list_messages(request):
-    unread = Message.objects.filter(unread=True).count()
-    total = Message.objects.all().count()
-    messages = Message.objects.all().order_by('-id')
+    """
+    The function `list_messages` retrieves a list of messages,
+    ordered by id descending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        MessageList: a message list object that includes unread and totals.
+    """
+
+    unread = Message.objects.filter(
+        unread=True
+    ).count()  # Total unread messages
+    total = Message.objects.all().count()  # The total number of messages
+    messages = Message.objects.all().order_by("-id")
     message_list = []
     for message in messages:
         message_list.append(MessageOut.from_orm(message))
     message_list_object = MessageList(
-        unread_count=unread,
-        total_count=total,
-        messages=message_list
+        unread_count=unread, total_count=total, messages=message_list
     )
     return message_list_object
 
 
 @api.get("/tagtypes", response=List[TagTypeOut])
 def list_tag_types(request):
-    qs = TagType.objects.exclude(id=3).order_by('id')
+    """
+    The function `list_tag_types` retrieves a list of tag types,
+    ordered by id ascending and excluding Misc. tags (id=3)
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        TagTypeOut: a list of tag type objects
+    """
+
+    qs = TagType.objects.exclude(id=3).order_by("id")
     return qs
 
 
 @api.put("/accounts/types/{accounttype_id}")
 def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
+    """
+    The function `update_account_type` updates the account type specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        accounttype_id (int): the id of the account type to update
+        payload (AccountTypeIn): an account type object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the account type with the specified ID does not exist.
+    """
+
     account_type = get_object_or_404(AccountType, id=accounttype_id)
     account_type.account_type = payload.account_type
     account_type.color = payload.color
@@ -1226,6 +2323,21 @@ def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
 
 @api.put("/accounts/banks/{bank_id}")
 def update_bank(request, bank_id: int, payload: BankIn):
+    """
+    The function `update_bank` updates the bank specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        bank_id (int): the id of the bank to update
+        payload (BankIn): a bank object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the bank with the specified ID does not exist.
+    """
+
     bank = get_object_or_404(Bank, id=bank_id)
     bank.bank_name = payload.bank_name
     bank.save()
@@ -1234,6 +2346,22 @@ def update_bank(request, bank_id: int, payload: BankIn):
 
 @api.patch("/accounts/{account_id}")
 def update_account(request, account_id: int, payload: AccountUpdate):
+    """
+    The function `update_account` updates the account specified by id,
+    patching the account if a field is sent in the payload.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        account_id (int): the id of the account to update
+        payload (AccountUpdate): an account update object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the account with the specified ID does not exist.
+    """
+
     account = get_object_or_404(Account, id=account_id)
     if payload.account_name is not None:
         account.account_name = payload.account_name
@@ -1269,6 +2397,21 @@ def update_account(request, account_id: int, payload: AccountUpdate):
 
 @api.put("/tags/{tag_id}")
 def update_tag(request, tag_id: int, payload: TagIn):
+    """
+    The function `update_tag` updates the tag specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        tag_id (int): the id of the tag to update
+        payload (TagIn): a tag object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the tag with the specified ID does not exist.
+    """
+
     tag = get_object_or_404(Tag, id=tag_id)
     tag.tag_name = payload.tag_name
     tag.parent_id = payload.parent_id
@@ -1279,6 +2422,21 @@ def update_tag(request, tag_id: int, payload: TagIn):
 
 @api.put("/planning/contribrules/{contribrule_id}")
 def update_contrib_rule(request, contribrule_id: int, payload: ContribRuleIn):
+    """
+    The function `update_contrib_rule` updates the contribution rule specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        contribrule_id (int): the id of the contribution rule to update
+        payload (ContribRuleIn): a contribution rule object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the contribution rule with the specified ID does not exist.
+    """
+
     contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
     contrib_rule.rule = payload.rule
     contrib_rule.cap = payload.cap
@@ -1288,6 +2446,21 @@ def update_contrib_rule(request, contribrule_id: int, payload: ContribRuleIn):
 
 @api.put("/planning/contributions/{contribution_id}")
 def update_contribution(request, contribution_id: int, payload: ContributionIn):
+    """
+    The function `update_contribution` updates the contribution specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        contribution_id (int): the id of the contribution to update
+        payload (ContributionIn): a contribution object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the contribution with the specified ID does not exist.
+    """
+
     contribution = get_object_or_404(Contribution, id=contribution_id)
     contribution.contribution = payload.contribution
     contribution.per_paycheck = payload.per_paycheck
@@ -1301,6 +2474,21 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
 
 @api.put("/errorlevels/{errorlevel_id}")
 def update_errorlevel(request, errorlevel_id: int, payload: ErrorLevelIn):
+    """
+    The function `update_errorlevel` updates the error level specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        errorlevel_id (int): the id of the error level to update
+        payload (ErrorLevelIn): an error level object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the error level with the specified ID does not exist.
+    """
+
     errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
     errorlevel.error_level = payload.error_level
     errorlevel.save()
@@ -1308,8 +2496,27 @@ def update_errorlevel(request, errorlevel_id: int, payload: ErrorLevelIn):
 
 
 @api.put("/transactions/types/{transaction_type_id}")
-def update_transaction_type(request, transaction_type_id: int, payload: TransactionTypeIn):
-    transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
+def update_transaction_type(
+    request, transaction_type_id: int, payload: TransactionTypeIn
+):
+    """
+    The function `update_transaction_type` updates the transaction type specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transactiontype_id (int): the id of the transaction type to update
+        payload (TransactionTypeIn): a transaction type object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the transaction type with the specified ID does not exist.
+    """
+
+    transaction_type = get_object_or_404(
+        TransactionType, id=transaction_type_id
+    )
     transaction_type.transaction_type = payload.transaction_type
     transaction_type.save()
     return {"success": True}
@@ -1317,6 +2524,21 @@ def update_transaction_type(request, transaction_type_id: int, payload: Transact
 
 @api.put("/reminders/repeats/{repeat_id}")
 def update_repeat(request, repeat_id: int, payload: RepeatIn):
+    """
+    The function `update_repeat` updates the repeat specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        repeat_id (int): the id of repeat to update
+        payload (RepeatIn): a repeat object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the repeat with the specified ID does not exist.
+    """
+
     repeat = get_object_or_404(Repeat, id=repeat_id)
     repeat.repeat_name = payload.repeat_name
     repeat.days = payload.days
@@ -1329,11 +2551,28 @@ def update_repeat(request, repeat_id: int, payload: RepeatIn):
 
 @api.put("/reminders/{reminder_id}")
 def update_reminder(request, reminder_id: int, payload: ReminderIn):
+    """
+    The function `update_reminder` updates the reminder specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        reminder_id (int): the id of the reminder to update
+        payload (ReminderIn): a reminder object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the reminder with the specified ID does not exist.
+    """
+
     reminder = get_object_or_404(Reminder, id=reminder_id)
     reminder.tag_id = payload.tag_id
     reminder.amount = payload.amount
     reminder.reminder_source_account_id = payload.reminder_source_account_id
-    reminder.reminder_destination_account_id = payload.reminder_destination_account_id
+    reminder.reminder_destination_account_id = (
+        payload.reminder_destination_account_id
+    )
     reminder.description = payload.description
     reminder.transaction_type_id = payload.transaction_type_id
     reminder.start_date = payload.start_date
@@ -1347,6 +2586,21 @@ def update_reminder(request, reminder_id: int, payload: ReminderIn):
 
 @api.put("/planning/notes/{note_id}")
 def update_note(request, note_id: int, payload: NoteIn):
+    """
+    The function `update_note` updates the note specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        note_id (int): the id of the note to update
+        payload (NoteIn): a note object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the note with the specified ID does not exist.
+    """
+
     note = get_object_or_404(Note, id=note_id)
     note.note_text = payload.note_text
     note.note_date = payload.note_date
@@ -1356,6 +2610,22 @@ def update_note(request, note_id: int, payload: NoteIn):
 
 @api.patch("/options/{option_id}")
 def update_option(request, option_id: int, payload: OptionIn):
+    """
+    The function `update_option` updates the option specified by id,
+    patching the option if a field is sent in the payload.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        option_id (int): the id of the option to update
+        payload (OptionIn): an option object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the option with the specified ID does not exist.
+    """
+
     option = get_object_or_404(Option, id=option_id)
     if payload.log_level_id is not None:
         option.log_level_id = payload.log_level_id
@@ -1398,8 +2668,27 @@ def update_option(request, option_id: int, payload: OptionIn):
 
 
 @api.put("/transactions/statuses/{transactionstatus_id}")
-def update_transaction_status(request, transactionstatus_id: int, payload: TransactionStatusIn):
-    transaction_status = get_object_or_404(TransactionStatus, id=transactionstatus_id)
+def update_transaction_status(
+    request, transactionstatus_id: int, payload: TransactionStatusIn
+):
+    """
+    The function `update_transaction_status` updates the transaction status specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transactionsatus_id (int): the id of the transaction status to update
+        payload (TransactionStatusIn): a transaction status object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the transaction status with the specified ID does not exist.
+    """
+
+    transaction_status = get_object_or_404(
+        TransactionStatus, id=transactionstatus_id
+    )
     transaction_status.transaction_status = payload.transaction_status
     transaction_status.save()
     return {"success": True}
@@ -1407,6 +2696,21 @@ def update_transaction_status(request, transactionstatus_id: int, payload: Trans
 
 @api.put("/payees/{payee_id}")
 def update_payee(request, payee_id: int, payload: PayeeIn):
+    """
+    The function `update_payee` updates the payee specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        payee_id (int): the id of the payee to update
+        payload (NoteIn): a note object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the payee with the specified ID does not exist.
+    """
+
     payee = get_object_or_404(Payee, id=payee_id)
     payee.payee_name = payload.payee_name
     payee.save()
@@ -1415,6 +2719,21 @@ def update_payee(request, payee_id: int, payload: PayeeIn):
 
 @api.put("/paychecks/{paycheck_id}")
 def update_paycheck(request, paycheck_id: int, payload: PaycheckIn):
+    """
+    The function `update_paycheck` updates the paycheck specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        paycheck_id (int): the id of the paycheck to update
+        payload (PaycheckIn): a paycheck object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the paycheck with the specified ID does not exist.
+    """
+
     paycheck = get_object_or_404(Paycheck, id=paycheck_id)
     paycheck.gross = payload.gross
     paycheck.net = payload.net
@@ -1432,6 +2751,21 @@ def update_paycheck(request, paycheck_id: int, payload: PaycheckIn):
 
 @api.put("/transactions/{transaction_id}")
 def update_transaction(request, transaction_id: int, payload: TransactionIn):
+    """
+    The function `update_transaction` updates the transaction specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transaction_id (int): the id of the transaction to update
+        payload (TransactionIn): a transaction object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the transaction with the specified ID does not exist.
+    """
+
     transaction = get_object_or_404(Transaction, id=transaction_id)
     transaction.transaction_date = payload.transaction_date
     transaction.total_amount = payload.total_amount
@@ -1449,6 +2783,22 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
 
 @api.patch("/transactions/clear/{transaction_id}")
 def clear_transaction(request, transaction_id: int, payload: TransactionClear):
+    """
+    The function `clear_transaction` changes the status to cleared, edit date to today
+    of the transaction specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transaction_id (int): the id of the transaction to update
+        payload (TransactionClear): a transaction clear object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the transaction with the specified ID does not exist.
+    """
+
     transaction = get_object_or_404(Transaction, id=transaction_id)
     transaction.status_id = payload.status_id
     transaction.edit_date = payload.edit_date
@@ -1457,8 +2807,27 @@ def clear_transaction(request, transaction_id: int, payload: TransactionClear):
 
 
 @api.put("/transactions/details/{transactiondetail_id}")
-def update_transaction_detail(request, transactiondetail_id: int, payload: TransactionDetailIn):
-    transaction_detail = get_object_or_404(TransactionDetail, id=transactiondetail_id)
+def update_transaction_detail(
+    request, transactiondetail_id: int, payload: TransactionDetailIn
+):
+    """
+    The function `update_transaction_detail` updates the transacion detail specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transactiondetail_id (int): the id of the transaction detail to update
+        payload (TransactionDetailIn): a transaction detail object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the transaction detail with the specified ID does not exist.
+    """
+
+    transaction_detail = get_object_or_404(
+        TransactionDetail, id=transactiondetail_id
+    )
     transaction_detail.transaction_id = payload.transaction_id
     transaction_detail.account_id = payload.account_id
     transaction_detail.detail_amt = payload.detail_amt
@@ -1469,6 +2838,21 @@ def update_transaction_detail(request, transactiondetail_id: int, payload: Trans
 
 @api.put("/logentries/{logentry_id}")
 def update_log_entry(request, logentry_id: int, payload: LogEntryIn):
+    """
+    The function `update_log_entry` updates the log entry specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        logentry_id (int): the id of the log entry to update
+        payload (LogEntryIn): a log entry object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the log entry with the specified ID does not exist.
+    """
+
     log_entry = get_object_or_404(LogEntry, id=logentry_id)
     log_entry.log_date = payload.log_date
     log_entry.log_entry = payload.log_entry
@@ -1483,6 +2867,21 @@ def update_log_entry(request, logentry_id: int, payload: LogEntryIn):
 
 @api.put("/messages/{message_id}")
 def update_message(request, message_id: int, payload: MessageIn):
+    """
+    The function `update_message` updates the message specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        message_id (int): the id of the message to update
+        payload (MessageIn): a message object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the message with the specified ID does not exist.
+    """
+
     message = get_object_or_404(Message, id=message_id)
     message.message_date = payload.message_date
     message.message = payload.message
@@ -1493,7 +2892,19 @@ def update_message(request, message_id: int, payload: MessageIn):
 
 @api.patch("/messages/readall/{message_id}")
 def update_messages(request, message_id: int, payload: AllMessage):
+    """
+    The function `update_messages` marks all messages as read.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        message_id (int): defaults to 0 and is unused
+        payload (AllMessage): an all message object
+
+    Returns:
+        success: True
+    """
     messages = Message.objects.all()
+
     for message in messages:
         message.unread = payload.unread
         message.save()
@@ -1502,6 +2913,20 @@ def update_messages(request, message_id: int, payload: AllMessage):
 
 @api.delete("/accounts/types/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
+    """
+    The function `delete_account_type` deletes the account type specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        accounttype_id (int): the id of the account type to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the account type with the specified ID does not exist.
+    """
+
     account_type = get_object_or_404(AccountType, id=accounttype_id)
     account_type.delete()
     return {"success": True}
@@ -1509,6 +2934,20 @@ def delete_account_type(request, accounttype_id: int):
 
 @api.delete("/accounts/banks/{bank_id}")
 def delete_bank(request, bank_id: int):
+    """
+    The function `delete_bank` deletes the bank specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        bank_id (int): the id of the bank to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the bank with the specified ID does not exist.
+    """
+
     bank = get_object_or_404(Bank, id=bank_id)
     bank.delete()
     return {"success": True}
@@ -1516,7 +2955,26 @@ def delete_bank(request, bank_id: int):
 
 @api.delete("/accounts/{account_id}")
 def delete_account(request, account_id: int):
+    """
+    The function `delete_account` deletes the account specified by id,
+    and any related transaction details and transactions.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        account_id (int): the id of the account to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the account with the specified ID does not exist.
+    """
+
+    # Retrieve the account
     account = get_object_or_404(Account, id=account_id)
+
+    # Retrieve the related transaction details and delete them, keep a running list
+    # of transactions that need to be deleted
     transaction_details = TransactionDetail.objects.filter(account=account)
     transactions_to_delete = []
     for detail in transaction_details:
@@ -1524,6 +2982,8 @@ def delete_account(request, account_id: int):
         detail.delete()
         if not transaction.transactiondetail_set.exists():
             transactions_to_delete.append(transaction)
+
+    # Delete the related transactions
     for transaction in transactions_to_delete:
         transaction.delete()
     account.delete()
@@ -1532,6 +2992,20 @@ def delete_account(request, account_id: int):
 
 @api.delete("/tags/{tag_id}")
 def delete_tag(request, tag_id: int):
+    """
+    The function `delete_tag` deletes the tag specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        tag_id (int): the id of the tag to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the tag with the specified ID does not exist.
+    """
+
     tag = get_object_or_404(Tag, id=tag_id)
     tag.delete()
     return {"success": True}
@@ -1539,6 +3013,20 @@ def delete_tag(request, tag_id: int):
 
 @api.delete("/planning/contribrules/{contribrule_id}")
 def delete_contrib_rule(request, contribrule_id: int):
+    """
+    The function `delete_contrib_rule` deletes the contribution rule specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        contribrule_id (int): the id of the contribution rule to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the contribution rule with the specified ID does not exist.
+    """
+
     contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
     contrib_rule.delete()
     return {"success": True}
@@ -1546,6 +3034,20 @@ def delete_contrib_rule(request, contribrule_id: int):
 
 @api.delete("/planning/contributions/{contribution_id}")
 def delete_contribution(request, contribution_id: int):
+    """
+    The function `delete_contribution` deletes the contribution specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        contribution_id (int): the id of the contribution to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the contribution with the specified ID does not exist.
+    """
+
     contribution = get_object_or_404(Contribution, id=contribution_id)
     contribution.delete()
     return {"success": True}
@@ -1553,6 +3055,20 @@ def delete_contribution(request, contribution_id: int):
 
 @api.delete("/errorlevels/{errorlevel_id}")
 def delete_errorlevel(request, errorlevel_id: int):
+    """
+    The function `delete_errorlevel` deletes the error level specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        errorlevel_id (int): the id of the error level to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the error level with the specified ID does not exist.
+    """
+
     errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
     errorlevel.delete()
     return {"success": True}
@@ -1560,13 +3076,43 @@ def delete_errorlevel(request, errorlevel_id: int):
 
 @api.delete("/transactions/types/{transaction_type_id}")
 def delete_transaction_type(request, transaction_type_id: int):
-    transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
+    """
+    The function `delete_transaction_type` deletes the transaction type specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transaction_type_id (int): the id of the transaction type to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the transaction type with the specified ID does not exist.
+    """
+
+    transaction_type = get_object_or_404(
+        TransactionType, id=transaction_type_id
+    )
     transaction_type.delete()
     return {"success": True}
 
 
 @api.delete("/reminders/repeats/{repeat_id}")
 def delete_repeat(request, repeat_id: int):
+    """
+    The function `delete_repeat` deletes the repeat specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        repeat_id (int): the id of the repeat to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the repeat with the specified ID does not exist.
+    """
+
     repeat = get_object_or_404(Repeat, id=repeat_id)
     repeat.delete()
     return {"success": True}
@@ -1574,6 +3120,20 @@ def delete_repeat(request, repeat_id: int):
 
 @api.delete("/reminders/{reminder_id}")
 def delete_reminder(request, reminder_id: int):
+    """
+    The function `delete_reminder` deletes the reminder specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        reminder_id (int): the id of the reminder to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the reminder with the specified ID does not exist.
+    """
+
     reminder = get_object_or_404(Reminder, id=reminder_id)
     reminder.delete()
     return {"success": True}
@@ -1581,6 +3141,20 @@ def delete_reminder(request, reminder_id: int):
 
 @api.delete("/planning/notes/{note_id}")
 def delete_note(request, note_id: int):
+    """
+    The function `delete_note` deletes the note specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        note_id (int): the id of the note to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the note with the specified ID does not exist.
+    """
+
     note = get_object_or_404(Note, id=note_id)
     note.delete()
     return {"success": True}
@@ -1588,6 +3162,20 @@ def delete_note(request, note_id: int):
 
 @api.delete("/options/{option_id}")
 def delete_option(request, option_id: int):
+    """
+    The function `delete_option` deletes the option specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        option_id (int): the id of the option to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the option with the specified ID does not exist.
+    """
+
     option = get_object_or_404(Option, id=option_id)
     option.delete()
     return {"success": True}
@@ -1595,13 +3183,43 @@ def delete_option(request, option_id: int):
 
 @api.delete("/transactions/statuses/{transactionstatus_id}")
 def delete_transaction_status(request, transactionstatus_id: int):
-    transaction_status = get_object_or_404(TransactionStatus, id=transactionstatus_id)
+    """
+    The function `delete_transaction_status` deletes the transaction status specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transactionstatus_id (int): the id of the transaction status to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the transaction status with the specified ID does not exist.
+    """
+
+    transaction_status = get_object_or_404(
+        TransactionStatus, id=transactionstatus_id
+    )
     transaction_status.delete()
     return {"success": True}
 
 
 @api.delete("/payees/{payee_id}")
 def delete_payee(request, payee_id: int):
+    """
+    The function `delete_payee` deletes the payee specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        payee_id (int): the id of the payee to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the payee with the specified ID does not exist.
+    """
+
     payee = get_object_or_404(Payee, id=payee_id)
     payee.delete()
     return {"success": True}
@@ -1609,6 +3227,20 @@ def delete_payee(request, payee_id: int):
 
 @api.delete("/paychecks/{paycheck_id}")
 def delete_paycheck(request, paycheck_id: int):
+    """
+    The function `delete_paycheck` deletes the paycheck specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        paycheck_id (int): the id of the paycheck to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the paycheck with the specified ID does not exist.
+    """
+
     paycheck = get_object_or_404(Paycheck, id=paycheck_id)
     paycheck.delete()
     return {"success": True}
@@ -1616,6 +3248,20 @@ def delete_paycheck(request, paycheck_id: int):
 
 @api.delete("/transactions/{transaction_id}")
 def delete_transaction(request, transaction_id: int):
+    """
+    The function `delete_transaction` deletes the transaction specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transaction_id (int): the id of the transaction to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the transaction with the specified ID does not exist.
+    """
+
     transaction = get_object_or_404(Transaction, id=transaction_id)
     transaction.delete()
     return {"success": True}
@@ -1623,13 +3269,43 @@ def delete_transaction(request, transaction_id: int):
 
 @api.delete("/transactions/details/{transactiondetail_id}")
 def delete_transaction_detail(request, transactiondetail_id: int):
-    transaction_detail = get_object_or_404(TransactionDetail, id=transactiondetail_id)
+    """
+    The function `delete_transaction_detail` deletes the transaction detail specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transactiondetail_id (int): the id of the transaction detail to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the transaction detail with the specified ID does not exist.
+    """
+
+    transaction_detail = get_object_or_404(
+        TransactionDetail, id=transactiondetail_id
+    )
     transaction_detail.delete()
     return {"success": True}
 
 
 @api.delete("/logentries/{logentry_id}")
 def delete_log_entry(request, logentry_id: int):
+    """
+    The function `delete_log_entry` deletes the log entry specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        logentry_id (int): the id of the log entry to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the log entry with the specified ID does not exist.
+    """
+
     log_entry = get_object_or_404(LogEntry, id=logentry_id)
     log_entry.delete()
     return {"success": True}
@@ -1637,6 +3313,20 @@ def delete_log_entry(request, logentry_id: int):
 
 @api.delete("/messages/{message_id}")
 def delete_message(request, message_id: int):
+    """
+    The function `delete_message` deletes the message specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        message_id (int): the id of the message to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the message with the specified ID does not exist.
+    """
+
     message = get_object_or_404(Message, id=message_id)
     message.delete()
     return {"success": True}
@@ -1644,6 +3334,17 @@ def delete_message(request, message_id: int):
 
 @api.delete("/messages/deleteall/{message_id}")
 def delete_messages(request, message_id: int):
+    """
+    The function `delete_messages` deletes all messages.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        message_id (int): defaults to 0, not used
+
+    Returns:
+        success: True
+    """
+
     messages = Message.objects.all()
     for message in messages:
         message.delete()
