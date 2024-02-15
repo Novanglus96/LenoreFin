@@ -1,6 +1,6 @@
 <template>
-    <PlanningMenu/>
+  <PlanningMenu />
 </template>
 <script setup>
-import PlanningMenu from '@/components/PlanningMenu.vue'
+import PlanningMenu from "@/components/PlanningMenu.vue";
 </script>

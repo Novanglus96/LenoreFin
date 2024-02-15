@@ -1,84 +1,89 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
-import axios from 'axios'
-import { useMainStore } from '@/stores/main'
-import { logToDB } from "./logentriesComposable"
+import axios from "axios";
+import { useMainStore } from "@/stores/main";
+import { logToDB } from "./logentriesComposable";
 
 const apiClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: "/api/v1",
   withCredentials: false,
   headers: {
-    Accept: 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer sVruPBzWnGEDrLb7JjfVNrs9wk8LtgnDQef6iXDXc4bWMUk3XFcsCtEgT8dKzhJd' //TODO: Pull API_KEY from somewhere secure
-  }
-})
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    Authorization:
+      "Bearer sVruPBzWnGEDrLb7JjfVNrs9wk8LtgnDQef6iXDXc4bWMUk3XFcsCtEgT8dKzhJd", //TODO: Pull API_KEY from somewhere secure
+  },
+});
 
 function handleApiError(error, message) {
   const mainstore = useMainStore();
   if (error.response) {
-    console.error('Response error:', error.response.data)
-    console.error('Status code:', error.response.status)
-    console.error('Headers', error.response.headers)
-  } else if (error.request){
-    console.error('No response received:', error.request)
+    console.error("Response error:", error.response.data);
+    console.error("Status code:", error.response.status);
+    console.error("Headers", error.response.headers);
+  } else if (error.request) {
+    console.error("No response received:", error.request);
   } else {
-    console.error('Error during request setup:', error.message)
+    console.error("Error during request setup:", error.message);
   }
-  mainstore.showSnackbar(message + 'Error #' + error.response.status, 'error')
-  throw error
+  mainstore.showSnackbar(message + "Error #" + error.response.status, "error");
+  throw error;
 }
 
 async function getBanksFunction() {
   try {
-    const response = await apiClient.get('/accounts/banks')
-    logToDB(null, 'Banks fetched', 0, null, null, null)
-    return response.data
-      
-    } catch (error) {
-    handleApiError(error, 'Banks not fetched: ')
-    logToDB(error, 'Banks not fetched', 2, null, null, null)
-    }
-
+    const response = await apiClient.get("/accounts/banks");
+    logToDB(null, "Banks fetched", 0, null, null, null);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Banks not fetched: ");
+    logToDB(error, "Banks not fetched", 2, null, null, null);
+  }
 }
 
 async function createBankFunction(newBank) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.post('/accounts/banks', newBank)
-    logToDB(null, 'Bank created : ' + newBank.bank_name, 1, null, null, null)
-    mainstore.showSnackbar('Bank created successfully!', 'success')
-    return response.data
+    const response = await apiClient.post("/accounts/banks", newBank);
+    logToDB(null, "Bank created : " + newBank.bank_name, 1, null, null, null);
+    mainstore.showSnackbar("Bank created successfully!", "success");
+    return response.data;
   } catch (error) {
-    handleApiError(error, 'Bank not created: ')
-    logToDB(error, 'Bank not created : ' + newBank.bank_name, 2, null, null, null)
+    handleApiError(error, "Bank not created: ");
+    logToDB(
+      error,
+      "Bank not created : " + newBank.bank_name,
+      2,
+      null,
+      null,
+      null,
+    );
   }
-
 }
 
 export function useBanks() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   const { data: banks, isLoading } = useQuery({
-    queryKey: ['banks'],
+    queryKey: ["banks"],
     queryFn: () => getBanksFunction(),
-    select: (response) => response,
-    client: queryClient
-})
+    select: response => response,
+    client: queryClient,
+  });
 
-const createBankMutation = useMutation({
+  const createBankMutation = useMutation({
     mutationFn: createBankFunction,
     onSuccess: () => {
-      console.log('Success adding bank')
-      queryClient.invalidateQueries({ queryKey: ['banks'] })
-    }
-})
+      console.log("Success adding bank");
+      queryClient.invalidateQueries({ queryKey: ["banks"] });
+    },
+  });
 
-async function addBank(newBank) {
-  createBankMutation.mutate(newBank);
-}
+  async function addBank(newBank) {
+    createBankMutation.mutate(newBank);
+  }
 
-return {
-  isLoading,
-  banks,
-  addBank
-}
+  return {
+    isLoading,
+    banks,
+    addBank,
+  };
 }

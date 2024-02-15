@@ -1,6 +1,6 @@
 // stores/chore
 
-import { createStore } from 'vuex';
+import { createStore } from "vuex";
 
 export default createStore({
   state: {
@@ -18,10 +18,10 @@ export default createStore({
   },
   actions: {
     setAuthToken({ commit }, token) {
-      commit('setAuthToken', token);
+      commit("setAuthToken", token);
     },
     clearAuthToken({ commit }) {
-      commit('clearAuthToken');
+      commit("clearAuthToken");
     },
     // Define other actions as needed
   },
