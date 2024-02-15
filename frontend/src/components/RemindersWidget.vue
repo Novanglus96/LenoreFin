@@ -114,20 +114,17 @@
         class="alt-pagination"
         @rowSelect="rowSelected"
         ><!--height="280px"-->
-        <template #next_date="row"
-          ><!-- eslint-disable-line -->
+        <template #next_date="row">
           <span class="font-weight-bold text-black">{{
             row.value.next_date
           }}</span>
         </template>
-        <template #amount="row"
-          ><!-- eslint-disable-line -->
+        <template #amount="row">
           <span :class="getClassForMoney(row.value.amount)"
             >${{ row.value.amount }}</span
           >
         </template>
-        <template #description="row"
-          ><!-- eslint-disable-line -->
+        <template #description="row">
           <span class="font-weight-bold text-black">{{
             row.value.description
           }}</span>

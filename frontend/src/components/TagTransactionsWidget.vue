@@ -67,27 +67,22 @@
               paginationInfo="Showing {0} to {1} of {2} transactions"
               class="alt-pagination"
               ><!--height="280px"-->
-              <template #transaction_date="row"
-                ><!-- eslint-disable-line -->
+              <template #transaction_date="row">
                 {{ row.value.transaction_date }}
               </template>
-              <template #tag_amount="row"
-                ><!-- eslint-disable-line -->
+              <template #tag_amount="row">
                 <span
                   :class="row.value.tag_amount < 0 ? 'text-red' : 'text-green'"
                   >${{ row.value.tag_amount }}</span
                 >
               </template>
-              <template #transaction_description="row"
-                ><!-- eslint-disable-line -->
+              <template #transaction_description="row">
                 {{ row.value.transaction_description }}
               </template>
-              <template #transaction_memo="row"
-                ><!-- eslint-disable-line -->
+              <template #transaction_memo="row">
                 {{ row.transaction_memo }}
               </template>
-              <template #transaction_pretty_account="row"
-                ><!-- eslint-disable-line -->
+              <template #transaction_pretty_account="row">
                 {{ row.value.transaction_pretty_account }}
               </template>
             </vue3-datatable>

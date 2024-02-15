@@ -19,8 +19,7 @@
       paginationInfo="Showing {0} to {1} of {2} log entries"
       class="alt-pagination"
     >
-      <template #error_level="row"
-        ><!-- eslint-disable-line -->
+      <template #error_level="row">
         <v-btn v-if="row.value.error_level.id == 0" variant="plain">
           <v-icon icon="mdi-bug" color="blue"></v-icon>
           <v-tooltip

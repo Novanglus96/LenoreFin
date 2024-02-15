@@ -121,8 +121,7 @@
         paginationInfo="Showing {0} to {1} of {2} transactions"
         class="alt-pagination"
         ><!--height="280px"-->
-        <template #status.transaction_status="row"
-          ><!-- eslint-disable-line -->
+        <template #status.transaction_status="row">
           <span
             :class="
               row.value.status.id == 1
@@ -132,8 +131,7 @@
             >{{ row.value.status.transaction_status }}</span
           >
         </template>
-        <template #transaction_date="row"
-          ><!-- eslint-disable-line -->
+        <template #transaction_date="row">
           <span
             :class="
               row.value.status.id == 1
@@ -143,8 +141,7 @@
             >{{ row.value.transaction_date }}</span
           >
         </template>
-        <template #pretty_total="row"
-          ><!-- eslint-disable-line -->
+        <template #pretty_total="row">
           <span
             :class="
               getClassForMoney(row.value.pretty_total, row.value.status.id)
@@ -152,15 +149,13 @@
             >${{ row.value.pretty_total }}</span
           >
         </template>
-        <template #balance="row"
-          ><!-- eslint-disable-line -->
+        <template #balance="row">
           <span
             :class="getClassForMoney(row.value.balance, row.value.status.id)"
             >${{ row.value.balance }}</span
           >
         </template>
-        <template #description="row"
-          ><!-- eslint-disable-line -->
+        <template #description="row">
           <span
             :class="
               row.value.status.id == 1
@@ -170,8 +165,7 @@
             >{{ row.value.description }}</span
           >
         </template>
-        <template #tags="row"
-          ><!-- eslint-disable-line -->
+        <template #tags="row">
           <div v-for="tag in row.value.tags" :key="tag">
             <v-icon
               icon="mdi-tag"
@@ -187,8 +181,7 @@
             >
           </div>
         </template>
-        <template #pretty_account="row"
-          ><!-- eslint-disable-line -->
+        <template #pretty_account="row">
           <span
             :class="
               row.value.status.id == 1
