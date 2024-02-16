@@ -2040,7 +2040,8 @@ def list_transactions(
 ):
     """
     The function `list_transactions` retrieves a list of transactions,
-    ordered by status, transaction date ascending, and id descending.
+    ordered by status, transaction date ascending, custom transaction type,
+    and total_amount.
     If this is for a forecast, you can specify the maximum days in the future
     to display transactions from.  If this is not for a forecast, you can specify the
     maxmimum days in the past to view transactions from.  If an account is specified,
@@ -2078,11 +2079,29 @@ def list_transactions(
             output_field=models.IntegerField(),
         )
 
+        # Set custom type order
+        custom_type_order = Case(
+            When(transaction_type_id=2, then=0),
+            When(transaction_type_id=3, then=1),
+            When(transaction_type_id=1, then=2),
+            output_field=models.IntegerField(),
+        )
+
         # If this is a forecast, set sort
         if forecast is False:
-            qs = qs.order_by(custom_order, "transaction_date", "-id")
+            qs = qs.order_by(
+                custom_order,
+                "transaction_date",
+                custom_type_order,
+                "-total_amount",
+            )
         else:
-            qs = qs.order_by(custom_order, "transaction_date", "id")
+            qs = qs.order_by(
+                custom_order,
+                "transaction_date",
+                custom_type_order,
+                "total_amount",
+            )
 
         # Initialize blank list of transactions
         transactions = []
