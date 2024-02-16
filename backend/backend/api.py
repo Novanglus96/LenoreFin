@@ -1638,7 +1638,7 @@ def get_graph(request, widget_id: int):
             tag_type__id=tag_type_id, parent=None
         ).exclude(id__in=exclude_list)
     else:
-        tags = Tag.objects.filter(id=tagID).exclude(id__in=exclude_list)
+        tags = Tag.objects.filter(parent__id=tagID).exclude(id__in=exclude_list)
 
     # Calculate month totals for each tag
     # Use the tag name as the label and the total as the value
