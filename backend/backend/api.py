@@ -292,18 +292,45 @@ class FillObject(Schema):
 
 # The class DatasetObject is a schema representing a Graph Forecast Dataset.
 class DatasetObject(Schema):
-    borderColor: str
-    backgroundColor: str
-    tension: Decimal = Field(whole_digits=1, decimal_places=1)
-    data: List[Decimal] = Field(whole_digits=10, decimal_places=2)
-    fill: FillObject
-    pointStyle: bool
+    borderColor: Optional[str]
+    backgroundColor: Optional[str]
+    tension: Optional[Decimal] = Field(whole_digits=1, decimal_places=1)
+    data: Optional[List[Decimal]] = Field(whole_digits=10, decimal_places=2)
+    fill: Optional[FillObject]
+    pointStyle: Optional[bool]
+    label: Optional[str]
+
+
+# The class GraphData is a schema representing a graph data object.
+class GraphData(Schema):
+    labels: List[str]
+    datasets: List[DatasetObject]
 
 
 # The class ForecastOut is a schema for representing forecast graph data.
 class ForecastOut(Schema):
     labels: List[str]
     datasets: List[DatasetObject]
+
+
+# The class TagTransactionOut is a schema for representing Transactions by Tag.
+class TagTransactionOut(Schema):
+    transaction_id: int
+    transaction_date: date
+    tag_amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    transaction_description: str
+    transaction_memo: str
+    transaction_pretty_account: str
+
+
+# The class TagGraphOut is a schema for representing a tag bar graph data.
+class TagGraphOut(Schema):
+    data: GraphData
+    year1: int
+    year2: int
+    year1_avg: Decimal = Field(whole_digits=10, decimal_places=2)
+    year2_avg: Decimal = Field(whole_digits=10, decimal_places=2)
+    transactions: List[TagTransactionOut]
 
 
 # The class ReminderIn is a schema for validating Reminders.
@@ -656,23 +683,6 @@ class LogEntryOut(Schema):
     transaction: Optional[TransactionOut] = None
     error_num: Optional[int] = None
     error_level: Optional[ErrorLevelOut] = None
-
-
-# The class TagTransactionOut is a schema for representing Transactions by Tag.
-class TagTransactionOut(Schema):
-    transaction_id: int
-    transaction_date: date
-    tag_amount: Decimal = Field(whole_digits=10, decimal_places=2)
-    transaction_description: str
-    transaction_memo: str
-    transaction_pretty_account: str
-
-
-# The class TagDetailOut is a schema for representing Tag details.
-class TagDetailOut(Schema):
-    details: List[TagTransactionOut]
-    total_amt: Decimal = Field(whole_digits=10, decimal_places=2)
-    average_amt: Decimal = Field(whole_digits=10, decimal_places=2)
 
 
 # The class GraphDataset is a schema for representing graph datasets.
@@ -1670,10 +1680,13 @@ def get_graph(request, widget_id: int):
     return graph_object
 
 
-@api.get("/transactions_bytag", response=TagDetailOut)
-def list_transactions_bytag(request, tag: int, month: Optional[int] = 0):
+@api.get("/transactions_bytag", response=TagGraphOut)
+def list_transactions_bytag(request, tag: int):
     """
-    The function `list_transactions_bytag` retrieves transactions for a tag id.
+    The function `list_transactions_bytag` retrieves transactions for a tag id,
+    and calcualtes the totals by month for the current year and last year, as
+    well as the averages by month for the years and returns the data as graph
+    data.
 
     Args:
         request (HttpRequest): The HTTP request object.
@@ -1684,22 +1697,62 @@ def list_transactions_bytag(request, tag: int, month: Optional[int] = 0):
         TagDetailOut: the tag detail object
     """
 
-    # Calculate dates based on month
+    # Calculate dates based on month, year
     today = timezone.now().date()
-    target_date = today - relativedelta(months=month)
-    target_month = target_date.month
+    this_month = today.month
+    this_year = today.year
+    last_year = today.year - 1
 
-    # Retrieve transactions details for tag in the calculated month
-    qs = TransactionDetail.objects.filter(
-        tag__id=tag, transaction__transaction_date__month=target_month
+    # Retrieve all transactions for tag
+    alltrans = TransactionDetail.objects.filter(tag__id=tag).order_by(
+        "-transaction__transaction_date"
+    )
+
+    # Filter transactions for current year
+    thisyear_trans = alltrans.filter(
+        transaction__transaction_date__year=this_year
     ).order_by("-transaction__transaction_date")
 
-    # Caculate the month total and average for the tag
-    total_amount = 0
-    average_amount = 0
+    # Filter transactions for last year
+    lastyear_trans = alltrans.filter(
+        transaction__transaction_date__year=last_year
+    ).order_by("-transaction__transaction_date")
+
+    # Calculate the YTD total
+    this_year_total = 0
+    this_year_total = thisyear_trans.aggregate(total_amount=Sum("detail_amt"))[
+        "total_amount"
+    ]
+    if this_year_total is not None:
+        this_year_total = abs(this_year_total)
+    else:
+        this_year_total = 0
+
+    # Calculate last years total
+    last_year_total = 0
+    last_year_total = lastyear_trans.aggregate(total_amount=Sum("detail_amt"))[
+        "total_amount"
+    ]
+    if last_year_total is not None:
+        last_year_total = abs(last_year_total)
+    else:
+        last_year_total = 0
+
+    # Calculate YTD Monthly average
+    if this_year_total is not None:
+        this_year_avg = this_year_total / this_month
+    else:
+        this_year_avg = 0
+
+    # Calculate Last Year Monthly average
+    if last_year_total is not None:
+        last_year_avg = last_year_total / 12
+    else:
+        last_year_avg = 0
+
+    # Prepare the transactions object
     transaction_details = []
-    for detail in qs:
-        total_amount += detail.detail_amt
+    for detail in alltrans:
         transaction_detail = TagTransactionOut(
             transaction_id=detail.transaction.id,
             transaction_date=detail.transaction.transaction_date,
@@ -1709,16 +1762,71 @@ def list_transactions_bytag(request, tag: int, month: Optional[int] = 0):
             transaction_pretty_account=detail.account.account_name,
         )
         transaction_details.append(transaction_detail)
-    if qs.count() != 0:
-        average_amount = total_amount / qs.count()
 
-    # Prepare the tag detail object
-    tag_detail = TagDetailOut(
-        details=transaction_details,
-        total_amt=total_amount,
-        average_amt=average_amount,
+    # Calculate this year monthly totals
+    this_year_totals = []
+    for month in range(1, this_month + 1):
+        monthly_total = 0
+        monthly_total = thisyear_trans.filter(
+            transaction__transaction_date__month=month
+        ).aggregate(monthly_total=Sum("detail_amt"))["monthly_total"]
+        if monthly_total is not None:
+            this_year_totals.append(abs(monthly_total))
+        else:
+            this_year_totals.append(0)
+
+    # Calculate last year monthly totals
+    last_year_totals = []
+    for month in range(1, 13):
+        monthly_total = 0
+        monthly_total = lastyear_trans.filter(
+            transaction__transaction_date__month=month
+        ).aggregate(monthly_total=Sum("detail_amt"))["monthly_total"]
+        if monthly_total is not None:
+            last_year_totals.append(abs(monthly_total))
+        else:
+            last_year_totals.append(0)
+
+    # Prepare the datasets
+    datasets = []
+    this_year_dataset = DatasetObject(
+        label=this_year, backgroundColor="#046959", data=this_year_totals
     )
-    return tag_detail
+    datasets.append(this_year_dataset)
+    last_year_dataset = DatasetObject(
+        label=last_year, backgroundColor="#c2fff5", data=last_year_totals
+    )
+    datasets.append(last_year_dataset)
+
+    # Prepare the GraphData object
+    graph_data = GraphData(
+        labels=[
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ],
+        datasets=datasets,
+    )
+
+    # Prepare the tag graph out object
+    tag_graph_out = TagGraphOut(
+        data=graph_data,
+        year1=this_year,
+        year2=last_year,
+        year1_avg=this_year_avg,
+        year2_avg=last_year_avg,
+        transactions=transaction_details,
+    )
+    return tag_graph_out
 
 
 @api.get("/accounts", response=List[AccountOut])

@@ -3,38 +3,29 @@
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded">
         <v-card v-if="!isLoading">
-          <v-card-title>This Month</v-card-title>
+          <v-card-title>Tag Totals</v-card-title>
           <v-card-text>
             <v-container>
               <v-row dense>
-                <v-col cols="1" class="text-right font-weight-bold">
-                  Total:
-                </v-col>
                 <v-col>
-                  <span
-                    :class="{
-                      'text-red': tag_transactions.total_amt < 0,
-                      'text-green': tag_transactions.total_amt > 0,
-                      'text-black': tag_transactions.total_amt === 0,
-                    }"
-                    >${{ tag_transactions.total_amt }}</span
-                  >
+                  <Bar :data="tag_transactions.data" :options="options" />
                 </v-col>
               </v-row>
-              <v-row dense>
-                <v-col cols="1" class="text-right font-weight-bold">
-                  Average:
-                </v-col>
-                <v-col>
-                  <span
-                    :class="{
-                      'text-red': tag_transactions.total_amt < 0,
-                      'text-green': tag_transactions.total_amt > 0,
-                      'text-black': tag_transactions.total_amt === 0,
-                    }"
-                    >${{ tag_transactions.average_amt }}</span
-                  >
-                </v-col>
+              <v-row>
+                <v-col class="text-right"
+                  ><span class="text-subtitle-2"
+                    >{{ tag_transactions.year1 }} Avg: ${{
+                      tag_transactions.year1_avg
+                    }}</span
+                  ></v-col
+                >
+                <v-col class="text-left"
+                  ><span class="text-subtitle-2"
+                    >{{ tag_transactions.year2 }} Avg: ${{
+                      tag_transactions.year2_avg
+                    }}</span
+                  ></v-col
+                >
               </v-row>
             </v-container>
           </v-card-text>
@@ -48,11 +39,13 @@
           <v-card-title>Transactions</v-card-title>
           <v-card-text>
             <vue3-datatable
-              :rows="tag_transactions.details"
+              :rows="tag_transactions.transactions"
               :columns="columns"
               :loading="isLoading"
               :totalRows="
-                tag_transactions.details ? tag_transactions.details.length : 0
+                tag_transactions.transactions
+                  ? tag_transactions.transactions.length
+                  : 0
               "
               :isServerMode="false"
               pageSize="10"
@@ -94,10 +87,31 @@
   </div>
 </template>
 <script setup>
-import { defineProps, ref } from "vue";
+import { defineProps, ref, computed } from "vue";
 import { useGraphTransactions } from "@/composables/tagsComposable";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+} from "chart.js";
+import { Bar } from "vue-chartjs";
+import annotationPlugin from "chartjs-plugin-annotation";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  annotationPlugin,
+);
 
 const props = defineProps({
   tagID: {
@@ -112,5 +126,76 @@ const columns = ref([
   { field: "transaction_memo", title: "Memo" },
   { field: "transaction_pretty_account", title: "Account" },
 ]);
-const { tag_transactions, isLoading } = useGraphTransactions(props.tagID, 0);
+const { tag_transactions, isLoading } = useGraphTransactions(props.tagID);
+const this_year_avg = computed(() =>
+  tag_transactions.value.year1_avg ? tag_transactions.value.year1_avg : 0,
+);
+const show_year1 = computed(() =>
+  tag_transactions.value.year1_avg !== 0 ? true : false,
+);
+const last_year_avg = computed(() =>
+  tag_transactions.value.year2_avg ? tag_transactions.value.year2_avg : 0,
+);
+const show_year2 = computed(() =>
+  tag_transactions.value.year2_avg !== 0 ? true : false,
+);
+const options = ref({
+  responsive: true,
+  maintainAspectRatio: true,
+  aspectRatio: "5",
+  plugins: {
+    annotation: {
+      annotations: [
+        {
+          type: "line",
+          display: show_year1,
+          mode: "horizontal",
+          scaleID: "y",
+          value: this_year_avg,
+          borderColor: "#034a45",
+          borderWidth: 1,
+          borderDash: [3, 3],
+        },
+        {
+          type: "line",
+          display: show_year2,
+          mode: "horizontal",
+          scaleID: "y",
+          value: last_year_avg,
+          borderColor: "#88b3b0",
+          borderWidth: 1,
+          borderDash: [3, 3],
+        },
+      ],
+    },
+    tooltip: {
+      callbacks: {
+        label: function (context) {
+          let label = context.dataset.label || "";
+
+          if (label) {
+            label += ": ";
+          }
+          if (context.parsed.y !== null) {
+            label += new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+            }).format(context.parsed.y);
+          }
+          return label;
+        },
+      },
+    },
+  },
+  scales: {
+    y: {
+      ticks: {
+        // Include a dollar sign in the ticks
+        callback: function (value) {
+          return "$" + value;
+        },
+      },
+    },
+  },
+});
 </script>

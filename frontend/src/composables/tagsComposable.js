@@ -68,11 +68,9 @@ async function getGraphByTagsFunction(widget_id) {
   }
 }
 
-async function getTransactionsByTagsFunction(tag_id, month) {
+async function getTransactionsByTagsFunction(tag_id) {
   try {
-    const response = await apiClient.get(
-      "/transactions_bytag?tag=" + tag_id + "&month=" + month,
-    );
+    const response = await apiClient.get("/transactions_bytag?tag=" + tag_id);
     logToDB(null, "Transactions by tag fetched", 0, null, null, null);
     return response.data;
   } catch (error) {
@@ -152,11 +150,11 @@ export function useGraphs(widget_id) {
   };
 }
 
-export function useGraphTransactions(tag_id, month) {
+export function useGraphTransactions(tag_id) {
   const queryClient = useQueryClient();
   const { data: tag_transactions, isLoading } = useQuery({
     queryKey: ["tag_transactions", { tagID: tag_id }],
-    queryFn: () => getTransactionsByTagsFunction(tag_id, month),
+    queryFn: () => getTransactionsByTagsFunction(tag_id),
     select: response => response,
     client: queryClient,
   });
