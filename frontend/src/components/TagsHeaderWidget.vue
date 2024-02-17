@@ -41,7 +41,7 @@
                   color="primary"
                   :class="['ma-4', selectedClass]"
                   height="75"
-                  width="200"
+                  width="250"
                   @click="toggle"
                 >
                   <template v-slot:prepend>
@@ -51,7 +51,7 @@
                     ></v-icon>
                   </template>
                   <template v-slot:title>
-                    <span>{{
+                    <span class="text-subtitle-1 font-weight-bold">{{
                       tag.parent ? tag.parent.tag_name : tag.tag_name
                     }}</span>
                   </template>
