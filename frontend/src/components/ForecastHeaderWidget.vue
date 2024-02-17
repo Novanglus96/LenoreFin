@@ -29,16 +29,17 @@
                   height="75"
                   width="350"
                   @click="toggle"
-                  :prepend-icon="account.account_type.icon"
-                >
-                  <v-card-title
-                    ><span class="text-subtitle-1 font-weight-bold">{{
+                  ><template v-slot:prepend>
+                    <v-icon :icon="account.account_type.icon"></v-icon>
+                  </template>
+                  <template v-slot:title>
+                    <span class="text-subtitle-1 font-weight-bold">{{
                       account.account_name
-                    }}</span></v-card-title
-                  >
-                  <v-card-subtitle>{{
-                    account.bank.bank_name
-                  }}</v-card-subtitle>
+                    }}</span>
+                  </template>
+                  <template v-slot:subtitle>
+                    <span>{{ account.bank.bank_name }}</span>
+                  </template>
                 </v-card>
               </v-slide-group-item>
             </v-slide-group>
