@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from "axios";
 import { useMainStore } from "@/stores/main";
-import { logToDB } from "./logentriesComposable";
 
 const apiClient = axios.create({
   baseURL: "/api/v1",
@@ -25,29 +24,25 @@ function handleApiError(error, message) {
   } else {
     console.error("Error during request setup:", error.message);
   }
-  mainstore.showSnackbar(message + "Error #" + error.response.status, "error");
+  mainstore.showSnackbar(message + " : " + error.response.data.detail, "error");
   throw error;
 }
 
 async function getOptionsFunction() {
   try {
     const response = await apiClient.get("/options/1");
-    logToDB(null, "Options fetched", 0, null, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Options not fetched: ");
-    logToDB(error, "Options not fetched", 2, null, null, null);
   }
 }
 
 async function updateOptionsFunction(updatedOptions) {
   try {
     const response = await apiClient.patch("/options/1", updatedOptions);
-    logToDB(null, "Options updated", 1, null, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Options not updated: ");
-    logToDB(error, "Options not updated", 2, null, null, null);
   }
 }
 

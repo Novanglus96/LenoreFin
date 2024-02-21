@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from "axios";
 import { useMainStore } from "@/stores/main";
-import { logToDB } from "./logentriesComposable";
 
 const apiClient = axios.create({
   baseURL: "/api/v1",
@@ -25,18 +24,16 @@ function handleApiError(error, message) {
   } else {
     console.error("Error during request setup:", error.message);
   }
-  mainstore.showSnackbar(message + "Error #" + error.response.status, "error");
+  mainstore.showSnackbar(message + " : " + error.response.data.detail, "error");
   throw error;
 }
 
 async function getBanksFunction() {
   try {
     const response = await apiClient.get("/accounts/banks");
-    logToDB(null, "Banks fetched", 0, null, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Banks not fetched: ");
-    logToDB(error, "Banks not fetched", 2, null, null, null);
   }
 }
 
@@ -44,19 +41,10 @@ async function createBankFunction(newBank) {
   const mainstore = useMainStore();
   try {
     const response = await apiClient.post("/accounts/banks", newBank);
-    logToDB(null, "Bank created : " + newBank.bank_name, 1, null, null, null);
     mainstore.showSnackbar("Bank created successfully!", "success");
     return response.data;
   } catch (error) {
     handleApiError(error, "Bank not created: ");
-    logToDB(
-      error,
-      "Bank not created : " + newBank.bank_name,
-      2,
-      null,
-      null,
-      null,
-    );
   }
 }
 

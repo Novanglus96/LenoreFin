@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from "axios";
 import { useMainStore } from "@/stores/main";
-import { logToDB } from "./logentriesComposable";
 
 const apiClient = axios.create({
   baseURL: "/api/v1",
@@ -25,7 +24,7 @@ function handleApiError(error, message) {
   } else {
     console.error("Error during request setup:", error.message);
   }
-  mainstore.showSnackbar(message + "Error #" + error.response.status, "error");
+  mainstore.showSnackbar(message + " : " + error.response.data.detail, "error");
   throw error;
 }
 
@@ -35,28 +34,17 @@ async function getAccountsFunction(account_type, inactive) {
       const response = await apiClient.get(
         "/accounts?account_type=" + account_type,
       );
-      logToDB(
-        null,
-        "Accounts of type " + account_type + " fetched",
-        0,
-        null,
-        null,
-        null,
-      );
       return response.data;
     } else {
       if (inactive) {
         const response = await apiClient.get("/accounts?inactive=true");
-        logToDB(null, "All inactive accounts fetched", 0, null, null, null);
         return response.data;
       } else {
         const response = await apiClient.get("/accounts");
-        logToDB(null, "All accounts fetched", 0, null, null, null);
         return response.data;
       }
     }
   } catch (error) {
-    logToDB(error, "Accounts not fetched", 2, null, null, null);
     handleApiError(error, "Accounts not fetched: ");
   }
 }
@@ -64,11 +52,9 @@ async function getAccountsFunction(account_type, inactive) {
 async function getAccountByIDFunction(account_id) {
   try {
     const response = await apiClient.get("/accounts/" + account_id);
-    logToDB(null, "Account fetched", 0, account_id, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Account not fetched: ");
-    logToDB(error, "Account not fetched", 2, account_id, null, null);
   }
 }
 
@@ -77,11 +63,9 @@ async function createAccountFunction(newAccount) {
   try {
     const response = await apiClient.post("/accounts", newAccount);
     chorestore.showSnackbar("Account created successfully!", "success");
-    logToDB(null, "Account created", 1, response.data.id, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Account not created: ");
-    logToDB(error, "Account not created", 2, null, null, null);
   }
 }
 
@@ -89,12 +73,10 @@ async function deleteAccountFunction(deletedAccount) {
   const mainstore = useMainStore();
   try {
     const response = await apiClient.delete("/accounts/" + deletedAccount);
-    logToDB(null, "Account deleted", 1, deletedAccount, null, null);
     mainstore.showSnackbar("Account deleted successfully!", "success");
     return response.data;
   } catch (error) {
     handleApiError(error, "Account not deleted: ");
-    logToDB(error, "Account not deleted", 2, deletedAccount, null, null);
   }
 }
 
@@ -104,11 +86,9 @@ async function updateAccountFunction(updatedAccount) {
       "/accounts/" + updatedAccount.id,
       updatedAccount,
     );
-    logToDB(null, "Account updated", 1, updatedAccount.id, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Account not updated: ");
-    logToDB(error, "Account not updated", 2, updatedAccount.id, null, null);
   }
 }
 

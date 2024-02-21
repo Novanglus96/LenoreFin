@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from "axios";
 import { useMainStore } from "@/stores/main";
-import { logToDB } from "./logentriesComposable";
 
 const apiClient = axios.create({
   baseURL: "/api/v1",
@@ -25,18 +24,16 @@ function handleApiError(error, message) {
   } else {
     console.error("Error during request setup:", error.message);
   }
-  mainstore.showSnackbar(message + "Error #" + error.response.status, "error");
+  mainstore.showSnackbar(message + " : " + error.response.data.detail, "error");
   throw error;
 }
 
 async function getMessagesFunction() {
   try {
     const response = await apiClient.get("/messages");
-    logToDB(null, "Messages fetched", 0, null, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Messages not fetched: ");
-    logToDB(error, "Messages not fetched", 2, null, null, null);
   }
 }
 
@@ -45,11 +42,9 @@ async function createMessageFunction(newMessage) {
   try {
     const response = await apiClient.post("/messages", newMessage);
     mainstore.showSnackbar("Message created successfully!", "success");
-    logToDB(null, "Message created", 1, null, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Message not created: ");
-    logToDB(error, "Message not created", 2, null, null, null);
   }
 }
 
@@ -58,11 +53,9 @@ async function deleteAllMessagesFunction() {
   try {
     const response = await apiClient.delete("/messages/deleteall/0");
     mainstore.showSnackbar("Messages deleted successfully!", "success");
-    logToDB(null, "All messages deleted", 1, null, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Messages not deleted: ");
-    logToDB(error, "All messages not deleted", 2, null, null, null);
   }
 }
 
@@ -74,11 +67,9 @@ async function readAllMessagesFunction() {
     };
     const response = await apiClient.patch("/messages/readall/0", payload);
     mainstore.showSnackbar("Messages marked read successfully!", "success");
-    logToDB(null, "All messages marked read", 1, null, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Messages not marked read: ");
-    logToDB(error, "All messages not marked read", 2, null, null, null);
   }
 }
 

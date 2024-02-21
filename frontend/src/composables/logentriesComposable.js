@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
+import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import axios from "axios";
 import { useMainStore } from "@/stores/main";
 
@@ -37,15 +37,6 @@ async function getLogEntriesFunction() {
   }
 }
 
-async function createLogEntryFunction(newLogEntry) {
-  try {
-    const response = await apiClient.post("/logentries", newLogEntry);
-    return response.data;
-  } catch (error) {
-    handleApiError(error, "Log entry not created: ");
-  }
-}
-
 export function useLogEntries() {
   const queryClient = useQueryClient();
   const { data: log_entries, isLoading } = useQuery({
@@ -55,54 +46,8 @@ export function useLogEntries() {
     client: queryClient,
   });
 
-  const createLogEntryMutation = useMutation({
-    mutationFn: createLogEntryFunction,
-    onSuccess: () => {
-      console.log("Success adding log entry");
-      queryClient.invalidateQueries({ queryKey: ["log_entries"] });
-    },
-  });
-
-  async function addLogEntry(newLogEntry) {
-    console.log(newLogEntry);
-    createLogEntryMutation.mutate(newLogEntry);
-  }
-
   return {
     isLoading,
     log_entries,
-    addLogEntry,
   };
-}
-
-export async function logToDB(
-  error,
-  message,
-  errorlevel,
-  account_id,
-  reminder_id,
-  transaction_id,
-) {
-  let error_num = 0;
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  const formattedDate = `${year}-${month}-${day}`;
-  if (error) {
-    error_num = error.response.status;
-  } else {
-    error_num = null;
-  }
-  const logEntry = {
-    log_date: formattedDate,
-    log_entry: message,
-    account_id: account_id,
-    reminder_id: reminder_id,
-    transaction_id: transaction_id,
-    error_num: error_num,
-    error_level_id: errorlevel,
-  };
-  const response = await apiClient.post("/logentries", logEntry);
-  return response.data;
 }
