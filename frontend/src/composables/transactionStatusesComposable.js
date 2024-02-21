@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getTransactionStatusesFunction() {
   try {
-    const response = await apiClient.get("/transactions/statuses");
+    const response = await apiClient.get("/transaction/statuses");
     return response.data;
   } catch (error) {
     handleApiError(error, "Transaction statuses not fetched: ");
