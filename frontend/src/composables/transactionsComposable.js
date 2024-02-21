@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from "axios";
 import { useMainStore } from "@/stores/main";
-import { logToDB } from "./logentriesComposable";
 
 const apiClient = axios.create({
   baseURL: "/api/v1",
@@ -25,7 +24,7 @@ function handleApiError(error, message) {
   } else {
     console.error("Error during request setup:", error.message);
   }
-  mainstore.showSnackbar(message + "Error #" + error.response.status, "error");
+  mainstore.showSnackbar(message + " : " + error.response.data.detail, "error");
   throw error;
 }
 
@@ -40,23 +39,13 @@ async function getTransactionsFunction(account_id, maxdays, forecast) {
         querytext = querytext + "&forecast=" + forecast;
       }
       const response = await apiClient.get("/transactions" + querytext);
-      logToDB(
-        null,
-        "Transactions fetched for " + maxdays + " days",
-        0,
-        account_id,
-        null,
-        null,
-      );
       return response.data;
     } else {
       const response = await apiClient.get("/transactions");
-      logToDB(null, "All transcations fetched", 0, account_id, null, null);
       return response.data;
     }
   } catch (error) {
     handleApiError(error, "Transactions not fetched: ");
-    logToDB(error, "Transactions not fetched", 2, account_id, null, null);
   }
 }
 
@@ -65,14 +54,6 @@ async function createTransactionFunction(newTransaction) {
   let details = [];
   try {
     const response = await apiClient.post("/transactions", newTransaction);
-    logToDB(
-      null,
-      "Transaction created",
-      1,
-      newTransaction.source_account_id,
-      null,
-      response.data.id,
-    );
     mainstore.showSnackbar("Transaction created successfully!", "success");
 
     if (newTransaction.transaction_type_id == 3) {
@@ -103,14 +84,6 @@ async function createTransactionFunction(newTransaction) {
     return details;
   } catch (error) {
     handleApiError(error, "Transaction not created: ");
-    logToDB(
-      error,
-      "Transaction not created",
-      2,
-      newTransaction.source_account_id,
-      null,
-      null,
-    );
   }
 }
 
@@ -121,14 +94,6 @@ async function createTransactionDetailFunction(newTransactionDetail) {
       "/transactions/details",
       newTransactionDetail,
     );
-    logToDB(
-      null,
-      "Transaction detail created",
-      1,
-      newTransactionDetail.account_id,
-      null,
-      newTransactionDetail.transaction_id,
-    );
     mainstore.showSnackbar(
       "Transaction detail created successfully!",
       "success",
@@ -136,14 +101,6 @@ async function createTransactionDetailFunction(newTransactionDetail) {
     return response.data;
   } catch (error) {
     handleApiError(error, "Transaction detail not created: ");
-    logToDB(
-      error,
-      "Transaction detail not created",
-      2,
-      newTransactionDetail.account_id,
-      null,
-      newTransactionDetail.transaction_id,
-    );
   }
 }
 
@@ -153,19 +110,10 @@ async function deleteTransactionFunction(deletedTransaction) {
     const response = await apiClient.delete(
       "/transactions/" + deletedTransaction,
     );
-    logToDB(null, "Transaction deleted", 1, null, null, deletedTransaction);
     mainstore.showSnackbar("Transaction deleted successfully!", "success");
     return response.data;
   } catch (error) {
     handleApiError(error, "Transaction not deleted: ");
-    logToDB(
-      error,
-      "Transaction not deleted",
-      2,
-      null,
-      null,
-      deletedTransaction,
-    );
   }
 }
 
@@ -180,18 +128,9 @@ async function clearTransactionFunction(clearedTransaction) {
       payload,
     );
     mainstore.showSnackbar("Transaction cleared successfully!", "success");
-    logToDB(null, "Transaction cleared", 1, null, null, clearedTransaction);
     return response.data;
   } catch (error) {
     handleApiError(error, "Transaction not cleared: ");
-    logToDB(
-      error,
-      "Transaction not cleared",
-      2,
-      null,
-      null,
-      clearedTransaction,
-    );
   }
 }
 

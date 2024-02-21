@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import axios from "axios";
 import { useMainStore } from "@/stores/main";
-import { logToDB } from "./logentriesComposable";
 
 const apiClient = axios.create({
   baseURL: "/api/v1",
@@ -25,18 +24,16 @@ function handleApiError(error, message) {
   } else {
     console.error("Error during request setup:", error.message);
   }
-  mainstore.showSnackbar(message + "Error #" + error.response.status, "error");
+  mainstore.showSnackbar(message + " : " + error.response.data.detail, "error");
   throw error;
 }
 
 async function getTransactionTypesFunction() {
   try {
     const response = await apiClient.get("/transactions/types");
-    logToDB(null, "Transaction types fetched", 0, null, null, null);
     return response.data;
   } catch (error) {
     handleApiError(error, "Transaction types not fetched: ");
-    logToDB(error, "Transaction types not fetched", 2, null, null, null);
   }
 }
 
