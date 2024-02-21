@@ -33,9 +33,10 @@ from api.models import (
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from pydantic import BaseModel, Field
 from ninja.security import HttpBearer
+from ninja.errors import HttpError
 from decouple import config
 from django.db.models import (
     Case,
@@ -47,7 +48,7 @@ from django.db.models import (
     CharField,
     Sum,
 )
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.models.functions import Concat
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
@@ -665,7 +666,7 @@ class TransactionDetailIn(Schema):
 
 # The class LogEntryIn is a schema for validating Log Entries.
 class LogEntryIn(Schema):
-    log_date: Optional[date] = get_today_formatted()
+    log_date: Optional[datetime] = None
     log_entry: str
     account_id: Optional[int] = None
     reminder_id: Optional[int] = None
@@ -676,7 +677,7 @@ class LogEntryIn(Schema):
 
 # The class LogEntryOut is a schema for representing Log Entries.
 class LogEntryOut(Schema):
-    log_date: date
+    log_date: datetime
     log_entry: str
     account: Optional[AccountOut] = None
     reminder: Optional[ReminderOut] = None
@@ -712,8 +713,51 @@ def create_account_type(request, payload: AccountTypeIn):
         id: returns the id of the created account type
     """
 
-    account_type = AccountType.objects.create(**payload.dict())
-    return {"id": account_type.id}
+    try:
+        account_type = AccountType.objects.create(**payload.dict())
+        logToDB(
+            f"Account type created : {account_type.account_type}",
+            None,
+            None,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": account_type.id}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Account type not created : type exists ({payload.account_type})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Account type already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Account type not created : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Account type not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/accounts/banks")
@@ -729,8 +773,51 @@ def create_bank(request, payload: BankIn):
         id: returns the id of the created bank
     """
 
-    bank = Bank.objects.create(**payload.dict())
-    return {"id": bank.id}
+    try:
+        bank = Bank.objects.create(**payload.dict())
+        logToDB(
+            f"Bank created : {bank.bank_name}",
+            None,
+            None,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": bank.id}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Bank not created : bank exists ({payload.bank_name})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Bank already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Bank not created : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Bank not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/accounts")
@@ -746,8 +833,51 @@ def create_account(request, payload: AccountIn):
         id: returns the id of the created account
     """
 
-    account = Account.objects.create(**payload.dict())
-    return {"id": account.id}
+    try:
+        account = Account.objects.create(**payload.dict())
+        logToDB(
+            f"Account created : {account.account_name}",
+            account.id,
+            None,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": account.id}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Account not created : name exists ({payload.account_name})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Account name already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Account not created : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Account not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/tags")
@@ -763,8 +893,51 @@ def create_tag(request, payload: TagIn):
         id: returns the id of the created tag
     """
 
-    tag = Tag.objects.create(**payload.dict())
-    return {"id": tag.id}
+    try:
+        tag = Tag.objects.create(**payload.dict())
+        logToDB(
+            f"Tag created : {tag.tag_name}",
+            None,
+            None,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": tag.id}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Tag not created : tag exists ({payload.tag_name})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Tag already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Tag not created : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Tag not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/planning/contribrules")
@@ -780,8 +953,51 @@ def create_contrib_rule(request, payload: ContribRuleIn):
         id: returns the id of the created contribution rule
     """
 
-    contrib_rule = ContribRule.objects.create(**payload.dict())
-    return {"id": contrib_rule.id}
+    try:
+        contrib_rule = ContribRule.objects.create(**payload.dict())
+        logToDB(
+            f"Contribution rule created : {payload.rule}",
+            None,
+            None,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": contrib_rule.id}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Contribution rule not created : rule exists ({payload.rule})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Conitribution rule already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Contribution rule not created : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Contribution rule not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/planning/contributions")
@@ -797,42 +1013,51 @@ def create_contribution(request, payload: ContributionIn):
         id: returns the id of the created contribution
     """
 
-    contribution = Contribution.objects.create(**payload.dict())
-    return {"id": contribution.id}
-
-
-@api.post("/errorlevels")
-def create_errorlevel(request, payload: ErrorLevelIn):
-    """
-    The function `create_errorlevel` creates an error level
-
-    Args:
-        request ():
-        payload (ErrorLevelIn): An object using schema of ErrorLevelIn.
-
-    Returns:
-        id: returns the id of the created error level
-    """
-
-    errorlevel = ErrorLevel.objects.create(**payload.dict())
-    return {"id": errorlevel.id}
-
-
-@api.post("/transactions/types")
-def create_transaction_type(request, payload: TransactionTypeIn):
-    """
-    The function `create_transaction_type` creates a transaction type
-
-    Args:
-        request ():
-        payload (TransactionTypeIn): An object using schema of TransactionTypeIn.
-
-    Returns:
-        id: returns the id of the created transaction type
-    """
-
-    transaction_type = TransactionType.objects.create(**payload.dict())
-    return {"id": transaction_type.id}
+    try:
+        contribution = Contribution.objects.create(**payload.dict())
+        logToDB(
+            f"Contribution created : {payload.contribution}",
+            None,
+            None,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": contribution.id}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Contribution not created : contribution exists ({payload.contribution})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Conitribution already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Contribution not created : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Contribution not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/reminders/repeats")
@@ -848,8 +1073,51 @@ def create_repeat(request, payload: RepeatIn):
         id: returns the id of the created repeat
     """
 
-    repeat = Repeat.objects.create(**payload.dict())
-    return {"id": repeat.id}
+    try:
+        repeat = Repeat.objects.create(**payload.dict())
+        logToDB(
+            f"Repeat created : {repeat.repeat_name}",
+            None,
+            None,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": repeat.id}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Repeat not created : repeat exists ({payload.repeat_name})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Repeat already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Repeat not created : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Repeat not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/reminders")
@@ -865,8 +1133,28 @@ def create_reminder(request, payload: ReminderIn):
         id: returns the id of the created reminder
     """
 
-    reminder = Reminder.objects.create(**payload.dict())
-    return {"id": reminder.id}
+    try:
+        reminder = Reminder.objects.create(**payload.dict())
+        logToDB(
+            f"Reminder created : {reminder.description}",
+            None,
+            reminder.id,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": reminder.id}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Reminder not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/planning/notes")
@@ -882,42 +1170,28 @@ def create_note(request, payload: NoteIn):
         id: returns the id of the created note
     """
 
-    note = Note.objects.create(**payload.dict())
-    return {"id": note.id}
-
-
-@api.post("/options")
-def create_option(request, payload: OptionIn):
-    """
-    The function `create_option` creates an option
-
-    Args:
-        request ():
-        payload (OptionIn): An object using schema of OptionIn.
-
-    Returns:
-        id: returns the id of the created option
-    """
-
-    option = Option.objects.create(**payload.dict())
-    return {"id": option.id}
-
-
-@api.post("/transactions/statuses")
-def create_transaction_status(request, payload: TransactionStatusIn):
-    """
-    The function `create_transaction_status` creates a transactoin status
-
-    Args:
-        request ():
-        payload (TransactionStatusIn): An object using schema of TransactionStatusIn.
-
-    Returns:
-        id: returns the id of the created transaction status
-    """
-
-    transaction_status = TransactionStatus.objects.create(**payload.dict())
-    return {"id": transaction_status.id}
+    try:
+        note = Note.objects.create(**payload.dict())
+        logToDB(
+            f"Note created : {note.note_date}",
+            None,
+            None,
+            None,
+            3001005,
+            2,
+        )
+        return {"id": note.id}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Note not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/payees")
@@ -933,8 +1207,51 @@ def create_payee(request, payload: PayeeIn):
         id: returns the id of the created payee
     """
 
-    payee = Payee.objects.create(**payload.dict())
-    return {"id": payee.id}
+    try:
+        payee = Payee.objects.create(**payload.dict())
+        logToDB(
+            f"Payee created : {payee.payee_name}",
+            None,
+            None,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": payee.id}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Payee not created : payee exists ({payload.payee_name})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Payee already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Payee not created : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Payee not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/paychecks")
@@ -950,8 +1267,28 @@ def create_paycheck(request, payload: PaycheckIn):
         id: returns the id of the created paycheck
     """
 
-    paycheck = Paycheck.objects.create(**payload.dict())
-    return {"id": paycheck.id}
+    try:
+        paycheck = Paycheck.objects.create(**payload.dict())
+        logToDB(
+            f"Paycheck created : #{paycheck.id}",
+            None,
+            None,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": paycheck.id}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Paycheck not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/transactions")
@@ -967,8 +1304,28 @@ def create_transaction(request, payload: TransactionIn):
         id: returns the id of the created transaction
     """
 
-    transaction = Transaction.objects.create(**payload.dict())
-    return {"id": transaction.id}
+    try:
+        transaction = Transaction.objects.create(**payload.dict())
+        logToDB(
+            f"Transaction created : #{transaction.id}",
+            None,
+            None,
+            transaction.id,
+            3001005,
+            2,
+        )
+        return {"id": transaction.id}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/transactions/details")
@@ -984,8 +1341,28 @@ def create_transaction_detail(request, payload: TransactionDetailIn):
         id: returns the id of the created transaction detail
     """
 
-    transaction_detail = TransactionDetail.objects.create(**payload.dict())
-    return {"id": transaction_detail.id}
+    try:
+        transaction_detail = TransactionDetail.objects.create(**payload.dict())
+        logToDB(
+            f"Transaction detail created : #{transaction_detail.transaction.id}",
+            None,
+            None,
+            payload.transaction_id,
+            3001005,
+            2,
+        )
+        return {"id": transaction_detail.id}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction detail not created : {str(e)}",
+            None,
+            None,
+            payload.transaction_id,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.post("/logentries")
@@ -1022,8 +1399,28 @@ def create_message(request, payload: MessageIn):
         id: returns the id of the created transaction detail
     """
 
-    message = Message.objects.create(**payload.dict())
-    return {"id": message.id}
+    try:
+        message = Message.objects.create(**payload.dict())
+        logToDB(
+            f"Message created : #{message.id}",
+            None,
+            None,
+            None,
+            3001001,
+            1,
+        )
+        return {"id": message.id}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Message not created : {str(e)}",
+            None,
+            None,
+            None,
+            3001901,
+            2,
+        )
+        raise HttpError(500, "Record creation error")
 
 
 @api.get("/accounts/types/{accounttype_id}", response=AccountTypeOut)
@@ -3476,3 +3873,36 @@ def delete_messages(request, message_id: int):
     for message in messages:
         message.delete()
     return {"success": True}
+
+
+def logToDB(message, account, reminder, transaction, error, level):
+    """
+    The function `logToDB` creates log entries, but only if the current logging level
+    set in options is lower than the specified error level.
+
+    Args:
+        message (str): The log entry message.
+        account (Account): Optional, the account associated with this entry.
+        reminder (Reminder): Optional, the reminder associated with this entry.
+        transaction (Transaction): Optional, the transactions associated with this entry.
+        error (int): Optional, any error number associated with this entry.
+        level (ErrorLevel): The error level of this entry.
+
+    Returns:
+        success (int): Returns the id of the created log entry.
+    """
+
+    options = get_object_or_404(Option, id=1)
+    if options.log_level.id <= level:
+        log_entry = LogEntry.objects.create(
+            log_entry=message,
+            account_id=account,
+            reminder_id=reminder,
+            transaction_id=transaction,
+            error_num=error,
+            error_level_id=level,
+        )
+        return_id = log_entry.id
+    else:
+        return_id = 0
+    return {"success": return_id}

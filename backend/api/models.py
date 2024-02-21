@@ -165,7 +165,7 @@ class ContribRule(models.Model):
     - cap (CharField): The cap rule for this contribution rule, lmited to 254 charaters.
     """
 
-    rule = models.CharField(max_length=254)
+    rule = models.CharField(max_length=254, unique=True)
     cap = models.CharField(max_length=254, null=True, blank=True, default=None)
 
     def __str__(self):
@@ -560,7 +560,7 @@ class LogEntry(models.Model):
     the error level of this log entry.
     """
 
-    log_date = models.DateField(default=date.today)
+    log_date = models.DateTimeField(auto_now_add=True)
     log_entry = models.CharField(max_length=254)
     account = models.ForeignKey(
         Account, on_delete=models.CASCADE, null=True, blank=True, default=None
