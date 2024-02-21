@@ -69,7 +69,6 @@ const account_selected = ref(null);
 const { accounts, isLoading: accounts_isLoading } = useAccounts();
 
 const clickAccountUpdate = () => {
-  console.log("account:", account_selected.value);
   emit("updateAccount", account_selected.value);
 };
 </script>
