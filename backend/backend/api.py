@@ -1604,7 +1604,7 @@ def get_errorlevel(request, errorlevel_id: int):
 
 
 @api.get(
-    "/transactions/types/{transaction_type_id}", response=TransactionTypeOut
+    "/transaction/types/{transaction_type_id}", response=TransactionTypeOut
 )
 def get_transaction_type(request, transaction_type_id: int):
     """
@@ -1776,7 +1776,7 @@ def get_forecast(
 
 
 @api.get(
-    "/transactions/statuses/{transactionstatus_id}",
+    "/transaction/statuses/{transactionstatus_id}",
     response=TransactionStatusOut,
 )
 def get_transaction_status(request, transactionstatus_id: int):
@@ -2400,7 +2400,7 @@ def list_errorlevels(request):
     return qs
 
 
-@api.get("/transactions/types", response=List[TransactionTypeOut])
+@api.get("/transaction/types", response=List[TransactionTypeOut])
 def list_transaction_types(request):
     """
     The function `list_transaction_types` retrieves a list of transaction types,
@@ -2485,7 +2485,7 @@ def list_options(request):
     return qs
 
 
-@api.get("/transactions/statuses", response=List[TransactionStatusOut])
+@api.get("/transaction/statuses", response=List[TransactionStatusOut])
 def list_transaction_statuses(request):
     """
     The function `list_transaction_statuses` retrieves a list of transaction statuses,
@@ -3019,7 +3019,7 @@ def update_errorlevel(request, errorlevel_id: int, payload: ErrorLevelIn):
     return {"success": True}
 
 
-@api.put("/transactions/types/{transaction_type_id}")
+@api.put("/transaction/types/{transaction_type_id}")
 def update_transaction_type(
     request, transaction_type_id: int, payload: TransactionTypeIn
 ):
@@ -3191,7 +3191,7 @@ def update_option(request, option_id: int, payload: OptionIn):
     return {"success": True}
 
 
-@api.put("/transactions/statuses/{transactionstatus_id}")
+@api.put("/transaction/statuses/{transactionstatus_id}")
 def update_transaction_status(
     request, transactionstatus_id: int, payload: TransactionStatusIn
 ):
@@ -3598,7 +3598,7 @@ def delete_errorlevel(request, errorlevel_id: int):
     return {"success": True}
 
 
-@api.delete("/transactions/types/{transaction_type_id}")
+@api.delete("/transaction/types/{transaction_type_id}")
 def delete_transaction_type(request, transaction_type_id: int):
     """
     The function `delete_transaction_type` deletes the transaction type specified by id.
@@ -3705,7 +3705,7 @@ def delete_option(request, option_id: int):
     return {"success": True}
 
 
-@api.delete("/transactions/statuses/{transactionstatus_id}")
+@api.delete("/transaction/statuses/{transactionstatus_id}")
 def delete_transaction_status(request, transactionstatus_id: int):
     """
     The function `delete_transaction_status` deletes the transaction status specified by id.
