@@ -1439,8 +1439,28 @@ def get_account_type(request, accounttype_id: int):
         Http404: If the account type with the specified ID does not exist.
     """
 
-    account_type = get_object_or_404(AccountType, id=accounttype_id)
-    return account_type
+    try:
+        account_type = get_object_or_404(AccountType, id=accounttype_id)
+        logToDB(
+            f"Account type retrieved : {account_type.account_type}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return account_type
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Account type not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/accounts/banks/{bank_id}", response=BankOut)
@@ -1459,8 +1479,28 @@ def get_bank(request, bank_id: int):
         Http404: If the bank with the specified ID does not exist.
     """
 
-    bank = get_object_or_404(Bank, id=bank_id)
-    return bank
+    try:
+        bank = get_object_or_404(Bank, id=bank_id)
+        logToDB(
+            f"Bank retrieved : {bank.bank_name}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return bank
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Bank not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/accounts/{account_id}", response=AccountOut)
@@ -1479,802 +1519,24 @@ def get_account(request, account_id: int):
         Http404: If the account with the specified ID does not exist.
     """
 
-    # Retrieve the account object from the database
-    account = get_object_or_404(Account, id=account_id)
+    try:
+        # Retrieve the account object from the database
+        account = get_object_or_404(Account, id=account_id)
 
-    # Fetch all transactions exlduing pending
-    transactions = Transaction.objects.exclude(status_id=1)
+        # Fetch all transactions exlduing pending
+        transactions = Transaction.objects.exclude(status_id=1)
 
-    # Filter transactions related to account
-    transactions = TransactionDetail.objects.filter(
-        account__id=account_id
-    ).exclude(transaction__status__id=1)
-
-    # Calculate the account balance using transactions
-    calc_balance = account.opening_balance
-    for transaction in transactions:
-        calc_balance += transaction.detail_amt
-
-    # Prepare the AccountOut object
-    account_out = AccountOut(
-        id=account.id,
-        account_name=account.account_name,
-        account_type=AccountTypeOut(
-            id=account.account_type.id,
-            account_type=account.account_type.account_type,
-            color=account.account_type.color,
-            icon=account.account_type.icon,
-        ),
-        opening_balance=account.opening_balance,
-        apy=account.apy,
-        due_date=account.due_date,
-        active=account.active,
-        open_date=account.open_date,
-        next_cycle_date=account.next_cycle_date,
-        statement_cycle_length=account.statement_cycle_length,
-        statement_cycle_period=account.statement_cycle_period,
-        rewards_amount=account.rewards_amount,
-        credit_limit=account.credit_limit,
-        available_credit=account.credit_limit + calc_balance,
-        balance=calc_balance,
-        bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name),
-        last_statement_amount=account.last_statement_amount,
-    )
-    return account_out
-
-
-@api.get("/tags/{tag_id}", response=TagOut)
-def get_tag(request, tag_id: int):
-    """
-    The function `get_tag` retrieves the tag by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        tag_id (int): The id of the tag to retrieve.
-
-    Returns:
-        TagOut: the tag object
-
-    Raises:
-        Http404: If the tag with the specified ID does not exist.
-    """
-
-    tag = get_object_or_404(Tag, id=tag_id)
-    return tag
-
-
-@api.get("/planning/contribrules/{contribrule_id}", response=ContribRuleOut)
-def get_contribrule(request, contribrule_id: int):
-    """
-    The function `get_contribrule` retrieves the contribution rule by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        contribrule_id (int): The id of the contribution rule to retrieve.
-
-    Returns:
-        ContribRuleOut: the contribution rule object
-
-    Raises:
-        Http404: If the contribution rule with the specified ID does not exist.
-    """
-
-    contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
-    return contrib_rule
-
-
-@api.get("/planning/contributions/{contribution_id}", response=ContributionOut)
-def get_contribution(request, contribution_id: int):
-    """
-    The function `get_contribution` retrieves the contribution by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        contribution_id (int): The id of the contribution to retrieve.
-
-    Returns:
-        ContributionOut: the contribution object
-
-    Raises:
-        Http404: If the contribution with the specified ID does not exist.
-    """
-
-    contribution = get_object_or_404(Contribution, id=contribution_id)
-    return contribution
-
-
-@api.get("/errorlevels/{errorlevel_id}", response=ErrorLevelOut)
-def get_errorlevel(request, errorlevel_id: int):
-    """
-    The function `get_errorlevel` retrieves the error level by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        errorlevel_id (int): The id of the error level to retrieve.
-
-    Returns:
-        ErrorLevelOut: the error level object
-
-    Raises:
-        Http404: If the error level with the specified ID does not exist.
-    """
-
-    errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
-    return errorlevel
-
-
-@api.get(
-    "/transaction/types/{transaction_type_id}", response=TransactionTypeOut
-)
-def get_transaction_type(request, transaction_type_id: int):
-    """
-    The function `get_transaction_type` retrieves the transaction type by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transaction_type_id (int): The id of the transaction type to retrieve.
-
-    Returns:
-        TransactionTypeOut: the transaction type object
-
-    Raises:
-        Http404: If the transaction type with the specified ID does not exist.
-    """
-
-    transaction_type = get_object_or_404(
-        TransactionType, id=transaction_type_id
-    )
-    return transaction_type
-
-
-@api.get("/reminders/repeats/{repeat_id}", response=RepeatOut)
-def get_repeat(request, repeat_id: int):
-    """
-    The function `get_repeat` retrieves the repeat by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        repeat_id (int): The id of the repeat to retrieve.
-
-    Returns:
-        RepeatOut: the repeat object
-
-    Raises:
-        Http404: If the repeat with the specified ID does not exist.
-    """
-
-    repeat = get_object_or_404(Repeat, id=repeat_id)
-    return repeat
-
-
-@api.get("/reminders/{reminder_id}", response=ReminderOut)
-def get_reminder(request, reminder_id: int):
-    """
-    The function `get_reminder` retrieves the reminder by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        reminder_id (int): The id of the reminder to retrieve.
-
-    Returns:
-        ReminderOut: the reminder object
-
-    Raises:
-        Http404: If the reminder with the specified ID does not exist.
-    """
-
-    reminder = get_object_or_404(Reminder, id=reminder_id)
-    return reminder
-
-
-@api.get("/planning/notes/{note_id}", response=NoteOut)
-def get_note(request, note_id: int):
-    """
-    The function `get_note` retrieves the note by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        note_id (int): The id of the note to retrieve.
-
-    Returns:
-        NoteOut: the note object
-
-    Raises:
-        Http404: If the note with the specified ID does not exist.
-    """
-
-    note = get_object_or_404(Note, id=note_id)
-    return note
-
-
-@api.get("/options/{option_id}", response=OptionOut)
-def get_option(request, option_id: int):
-    """
-    The function `get_option` retrieves the option by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        option_id (int): The id of the option to retrieve.
-
-    Returns:
-        OptionOut: the option object
-
-    Raises:
-        Http404: If the option with the specified ID does not exist.
-    """
-
-    option = get_object_or_404(Option, id=option_id)
-    return option
-
-
-@api.get("/accounts/{account_id}/forecast", response=ForecastOut)
-def get_forecast(
-    request, account_id: int, start_interval: int, end_interval: int
-):
-    """
-    The function `get_forecast` retrieves the forecast data for the account id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        account_id (int): The id of the account to retrieve forecast data.
-        start_interval (int): the number of days before today to start forecast.
-        end_interval (int): the number of days after today to end forecast.
-
-    Returns:
-        ForecastOut: the forecast object
-
-    Raises:
-        Http404: If the account with the specified ID does not exist.
-    """
-
-    # Retrieve the dates in range as labels for forecast
-    labels = get_dates_in_range(start_interval, end_interval)
-
-    dates = get_unformatted_dates_in_range(start_interval, end_interval)
-    data = []
-    datasets = []
-
-    # Retrieve the account for the forecast
-    account = get_object_or_404(Account, id=account_id)
-
-    # Retrieve the transactions in the date range for the account
-    transactions = TransactionDetail.objects.filter(
-        account__id=account_id,
-        transaction__transaction_date__lt=get_forecast_end_date(end_interval),
-    )
-    transactions = transactions.order_by("transaction__transaction_date")
-
-    # Calculate the daily account balance
-    balance = Decimal(0)
-    balance += account.opening_balance
-    day_balance = Decimal(0)
-    for label in dates:
-        day_balance = balance
-        for transaction in transactions:
-            if transaction.transaction.transaction_date <= label:
-                day_balance += transaction.detail_amt
-        data.append(day_balance)
-
-    # Prepare the graph data for the forecast object
-    targetobject_out = TargetObject(value=0)
-    fillobject_out = FillObject(
-        target=targetobject_out,
-        above="rgb(236 , 253, 245)",
-        below="rgb(248, 121, 121)",
-    )
-    datasets_out = DatasetObject(
-        borderColor="#06966A",
-        backgroundColor="#06966A",
-        tension=0.1,
-        data=data,
-        fill=fillobject_out,
-        pointStyle="false",
-    )
-    datasets.append(datasets_out)
-    forecast_out = ForecastOut(labels=labels, datasets=datasets)
-    return forecast_out
-
-
-@api.get(
-    "/transaction/statuses/{transactionstatus_id}",
-    response=TransactionStatusOut,
-)
-def get_transaction_status(request, transactionstatus_id: int):
-    """
-    The function `get_transaction_status` retrieves the transaction status by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transactionstatus_id (int): The id of the transaction status to retrieve.
-
-    Returns:
-        TransactionStatusOut: the transaction status object
-
-    Raises:
-        Http404: If the transaction status with the specified ID does not exist.
-    """
-
-    transaction_status = get_object_or_404(
-        TransactionStatus, id=transactionstatus_id
-    )
-    return transaction_status
-
-
-@api.get("/payees/{payee_id}", response=PayeeOut)
-def get_payee(request, payee_id: int):
-    """
-    The function `get_payee` retrieves the payee by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        payee_id (int): The id of the payee to retrieve.
-
-    Returns:
-        PayeeOut: the payee object
-
-    Raises:
-        Http404: If the payee with the specified ID does not exist.
-    """
-
-    payee = get_object_or_404(Payee, id=payee_id)
-    return payee
-
-
-@api.get("/paychecks/{paycheck_id}", response=PaycheckOut)
-def get_paycheck(request, paycheck_id: int):
-    """
-    The function `get_paycheck` retrieves the paycheck by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        paycheck_id (int): The id of the paycheck to retrieve.
-
-    Returns:
-        PaycheckOut: the payee object
-
-    Raises:
-        Http404: If the paycheck with the specified ID does not exist.
-    """
-
-    paycheck = get_object_or_404(Paycheck, id=paycheck_id)
-    return paycheck
-
-
-@api.get("/transactions/{transaction_id}", response=TransactionOut)
-def get_transaction(request, transaction_id: int):
-    """
-    The function `get_transaction` retrieves the transaction by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transaction_id (int): The id of the transaction to retrieve.
-
-    Returns:
-        TransactionOut: the transaction object
-
-    Raises:
-        Http404: If the transaction with the specified ID does not exist.
-    """
-
-    transaction = get_object_or_404(Transaction, id=transaction_id)
-    return transaction
-
-
-@api.get(
-    "/transactions/details/{transactiondetail_id}",
-    response=TransactionDetailOut,
-)
-def get_transaction_detail(request, transactiondetail_id: int):
-    """
-    The function `get_transaction_detail` retrieves the transaction detail by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transactiondetail_id (int): The id of the transaction detail to retrieve.
-
-    Returns:
-        TransactionDetailOut: the transaction detail object
-
-    Raises:
-        Http404: If the transaction detail with the specified ID does not exist.
-    """
-
-    transaction_detail = get_object_or_404(
-        TransactionDetail, id=transactiondetail_id
-    )
-    return transaction_detail
-
-
-@api.get("/logentries/{logentry_id}", response=LogEntryOut)
-def get_log_entry(request, logentry_id: int):
-    """
-    The function `get_log_entry` retrieves the log entry by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        logentry_id (int): The id of the log entry to retrieve.
-
-    Returns:
-        LogEntryOut: the log entry object
-
-    Raises:
-        Http404: If the log entry with the specified ID does not exist.
-    """
-
-    log_entry = get_object_or_404(LogEntry, id=logentry_id)
-    return log_entry
-
-
-@api.get("/messages/{message_id}", response=MessageOut)
-def get_message(request, message_id: int):
-    """
-    The function `get_message` retrieves the message by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        message_id (int): The id of the message to retrieve.
-
-    Returns:
-        MessageOut: the message object
-
-    Raises:
-        Http404: If the message with the specified ID does not exist.
-    """
-
-    message = get_object_or_404(Message, id=message_id)
-    return message
-
-
-@api.get("/accounts/types", response=List[AccountTypeOut])
-def list_account_types(request):
-    """
-    The function `list_account_types` retrieves a list of account types,
-    orderd by ID ascending.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        AccountTypeOut: a list of account type objects
-    """
-
-    qs = AccountType.objects.all().order_by("id")
-    return qs
-
-
-@api.get("/accounts/banks", response=List[BankOut])
-def list_banks(request):
-    """
-    The function `list_banks` retrieves a list of banks,
-    orderd by bank name ascending.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        BankOut: a list of bank objects
-    """
-
-    qs = Bank.objects.all().order_by("bank_name")
-    return qs
-
-
-@api.get("/graphs_bytags", response=GraphOut)
-def get_graph(request, widget_id: int):
-    """
-    The function `get_graph` retrieves graph data for tags for widget id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        widget_id (int): The widget for graph data
-
-    Returns:
-        GraphOut: the graph data object
-    """
-
-    # Initialize variables
-    graph_name = ""
-    exclude = "[0]"
-    tagID = None
-    month = 0
-    expense = True
-
-    # Load the options for the specified widget ID
-    options = get_object_or_404(Option, id=1)
-
-    # Set graph options based on widget options
-    if widget_id == 1:
-        graph_name = options.widget1_graph_name
-        exclude = options.widget1_exclude
-        tagID = options.widget1_tag_id
-        month = options.widget1_month
-        expense = options.widget1_expense
-    if widget_id == 2:
-        graph_name = options.widget2_graph_name
-        exclude = options.widget2_exclude
-        tagID = options.widget2_tag_id
-        month = options.widget2_month
-        expense = options.widget2_expense
-    if widget_id == 3:
-        graph_name = options.widget3_graph_name
-        exclude = options.widget3_exclude
-        tagID = options.widget3_tag_id
-        month = options.widget3_month
-        expense = options.widget3_expense
-    exclude_list = json.loads(exclude)
-    today = timezone.now().date()
-    target_date = today - relativedelta(months=month)
-    target_month = target_date.month
-    labels = []
-    values = []
-    datasets = []
-    colors = [
-        "#7fb1b1",
-        "#597c7c",
-        "#7f8cb1",
-        "#7fb17f",
-        "#597c59",
-        "#b17fa5",
-        "#7c5973",
-        "#b1a77f",
-        "#edffff",
-        "#dbffff",
-        "#7c6759",
-        "#b1937f",
-        "#8686b1",
-        "#5e5e7c",
-        "#757c59",
-        "#52573e",
-        "#ffedff",
-        "#573e57",
-        "#fff8db",
-        "#ffe9db",
-        "#e0e0ff",
-        "#9d9db3",
-    ]
-
-    # Sort colors randomly, seeded to stay the same for this month
-    random.seed(today.month * widget_id)
-    random.shuffle(colors)
-
-    # If a tag is specified in options, filter by that tag
-    # Otherwise, filter on expense tags or income tags
-    if tagID is None:
-        tag_type_id = 1 if expense else 2
-        tags = Tag.objects.filter(
-            tag_type__id=tag_type_id, parent=None
-        ).exclude(id__in=exclude_list)
-    else:
-        tags = Tag.objects.filter(parent__id=tagID).exclude(id__in=exclude_list)
-
-    # Calculate month totals for each tag
-    # Use the tag name as the label and the total as the value
-    for tag in tags:
-        tag_amount = (
-            TransactionDetail.objects.filter(
-                Q(tag=tag) | Q(tag__parent=tag),
-                transaction__transaction_date__month=target_month,
-            ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
-            or 0
-        )
-        if tag_amount != 0:
-            labels.append(tag.tag_name)
-            values.append(tag_amount)
-
-    # If there are no tags or totals, return None as label and 0 as value
-    if not values:
-        values.append(0)
-    if not labels:
-        labels.append("None")
-
-    # Prepare the graph data object
-    dataset = GraphDataset(
-        label=graph_name, data=values, backgroundColor=colors, hoverOffset=4
-    )
-    datasets.append(dataset)
-    graph_object = GraphOut(labels=labels, datasets=datasets)
-
-    return graph_object
-
-
-@api.get("/transactions_bytag", response=TagGraphOut)
-def list_transactions_bytag(request, tag: int):
-    """
-    The function `list_transactions_bytag` retrieves transactions for a tag id,
-    and calcualtes the totals by month for the current year and last year, as
-    well as the averages by month for the years and returns the data as graph
-    data.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        tag (int): The tag id to get transactions for.
-        month (int): Optional month integer.  If none is provided, 0
-
-    Returns:
-        TagDetailOut: the tag detail object
-    """
-
-    # Calculate dates based on month, year
-    today = timezone.now().date()
-    this_month = today.month
-    this_year = today.year
-    last_year = today.year - 1
-
-    # Retrieve all transactions for tag
-    alltrans = TransactionDetail.objects.filter(tag__id=tag).order_by(
-        "-transaction__transaction_date"
-    )
-
-    # Filter transactions for current year
-    thisyear_trans = alltrans.filter(
-        transaction__transaction_date__year=this_year
-    ).order_by("-transaction__transaction_date")
-
-    # Filter transactions for last year
-    lastyear_trans = alltrans.filter(
-        transaction__transaction_date__year=last_year
-    ).order_by("-transaction__transaction_date")
-
-    # Calculate the YTD total
-    this_year_total = 0
-    this_year_total = thisyear_trans.aggregate(total_amount=Sum("detail_amt"))[
-        "total_amount"
-    ]
-    if this_year_total is not None:
-        this_year_total = abs(this_year_total)
-    else:
-        this_year_total = 0
-
-    # Calculate last years total
-    last_year_total = 0
-    last_year_total = lastyear_trans.aggregate(total_amount=Sum("detail_amt"))[
-        "total_amount"
-    ]
-    if last_year_total is not None:
-        last_year_total = abs(last_year_total)
-    else:
-        last_year_total = 0
-
-    # Calculate YTD Monthly average
-    if this_year_total is not None:
-        this_year_avg = this_year_total / this_month
-    else:
-        this_year_avg = 0
-
-    # Calculate Last Year Monthly average
-    if last_year_total is not None:
-        last_year_avg = last_year_total / 12
-    else:
-        last_year_avg = 0
-
-    # Prepare the transactions object
-    transaction_details = []
-    for detail in alltrans:
-        transaction_detail = TagTransactionOut(
-            transaction_id=detail.transaction.id,
-            transaction_date=detail.transaction.transaction_date,
-            tag_amount=detail.detail_amt,
-            transaction_description=detail.transaction.description,
-            transaction_memo=detail.transaction.memo,
-            transaction_pretty_account=detail.account.account_name,
-        )
-        transaction_details.append(transaction_detail)
-
-    # Calculate this year monthly totals
-    this_year_totals = []
-    for month in range(1, this_month + 1):
-        monthly_total = 0
-        monthly_total = thisyear_trans.filter(
-            transaction__transaction_date__month=month
-        ).aggregate(monthly_total=Sum("detail_amt"))["monthly_total"]
-        if monthly_total is not None:
-            this_year_totals.append(abs(monthly_total))
-        else:
-            this_year_totals.append(0)
-
-    # Calculate last year monthly totals
-    last_year_totals = []
-    for month in range(1, 13):
-        monthly_total = 0
-        monthly_total = lastyear_trans.filter(
-            transaction__transaction_date__month=month
-        ).aggregate(monthly_total=Sum("detail_amt"))["monthly_total"]
-        if monthly_total is not None:
-            last_year_totals.append(abs(monthly_total))
-        else:
-            last_year_totals.append(0)
-
-    # Prepare the datasets
-    datasets = []
-    this_year_dataset = DatasetObject(
-        label=this_year, backgroundColor="#046959", data=this_year_totals
-    )
-    datasets.append(this_year_dataset)
-    last_year_dataset = DatasetObject(
-        label=last_year, backgroundColor="#c2fff5", data=last_year_totals
-    )
-    datasets.append(last_year_dataset)
-
-    # Prepare the GraphData object
-    graph_data = GraphData(
-        labels=[
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December",
-        ],
-        datasets=datasets,
-    )
-
-    # Prepare the tag graph out object
-    tag_graph_out = TagGraphOut(
-        data=graph_data,
-        year1=this_year,
-        year2=last_year,
-        year1_avg=this_year_avg,
-        year2_avg=last_year_avg,
-        transactions=transaction_details,
-    )
-    return tag_graph_out
-
-
-@api.get("/accounts", response=List[AccountOut])
-def list_accounts(
-    request,
-    account_type: Optional[int] = Query(None),
-    inactive: Optional[bool] = Query(None),
-):
-    """
-    The function `list_accounts` retrieves a list of accounts,
-    optionally filtered by inactive or account type.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        account_type (int): Optional account type id to filter accounts.
-        inactive (bool): Optional filter on inactive or not
-
-    Returns:
-        AccountOut: a list of Account objects
-    """
-
-    # Retrieve all accounts
-    qs = Account.objects.all()
-
-    # If inactive argument is provided, filter by active/inactive
-    if inactive:
-        qs = qs.filter(active=False)
-    else:
-        qs = qs.filter(active=True)
-
-    # If account type argument is provided, filter by account type
-    if account_type is not None:
-        qs = qs.filter(account_type__id=account_type)
-
-    # Order accounts by account type id ascending, bank name ascending, and account
-    # name ascending
-    qs = qs.order_by("account_type__id", "bank__bank_name", "account_name")
-
-    # Initialize blank account list
-    account_list = []
-
-    # For each account, get related transactions and calculate balance
-    for account in qs:
-        calc_balance = account.opening_balance
+        # Filter transactions related to account
         transactions = TransactionDetail.objects.filter(
-            account__id=account.id
+            account__id=account_id
         ).exclude(transaction__status__id=1)
+
+        # Calculate the account balance using transactions
+        calc_balance = account.opening_balance
         for transaction in transactions:
             calc_balance += transaction.detail_amt
 
-        # Prepare Account object
+        # Prepare the AccountOut object
         account_out = AccountOut(
             id=account.id,
             account_name=account.account_name,
@@ -2299,9 +1561,1251 @@ def list_accounts(
             bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name),
             last_statement_amount=account.last_statement_amount,
         )
-        account_list.append(account_out)
+        logToDB(
+            f"Account retrieved : {account_out.account_name}",
+            account_id,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return account_out
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Account not retrieved : {str(e)}",
+            account_id,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
-    return account_list
+
+@api.get("/tags/{tag_id}", response=TagOut)
+def get_tag(request, tag_id: int):
+    """
+    The function `get_tag` retrieves the tag by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        tag_id (int): The id of the tag to retrieve.
+
+    Returns:
+        TagOut: the tag object
+
+    Raises:
+        Http404: If the tag with the specified ID does not exist.
+    """
+
+    try:
+        tag = get_object_or_404(Tag, id=tag_id)
+        logToDB(
+            f"Tag retrieved : {tag.tag_name}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return tag
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Tag not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/planning/contribrules/{contribrule_id}", response=ContribRuleOut)
+def get_contribrule(request, contribrule_id: int):
+    """
+    The function `get_contribrule` retrieves the contribution rule by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        contribrule_id (int): The id of the contribution rule to retrieve.
+
+    Returns:
+        ContribRuleOut: the contribution rule object
+
+    Raises:
+        Http404: If the contribution rule with the specified ID does not exist.
+    """
+
+    try:
+        contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
+        logToDB(
+            f"Contribution rule retrieved : {contrib_rule.rule}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return contrib_rule
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Contribution rule not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/planning/contributions/{contribution_id}", response=ContributionOut)
+def get_contribution(request, contribution_id: int):
+    """
+    The function `get_contribution` retrieves the contribution by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        contribution_id (int): The id of the contribution to retrieve.
+
+    Returns:
+        ContributionOut: the contribution object
+
+    Raises:
+        Http404: If the contribution with the specified ID does not exist.
+    """
+
+    try:
+        contribution = get_object_or_404(Contribution, id=contribution_id)
+        logToDB(
+            f"Contribution retrieved : {contribution.rule}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return contribution
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Contribution not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/errorlevels/{errorlevel_id}", response=ErrorLevelOut)
+def get_errorlevel(request, errorlevel_id: int):
+    """
+    The function `get_errorlevel` retrieves the error level by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        errorlevel_id (int): The id of the error level to retrieve.
+
+    Returns:
+        ErrorLevelOut: the error level object
+
+    Raises:
+        Http404: If the error level with the specified ID does not exist.
+    """
+
+    try:
+        errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
+        logToDB(
+            f"Error level retrieved : {errorlevel.error_level}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return errorlevel
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Error level not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get(
+    "/transaction/types/{transaction_type_id}", response=TransactionTypeOut
+)
+def get_transaction_type(request, transaction_type_id: int):
+    """
+    The function `get_transaction_type` retrieves the transaction type by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transaction_type_id (int): The id of the transaction type to retrieve.
+
+    Returns:
+        TransactionTypeOut: the transaction type object
+
+    Raises:
+        Http404: If the transaction type with the specified ID does not exist.
+    """
+
+    try:
+        transaction_type = get_object_or_404(
+            TransactionType, id=transaction_type_id
+        )
+        logToDB(
+            f"Transaction type retrieved : {transaction_type.transaction_type}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return transaction_type
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction type not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/reminders/repeats/{repeat_id}", response=RepeatOut)
+def get_repeat(request, repeat_id: int):
+    """
+    The function `get_repeat` retrieves the repeat by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        repeat_id (int): The id of the repeat to retrieve.
+
+    Returns:
+        RepeatOut: the repeat object
+
+    Raises:
+        Http404: If the repeat with the specified ID does not exist.
+    """
+
+    try:
+        repeat = get_object_or_404(Repeat, id=repeat_id)
+        logToDB(
+            f"Repeat retrieved : {repeat.repeat_name}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return repeat
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Repeat not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/reminders/{reminder_id}", response=ReminderOut)
+def get_reminder(request, reminder_id: int):
+    """
+    The function `get_reminder` retrieves the reminder by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        reminder_id (int): The id of the reminder to retrieve.
+
+    Returns:
+        ReminderOut: the reminder object
+
+    Raises:
+        Http404: If the reminder with the specified ID does not exist.
+    """
+
+    try:
+        reminder = get_object_or_404(Reminder, id=reminder_id)
+        logToDB(
+            f"Reminder retrieved : {reminder.description}",
+            None,
+            reminder.id,
+            None,
+            3001006,
+            1,
+        )
+        return reminder
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Reminder not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/planning/notes/{note_id}", response=NoteOut)
+def get_note(request, note_id: int):
+    """
+    The function `get_note` retrieves the note by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        note_id (int): The id of the note to retrieve.
+
+    Returns:
+        NoteOut: the note object
+
+    Raises:
+        Http404: If the note with the specified ID does not exist.
+    """
+
+    try:
+        note = get_object_or_404(Note, id=note_id)
+        logToDB(
+            f"Note retrieved : #{note.id}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return note
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Note not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/options/{option_id}", response=OptionOut)
+def get_option(request, option_id: int):
+    """
+    The function `get_option` retrieves the option by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        option_id (int): The id of the option to retrieve.
+
+    Returns:
+        OptionOut: the option object
+
+    Raises:
+        Http404: If the option with the specified ID does not exist.
+    """
+
+    try:
+        option = get_object_or_404(Option, id=option_id)
+        logToDB(
+            f"Option retrieved : #{option.id}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return option
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Option not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/accounts/{account_id}/forecast", response=ForecastOut)
+def get_forecast(
+    request, account_id: int, start_interval: int, end_interval: int
+):
+    """
+    The function `get_forecast` retrieves the forecast data for the account id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        account_id (int): The id of the account to retrieve forecast data.
+        start_interval (int): the number of days before today to start forecast.
+        end_interval (int): the number of days after today to end forecast.
+
+    Returns:
+        ForecastOut: the forecast object
+
+    Raises:
+        Http404: If the account with the specified ID does not exist.
+    """
+
+    try:
+        # Retrieve the dates in range as labels for forecast
+        labels = get_dates_in_range(start_interval, end_interval)
+
+        dates = get_unformatted_dates_in_range(start_interval, end_interval)
+        data = []
+        datasets = []
+
+        # Retrieve the account for the forecast
+        account = get_object_or_404(Account, id=account_id)
+
+        # Retrieve the transactions in the date range for the account
+        transactions = TransactionDetail.objects.filter(
+            account__id=account_id,
+            transaction__transaction_date__lt=get_forecast_end_date(
+                end_interval
+            ),
+        )
+        transactions = transactions.order_by("transaction__transaction_date")
+
+        # Calculate the daily account balance
+        balance = Decimal(0)
+        balance += account.opening_balance
+        day_balance = Decimal(0)
+        for label in dates:
+            day_balance = balance
+            for transaction in transactions:
+                if transaction.transaction.transaction_date <= label:
+                    day_balance += transaction.detail_amt
+            data.append(day_balance)
+
+        # Prepare the graph data for the forecast object
+        targetobject_out = TargetObject(value=0)
+        fillobject_out = FillObject(
+            target=targetobject_out,
+            above="rgb(236 , 253, 245)",
+            below="rgb(248, 121, 121)",
+        )
+        datasets_out = DatasetObject(
+            borderColor="#06966A",
+            backgroundColor="#06966A",
+            tension=0.1,
+            data=data,
+            fill=fillobject_out,
+            pointStyle="false",
+        )
+        datasets.append(datasets_out)
+        forecast_out = ForecastOut(labels=labels, datasets=datasets)
+        logToDB(
+            "Forecast retrieved",
+            account_id,
+            None,
+            None,
+            3002002,
+            1,
+        )
+        return forecast_out
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Forecast not retrieved : {str(e)}",
+            account_id,
+            None,
+            None,
+            3002902,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get(
+    "/transaction/statuses/{transactionstatus_id}",
+    response=TransactionStatusOut,
+)
+def get_transaction_status(request, transactionstatus_id: int):
+    """
+    The function `get_transaction_status` retrieves the transaction status by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transactionstatus_id (int): The id of the transaction status to retrieve.
+
+    Returns:
+        TransactionStatusOut: the transaction status object
+
+    Raises:
+        Http404: If the transaction status with the specified ID does not exist.
+    """
+
+    try:
+        transaction_status = get_object_or_404(
+            TransactionStatus, id=transactionstatus_id
+        )
+        logToDB(
+            f"Transaction status retrieved : {transaction_status.transaction_status}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return transaction_status
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction status not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/payees/{payee_id}", response=PayeeOut)
+def get_payee(request, payee_id: int):
+    """
+    The function `get_payee` retrieves the payee by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        payee_id (int): The id of the payee to retrieve.
+
+    Returns:
+        PayeeOut: the payee object
+
+    Raises:
+        Http404: If the payee with the specified ID does not exist.
+    """
+
+    try:
+        payee = get_object_or_404(Payee, id=payee_id)
+        logToDB(
+            f"Payee retrieved : {payee.payee_name}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return payee
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Payee not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/paychecks/{paycheck_id}", response=PaycheckOut)
+def get_paycheck(request, paycheck_id: int):
+    """
+    The function `get_paycheck` retrieves the paycheck by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        paycheck_id (int): The id of the paycheck to retrieve.
+
+    Returns:
+        PaycheckOut: the payee object
+
+    Raises:
+        Http404: If the paycheck with the specified ID does not exist.
+    """
+
+    try:
+        paycheck = get_object_or_404(Paycheck, id=paycheck_id)
+        logToDB(
+            f"Paycheck retrieved : #{paycheck.id}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return paycheck
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Paycheck not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/transactions/{transaction_id}", response=TransactionOut)
+def get_transaction(request, transaction_id: int):
+    """
+    The function `get_transaction` retrieves the transaction by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transaction_id (int): The id of the transaction to retrieve.
+
+    Returns:
+        TransactionOut: the transaction object
+
+    Raises:
+        Http404: If the transaction with the specified ID does not exist.
+    """
+
+    try:
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+        logToDB(
+            f"Transaction retrieved : #{transaction.id}",
+            None,
+            None,
+            transaction.id,
+            3001006,
+            1,
+        )
+        return transaction
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get(
+    "/transactions/details/{transactiondetail_id}",
+    response=TransactionDetailOut,
+)
+def get_transaction_detail(request, transactiondetail_id: int):
+    """
+    The function `get_transaction_detail` retrieves the transaction detail by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transactiondetail_id (int): The id of the transaction detail to retrieve.
+
+    Returns:
+        TransactionDetailOut: the transaction detail object
+
+    Raises:
+        Http404: If the transaction detail with the specified ID does not exist.
+    """
+
+    try:
+        transaction_detail = get_object_or_404(
+            TransactionDetail, id=transactiondetail_id
+        )
+        logToDB(
+            f"Transaction detail retrieved : #{transaction_detail.id}",
+            None,
+            None,
+            transaction_detail.transaction.id,
+            3001006,
+            1,
+        )
+        return transaction_detail
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction detail not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/logentries/{logentry_id}", response=LogEntryOut)
+def get_log_entry(request, logentry_id: int):
+    """
+    The function `get_log_entry` retrieves the log entry by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        logentry_id (int): The id of the log entry to retrieve.
+
+    Returns:
+        LogEntryOut: the log entry object
+
+    Raises:
+        Http404: If the log entry with the specified ID does not exist.
+    """
+
+    try:
+        log_entry = get_object_or_404(LogEntry, id=logentry_id)
+        logToDB(
+            f"Log entry retrieved : #{log_entry.id}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return log_entry
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Log entry not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/messages/{message_id}", response=MessageOut)
+def get_message(request, message_id: int):
+    """
+    The function `get_message` retrieves the message by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        message_id (int): The id of the message to retrieve.
+
+    Returns:
+        MessageOut: the message object
+
+    Raises:
+        Http404: If the message with the specified ID does not exist.
+    """
+
+    try:
+        message = get_object_or_404(Message, id=message_id)
+        logToDB(
+            f"Message retrieved : {message.id}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return message
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Message not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/accounts/types", response=List[AccountTypeOut])
+def list_account_types(request):
+    """
+    The function `list_account_types` retrieves a list of account types,
+    orderd by ID ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        AccountTypeOut: a list of account type objects
+    """
+
+    try:
+        qs = AccountType.objects.all().order_by("id")
+        logToDB(
+            "Account type list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Account type list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/accounts/banks", response=List[BankOut])
+def list_banks(request):
+    """
+    The function `list_banks` retrieves a list of banks,
+    orderd by bank name ascending.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        BankOut: a list of bank objects
+    """
+
+    try:
+        qs = Bank.objects.all().order_by("bank_name")
+        logToDB(
+            "Bank list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Bank list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/graphs_bytags", response=GraphOut)
+def get_graph(request, widget_id: int):
+    """
+    The function `get_graph` retrieves graph data for tags for widget id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        widget_id (int): The widget for graph data
+
+    Returns:
+        GraphOut: the graph data object
+    """
+
+    try:
+        # Initialize variables
+        graph_name = ""
+        exclude = "[0]"
+        tagID = None
+        month = 0
+        expense = True
+
+        # Load the options for the specified widget ID
+        options = get_object_or_404(Option, id=1)
+
+        # Set graph options based on widget options
+        if widget_id == 1:
+            graph_name = options.widget1_graph_name
+            exclude = options.widget1_exclude
+            tagID = options.widget1_tag_id
+            month = options.widget1_month
+            expense = options.widget1_expense
+        if widget_id == 2:
+            graph_name = options.widget2_graph_name
+            exclude = options.widget2_exclude
+            tagID = options.widget2_tag_id
+            month = options.widget2_month
+            expense = options.widget2_expense
+        if widget_id == 3:
+            graph_name = options.widget3_graph_name
+            exclude = options.widget3_exclude
+            tagID = options.widget3_tag_id
+            month = options.widget3_month
+            expense = options.widget3_expense
+        exclude_list = json.loads(exclude)
+        today = timezone.now().date()
+        target_date = today - relativedelta(months=month)
+        target_month = target_date.month
+        labels = []
+        values = []
+        datasets = []
+        colors = [
+            "#7fb1b1",
+            "#597c7c",
+            "#7f8cb1",
+            "#7fb17f",
+            "#597c59",
+            "#b17fa5",
+            "#7c5973",
+            "#b1a77f",
+            "#edffff",
+            "#dbffff",
+            "#7c6759",
+            "#b1937f",
+            "#8686b1",
+            "#5e5e7c",
+            "#757c59",
+            "#52573e",
+            "#ffedff",
+            "#573e57",
+            "#fff8db",
+            "#ffe9db",
+            "#e0e0ff",
+            "#9d9db3",
+        ]
+
+        # Sort colors randomly, seeded to stay the same for this month
+        random.seed(today.month * widget_id)
+        random.shuffle(colors)
+
+        # If a tag is specified in options, filter by that tag
+        # Otherwise, filter on expense tags or income tags
+        if tagID is None:
+            tag_type_id = 1 if expense else 2
+            tags = Tag.objects.filter(
+                tag_type__id=tag_type_id, parent=None
+            ).exclude(id__in=exclude_list)
+        else:
+            tags = Tag.objects.filter(parent__id=tagID).exclude(
+                id__in=exclude_list
+            )
+
+        # Calculate month totals for each tag
+        # Use the tag name as the label and the total as the value
+        for tag in tags:
+            tag_amount = (
+                TransactionDetail.objects.filter(
+                    Q(tag=tag) | Q(tag__parent=tag),
+                    transaction__transaction_date__month=target_month,
+                ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
+                or 0
+            )
+            if tag_amount != 0:
+                labels.append(tag.tag_name)
+                values.append(tag_amount)
+
+        # If there are no tags or totals, return None as label and 0 as value
+        if not values:
+            values.append(0)
+        if not labels:
+            labels.append("None")
+
+        # Prepare the graph data object
+        dataset = GraphDataset(
+            label=graph_name, data=values, backgroundColor=colors, hoverOffset=4
+        )
+        datasets.append(dataset)
+        graph_object = GraphOut(labels=labels, datasets=datasets)
+        logToDB(
+            f"Graph data retrieved : {widget_id}",
+            None,
+            None,
+            None,
+            3002003,
+            1,
+        )
+        return graph_object
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Graph data not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3002903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/transactions_bytag", response=TagGraphOut)
+def list_transactions_bytag(request, tag: int):
+    """
+    The function `list_transactions_bytag` retrieves transactions for a tag id,
+    and calcualtes the totals by month for the current year and last year, as
+    well as the averages by month for the years and returns the data as graph
+    data.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        tag (int): The tag id to get transactions for.
+        month (int): Optional month integer.  If none is provided, 0
+
+    Returns:
+        TagDetailOut: the tag detail object
+    """
+
+    try:
+        # Calculate dates based on month, year
+        today = timezone.now().date()
+        this_month = today.month
+        this_year = today.year
+        last_year = today.year - 1
+
+        # Retrieve all transactions for tag
+        alltrans = TransactionDetail.objects.filter(tag__id=tag).order_by(
+            "-transaction__transaction_date"
+        )
+
+        # Filter transactions for current year
+        thisyear_trans = alltrans.filter(
+            transaction__transaction_date__year=this_year
+        ).order_by("-transaction__transaction_date")
+
+        # Filter transactions for last year
+        lastyear_trans = alltrans.filter(
+            transaction__transaction_date__year=last_year
+        ).order_by("-transaction__transaction_date")
+
+        # Calculate the YTD total
+        this_year_total = 0
+        this_year_total = thisyear_trans.aggregate(
+            total_amount=Sum("detail_amt")
+        )["total_amount"]
+        if this_year_total is not None:
+            this_year_total = abs(this_year_total)
+        else:
+            this_year_total = 0
+
+        # Calculate last years total
+        last_year_total = 0
+        last_year_total = lastyear_trans.aggregate(
+            total_amount=Sum("detail_amt")
+        )["total_amount"]
+        if last_year_total is not None:
+            last_year_total = abs(last_year_total)
+        else:
+            last_year_total = 0
+
+        # Calculate YTD Monthly average
+        if this_year_total is not None:
+            this_year_avg = this_year_total / this_month
+        else:
+            this_year_avg = 0
+
+        # Calculate Last Year Monthly average
+        if last_year_total is not None:
+            last_year_avg = last_year_total / 12
+        else:
+            last_year_avg = 0
+
+        # Prepare the transactions object
+        transaction_details = []
+        for detail in alltrans:
+            transaction_detail = TagTransactionOut(
+                transaction_id=detail.transaction.id,
+                transaction_date=detail.transaction.transaction_date,
+                tag_amount=detail.detail_amt,
+                transaction_description=detail.transaction.description,
+                transaction_memo=detail.transaction.memo,
+                transaction_pretty_account=detail.account.account_name,
+            )
+            transaction_details.append(transaction_detail)
+
+        # Calculate this year monthly totals
+        this_year_totals = []
+        for month in range(1, this_month + 1):
+            monthly_total = 0
+            monthly_total = thisyear_trans.filter(
+                transaction__transaction_date__month=month
+            ).aggregate(monthly_total=Sum("detail_amt"))["monthly_total"]
+            if monthly_total is not None:
+                this_year_totals.append(abs(monthly_total))
+            else:
+                this_year_totals.append(0)
+
+        # Calculate last year monthly totals
+        last_year_totals = []
+        for month in range(1, 13):
+            monthly_total = 0
+            monthly_total = lastyear_trans.filter(
+                transaction__transaction_date__month=month
+            ).aggregate(monthly_total=Sum("detail_amt"))["monthly_total"]
+            if monthly_total is not None:
+                last_year_totals.append(abs(monthly_total))
+            else:
+                last_year_totals.append(0)
+
+        # Prepare the datasets
+        datasets = []
+        this_year_dataset = DatasetObject(
+            label=this_year, backgroundColor="#046959", data=this_year_totals
+        )
+        datasets.append(this_year_dataset)
+        last_year_dataset = DatasetObject(
+            label=last_year, backgroundColor="#c2fff5", data=last_year_totals
+        )
+        datasets.append(last_year_dataset)
+
+        # Prepare the GraphData object
+        graph_data = GraphData(
+            labels=[
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+            ],
+            datasets=datasets,
+        )
+
+        # Prepare the tag graph out object
+        tag_graph_out = TagGraphOut(
+            data=graph_data,
+            year1=this_year,
+            year2=last_year,
+            year1_avg=this_year_avg,
+            year2_avg=last_year_avg,
+            transactions=transaction_details,
+        )
+        logToDB(
+            f"Tag details retrieved : {tag}",
+            None,
+            None,
+            None,
+            3002004,
+            1,
+        )
+        return tag_graph_out
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Tag details not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3002904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/accounts", response=List[AccountOut])
+def list_accounts(
+    request,
+    account_type: Optional[int] = Query(None),
+    inactive: Optional[bool] = Query(None),
+):
+    """
+    The function `list_accounts` retrieves a list of accounts,
+    optionally filtered by inactive or account type.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        account_type (int): Optional account type id to filter accounts.
+        inactive (bool): Optional filter on inactive or not
+
+    Returns:
+        AccountOut: a list of Account objects
+    """
+
+    try:
+        # Retrieve all accounts
+        qs = Account.objects.all()
+
+        # If inactive argument is provided, filter by active/inactive
+        if inactive:
+            qs = qs.filter(active=False)
+        else:
+            qs = qs.filter(active=True)
+
+        # If account type argument is provided, filter by account type
+        if account_type is not None:
+            qs = qs.filter(account_type__id=account_type)
+
+        # Order accounts by account type id ascending, bank name ascending, and account
+        # name ascending
+        qs = qs.order_by("account_type__id", "bank__bank_name", "account_name")
+
+        # Initialize blank account list
+        account_list = []
+
+        # For each account, get related transactions and calculate balance
+        for account in qs:
+            calc_balance = account.opening_balance
+            transactions = TransactionDetail.objects.filter(
+                account__id=account.id
+            ).exclude(transaction__status__id=1)
+            for transaction in transactions:
+                calc_balance += transaction.detail_amt
+
+            # Prepare Account object
+            account_out = AccountOut(
+                id=account.id,
+                account_name=account.account_name,
+                account_type=AccountTypeOut(
+                    id=account.account_type.id,
+                    account_type=account.account_type.account_type,
+                    color=account.account_type.color,
+                    icon=account.account_type.icon,
+                ),
+                opening_balance=account.opening_balance,
+                apy=account.apy,
+                due_date=account.due_date,
+                active=account.active,
+                open_date=account.open_date,
+                next_cycle_date=account.next_cycle_date,
+                statement_cycle_length=account.statement_cycle_length,
+                statement_cycle_period=account.statement_cycle_period,
+                rewards_amount=account.rewards_amount,
+                credit_limit=account.credit_limit,
+                available_credit=account.credit_limit + calc_balance,
+                balance=calc_balance,
+                bank=BankOut(
+                    id=account.bank.id, bank_name=account.bank.bank_name
+                ),
+                last_statement_amount=account.last_statement_amount,
+            )
+            account_list.append(account_out)
+        logToDB(
+            "Account list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return account_list
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Account list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/tags", response=List[TagOut])
@@ -2323,30 +2827,52 @@ def list_tags(
         TagOut: a list of tag objects
     """
 
-    # Retrive a list of tags, annotating a pretty_name based on parent tag name
-    qs = Tag.objects.annotate(
-        pretty_name=Case(
-            When(
-                parent__isnull=False,
-                then=Concat(F("parent__tag_name"), Value(" / "), F("tag_name")),
-            ),
-            default=F("tag_name"),
-            output_field=CharField(),
+    try:
+        # Retrive a list of tags, annotating a pretty_name based on parent tag name
+        qs = Tag.objects.annotate(
+            pretty_name=Case(
+                When(
+                    parent__isnull=False,
+                    then=Concat(
+                        F("parent__tag_name"), Value(" / "), F("tag_name")
+                    ),
+                ),
+                default=F("tag_name"),
+                output_field=CharField(),
+            )
         )
-    )
 
-    # Filter tags by tag type if a tag type is specified
-    if tag_type is not None:
-        qs = qs.filter(tag_type__id=tag_type)
+        # Filter tags by tag type if a tag type is specified
+        if tag_type is not None:
+            qs = qs.filter(tag_type__id=tag_type)
 
-    # Filter tags by parent if parent only is true
-    if parent_only is True:
-        qs = qs.filter(parent__isnull=True).exclude(tag_type__id=3)
+        # Filter tags by parent if parent only is true
+        if parent_only is True:
+            qs = qs.filter(parent__isnull=True).exclude(tag_type__id=3)
 
-    # Order tags by pretty name ascending, parent tag name ascending, and then tag name
-    # ascending
-    qs = qs.order_by("pretty_name", "parent__tag_name", "tag_name")
-    return qs
+        # Order tags by pretty name ascending, parent tag name ascending, and then tag name
+        # ascending
+        qs = qs.order_by("pretty_name", "parent__tag_name", "tag_name")
+        logToDB(
+            "Tag list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Tag list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/planning/contribrules", response=List[ContribRuleOut])
@@ -2362,8 +2888,28 @@ def list_contrib_rules(request):
         ContribRuleOut: a list of contribution rule objects
     """
 
-    qs = ContribRule.objects.all().order_by("id")
-    return qs
+    try:
+        qs = ContribRule.objects.all().order_by("id")
+        logToDB(
+            "Contribution rule list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Contribution rule list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/planning/contributions", response=List[ContributionOut])
@@ -2379,8 +2925,28 @@ def list_contributions(request):
         ContributionOut: a list of contribution objects
     """
 
-    qs = Contribution.objects.all().order_by("id")
-    return qs
+    try:
+        qs = Contribution.objects.all().order_by("id")
+        logToDB(
+            "Contribution list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Contribution list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/errorlevels", response=List[ErrorLevelOut])
@@ -2396,8 +2962,28 @@ def list_errorlevels(request):
         ErrorLevelOut: a list of error level objects
     """
 
-    qs = ErrorLevel.objects.all().order_by("id")
-    return qs
+    try:
+        qs = ErrorLevel.objects.all().order_by("id")
+        logToDB(
+            "Error level list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Error level list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/transaction/types", response=List[TransactionTypeOut])
@@ -2413,8 +2999,28 @@ def list_transaction_types(request):
         TransactionTypeOut: a list of transaction type objects
     """
 
-    qs = TransactionType.objects.all().order_by("id")
-    return qs
+    try:
+        qs = TransactionType.objects.all().order_by("id")
+        logToDB(
+            "Transaction type list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction type list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/reminders/repeats", response=List[RepeatOut])
@@ -2430,8 +3036,28 @@ def list_repeats(request):
         RepeatOut: a list of repeat objects
     """
 
-    qs = Repeat.objects.all().order_by("id")
-    return qs
+    try:
+        qs = Repeat.objects.all().order_by("id")
+        logToDB(
+            "Repeat list not retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Repeat list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/reminders", response=List[ReminderOut])
@@ -2447,8 +3073,28 @@ def list_reminders(request):
         ReminderOut: a list of reminders objects
     """
 
-    qs = Reminder.objects.all().order_by("next_date", "id")
-    return qs
+    try:
+        qs = Reminder.objects.all().order_by("next_date", "id")
+        logToDB(
+            "Reminder list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Reminder list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/planning/notes", response=List[NoteOut])
@@ -2464,8 +3110,28 @@ def list_notes(request):
         NoteOut: a list of note objects
     """
 
-    qs = Note.objects.all().order_by("-note_date")
-    return qs
+    try:
+        qs = Note.objects.all().order_by("-note_date")
+        logToDB(
+            "Note list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Note list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/options", response=List[OptionOut])
@@ -2481,8 +3147,28 @@ def list_options(request):
         OptionOut: a list of option objects
     """
 
-    qs = Option.objects.all().order_by("id")
-    return qs
+    try:
+        qs = Option.objects.all().order_by("id")
+        logToDB(
+            "Option list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Option list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/transaction/statuses", response=List[TransactionStatusOut])
@@ -2498,8 +3184,28 @@ def list_transaction_statuses(request):
         TransactionStatusOut: a list of transaction status objects
     """
 
-    qs = TransactionStatus.objects.all().order_by("id")
-    return qs
+    try:
+        qs = TransactionStatus.objects.all().order_by("id")
+        logToDB(
+            "Transaction status list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction status list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/payees", response=List[PayeeOut])
@@ -2515,8 +3221,28 @@ def list_payees(request):
         PayeeOut: a list of payee objects
     """
 
-    qs = Payee.objects.all().order_by("payee_name")
-    return qs
+    try:
+        qs = Payee.objects.all().order_by("payee_name")
+        logToDB(
+            "Payee list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Payee list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/paychecks", response=List[PaycheckOut])
@@ -2532,8 +3258,28 @@ def list_paychecks(request):
         PaycheckOut: a list of paycheck objects
     """
 
-    qs = Paycheck.objects.all().order_by("id")
-    return qs
+    try:
+        qs = Paycheck.objects.all().order_by("id")
+        logToDB(
+            "Paycheck list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Paycheck list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/transactions", response=List[TransactionOut])
@@ -2564,166 +3310,97 @@ def list_transactions(
         TransactionOut: a list of transaction objects
     """
 
-    # Retrieve all transactions
-    qs = Transaction.objects.all()
+    try:
+        # Retrieve all transactions
+        qs = Transaction.objects.all()
 
-    # If an account is specified, filter transactions for maximum days and transaction
-    # details that match account
-    if account is not None:
-        threshold_date = timezone.now().date() + timedelta(days=maxdays)
-        qs = qs.filter(
-            transactiondetail__account__id=account,
-            transaction_date__lt=threshold_date,
-        )
-
-        # Set custom status order
-        custom_order = Case(
-            When(status_id=3, then=0),
-            When(status_id=2, then=0),
-            When(status_id=1, then=1),
-            output_field=models.IntegerField(),
-        )
-
-        # Set custom type order
-        custom_type_order = Case(
-            When(transaction_type_id=2, then=0),
-            When(transaction_type_id=3, then=1),
-            When(transaction_type_id=1, then=2),
-            output_field=models.IntegerField(),
-        )
-
-        # If this is a forecast, set sort
-        if forecast is False:
-            qs = qs.order_by(
-                custom_order,
-                "transaction_date",
-                custom_type_order,
-                "-total_amount",
-            )
-        else:
-            qs = qs.order_by(
-                custom_order,
-                "transaction_date",
-                custom_type_order,
-                "total_amount",
+        # If an account is specified, filter transactions for maximum days and transaction
+        # details that match account
+        if account is not None:
+            threshold_date = timezone.now().date() + timedelta(days=maxdays)
+            qs = qs.filter(
+                transactiondetail__account__id=account,
+                transaction_date__lt=threshold_date,
             )
 
-        # Initialize blank list of transactions
-        transactions = []
-
-        # Calculate the running account balance
-        balance = Decimal(0)
-        for transaction in qs:
-
-            # Initialize transaction details
-            pretty_account = ""
-            tags = []
-            pretty_total = 0
-            source_account = ""
-            destination_account = ""
-
-            # Retrieve a list of transaction details for the transaction
-            transaction_details = TransactionDetail.objects.filter(
-                transaction=transaction.id
+            # Set custom status order
+            custom_order = Case(
+                When(status_id=3, then=0),
+                When(status_id=2, then=0),
+                When(status_id=1, then=1),
+                output_field=models.IntegerField(),
             )
 
-            # Process each detail for this transaction
-            for detail in transaction_details:
+            # Set custom type order
+            custom_type_order = Case(
+                When(transaction_type_id=2, then=0),
+                When(transaction_type_id=3, then=1),
+                When(transaction_type_id=1, then=2),
+                output_field=models.IntegerField(),
+            )
 
-                # If a tag doesn't already exist in the tags list, add it
-                if detail.tag.tag_name not in tags:
-                    tags.append(detail.tag.tag_name)
-
-                # If this transaction is a transfer, add the total if the detail
-                # source account matches account, or subtract if it does not
-                # Change the pretty name to be source account => destintation account or
-                # just the source account if this is not a transfer
-                if transaction.transaction_type.id == 3:
-                    if detail.detail_amt < 0:
-                        source_account = detail.account.account_name
-                        if detail.account.id == account:
-                            pretty_total = transaction.total_amount
-                    else:
-                        destination_account = detail.account.account_name
-                        if detail.account.id == account:
-                            pretty_total = -transaction.total_amount
-                    if detail.account.id == account:
-                        balance += detail.detail_amt
-                else:
-                    pretty_total = transaction.total_amount
-                    source_account = detail.account.account_name
-                    balance += transaction.total_amount
-            if transaction.transaction_type.id == 3:
-                if source_account:
-                    pretty_account = source_account
-                else:
-                    pretty_account = (
-                        "Deleted Account"  # If the source account was deleted
-                    )
-                if destination_account:
-                    pretty_account += " => " + destination_account
-                else:
-                    pretty_account += " => Deleted Account"  # If the destination account was deleted
-            else:
-                pretty_account = source_account
-
-            # Update the balance in the transaction and append to the list
-            transaction.balance = balance
-            transaction.pretty_account = pretty_account
-            transaction.tags = tags
-            transaction.pretty_total = pretty_total
+            # If this is a forecast, set sort
             if forecast is False:
-                transactions.append(TransactionOut.from_orm(transaction))
+                qs = qs.order_by(
+                    custom_order,
+                    "transaction_date",
+                    custom_type_order,
+                    "-total_amount",
+                )
             else:
-                if transaction.transaction_date >= timezone.now().date():
-                    transactions.append(TransactionOut.from_orm(transaction))
-        if forecast is False:
-            transactions.reverse()
-        return transactions
+                qs = qs.order_by(
+                    custom_order,
+                    "transaction_date",
+                    custom_type_order,
+                    "total_amount",
+                )
 
-    # If an account was not specified, these should be upcoming transactions
-    else:
+            # Initialize blank list of transactions
+            transactions = []
 
-        # Filter transactions for pending status
-        qs = qs.filter(status_id=1)
-        custom_order = Case(
-            When(status_id=1, then=0),
-            When(status_id=2, then=1),
-            When(status_id=3, then=1),
-            output_field=models.IntegerField(),
-        )
+            # Calculate the running account balance
+            balance = Decimal(0)
+            for transaction in qs:
 
-        # Set order of transactions
-        qs = qs.order_by(custom_order, "transaction_date", "id")
-        for transaction in qs:
+                # Initialize transaction details
+                pretty_account = ""
+                tags = []
+                pretty_total = 0
+                source_account = ""
+                destination_account = ""
 
-            # Initialize transaction details
-            tags = []
-            source_account = ""
-            destination_account = ""
-            pretty_account = ""
+                # Retrieve a list of transaction details for the transaction
+                transaction_details = TransactionDetail.objects.filter(
+                    transaction=transaction.id
+                )
 
-            # Retrieve transaction details
-            transaction_details = TransactionDetail.objects.filter(
-                transaction=transaction.id
-            )
+                # Process each detail for this transaction
+                for detail in transaction_details:
 
-            # Process the details for this transaction
-            for detail in transaction_details:
+                    # If a tag doesn't already exist in the tags list, add it
+                    if detail.tag.tag_name not in tags:
+                        tags.append(detail.tag.tag_name)
 
-                # If a tag doesn't already exist in the tags list, add it
-                if detail.tag.tag_name not in tags:
-                    tags.append(detail.tag.tag_name)
-
-                # If this transaction is a transfer, add the total if the detail
-                # source account matches account, or subtract if it does not
-                # Change the pretty name to be source account => destintation account or
-                # just the source account if this is not a transfer
-                if transaction.transaction_type.id == 3:
-                    if detail.detail_amt < 0:
-                        source_account = detail.account.account_name
+                    # If this transaction is a transfer, add the total if the detail
+                    # source account matches account, or subtract if it does not
+                    # Change the pretty name to be source account => destintation account or
+                    # just the source account if this is not a transfer
+                    if transaction.transaction_type.id == 3:
+                        if detail.detail_amt < 0:
+                            source_account = detail.account.account_name
+                            if detail.account.id == account:
+                                pretty_total = transaction.total_amount
+                        else:
+                            destination_account = detail.account.account_name
+                            if detail.account.id == account:
+                                pretty_total = -transaction.total_amount
+                        if detail.account.id == account:
+                            balance += detail.detail_amt
                     else:
-                        destination_account = detail.account.account_name
+                        pretty_total = transaction.total_amount
+                        source_account = detail.account.account_name
+                        balance += transaction.total_amount
+                if transaction.transaction_type.id == 3:
                     if source_account:
                         pretty_account = source_account
                     else:
@@ -2733,12 +3410,101 @@ def list_transactions(
                     else:
                         pretty_account += " => Deleted Account"  # If the destination account was deleted
                 else:
-                    pretty_account = detail.account.account_name
-            transaction.tags = tags
-            transaction.pretty_account = pretty_account
-            transaction.pretty_total = transaction.total_amount
+                    pretty_account = source_account
 
-        return qs
+                # Update the balance in the transaction and append to the list
+                transaction.balance = balance
+                transaction.pretty_account = pretty_account
+                transaction.tags = tags
+                transaction.pretty_total = pretty_total
+                if forecast is False:
+                    transactions.append(TransactionOut.from_orm(transaction))
+                else:
+                    if transaction.transaction_date >= timezone.now().date():
+                        transactions.append(
+                            TransactionOut.from_orm(transaction)
+                        )
+            if forecast is False:
+                transactions.reverse()
+            return transactions
+
+        # If an account was not specified, these should be upcoming transactions
+        else:
+
+            # Filter transactions for pending status
+            qs = qs.filter(status_id=1)
+            custom_order = Case(
+                When(status_id=1, then=0),
+                When(status_id=2, then=1),
+                When(status_id=3, then=1),
+                output_field=models.IntegerField(),
+            )
+
+            # Set order of transactions
+            qs = qs.order_by(custom_order, "transaction_date", "id")
+            for transaction in qs:
+
+                # Initialize transaction details
+                tags = []
+                source_account = ""
+                destination_account = ""
+                pretty_account = ""
+
+                # Retrieve transaction details
+                transaction_details = TransactionDetail.objects.filter(
+                    transaction=transaction.id
+                )
+
+                # Process the details for this transaction
+                for detail in transaction_details:
+
+                    # If a tag doesn't already exist in the tags list, add it
+                    if detail.tag.tag_name not in tags:
+                        tags.append(detail.tag.tag_name)
+
+                    # If this transaction is a transfer, add the total if the detail
+                    # source account matches account, or subtract if it does not
+                    # Change the pretty name to be source account => destintation account or
+                    # just the source account if this is not a transfer
+                    if transaction.transaction_type.id == 3:
+                        if detail.detail_amt < 0:
+                            source_account = detail.account.account_name
+                        else:
+                            destination_account = detail.account.account_name
+                        if source_account:
+                            pretty_account = source_account
+                        else:
+                            pretty_account = "Deleted Account"  # If the source account was deleted
+                        if destination_account:
+                            pretty_account += " => " + destination_account
+                        else:
+                            pretty_account += " => Deleted Account"  # If the destination account was deleted
+                    else:
+                        pretty_account = detail.account.account_name
+                transaction.tags = tags
+                transaction.pretty_account = pretty_account
+                transaction.pretty_total = transaction.total_amount
+
+            return qs
+        logToDB(
+            "Transaction list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/transactions/details", response=List[TransactionDetailOut])
@@ -2754,8 +3520,28 @@ def list_transactiondetails(request):
         TransactionDetailOut: a list of transaction detail objects
     """
 
-    qs = TransactionDetail.objects.all().order_by("id")
-    return qs
+    try:
+        qs = TransactionDetail.objects.all().order_by("id")
+        logToDB(
+            "Transaction detail list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction detail list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/logentries", response=List[LogEntryOut])
@@ -2772,8 +3558,30 @@ def list_log_entries(request, log_level: Optional[int] = Query(0)):
         LogEntryOut: a list of log entry objects
     """
 
-    qs = LogEntry.objects.filter(error_level__id__gte=log_level).order_by("-id")
-    return qs
+    try:
+        qs = LogEntry.objects.filter(error_level__id__gte=log_level).order_by(
+            "-id"
+        )
+        logToDB(
+            "Log entry list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Log entry list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/messages", response=MessageList)
@@ -2789,18 +3597,38 @@ def list_messages(request):
         MessageList: a message list object that includes unread and totals.
     """
 
-    unread = Message.objects.filter(
-        unread=True
-    ).count()  # Total unread messages
-    total = Message.objects.all().count()  # The total number of messages
-    messages = Message.objects.all().order_by("-id")
-    message_list = []
-    for message in messages:
-        message_list.append(MessageOut.from_orm(message))
-    message_list_object = MessageList(
-        unread_count=unread, total_count=total, messages=message_list
-    )
-    return message_list_object
+    try:
+        unread = Message.objects.filter(
+            unread=True
+        ).count()  # Total unread messages
+        total = Message.objects.all().count()  # The total number of messages
+        messages = Message.objects.all().order_by("-id")
+        message_list = []
+        for message in messages:
+            message_list.append(MessageOut.from_orm(message))
+        message_list_object = MessageList(
+            unread_count=unread, total_count=total, messages=message_list
+        )
+        logToDB(
+            "Message list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return message_list_object
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Message list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/tagtypes", response=List[TagTypeOut])
@@ -2816,8 +3644,28 @@ def list_tag_types(request):
         TagTypeOut: a list of tag type objects
     """
 
-    qs = TagType.objects.exclude(id=3).order_by("id")
-    return qs
+    try:
+        qs = TagType.objects.exclude(id=3).order_by("id")
+        logToDB(
+            "Tag type list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Tag type list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.put("/accounts/types/{accounttype_id}")
@@ -2837,12 +3685,55 @@ def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
         Http404: If the account type with the specified ID does not exist.
     """
 
-    account_type = get_object_or_404(AccountType, id=accounttype_id)
-    account_type.account_type = payload.account_type
-    account_type.color = payload.color
-    account_type.icon = payload.icon
-    account_type.save()
-    return {"success": True}
+    try:
+        account_type = get_object_or_404(AccountType, id=accounttype_id)
+        account_type.account_type = payload.account_type
+        account_type.color = payload.color
+        account_type.icon = payload.icon
+        account_type.save()
+        logToDB(
+            f"Account type updated : {account_type.account_type}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Account type not updated : account type exists ({payload.account_type})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Account type already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Account type not updated : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Account type not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/accounts/banks/{bank_id}")
@@ -2862,10 +3753,53 @@ def update_bank(request, bank_id: int, payload: BankIn):
         Http404: If the bank with the specified ID does not exist.
     """
 
-    bank = get_object_or_404(Bank, id=bank_id)
-    bank.bank_name = payload.bank_name
-    bank.save()
-    return {"success": True}
+    try:
+        bank = get_object_or_404(Bank, id=bank_id)
+        bank.bank_name = payload.bank_name
+        bank.save()
+        logToDB(
+            f"Bank updated : {bank.bank_name}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Bank not updated : bank exists ({payload.bank_name})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Bank already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Bank not updated : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Bank not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.patch("/accounts/{account_id}")
@@ -2886,37 +3820,80 @@ def update_account(request, account_id: int, payload: AccountUpdate):
         Http404: If the account with the specified ID does not exist.
     """
 
-    account = get_object_or_404(Account, id=account_id)
-    if payload.account_name is not None:
-        account.account_name = payload.account_name
-    if payload.account_type_id is not None:
-        account.account_type_id = payload.account_type_id
-    if payload.opening_balance is not None:
-        account.opening_balance = payload.opening_balance
-    if payload.apy is not None:
-        account.apy = payload.apy
-    if payload.due_date is not None:
-        account.due_date = payload.due_date
-    if payload.active is not None:
-        account.active = payload.active
-    if payload.open_date is not None:
-        account.open_date = payload.open_date
-    if payload.next_cycle_date is not None:
-        account.next_cycle_date = payload.next_cycle_date
-    if payload.statement_cycle_length is not None:
-        account.statement_cycle_length = payload.statement_cycle_length
-    if payload.statement_cycle_period is not None:
-        account.statement_cycle_period = payload.statement_cycle_period
-    if payload.rewards_amount is not None:
-        account.rewards_amount = payload.rewards_amount
-    if payload.credit_limit is not None:
-        account.credit_limit = payload.credit_limit
-    if payload.bank_id is not None:
-        account.bank_id = payload.bank_id
-    if payload.last_statement_amount is not None:
-        account.last_statement_amount = payload.last_statement_amount
-    account.save()
-    return {"success": True}
+    try:
+        account = get_object_or_404(Account, id=account_id)
+        if payload.account_name is not None:
+            account.account_name = payload.account_name
+        if payload.account_type_id is not None:
+            account.account_type_id = payload.account_type_id
+        if payload.opening_balance is not None:
+            account.opening_balance = payload.opening_balance
+        if payload.apy is not None:
+            account.apy = payload.apy
+        if payload.due_date is not None:
+            account.due_date = payload.due_date
+        if payload.active is not None:
+            account.active = payload.active
+        if payload.open_date is not None:
+            account.open_date = payload.open_date
+        if payload.next_cycle_date is not None:
+            account.next_cycle_date = payload.next_cycle_date
+        if payload.statement_cycle_length is not None:
+            account.statement_cycle_length = payload.statement_cycle_length
+        if payload.statement_cycle_period is not None:
+            account.statement_cycle_period = payload.statement_cycle_period
+        if payload.rewards_amount is not None:
+            account.rewards_amount = payload.rewards_amount
+        if payload.credit_limit is not None:
+            account.credit_limit = payload.credit_limit
+        if payload.bank_id is not None:
+            account.bank_id = payload.bank_id
+        if payload.last_statement_amount is not None:
+            account.last_statement_amount = payload.last_statement_amount
+        account.save()
+        logToDB(
+            f"Account updated : {account.account_name}",
+            account_id,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Account not updated : account exists ({payload.account_name})",
+                account_id,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Account already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Account not updated : db integrity error",
+                account_id,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Account not updated : {str(e)}",
+            account_id,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/tags/{tag_id}")
@@ -2936,12 +3913,55 @@ def update_tag(request, tag_id: int, payload: TagIn):
         Http404: If the tag with the specified ID does not exist.
     """
 
-    tag = get_object_or_404(Tag, id=tag_id)
-    tag.tag_name = payload.tag_name
-    tag.parent_id = payload.parent_id
-    tag.tag_type_id = payload.tag_type_id
-    tag.save()
-    return {"success": True}
+    try:
+        tag = get_object_or_404(Tag, id=tag_id)
+        tag.tag_name = payload.tag_name
+        tag.parent_id = payload.parent_id
+        tag.tag_type_id = payload.tag_type_id
+        tag.save()
+        logToDB(
+            f"Tag updated : {tag.tag_name}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Tag not updated : tag exists ({payload.tag_name})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Tag already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Tag not updated : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Tag not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/planning/contribrules/{contribrule_id}")
@@ -2961,11 +3981,54 @@ def update_contrib_rule(request, contribrule_id: int, payload: ContribRuleIn):
         Http404: If the contribution rule with the specified ID does not exist.
     """
 
-    contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
-    contrib_rule.rule = payload.rule
-    contrib_rule.cap = payload.cap
-    contrib_rule.save()
-    return {"success": True}
+    try:
+        contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
+        contrib_rule.rule = payload.rule
+        contrib_rule.cap = payload.cap
+        contrib_rule.save()
+        logToDB(
+            f"Contribution rule updated : {contrib_rule.rule}",
+            None,
+            None,
+            None,
+            3001002,
+            2,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Contribution rule not updated : contribution rule exists ({payload.rule})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Contribution rule already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Contribution rule not updated : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Contribution rule not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/planning/contributions/{contribution_id}")
@@ -2985,15 +4048,58 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
         Http404: If the contribution with the specified ID does not exist.
     """
 
-    contribution = get_object_or_404(Contribution, id=contribution_id)
-    contribution.contribution = payload.contribution
-    contribution.per_paycheck = payload.per_paycheck
-    contribution.emergency_amt = payload.emergency_amt
-    contribution.emergency_diff = payload.emergency_diff
-    contribution.cap = payload.cap
-    contribution.active = payload.active
-    contribution.save()
-    return {"success": True}
+    try:
+        contribution = get_object_or_404(Contribution, id=contribution_id)
+        contribution.contribution = payload.contribution
+        contribution.per_paycheck = payload.per_paycheck
+        contribution.emergency_amt = payload.emergency_amt
+        contribution.emergency_diff = payload.emergency_diff
+        contribution.cap = payload.cap
+        contribution.active = payload.active
+        contribution.save()
+        logToDB(
+            f"Contribution updated : {contribution.contribution}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Contribution not updated : contribution exists ({payload.contribution})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Contribution already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Contribution not updated : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Contribution not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/errorlevels/{errorlevel_id}")
@@ -3013,10 +4119,53 @@ def update_errorlevel(request, errorlevel_id: int, payload: ErrorLevelIn):
         Http404: If the error level with the specified ID does not exist.
     """
 
-    errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
-    errorlevel.error_level = payload.error_level
-    errorlevel.save()
-    return {"success": True}
+    try:
+        errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
+        errorlevel.error_level = payload.error_level
+        errorlevel.save()
+        logToDB(
+            f"Error level updated : {errorlevel.error_level}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Error level not updated : error level exists ({payload.error_level})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Error level already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Error level not updated : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Error level not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/transaction/types/{transaction_type_id}")
@@ -3038,12 +4187,55 @@ def update_transaction_type(
         Http404: If the transaction type with the specified ID does not exist.
     """
 
-    transaction_type = get_object_or_404(
-        TransactionType, id=transaction_type_id
-    )
-    transaction_type.transaction_type = payload.transaction_type
-    transaction_type.save()
-    return {"success": True}
+    try:
+        transaction_type = get_object_or_404(
+            TransactionType, id=transaction_type_id
+        )
+        transaction_type.transaction_type = payload.transaction_type
+        transaction_type.save()
+        logToDB(
+            f"Transaction type updated : {transaction_type.transaction_type}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Transaction type not updated : transaction type exists ({payload.transaction_type})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Transaction type already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Transaction type not updated : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction type not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/reminders/repeats/{repeat_id}")
@@ -3063,14 +4255,57 @@ def update_repeat(request, repeat_id: int, payload: RepeatIn):
         Http404: If the repeat with the specified ID does not exist.
     """
 
-    repeat = get_object_or_404(Repeat, id=repeat_id)
-    repeat.repeat_name = payload.repeat_name
-    repeat.days = payload.days
-    repeat.weeks = payload.weeks
-    repeat.months = payload.months
-    repeat.years = payload.years
-    repeat.save()
-    return {"success": True}
+    try:
+        repeat = get_object_or_404(Repeat, id=repeat_id)
+        repeat.repeat_name = payload.repeat_name
+        repeat.days = payload.days
+        repeat.weeks = payload.weeks
+        repeat.months = payload.months
+        repeat.years = payload.years
+        repeat.save()
+        logToDB(
+            f"Repeat updated : {repeat.repeat_name}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Repeat not updated : repeat exists ({payload.repeat_name})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Repeat already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Repeat not updated : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Repeat not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/reminders/{reminder_id}")
@@ -3090,22 +4325,42 @@ def update_reminder(request, reminder_id: int, payload: ReminderIn):
         Http404: If the reminder with the specified ID does not exist.
     """
 
-    reminder = get_object_or_404(Reminder, id=reminder_id)
-    reminder.tag_id = payload.tag_id
-    reminder.amount = payload.amount
-    reminder.reminder_source_account_id = payload.reminder_source_account_id
-    reminder.reminder_destination_account_id = (
-        payload.reminder_destination_account_id
-    )
-    reminder.description = payload.description
-    reminder.transaction_type_id = payload.transaction_type_id
-    reminder.start_date = payload.start_date
-    reminder.next_date = payload.next_date
-    reminder.end_date = payload.end_date
-    reminder.repeat_id = payload.repeat_id
-    reminder.auto_add = payload.auto_add
-    reminder.save()
-    return {"success": True}
+    try:
+        reminder = get_object_or_404(Reminder, id=reminder_id)
+        reminder.tag_id = payload.tag_id
+        reminder.amount = payload.amount
+        reminder.reminder_source_account_id = payload.reminder_source_account_id
+        reminder.reminder_destination_account_id = (
+            payload.reminder_destination_account_id
+        )
+        reminder.description = payload.description
+        reminder.transaction_type_id = payload.transaction_type_id
+        reminder.start_date = payload.start_date
+        reminder.next_date = payload.next_date
+        reminder.end_date = payload.end_date
+        reminder.repeat_id = payload.repeat_id
+        reminder.auto_add = payload.auto_add
+        reminder.save()
+        logToDB(
+            f"Reminder updated : #{reminder_id}",
+            None,
+            reminder_id,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Reminder not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/planning/notes/{note_id}")
@@ -3125,11 +4380,31 @@ def update_note(request, note_id: int, payload: NoteIn):
         Http404: If the note with the specified ID does not exist.
     """
 
-    note = get_object_or_404(Note, id=note_id)
-    note.note_text = payload.note_text
-    note.note_date = payload.note_date
-    note.save()
-    return {"success": True}
+    try:
+        note = get_object_or_404(Note, id=note_id)
+        note.note_text = payload.note_text
+        note.note_date = payload.note_date
+        note.save()
+        logToDB(
+            f"Note updated : #{note_id}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Note not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.patch("/options/{option_id}")
@@ -3150,45 +4425,65 @@ def update_option(request, option_id: int, payload: OptionIn):
         Http404: If the option with the specified ID does not exist.
     """
 
-    option = get_object_or_404(Option, id=option_id)
-    if payload.log_level_id is not None:
-        option.log_level_id = payload.log_level_id
-    if payload.alert_balance is not None:
-        option.alert_balance = payload.alert_balance
-    if payload.alert_period is not None:
-        option.alert_period = payload.alert_period
-    if payload.widget1_graph_name is not None:
-        option.widget1_graph_name = payload.widget1_graph_name
-    if payload.widget1_tag_id is not None:
-        option.widget1_tag_id = payload.widget1_tag_id
-    if payload.widget1_expense is not None:
-        option.widget1_expense = payload.widget1_expense
-    if payload.widget1_month is not None:
-        option.widget1_month = payload.widget1_month
-    if payload.widget1_exclude is not None:
-        option.widget1_exclude = payload.widget1_exclude
-    if payload.widget2_graph_name is not None:
-        option.widget2_graph_name = payload.widget2_graph_name
-    if payload.widget2_tag_id is not None:
-        option.widget2_tag_id = payload.widget2_tag_id
-    if payload.widget2_expense is not None:
-        option.widget2_expense = payload.widget2_expense
-    if payload.widget2_month is not None:
-        option.widget2_month = payload.widget2_month
-    if payload.widget2_exclude is not None:
-        option.widget2_exclude = payload.widget2_exclude
-    if payload.widget3_graph_name is not None:
-        option.widget3_graph_name = payload.widget3_graph_name
-    if payload.widget3_tag_id is not None:
-        option.widget3_tag_id = payload.widget3_tag_id
-    if payload.widget3_expense is not None:
-        option.widget3_expense = payload.widget3_expense
-    if payload.widget3_month is not None:
-        option.widget3_month = payload.widget3_month
-    if payload.widget3_exclude is not None:
-        option.widget3_exclude = payload.widget3_exclude
-    option.save()
-    return {"success": True}
+    try:
+        option = get_object_or_404(Option, id=option_id)
+        if payload.log_level_id is not None:
+            option.log_level_id = payload.log_level_id
+        if payload.alert_balance is not None:
+            option.alert_balance = payload.alert_balance
+        if payload.alert_period is not None:
+            option.alert_period = payload.alert_period
+        if payload.widget1_graph_name is not None:
+            option.widget1_graph_name = payload.widget1_graph_name
+        if payload.widget1_tag_id is not None:
+            option.widget1_tag_id = payload.widget1_tag_id
+        if payload.widget1_expense is not None:
+            option.widget1_expense = payload.widget1_expense
+        if payload.widget1_month is not None:
+            option.widget1_month = payload.widget1_month
+        if payload.widget1_exclude is not None:
+            option.widget1_exclude = payload.widget1_exclude
+        if payload.widget2_graph_name is not None:
+            option.widget2_graph_name = payload.widget2_graph_name
+        if payload.widget2_tag_id is not None:
+            option.widget2_tag_id = payload.widget2_tag_id
+        if payload.widget2_expense is not None:
+            option.widget2_expense = payload.widget2_expense
+        if payload.widget2_month is not None:
+            option.widget2_month = payload.widget2_month
+        if payload.widget2_exclude is not None:
+            option.widget2_exclude = payload.widget2_exclude
+        if payload.widget3_graph_name is not None:
+            option.widget3_graph_name = payload.widget3_graph_name
+        if payload.widget3_tag_id is not None:
+            option.widget3_tag_id = payload.widget3_tag_id
+        if payload.widget3_expense is not None:
+            option.widget3_expense = payload.widget3_expense
+        if payload.widget3_month is not None:
+            option.widget3_month = payload.widget3_month
+        if payload.widget3_exclude is not None:
+            option.widget3_exclude = payload.widget3_exclude
+        option.save()
+        logToDB(
+            f"Option updated : {option_id}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Option not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/transaction/statuses/{transactionstatus_id}")
@@ -3210,12 +4505,55 @@ def update_transaction_status(
         Http404: If the transaction status with the specified ID does not exist.
     """
 
-    transaction_status = get_object_or_404(
-        TransactionStatus, id=transactionstatus_id
-    )
-    transaction_status.transaction_status = payload.transaction_status
-    transaction_status.save()
-    return {"success": True}
+    try:
+        transaction_status = get_object_or_404(
+            TransactionStatus, id=transactionstatus_id
+        )
+        transaction_status.transaction_status = payload.transaction_status
+        transaction_status.save()
+        logToDB(
+            f"Transaction status updated : {transaction_status.transaction_status}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Transaction status not updated : transaction status exists ({payload.transaction_status})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Transaction status already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Transaction status not updated : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction status not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/payees/{payee_id}")
@@ -3235,10 +4573,53 @@ def update_payee(request, payee_id: int, payload: PayeeIn):
         Http404: If the payee with the specified ID does not exist.
     """
 
-    payee = get_object_or_404(Payee, id=payee_id)
-    payee.payee_name = payload.payee_name
-    payee.save()
-    return {"success": True}
+    try:
+        payee = get_object_or_404(Payee, id=payee_id)
+        payee.payee_name = payload.payee_name
+        payee.save()
+        logToDB(
+            f"Payee updated : {payee.payee_name}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except IntegrityError as integrity_error:
+        # Check if the integrity error is due to a duplicate
+        if "unique constraint" in str(integrity_error).lower():
+            logToDB(
+                f"Payee not updated : payee exists ({payload.payee_name})",
+                None,
+                None,
+                None,
+                3001004,
+                2,
+            )
+            raise HttpError(400, "Payee already exists")
+        else:
+            # Log other types of integry errors
+            logToDB(
+                "Payee not updated : db integrity error",
+                None,
+                None,
+                None,
+                3001005,
+                2,
+            )
+            raise HttpError(400, "DB integrity error")
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Payee not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/paychecks/{paycheck_id}")
@@ -3258,19 +4639,39 @@ def update_paycheck(request, paycheck_id: int, payload: PaycheckIn):
         Http404: If the paycheck with the specified ID does not exist.
     """
 
-    paycheck = get_object_or_404(Paycheck, id=paycheck_id)
-    paycheck.gross = payload.gross
-    paycheck.net = payload.net
-    paycheck.taxes = payload.taxes
-    paycheck.health = payload.health
-    paycheck.pension = payload.pension
-    paycheck.fsa = payload.fsa
-    paycheck.dca = payload.dca
-    paycheck.union_dues = payload.union_dues
-    paycheck.four_fifty_seven_b = payload.four_fifty_seven_b
-    paycheck.payee_id = payload.payee_id
-    paycheck.save()
-    return {"success": True}
+    try:
+        paycheck = get_object_or_404(Paycheck, id=paycheck_id)
+        paycheck.gross = payload.gross
+        paycheck.net = payload.net
+        paycheck.taxes = payload.taxes
+        paycheck.health = payload.health
+        paycheck.pension = payload.pension
+        paycheck.fsa = payload.fsa
+        paycheck.dca = payload.dca
+        paycheck.union_dues = payload.union_dues
+        paycheck.four_fifty_seven_b = payload.four_fifty_seven_b
+        paycheck.payee_id = payload.payee_id
+        paycheck.save()
+        logToDB(
+            f"Paycheck updated : #{paycheck_id}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Paycheck not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/transactions/{transaction_id}")
@@ -3290,19 +4691,39 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         Http404: If the transaction with the specified ID does not exist.
     """
 
-    transaction = get_object_or_404(Transaction, id=transaction_id)
-    transaction.transaction_date = payload.transaction_date
-    transaction.total_amount = payload.total_amount
-    transaction.status_id = payload.status_id
-    transaction.memo = payload.memo
-    transaction.description = payload.description
-    transaction.edit_date = payload.edit_date
-    transaction.add_date = payload.add_date
-    transaction.transaction_type_id = payload.transaction_type_id
-    transaction.reminder_id = payload.reminder_id
-    transaction.paycheck_id = payload.paycheck_id
-    transaction.save()
-    return {"success": True}
+    try:
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+        transaction.transaction_date = payload.transaction_date
+        transaction.total_amount = payload.total_amount
+        transaction.status_id = payload.status_id
+        transaction.memo = payload.memo
+        transaction.description = payload.description
+        transaction.edit_date = payload.edit_date
+        transaction.add_date = payload.add_date
+        transaction.transaction_type_id = payload.transaction_type_id
+        transaction.reminder_id = payload.reminder_id
+        transaction.paycheck_id = payload.paycheck_id
+        transaction.save()
+        logToDB(
+            f"Transaction updated : {transaction_id}",
+            None,
+            None,
+            transaction_id,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction not updated : {str(e)}",
+            None,
+            None,
+            transaction_id,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.patch("/transactions/clear/{transaction_id}")
@@ -3323,11 +4744,31 @@ def clear_transaction(request, transaction_id: int, payload: TransactionClear):
         Http404: If the transaction with the specified ID does not exist.
     """
 
-    transaction = get_object_or_404(Transaction, id=transaction_id)
-    transaction.status_id = payload.status_id
-    transaction.edit_date = payload.edit_date
-    transaction.save()
-    return {"success": True}
+    try:
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+        transaction.status_id = payload.status_id
+        transaction.edit_date = payload.edit_date
+        transaction.save()
+        logToDB(
+            f"Transaction cleared : #{transaction_id}",
+            None,
+            None,
+            transaction_id,
+            3002005,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction not cleared : {str(e)}",
+            None,
+            None,
+            transaction_id,
+            3002905,
+            2,
+        )
+        raise HttpError(500, "Transaction clear error")
 
 
 @api.put("/transactions/details/{transactiondetail_id}")
@@ -3349,15 +4790,35 @@ def update_transaction_detail(
         Http404: If the transaction detail with the specified ID does not exist.
     """
 
-    transaction_detail = get_object_or_404(
-        TransactionDetail, id=transactiondetail_id
-    )
-    transaction_detail.transaction_id = payload.transaction_id
-    transaction_detail.account_id = payload.account_id
-    transaction_detail.detail_amt = payload.detail_amt
-    transaction_detail.tag_id = payload.tag_id
-    transaction_detail.save()
-    return {"success": True}
+    try:
+        transaction_detail = get_object_or_404(
+            TransactionDetail, id=transactiondetail_id
+        )
+        transaction_detail.transaction_id = payload.transaction_id
+        transaction_detail.account_id = payload.account_id
+        transaction_detail.detail_amt = payload.detail_amt
+        transaction_detail.tag_id = payload.tag_id
+        transaction_detail.save()
+        logToDB(
+            f"Transaction detail updated : #{transactiondetail_id}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction detail not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/logentries/{logentry_id}")
@@ -3377,16 +4838,36 @@ def update_log_entry(request, logentry_id: int, payload: LogEntryIn):
         Http404: If the log entry with the specified ID does not exist.
     """
 
-    log_entry = get_object_or_404(LogEntry, id=logentry_id)
-    log_entry.log_date = payload.log_date
-    log_entry.log_entry = payload.log_entry
-    log_entry.account_id = payload.account_id
-    log_entry.reminder_id = payload.reminder_id
-    log_entry.transaction_id = payload.transaction_id
-    log_entry.error_num = payload.error_num
-    log_entry.error_level_id = payload.error_level_id
-    log_entry.save()
-    return {"success": True}
+    try:
+        log_entry = get_object_or_404(LogEntry, id=logentry_id)
+        log_entry.log_date = payload.log_date
+        log_entry.log_entry = payload.log_entry
+        log_entry.account_id = payload.account_id
+        log_entry.reminder_id = payload.reminder_id
+        log_entry.transaction_id = payload.transaction_id
+        log_entry.error_num = payload.error_num
+        log_entry.error_level_id = payload.error_level_id
+        log_entry.save()
+        logToDB(
+            f"Log entry updated : #{logentry_id}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Log entry not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.put("/messages/{message_id}")
@@ -3406,12 +4887,32 @@ def update_message(request, message_id: int, payload: MessageIn):
         Http404: If the message with the specified ID does not exist.
     """
 
-    message = get_object_or_404(Message, id=message_id)
-    message.message_date = payload.message_date
-    message.message = payload.message
-    message.unread = payload.unread
-    message.save()
-    return {"sucess": True}
+    try:
+        message = get_object_or_404(Message, id=message_id)
+        message.message_date = payload.message_date
+        message.message = payload.message
+        message.unread = payload.unread
+        message.save()
+        logToDB(
+            f"Message updated : {message_id}",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
+        return {"sucess": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Message not updated : {str(e)}",
+            None,
+            None,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, "Record update error")
 
 
 @api.patch("/messages/readall/{message_id}")
@@ -3427,12 +4928,32 @@ def update_messages(request, message_id: int, payload: AllMessage):
     Returns:
         success: True
     """
-    messages = Message.objects.all()
+    try:
+        messages = Message.objects.all()
 
-    for message in messages:
-        message.unread = payload.unread
-        message.save()
-    return {"success": True}
+        for message in messages:
+            message.unread = payload.unread
+            message.save()
+        logToDB(
+            "All messages marked as read",
+            None,
+            None,
+            None,
+            3002006,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Messages not marked as read : {str(e)}",
+            None,
+            None,
+            None,
+            3002906,
+            2,
+        )
+        raise HttpError(500, "Messages not marked read error")
 
 
 @api.delete("/accounts/types/{accounttype_id}")
@@ -3451,9 +4972,30 @@ def delete_account_type(request, accounttype_id: int):
         Http404: If the account type with the specified ID does not exist.
     """
 
-    account_type = get_object_or_404(AccountType, id=accounttype_id)
-    account_type.delete()
-    return {"success": True}
+    try:
+        account_type = get_object_or_404(AccountType, id=accounttype_id)
+        account_type_name = account_type.account_type
+        account_type.delete()
+        logToDB(
+            f"Account type deleted : {account_type_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Account type not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/accounts/banks/{bank_id}")
@@ -3472,9 +5014,30 @@ def delete_bank(request, bank_id: int):
         Http404: If the bank with the specified ID does not exist.
     """
 
-    bank = get_object_or_404(Bank, id=bank_id)
-    bank.delete()
-    return {"success": True}
+    try:
+        bank = get_object_or_404(Bank, id=bank_id)
+        bank_name = bank.bank_name
+        bank.delete()
+        logToDB(
+            f"Bank deleted : {bank_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Bank not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/accounts/{account_id}")
@@ -3494,24 +5057,45 @@ def delete_account(request, account_id: int):
         Http404: If the account with the specified ID does not exist.
     """
 
-    # Retrieve the account
-    account = get_object_or_404(Account, id=account_id)
+    try:
+        # Retrieve the account
+        account = get_object_or_404(Account, id=account_id)
 
-    # Retrieve the related transaction details and delete them, keep a running list
-    # of transactions that need to be deleted
-    transaction_details = TransactionDetail.objects.filter(account=account)
-    transactions_to_delete = []
-    for detail in transaction_details:
-        transaction = detail.transaction
-        detail.delete()
-        if not transaction.transactiondetail_set.exists():
-            transactions_to_delete.append(transaction)
+        # Retrieve the related transaction details and delete them, keep a running list
+        # of transactions that need to be deleted
+        transaction_details = TransactionDetail.objects.filter(account=account)
+        transactions_to_delete = []
+        for detail in transaction_details:
+            transaction = detail.transaction
+            detail.delete()
+            if not transaction.transactiondetail_set.exists():
+                transactions_to_delete.append(transaction)
 
-    # Delete the related transactions
-    for transaction in transactions_to_delete:
-        transaction.delete()
-    account.delete()
-    return {"success": True}
+        # Delete the related transactions
+        for transaction in transactions_to_delete:
+            transaction.delete()
+        account_name = account.account_name
+        account.delete()
+        logToDB(
+            f"Account deleted (and related transactions/details) : {account_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Account not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/tags/{tag_id}")
@@ -3530,9 +5114,30 @@ def delete_tag(request, tag_id: int):
         Http404: If the tag with the specified ID does not exist.
     """
 
-    tag = get_object_or_404(Tag, id=tag_id)
-    tag.delete()
-    return {"success": True}
+    try:
+        tag = get_object_or_404(Tag, id=tag_id)
+        tag_name = tag.tag_name
+        tag.delete()
+        logToDB(
+            f"Tag deleted : {tag_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Tag not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/planning/contribrules/{contribrule_id}")
@@ -3551,9 +5156,30 @@ def delete_contrib_rule(request, contribrule_id: int):
         Http404: If the contribution rule with the specified ID does not exist.
     """
 
-    contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
-    contrib_rule.delete()
-    return {"success": True}
+    try:
+        contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
+        rule_name = contrib_rule.rule
+        contrib_rule.delete()
+        logToDB(
+            f"Contribtion rule deleted : {rule_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Contribution rule not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/planning/contributions/{contribution_id}")
@@ -3572,9 +5198,30 @@ def delete_contribution(request, contribution_id: int):
         Http404: If the contribution with the specified ID does not exist.
     """
 
-    contribution = get_object_or_404(Contribution, id=contribution_id)
-    contribution.delete()
-    return {"success": True}
+    try:
+        contribution = get_object_or_404(Contribution, id=contribution_id)
+        contribution_name = contribution.contribution
+        contribution.delete()
+        logToDB(
+            f"Contribution deleted : {contribution_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Contribution not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/errorlevels/{errorlevel_id}")
@@ -3593,9 +5240,30 @@ def delete_errorlevel(request, errorlevel_id: int):
         Http404: If the error level with the specified ID does not exist.
     """
 
-    errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
-    errorlevel.delete()
-    return {"success": True}
+    try:
+        errorlevel = get_object_or_404(ErrorLevel, id=errorlevel_id)
+        error_name = errorlevel.error_level
+        errorlevel.delete()
+        logToDB(
+            f"Error level deleted : {error_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Error level not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/transaction/types/{transaction_type_id}")
@@ -3614,11 +5282,32 @@ def delete_transaction_type(request, transaction_type_id: int):
         Http404: If the transaction type with the specified ID does not exist.
     """
 
-    transaction_type = get_object_or_404(
-        TransactionType, id=transaction_type_id
-    )
-    transaction_type.delete()
-    return {"success": True}
+    try:
+        transaction_type = get_object_or_404(
+            TransactionType, id=transaction_type_id
+        )
+        transaction_type_name = transaction_type.transaction_type
+        transaction_type.delete()
+        logToDB(
+            f"Transaction type deleted : {transaction_type_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction type not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/reminders/repeats/{repeat_id}")
@@ -3637,9 +5326,30 @@ def delete_repeat(request, repeat_id: int):
         Http404: If the repeat with the specified ID does not exist.
     """
 
-    repeat = get_object_or_404(Repeat, id=repeat_id)
-    repeat.delete()
-    return {"success": True}
+    try:
+        repeat = get_object_or_404(Repeat, id=repeat_id)
+        repeat_name = repeat.repeat_name
+        repeat.delete()
+        logToDB(
+            f"Repeat deleted : {repeat_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Repeat not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/reminders/{reminder_id}")
@@ -3658,9 +5368,30 @@ def delete_reminder(request, reminder_id: int):
         Http404: If the reminder with the specified ID does not exist.
     """
 
-    reminder = get_object_or_404(Reminder, id=reminder_id)
-    reminder.delete()
-    return {"success": True}
+    try:
+        reminder = get_object_or_404(Reminder, id=reminder_id)
+        reminder_description = reminder.description
+        reminder.delete()
+        logToDB(
+            f"Reminder deleted : #{reminder_description}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Reminder not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/planning/notes/{note_id}")
@@ -3679,9 +5410,30 @@ def delete_note(request, note_id: int):
         Http404: If the note with the specified ID does not exist.
     """
 
-    note = get_object_or_404(Note, id=note_id)
-    note.delete()
-    return {"success": True}
+    try:
+        note = get_object_or_404(Note, id=note_id)
+        note_date = note.note_date
+        note.delete()
+        logToDB(
+            f"Note deleted from {note_date}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Note not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/options/{option_id}")
@@ -3700,9 +5452,29 @@ def delete_option(request, option_id: int):
         Http404: If the option with the specified ID does not exist.
     """
 
-    option = get_object_or_404(Option, id=option_id)
-    option.delete()
-    return {"success": True}
+    try:
+        option = get_object_or_404(Option, id=option_id)
+        option.delete()
+        logToDB(
+            f"Option deleted : #{option_id}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Option not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/transaction/statuses/{transactionstatus_id}")
@@ -3721,11 +5493,32 @@ def delete_transaction_status(request, transactionstatus_id: int):
         Http404: If the transaction status with the specified ID does not exist.
     """
 
-    transaction_status = get_object_or_404(
-        TransactionStatus, id=transactionstatus_id
-    )
-    transaction_status.delete()
-    return {"success": True}
+    try:
+        transaction_status = get_object_or_404(
+            TransactionStatus, id=transactionstatus_id
+        )
+        transaction_status_name = transaction_status.transaction_status
+        transaction_status.delete()
+        logToDB(
+            f"Transaction status deleted : {transaction_status_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction status not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/payees/{payee_id}")
@@ -3744,9 +5537,30 @@ def delete_payee(request, payee_id: int):
         Http404: If the payee with the specified ID does not exist.
     """
 
-    payee = get_object_or_404(Payee, id=payee_id)
-    payee.delete()
-    return {"success": True}
+    try:
+        payee = get_object_or_404(Payee, id=payee_id)
+        payee_name = payee.payee_name
+        payee.delete()
+        logToDB(
+            f"Payee deleted : {payee_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Payee not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/paychecks/{paycheck_id}")
@@ -3765,9 +5579,29 @@ def delete_paycheck(request, paycheck_id: int):
         Http404: If the paycheck with the specified ID does not exist.
     """
 
-    paycheck = get_object_or_404(Paycheck, id=paycheck_id)
-    paycheck.delete()
-    return {"success": True}
+    try:
+        paycheck = get_object_or_404(Paycheck, id=paycheck_id)
+        paycheck.delete()
+        logToDB(
+            f"Paycheck deleted : {paycheck_id}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Paycheck not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/transactions/{transaction_id}")
@@ -3786,9 +5620,29 @@ def delete_transaction(request, transaction_id: int):
         Http404: If the transaction with the specified ID does not exist.
     """
 
-    transaction = get_object_or_404(Transaction, id=transaction_id)
-    transaction.delete()
-    return {"success": True}
+    try:
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+        transaction.delete()
+        logToDB(
+            f"Transaction deleted : #{transaction_id}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/transactions/details/{transactiondetail_id}")
@@ -3807,11 +5661,31 @@ def delete_transaction_detail(request, transactiondetail_id: int):
         Http404: If the transaction detail with the specified ID does not exist.
     """
 
-    transaction_detail = get_object_or_404(
-        TransactionDetail, id=transactiondetail_id
-    )
-    transaction_detail.delete()
-    return {"success": True}
+    try:
+        transaction_detail = get_object_or_404(
+            TransactionDetail, id=transactiondetail_id
+        )
+        transaction_detail.delete()
+        logToDB(
+            f"Transaction detail deleted : #{transactiondetail_id}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction detail not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/logentries/{logentry_id}")
@@ -3830,9 +5704,29 @@ def delete_log_entry(request, logentry_id: int):
         Http404: If the log entry with the specified ID does not exist.
     """
 
-    log_entry = get_object_or_404(LogEntry, id=logentry_id)
-    log_entry.delete()
-    return {"success": True}
+    try:
+        log_entry = get_object_or_404(LogEntry, id=logentry_id)
+        log_entry.delete()
+        logToDB(
+            f"Log entry deleted : #{logentry_id}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Log entry not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/messages/{message_id}")
@@ -3851,9 +5745,29 @@ def delete_message(request, message_id: int):
         Http404: If the message with the specified ID does not exist.
     """
 
-    message = get_object_or_404(Message, id=message_id)
-    message.delete()
-    return {"success": True}
+    try:
+        message = get_object_or_404(Message, id=message_id)
+        message.delete()
+        logToDB(
+            f"Message deleted : #{message_id}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Message not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/messages/deleteall/{message_id}")
@@ -3869,10 +5783,30 @@ def delete_messages(request, message_id: int):
         success: True
     """
 
-    messages = Message.objects.all()
-    for message in messages:
-        message.delete()
-    return {"success": True}
+    try:
+        messages = Message.objects.all()
+        for message in messages:
+            message.delete()
+        logToDB(
+            "All Messages deleted",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"All messages not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
 
 
 def logToDB(message, account, reminder, transaction, error, level):
