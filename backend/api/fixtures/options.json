@@ -3,7 +3,7 @@
     "model": "api.Option",
     "pk": 1,
     "fields": {
-        "log_level": 2,
+        "log_level": 1,
         "alert_balance": 100,
         "alert_period": 3,
         "widget1_graph_name": "Expenses",
