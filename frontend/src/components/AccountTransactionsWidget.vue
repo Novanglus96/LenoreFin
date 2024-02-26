@@ -122,14 +122,56 @@
         class="alt-pagination"
         ><!--height="280px"-->
         <template #status.transaction_status="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-            >{{ row.value.status.transaction_status }}</span
-          >
+          <v-tooltip text="Pending" location="top">
+            <template v-slot:activator="{ props }">
+              <v-icon
+                icon="mdi-circle-medium"
+                color="grey"
+                v-if="row.value.status.id == 1"
+                v-bind="props"
+              ></v-icon>
+            </template>
+          </v-tooltip>
+          <v-tooltip text="Cleared" location="top">
+            <template v-slot:activator="{ props }">
+              <v-icon
+                icon="mdi-check-bold"
+                color="green"
+                v-if="row.value.status.id == 2"
+                v-bind="props"
+              ></v-icon>
+            </template>
+          </v-tooltip>
+          <v-tooltip text="Reconciled" location="top">
+            <template v-slot:activator="{ props }">
+              <v-icon
+                icon="mdi-alpha-r-circle-outline"
+                color="green"
+                v-if="row.value.status.id == 3"
+                v-bind="props"
+              ></v-icon>
+            </template>
+          </v-tooltip>
+          <v-tooltip text="Reminder" location="top">
+            <template v-slot:activator="{ props }">
+              <v-icon
+                icon="mdi-bell"
+                v-if="row.value.reminder"
+                color="amber"
+                v-bind="props"
+              ></v-icon>
+            </template>
+          </v-tooltip>
+          <v-tooltip text="Paycheck" location="top">
+            <template v-slot:activator="{ props }">
+              <v-icon
+                icon="mdi-checkbook"
+                v-if="row.value.paycheck"
+                color="amber"
+                v-bind="props"
+              ></v-icon>
+            </template>
+          </v-tooltip>
         </template>
         <template #transaction_date="row">
           <span
@@ -221,7 +263,7 @@ const { isLoading, transactions, removeTransaction, clearTransaction } =
 const selected = ref([]);
 const columns = ref([
   { field: "id", title: "ID", isUnique: true, hide: true },
-  { field: "status.transaction_status", title: "Status", width: "80px" },
+  { field: "status.transaction_status", title: "", width: "70px" },
   { field: "transaction_date", title: "Date", type: "date", width: "120px" },
   { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
   { field: "balance", title: "Balance", width: "100px" },
