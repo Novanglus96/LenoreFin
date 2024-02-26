@@ -14,7 +14,7 @@
       <span class="text-subtitle-2 text-accent">Transactions</span>
     </template>
     <template v-slot:text>
-      <v-tooltip text="Toggle Transaction(s)" location="top">
+      <v-tooltip text="Clear Transaction(s)" location="top">
         <template v-slot:activator="{ props }">
           <v-btn
             icon="mdi-invoice-text-clock"
@@ -65,7 +65,10 @@
         <v-card title="Dialog">
           <v-card-text>
             Are you sure you want to delete these
-            {{ selected.length }} transactions?
+            {{ selected.length }} transactions? <br /><span
+              class="text-red text-subtitle-2 font-italic"
+              >* Reminder transactions will not be deleted.</span
+            >
           </v-card-text>
 
           <v-card-actions>
@@ -311,6 +314,7 @@ const clickRemoveTransaction = async transactions => {
     removeTransaction(transaction);
     selected.value = [];
   });
+  trans_table.value.clearSelectedRows();
 };
 
 const clickClearTransaction = async transactions => {

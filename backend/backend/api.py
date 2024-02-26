@@ -4733,7 +4733,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
 def clear_transaction(request, transaction_id: int, payload: TransactionClear):
     """
     The function `clear_transaction` changes the status to cleared, edit date to today
-    of the transaction specified by id.
+    of the transaction specified by id.  Skips transactions with a related Reminder.
 
     Args:
         request (HttpRequest): The HTTP request object.
@@ -4749,17 +4749,18 @@ def clear_transaction(request, transaction_id: int, payload: TransactionClear):
 
     try:
         transaction = get_object_or_404(Transaction, id=transaction_id)
-        transaction.status_id = payload.status_id
-        transaction.edit_date = payload.edit_date
-        transaction.save()
-        logToDB(
-            f"Transaction cleared : #{transaction_id}",
-            None,
-            None,
-            transaction_id,
-            3002005,
-            1,
-        )
+        if transaction.reminder is None:
+            transaction.status_id = payload.status_id
+            transaction.edit_date = payload.edit_date
+            transaction.save()
+            logToDB(
+                f"Transaction cleared : #{transaction_id}",
+                None,
+                None,
+                transaction_id,
+                3002005,
+                1,
+            )
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
@@ -5610,7 +5611,8 @@ def delete_paycheck(request, paycheck_id: int):
 @api.delete("/transactions/{transaction_id}")
 def delete_transaction(request, transaction_id: int):
     """
-    The function `delete_transaction` deletes the transaction specified by id.
+    The function `delete_transaction` deletes the transaction specified by id,
+    but skips any that have a related reminder.
 
     Args:
         request (HttpRequest): The HTTP request object.
@@ -5625,15 +5627,16 @@ def delete_transaction(request, transaction_id: int):
 
     try:
         transaction = get_object_or_404(Transaction, id=transaction_id)
-        transaction.delete()
-        logToDB(
-            f"Transaction deleted : #{transaction_id}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        if transaction.reminder is None:
+            transaction.delete()
+            logToDB(
+                f"Transaction deleted : #{transaction_id}",
+                None,
+                None,
+                None,
+                3001003,
+                1,
+            )
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
