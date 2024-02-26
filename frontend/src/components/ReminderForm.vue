@@ -138,6 +138,7 @@
           </v-row>
           <v-row>
             <v-col>
+              <span class="text-subtitle-2">Start Date</span>
               <VueDatePicker
                 v-model="formData.start_date"
                 timezone="America/New_York"
@@ -146,11 +147,12 @@
                 auto-apply
                 format="yyyy-MM-dd"
                 @closed="checkFormComplete"
-                :min-date="today"
+                :min-date="tomorrow"
                 :teleport="true"
               ></VueDatePicker>
             </v-col>
             <v-col>
+              <span class="text-subtitle-2">End Date</span>
               <VueDatePicker
                 v-model="formData.end_date"
                 timezone="America/New_York"
@@ -161,6 +163,7 @@
                 @closed="checkFormComplete"
                 :min-date="getLowerLimit()"
                 :teleport="true"
+                :state="endDateGood"
               ></VueDatePicker>
             </v-col>
           </v-row>
@@ -219,6 +222,8 @@ import { useReminders } from "@/composables/remindersComposable";
 import { useRepeats } from "@/composables/repeatsComposable";
 
 const today = new Date();
+const tomorrow = new Date(today);
+tomorrow.setDate(today.getDate() + 1);
 const { addReminder, updateReminder } = useReminders();
 const { accounts, isLoading: accounts_isLoading } = useAccounts();
 const formComplete = ref(false);
@@ -280,7 +285,7 @@ const watchPassedFormData = () => {
     }
   });
 };
-
+const endDateGood = ref(true);
 const required = [
   value => {
     if (value) return true;
@@ -294,6 +299,16 @@ const amount = ref(
     : null,
 );
 const checkFormComplete = async () => {
+  if (formData.value.repeat_id == 6) {
+    formData.value.end_date = formData.value.start_date;
+  }
+  if (formData.value.end_date) {
+    if (formData.value.end_date >= formData.value.start_date) {
+      endDateGood.value = true;
+    } else {
+      endDateGood.value = false;
+    }
+  }
   if (
     formData.value.transaction_type_id !== null &&
     formData.value.transaction_type_id !== "" &&
@@ -322,6 +337,13 @@ const checkFormComplete = async () => {
     } else {
       formData.value.reminder_destination_account_id = null;
       formComplete.value = true;
+    }
+    if (formData.value.end_date) {
+      if (formData.value.end_date >= formData.value.start_date) {
+        formComplete.value = true;
+      } else {
+        formComplete.value = false;
+      }
     }
   } else {
     formComplete.value = false;
@@ -367,6 +389,9 @@ const tagColor = typeID => {
 };
 
 const getLowerLimit = () => {
-  return new Date(formData.value.start_date);
+  const lowerLimit = new Date();
+  const start_date = new Date(formData.value.start_date);
+  lowerLimit.setDate(start_date.getDate() + 1);
+  return lowerLimit;
 };
 </script>
