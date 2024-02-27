@@ -3432,8 +3432,8 @@ def list_transactions(
         # If an account was not specified, these should be upcoming transactions
         else:
 
-            # Filter transactions for pending status
-            qs = qs.filter(status_id=1)
+            # Filter transactions for pending status and no reminders
+            qs = qs.filter(status_id=1, reminder__isnull=True)
             custom_order = Case(
                 When(status_id=1, then=0),
                 When(status_id=2, then=1),
