@@ -651,6 +651,8 @@ class TransactionOut(Schema):
     pretty_total: Optional[Decimal] = Field(
         default=None, whole_digits=10, decimal_places=2
     )
+    source_account_id: Optional[int] = None
+    destination_account_id: Optional[int] = None
 
 
 TransactionDetailOut.update_forward_refs()
@@ -3369,6 +3371,8 @@ def list_transactions(
                 pretty_total = 0
                 source_account = ""
                 destination_account = ""
+                source_account_id = None
+                destination_account_id = None
 
                 # Retrieve a list of transaction details for the transaction
                 transaction_details = TransactionDetail.objects.filter(
@@ -3389,10 +3393,12 @@ def list_transactions(
                     if transaction.transaction_type.id == 3:
                         if detail.detail_amt < 0:
                             source_account = detail.account.account_name
+                            source_account_id = detail.account.id
                             if detail.account.id == account:
                                 pretty_total = transaction.total_amount
                         else:
                             destination_account = detail.account.account_name
+                            destination_account_id = detail.account.id
                             if detail.account.id == account:
                                 pretty_total = -transaction.total_amount
                         if detail.account.id == account:
@@ -3400,6 +3406,7 @@ def list_transactions(
                     else:
                         pretty_total = transaction.total_amount
                         source_account = detail.account.account_name
+                        source_account_id = detail.account.id
                         balance += transaction.total_amount
                 if transaction.transaction_type.id == 3:
                     if source_account:
@@ -3418,6 +3425,9 @@ def list_transactions(
                 transaction.pretty_account = pretty_account
                 transaction.tags = tags
                 transaction.pretty_total = pretty_total
+                transaction.details = transaction_details
+                transaction.source_account_id = source_account_id
+                transaction.destination_account_id = destination_account_id
                 if forecast is False:
                     transactions.append(TransactionOut.from_orm(transaction))
                 else:
