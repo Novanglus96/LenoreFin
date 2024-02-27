@@ -30,7 +30,8 @@ class Command(BaseCommand):
         # Calculate the next run date for scheduled tasks
         today = date.today()
         tomorrow = today + timedelta(days=1)
-        next_run_date = tomorrow.strftime("%Y-%m-%d")
+        next_run_date_tomorrow = tomorrow.strftime("%Y-%m-%d")
+        next_run_date_today = today.strftime("%Y-%m-%d")
 
         # Define tasks to be scheduled
         tasks = [
@@ -39,25 +40,51 @@ class Command(BaseCommand):
                 "function": "api.tasks.create_message",
                 "time": "03:15",
                 "arguments": "'Hello World'",
-            }
+                "type": "DAILY",
+                "start_today": False,
+                "delete": True,
+            },
+            {
+                "task_name": "Convert Reminder Transactions",
+                "function": "api.tasks.convert_reminder",
+                "time": "03:00",
+                "arguments": "",
+                "type": "DAILY",  # DAILY, HOURLY
+                "start_today": False,
+                "delete": False,
+            },
         ]
 
         # Schedule or modify tasks
         for task in tasks:
-            next_run = next_run_date + " " + task["time"]
+            next_run = ""
+            schedule_type = ""
+            if task["start_today"]:
+                next_run = next_run_date_today + " " + task["time"]
+            else:
+                next_run = next_run_date_tomorrow + " " + task["time"]
+            if task["type"] == "DAILY":
+                schedule_type = Schedule.DAILY
+            elif task["type"] == "HOURLY":
+                schedule_type = Schedule.HOURLY
             existing_schedule = Schedule.objects.filter(
                 name=task["task_name"]
             ).first()
             if existing_schedule:
-                existing_schedule.func = task["function"]
-                existing_schedule.args = task["arguments"]
-                existing_schedule.next_run = next_run
-                existing_schedule.save()
+                if task["delete"]:
+                    existing_schedule.delete()
+                else:
+                    existing_schedule.func = task["function"]
+                    existing_schedule.args = task["arguments"]
+                    existing_schedule.next_run = next_run
+                    existing_schedule.schedule_type = schedule_type
+                    existing_schedule.save()
             else:
-                Schedule.objects.create(
-                    func=task["function"],
-                    args=task["arguments"],
-                    schedule_type=Schedule.DAILY,
-                    name=task["task_name"],
-                    next_run=next_run,
-                )
+                if not task["delete"]:
+                    Schedule.objects.create(
+                        func=task["function"],
+                        args=task["arguments"],
+                        schedule_type=schedule_type,
+                        name=task["task_name"],
+                        next_run=next_run,
+                    )
