@@ -129,6 +129,22 @@
             row.value.description
           }}</span>
         </template>
+        <template #tag.tag_name="row">
+          <v-icon icon="mdi-tag" color="black"></v-icon>
+          <span class="font-weight-bold text-black">{{
+            row.value.tag.tag_name
+          }}</span>
+        </template>
+        <template #end_date="row">
+          <span class="font-weight-bold text-black">{{
+            row.value.end_date
+          }}</span>
+        </template>
+        <template #repeat.repeat_name="row">
+          <span class="font-weight-bold text-black">{{
+            row.value.repeat.repeat_name
+          }}</span>
+        </template>
       </vue3-datatable>
     </template>
   </v-card>
@@ -219,9 +235,12 @@ const blankForm = ref({
 });
 const reminders_table = ref(null);
 const columns = ref([
-  { field: "next_date", title: "Date", type: "date", width: "120px" },
+  { field: "next_date", title: "Next Date", type: "date", width: "120px" },
   { field: "amount", title: "Amount", type: "number", width: "100px" },
   { field: "description", title: "Reminder" },
+  { field: "tag.tag_name", title: "Tag", width: "200px" },
+  { field: "end_date", title: "End Date", type: "date", width: "120px" },
+  { field: "repeat.repeat_name", title: "Repeat", width: "120px" },
 ]);
 const getClassForMoney = amount => {
   let color = "";
