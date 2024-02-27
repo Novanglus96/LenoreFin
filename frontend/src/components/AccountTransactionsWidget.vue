@@ -46,6 +46,7 @@
         @edit-transaction="clickEditTransaction"
         :isEdit="true"
         @update-dialog="updateEditDialog"
+        :passedFormData="editTransaction"
       />
 
       <v-tooltip text="Remove Transaction(s)" location="top">
@@ -103,6 +104,7 @@
         :isEdit="false"
         @update-dialog="updateAddDialog"
         :account_id="props.account"
+        :passedFormData="blankForm"
       />
       <vue3-datatable
         :rows="transactions"
@@ -247,11 +249,16 @@ import TransactionForm from "@/components/TransactionForm";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
 
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, "0");
+const day = String(today.getDate()).padStart(2, "0");
+const formattedDate = `${year}-${month}-${day}`;
 const showDeleteDialog = ref(false);
 const transactionAddFormDialog = ref(false);
 const transactionEditFormDialog = ref(false);
 const props = defineProps({
-  account: Array,
+  account: Number,
   maxdays: { type: Number, default: 14 },
   forecast: { type: Boolean, default: false },
 });
@@ -261,6 +268,50 @@ const emit = defineEmits([
   "editTransaction",
   "clearTransaction",
 ]);
+
+const blankForm = ref({
+  id: 0,
+  status: {
+    id: 1,
+  },
+  transaction_type: {
+    id: 1,
+  },
+  transaction_date: formattedDate,
+  memo: "",
+  source_account_id: parseInt(props.account),
+  destination_account_id: null,
+  edit_date: formattedDate,
+  add_date: formattedDate,
+  tag_id: 1,
+  total_amount: 0,
+});
+const editTransaction = ref({
+  id: 0,
+  transaction_date: formattedDate,
+  total_amount: 0,
+  status: {
+    id: 1,
+    transaction_status: "Pending",
+  },
+  memo: "",
+  description: null,
+  edit_date: formattedDate,
+  add_date: formattedDate,
+  transaction_type: {
+    id: 1,
+    transaction_type: "Expense",
+  },
+  reminder: null,
+  paycheck: null,
+  balance: 0,
+  pretty_account: null,
+  tags: [],
+  details: [],
+  pretty_total: 0,
+  source_account_id: 0,
+  destination_account_id: null,
+});
 const { isLoading, transactions, removeTransaction, clearTransaction } =
   useTransactions(props.account, props.maxdays, props.forecast);
 const selected = ref([]);
@@ -301,6 +352,7 @@ const rowSelected = () => {
   let selectedrows = trans_table.value.getSelectedRows();
   for (const selectedrow of selectedrows) {
     selected.value.push(selectedrow.id);
+    editTransaction.value = selectedrow;
   }
 };
 const trans_table = ref(null);

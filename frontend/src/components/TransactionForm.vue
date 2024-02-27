@@ -34,6 +34,7 @@
                 v-model="formData.transaction_type_id"
                 :rules="required"
                 @update:model-value="checkFormComplete"
+                :disabled="props.isEdit"
               ></v-autocomplete>
             </v-col>
             <v-col>
@@ -60,6 +61,9 @@
                 :rules="required"
                 prefix="$"
                 @update:model-value="checkFormComplete"
+                type="number"
+                step="1.00"
+                @update:focused="reformatNumberToMoney"
               ></v-text-field>
             </v-col>
             <v-col>
@@ -222,35 +226,54 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  passedFormData: Array,
+  passedFormData: Object,
   account_id: {
     type: Number,
     default: 1,
   },
 });
 const formData = ref({
-  id: 0,
-  status_id: 1,
-  transaction_type_id: 1,
-  transaction_date: formattedDate,
-  memo: "",
-  source_account_id: null,
-  destination_account_id: null,
+  id: props.passedFormData ? props.passedFormData.id : 0,
+  status_id: props.passedFormData.status.id || 1,
+  transaction_type_id: props.passedFormData.transaction_type.id || 1,
+  transaction_date: props.passedFormData.transaction_date || formattedDate,
+  memo: props.passedFormData.memo || "",
+  source_account_id: props.passedFormData.source_account_id || null,
+  destination_account_id: props.passedFormData.destination_account_id || null,
   edit_date: formattedDate,
-  add_date: formattedDate,
-  tag_id: 1,
-  total_amount: 0,
+  add_date: props.passedFormData.add_date || formattedDate,
+  tag_id: props.passedFormData.tag_id || 1,
+  total_amount: props.passedFormData.total_amount || 0,
+  description: props.passedFormData.description || null,
 });
 const { tags, isLoading: tags_isLoading } = useTags();
-const amount = ref(null);
+const amount = ref(
+  props.passedFormData.total_amount
+    ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
+    : null,
+);
 const show = ref(props.itemFormDialog);
 const emit = defineEmits(["updateDialog"]);
 const watchPassedFormData = () => {
   watchEffect(() => {
     if (props.passedFormData) {
-      formData.value.id = props.passedFormData.id;
-      formData.value.name = props.passedFormData.name;
-      formData.value.matches = props.passedFormData.matches;
+      formData.value = {
+        id: props.passedFormData.id,
+        status_id: props.passedFormData.status.id,
+        transaction_type_id: props.passedFormData.transaction_type.id,
+        transaction_date: props.passedFormData.transaction_date,
+        memo: props.passedFormData.memo,
+        source_account_id: props.passedFormData.source_account_id,
+        destination_account_id: props.passedFormData.destination_account_id,
+        edit_date: formattedDate,
+        add_date: props.passedFormData.add_date,
+        tag_id: props.passedFormData.tag_id,
+        total_amount: props.passedFormData.total_amount,
+        description: props.passedFormData.description,
+      };
+      amount.value = props.passedFormData.total_amount
+        ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
+        : null;
     }
   });
 };
@@ -323,5 +346,9 @@ const tagColor = typeID => {
   } else if (typeID == 3) {
     return "grey";
   }
+};
+
+const reformatNumberToMoney = () => {
+  amount.value = parseFloat(amount.value).toFixed(2);
 };
 </script>
