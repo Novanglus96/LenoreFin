@@ -9,8 +9,9 @@ Date: February 15, 2024
 from django.core.management.base import BaseCommand, CommandError
 from django_q.tasks import schedule
 from django_q.models import Schedule
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 
 class Command(BaseCommand):
@@ -28,7 +29,8 @@ class Command(BaseCommand):
         """
 
         # Calculate the next run date for scheduled tasks
-        today = date.today()
+        current_timezone = timezone.get_current_timezone()
+        today = timezone.localdate()
         tomorrow = today + timedelta(days=1)
         next_run_date_tomorrow = tomorrow.strftime("%Y-%m-%d")
         next_run_date_today = today.strftime("%Y-%m-%d")
@@ -60,9 +62,14 @@ class Command(BaseCommand):
             next_run = ""
             schedule_type = ""
             if task["start_today"]:
-                next_run = next_run_date_today + " " + task["time"]
+                next_run = datetime.combine(
+                    today, datetime.strptime(task["time"], "%H:%M").time()
+                )
             else:
-                next_run = next_run_date_tomorrow + " " + task["time"]
+                next_run = datetime.combine(
+                    tomorrow, datetime.strptime(task["time"], "%H:%M").time()
+                )
+            next_run = next_run.astimezone(current_timezone)
             if task["type"] == "DAILY":
                 schedule_type = Schedule.DAILY
             elif task["type"] == "HOURLY":
