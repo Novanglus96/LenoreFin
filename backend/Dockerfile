@@ -66,6 +66,11 @@ COPY ./start.sh .
 RUN sed -i 's/\r$//g' $APP_HOME/start.sh
 RUN chmod +x $APP_HOME/start.sh
 
+# copy start.dev.sh
+COPY ./start.dev.sh .
+RUN sed -i 's/\r$//g' $APP_HOME/start.dev.sh
+RUN chmod +x $APP_HOME/start.dev.sh
+
 # copy project
 COPY . $APP_HOME
 

@@ -2,45 +2,56 @@ version: "3.8"
 
 services:
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     networks:
       - default
     restart: unless-stopped
-    expose:
-      - 80
+    ports:
+      - 8081:8080
     image: money_frontend:development
     container_name: money_frontend_dev
+    volumes:
+      - ./frontend:/app
+    environment:
+      - NODE_ENV=development
+    command: /bin/sh -c "npm run serve"
   backend:
     build:
       context: ./backend
-    command: /home/app/web/start.sh
+      dockerfile: Dockerfile.dev
+    command: /usr/src/app/start.dev.sh
     volumes:
-      - static_volume:/home/app/web/staticfiles
-      - media_volume:/home/app/web/mediafiles
-    expose:
-      - 8000
+      - ./backend:/usr/src/app
+    environment:
+      - DEBUG=1
+    ports:
+      - 8001:8001
     depends_on:
       - db
     networks:
       - default
     env_file:
-      - ./.env
+      - ./.env.dev
     image: money_backend:development
     container_name: money_backend_dev
   worker:
     build:
       context: ./backend
-    command: /home/app/web/start_worker.sh
+      dockerfile: Dockerfile.dev
+    command: /usr/src/app/start_worker.sh
     volumes:
-      - static_volume:/home/app/web/staticfiles
-      - media_volume:/home/app/web/mediafiles
+      - ./backend:/usr/src/app
+    environment:
+      - DEBUG=1
     depends_on:
       - db
       - backend
     networks:
       - default
     env_file:
-      - ./.env
+      - ./.env.dev
     image: money_worker:development
     container_name: money_worker_dev
   db:
@@ -48,23 +59,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - ./.env.db
+      - ./.env.dev.db
     networks:
       - default
     container_name: money_db_dev
-  nginx:
-    image: registry.danielleandjohn.love/django_vue_proxy:latest
-    volumes:
-      - static_volume:/home/app/web/staticfiles
-      - media_volume:/home/app/web/mediafiles
-    depends_on:
-      - backend
-      - frontend
-    networks:
-      - default
-    ports:
-      - 7000:80
-    container_name: money_proxy_dev
 
 volumes:
   postgres_data:
