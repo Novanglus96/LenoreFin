@@ -474,6 +474,13 @@ class PaycheckOut(Schema):
     payee: PayeeOut
 
 
+# The class TagDetailIn is a schema for validating transaction tag details.
+class TagDetailIn(Schema):
+    tag_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+    tag_pretty_name: str
+    tag_id: int
+
+
 # The class TransactionIn is a schema for validating Transaction information.
 class TransactionIn(Schema):
     transaction_date: date
@@ -486,6 +493,9 @@ class TransactionIn(Schema):
     transaction_type_id: int
     reminder_id: Optional[int] = None
     paycheck_id: Optional[int] = None
+    details: Optional[List[TagDetailIn]] = None
+    transaction_source_account_id: Optional[int] = None
+    transaction_destination_account_id: Optional[int] = None
 
 
 # The class MessageIn is a schema for validating Messages.
@@ -1308,7 +1318,18 @@ def create_transaction(request, payload: TransactionIn):
     """
 
     try:
-        transaction = Transaction.objects.create(**payload.dict())
+        transaction = Transaction.objects.create(
+            transaction_date=payload.transaction_date,
+            total_amount=payload.total_amount,
+            status_id=payload.status_id,
+            memo=payload.memo,
+            description=payload.description,
+            edit_date=payload.edit_date,
+            add_date=payload.add_date,
+            transaction_type_id=payload.transaction_type_id,
+            reminder_id=payload.reminder_id,
+            paycheck_id=payload.paycheck_id,
+        )
         logToDB(
             f"Transaction created : #{transaction.id}",
             None,
@@ -1317,6 +1338,57 @@ def create_transaction(request, payload: TransactionIn):
             3001005,
             2,
         )
+        if payload.details is not None:
+            if payload.transaction_type_id == 3:
+                TransactionDetail.objects.create(
+                    transaction_id=transaction.id,
+                    account_id=payload.transaction_source_account_id,
+                    detail_amt=payload.total_amount,
+                    tag_id=2,
+                )
+                logToDB(
+                    "Transaction detail created",
+                    None,
+                    None,
+                    transaction.id,
+                    3001005,
+                    2,
+                )
+                TransactionDetail.objects.create(
+                    transaction_id=transaction.id,
+                    account_id=payload.transaction_destination_account_id,
+                    detail_amt=-payload.total_amount,
+                    tag_id=2,
+                )
+                logToDB(
+                    "Transaction detail created",
+                    None,
+                    None,
+                    transaction.id,
+                    3001005,
+                    2,
+                )
+            else:
+                for detail in payload.details:
+                    adj_amount = 0
+                    if payload.transaction_type_id == 1:
+                        adj_amount = -detail.tag_amt
+                    else:
+                        adj_amount = detail.tag_amt
+                    TransactionDetail.objects.create(
+                        transaction_id=transaction.id,
+                        account_id=payload.transaction_source_account_id,
+                        detail_amt=adj_amount,
+                        tag_id=detail.tag_id,
+                    )
+                    logToDB(
+                        "Transaction detail created",
+                        None,
+                        None,
+                        transaction.id,
+                        3001005,
+                        2,
+                    )
         return {"id": transaction.id}
     except Exception as e:
         # Log other types of exceptions

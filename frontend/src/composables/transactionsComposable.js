@@ -51,56 +51,13 @@ async function getTransactionsFunction(account_id, maxdays, forecast) {
 
 async function createTransactionFunction(newTransaction) {
   const mainstore = useMainStore();
-  let details = [];
   try {
     const response = await apiClient.post("/transactions", newTransaction);
     mainstore.showSnackbar("Transaction created successfully!", "success");
 
-    if (newTransaction.transaction_type_id == 3) {
-      details = [
-        {
-          transaction_id: response.data.id,
-          account_id: newTransaction.source_account_id,
-          detail_amt: newTransaction.total_amount,
-          tag_id: newTransaction.tag_id,
-        },
-        {
-          transaction_id: response.data.id,
-          account_id: newTransaction.destination_account_id,
-          detail_amt: -newTransaction.total_amount,
-          tag_id: newTransaction.tag_id,
-        },
-      ];
-    } else {
-      details = [
-        {
-          transaction_id: response.data.id,
-          account_id: newTransaction.source_account_id,
-          detail_amt: newTransaction.total_amount,
-          tag_id: newTransaction.tag_id,
-        },
-      ];
-    }
-    return details;
+    return response.id;
   } catch (error) {
     handleApiError(error, "Transaction not created: ");
-  }
-}
-
-async function createTransactionDetailFunction(newTransactionDetail) {
-  const mainstore = useMainStore();
-  try {
-    const response = await apiClient.post(
-      "/transactions/details",
-      newTransactionDetail,
-    );
-    mainstore.showSnackbar(
-      "Transaction detail created successfully!",
-      "success",
-    );
-    return response.data;
-  } catch (error) {
-    handleApiError(error, "Transaction detail not created: ");
   }
 }
 
@@ -147,20 +104,6 @@ export function useTransactions(account_id, maxdays, forecast) {
     mutationFn: createTransactionFunction,
     onSuccess: data => {
       console.log("Success adding transaction", data);
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
-      queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
-      for (const detail of data) {
-        createTransactionDetailMutation.mutate(detail);
-      }
-    },
-  });
-
-  const createTransactionDetailMutation = useMutation({
-    mutationFn: createTransactionDetailFunction,
-    onSuccess: () => {
-      console.log("Success adding transaction detail");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
