@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="show" persistent width="1024">
+  <v-dialog persistent width="1024">
     <v-card>
       <v-card-title>
         <span class="text-h5" v-if="props.isEdit == false"
@@ -86,7 +86,7 @@
                 :loading="accounts_isLoading"
                 item-title="account_name"
                 item-value="id"
-                v-model="formData.source_account_id"
+                v-model="formData.transaction_source_account_id"
                 :rules="required"
                 @update:model-value="checkFormComplete"
               >
@@ -112,7 +112,7 @@
                 :loading="accounts_isLoading"
                 item-title="account_name"
                 item-value="id"
-                v-model="formData.destination_account_id"
+                v-model="formData.transaction_destination_account_id"
                 :rules="required"
                 @update:model-value="checkFormComplete"
                 v-if="formData.transaction_type_id == 3"
@@ -134,43 +134,12 @@
           <v-row>
             <v-col>
               <!-- TODO: Enable adding tags here -->
-              <v-autocomplete
-                clearable
-                label="Tag*"
-                :items="tags"
-                variant="outlined"
-                :loading="tags_isLoading"
-                item-title="tag_name"
-                item-value="id"
-                v-model="formData.tag_id"
-                v-if="!isEdit"
-                :rules="required"
-                @update:model-value="checkFormComplete"
-              >
-                <template v-slot:item="{ props, item }">
-                  <v-list-item
-                    v-bind="props"
-                    :title="
-                      item.raw.parent
-                        ? item.raw.parent.tag_name
-                        : item.raw.tag_name
-                    "
-                    :subtitle="item.raw.parent ? item.raw.tag_name : null"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon
-                        icon="mdi-tag"
-                        :color="tagColor(item.raw.tag_type.id)"
-                      ></v-icon>
-                    </template>
-                  </v-list-item>
-                </template>
-              </v-autocomplete>
               <v-sheet
                 border
                 rounded
-                v-if="isEdit && formData.transaction_type_id != 3"
+                v-if="formData.transaction_type_id != 3"
                 :height="300"
+                :color="verifyTagTotal() ? 'white' : 'red-lighten-5'"
               >
                 <v-container class="pa-0 ma-1">
                   <v-row dense>
@@ -247,7 +216,7 @@
                             color="success"
                             @click="clickTagAdd"
                             v-bind="props"
-                            :disabled="!tagComplete"
+                            :disabled="!tagComplete && !verifyTagTotal()"
                           ></v-btn>
                         </template>
                       </v-tooltip>
@@ -255,7 +224,9 @@
                   </v-row>
                   <v-row dense>
                     <v-col
-                      ><span class="text-error text-subtitle-2 font-italic"
+                      ><span
+                        class="text-error text-subtitle-2 font-italic"
+                        v-if="!verifyTagTotal()"
                         >* Tags must equal total</span
                       ></v-col
                     >
@@ -318,13 +289,21 @@
           @click="submitForm"
           :disabled="!formComplete"
         >
-          Save
+          {{ props.isEdit ? "Update" : "Add" }}
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 <script setup>
+/**
+ * Vue script setup for transaction creation/editing
+ * @fileoverview
+ * @author John Adams
+ * @version 1.0.0
+ */
+
+// Import Vue composition functions and components...
 import { ref, defineEmits, defineProps, onMounted, watchEffect } from "vue";
 import { useTransactionTypes } from "@/composables/transactionTypesComposable";
 import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
@@ -336,21 +315,43 @@ import "@vuepic/vue-datepicker/dist/main.css";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
 
-const tagToAdd = ref(null);
-const tagAmount = ref(null);
-const tagComplete = ref(false);
+// Define reactive variables...
+const tagToAdd = ref(null); // Tag object to add to tag list
+const tagAmount = ref(null); // Tag amount to add to tag list
+const tagComplete = ref(false); // True when tag/amount are filled out, enables add button
+const formComplete = ref(false); // True when form is validated, enables add/update button
+const selected = ref([]); // The objects of the rows selected in table
+const details_table = ref(null); // The reference to the table
+
+// Define emits
+const emit = defineEmits(["updateDialog"]);
+
+// Define validation rules
+const required = [
+  value => {
+    if (value) return true;
+
+    return "This field is required.";
+  },
+];
+
+// Date variables...
 const today = new Date();
 const year = today.getFullYear();
 const month = String(today.getMonth() + 1).padStart(2, "0");
 const day = String(today.getDate()).padStart(2, "0");
-const { accounts, isLoading: accounts_isLoading } = useAccounts();
 const formattedDate = `${year}-${month}-${day}`;
-const formComplete = ref(false);
+
+// API calls and data retrieval...
+const { accounts, isLoading: accounts_isLoading } = useAccounts();
 const { transaction_types, isLoading: transaction_types_isLoading } =
   useTransactionTypes();
 const { transaction_statuses, isLoading: transaction_statuses_isLoading } =
   useTransactionStatuses();
 const { addTransaction } = useTransactions();
+const { tags, isLoading: tags_isLoading } = useTags();
+
+// Define props...
 const props = defineProps({
   itemFormDialog: {
     type: Boolean,
@@ -366,35 +367,43 @@ const props = defineProps({
     default: 1,
   },
 });
+
+// Initialze Form Data...
 const formData = ref({
   id: props.passedFormData ? props.passedFormData.id : 0,
   status_id: props.passedFormData.status.id || 1,
   transaction_type_id: props.passedFormData.transaction_type.id || 1,
   transaction_date: props.passedFormData.transaction_date || formattedDate,
   memo: props.passedFormData.memo || "",
-  source_account_id: props.passedFormData.source_account_id || null,
-  destination_account_id: props.passedFormData.destination_account_id || null,
+  transaction_source_account_id:
+    props.passedFormData.transaction_source_account_id || null,
+  transaction_destination_account_id:
+    props.passedFormData.transaction_destination_account_id || null,
   edit_date: formattedDate,
   add_date: props.passedFormData.add_date || formattedDate,
-  tag_id: props.passedFormData.tag_id || 1,
   total_amount: props.passedFormData.total_amount || 0,
   description: props.passedFormData.description || null,
   details: [],
 });
-const { tags, isLoading: tags_isLoading } = useTags();
+
+// Initialize amount with absolute value...
 const amount = ref(
   props.passedFormData.total_amount
     ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
     : null,
 );
 
+// Define table columns...
 const columns = ref([
   { field: "tag_id", title: "ID", isUnique: true, hide: true },
   { field: "tag_pretty_name", title: "Tag" },
   { field: "tag_amt", title: "Amount", type: "number", width: "100px" },
 ]);
-const selected = ref([]);
 
+// Define functions...
+/**
+ * `rowSelected` Populates selected variable with selected rows in table.
+ */
 const rowSelected = () => {
   selected.value = [];
   let selectedrows = details_table.value.getSelectedRows();
@@ -402,9 +411,11 @@ const rowSelected = () => {
     selected.value.push(selectedrow.tag_id);
   }
 };
-const details_table = ref(null);
-const show = ref(props.itemFormDialog);
-const emit = defineEmits(["updateDialog"]);
+
+/**
+ * `watchpassedFormData` Watches for changes to passedFormData prop and updates
+ * local variable formData as appropiate.
+ */
 const watchPassedFormData = () => {
   watchEffect(() => {
     if (props.passedFormData) {
@@ -414,8 +425,10 @@ const watchPassedFormData = () => {
         transaction_type_id: props.passedFormData.transaction_type.id,
         transaction_date: props.passedFormData.transaction_date,
         memo: props.passedFormData.memo,
-        source_account_id: props.passedFormData.source_account_id,
-        destination_account_id: props.passedFormData.destination_account_id,
+        transaction_source_account_id:
+          props.passedFormData.transaction_source_account_id,
+        transaction_destination_account_id:
+          props.passedFormData.transaction_destination_account_id,
         edit_date: formattedDate,
         add_date: props.passedFormData.add_date,
         tag_id: props.passedFormData.tag_id,
@@ -430,6 +443,11 @@ const watchPassedFormData = () => {
   });
 };
 
+/**
+ * `fillTagTable` Formats tag details for display in tag table.
+ * @param {list} details - The list of tag details.
+ * @returns {table} - A list of formatted tags for display in the table.
+ */
 const fillTagTable = details => {
   let table = [];
   let pretty_name = "";
@@ -451,14 +469,11 @@ const fillTagTable = details => {
 
   return table;
 };
-const required = [
-  value => {
-    if (value) return true;
 
-    return "This field is required.";
-  },
-];
-
+/**
+ * `checkFormComplete` Validates form completion.
+ * @returns {formComplete} - Sets to True when form is validated.
+ */
 const checkFormComplete = async () => {
   if (
     formData.value.transaction_type_id !== null &&
@@ -471,8 +486,7 @@ const checkFormComplete = async () => {
     amount.value !== null &&
     formData.value.transaction_source_account_id !== "" &&
     formData.value.transaction_source_account_id !== null &&
-    formData.value.tag_id !== "" &&
-    formData.value.tag_id !== null
+    verifyTagTotal() == true
   ) {
     if (
       (formData.value.status_id == 3 &&
@@ -488,10 +502,9 @@ const checkFormComplete = async () => {
   }
 };
 
-onMounted(() => {
-  watchPassedFormData();
-});
-
+/**
+ * `submitForm` Submits the formData and creates/edits transaction.
+ */
 const submitForm = async () => {
   if (formData.value.transaction_type_id == 2) {
     formData.value.total_amount = amount.value;
@@ -507,10 +520,18 @@ const submitForm = async () => {
   closeDialog();
 };
 
+/**
+ * `closeDialog` Emits updateDialog to close form.
+ */
 const closeDialog = () => {
   emit("updateDialog", false);
 };
 
+/**
+ * `tagColor` Sets the tag color based on tag type.
+ * @param {int} typeID - The tag type ID.
+ * @return {color} - The color of the tag.
+ */
 const tagColor = typeID => {
   if (typeID == 1) {
     return "red";
@@ -521,10 +542,16 @@ const tagColor = typeID => {
   }
 };
 
+/**
+ * `reformatNumberToMoney` Formats an amount to currency.
+ */
 const reformatNumberToMoney = () => {
   amount.value = parseFloat(amount.value).toFixed(2);
 };
 
+/**
+ * `checkTagComplete` Checks if tag and amount are selected to add to table.
+ */
 const checkTagComplete = () => {
   if (
     tagAmount.value !== null &&
@@ -538,6 +565,9 @@ const checkTagComplete = () => {
   }
 };
 
+/**
+ * `clickTagAdd` Adds a tag to the tag table.
+ */
 const clickTagAdd = () => {
   let pretty_name = "";
   if (tagToAdd.value.parent) {
@@ -553,8 +583,12 @@ const clickTagAdd = () => {
   };
   formData.value.details.push(tag_row);
   details_table.value.reset();
+  checkFormComplete();
 };
 
+/**
+ * `clickTagRemove` Removes a tag from the tag table.
+ */
 const clickTagRemove = () => {
   if (selected.value) {
     for (const tag of selected.value) {
@@ -563,5 +597,31 @@ const clickTagRemove = () => {
       );
     }
   }
+  checkFormComplete();
 };
+
+/**
+ * `verifyTagTotal` Verifies the total of tags equals total amount.
+ * @returns - Returns True if totals match
+ */
+const verifyTagTotal = () => {
+  let tagtotal = 0;
+  if (formData.value.details) {
+    formData.value.details.forEach(tag => {
+      tagtotal += parseFloat(tag.tag_amt);
+    });
+  }
+  if (tagtotal == amount.value) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+// Lifecycle hook...
+
+onMounted(() => {
+  // Perform actions on mount
+  watchPassedFormData();
+});
 </script>

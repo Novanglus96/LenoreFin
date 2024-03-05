@@ -279,8 +279,8 @@ const blankForm = ref({
   },
   transaction_date: formattedDate,
   memo: "",
-  source_account_id: parseInt(props.account),
-  destination_account_id: null,
+  transaction_source_account_id: parseInt(props.account),
+  transaction_destination_account_id: null,
   edit_date: formattedDate,
   add_date: formattedDate,
   tag_id: 1,
@@ -309,8 +309,8 @@ const editTransaction = ref({
   tags: [],
   details: [],
   pretty_total: 0,
-  source_account_id: 0,
-  destination_account_id: null,
+  transaction_source_account_id: 0,
+  transaction_destination_account_id: null,
 });
 const { isLoading, transactions, removeTransaction, clearTransaction } =
   useTransactions(props.account, props.maxdays, props.forecast);
