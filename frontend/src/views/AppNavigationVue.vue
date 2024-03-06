@@ -60,7 +60,11 @@
           prepend-icon="mdi-view-dashboard-variant"
           to="/"
         ></v-list-item>
-        <v-list-item prepend-icon="mdi-bank" to="/accounts"></v-list-item>
+        <v-list-item to="/accounts">
+          <template v-slot:append>
+            <v-icon icon="mdi-bank" color="accent"></v-icon>
+          </template>
+        </v-list-item>
         <v-list-item prepend-icon="mdi-chart-bar" to="/forecast"></v-list-item>
         <v-list-item prepend-icon="mdi-bell" to="/reminders"></v-list-item>
         <v-list-item prepend-icon="mdi-folder" to="/planning"></v-list-item>
@@ -76,6 +80,7 @@
               prepend-icon="mdi-view-dashboard-variant"
               to="/"
               v-bind="props"
+              color="accent"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -87,6 +92,7 @@
               prepend-icon="mdi-bank"
               @click="nav_toggle = true"
               v-bind="props"
+              color="accent"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -96,6 +102,7 @@
               prepend-icon="mdi-chart-bar"
               to="/forecast"
               v-bind="props"
+              color="accent"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -105,6 +112,7 @@
               prepend-icon="mdi-bell"
               to="/reminders"
               v-bind="props"
+              color="accent"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -116,6 +124,7 @@
               prepend-icon="mdi-folder"
               @click="nav_toggle = false"
               v-bind="props"
+              color="accent"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -125,6 +134,7 @@
               prepend-icon="mdi-tag"
               to="/tags"
               v-bind="props"
+              color="accent"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -134,6 +144,7 @@
               prepend-icon="mdi-cog"
               to="/settings"
               v-bind="props"
+              color="accent"
             ></v-list-item>
           </template>
         </v-tooltip>
