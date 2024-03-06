@@ -10,7 +10,7 @@
       </v-list-item>
     </v-list>
     <v-list density="compact" nav>
-      <v-list-subheader
+      <v-list-subheader color="accent"
         ><v-icon icon="mdi-checkbook"></v-icon> CHECKING</v-list-subheader
       >
       <v-list-item
@@ -38,7 +38,7 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader
+      <v-list-subheader color="accent"
         ><v-icon icon="mdi-piggy-bank"></v-icon> SAVINGS</v-list-subheader
       >
       <v-list-item
@@ -66,7 +66,7 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader
+      <v-list-subheader color="accent"
         ><v-icon icon="mdi-credit-card"></v-icon> CREDIT CARD</v-list-subheader
       >
       <v-list-item
@@ -94,7 +94,7 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader
+      <v-list-subheader color="accent"
         ><v-icon icon="mdi-finance"></v-icon> INVESTMENT</v-list-subheader
       >
       <v-list-item
@@ -122,7 +122,7 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader
+      <v-list-subheader color="accent"
         ><v-icon icon="mdi-car-back"></v-icon> LOAN</v-list-subheader
       >
       <v-list-item
@@ -150,7 +150,7 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader
+      <v-list-subheader color="accent"
         ><v-icon icon="mdi-bank-off"></v-icon> INACTIVE</v-list-subheader
       >
       <v-list-item
