@@ -2679,13 +2679,15 @@ def list_transactions_bytag(request, tag: int):
             this_year_avg = this_year_total / this_month
         else:
             this_year_avg = 0
-
+        this_year_avg = round(this_year_avg, 2)
+        print(f"YTD_avg: {this_year_avg}")
         # Calculate Last Year Monthly average
         if last_year_total is not None:
             last_year_avg = last_year_total / 12
         else:
             last_year_avg = 0
-
+        last_year_avg = round(last_year_avg, 2)
+        print(f"last_year_avg: {last_year_avg}")
         # Prepare the transactions object
         transaction_details = []
         for detail in alltrans:
@@ -3396,8 +3398,7 @@ def list_transactions(
             qs = qs.filter(
                 transactiondetail__account__id=account,
                 transaction_date__lt=threshold_date,
-            )
-
+            ).distinct()
             # Set custom status order
             custom_order = Case(
                 When(status_id=3, then=0),
@@ -3479,7 +3480,7 @@ def list_transactions(
                         pretty_total = transaction.total_amount
                         source_account = detail.account.account_name
                         source_account_id = detail.account.id
-                        balance += transaction.total_amount
+                        balance += detail.detail_amt
                 if transaction.transaction_type.id == 3:
                     if source_account:
                         pretty_account = source_account
