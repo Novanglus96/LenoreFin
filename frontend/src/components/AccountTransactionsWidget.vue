@@ -213,20 +213,21 @@
           >
         </template>
         <template #tags="row">
-          <div v-for="tag in row.value.tags" :key="tag">
+          <span
+            :class="
+              row.value.status.id == 1
+                ? 'font-italic text-grey'
+                : 'font-weight-bold text-black'
+            "
+            v-for="tag in row.value.tags"
+            :key="tag"
+          >
             <v-icon
               icon="mdi-tag"
               :color="row.value.status.id == 1 ? 'grey' : 'black'"
             ></v-icon>
-            <span
-              :class="
-                row.value.status.id == 1
-                  ? 'font-italic text-grey'
-                  : 'font-weight-bold text-black'
-              "
-              >{{ tag }}</span
-            >
-          </div>
+            {{ tag }}&nbsp;
+          </span>
         </template>
         <template #pretty_account="row">
           <span
@@ -322,7 +323,7 @@ const columns = ref([
   { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
   { field: "balance", title: "Balance", width: "100px" },
   { field: "description", title: "Description" },
-  { field: "tags", title: "Tag(s)" },
+  { field: "tags", title: "Tag(s)", width:"200px" },
   { field: "pretty_account", title: "Account" },
 ]);
 const getClassForMoney = (amount, status) => {
