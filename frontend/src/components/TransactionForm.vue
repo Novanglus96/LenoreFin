@@ -5,8 +5,21 @@
         <span class="text-h5" v-if="props.isEdit == false"
           >Add Transaction</span
         >
-        <span class="text-h5" v-else>Edit Transaction</span>
+        <span class="text-h5" v-else>Edit Transaction</span
+        ><v-icon
+          v-if="props.passedFormData.reminder"
+          icon="mdi-bell"
+          color="amber"
+        ></v-icon>
       </v-card-title>
+      <v-card-subtitle>
+        <span
+          class="text-subtitle-2 font-italic text-red-lighten-2"
+          v-if="props.passedFormData.reminder"
+          >* This transaction is part of a reminder. Modifying it will remove it
+          from the reminder.</span
+        >
+      </v-card-subtitle>
       <v-card-text>
         <v-container>
           <v-row>
@@ -19,6 +32,21 @@
                 auto-apply
                 format="yyyy-MM-dd"
               ></VueDatePicker>
+            </v-col>
+            <v-col class="text-right">
+              <v-btn
+                v-if="!props.passedFormData.paycheck && props.isEdit"
+                flat
+                variant="plain"
+                color="accent"
+              >
+                <v-tooltip
+                  text="Add Pay Info"
+                  location="top"
+                  activator="parent"
+                ></v-tooltip>
+                <v-icon icon="mdi-checkbook"></v-icon>
+              </v-btn>
             </v-col>
           </v-row>
           <v-row>
