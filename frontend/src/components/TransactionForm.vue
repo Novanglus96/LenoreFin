@@ -86,7 +86,7 @@
                 :loading="accounts_isLoading"
                 item-title="account_name"
                 item-value="id"
-                v-model="formData.transaction_source_account_id"
+                v-model="formData.source_account_id"
                 :rules="required"
                 @update:model-value="checkFormComplete"
               >
@@ -112,7 +112,7 @@
                 :loading="accounts_isLoading"
                 item-title="account_name"
                 item-value="id"
-                v-model="formData.transaction_destination_account_id"
+                v-model="formData.destination_account_id"
                 :rules="required"
                 @update:model-value="checkFormComplete"
                 v-if="formData.transaction_type_id == 3"
@@ -375,10 +375,8 @@ const formData = ref({
   transaction_type_id: props.passedFormData.transaction_type.id || 1,
   transaction_date: props.passedFormData.transaction_date || formattedDate,
   memo: props.passedFormData.memo || "",
-  transaction_source_account_id:
-    props.passedFormData.transaction_source_account_id || null,
-  transaction_destination_account_id:
-    props.passedFormData.transaction_destination_account_id || null,
+  source_account_id: props.passedFormData.source_account_id || null,
+  destination_account_id: props.passedFormData.destination_account_id || null,
   edit_date: formattedDate,
   add_date: props.passedFormData.add_date || formattedDate,
   total_amount: props.passedFormData.total_amount || 0,
@@ -425,10 +423,8 @@ const watchPassedFormData = () => {
         transaction_type_id: props.passedFormData.transaction_type.id,
         transaction_date: props.passedFormData.transaction_date,
         memo: props.passedFormData.memo,
-        transaction_source_account_id:
-          props.passedFormData.transaction_source_account_id,
-        transaction_destination_account_id:
-          props.passedFormData.transaction_destination_account_id,
+        source_account_id: props.passedFormData.source_account_id,
+        destination_account_id: props.passedFormData.destination_account_id,
         edit_date: formattedDate,
         add_date: props.passedFormData.add_date,
         tag_id: props.passedFormData.tag_id,
@@ -484,13 +480,13 @@ const checkFormComplete = async () => {
     formData.value.description !== null &&
     amount.value !== "" &&
     amount.value !== null &&
-    formData.value.transaction_source_account_id !== "" &&
-    formData.value.transaction_source_account_id !== null &&
+    formData.value.source_account_id !== "" &&
+    formData.value.source_account_id !== null &&
     verifyTagTotal() == true
   ) {
     if (
       (formData.value.status_id == 3 &&
-        formData.value.transaction_destination_account_id !== null) ||
+        formData.value.destination_account_id !== null) ||
       formData.value.status_id !== 3
     ) {
       formComplete.value = true;

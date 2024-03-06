@@ -494,8 +494,8 @@ class TransactionIn(Schema):
     reminder_id: Optional[int] = None
     paycheck_id: Optional[int] = None
     details: Optional[List[TagDetailIn]] = None
-    transaction_source_account_id: Optional[int] = None
-    transaction_destination_account_id: Optional[int] = None
+    source_account_id: Optional[int] = None
+    destination_account_id: Optional[int] = None
 
 
 # The class MessageIn is a schema for validating Messages.
@@ -1342,7 +1342,7 @@ def create_transaction(request, payload: TransactionIn):
             if payload.transaction_type_id == 3:
                 TransactionDetail.objects.create(
                     transaction_id=transaction.id,
-                    account_id=payload.transaction_source_account_id,
+                    account_id=payload.source_account_id,
                     detail_amt=payload.total_amount,
                     tag_id=2,
                 )
@@ -1356,7 +1356,7 @@ def create_transaction(request, payload: TransactionIn):
                 )
                 TransactionDetail.objects.create(
                     transaction_id=transaction.id,
-                    account_id=payload.transaction_destination_account_id,
+                    account_id=payload.destination_account_id,
                     detail_amt=-payload.total_amount,
                     tag_id=2,
                 )
@@ -1377,7 +1377,7 @@ def create_transaction(request, payload: TransactionIn):
                         adj_amount = detail.tag_amt
                     TransactionDetail.objects.create(
                         transaction_id=transaction.id,
-                        account_id=payload.transaction_source_account_id,
+                        account_id=payload.source_account_id,
                         detail_amt=adj_amount,
                         tag_id=detail.tag_id,
                     )
