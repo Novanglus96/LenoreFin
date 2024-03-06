@@ -48,13 +48,13 @@
           </v-card-text>
           <v-card-actions v-if="messages.total_count > 0">
             <v-spacer></v-spacer>
-            <v-btn color="accent" @click="markRead"> Mark All Read </v-btn>
-            <v-btn color="accent" @click="deleteAll"> Delete All </v-btn>
+            <v-btn color="secondary" @click="markRead"> Mark All Read </v-btn>
+            <v-btn color="secondary" @click="deleteAll"> Delete All </v-btn>
           </v-card-actions>
         </v-card>
       </v-menu>
     </v-app-bar>
-    <v-navigation-drawer color="accent" rail permanent v-if="!mdAndUp">
+    <v-navigation-drawer color="secondary" rail permanent v-if="!mdAndUp">
       <v-list density="compact" nav>
         <v-list-item
           prepend-icon="mdi-view-dashboard-variant"
@@ -68,7 +68,7 @@
         <v-list-item prepend-icon="mdi-cog" to="/settings"></v-list-item>
       </v-list>
     </v-navigation-drawer>
-    <v-navigation-drawer color="accent" rail permanent v-if="mdAndUp">
+    <v-navigation-drawer color="secondary" rail permanent v-if="mdAndUp">
       <v-list density="compact" nav>
         <v-tooltip text="Dashboard">
           <template v-slot:activator="{ props }">

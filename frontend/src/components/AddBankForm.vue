@@ -2,7 +2,7 @@
   <v-dialog v-model="dialog" persistent width="300">
     <template v-slot:activator="{ props }">
       <v-btn
-        color="accent"
+        color="secondary"
         v-bind="props"
         @click="
           bankForm.bank_name = '';
@@ -34,11 +34,11 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="accent" variant="text" @click="dialog = false">
+        <v-btn color="secondary" variant="text" @click="dialog = false">
           Close
         </v-btn>
         <v-btn
-          color="accent"
+          color="secondary"
           variant="text"
           @click="submitForm"
           :disabled="bankSubmit"

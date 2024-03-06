@@ -11,10 +11,10 @@
       </v-menu>
     </template>
     <template v-slot:title>
-      <span class="text-subtitle-2 text-accent" v-if="!props.allowEdit"
+      <span class="text-subtitle-2 text-secondary" v-if="!props.allowEdit"
         >Upcoming Reminders</span
       >
-      <span class="text-subtitle-2 text-accent" v-else>Reminders</span>
+      <span class="text-subtitle-2 text-secondary" v-else>Reminders</span>
     </template>
     <template v-slot:text>
       <div v-if="props.allowEdit">

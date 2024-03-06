@@ -2,7 +2,7 @@
   <div>
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded">
-        <v-tabs v-model="tab" color="accent" align-tabs="center">
+        <v-tabs v-model="tab" color="secondary" align-tabs="center">
           <v-tab :value="1">Options</v-tab>
           <v-tab :value="2">Fields</v-tab>
           <v-tab :value="3">Log</v-tab>

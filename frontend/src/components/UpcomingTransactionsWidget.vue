@@ -11,7 +11,7 @@
       </v-menu>
     </template>
     <template v-slot:title>
-      <span class="text-subtitle-2 text-accent">Upcoming Transactions</span>
+      <span class="text-subtitle-2 text-secondary">Upcoming Transactions</span>
     </template>
     <template v-slot:text>
       <vue3-datatable

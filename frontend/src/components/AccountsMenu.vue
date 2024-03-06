@@ -3,7 +3,7 @@
     <v-list density="compact" nav>
       <v-list-item
         prepend-icon="mdi-plus-circle"
-        base-color="accent"
+        base-color="secondary"
         :to="add_account_link"
       >
         <v-list-item-title>Add Account</v-list-item-title>

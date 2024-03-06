@@ -31,10 +31,11 @@
       </v-card-text>
       <v-card-actions
         ><v-spacer></v-spacer
-        ><v-btn @click="emit('updateDialog', false)" color="accent">Close</v-btn
+        ><v-btn @click="emit('updateDialog', false)" color="secondary"
+          >Close</v-btn
         ><v-btn
           @click="clickAdjustBalance()"
-          color="accent"
+          color="secondary"
           :disabled="balanceSubmit"
           >Adjust</v-btn
         ></v-card-actions

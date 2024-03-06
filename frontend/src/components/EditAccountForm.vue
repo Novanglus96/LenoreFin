@@ -180,10 +180,11 @@
       </v-card-text>
       <v-card-actions
         ><v-spacer></v-spacer
-        ><v-btn @click="emit('updateDialog', false)" color="accent">Close</v-btn
+        ><v-btn @click="emit('updateDialog', false)" color="secondary"
+          >Close</v-btn
         ><v-btn
           @click="clickEditAccount()"
-          color="accent"
+          color="secondary"
           :disabled="editSubmit"
           >Save</v-btn
         ></v-card-actions

@@ -49,11 +49,11 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="accent" variant="text" @click="closeDialog">
+        <v-btn color="secondary" variant="text" @click="closeDialog">
           Close
         </v-btn>
         <v-btn
-          color="accent"
+          color="secondary"
           variant="text"
           @click="submitForm"
           :disabled="!formComplete"

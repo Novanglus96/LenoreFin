@@ -3,7 +3,7 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      :class="account.active ? 'bg-accent' : 'bg-grey'"
+      :class="account.active ? 'bg-secondary' : 'bg-grey'"
       v-if="!isLoading"
     >
       <template v-slot:append>
@@ -87,7 +87,7 @@
     </v-card>
     <v-skeleton-loader
       type="card"
-      color="accent"
+      color="secondary"
       height="100"
       v-else
     ></v-skeleton-loader>

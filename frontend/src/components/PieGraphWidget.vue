@@ -45,7 +45,7 @@
         </v-menu>
       </template>
       <template v-slot:title>
-        <span class="text-subtitle-2 text-accent">{{
+        <span class="text-subtitle-2 text-secondary">{{
           tag_graph ? tag_graph.datasets[0].label : ""
         }}</span>
       </template>
@@ -54,7 +54,7 @@
       </template>
     </v-card>
     <v-progress-circular
-      color="accent"
+      color="secondary"
       indeterminate
       :size="300"
       :width="12"

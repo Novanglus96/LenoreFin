@@ -18,11 +18,11 @@
       </v-menu>
     </template>
     <template v-slot:title>
-      <span class="text-subtitle-2 text-accent">Kids Expenses</span>
+      <span class="text-subtitle-2 text-secondary">Kids Expenses</span>
     </template>
     <template v-slot:text>
       <v-progress-circular
-        color="accent"
+        color="secondary"
         indeterminate
         :size="300"
         :width="12"

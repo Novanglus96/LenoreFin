@@ -22,7 +22,7 @@
               <v-btn-toggle
                 v-model="disableAccount"
                 rounded="0"
-                color="accent"
+                color="secondary"
                 group
               >
                 <v-btn :value="true"> Disable </v-btn>
@@ -34,10 +34,11 @@
       </v-card-text>
       <v-card-actions
         ><v-spacer></v-spacer
-        ><v-btn @click="emit('updateDialog', false)" color="accent">Close</v-btn
+        ><v-btn @click="emit('updateDialog', false)" color="secondary"
+          >Close</v-btn
         ><v-btn
           @click="clickRemoveAccount()"
-          color="accent"
+          color="secondary"
           :disabled="deleteSubmit"
           >{{ displayButtonText() }}</v-btn
         ></v-card-actions

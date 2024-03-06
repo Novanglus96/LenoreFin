@@ -11,7 +11,7 @@
       </v-menu>
     </template>
     <template v-slot:title>
-      <span class="text-subtitle-2 text-accent">Transactions</span>
+      <span class="text-subtitle-2 text-secondary">Transactions</span>
     </template>
     <template v-slot:text>
       <v-tooltip text="Clear Transaction(s)" location="top">

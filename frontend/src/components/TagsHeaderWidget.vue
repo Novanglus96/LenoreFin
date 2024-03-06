@@ -3,7 +3,7 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      class="bg-accent"
+      class="bg-secondary"
       v-if="!isLoading"
     >
       <template v-slot:text>

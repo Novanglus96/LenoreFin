@@ -3,7 +3,7 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      class="bg-accent"
+      class="bg-secondary"
       v-if="!accounts_isLoading && accounts && accounts.length > 0"
     >
       <template v-slot:text>
@@ -54,7 +54,7 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      class="bg-accent"
+      class="bg-secondary"
       v-if="accounts && accounts.length === 0"
       title="No Accounts"
     ></v-card>

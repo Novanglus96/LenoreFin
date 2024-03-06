@@ -9,8 +9,8 @@ const myCustomLightTheme = {
   dark: false,
   colors: {
     primary: "#ECFDF5",
-    secondary: "#7fb17f",
-    accent: "#06966A",
+    secondary: "#06966A",
+    accent: "#FF5900",
     error: "#FF3407",
     warning: "#ffc107",
     info: "#795548",
