@@ -20,291 +20,472 @@
           from the reminder.</span
         >
       </v-card-subtitle>
+
       <v-card-text>
-        <v-container>
-          <v-row>
-            <v-col>
-              <VueDatePicker
-                v-model="formData.transaction_date"
-                timezone="America/New_York"
-                model-type="yyyy-MM-dd"
-                :enable-time-picker="false"
-                auto-apply
-                format="yyyy-MM-dd"
-              ></VueDatePicker>
-            </v-col>
-            <v-col class="text-right">
-              <v-btn
-                v-if="!props.passedFormData.paycheck && props.isEdit"
-                flat
-                variant="plain"
-                color="accent"
-              >
-                <v-tooltip
-                  text="Add Pay Info"
-                  location="top"
-                  activator="parent"
-                ></v-tooltip>
-                <v-icon icon="mdi-checkbook"></v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <v-autocomplete
-                clearable
-                label="Transaction Type*"
-                :items="transaction_types"
-                variant="outlined"
-                :loading="transaction_types_isLoading"
-                item-title="transaction_type"
-                item-value="id"
-                v-model="formData.transaction_type_id"
-                :rules="required"
-                @update:model-value="checkFormComplete"
-                :disabled="props.isEdit"
-              ></v-autocomplete>
-            </v-col>
-            <v-col>
-              <v-autocomplete
-                clearable
-                label="Transaction Status*"
-                :items="transaction_statuses"
-                variant="outlined"
-                :loading="transaction_statuses_isLoading"
-                item-title="transaction_status"
-                item-value="id"
-                v-model="formData.status_id"
-                :rules="required"
-                @update:model-value="checkFormComplete"
-              ></v-autocomplete>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <v-text-field
-                v-model="amount"
-                variant="outlined"
-                label="Amount*"
-                :rules="required"
-                prefix="$"
-                @update:model-value="checkFormComplete"
-                type="number"
-                step="1.00"
-                @update:focused="reformatNumberToMoney"
-              ></v-text-field>
-            </v-col>
-            <v-col>
-              <v-text-field
-                v-model="formData.description"
-                variant="outlined"
-                label="Description*"
-                :rules="required"
-                @update:model-value="checkFormComplete"
-              ></v-text-field>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <v-autocomplete
-                clearable
-                label="Source Account*"
-                :items="accounts"
-                variant="outlined"
-                :loading="accounts_isLoading"
-                item-title="account_name"
-                item-value="id"
-                v-model="formData.source_account_id"
-                :rules="required"
-                @update:model-value="checkFormComplete"
-              >
-                <template v-slot:item="{ props, item }">
-                  <v-list-item
-                    v-bind="props"
-                    :title="item.raw.account_name"
-                    :subtitle="item.raw.bank.bank_name"
+        <v-tabs v-model="tab" color="accent">
+          <v-tab value="trans" density="compact">Transaction Details</v-tab>
+          <v-tab value="pay" density="compact">Paycheck Info</v-tab>
+        </v-tabs>
+        <v-window v-model="tab">
+          <v-window-item value="trans">
+            <v-container>
+              <v-row dense>
+                <v-col>
+                  <VueDatePicker
+                    v-model="formData.transaction_date"
+                    timezone="America/New_York"
+                    model-type="yyyy-MM-dd"
+                    :enable-time-picker="false"
+                    auto-apply
+                    format="yyyy-MM-dd"
+                  ></VueDatePicker>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-autocomplete
+                    clearable
+                    label="Transaction Type*"
+                    :items="transaction_types"
+                    variant="outlined"
+                    :loading="transaction_types_isLoading"
+                    item-title="transaction_type"
+                    item-value="id"
+                    v-model="formData.transaction_type_id"
+                    :rules="required"
+                    @update:model-value="checkFormComplete"
+                    :disabled="props.isEdit"
+                    density="compact"
+                  ></v-autocomplete>
+                </v-col>
+                <v-col>
+                  <v-autocomplete
+                    clearable
+                    label="Transaction Status*"
+                    :items="transaction_statuses"
+                    variant="outlined"
+                    :loading="transaction_statuses_isLoading"
+                    item-title="transaction_status"
+                    item-value="id"
+                    v-model="formData.status_id"
+                    :rules="required"
+                    @update:model-value="checkFormComplete"
+                    density="compact"
+                  ></v-autocomplete>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-text-field
+                    v-model="amount"
+                    variant="outlined"
+                    label="Amount*"
+                    :rules="required"
+                    prefix="$"
+                    @update:model-value="checkFormComplete"
+                    type="number"
+                    step="1.00"
+                    @update:focused="reformatNumberToMoney"
+                    density="compact"
+                  ></v-text-field>
+                </v-col>
+                <v-col>
+                  <v-text-field
+                    v-model="formData.description"
+                    variant="outlined"
+                    label="Description*"
+                    :rules="required"
+                    @update:model-value="checkFormComplete"
+                    density="compact"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-autocomplete
+                    clearable
+                    label="Source Account*"
+                    :items="accounts"
+                    variant="outlined"
+                    :loading="accounts_isLoading"
+                    item-title="account_name"
+                    item-value="id"
+                    v-model="formData.source_account_id"
+                    :rules="required"
+                    @update:model-value="checkFormComplete"
+                    density="compact"
                   >
-                    <template v-slot:prepend>
-                      <v-icon :icon="item.raw.account_type.icon"></v-icon>
-                    </template>
-                  </v-list-item>
-                </template>
-              </v-autocomplete>
-            </v-col>
-            <v-col>
-              <v-autocomplete
-                clearable
-                label="Destination Account*"
-                :items="accounts"
-                variant="outlined"
-                :loading="accounts_isLoading"
-                item-title="account_name"
-                item-value="id"
-                v-model="formData.destination_account_id"
-                :rules="required"
-                @update:model-value="checkFormComplete"
-                v-if="formData.transaction_type_id == 3"
-              >
-                <template v-slot:item="{ props, item }">
-                  <v-list-item
-                    v-bind="props"
-                    :title="item.raw.account_name"
-                    :subtitle="item.raw.bank.bank_name"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon :icon="item.raw.account_type.icon"></v-icon>
-                    </template>
-                  </v-list-item>
-                </template>
-              </v-autocomplete>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <!-- TODO: Enable adding tags here -->
-              <v-sheet
-                border
-                rounded
-                v-if="formData.transaction_type_id != 3"
-                :height="300"
-                :color="verifyTagTotal() ? 'white' : 'red-lighten-5'"
-              >
-                <v-container class="pa-0 ma-1">
-                  <v-row dense>
-                    <v-col cols="1">
-                      <v-tooltip text="Delete Tag(s)" location="top">
-                        <template v-slot:activator="{ props }">
-                          <v-btn
-                            icon="mdi-tag-minus"
-                            flat
-                            variant="plain"
-                            color="error"
-                            @click="clickTagRemove"
-                            v-bind="props"
-                            :disabled="selected && selected.length === 0"
-                          ></v-btn>
-                        </template>
-                      </v-tooltip>
-                    </v-col>
-                    <v-col>
-                      <v-autocomplete
-                        clearable
-                        label="Tag"
-                        :items="tags"
-                        variant="outlined"
-                        :loading="tags_isLoading"
-                        item-title="tag_name"
-                        v-model="tagToAdd"
-                        @update:model-value="checkTagComplete"
-                        density="compact"
-                        return-object
+                    <template v-slot:item="{ props, item }">
+                      <v-list-item
+                        v-bind="props"
+                        :title="item.raw.account_name"
+                        :subtitle="item.raw.bank.bank_name"
                       >
-                        <template v-slot:item="{ props, item }">
-                          <v-list-item
-                            v-bind="props"
-                            :title="
-                              item.raw.parent
-                                ? item.raw.parent.tag_name
-                                : item.raw.tag_name
-                            "
-                            :subtitle="
-                              item.raw.parent ? item.raw.tag_name : null
-                            "
-                          >
-                            <template v-slot:prepend>
-                              <v-icon
-                                icon="mdi-tag"
-                                :color="tagColor(item.raw.tag_type.id)"
-                              ></v-icon>
+                        <template v-slot:prepend>
+                          <v-icon :icon="item.raw.account_type.icon"></v-icon>
+                        </template>
+                      </v-list-item>
+                    </template>
+                  </v-autocomplete>
+                </v-col>
+                <v-col>
+                  <v-autocomplete
+                    clearable
+                    label="Destination Account*"
+                    :items="accounts"
+                    variant="outlined"
+                    :loading="accounts_isLoading"
+                    item-title="account_name"
+                    item-value="id"
+                    v-model="formData.destination_account_id"
+                    :rules="required"
+                    @update:model-value="checkFormComplete"
+                    v-if="formData.transaction_type_id == 3"
+                    density="compact"
+                  >
+                    <template v-slot:item="{ props, item }">
+                      <v-list-item
+                        v-bind="props"
+                        :title="item.raw.account_name"
+                        :subtitle="item.raw.bank.bank_name"
+                      >
+                        <template v-slot:prepend>
+                          <v-icon :icon="item.raw.account_type.icon"></v-icon>
+                        </template>
+                      </v-list-item>
+                    </template>
+                  </v-autocomplete>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <!-- TODO: Enable adding tags here -->
+                  <v-sheet
+                    border
+                    rounded
+                    v-if="formData.transaction_type_id != 3"
+                    :height="300"
+                    :color="verifyTagTotal() ? 'white' : 'red-lighten-5'"
+                  >
+                    <v-container class="pa-0 ma-1">
+                      <v-row dense>
+                        <v-col cols="1">
+                          <v-tooltip text="Delete Tag(s)" location="top">
+                            <template v-slot:activator="{ props }">
+                              <v-btn
+                                icon="mdi-tag-minus"
+                                flat
+                                variant="plain"
+                                color="error"
+                                @click="clickTagRemove"
+                                v-bind="props"
+                                :disabled="selected && selected.length === 0"
+                              ></v-btn>
                             </template>
-                          </v-list-item>
-                        </template>
-                      </v-autocomplete>
-                    </v-col>
-                    <v-col cols="4">
-                      <v-text-field
-                        v-model="tagAmount"
-                        variant="outlined"
-                        label="Amount"
-                        prefix="$"
-                        @update:model-value="checkTagComplete"
-                        type="number"
-                        step="1.00"
-                        @update:focused="reformatNumberToMoney"
-                        density="compact"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="1">
-                      <v-tooltip text="Add New Tag" location="top">
-                        <template v-slot:activator="{ props }">
-                          <v-btn
-                            icon="mdi-tag-plus"
-                            flat
-                            variant="plain"
-                            color="success"
-                            @click="clickTagAdd"
-                            v-bind="props"
-                            :disabled="!tagComplete && !verifyTagTotal()"
-                          ></v-btn>
-                        </template>
-                      </v-tooltip>
-                    </v-col>
-                  </v-row>
-                  <v-row dense>
-                    <v-col
-                      ><span
-                        class="text-error text-subtitle-2 font-italic"
-                        v-if="!verifyTagTotal()"
-                        >* Tags must equal total</span
-                      ></v-col
+                          </v-tooltip>
+                        </v-col>
+                        <v-col>
+                          <v-autocomplete
+                            clearable
+                            label="Tag"
+                            :items="tags"
+                            variant="outlined"
+                            :loading="tags_isLoading"
+                            item-title="tag_name"
+                            v-model="tagToAdd"
+                            @update:model-value="checkTagComplete"
+                            density="compact"
+                            return-object
+                          >
+                            <template v-slot:item="{ props, item }">
+                              <v-list-item
+                                v-bind="props"
+                                :title="
+                                  item.raw.parent
+                                    ? item.raw.parent.tag_name
+                                    : item.raw.tag_name
+                                "
+                                :subtitle="
+                                  item.raw.parent ? item.raw.tag_name : null
+                                "
+                              >
+                                <template v-slot:prepend>
+                                  <v-icon
+                                    icon="mdi-tag"
+                                    :color="tagColor(item.raw.tag_type.id)"
+                                  ></v-icon>
+                                </template>
+                              </v-list-item>
+                            </template>
+                          </v-autocomplete>
+                        </v-col>
+                        <v-col cols="4">
+                          <v-text-field
+                            v-model="tagAmount"
+                            variant="outlined"
+                            label="Amount"
+                            prefix="$"
+                            @update:model-value="checkTagComplete"
+                            type="number"
+                            step="1.00"
+                            @update:focused="reformatNumberToMoney"
+                            density="compact"
+                          ></v-text-field>
+                        </v-col>
+                        <v-col cols="1">
+                          <v-tooltip text="Add New Tag" location="top">
+                            <template v-slot:activator="{ props }">
+                              <v-btn
+                                icon="mdi-tag-plus"
+                                flat
+                                variant="plain"
+                                color="success"
+                                @click="clickTagAdd"
+                                v-bind="props"
+                                :disabled="!tagComplete && !verifyTagTotal()"
+                              ></v-btn>
+                            </template>
+                          </v-tooltip>
+                        </v-col>
+                      </v-row>
+                      <v-row dense>
+                        <v-col
+                          ><span
+                            class="text-error text-subtitle-2 font-italic"
+                            v-if="!verifyTagTotal()"
+                            >* Tags must equal total</span
+                          ></v-col
+                        >
+                      </v-row>
+                    </v-container>
+                    <vue3-datatable
+                      :rows="formData.details"
+                      :columns="columns"
+                      :totalRows="
+                        formData.details ? formData.details.length : 0
+                      "
+                      :isServerMode="false"
+                      pageSize="4"
+                      :hasCheckbox="true"
+                      :stickyHeader="true"
+                      noDataContent="No Tags"
+                      search=""
+                      @rowSelect="rowSelected"
+                      ref="details_table"
+                      height="210px"
+                      skin="bh-table-striped bh-table-compact"
+                      :pageSizeOptions="[4]"
+                      :showPageSize="false"
+                      paginationInfo="{0} to {1} of {2}"
+                      class="alt-pagination"
                     >
-                  </v-row>
-                </v-container>
-                <vue3-datatable
-                  :rows="formData.details"
-                  :columns="columns"
-                  :totalRows="formData.details ? formData.details.length : 0"
-                  :isServerMode="false"
-                  pageSize="4"
-                  :hasCheckbox="true"
-                  :stickyHeader="true"
-                  noDataContent="No Tags"
-                  search=""
-                  @rowSelect="rowSelected"
-                  ref="details_table"
-                  height="210px"
-                  skin="bh-table-striped bh-table-compact"
-                  :pageSizeOptions="[4]"
-                  :showPageSize="false"
-                  paginationInfo="{0} to {1} of {2}"
-                  class="alt-pagination"
-                >
-                  <template #tag_pretty_name="row">
-                    <v-icon icon="mdi-tag"></v-icon>
-                    <span class="font-weight-bold text-black">{{
-                      row.value.tag_pretty_name
-                    }}</span>
-                  </template>
-                  <template #tag_amt="row">
-                    <span class="font-weight-bold text-black"
-                      >${{ row.value.tag_amt }}</span
-                    >
-                  </template>
-                </vue3-datatable>
-              </v-sheet>
-            </v-col>
-            <v-col>
-              <v-textarea
-                clearable
-                label="Memo"
-                variant="outlined"
-                v-model="formData.memo"
-                :rows="11"
-                no-resize
-              ></v-textarea>
-            </v-col>
-          </v-row>
-        </v-container>
+                      <template #tag_pretty_name="row">
+                        <v-icon icon="mdi-tag"></v-icon>
+                        <span class="font-weight-bold text-black">{{
+                          row.value.tag_pretty_name
+                        }}</span>
+                      </template>
+                      <template #tag_amt="row">
+                        <span class="font-weight-bold text-black"
+                          >${{ row.value.tag_amt }}</span
+                        >
+                      </template>
+                    </vue3-datatable>
+                  </v-sheet>
+                </v-col>
+                <v-col>
+                  <v-textarea
+                    clearable
+                    label="Memo"
+                    variant="outlined"
+                    v-model="formData.memo"
+                    :rows="11"
+                    no-resize
+                  ></v-textarea>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-window-item>
+          <v-window-item value="pay">
+            <v-container>
+              <v-row dense>
+                <v-col>
+                  <v-checkbox
+                    v-model="isPaycheck"
+                    label="Is this a Paycheck?"
+                    @update:model-value="selectPaycheckChange()"
+                  ></v-checkbox>
+                </v-col>
+                <v-col>
+                  <span
+                    class="text-subtitle-2 text-red font-italic"
+                    v-if="!paycheckTotalsMatch && isPaycheck"
+                    >* Paycheck fields must total Gross</span
+                  >
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-text-field
+                    v-model="paycheck.gross"
+                    variant="outlined"
+                    label="Gross*"
+                    :rules="required"
+                    prefix="$"
+                    @update:model-value="checkFormComplete"
+                    type="number"
+                    step="1.00"
+                    @update:focused="reformatNumberToMoney"
+                    density="compact"
+                    :disabled="!isPaycheck"
+                  ></v-text-field>
+                </v-col>
+                <v-col>
+                  <v-text-field
+                    v-model="amount"
+                    variant="outlined"
+                    label="Net*"
+                    :rules="required"
+                    prefix="$"
+                    @update:model-value="checkFormComplete"
+                    type="number"
+                    step="1.00"
+                    @update:focused="reformatNumberToMoney"
+                    density="compact"
+                    :disabled="!isPaycheck"
+                  ></v-text-field>
+                </v-col>
+                <v-col>
+                  <v-text-field
+                    v-model="paycheck.taxes"
+                    variant="outlined"
+                    label="Taxes*"
+                    :rules="required"
+                    prefix="$"
+                    @update:model-value="checkFormComplete"
+                    type="number"
+                    step="1.00"
+                    @update:focused="reformatNumberToMoney"
+                    density="compact"
+                    :disabled="!isPaycheck"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-text-field
+                    v-model="paycheck.health"
+                    variant="outlined"
+                    label="Health*"
+                    :rules="required"
+                    prefix="$"
+                    @update:model-value="checkFormComplete"
+                    type="number"
+                    step="1.00"
+                    @update:focused="reformatNumberToMoney"
+                    density="compact"
+                    :disabled="!isPaycheck"
+                  ></v-text-field>
+                </v-col>
+                <v-col>
+                  <v-text-field
+                    v-model="paycheck.pension"
+                    variant="outlined"
+                    label="Pension*"
+                    :rules="required"
+                    prefix="$"
+                    @update:model-value="checkFormComplete"
+                    type="number"
+                    step="1.00"
+                    @update:focused="reformatNumberToMoney"
+                    density="compact"
+                    :disabled="!isPaycheck"
+                  ></v-text-field>
+                </v-col>
+                <v-col>
+                  <v-text-field
+                    v-model="paycheck.fsa"
+                    variant="outlined"
+                    label="FSA*"
+                    :rules="required"
+                    prefix="$"
+                    @update:model-value="checkFormComplete"
+                    type="number"
+                    step="1.00"
+                    @update:focused="reformatNumberToMoney"
+                    density="compact"
+                    :disabled="!isPaycheck"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-text-field
+                    v-model="paycheck.dca"
+                    variant="outlined"
+                    label="DCA*"
+                    :rules="required"
+                    prefix="$"
+                    @update:model-value="checkFormComplete"
+                    type="number"
+                    step="1.00"
+                    @update:focused="reformatNumberToMoney"
+                    density="compact"
+                    :disabled="!isPaycheck"
+                  ></v-text-field>
+                </v-col>
+                <v-col>
+                  <v-text-field
+                    v-model="paycheck.union_dues"
+                    variant="outlined"
+                    label="Union Dues*"
+                    :rules="required"
+                    prefix="$"
+                    @update:model-value="checkFormComplete"
+                    type="number"
+                    step="1.00"
+                    @update:focused="reformatNumberToMoney"
+                    density="compact"
+                    :disabled="!isPaycheck"
+                  ></v-text-field>
+                </v-col>
+                <v-col>
+                  <v-text-field
+                    v-model="paycheck.four_fifty_seven_b"
+                    variant="outlined"
+                    label="457b*"
+                    :rules="required"
+                    prefix="$"
+                    @update:model-value="checkFormComplete"
+                    type="number"
+                    step="1.00"
+                    @update:focused="reformatNumberToMoney"
+                    density="compact"
+                    :disabled="!isPaycheck"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-autocomplete
+                    clearable
+                    label="Payee*"
+                    :items="payees"
+                    variant="outlined"
+                    :loading="payees_isLoading"
+                    item-title="payee_name"
+                    item-value="id"
+                    v-model="paycheck.payee_id"
+                    :rules="required"
+                    @update:model-value="checkFormComplete"
+                    density="compact"
+                    :disabled="!isPaycheck"
+                  ></v-autocomplete>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-window-item>
+        </v-window>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -338,6 +519,7 @@ import { useTransactionStatuses } from "@/composables/transactionStatusesComposa
 import { useAccounts } from "@/composables/accountsComposable";
 import { useTags } from "@/composables/tagsComposable";
 import { useTransactions } from "@/composables/transactionsComposable";
+import { usePayees } from "@/composables/payeesComposable";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
@@ -350,6 +532,9 @@ const tagComplete = ref(false); // True when tag/amount are filled out, enables 
 const formComplete = ref(false); // True when form is validated, enables add/update button
 const selected = ref([]); // The objects of the rows selected in table
 const details_table = ref(null); // The reference to the table
+const tab = ref(null); // Tab model
+const isPaycheck = ref(null); // True if this transaction a paycheck
+const paycheckTotalsMatch = ref(false); // True if the paycheck fields total = gross
 
 // Define emits
 const emit = defineEmits(["updateDialog"]);
@@ -378,6 +563,7 @@ const { transaction_statuses, isLoading: transaction_statuses_isLoading } =
   useTransactionStatuses();
 const { addTransaction } = useTransactions();
 const { tags, isLoading: tags_isLoading } = useTags();
+const { payees, isLoading: payees_isLoading } = usePayees();
 
 // Define props...
 const props = defineProps({
@@ -410,6 +596,21 @@ const formData = ref({
   total_amount: props.passedFormData.total_amount || 0,
   description: props.passedFormData.description || null,
   details: [],
+  paycheck: null,
+});
+
+const paycheck = ref({
+  id: 0,
+  gross: null,
+  net: null,
+  taxes: null,
+  health: null,
+  pension: null,
+  fsa: null,
+  dca: null,
+  union_dues: null,
+  four_fifty_seven_b: null,
+  payee_id: null,
 });
 
 // Initialize amount with absolute value...
@@ -460,9 +661,51 @@ const watchPassedFormData = () => {
         description: props.passedFormData.description,
         details: fillTagTable(props.passedFormData.details),
       };
+      paycheck.value = {
+        id: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.id
+          : 0,
+        gross: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.gross
+          : null,
+        net: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.net
+          : null,
+        taxes: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.taxes
+          : null,
+        health: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.health
+          : null,
+        pension: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.pension
+          : null,
+        fsa: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.fsa
+          : null,
+        dca: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.dca
+          : null,
+        union_dues: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.union_dues
+          : null,
+        four_fifty_seven_b: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.four_fifty_seven_b
+          : null,
+        payee_id: props.passedFormData.paycheck
+          ? props.passedFormData.paycheck.payee.id
+          : null,
+      };
       amount.value = props.passedFormData.total_amount
         ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
         : null;
+      if (props.passedFormData.paycheck) {
+        isPaycheck.value = true;
+        paycheckTotalsMatch.value = true;
+      } else {
+        isPaycheck.value = false;
+        paycheckTotalsMatch.value = false;
+      }
     }
   });
 };
@@ -498,7 +741,24 @@ const fillTagTable = details => {
  * `checkFormComplete` Validates form completion.
  * @returns {formComplete} - Sets to True when form is validated.
  */
-const checkFormComplete = async () => {
+const checkFormComplete = () => {
+  if (
+    verifyBaseRequired() == true &&
+    verifyTagTotal() == true &&
+    verifyTransactionType() == true &&
+    verifyPaycheck() == true
+  ) {
+    formComplete.value = true;
+  } else {
+    formComplete.value = false;
+  }
+};
+
+/**
+ * `verifyBaseRequired` Verifies base requirements for form completeion
+ * @returns {boolean}- True if base requirements met
+ */
+const verifyBaseRequired = () => {
   if (
     formData.value.transaction_type_id !== null &&
     formData.value.transaction_type_id !== "" &&
@@ -509,20 +769,107 @@ const checkFormComplete = async () => {
     amount.value !== "" &&
     amount.value !== null &&
     formData.value.source_account_id !== "" &&
-    formData.value.source_account_id !== null &&
-    verifyTagTotal() == true
+    formData.value.source_account_id !== null
   ) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+/**
+ * `verifyTransactionType` Verifies destination_account filled if this is transfer
+ * @returns {boolean}- True if transfer and destination_account filled out
+ */
+const verifyTransactionType = () => {
+  if (formData.value.transaction_type_id == 3) {
     if (
-      (formData.value.status_id == 3 &&
-        formData.value.destination_account_id !== null) ||
-      formData.value.status_id !== 3
+      formData.value.destination_account_id !== null &&
+      formData.value.destination_account_id !== ""
     ) {
-      formComplete.value = true;
+      return true;
     } else {
-      formComplete.value = false;
+      return false;
     }
   } else {
-    formComplete.value = false;
+    return true;
+  }
+};
+
+/**
+ * `verifyPaycheck` Verifies paycheck info is filled out if this is a paycheck
+ * @returns {boolean}- True if all paycheck fields are filled and totals = gross
+ */
+const verifyPaycheck = () => {
+  let payfields = false;
+  let paytotal = false;
+  let paychecksum = 0;
+  if (isPaycheck.value) {
+    if (paycheck.value.dca) {
+      paychecksum += parseFloat(paycheck.value.dca);
+    }
+    if (paycheck.value.four_fifty_seven_b) {
+      paychecksum += parseFloat(paycheck.value.four_fifty_seven_b);
+    }
+    if (paycheck.value.fsa) {
+      paychecksum += parseFloat(paycheck.value.fsa);
+    }
+    if (paycheck.value.health) {
+      paychecksum += parseFloat(paycheck.value.health);
+    }
+    if (amount.value) {
+      paychecksum += parseFloat(amount.value);
+    }
+    if (paycheck.value.pension) {
+      paychecksum += parseFloat(paycheck.value.pension);
+    }
+    if (paycheck.value.taxes) {
+      paychecksum += parseFloat(paycheck.value.taxes);
+    }
+    if (paycheck.value.union_dues) {
+      paychecksum += parseFloat(paycheck.value.union_dues);
+    }
+    if (
+      paycheck.value.dca !== null &&
+      paycheck.value.dca !== "" &&
+      paycheck.value.four_fifty_seven_b !== null &&
+      paycheck.value.four_fifty_seven_b !== "" &&
+      paycheck.value.fsa !== null &&
+      paycheck.value.fsa !== "" &&
+      paycheck.value.gross !== null &&
+      paycheck.value.gross !== "" &&
+      paycheck.value.health !== null &&
+      paycheck.value.health !== "" &&
+      amount.value !== null &&
+      amount.value !== "" &&
+      paycheck.value.payee_id !== null &&
+      paycheck.value.payee_id !== "" &&
+      paycheck.value.pension !== null &&
+      paycheck.value.pension !== "" &&
+      paycheck.value.taxes !== null &&
+      paycheck.value.taxes !== "" &&
+      paycheck.value.union_dues !== null &&
+      paycheck.value.union_dues !== ""
+    ) {
+      payfields = true;
+    } else {
+      payfields = false;
+    }
+    if (paycheck.value.gross === paychecksum.toFixed(2)) {
+      paytotal = true;
+      paycheckTotalsMatch.value = true;
+    } else {
+      paytotal = false;
+      paycheckTotalsMatch.value = false;
+    }
+  } else {
+    payfields = true;
+    paytotal = true;
+  }
+  if (payfields && paytotal) {
+    return true;
+  } else {
+    return false;
   }
 };
 
@@ -534,6 +881,10 @@ const submitForm = async () => {
     formData.value.total_amount = amount.value;
   } else {
     formData.value.total_amount = -amount.value;
+  }
+  if (isPaycheck.value) {
+    paycheck.value.net = amount.value;
+    formData.value.paycheck = paycheck.value;
   }
   if (props.isEdit == false) {
     await addTransaction(formData.value);
@@ -548,6 +899,59 @@ const submitForm = async () => {
  * `closeDialog` Emits updateDialog to close form.
  */
 const closeDialog = () => {
+  formData.value = {
+    id: props.passedFormData ? props.passedFormData.id : 0,
+    status_id: props.passedFormData.status.id || 1,
+    transaction_type_id: props.passedFormData.transaction_type.id || 1,
+    transaction_date: props.passedFormData.transaction_date || formattedDate,
+    memo: props.passedFormData.memo || "",
+    source_account_id: props.passedFormData.source_account_id || null,
+    destination_account_id: props.passedFormData.destination_account_id || null,
+    edit_date: formattedDate,
+    add_date: props.passedFormData.add_date || formattedDate,
+    total_amount: props.passedFormData.total_amount || 0,
+    description: props.passedFormData.description || null,
+    details: fillTagTable(props.passedFormData.details),
+    paycheck: null,
+  };
+  amount.value = props.passedFormData.total_amount
+    ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
+    : null;
+  paycheck.value = {
+    id: props.passedFormData.paycheck ? props.passedFormData.paycheck.id : 0,
+    gross: props.passedFormData.paycheck
+      ? props.passedFormData.paycheck.gross
+      : null,
+    net: props.passedFormData.paycheck
+      ? props.passedFormData.paycheck.net
+      : null,
+    taxes: props.passedFormData.paycheck
+      ? props.passedFormData.paycheck.taxes
+      : null,
+    health: props.passedFormData.paycheck
+      ? props.passedFormData.paycheck.health
+      : null,
+    pension: props.passedFormData.paycheck
+      ? props.passedFormData.paycheck.pension
+      : null,
+    fsa: props.passedFormData.paycheck
+      ? props.passedFormData.paycheck.fsa
+      : null,
+    dca: props.passedFormData.paycheck
+      ? props.passedFormData.paycheck.dca
+      : null,
+    union_dues: props.passedFormData.paycheck
+      ? props.passedFormData.paycheck.union_dues
+      : null,
+    four_fifty_seven_b: props.passedFormData.paycheck
+      ? props.passedFormData.paycheck.four_fifty_seven_b
+      : null,
+    payee_id: props.passedFormData.paycheck
+      ? props.passedFormData.paycheck.payee.id
+      : null,
+  };
+  tagToAdd.value = null;
+  tagAmount.value = null;
   emit("updateDialog", false);
 };
 
@@ -570,7 +974,53 @@ const tagColor = typeID => {
  * `reformatNumberToMoney` Formats an amount to currency.
  */
 const reformatNumberToMoney = () => {
-  amount.value = parseFloat(amount.value).toFixed(2);
+  if (amount.value) {
+    amount.value = parseFloat(amount.value).toFixed(2);
+  }
+  if (paycheck.value.dca) {
+    paycheck.value.dca = parseFloat(paycheck.value.dca).toFixed(2);
+  }
+  if (paycheck.value.four_fifty_seven_b) {
+    paycheck.value.four_fifty_seven_b = parseFloat(
+      paycheck.value.four_fifty_seven_b,
+    ).toFixed(2);
+  }
+  if (paycheck.value.fsa) {
+    paycheck.value.fsa = parseFloat(paycheck.value.fsa).toFixed(2);
+  }
+  if (paycheck.value.gross) {
+    paycheck.value.gross = parseFloat(paycheck.value.gross).toFixed(2);
+  }
+  if (paycheck.value.health) {
+    paycheck.value.health = parseFloat(paycheck.value.health).toFixed(2);
+  }
+  if (paycheck.value.pension) {
+    paycheck.value.pension = parseFloat(paycheck.value.pension).toFixed(2);
+  }
+  if (paycheck.value.taxes) {
+    paycheck.value.taxes = parseFloat(paycheck.value.taxes).toFixed(2);
+  }
+  if (paycheck.value.union_dues) {
+    paycheck.value.union_dues = parseFloat(paycheck.value.union_dues).toFixed(
+      2,
+    );
+  }
+};
+
+/**
+ * `selectPaycheckChange` Handles when switching between paycheck or not.
+ */
+const selectPaycheckChange = () => {
+  paycheck.value.dca = null;
+  paycheck.value.four_fifty_seven_b = null;
+  paycheck.value.fsa = null;
+  paycheck.value.gross = null;
+  paycheck.value.health = null;
+  paycheck.value.payee_id = null;
+  paycheck.value.pension = null;
+  paycheck.value.taxes = null;
+  paycheck.value.union_dues = null;
+  checkFormComplete();
 };
 
 /**
