@@ -1,6 +1,6 @@
 <template>
   <v-list density="compact" nav>
-    <v-list-subheader
+    <v-list-subheader color="secondary"
       ><v-icon icon="mdi-folder"></v-icon> PLANNING</v-list-subheader
     >
     <v-list-item
@@ -8,6 +8,7 @@
       :key="i"
       :prepend-icon="planning_item.icon"
       :to="planning_item.link"
+      color="accent"
     >
       <v-list-item-title>{{ planning_item.title }}</v-list-item-title>
     </v-list-item>

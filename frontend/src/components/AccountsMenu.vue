@@ -10,7 +10,7 @@
       </v-list-item>
     </v-list>
     <v-list density="compact" nav>
-      <v-list-subheader color="accent"
+      <v-list-subheader color="secondary"
         ><v-icon icon="mdi-checkbook"></v-icon> CHECKING</v-list-subheader
       >
       <v-list-item
@@ -21,6 +21,7 @@
         v-for="(account, i) in checking_accounts"
         :key="i"
         :to="'/accounts/' + account.id"
+        color="accent"
         v-else
       >
         <v-list-item-title>{{ account.account_name }} </v-list-item-title>
@@ -38,7 +39,7 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader color="accent"
+      <v-list-subheader color="secondary"
         ><v-icon icon="mdi-piggy-bank"></v-icon> SAVINGS</v-list-subheader
       >
       <v-list-item
@@ -49,6 +50,7 @@
         v-for="(account, i) in savings_accounts"
         :key="i"
         :to="'/accounts/' + account.id"
+        color="accent"
         v-else
       >
         <v-list-item-title>{{ account.account_name }} </v-list-item-title>
@@ -66,7 +68,7 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader color="accent"
+      <v-list-subheader color="secondary"
         ><v-icon icon="mdi-credit-card"></v-icon> CREDIT CARD</v-list-subheader
       >
       <v-list-item
@@ -77,6 +79,7 @@
         v-for="(account, i) in cc_accounts"
         :key="i"
         :to="'/accounts/' + account.id"
+        color="accent"
         v-else
       >
         <v-list-item-title>{{ account.account_name }} </v-list-item-title>
@@ -94,7 +97,7 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader color="accent"
+      <v-list-subheader color="secondary"
         ><v-icon icon="mdi-finance"></v-icon> INVESTMENT</v-list-subheader
       >
       <v-list-item
@@ -105,6 +108,7 @@
         v-for="(account, i) in investment_accounts"
         :key="i"
         :to="'/accounts/' + account.id"
+        color="accent"
         v-else
       >
         <v-list-item-title>{{ account.account_name }} </v-list-item-title>
@@ -122,7 +126,7 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader color="accent"
+      <v-list-subheader color="secondary"
         ><v-icon icon="mdi-car-back"></v-icon> LOAN</v-list-subheader
       >
       <v-list-item
@@ -133,6 +137,7 @@
         v-for="(account, i) in loan_accounts"
         :key="i"
         :to="'/accounts/' + account.id"
+        color="accent"
         v-else
       >
         <v-list-item-title>{{ account.account_name }} </v-list-item-title>
@@ -150,7 +155,7 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader color="accent"
+      <v-list-subheader color="secondary"
         ><v-icon icon="mdi-bank-off"></v-icon> INACTIVE</v-list-subheader
       >
       <v-list-item
@@ -161,6 +166,7 @@
         v-for="(account, i) in inactive_accounts"
         :key="i"
         :to="'/accounts/' + account.id"
+        color="accent"
         v-else
       >
         <v-list-item-title
