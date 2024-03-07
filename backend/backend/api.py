@@ -496,6 +496,7 @@ class TransactionIn(Schema):
     details: Optional[List[TagDetailIn]] = None
     source_account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
+    paycheck: Optional[PaycheckIn] = None
 
 
 # The class MessageIn is a schema for validating Messages.
@@ -1318,18 +1319,46 @@ def create_transaction(request, payload: TransactionIn):
     """
 
     try:
-        transaction = Transaction.objects.create(
-            transaction_date=payload.transaction_date,
-            total_amount=payload.total_amount,
-            status_id=payload.status_id,
-            memo=payload.memo,
-            description=payload.description,
-            edit_date=payload.edit_date,
-            add_date=payload.add_date,
-            transaction_type_id=payload.transaction_type_id,
-            reminder_id=payload.reminder_id,
-            paycheck_id=payload.paycheck_id,
-        )
+        transaction = None
+        # Create paycheck
+        if payload.paycheck is not None:
+            paycheck = Paycheck.objects.create(
+                gross=payload.paycheck.gross,
+                net=payload.paycheck.net,
+                taxes=payload.paycheck.taxes,
+                health=payload.paycheck.health,
+                pension=payload.paycheck.pension,
+                fsa=payload.paycheck.fsa,
+                dca=payload.paycheck.dca,
+                union_dues=payload.paycheck.union_dues,
+                four_fifty_seven_b=payload.paycheck.four_fifty_seven_b,
+                payee_id=payload.paycheck.payee_id,
+            )
+            transaction = Transaction.objects.create(
+                transaction_date=payload.transaction_date,
+                total_amount=payload.total_amount,
+                status_id=payload.status_id,
+                memo=payload.memo,
+                description=payload.description,
+                edit_date=payload.edit_date,
+                add_date=payload.add_date,
+                transaction_type_id=payload.transaction_type_id,
+                reminder_id=payload.reminder_id,
+                paycheck_id=paycheck.id,
+            )
+        else:
+            transaction = Transaction.objects.create(
+                transaction_date=payload.transaction_date,
+                total_amount=payload.total_amount,
+                status_id=payload.status_id,
+                memo=payload.memo,
+                description=payload.description,
+                edit_date=payload.edit_date,
+                add_date=payload.add_date,
+                transaction_type_id=payload.transaction_type_id,
+                reminder_id=payload.reminder_id,
+                paycheck_id=None,
+            )
         logToDB(
             f"Transaction created : #{transaction.id}",
             None,
@@ -1338,6 +1367,7 @@ def create_transaction(request, payload: TransactionIn):
             3001005,
             2,
         )
+        # Create transaction details
         if payload.details is not None:
             if payload.transaction_type_id == 3:
                 TransactionDetail.objects.create(
@@ -1400,7 +1430,8 @@ def create_transaction(request, payload: TransactionIn):
             3001901,
             2,
         )
-        raise HttpError(500, "Record creation error")
+        print(f"Error: {str(e)}")
+        raise HttpError(500, f"Record creation error : {str(e)}")
 
 
 @api.post("/transactions/details")
