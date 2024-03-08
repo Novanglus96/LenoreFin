@@ -952,6 +952,13 @@ const closeDialog = () => {
   };
   tagToAdd.value = null;
   tagAmount.value = null;
+  if (props.passedFormData.paycheck) {
+    isPaycheck.value = true;
+  } else {
+    isPaycheck.value = false;
+  }
+  tab.value = null;
+  formComplete.value = false;
   emit("updateDialog", false);
 };
 
