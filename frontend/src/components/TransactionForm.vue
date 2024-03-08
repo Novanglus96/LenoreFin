@@ -597,6 +597,7 @@ const formData = ref({
   description: props.passedFormData.description || null,
   details: [],
   paycheck: null,
+  reminder: null,
 });
 
 const paycheck = ref({
@@ -660,6 +661,7 @@ const watchPassedFormData = () => {
         total_amount: props.passedFormData.total_amount,
         description: props.passedFormData.description,
         details: fillTagTable(props.passedFormData.details),
+        reminder: props.passedFormData.reminder,
       };
       paycheck.value = {
         id: props.passedFormData.paycheck
@@ -889,7 +891,7 @@ const submitForm = async () => {
   if (props.isEdit == false) {
     await addTransaction(formData.value);
   } else {
-    console.log("edit");
+    console.log("edit:", formData.value);
   }
 
   closeDialog();
