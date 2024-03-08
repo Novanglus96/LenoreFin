@@ -512,7 +512,7 @@ class Transaction(models.Model):
         Reminder, on_delete=models.CASCADE, null=True, blank=True, default=None
     )
     paycheck = models.ForeignKey(
-        Paycheck, on_delete=models.CASCADE, null=True, blank=True, default=None
+        Paycheck, on_delete=models.SET_NULL, null=True, blank=True, default=None
     )
 
 

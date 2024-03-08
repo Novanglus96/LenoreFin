@@ -497,6 +497,7 @@ class TransactionIn(Schema):
     source_account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
     paycheck: Optional[PaycheckIn] = None
+    reminder: Optional[ReminderIn] = None
 
 
 # The class MessageIn is a schema for validating Messages.
@@ -4809,17 +4810,144 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
     """
 
     try:
+        # Setup variables
+        today = get_today_formatted()
+        paycheck = None
+
+        # Get the transaction to update
         transaction = get_object_or_404(Transaction, id=transaction_id)
+
+        # Recreate Details
+        existing_details = TransactionDetail.objects.filter(
+            transaction_id=transaction_id
+        )
+        for detail in existing_details:
+            detail.delete()
+        if payload.transaction_type_id == 3:
+            TransactionDetail.objects.create(
+                transaction_id=transaction_id,
+                account_id=payload.source_account_id,
+                detail_amt=payload.total_amount,
+                tag_id=2,
+            )
+            logToDB(
+                "Transaction detail created",
+                None,
+                None,
+                transaction_id,
+                3001001,
+                1,
+            )
+            TransactionDetail.objects.create(
+                transaction_id=transaction_id,
+                account_id=payload.destination_account_id,
+                detail_amt=-payload.total_amount,
+                tag_id=2,
+            )
+            logToDB(
+                "Transaction detail created",
+                None,
+                None,
+                transaction_id,
+                3001001,
+                1,
+            )
+        else:
+            for detail in payload.details:
+                adj_amount = 0
+                if payload.transaction_type_id == 1:
+                    adj_amount = -detail.tag_amt
+                else:
+                    adj_amount = detail.tag_amt
+                TransactionDetail.objects.create(
+                    transaction_id=transaction_id,
+                    account_id=payload.source_account_id,
+                    detail_amt=adj_amount,
+                    tag_id=detail.tag_id,
+                )
+                logToDB(
+                    "Transaction detail created",
+                    None,
+                    None,
+                    transaction_id,
+                    3001001,
+                    1,
+                )
+
+        # Get existing paycheck if it exists
+        if transaction.paycheck_id is not None:
+            paycheck = get_object_or_404(Paycheck, id=transaction.paycheck_id)
+
+        # Update existing paycheck
+        if payload.paycheck is not None and paycheck is not None:
+            paycheck.gross = payload.paycheck.gross
+            paycheck.net = payload.paycheck.net
+            paycheck.taxes = payload.paycheck.taxes
+            paycheck.health = payload.paycheck.health
+            paycheck.pension = payload.paycheck.pension
+            paycheck.fsa = payload.paycheck.fsa
+            paycheck.dca = payload.paycheck.dca
+            paycheck.union_dues = payload.paycheck.union_dues
+            paycheck.four_fifty_seven_b = payload.paycheck.four_fifty_seven_b
+            paycheck.payee_id = payload.paycheck.payee_id
+            paycheck.save()
+            logToDB(
+                "Paycheck updated",
+                None,
+                None,
+                transaction_id,
+                3001002,
+                1,
+            )
+
+        # Create new paycheck
+        if payload.paycheck is not None and paycheck is None:
+            paycheck = Paycheck.objects.create(
+                gross=payload.paycheck.gross,
+                net=payload.paycheck.net,
+                taxes=payload.paycheck.taxes,
+                health=payload.paycheck.health,
+                pension=payload.paycheck.pension,
+                fsa=payload.paycheck.fsa,
+                dca=payload.paycheck.dca,
+                union_dues=payload.paycheck.union_dues,
+                four_fifty_seven_b=payload.paycheck.four_fifty_seven_b,
+                payee_id=payload.paycheck.payee_id,
+            )
+            logToDB(
+                "Paycheck created",
+                None,
+                None,
+                transaction_id,
+                3001001,
+                1,
+            )
+
+        # Delete existing paycheck if no paycheck info passed
+        if payload.paycheck is None and paycheck is not None:
+            paycheck.delete()
+        logToDB(
+            "Paycheck deleted",
+            None,
+            None,
+            transaction_id,
+            3001003,
+            1,
+        )
+
+        # Update the transaction
         transaction.transaction_date = payload.transaction_date
         transaction.total_amount = payload.total_amount
         transaction.status_id = payload.status_id
         transaction.memo = payload.memo
         transaction.description = payload.description
-        transaction.edit_date = payload.edit_date
-        transaction.add_date = payload.add_date
+        transaction.edit_date = today
         transaction.transaction_type_id = payload.transaction_type_id
-        transaction.reminder_id = payload.reminder_id
-        transaction.paycheck_id = payload.paycheck_id
+        transaction.reminder_id = None
+        if paycheck is not None:
+            transaction.paycheck_id = paycheck.id
+        else:
+            transaction.paycheck_id = None
         transaction.save()
         logToDB(
             f"Transaction updated : {transaction_id}",
@@ -4829,6 +4957,9 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
             3001002,
             1,
         )
+
+        # Update the reminder
+
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions

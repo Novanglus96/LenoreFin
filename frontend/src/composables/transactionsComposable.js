@@ -91,6 +91,18 @@ async function clearTransactionFunction(clearedTransaction) {
   }
 }
 
+async function updateTransactionFunction(updatedTransaction) {
+  try {
+    const response = await apiClient.put(
+      "/transactions/" + updatedTransaction.id,
+      updatedTransaction,
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Transaction not updated: ");
+  }
+}
+
 export function useTransactions(account_id, maxdays, forecast) {
   const queryClient = useQueryClient();
   const { data: transactions, isLoading } = useQuery({
@@ -133,6 +145,21 @@ export function useTransactions(account_id, maxdays, forecast) {
     },
   });
 
+  const updateTransactionMutation = useMutation({
+    mutationFn: updateTransactionFunction,
+    onSuccess: () => {
+      console.log("Success updating transaction");
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
+      queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
+    },
+  });
+
+  async function editTransaction(updatedTransaction) {
+    updateTransactionMutation.mutate(updatedTransaction);
+  }
+
   async function addTransaction(newTransaction) {
     createTransactionMutation.mutate(newTransaction);
   }
@@ -151,5 +178,6 @@ export function useTransactions(account_id, maxdays, forecast) {
     addTransaction,
     removeTransaction,
     clearTransaction,
+    editTransaction,
   };
 }

@@ -561,7 +561,7 @@ const { transaction_types, isLoading: transaction_types_isLoading } =
   useTransactionTypes();
 const { transaction_statuses, isLoading: transaction_statuses_isLoading } =
   useTransactionStatuses();
-const { addTransaction } = useTransactions();
+const { addTransaction, editTransaction } = useTransactions();
 const { tags, isLoading: tags_isLoading } = useTags();
 const { payees, isLoading: payees_isLoading } = usePayees();
 
@@ -891,7 +891,7 @@ const submitForm = async () => {
   if (props.isEdit == false) {
     await addTransaction(formData.value);
   } else {
-    console.log("edit:", formData.value);
+    await editTransaction(formData.value);
   }
 
   closeDialog();
