@@ -59,17 +59,35 @@
         <v-list-item
           prepend-icon="mdi-view-dashboard-variant"
           to="/"
+          color="accent"
         ></v-list-item>
-        <v-list-item to="/accounts">
-          <template v-slot:append>
-            <v-icon icon="mdi-bank" color="accent"></v-icon>
-          </template>
+        <v-list-item prepend-icon="mdi-bank" to="/accounts" color="accent">
         </v-list-item>
-        <v-list-item prepend-icon="mdi-chart-bar" to="/forecast"></v-list-item>
-        <v-list-item prepend-icon="mdi-bell" to="/reminders"></v-list-item>
-        <v-list-item prepend-icon="mdi-folder" to="/planning"></v-list-item>
-        <v-list-item prepend-icon="mdi-tag" to="/tags"></v-list-item>
-        <v-list-item prepend-icon="mdi-cog" to="/settings"></v-list-item>
+        <v-list-item
+          prepend-icon="mdi-chart-bar"
+          to="/forecast"
+          color="accent"
+        ></v-list-item>
+        <v-list-item
+          prepend-icon="mdi-bell"
+          to="/reminders"
+          color="accent"
+        ></v-list-item>
+        <v-list-item
+          prepend-icon="mdi-folder"
+          to="/planning"
+          color="accent"
+        ></v-list-item>
+        <v-list-item
+          prepend-icon="mdi-tag"
+          to="/tags"
+          color="accent"
+        ></v-list-item>
+        <v-list-item
+          prepend-icon="mdi-cog"
+          to="/settings"
+          color="accent"
+        ></v-list-item>
       </v-list>
     </v-navigation-drawer>
     <v-navigation-drawer color="secondary" rail permanent v-if="mdAndUp">
