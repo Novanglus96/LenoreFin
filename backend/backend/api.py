@@ -1431,7 +1431,6 @@ def create_transaction(request, payload: TransactionIn):
             3001901,
             2,
         )
-        print(f"Error: {str(e)}")
         raise HttpError(500, f"Record creation error : {str(e)}")
 
 
@@ -2712,14 +2711,12 @@ def list_transactions_bytag(request, tag: int):
         else:
             this_year_avg = 0
         this_year_avg = round(this_year_avg, 2)
-        print(f"YTD_avg: {this_year_avg}")
         # Calculate Last Year Monthly average
         if last_year_total is not None:
             last_year_avg = last_year_total / 12
         else:
             last_year_avg = 0
         last_year_avg = round(last_year_avg, 2)
-        print(f"last_year_avg: {last_year_avg}")
         # Prepare the transactions object
         transaction_details = []
         for detail in alltrans:
@@ -5000,13 +4997,9 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
                 )
                 transaction.reminder_id = None
                 if new_date <= reminder.end_date:
-                    print(
-                        f"end_date = {reminder.end_date}, new_date = {new_date}"
-                    )
                     reminder.next_date = new_date
                     reminder.start_date = new_date
                 else:
-                    print(f"reminder_to_delete = {reminder.id}")
                     reminder_to_delete = reminder.id
 
             # Save changes to Reminder
@@ -5043,7 +5036,6 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
 
         # Delete reminder
         if reminder_to_delete is not None:
-            print(f"Delete reminder_to_delete: {reminder_to_delete}")
             get_object_or_404(Reminder, id=reminder_to_delete).delete()
             logToDB(
                 f"Reminder deleted: #{reminder_to_delete}",
