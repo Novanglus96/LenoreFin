@@ -8,11 +8,20 @@ Date: February 15, 2024
 
 from django_q.tasks import async_task, result, schedule
 import arrow
-from api.models import Message, Reminder, Transaction, Repeat, Option, LogEntry
+from api.models import (
+    Message,
+    Reminder,
+    Transaction,
+    Repeat,
+    Option,
+    LogEntry,
+    TransactionDetail,
+)
 from django_q.models import Schedule
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 
 def create_message(message_text):
@@ -39,7 +48,7 @@ def convert_reminder():
     """
 
     # Define todays date
-    todayDate = date.today().strftime("%Y-%m-%d")
+    todayDate = timzezone.now().date().strftime("%Y-%m-%d")
 
     # Get transactions that have a reminder and are dated today or earlier
     transactions = Transaction.objects.filter(
@@ -76,7 +85,7 @@ def convert_reminder():
                 )
 
             # Modify the next due and start date of the reminder
-            nextDate = date.today()
+            nextDate = timezone.now().date()
             nextDate += relativedelta(days=repeat.days)
             nextDate += relativedelta(weeks=repeat.weeks)
             nextDate += relativedelta(months=repeat.months)
@@ -106,6 +115,92 @@ def convert_reminder():
                     3001003,
                     1,
                 )
+
+
+# TODO: Task to update forever reminders
+
+
+def update_forever_reminders():
+    """
+    The function `update_forever_reminders` updates reminders that have no end date to always have
+    data for 10 years.
+
+    Args:
+
+    Returns:
+        trans_total (int): the total number of transactions created
+
+    """
+    # setup variables
+    todayDate = timezone.now().date()
+    maxDate = todayDate + relativedelta(years=10)
+    trans_total = 0
+
+    # Retrieve reminders with no end date
+    reminders = Reminder.objects.filter(end_date__isnull=True)
+    for reminder in reminders:
+        # Get last transaction
+        last_transaction = (
+            Transaction.objects.filter(reminder_id=reminder.id)
+            .order_by("-transaction_date")
+            .first()
+        )
+        last_date = last_transaction.transaction_date
+        next_date = last_date
+        next_date += relativedelta(days=reminder.repeat.days)
+        next_date += relativedelta(weeks=reminder.repeat.weeks)
+        next_date += relativedelta(months=reminder.repeat.months)
+        next_date += relativedelta(years=reminder.repeat.years)
+        # Add transactions up to 10 years
+        while next_date <= maxDate:
+            # Add Transaction
+            new_transaction = Transaction.objects.create(
+                transaction_date=next_date,
+                total_amount=reminder.amount,
+                status_id=1,
+                description=reminder.description,
+                edit_date=todayDate,
+                add_date=todayDate,
+                transaction_type_id=reminder.transaction_type.id,
+                reminder_id=reminder.id,
+            )
+            # Add Detail
+            if reminder.transaction_type.id == 3:
+                TransactionDetail.objects.create(
+                    transaction_id=new_transaction.id,
+                    account_id=reminder.reminder_source_account.id,
+                    detail_amt=reminder.amount,
+                    tag_id=reminder.tag.id,
+                )
+                TransactionDetail.objects.create(
+                    transaction_id=new_transaction.id,
+                    account_id=reminder.reminder_destination_account.id,
+                    detail_amt=-reminder.amount,
+                    tag_id=reminder.tag.id,
+                )
+            else:
+                TransactionDetail.objects.create(
+                    transaction_id=new_transaction.id,
+                    account_id=reminder.reminder_source_account.id,
+                    detail_amt=reminder.amount,
+                    tag_id=reminder.tag.id,
+                )
+            logToDB(
+                "Reminder transactions created",
+                None,
+                reminder.id,
+                None,
+                3002007,
+                1,
+            )
+            trans_total += 1
+            # Increment next_date
+            next_date += relativedelta(days=reminder.repeat.days)
+            next_date += relativedelta(weeks=reminder.repeat.weeks)
+            next_date += relativedelta(months=reminder.repeat.months)
+            next_date += relativedelta(years=reminder.repeat.years)
+        string_return = f"Created {trans_total} new transaction(s)"
+        return string_return
 
 
 # TODO: Task to look for negative dips
