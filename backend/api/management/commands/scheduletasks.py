@@ -49,7 +49,16 @@ class Command(BaseCommand):
             {
                 "task_name": "Convert Reminder Transactions",
                 "function": "api.tasks.convert_reminder",
-                "time": "03:00",
+                "time": "00:01",
+                "arguments": "",
+                "type": "DAILY",  # DAILY, HOURLY
+                "start_today": False,
+                "delete": False,
+            },
+            {
+                "task_name": "Update Forever Reminders",
+                "function": "api.tasks.update_forever_reminders",
+                "time": "00:02",
                 "arguments": "",
                 "type": "DAILY",  # DAILY, HOURLY
                 "start_today": False,
