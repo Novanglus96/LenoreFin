@@ -2554,6 +2554,7 @@ def get_graph(request, widget_id: int):
         today = timezone.now().date()
         target_date = today - relativedelta(months=month)
         target_month = target_date.month
+        target_year = target_date.year
         labels = []
         values = []
         datasets = []
@@ -2605,6 +2606,8 @@ def get_graph(request, widget_id: int):
                 TransactionDetail.objects.filter(
                     Q(tag=tag) | Q(tag__parent=tag),
                     transaction__transaction_date__month=target_month,
+                    transaction__transaction_date__year=target_year,
+                    transaction__status__id__gt=1
                 ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
                 or 0
             )
@@ -2671,9 +2674,9 @@ def list_transactions_bytag(request, tag: int):
         last_year = today.year - 1
 
         # Retrieve all transactions for tag
-        alltrans = TransactionDetail.objects.filter(tag__id=tag).order_by(
-            "-transaction__transaction_date"
-        )
+        alltrans = TransactionDetail.objects.filter(
+            Q(tag__id=tag) & Q(transaction__status__id__gt=1)
+        ).order_by("-transaction__transaction_date")
 
         # Filter transactions for current year
         thisyear_trans = alltrans.filter(
