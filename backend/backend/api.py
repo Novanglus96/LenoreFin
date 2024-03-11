@@ -4996,11 +4996,15 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
                     1,
                 )
                 transaction.reminder_id = None
-                if new_date <= reminder.end_date:
+                if reminder.end_date is not None:
+                    if new_date <= reminder.end_date:
+                        reminder.next_date = new_date
+                        reminder.start_date = new_date
+                    else:
+                        reminder_to_delete = reminder.id
+                else:
                     reminder.next_date = new_date
                     reminder.start_date = new_date
-                else:
-                    reminder_to_delete = reminder.id
 
             # Save changes to Reminder
             reminder.save()
