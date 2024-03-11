@@ -117,9 +117,6 @@ def convert_reminder():
                 )
 
 
-# TODO: Task to update forever reminders
-
-
 def update_forever_reminders():
     """
     The function `update_forever_reminders` updates reminders that have no end date to always have
