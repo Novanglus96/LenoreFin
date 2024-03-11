@@ -497,7 +497,7 @@ class TransactionIn(Schema):
     source_account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
     paycheck: Optional[PaycheckIn] = None
-    reminder: Optional[ReminderIn] = None
+    reminder: Optional[ReminderOut] = None
 
 
 # The class MessageIn is a schema for validating Messages.
@@ -4813,6 +4813,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         # Setup variables
         today = get_today_formatted()
         paycheck = None
+        reminder_to_delete = None
 
         # Get the transaction to update
         transaction = get_object_or_404(Transaction, id=transaction_id)
@@ -4935,6 +4936,89 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
             1,
         )
 
+        # Update Reminder
+        if transaction.reminder is not None:
+            reminder = get_object_or_404(Reminder, id=transaction.reminder_id)
+            new_date = transaction.transaction_date
+            new_date += relativedelta(days=reminder.repeat.days)
+            new_date += relativedelta(weeks=reminder.repeat.weeks)
+            new_date += relativedelta(months=reminder.repeat.months)
+            new_date += relativedelta(years=reminder.repeat.years)
+            prev_date = transaction.transaction_date
+            prev_date -= relativedelta(days=reminder.repeat.days)
+            prev_date -= relativedelta(weeks=reminder.repeat.weeks)
+            prev_date -= relativedelta(months=reminder.repeat.months)
+            prev_date -= relativedelta(years=reminder.repeat.years)
+
+            # If transaction date is equal to start date, modify start/next date
+            if transaction.transaction_date == reminder.next_date:
+                if new_date <= reminder.end_date:
+                    reminder.next_date = new_date
+                    reminder.start_date = new_date
+                    transaction.reminder_id = None
+                else:
+                    transaction.reminder_id = None
+                    reminder_to_delete = reminder.id
+
+            # If transaction date is greater than start date, less then end date
+            # modify original start/next date, create new reminder
+            if transaction.transaction_date > reminder.next_date:
+                new_reminder = Reminder.objects.create(
+                    tag=reminder.tag,
+                    amount=reminder.amount,
+                    reminder_source_account=reminder.reminder_source_account,
+                    reminder_destination_account=reminder.reminder_destination_account,
+                    description=reminder.description,
+                    transaction_type=reminder.transaction_type,
+                    start_date=reminder.start_date,
+                    next_date=reminder.next_date,
+                    end_date=prev_date,
+                    repeat=reminder.repeat,
+                    auto_add=reminder.auto_add,
+                )
+                trans_to_update_reminders = Transaction.objects.filter(
+                    reminder_id=reminder.id, transaction_date__lte=prev_date
+                )
+                for trans in trans_to_update_reminders:
+                    trans.reminder_id = new_reminder.id
+                    trans.save()
+                    logToDB(
+                        "Transaction updated",
+                        None,
+                        None,
+                        trans.id,
+                        3001002,
+                        1,
+                    )
+                logToDB(
+                    "Reminder created",
+                    None,
+                    new_reminder.id,
+                    None,
+                    3001001,
+                    1,
+                )
+                transaction.reminder_id = None
+                if new_date <= reminder.end_date:
+                    print(
+                        f"end_date = {reminder.end_date}, new_date = {new_date}"
+                    )
+                    reminder.next_date = new_date
+                    reminder.start_date = new_date
+                else:
+                    print(f"reminder_to_delete = {reminder.id}")
+                    reminder_to_delete = reminder.id
+
+            # Save changes to Reminder
+            reminder.save()
+            logToDB(
+                "Reminder updated",
+                None,
+                reminder.id,
+                None,
+                3001002,
+                1,
+            )
         # Update the transaction
         transaction.transaction_date = payload.transaction_date
         transaction.total_amount = payload.total_amount
@@ -4943,7 +5027,6 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         transaction.description = payload.description
         transaction.edit_date = today
         transaction.transaction_type_id = payload.transaction_type_id
-        transaction.reminder_id = None
         if paycheck is not None:
             transaction.paycheck_id = paycheck.id
         else:
@@ -4958,7 +5041,18 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
             1,
         )
 
-        # Update the reminder
+        # Delete reminder
+        if reminder_to_delete is not None:
+            print(f"Delete reminder_to_delete: {reminder_to_delete}")
+            get_object_or_404(Reminder, id=reminder_to_delete).delete()
+            logToDB(
+                f"Reminder deleted: #{reminder_to_delete}",
+                None,
+                None,
+                None,
+                3001003,
+                1,
+            )
 
         return {"success": True}
     except Exception as e:
