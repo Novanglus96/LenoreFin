@@ -95,7 +95,12 @@
                     variant="outlined"
                     label="Description*"
                     :rules="required"
-                    @update:model-value="checkFormComplete"
+                    @update:model-value="
+                      () => {
+                        checkFormComplete();
+                        resetTagField();
+                      }
+                    "
                     density="compact"
                   ></v-text-field>
                 </v-col>
@@ -1030,6 +1035,13 @@ const selectPaycheckChange = () => {
   paycheck.value.taxes = null;
   paycheck.value.union_dues = null;
   checkFormComplete();
+};
+
+/**
+ * `resetTagField` Convenience function adds total and Untagged as default option for tags.
+ */
+const resetTagField = () => {
+  tagAmount.value = amount.value;
 };
 
 /**
