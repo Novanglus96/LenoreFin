@@ -21,6 +21,7 @@ from .models import (
     Bank,
     Message,
     Paycheck,
+    FileImport,
 )
 
 # Register your models here.
@@ -46,3 +47,4 @@ admin.site.register(TagType)
 admin.site.register(Bank)
 admin.site.register(Message)
 admin.site.register(Paycheck)
+admin.site.register(FileImport)

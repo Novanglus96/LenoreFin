@@ -8,6 +8,18 @@ Date: February 15, 2024
 
 from django.db import models
 from datetime import date
+from django.utils import timezone
+
+
+def import_file_name(instance, filename):
+    timestamp = timezone.now().strftime("%Y-%m-%d_%H-%M-%S")
+    return f"imports/import-{timestamp}.csv"
+
+
+def mapping_file_name(instance, filename):
+    timestamp = timezone.now().strftime("%Y-%m-%d_%H-%M-%S")
+    return f"imports/mapping-{timestamp}.csv"
+
 
 # Create your models here.
 
@@ -603,3 +615,16 @@ class Message(models.Model):
 
     def __str__(self):
         return self.message
+
+
+class FileImport(models.Model):
+    """
+    Model representing a file import to import transactions.
+
+    Fields:
+    - import_file (FileField): The transcation import file.
+    - mappings_file (FileField): A mapping file to map fields correctly.
+    """
+
+    import_file = models.FileField(upload_to=import_file_name)
+    mapping_file = models.FileField(upload_to=mapping_file_name)

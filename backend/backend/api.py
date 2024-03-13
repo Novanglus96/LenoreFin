@@ -6,7 +6,8 @@ Author: John Adams <johnmadams96@gmail.com>
 Date: February 13, 2024
 """
 
-from ninja import NinjaAPI, Schema, Query
+from ninja import NinjaAPI, Schema, Query, File
+from ninja.files import UploadedFile
 from api.models import (
     Account,
     AccountType,
@@ -29,6 +30,7 @@ from api.models import (
     Bank,
     Paycheck,
     Message,
+    FileImport,
 )
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
@@ -2607,7 +2609,7 @@ def get_graph(request, widget_id: int):
                     Q(tag=tag) | Q(tag__parent=tag),
                     transaction__transaction_date__month=target_month,
                     transaction__transaction_date__year=target_year,
-                    transaction__status__id__gt=1
+                    transaction__status__id__gt=1,
                 ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
                 or 0
             )
@@ -6151,6 +6153,29 @@ def delete_messages(request, message_id: int):
             2,
         )
         raise HttpError(500, "Record retrieval error")
+
+
+@api.post("/upload")
+def import_file(
+    request,
+    import_file: UploadedFile = File(...),
+    mapping_file: UploadedFile = File(...),
+):
+    """
+    The function `import_file` uploads an import file and its mapping file.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        import_file (File): the import file to upload in csv format
+        mapping_file (File): the mapping file for the import file
+
+    Returns:
+        success: True
+    """
+    importedFile = FileImport.objects.create(
+        import_file=import_file, mapping_file=mapping_file
+    )
+    return {"success": True}
 
 
 # Helper Functions
