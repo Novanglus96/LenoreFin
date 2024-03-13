@@ -1,6 +1,21 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-white">
     <template v-slot:append>
+      <v-tooltip text="File Import" location="top">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            icon="mdi-file-import"
+            flat
+            variant="plain"
+            v-bind="props"
+            @click="importFileDialog = true"
+          ></v-btn>
+        </template>
+      </v-tooltip>
+      <FileImportForm
+        v-model="importFileDialog"
+        @update-dialog="updateImportFileDialog"
+      />
       <v-menu location="start">
         <template v-slot:activator="{ props }">
           <v-btn icon="mdi-cog" flat size="xs" v-bind="props"> </v-btn>
@@ -247,6 +262,7 @@
 import { ref, defineProps, defineEmits } from "vue";
 import { useTransactions } from "@/composables/transactionsComposable";
 import TransactionForm from "@/components/TransactionForm";
+import FileImportForm from "@/components/FileImportForm";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
 
@@ -257,6 +273,7 @@ const day = String(today.getDate()).padStart(2, "0");
 const formattedDate = `${year}-${month}-${day}`;
 const showDeleteDialog = ref(false);
 const transactionAddFormDialog = ref(false);
+const importFileDialog = ref(false);
 const transactionEditFormDialog = ref(false);
 const props = defineProps({
   account: Number,
@@ -323,7 +340,7 @@ const columns = ref([
   { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
   { field: "balance", title: "Balance", width: "100px" },
   { field: "description", title: "Description" },
-  { field: "tags", title: "Tag(s)", width:"200px" },
+  { field: "tags", title: "Tag(s)", width: "200px" },
   { field: "pretty_account", title: "Account" },
 ]);
 const getClassForMoney = (amount, status) => {
@@ -384,6 +401,10 @@ const clickEditTransaction = async transaction_id => {
 
 const updateAddDialog = () => {
   transactionAddFormDialog.value = false;
+};
+
+const updateImportFileDialog = () => {
+  importFileDialog.value = false;
 };
 
 const updateEditDialog = () => {
