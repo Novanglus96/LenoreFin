@@ -1,0 +1,10 @@
+﻿TransactionDate,TransactionType,TransactionStatus,Amount,Description,SourceAccount,DestinationAccount,Tags,Memo
+2024-03-13,Expense,Pending,123.5,Test,Some Account,,Money Pile: 23.50; Cash: 100.00,
+2024-03-13,Draft,Pending,123.5,Test,Some Account,,Money Pile: 23.50; Cash: 100.00,
+2024-03-13,Check,Pending,123.5,Test,Some Account,,Money Pile: 23.50; Cash: 100.00,
+2024-03-13,Expense,Cleared,123.5,Test,Some Account,,Money Pile: 23.50; Cash: 100.00,
+2024-03-13,Transfer,Cleared,123.5,Test,Some Account,,Money Pile: 23.50; Cash: 100.00,
+2024-03-13,Transfer,Reconciled,123.5,Test,Some Account,,Money Pile: 23.50; Cash: 100.00,
+2024-03-13,Income,Reconciled,123.5,Test,Some Account,,Money Pile: 23.50; Cash: 100.00,
+2024-03-13,Income,Cleared,123.5,Test,Some Account,,Money Pile: 23.50; Cash: 100.00,
+2024-03-13,Income,Not Cleared,123.5,Test,Some Account,,Money Pile: 23.50; Cash: 100.00,
