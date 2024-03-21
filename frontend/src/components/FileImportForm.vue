@@ -1,5 +1,5 @@
 <template>
-  <v-dialog persistent width="1024">
+  <v-dialog persistent width="75%">
     <v-card>
       <v-card-title>
         <span class="text-h5">Import File</span>
@@ -17,23 +17,41 @@
             <v-divider color="accent" thickness="2"></v-divider>
             <v-stepper-item
               value="2"
-              title="Review Mappings"
+              title="Status Mappings"
               icon="mdi-relation-many-to-many"
               :complete="step2Complete"
             ></v-stepper-item>
-            <v-divider color="accent" thickness="2"></v-divider>
             <v-stepper-item
               value="3"
-              title="Final Check"
-              icon="mdi-marker-check"
+              title="Type Mappings"
+              icon="mdi-relation-many-to-many"
               :complete="step3Complete"
+            ></v-stepper-item>
+            <v-stepper-item
+              value="4"
+              title="Tag Mappings"
+              icon="mdi-relation-many-to-many"
+              :complete="step4Complete"
+            ></v-stepper-item>
+            <v-stepper-item
+              value="5"
+              title="Account Mappings"
+              icon="mdi-relation-many-to-many"
+              :complete="step5Complete"
             ></v-stepper-item>
             <v-divider color="accent" thickness="2"></v-divider>
             <v-stepper-item
-              value="4"
+              value="6"
+              title="Transaction Errors"
+              icon="mdi-marker-check"
+              :complete="step6Complete"
+            ></v-stepper-item>
+            <v-divider color="accent" thickness="2"></v-divider>
+            <v-stepper-item
+              value="7"
               title="Summary"
               icon="mdi-text-box"
-              :complete="step4Complete"
+              :complete="step7Complete"
             ></v-stepper-item>
           </v-stepper-header>
           <v-stepper-window>
@@ -54,10 +72,560 @@
                 accept=".csv"
                 @update:model-value="updateStep1Complete"
               ></v-file-input>
+              <span
+                class="text-subtitle-2 font-italic text-error"
+                v-if="!fileIsValid"
+                >*** There's a problem with the file you uploaded. Make sure to
+                check the formatting and use this
+                <a href="/example.csv">example</a> as a template.</span
+              >
             </v-stepper-window-item>
-            <v-stepper-window-item value="2"> Test2 </v-stepper-window-item>
-            <v-stepper-window-item value="3"> Test3 </v-stepper-window-item>
-            <v-stepper-window-item value="4"> Test4 </v-stepper-window-item>
+            <v-stepper-window-item value="2">
+              <v-data-iterator
+                :items="mappings.transaction_statuses"
+                item-value="file_status"
+                :items-per-page="4"
+              >
+                <template
+                  v-slot:header="{ page, pageCount, prevPage, nextPage }"
+                >
+                  <h1
+                    class="text-subtitle-2 font-weight-bold d-flex justify-space-between mb-4 align-center"
+                  >
+                    <div class="text-truncate">Status Mappings</div>
+                    <div class="d-flex align-center">
+                      <div class="d-inline-flex">
+                        <v-btn
+                          :disabled="page === 1"
+                          class="me-2"
+                          icon="mdi-arrow-left"
+                          size="small"
+                          variant="tonal"
+                          @click="prevPage"
+                        ></v-btn>
+
+                        <v-btn
+                          :disabled="page === pageCount"
+                          icon="mdi-arrow-right"
+                          size="small"
+                          variant="tonal"
+                          @click="nextPage"
+                        ></v-btn>
+                      </div>
+                    </div>
+                  </h1>
+                </template>
+                <template v-slot:default="{ items }">
+                  <v-row>
+                    <v-col
+                      v-for="(item, i) in items"
+                      :key="i"
+                      cols="12"
+                      sm="6"
+                      xl="3"
+                    >
+                      <v-sheet border
+                        ><v-container
+                          ><v-row dense
+                            ><v-col>{{ item.raw.file_status }}</v-col></v-row
+                          ><v-row dense
+                            ><v-col class="text-center text-caption font-bold"
+                              >will be mapped to</v-col
+                            ></v-row
+                          ><v-row dense
+                            ><v-col
+                              ><v-autocomplete
+                                clearable
+                                label="Status*"
+                                :items="transaction_statuses"
+                                variant="outlined"
+                                :loading="transaction_statuses_isLoading"
+                                item-title="transaction_status"
+                                item-value="id"
+                                v-model="item.raw.status_id"
+                                :rules="required"
+                                density="compact"
+                                @update:model-value="updateStep2Complete"
+                              ></v-autocomplete></v-col></v-row></v-container></v-sheet></v-col
+                  ></v-row>
+                </template>
+                <template v-slot:footer="{ page, pageCount }">
+                  <v-footer
+                    class="justify-space-between text-body-2 mt-4"
+                    color="surface-variant"
+                  >
+                    Total status(es): {{ mappings.transaction_statuses.length }}
+
+                    <div>Page {{ page }} of {{ pageCount }}</div>
+                  </v-footer>
+                </template>
+              </v-data-iterator>
+            </v-stepper-window-item>
+            <v-stepper-window-item value="3">
+              <v-data-iterator
+                :items="mappings.transaction_types"
+                item-value="file_type"
+                :items-per-page="4"
+              >
+                <template
+                  v-slot:header="{ page, pageCount, prevPage, nextPage }"
+                >
+                  <h1
+                    class="text-subtitle-2 font-weight-bold d-flex justify-space-between mb-4 align-center"
+                  >
+                    <div class="text-truncate">Type Mappings</div>
+                    <div class="d-flex align-center">
+                      <div class="d-inline-flex">
+                        <v-btn
+                          :disabled="page === 1"
+                          class="me-2"
+                          icon="mdi-arrow-left"
+                          size="small"
+                          variant="tonal"
+                          @click="prevPage"
+                        ></v-btn>
+
+                        <v-btn
+                          :disabled="page === pageCount"
+                          icon="mdi-arrow-right"
+                          size="small"
+                          variant="tonal"
+                          @click="nextPage"
+                        ></v-btn>
+                      </div>
+                    </div>
+                  </h1>
+                </template>
+                <template v-slot:default="{ items }">
+                  <v-row>
+                    <v-col
+                      v-for="(item, i) in items"
+                      :key="i"
+                      cols="12"
+                      sm="6"
+                      xl="3"
+                    >
+                      <v-sheet border
+                        ><v-container
+                          ><v-row dense
+                            ><v-col>{{ item.raw.file_type }}</v-col></v-row
+                          ><v-row dense
+                            ><v-col class="text-center text-caption font-bold"
+                              >will be mapped to</v-col
+                            ></v-row
+                          ><v-row dense
+                            ><v-col
+                              ><v-autocomplete
+                                clearable
+                                label="Status*"
+                                :items="transaction_types"
+                                variant="outlined"
+                                :loading="transaction_types_isLoading"
+                                item-title="transaction_type"
+                                item-value="id"
+                                v-model="item.raw.type_id"
+                                :rules="required"
+                                density="compact"
+                                @update:model-value="updateStep3Complete"
+                              ></v-autocomplete></v-col></v-row></v-container></v-sheet></v-col
+                  ></v-row>
+                </template>
+                <template v-slot:footer="{ page, pageCount }">
+                  <v-footer
+                    class="justify-space-between text-body-2 mt-4"
+                    color="surface-variant"
+                  >
+                    Total type(s): {{ mappings.transaction_types.length }}
+
+                    <div>Page {{ page }} of {{ pageCount }}</div>
+                  </v-footer>
+                </template>
+              </v-data-iterator>
+            </v-stepper-window-item>
+            <v-stepper-window-item value="4">
+              <v-data-iterator
+                :items="mappings.tags"
+                item-value="file_tag"
+                :items-per-page="4"
+              >
+                <template
+                  v-slot:header="{ page, pageCount, prevPage, nextPage }"
+                >
+                  <h1
+                    class="text-subtitle-2 font-weight-bold d-flex justify-space-between mb-4 align-center"
+                  >
+                    <div class="text-truncate">Tag Mappings</div>
+                    <div class="d-flex align-center">
+                      <div class="d-inline-flex">
+                        <v-btn
+                          :disabled="page === 1"
+                          class="me-2"
+                          icon="mdi-arrow-left"
+                          size="small"
+                          variant="tonal"
+                          @click="prevPage"
+                        ></v-btn>
+
+                        <v-btn
+                          :disabled="page === pageCount"
+                          icon="mdi-arrow-right"
+                          size="small"
+                          variant="tonal"
+                          @click="nextPage"
+                        ></v-btn>
+                      </div>
+                    </div>
+                  </h1>
+                </template>
+                <template v-slot:default="{ items }">
+                  <v-row>
+                    <v-col
+                      v-for="(item, i) in items"
+                      :key="i"
+                      cols="12"
+                      sm="6"
+                      xl="3"
+                    >
+                      <v-sheet border
+                        ><v-container
+                          ><v-row dense
+                            ><v-col>{{ item.raw.file_tag }}</v-col></v-row
+                          ><v-row dense
+                            ><v-col class="text-center text-caption font-bold"
+                              >will be mapped to</v-col
+                            ></v-row
+                          ><v-row dense
+                            ><v-col
+                              ><v-autocomplete
+                                clearable
+                                label="Tag*"
+                                :items="tags"
+                                variant="outlined"
+                                :loading="tags_isLoading"
+                                item-title="tag_name"
+                                item-value="id"
+                                v-model="item.raw.tag_id"
+                                :rules="required"
+                                density="compact"
+                                @update:model-value="updateStep4Complete"
+                              ></v-autocomplete></v-col></v-row></v-container></v-sheet></v-col
+                  ></v-row>
+                </template>
+                <template v-slot:footer="{ page, pageCount }">
+                  <v-footer
+                    class="justify-space-between text-body-2 mt-4"
+                    color="surface-variant"
+                  >
+                    Total tag(s): {{ mappings.tags.length }}
+
+                    <div>Page {{ page }} of {{ pageCount }}</div>
+                  </v-footer>
+                </template>
+              </v-data-iterator>
+            </v-stepper-window-item>
+            <v-stepper-window-item value="5">
+              <v-data-iterator
+                :items="mappings.accounts"
+                item-value="file_account"
+                :items-per-page="4"
+              >
+                <template
+                  v-slot:header="{ page, pageCount, prevPage, nextPage }"
+                >
+                  <h1
+                    class="text-subtitle-2 font-weight-bold d-flex justify-space-between mb-4 align-center"
+                  >
+                    <div class="text-truncate">Account Mappings</div>
+                    <div class="d-flex align-center">
+                      <div class="d-inline-flex">
+                        <v-btn
+                          :disabled="page === 1"
+                          class="me-2"
+                          icon="mdi-arrow-left"
+                          size="small"
+                          variant="tonal"
+                          @click="prevPage"
+                        ></v-btn>
+
+                        <v-btn
+                          :disabled="page === pageCount"
+                          icon="mdi-arrow-right"
+                          size="small"
+                          variant="tonal"
+                          @click="nextPage"
+                        ></v-btn>
+                      </div>
+                    </div>
+                  </h1>
+                </template>
+                <template v-slot:default="{ items }">
+                  <v-row>
+                    <v-col
+                      v-for="(item, i) in items"
+                      :key="i"
+                      cols="12"
+                      sm="6"
+                      xl="3"
+                    >
+                      <v-sheet border
+                        ><v-container
+                          ><v-row dense
+                            ><v-col>{{ item.raw.file_account }}</v-col></v-row
+                          ><v-row dense
+                            ><v-col class="text-center text-caption font-bold"
+                              >will be mapped to</v-col
+                            ></v-row
+                          ><v-row dense
+                            ><v-col
+                              ><v-autocomplete
+                                clearable
+                                label="Account*"
+                                :items="accounts"
+                                variant="outlined"
+                                :loading="accounts_isLoading"
+                                item-title="account_name"
+                                item-value="id"
+                                v-model="item.raw.account_id"
+                                :rules="required"
+                                density="compact"
+                                @update:model-value="updateStep5Complete"
+                              ></v-autocomplete></v-col></v-row></v-container></v-sheet></v-col
+                  ></v-row>
+                </template>
+                <template v-slot:footer="{ page, pageCount }">
+                  <v-footer
+                    class="justify-space-between text-body-2 mt-4"
+                    color="surface-variant"
+                  >
+                    Total account(s): {{ mappings.accounts.length }}
+
+                    <div>Page {{ page }} of {{ pageCount }}</div>
+                  </v-footer>
+                </template>
+              </v-data-iterator>
+            </v-stepper-window-item>
+            <v-stepper-window-item value="6">
+              <v-data-iterator
+                :items="mappings.transactions"
+                item-value="description"
+                :items-per-page="2"
+              >
+                <template
+                  v-slot:header="{ page, pageCount, prevPage, nextPage }"
+                >
+                  <h1
+                    class="text-subtitle-2 font-weight-bold d-flex justify-space-between mb-4 align-center"
+                  >
+                    <div class="text-truncate">Transaction Errors</div>
+                    <div class="d-flex align-center">
+                      <div class="d-inline-flex">
+                        <v-btn
+                          :disabled="page === 1"
+                          class="me-2"
+                          icon="mdi-arrow-left"
+                          size="small"
+                          variant="tonal"
+                          @click="prevPage"
+                        ></v-btn>
+
+                        <v-btn
+                          :disabled="page === pageCount"
+                          icon="mdi-arrow-right"
+                          size="small"
+                          variant="tonal"
+                          @click="nextPage"
+                        ></v-btn>
+                      </div>
+                    </div>
+                  </h1>
+                </template>
+                <template v-slot:default="{ items }">
+                  <v-row>
+                    <v-col v-for="(item, i) in items" :key="i" sm="6" xl="3">
+                      <v-sheet border
+                        ><v-container>
+                          <v-row dense>
+                            <v-col>Line #{{ item.raw.id }}</v-col>
+                          </v-row>
+                          <v-row dense
+                            ><v-col
+                              ><span class="text-h6 font-bold">Errors:</span
+                              ><br />
+                              <span
+                                v-for="(error, j) in item.raw.errors"
+                                :key="j"
+                                class="font-italic text-subtitle-2 text-error"
+                                >{{ error
+                                }}<span v-if="j < item.raw.errors.length - 1">
+                                  :
+                                </span>
+                              </span></v-col
+                            >
+                          </v-row>
+                          <v-row dense>
+                            <v-col
+                              ><VueDatePicker
+                                v-model="item.raw.transactionDate"
+                                timezone="America/New_York"
+                                model-type="yyyy-MM-dd"
+                                :enable-time-picker="false"
+                                auto-apply
+                                format="yyyy-MM-dd"
+                                :teleport="true"
+                                @update:model-value="updateStep6Complete"
+                              ></VueDatePicker
+                            ></v-col>
+                          </v-row>
+                          <v-row dense>
+                            <v-col
+                              ><v-autocomplete
+                                clearable
+                                label="Transaction Type*"
+                                :items="transaction_types"
+                                variant="outlined"
+                                :loading="transaction_types_isLoading"
+                                item-title="transaction_type"
+                                item-value="id"
+                                v-model="item.raw.transactionTypeID"
+                                :rules="required"
+                                density="compact"
+                                @update:model-value="updateStep6Complete"
+                              ></v-autocomplete
+                            ></v-col>
+                            <v-col>
+                              <v-autocomplete
+                                clearable
+                                label="Transaction Status*"
+                                :items="transaction_statuses"
+                                variant="outlined"
+                                :loading="transaction_statuses_isLoading"
+                                item-title="transaction_status"
+                                item-value="id"
+                                v-model="item.raw.transactionStatusID"
+                                :rules="required"
+                                density="compact"
+                                @update:model-value="updateStep6Complete"
+                              ></v-autocomplete>
+                            </v-col>
+                          </v-row>
+                          <v-row dense>
+                            <v-col>
+                              <v-text-field
+                                v-model="item.raw.amount"
+                                variant="outlined"
+                                label="Amount*"
+                                :rules="required"
+                                prefix="$"
+                                type="number"
+                                step="1.00"
+                                density="compact"
+                                @update:model-value="updateStep6Complete"
+                              ></v-text-field>
+                            </v-col>
+                            <v-col>
+                              <v-text-field
+                                v-model="item.raw.description"
+                                variant="outlined"
+                                label="Description*"
+                                :rules="required"
+                                density="compact"
+                                @update:model-value="updateStep6Complete"
+                              ></v-text-field>
+                            </v-col>
+                          </v-row>
+                          <v-row dense>
+                            <v-col>
+                              <v-autocomplete
+                                clearable
+                                label="Source Account*"
+                                :items="accounts"
+                                variant="outlined"
+                                :loading="accounts_isLoading"
+                                item-title="account_name"
+                                item-value="id"
+                                v-model="item.raw.sourceAccountID"
+                                :rules="required"
+                                density="compact"
+                                @update:model-value="updateStep6Complete"
+                              >
+                                <template v-slot:item="{ props, item }">
+                                  <v-list-item
+                                    v-bind="props"
+                                    :title="item.raw.account_name"
+                                    :subtitle="item.raw.bank.bank_name"
+                                  >
+                                    <template v-slot:prepend>
+                                      <v-icon
+                                        :icon="item.raw.account_type.icon"
+                                      ></v-icon>
+                                    </template>
+                                  </v-list-item>
+                                </template>
+                              </v-autocomplete>
+                            </v-col>
+                            <v-col>
+                              <v-autocomplete
+                                clearable
+                                label="Destination Account*"
+                                :items="accounts"
+                                variant="outlined"
+                                :loading="accounts_isLoading"
+                                item-title="account_name"
+                                item-value="id"
+                                v-model="item.raw.destinationAccountID"
+                                :rules="required"
+                                density="compact"
+                                @update:model-value="updateStep6Complete"
+                              >
+                                <template v-slot:item="{ props, item }">
+                                  <v-list-item
+                                    v-bind="props"
+                                    :title="item.raw.account_name"
+                                    :subtitle="item.raw.bank.bank_name"
+                                  >
+                                    <template v-slot:prepend>
+                                      <v-icon
+                                        :icon="item.raw.account_type.icon"
+                                      ></v-icon>
+                                    </template>
+                                  </v-list-item>
+                                </template>
+                              </v-autocomplete>
+                            </v-col>
+                          </v-row>
+                          <v-row dense>
+                            <v-col>
+                              <v-textarea
+                                clearable
+                                label="Memo"
+                                variant="outlined"
+                                v-model="item.raw.memo"
+                                :rows="11"
+                                no-resize
+                                @update:model-value="updateStep6Complete"
+                              ></v-textarea>
+                            </v-col>
+                          </v-row>
+                        </v-container>
+                      </v-sheet>
+                    </v-col>
+                  </v-row>
+                </template>
+                <template v-slot:footer="{ page, pageCount }">
+                  <v-footer
+                    class="justify-space-between text-body-2 mt-4"
+                    color="surface-variant"
+                  >
+                    Total transaction(s): {{ mappings.transactions.length }}
+
+                    <div>Page {{ page }} of {{ pageCount }}</div>
+                  </v-footer>
+                </template>
+              </v-data-iterator>
+            </v-stepper-window-item>
+            <v-stepper-window-item value="7">
+              <v-banner><v-banner-text>Summary</v-banner-text></v-banner>
+            </v-stepper-window-item>
           </v-stepper-window>
           <v-stepper-actions disabled="prev">
             <template #next>
@@ -97,6 +665,8 @@ import { useTransactionTypes } from "@/composables/transactionTypesComposable";
 import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
 import { useAccounts } from "@/composables/accountsComposable";
 import { useTags } from "@/composables/tagsComposable";
+import VueDatePicker from "@vuepic/vue-datepicker";
+import "@vuepic/vue-datepicker/dist/main.css";
 
 // Define reactive variables...
 const step = ref(0);
@@ -105,7 +675,12 @@ const step1Complete = ref(false);
 const step2Complete = ref(false);
 const step3Complete = ref(false);
 const step4Complete = ref(false);
+const step5Complete = ref(false);
+const step6Complete = ref(false);
+const step7Complete = ref(false);
 const nextDisabled = ref(true);
+const fileIsValid = ref(true);
+const fileData = ref(null);
 
 // Initialize Mappings
 const mappings = ref({
@@ -113,6 +688,7 @@ const mappings = ref({
   transaction_statuses: [],
   accounts: [],
   tags: [],
+  transactions: [],
 });
 
 // Define emits
@@ -120,10 +696,12 @@ const emit = defineEmits(["updateDialog"]);
 
 // API calls and data retrieval...
 
-const { transaction_types } = useTransactionTypes();
-const { transaction_statuses } = useTransactionStatuses();
-const { accounts } = useAccounts();
-const { tags } = useTags();
+const { transaction_types, isLoading: transaction_types_isLoading } =
+  useTransactionTypes();
+const { transaction_statuses, isLoading: transaction_statuses_isLoading } =
+  useTransactionStatuses();
+const { accounts, isLoading: accounts_isLoading } = useAccounts();
+const { tags, isLoading: tags_isLoading } = useTags();
 
 // Define functions...
 
@@ -137,7 +715,18 @@ const closeDialog = () => {
   step2Complete.value = false;
   step3Complete.value = false;
   step4Complete.value = false;
-  nextDisabled.value = false;
+  step5Complete.value = false;
+  step6Complete.value = false;
+  step7Complete.value = false;
+  nextDisabled.value = true;
+  mappings.value = {
+    transaction_types: [],
+    transaction_statuses: [],
+    accounts: [],
+    tags: [],
+    transactions: [],
+  };
+  fileIsValid.value = true;
   emit("updateDialog", false);
 };
 
@@ -145,16 +734,18 @@ const closeDialog = () => {
  * `nextStep` Advances the stepper to next step.
  */
 const nextStep = () => {
-  if (step.value < 4) {
-    nextDisabled.value = true;
-    step.value++;
+  if (step.value < 7) {
+    if (fileIsValid.value) {
+      nextDisabled.value = true;
+      step.value++;
+    }
   }
 };
 
 /**
  * `updateStep1Complete` Updates Step 1 Completed status.
  */
-const updateStep1Complete = () => {
+const updateStep1Complete = async () => {
   processFile();
   if (fileToImport.value && fileToImport.value !== "") {
     step1Complete.value = true;
@@ -166,6 +757,88 @@ const updateStep1Complete = () => {
 };
 
 /**
+ * `updateStep2Complete` Updates Step 2 Completed status.
+ */
+const updateStep2Complete = () => {
+  let totalComplete = 0;
+  for (let x = 0; x < mappings.value.transaction_statuses.length; x++) {
+    if (mappings.value.transaction_statuses[x].status_id !== null) {
+      totalComplete += 1;
+    }
+  }
+  if (totalComplete == mappings.value.transaction_statuses.length) {
+    step2Complete.value = true;
+    nextDisabled.value = false;
+  } else {
+    step2Complete.value = false;
+    nextDisabled.value = true;
+  }
+};
+
+/**
+ * `updateStep3Complete` Updates Step 3 Completed status.
+ */
+const updateStep3Complete = () => {
+  let totalComplete = 0;
+  for (let x = 0; x < mappings.value.transaction_types.length; x++) {
+    if (mappings.value.transaction_types[x].type_id !== null) {
+      totalComplete += 1;
+    }
+  }
+  if (totalComplete == mappings.value.transaction_types.length) {
+    step3Complete.value = true;
+    nextDisabled.value = false;
+  } else {
+    step3Complete.value = false;
+    nextDisabled.value = true;
+  }
+};
+
+/**
+ * `updateStep4Complete` Updates Step 4 Completed status.
+ */
+const updateStep4Complete = () => {
+  let totalComplete = 0;
+  for (let x = 0; x < mappings.value.tags.length; x++) {
+    if (mappings.value.tags[x].tag_id !== null) {
+      totalComplete += 1;
+    }
+  }
+  if (totalComplete == mappings.value.tags.length) {
+    step4Complete.value = true;
+    nextDisabled.value = false;
+  } else {
+    step4Complete.value = false;
+    nextDisabled.value = true;
+  }
+};
+
+/**
+ * `updateStep5Complete` Updates Step 5 Completed status.
+ */
+const updateStep5Complete = () => {
+  let totalComplete = 0;
+  for (let x = 0; x < mappings.value.accounts.length; x++) {
+    if (mappings.value.accounts[x].account_id !== null) {
+      totalComplete += 1;
+    }
+  }
+  if (totalComplete == mappings.value.accounts.length) {
+    verifyTransactions(fileData.value);
+    step5Complete.value = true;
+    nextDisabled.value = false;
+  } else {
+    step5Complete.value = false;
+    nextDisabled.value = true;
+  }
+};
+
+/**
+ * `updateStep6Complete` Updates Step 6 Completed status.
+ */
+const updateStep6Complete = () => {};
+
+/**
  * `allStepsComplete` Returns true if all steps are complete.
  */
 const allStepsComplete = () => {
@@ -173,7 +846,10 @@ const allStepsComplete = () => {
     step1Complete.value &&
     step2Complete.value &&
     step3Complete.value &&
-    step4Complete.value
+    step4Complete.value &&
+    step5Complete.value &&
+    step6Complete.value &&
+    step7Complete.value
   ) {
     return true;
   } else {
@@ -191,8 +867,8 @@ const processFile = () => {
   const reader = new FileReader();
   reader.onload = e => {
     const contents = e.target.result;
-    const data = parseCSV(contents);
-    createMappings(data);
+    fileData.value = parseCSV(contents);
+    verifyFile(fileData.value);
   };
   reader.readAsText(file);
 };
@@ -219,6 +895,180 @@ const parseCSV = csvFile => {
 };
 
 /**
+ * `verifyFile` Verifies the integrity of the file.
+ */
+const verifyFile = data => {
+  if (
+    data.length >= 1 &&
+    data[0].TransactionDate &&
+    data[0].TransactionType &&
+    data[0].TransactionStatus &&
+    data[0].Amount &&
+    data[0].Description &&
+    data[0].SourceAccount
+  ) {
+    fileIsValid.value = true;
+    createMappings(data);
+  } else {
+    fileIsValid.value = false;
+    mappings.value = {
+      transaction_types: [],
+      transaction_statuses: [],
+      accounts: [],
+      tags: [],
+      transactions: [],
+    };
+  }
+};
+
+/**
+ * `verifyTransactions` Verifies transaction integrity.
+ */
+const verifyTransactions = transactions => {
+  console.log("mappings:", mappings.value);
+  for (let i = 0; i < transactions.length; i++) {
+    let transaction = transactions[i];
+    let trans_obj = {
+      id: i,
+      transactionDate: transaction.TransactionDate,
+      transactionTypeID: null,
+      transactionStatusID: null,
+      amount: transaction.Amount,
+      description: transaction.Description,
+      sourceAccountID: null,
+      destinationAccountID: null,
+      tags: [],
+      memo: transaction.Memo,
+      errors: [],
+    };
+
+    // Format tags
+    if (transaction.Tags) {
+      const tagStrings = transaction.Tags.split(";");
+      const tagObjects = tagStrings.map(tagString => {
+        const [tagName, tagAmount] = tagString.split(":");
+        return {
+          tag_id: null,
+          tag_name: tagName.trim(),
+          tag_amount: parseFloat(tagAmount.trim()),
+        };
+      });
+      for (let o = 0; o < tagObjects.length; o++) {
+        for (let t = 0; t < mappings.value.tags.length; t++) {
+          if (tagObjects[o].tag_name == mappings.value.tags[t].file_tag) {
+            tagObjects[o].tag_id = mappings.value.tags[t].tag_id;
+            break;
+          }
+        }
+      }
+      trans_obj.tags = tagObjects;
+    }
+    // Verify required fields are filled out and correct format
+    if (
+      transaction.TransactionDate == null ||
+      transaction.TransactionDate === ""
+    ) {
+      trans_obj.errors.push("Missing Date");
+      trans_obj.transactionDate = null;
+    } else {
+      if (!isValidDateFormat(transaction.TransactionDate)) {
+        trans_obj.errors.push("Invalid Date");
+        trans_obj.transactionDate = null;
+      }
+    }
+    if (
+      transaction.TransactionType == null ||
+      transaction.TransactionType === ""
+    ) {
+      trans_obj.errors.push("Missing Transaction Type");
+      trans_obj.transactionTypeID = null;
+    } else {
+      for (let y = 0; y < mappings.value.transaction_types.length; y++) {
+        if (
+          mappings.value.transaction_types[y].file_type ==
+          transaction.TransactionType
+        ) {
+          trans_obj.transactionTypeID =
+            mappings.value.transaction_types[y].type_id;
+          break;
+        }
+      }
+      if (
+        trans_obj.transactionTypeID === 3 &&
+        (transaction.DestinationAccount == null ||
+          transaction.DestinationAccount === "")
+      ) {
+        trans_obj.errors.push("Missing Transfer Destination Account");
+        trans_obj.destinationAccountID = null;
+      }
+    }
+    if (
+      transaction.TransactionStatus == null ||
+      transaction.TransactionStatus === ""
+    ) {
+      trans_obj.errors.push("Missing Transaction Status");
+      trans_obj.transactionStatusID = null;
+    } else {
+      for (let s = 0; s < mappings.value.transaction_statuses.length; s++) {
+        if (
+          mappings.value.transaction_statuses[s].file_status ==
+          transaction.TransactionStatus
+        ) {
+          trans_obj.transactionStatusID =
+            mappings.value.transaction_statuses[s].status_id;
+          break;
+        }
+      }
+    }
+    if (transaction.Amount == null || transaction.Amount === "") {
+      trans_obj.errors.push("Missing Amount");
+      trans_obj.amount = null;
+    } else {
+      if (!isValidFloat(transaction.Amount)) {
+        trans_obj.errors.push("Invalid Amount");
+        trans_obj.amount = null;
+      }
+    }
+    if (transaction.Description == null || transaction.Description === "") {
+      trans_obj.errors.push("Missing Description");
+      trans_obj.description = null;
+    }
+    if (transaction.SourceAccount == null || transaction.SourceAccount === "") {
+      trans_obj.errors.push("Missing Source Account");
+      trans_obj.sourceAccountID = null;
+    } else {
+      for (let sa = 0; sa < mappings.value.accounts.length; sa++) {
+        if (
+          mappings.value.accounts[sa].file_account == transaction.SourceAccount
+        ) {
+          trans_obj.sourceAccountID = mappings.value.accounts[sa].account_id;
+        }
+      }
+    }
+    if (
+      transaction.DestinationAccount !== null &&
+      transaction.DestinationAccount !== "" &&
+      trans_obj.transactionTypeID !== 3
+    ) {
+      trans_obj.errors.push("Destination Account Set For Non Transfer");
+    }
+    if (transaction.Tags !== null && transaction.Tags !== "") {
+      let tag_total = 0;
+      for (let k = 0; k < trans_obj.tags.length; k++) {
+        tag_total += trans_obj.tags[k].tag_amount;
+      }
+      if (parseFloat(tag_total) !== parseFloat(transaction.Amount)) {
+        trans_obj.errors.push("Tags Do Not Equal Total");
+      }
+    }
+
+    if (trans_obj.errors.length > 0) {
+      mappings.value.transactions.push(trans_obj);
+    }
+  }
+};
+
+/**
  * `createMappings` Create mappings for transaction fields.
  */
 const createMappings = transactions => {
@@ -230,19 +1080,19 @@ const createMappings = transactions => {
     let transaction = transactions[i];
     let trans_type = {
       file_type: transaction.TransactionType,
-      type_id: 0,
+      type_id: null,
     };
     let trans_status = {
       file_status: transaction.TransactionStatus,
-      status_id: 0,
+      status_id: null,
     };
     let source_account = {
       file_account: transaction.SourceAccount,
-      account_id: 0,
+      account_id: null,
     };
     let destination_account = {
       file_account: transaction.DestinationAccount,
-      account_id: 0,
+      account_id: null,
     };
 
     // Map TransactionTypes, set to 0 if it doesn't exist
@@ -330,13 +1180,16 @@ const createMappings = transactions => {
     }
 
     // Map tags, set to 0 if it doesn't exist
-    const all_tags = transaction.Tags.split(";").map(substring =>
-      substring.split(":")[0].trim(),
-    );
+    let all_tags = [];
+    if (transaction.Tags) {
+      all_tags = transaction.Tags.split(";").map(substring =>
+        substring.split(":")[0].trim(),
+      );
+    }
     for (let n = 0; n < all_tags.length; n++) {
       let trans_tag = {
         file_tag: all_tags[n],
-        tag_id: 0,
+        tag_id: null,
       };
       let tag_exists = true;
       if (transaction.Tags !== "") {
@@ -361,6 +1214,46 @@ const createMappings = transactions => {
   mappings.value.transaction_statuses = statuses;
   mappings.value.accounts = map_accounts;
   mappings.value.tags = map_tags;
-  console.log("mappings:", mappings.value);
 };
+
+/**
+ * `isValidDateFormat` Validates a provided string is a valid date.
+ */
+function isValidDateFormat(dateString) {
+  // Define a regular expression to match the yyyy-mm-dd format
+  const dateFormatRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+  // Check if the string matches the regular expression
+  if (!dateFormatRegex.test(dateString)) {
+    return false; // Date format doesn't match yyyy-mm-dd
+  }
+
+  // Check if the string represents a valid date using the Date object
+  const dateObject = new Date(dateString);
+  if (isNaN(dateObject.getTime())) {
+    return false; // Invalid date
+  }
+
+  // Check if the parsed date matches the original input
+  // This step is to handle edge cases such as "2021-02-30" which the Date object may accept
+  const [year, month, day] = dateString.split("-").map(Number);
+  const dateObjectTZ = new Date(year, month - 1, day);
+  if (
+    dateObjectTZ.getFullYear() !== year ||
+    dateObjectTZ.getMonth() + 1 !== month ||
+    dateObjectTZ.getDate() !== day
+  ) {
+    return false; // Date doesn't match original input
+  }
+
+  // If all checks passed, the string is in valid yyyy-mm-dd format and represents a valid date
+  return true;
+}
+
+/**
+ * `isValidFloat` Validates a provided value is a valid float.
+ */
+function isValidFloat(value) {
+  return !isNaN(parseFloat(value)) && isFinite(value);
+}
 </script>
