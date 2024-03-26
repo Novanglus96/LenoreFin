@@ -600,10 +600,23 @@
                                 label="Memo"
                                 variant="outlined"
                                 v-model="item.raw.memo"
-                                :rows="11"
+                                :rows="2"
                                 no-resize
                                 @update:model-value="updateStep6Complete"
                               ></v-textarea>
+                            </v-col>
+                          </v-row>
+                          <v-row dense>
+                            <v-col>
+                              <TagTable
+                                :key="i"
+                                v-if="item.raw.transactionTypeID !== 3"
+                                :tags="item.raw.tags"
+                                :totalAmount="item.raw.amount"
+                                :noItems="2"
+                                :transID="i"
+                                @tag-table-updated="updateTags"
+                              ></TagTable>
                             </v-col>
                           </v-row>
                         </v-container>
@@ -667,6 +680,7 @@ import { useAccounts } from "@/composables/accountsComposable";
 import { useTags } from "@/composables/tagsComposable";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
+import TagTable from "@/components/TagTable";
 
 // Define reactive variables...
 const step = ref(0);
@@ -1066,6 +1080,14 @@ const verifyTransactions = transactions => {
       mappings.value.transactions.push(trans_obj);
     }
   }
+};
+
+/**
+ * `updateTags` Updates tags if they are updated.
+ */
+const updateTags = data => {
+  mappings.value.transactions[data.transID].tags = data.tags;
+  updateStep6Complete();
 };
 
 /**
