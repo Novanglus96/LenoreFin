@@ -454,10 +454,17 @@
                               <span
                                 v-for="(error, j) in item.raw.errors"
                                 :key="j"
-                                class="font-italic text-subtitle-2 text-error"
-                                >{{ error
-                                }}<span v-if="j < item.raw.errors.length - 1">
-                                  :
+                                :class="
+                                  error.status == 0
+                                    ? 'font-italic text-subtitle-2 text-error'
+                                    : 'text-subtitle-2 text-grey text-decoration-line-through'
+                                "
+                                >{{ error.text
+                                }}<span
+                                  v-if="j < item.raw.errors.length - 1"
+                                  class="text-black font-bold"
+                                >
+                                  &bull;
                                 </span>
                               </span></v-col
                             >
@@ -472,7 +479,7 @@
                                 auto-apply
                                 format="yyyy-MM-dd"
                                 :teleport="true"
-                                @update:model-value="updateStep6Complete"
+                                @update:model-value="verifyErrors(item.raw.id)"
                               ></VueDatePicker
                             ></v-col>
                           </v-row>
@@ -489,7 +496,7 @@
                                 v-model="item.raw.transactionTypeID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="updateStep6Complete"
+                                @update:model-value="verifyErrors(item.raw.id)"
                               ></v-autocomplete
                             ></v-col>
                             <v-col>
@@ -504,7 +511,7 @@
                                 v-model="item.raw.transactionStatusID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="updateStep6Complete"
+                                @update:model-value="verifyErrors(item.raw.id)"
                               ></v-autocomplete>
                             </v-col>
                           </v-row>
@@ -519,7 +526,7 @@
                                 type="number"
                                 step="1.00"
                                 density="compact"
-                                @update:model-value="updateStep6Complete"
+                                @update:model-value="verifyErrors(item.raw.id)"
                               ></v-text-field>
                             </v-col>
                             <v-col>
@@ -529,7 +536,7 @@
                                 label="Description*"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="updateStep6Complete"
+                                @update:model-value="verifyErrors(item.raw.id)"
                               ></v-text-field>
                             </v-col>
                           </v-row>
@@ -546,7 +553,7 @@
                                 v-model="item.raw.sourceAccountID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="updateStep6Complete"
+                                @update:model-value="verifyErrors(item.raw.id)"
                               >
                                 <template v-slot:item="{ props, item }">
                                   <v-list-item
@@ -575,7 +582,7 @@
                                 v-model="item.raw.destinationAccountID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="updateStep6Complete"
+                                @update:model-value="verifyErrors(item.raw.id)"
                               >
                                 <template v-slot:item="{ props, item }">
                                   <v-list-item
@@ -602,7 +609,7 @@
                                 v-model="item.raw.memo"
                                 :rows="2"
                                 no-resize
-                                @update:model-value="updateStep6Complete"
+                                @update:model-value="verifyErrors(item.raw.id)"
                               ></v-textarea>
                             </v-col>
                           </v-row>
@@ -982,11 +989,11 @@ const verifyTransactions = transactions => {
       transaction.TransactionDate == null ||
       transaction.TransactionDate === ""
     ) {
-      trans_obj.errors.push("Missing Date");
+      trans_obj.errors.push({ text: "Missing Date", status: 0 });
       trans_obj.transactionDate = null;
     } else {
       if (!isValidDateFormat(transaction.TransactionDate)) {
-        trans_obj.errors.push("Invalid Date");
+        trans_obj.errors.push({ text: "Invalid Date", status: 0 });
         trans_obj.transactionDate = null;
       }
     }
@@ -994,7 +1001,7 @@ const verifyTransactions = transactions => {
       transaction.TransactionType == null ||
       transaction.TransactionType === ""
     ) {
-      trans_obj.errors.push("Missing Transaction Type");
+      trans_obj.errors.push({ text: "Missing Transaction Type", status: 0 });
       trans_obj.transactionTypeID = null;
     } else {
       for (let y = 0; y < mappings.value.transaction_types.length; y++) {
@@ -1012,7 +1019,10 @@ const verifyTransactions = transactions => {
         (transaction.DestinationAccount == null ||
           transaction.DestinationAccount === "")
       ) {
-        trans_obj.errors.push("Missing Transfer Destination Account");
+        trans_obj.errors.push({
+          text: "Missing Transfer Destination Account",
+          status: 0,
+        });
         trans_obj.destinationAccountID = null;
       }
     }
@@ -1020,7 +1030,7 @@ const verifyTransactions = transactions => {
       transaction.TransactionStatus == null ||
       transaction.TransactionStatus === ""
     ) {
-      trans_obj.errors.push("Missing Transaction Status");
+      trans_obj.errors.push({ text: "Missing Transaction Status", status: 0 });
       trans_obj.transactionStatusID = null;
     } else {
       for (let s = 0; s < mappings.value.transaction_statuses.length; s++) {
@@ -1035,20 +1045,20 @@ const verifyTransactions = transactions => {
       }
     }
     if (transaction.Amount == null || transaction.Amount === "") {
-      trans_obj.errors.push("Missing Amount");
+      trans_obj.errors.push({ text: "Missing Amount", status: 0 });
       trans_obj.amount = null;
     } else {
       if (!isValidFloat(transaction.Amount)) {
-        trans_obj.errors.push("Invalid Amount");
+        trans_obj.errors.push({ text: "Invalid Amount", status: 0 });
         trans_obj.amount = null;
       }
     }
     if (transaction.Description == null || transaction.Description === "") {
-      trans_obj.errors.push("Missing Description");
+      trans_obj.errors.push({ text: "Missing Description", status: 0 });
       trans_obj.description = null;
     }
     if (transaction.SourceAccount == null || transaction.SourceAccount === "") {
-      trans_obj.errors.push("Missing Source Account");
+      trans_obj.errors.push({ text: "Missing Source Account", status: 0 });
       trans_obj.sourceAccountID = null;
     } else {
       for (let sa = 0; sa < mappings.value.accounts.length; sa++) {
@@ -1064,7 +1074,10 @@ const verifyTransactions = transactions => {
       transaction.DestinationAccount !== "" &&
       trans_obj.transactionTypeID !== 3
     ) {
-      trans_obj.errors.push("Destination Account Set For Non Transfer");
+      trans_obj.errors.push({
+        text: "Destination Account Set For Non Transfer",
+        status: 0,
+      });
     }
     if (transaction.Tags !== null && transaction.Tags !== "") {
       let tag_total = 0;
@@ -1072,12 +1085,116 @@ const verifyTransactions = transactions => {
         tag_total += trans_obj.tags[k].tag_amount;
       }
       if (parseFloat(tag_total) !== parseFloat(transaction.Amount)) {
-        trans_obj.errors.push("Tags Do Not Equal Total");
+        trans_obj.errors.push({ text: "Tags Do Not Equal Total", status: 0 });
       }
     }
 
     if (trans_obj.errors.length > 0) {
       mappings.value.transactions.push(trans_obj);
+    }
+  }
+};
+
+/**
+ * `verifyErrors` Updates error status if errors are resolved.
+ */
+const verifyErrors = i => {
+  let transaction = mappings.value.transactions[i - 1];
+  for (let x = 0; x < transaction.errors.length; x++) {
+    const error = transaction.errors[x];
+    if (error.text == "Invalid Amount") {
+      if (isValidFloat(transaction.amount)) {
+        error.status = 1;
+      } else {
+        error.status = 0;
+      }
+    }
+    if (error.text == "Missing Date") {
+      if (
+        transaction.transactionDate !== null &&
+        transaction.transactionDate !== ""
+      ) {
+        error.status = 1;
+      } else {
+        error.status = 0;
+      }
+    }
+    if (error.text == "Invalid Date") {
+      if (isValidDateFormat(transaction.transactionDate)) {
+        error.status = 1;
+      } else {
+        error.status = 0;
+      }
+    }
+    if (error.text == "Missing Transaction Type") {
+      if (
+        transaction.transactionTypeID !== null &&
+        transaction.transactionTypeID !== ""
+      ) {
+        error.status = 1;
+      } else {
+        error.status = 0;
+      }
+    }
+    if (error.text == "Missing Amount") {
+      if (transaction.amount !== null && transaction.amount !== "") {
+        error.status = 1;
+      } else {
+        error.status = 0;
+      }
+    }
+    if (error.text == "Missing Description") {
+      if (transaction.description !== null && transaction.description !== "") {
+        error.status = 1;
+      } else {
+        error.status = 0;
+      }
+    }
+    if (error.text == "Missing Source Account") {
+      if (
+        transaction.sourceAccountID !== null &&
+        transaction.sourceAccountID !== ""
+      ) {
+        error.status = 1;
+      } else {
+        error.status = 0;
+      }
+    }
+    if (error.text == "Destination Account Set For Non Transfer") {
+      if (
+        transaction.transactionTypeID !== 3 &&
+        (transaction.destinationAccountID == null ||
+          transaction.destinationAccountID == "")
+      ) {
+        error.status = 1;
+      } else {
+        error.status = 0;
+      }
+    }
+    if (error.text == "Tags Do Not Equal Total") {
+      if (transaction.tags !== null && transaction.tags !== "") {
+        let tag_total = 0;
+        for (let k = 0; k < transaction.tags.length; k++) {
+          tag_total += transaction.tags[k].tag_amount;
+        }
+        if (parseFloat(tag_total) == parseFloat(transaction.amount)) {
+          error.status = 1;
+        } else {
+          error.status = 0;
+        }
+      } else {
+        error.status = 0;
+      }
+    }
+    if (error.text == "Missing Transfer Destination Account") {
+      if (
+        transaction.destinationAccountID !== null &&
+        transaction.destinationAccountID !== ""
+      ) {
+        error.status = 1;
+      } else {
+        error.status = 0;
+      }
     }
   }
 };
