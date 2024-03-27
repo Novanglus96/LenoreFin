@@ -645,6 +645,171 @@
             </v-stepper-window-item>
             <v-stepper-window-item value="7">
               <v-banner><v-banner-text>Summary</v-banner-text></v-banner>
+              <v-timeline side="end">
+                <v-timeline-item size="small" dot-color="secondary">
+                  <v-alert
+                    color="secondary"
+                    icon="mdi-information"
+                    :value="true"
+                    title="Transaction Status Mappings"
+                  >
+                    <v-container>
+                      <v-row
+                        dense
+                        v-for="(status, i) in mappings.transaction_statuses"
+                        :key="i"
+                      >
+                        <v-col
+                          ><span
+                            class="font-weight-bold text-subtitle-2 text-decoration-underline"
+                            >{{ status.file_status }}</span
+                          >
+                          will be mapped to
+                          <span
+                            class="font-weight-bold text-subtitle-2 text-decoration-underline"
+                            >{{
+                              transaction_statuses.find(
+                                item => item.id === status.status_id,
+                              ).transaction_status
+                            }}</span
+                          ></v-col
+                        >
+                      </v-row>
+                    </v-container>
+                  </v-alert>
+                </v-timeline-item>
+                <v-timeline-item size="small" dot-color="secondary">
+                  <v-alert
+                    color="secondary"
+                    icon="mdi-information"
+                    :value="true"
+                    title="Transaction Type Mappings"
+                  >
+                    <v-container>
+                      <v-row
+                        dense
+                        v-for="(type, i) in mappings.transaction_types"
+                        :key="i"
+                      >
+                        <v-col
+                          ><span
+                            class="font-weight-bold text-subtitle-2 text-decoration-underline"
+                            >{{ type.file_type }}</span
+                          >
+                          will be mapped to
+                          <span
+                            class="font-weight-bold text-subtitle-2 text-decoration-underline"
+                            >{{
+                              transaction_types.find(
+                                item => item.id === type.type_id,
+                              ).transaction_type
+                            }}</span
+                          ></v-col
+                        >
+                      </v-row>
+                    </v-container>
+                  </v-alert>
+                </v-timeline-item>
+                <v-timeline-item size="small" dot-color="secondary">
+                  <v-alert
+                    color="secondary"
+                    icon="mdi-information"
+                    :value="true"
+                    title="Tag Mappings"
+                  >
+                    <v-container>
+                      <v-row dense v-for="(tag, i) in mappings.tags" :key="i">
+                        <v-col
+                          ><span
+                            class="font-weight-bold text-subtitle-2 text-decoration-underline"
+                            >{{ tag.file_tag }}</span
+                          >
+                          will be mapped to
+                          <span
+                            class="font-weight-bold text-subtitle-2 text-decoration-underline"
+                            >{{
+                              tags.find(item => item.id === tag.tag_id).tag_name
+                            }}</span
+                          ></v-col
+                        >
+                      </v-row>
+                    </v-container>
+                  </v-alert>
+                </v-timeline-item>
+                <v-timeline-item size="small" dot-color="secondary">
+                  <v-alert
+                    color="secondary"
+                    icon="mdi-information"
+                    :value="true"
+                    title="Account Mappings"
+                  >
+                    <v-container>
+                      <v-row
+                        dense
+                        v-for="(account, i) in mappings.accounts"
+                        :key="i"
+                      >
+                        <v-col
+                          ><span
+                            class="font-weight-bold text-subtitle-2 text-decoration-underline"
+                            >{{ account.file_account }}</span
+                          >
+                          will be mapped to
+                          <span
+                            class="font-weight-bold text-subtitle-2 text-decoration-underline"
+                            >{{
+                              accounts.find(
+                                item => item.id === account.account_id,
+                              ).account_name
+                            }}</span
+                          ></v-col
+                        >
+                      </v-row>
+                    </v-container>
+                  </v-alert>
+                </v-timeline-item>
+                <v-timeline-item size="small" dot-color="secondary">
+                  <v-alert
+                    color="secondary"
+                    icon="mdi-information"
+                    :value="true"
+                    title="Fixed Transaction Errors"
+                  >
+                    <v-container>
+                      <v-row
+                        dense
+                        v-for="(transaction, i) in mappings.transactions"
+                        :key="i"
+                      >
+                        <v-col
+                          >#{{ transaction.id }}:
+                          {{ transaction.transactionDate }} &bull;
+                          {{ transaction.description }} &bull; ${{
+                            transaction.amount
+                          }}</v-col
+                        >
+                        <v-col
+                          ><span
+                            class="font-weight-bold text-subtitle-2 text-decoration-underline"
+                            >Fixed:
+                          </span>
+                          <span
+                            v-for="(error, e) in transaction.errors"
+                            :key="e"
+                            >{{ error.text
+                            }}<span
+                              class="font-weight-bold text-accent"
+                              v-if="e < transaction.errors.length - 1"
+                            >
+                              &bull;
+                            </span></span
+                          ></v-col
+                        >
+                      </v-row>
+                    </v-container>
+                  </v-alert>
+                </v-timeline-item>
+              </v-timeline>
             </v-stepper-window-item>
           </v-stepper-window>
           <v-stepper-actions disabled="prev">
@@ -663,7 +828,7 @@
           color="secondary"
           variant="text"
           @click="submitForm"
-          :disabled="allStepsComplete"
+          :disabled="!allStepsComplete"
         >
           Submit
         </v-btn>
@@ -698,10 +863,10 @@ const step3Complete = ref(false);
 const step4Complete = ref(false);
 const step5Complete = ref(false);
 const step6Complete = ref(false);
-const step7Complete = ref(false);
 const nextDisabled = ref(true);
 const fileIsValid = ref(true);
 const fileData = ref(null);
+const allStepsComplete = ref(false);
 
 // Initialize Mappings
 const mappings = ref({
@@ -738,7 +903,7 @@ const closeDialog = () => {
   step4Complete.value = false;
   step5Complete.value = false;
   step6Complete.value = false;
-  step7Complete.value = false;
+  allStepsComplete.value = false;
   nextDisabled.value = true;
   mappings.value = {
     transaction_types: [],
@@ -760,6 +925,11 @@ const nextStep = () => {
       nextDisabled.value = true;
       step.value++;
     }
+  }
+  if (step6Complete.value) {
+    allStepsComplete.value = true;
+  } else {
+    allStepsComplete.value = false;
   }
 };
 
@@ -857,24 +1027,18 @@ const updateStep5Complete = () => {
 /**
  * `updateStep6Complete` Updates Step 6 Completed status.
  */
-const updateStep6Complete = () => {};
-
-/**
- * `allStepsComplete` Returns true if all steps are complete.
- */
-const allStepsComplete = () => {
+const updateStep6Complete = () => {
+  console.log("mappings:", mappings.value);
   if (
-    step1Complete.value &&
-    step2Complete.value &&
-    step3Complete.value &&
-    step4Complete.value &&
-    step5Complete.value &&
-    step6Complete.value &&
-    step7Complete.value
+    verifyBaseRequired() == true &&
+    verifyTagTotal() == true &&
+    verifyTransactionType() == true
   ) {
-    return true;
+    step6Complete.value = true;
+    nextDisabled.value = false;
   } else {
-    return false;
+    step6Complete.value = false;
+    nextDisabled.value = true;
   }
 };
 
@@ -946,7 +1110,6 @@ const verifyFile = data => {
  * `verifyTransactions` Verifies transaction integrity.
  */
 const verifyTransactions = transactions => {
-  console.log("mappings:", mappings.value);
   for (let i = 0; i < transactions.length; i++) {
     let transaction = transactions[i];
     let trans_obj = {
@@ -1196,6 +1359,88 @@ const verifyErrors = i => {
         error.status = 0;
       }
     }
+  }
+  updateStep6Complete();
+};
+
+/**
+ * `verifyBaseRequired` Verifies base requirements for form completeion
+ * @returns {boolean}- True if base requirements met
+ */
+const verifyBaseRequired = () => {
+  let verified = 0;
+  for (let x = 0; x < mappings.value.transactions.length; x++) {
+    const transaction = mappings.value.transactions[x];
+    if (
+      transaction.transactionTypeID !== null &&
+      transaction.transactionTypeID !== "" &&
+      transaction.transactionStatusID !== null &&
+      transaction.transactionStatusID !== "" &&
+      transaction.description !== "" &&
+      transaction.description !== null &&
+      transaction.amount !== "" &&
+      transaction.amount !== null &&
+      transaction.sourceAccountID !== "" &&
+      transaction.sourceAccountID !== null
+    ) {
+      verified += 1;
+    }
+  }
+  if (verified == mappings.value.transactions.length) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+/**
+ * `verifyTagTotal` Verifies the total of tags equals total amount.
+ * @returns - Returns True if totals match
+ */
+const verifyTagTotal = () => {
+  let verified = 0;
+  for (let x = 0; x < mappings.value.transactions.length; x++) {
+    const transaction = mappings.value.transactions[x];
+    let tagtotal = 0;
+    if (transaction.tags) {
+      transaction.tags.forEach(tag => {
+        tagtotal += parseFloat(tag.tag_amount);
+      });
+    }
+    if (tagtotal == transaction.amount) {
+      verified += 1;
+    }
+  }
+  if (verified == mappings.value.transactions.length) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+/**
+ * `verifyTransactionType` Verifies destination_account filled if this is transfer
+ * @returns {boolean}- True if transfer and destination_account filled out
+ */
+const verifyTransactionType = () => {
+  let verified = 0;
+  for (let x = 0; x < mappings.value.transactions.length; x++) {
+    const transaction = mappings.value.transactions[x];
+    if (transaction.transactionTypeID == 3) {
+      if (
+        transaction.destinationAccountID !== null &&
+        transaction.destinationAccountID !== ""
+      ) {
+        verified += 1;
+      }
+    } else {
+      return true;
+    }
+  }
+  if (verified == mappings.value.transactions.length) {
+    return true;
+  } else {
+    return false;
   }
 };
 
