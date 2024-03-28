@@ -37,7 +37,7 @@
                 >
                 <v-list-item-subtitle
                   ><span :class="message.unread ? 'font-weight-bold' : ''">{{
-                    message.message_date
+                    getPrettyDate(message.message_date)
                   }}</span></v-list-item-subtitle
                 >
               </v-list-item>
@@ -185,4 +185,10 @@ import { useMessages } from "@/composables/messagesComposable";
 const { messages, markRead, deleteAll } = useMessages();
 const { mdAndUp } = useDisplay();
 const nav_toggle = ref(true);
+
+const getPrettyDate = uglyDate => {
+  const newDate = new Date(uglyDate);
+  const formattedDate = newDate.toLocaleString("en-US");
+  return formattedDate;
+};
 </script>

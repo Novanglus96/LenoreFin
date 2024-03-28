@@ -34,7 +34,7 @@ def create_message(message_text):
     """
 
     message_obj = Message.objects.create(
-        message_date=date.today().strftime("%Y-%m-%d"),
+        message_date=timezone.now(),
         message=message_text,
         unread=True,
     )
@@ -48,7 +48,7 @@ def convert_reminder():
     """
 
     # Define todays date
-    todayDate = timzezone.now().date().strftime("%Y-%m-%d")
+    todayDate = timezone.now().date().strftime("%Y-%m-%d")
 
     # Get transactions that have a reminder and are dated today or earlier
     transactions = Transaction.objects.filter(
