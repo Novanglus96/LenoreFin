@@ -504,7 +504,7 @@ class TransactionIn(Schema):
 
 # The class MessageIn is a schema for validating Messages.
 class MessageIn(Schema):
-    message_date: date
+    message_date: datetime
     message: str
     unread: bool
 
@@ -512,7 +512,7 @@ class MessageIn(Schema):
 # The class MessageOut is a schema for representing Messages.
 class MessageOut(Schema):
     id: int
-    message_date: date
+    message_date: datetime
     message: str
     unread: bool
 
@@ -714,6 +714,67 @@ class GraphDataset(Schema):
 class GraphOut(Schema):
     labels: List[str]
     datasets: List[GraphDataset]
+
+
+# The class TypeMapping is a schema for representing import type mappings.
+class TypeMapping(Schema):
+    file_type: str
+    type_id: int
+
+
+# The class StatusMapping is a schema for representing import status mappings.
+class StatusMapping(Schema):
+    file_status: str
+    status_id: int
+
+
+# The class AccountMapping is a schema for representing import account mappings.
+class AccountMapping(Schema):
+    file_account: str
+    account_id: int
+
+
+# The class TagMapping is a schema for representing import tag mappings.
+class TagMapping(Schema):
+    file_tag: str
+    tag_id: int
+
+
+# The class TransactionImportTag is a schema for representing import transaction tags.
+class TransactionImportTag(Schema):
+    tag_id: int
+    tag_name: str
+    tag_amount: Decimal = Field(whole_digits=10, decimal_places=2)
+
+
+# The class TransactionImportError is a schema for representing import transaction errors.
+class TransactionImportError(Schema):
+    text: str
+    status: int
+
+
+# The class TransactionImport is a schema for representing import transactions.
+class TransactionImport(Schema):
+    line_id: int
+    transactionDate: date
+    transactionTypeID: int
+    transactionStatusID: int
+    amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    description: str
+    sourceAccountID: int
+    destinationAccountID: Optional[int] = None
+    tags: List[TransactionImportTag]
+    memo: str
+    errors: List[TransactionImportError]
+
+
+# The class MappingDefinition is a schema for representing import mappings.
+class MappingDefinition(Schema):
+    transaction_types: List[TypeMapping]
+    transaction_statuses: List[StatusMapping]
+    accounts: List[AccountMapping]
+    tags: List[TagMapping]
+    transactions: List[TransactionImport]
 
 
 @api.post("/accounts/types")
@@ -6158,24 +6219,47 @@ def delete_messages(request, message_id: int):
 @api.post("/upload")
 def import_file(
     request,
+    payload: MappingDefinition,
     import_file: UploadedFile = File(...),
-    mapping_file: UploadedFile = File(...),
 ):
     """
-    The function `import_file` uploads an import file and its mapping file.
+    The function `import_file` uploads an import file and its mapping definition.
 
     Args:
         request (HttpRequest): The HTTP request object.
+        payload (MappingDefinition): the mapping definition for the import
         import_file (File): the import file to upload in csv format
-        mapping_file (File): the mapping file for the import file
 
     Returns:
         success: True
     """
-    importedFile = FileImport.objects.create(
-        import_file=import_file, mapping_file=mapping_file
-    )
-    return {"success": True}
+    try:
+        importedFile = FileImport.objects.create(import_file=import_file)
+        message_obj = Message.objects.create(
+            message_date=timezone.now(),
+            message=f"File import ID #{importedFile.id} started",
+            unread=True,
+        )
+        logToDB(
+            f"File import ID #{importedFile.id} started",
+            None,
+            None,
+            None,
+            3002001,
+            2,
+        )
+        return {"id": importedFile.id}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"File import failed : {str(e)}",
+            None,
+            None,
+            None,
+            3002901,
+            3,
+        )
+        raise HttpError(500, "File import error")
 
 
 # Helper Functions

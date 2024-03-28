@@ -445,7 +445,7 @@
                       <v-sheet border
                         ><v-container>
                           <v-row dense>
-                            <v-col>Line #{{ item.raw.id }}</v-col>
+                            <v-col>Line #{{ item.raw.line_id }}</v-col>
                           </v-row>
                           <v-row dense
                             ><v-col
@@ -479,7 +479,9 @@
                                 auto-apply
                                 format="yyyy-MM-dd"
                                 :teleport="true"
-                                @update:model-value="verifyErrors(item.raw.id)"
+                                @update:model-value="
+                                  verifyErrors(item.raw.line_id)
+                                "
                               ></VueDatePicker
                             ></v-col>
                           </v-row>
@@ -496,7 +498,9 @@
                                 v-model="item.raw.transactionTypeID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="verifyErrors(item.raw.id)"
+                                @update:model-value="
+                                  verifyErrors(item.raw.line_id)
+                                "
                               ></v-autocomplete
                             ></v-col>
                             <v-col>
@@ -511,7 +515,9 @@
                                 v-model="item.raw.transactionStatusID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="verifyErrors(item.raw.id)"
+                                @update:model-value="
+                                  verifyErrors(item.raw.line_id)
+                                "
                               ></v-autocomplete>
                             </v-col>
                           </v-row>
@@ -526,7 +532,9 @@
                                 type="number"
                                 step="1.00"
                                 density="compact"
-                                @update:model-value="verifyErrors(item.raw.id)"
+                                @update:model-value="
+                                  verifyErrors(item.raw.line_id)
+                                "
                               ></v-text-field>
                             </v-col>
                             <v-col>
@@ -536,7 +544,9 @@
                                 label="Description*"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="verifyErrors(item.raw.id)"
+                                @update:model-value="
+                                  verifyErrors(item.raw.line_id)
+                                "
                               ></v-text-field>
                             </v-col>
                           </v-row>
@@ -553,7 +563,9 @@
                                 v-model="item.raw.sourceAccountID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="verifyErrors(item.raw.id)"
+                                @update:model-value="
+                                  verifyErrors(item.raw.line_id)
+                                "
                               >
                                 <template v-slot:item="{ props, item }">
                                   <v-list-item
@@ -582,7 +594,9 @@
                                 v-model="item.raw.destinationAccountID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="verifyErrors(item.raw.id)"
+                                @update:model-value="
+                                  verifyErrors(item.raw.line_id)
+                                "
                               >
                                 <template v-slot:item="{ props, item }">
                                   <v-list-item
@@ -609,7 +623,9 @@
                                 v-model="item.raw.memo"
                                 :rows="2"
                                 no-resize
-                                @update:model-value="verifyErrors(item.raw.id)"
+                                @update:model-value="
+                                  verifyErrors(item.raw.line_id)
+                                "
                               ></v-textarea>
                             </v-col>
                           </v-row>
@@ -782,7 +798,7 @@
                         :key="i"
                       >
                         <v-col
-                          >#{{ transaction.id }}:
+                          >#{{ transaction.line_id }}:
                           {{ transaction.transactionDate }} &bull;
                           {{ transaction.description }} &bull; ${{
                             transaction.amount
@@ -850,6 +866,7 @@ import { useTransactionTypes } from "@/composables/transactionTypesComposable";
 import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
 import { useAccounts } from "@/composables/accountsComposable";
 import { useTags } from "@/composables/tagsComposable";
+import { uploadFile } from "@/composables/fileImportComposable";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import TagTable from "@/components/TagTable";
@@ -1113,7 +1130,7 @@ const verifyTransactions = transactions => {
   for (let i = 0; i < transactions.length; i++) {
     let transaction = transactions[i];
     let trans_obj = {
-      id: i,
+      line_id: i,
       transactionDate: transaction.TransactionDate,
       transactionTypeID: null,
       transactionStatusID: null,
@@ -1598,6 +1615,15 @@ const createMappings = transactions => {
   mappings.value.transaction_statuses = statuses;
   mappings.value.accounts = map_accounts;
   mappings.value.tags = map_tags;
+};
+
+/**
+ * `submitForm` Submits the mapping data and file.
+ */
+const submitForm = () => {
+  const file = fileToImport.value[0];
+  uploadFile(mappings.value, file);
+  closeDialog();
 };
 
 /**
