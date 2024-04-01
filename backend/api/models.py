@@ -655,7 +655,7 @@ class TransactionImport(models.Model):
     )
     description = models.CharField(max_length=254)
     source_account_id = models.IntegerField()
-    destination_account_id = models.IntegerField()
+    destination_account_id = models.IntegerField(default=None, null=True)
     memo = models.CharField(max_length=254)
     file_import = models.ForeignKey(FileImport, on_delete=models.CASCADE)
 

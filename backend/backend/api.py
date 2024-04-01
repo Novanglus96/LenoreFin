@@ -31,6 +31,13 @@ from api.models import (
     Paycheck,
     Message,
     FileImport,
+    TransactionImport,
+    TransactionImportTag,
+    TransactionImportError,
+    TypeMapping,
+    StatusMapping,
+    AccountMapping,
+    TagMapping,
 )
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
@@ -716,45 +723,45 @@ class GraphOut(Schema):
     datasets: List[GraphDataset]
 
 
-# The class TypeMapping is a schema for representing import type mappings.
-class TypeMapping(Schema):
+# The class TypeMappingSchema is a schema for representing import type mappings.
+class TypeMappingSchema(Schema):
     file_type: str
     type_id: int
 
 
-# The class StatusMapping is a schema for representing import status mappings.
-class StatusMapping(Schema):
+# The class StatusMappingSchema is a schema for representing import status mappings.
+class StatusMappingSchema(Schema):
     file_status: str
     status_id: int
 
 
-# The class AccountMapping is a schema for representing import account mappings.
-class AccountMapping(Schema):
+# The class AccountMappingSchema is a schema for representing import account mappings.
+class AccountMappingSchema(Schema):
     file_account: str
     account_id: int
 
 
 # The class TagMapping is a schema for representing import tag mappings.
-class TagMapping(Schema):
+class TagMappingSchema(Schema):
     file_tag: str
     tag_id: int
 
 
-# The class TransactionImportTag is a schema for representing import transaction tags.
-class TransactionImportTag(Schema):
+# The class TransactionImportTagSchema is a schema for representing import transaction tags.
+class TransactionImportTagSchema(Schema):
     tag_id: int
     tag_name: str
     tag_amount: Decimal = Field(whole_digits=10, decimal_places=2)
 
 
-# The class TransactionImportError is a schema for representing import transaction errors.
-class TransactionImportError(Schema):
+# The class TransactionImportErrorSchema is a schema for representing import transaction errors.
+class TransactionImportErrorSchema(Schema):
     text: str
     status: int
 
 
-# The class TransactionImport is a schema for representing import transactions.
-class TransactionImport(Schema):
+# The class TransactionImportSchema is a schema for representing import transactions.
+class TransactionImportSchema(Schema):
     line_id: int
     transactionDate: date
     transactionTypeID: int
@@ -763,18 +770,18 @@ class TransactionImport(Schema):
     description: str
     sourceAccountID: int
     destinationAccountID: Optional[int] = None
-    tags: List[TransactionImportTag]
+    tags: List[TransactionImportTagSchema]
     memo: str
-    errors: List[TransactionImportError]
+    errors: List[TransactionImportErrorSchema]
 
 
 # The class MappingDefinition is a schema for representing import mappings.
 class MappingDefinition(Schema):
-    transaction_types: List[TypeMapping]
-    transaction_statuses: List[StatusMapping]
-    accounts: List[AccountMapping]
-    tags: List[TagMapping]
-    transactions: List[TransactionImport]
+    transaction_types: List[TypeMappingSchema]
+    transaction_statuses: List[StatusMappingSchema]
+    accounts: List[AccountMappingSchema]
+    tags: List[TagMappingSchema]
+    transactions: List[TransactionImportSchema]
 
 
 @api.post("/accounts/types")
@@ -6235,6 +6242,60 @@ def import_file(
     """
     try:
         importedFile = FileImport.objects.create(import_file=import_file)
+        for type_mapping in payload.transaction_types:
+            typeMapping = TypeMapping.objects.create(
+                file_type=type_mapping.file_type,
+                type_id=type_mapping.type_id,
+                file_import=importedFile,
+            )
+        for status_mapping in payload.transaction_statuses:
+            statusMapping = StatusMapping.objects.create(
+                file_status=status_mapping.file_status,
+                status_id=status_mapping.status_id,
+                file_import=importedFile,
+            )
+        for account_mapping in payload.accounts:
+            accountMapping = AccountMapping.objects.create(
+                file_account=account_mapping.file_account,
+                account_id=account_mapping.account_id,
+                file_import=importedFile,
+            )
+        for tag_mapping in payload.tags:
+            tagMapping = TagMapping.objects.create(
+                file_tag=tag_mapping.file_tag,
+                tag_id=tag_mapping.tag_id,
+                file_import=importedFile,
+            )
+        for transaction in payload.transactions:
+            createTransaction = TransactionImport.objects.create(
+                line_id=transaction.line_id,
+                transaction_date=transaction.transactionDate,
+                transaction_type_id=transaction.transactionTypeID,
+                transaction_status_id=transaction.transactionStatusID,
+                amount=transaction.amount,
+                description=transaction.description,
+                source_account_id=transaction.sourceAccountID,
+                destination_account_id=transaction.destinationAccountID,
+                memo=transaction.memo,
+                file_import=importedFile,
+            )
+            for tag in transaction.tags:
+                createTransactionImportTag = (
+                    TransactionImportTag.objects.create(
+                        tag_id=tag.tag_id,
+                        tag_name=tag.tag_name,
+                        tag_amount=tag.tag_amount,
+                        transaction_import=createTransaction,
+                    )
+                )
+            for error in transaction.errors:
+                createTransactionImportError = (
+                    TransactionImportError.objects.create(
+                        text=error.text,
+                        status=error.status,
+                        transaction_import=createTransaction,
+                    )
+                )
         message_obj = Message.objects.create(
             message_date=timezone.now(),
             message=f"File import ID #{importedFile.id} started",
