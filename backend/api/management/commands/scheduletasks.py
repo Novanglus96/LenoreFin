@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 "function": "api.tasks.convert_reminder",
                 "time": "00:01",
                 "arguments": "",
-                "type": "DAILY",  # DAILY, HOURLY
+                "type": "DAILY",  # DAILY, HOURLY, MINUTES
                 "start_today": False,
                 "delete": False,
             },
@@ -60,8 +60,18 @@ class Command(BaseCommand):
                 "function": "api.tasks.update_forever_reminders",
                 "time": "00:02",
                 "arguments": "",
-                "type": "DAILY",  # DAILY, HOURLY
+                "type": "DAILY",  # DAILY, HOURLY, MINUTES
                 "start_today": False,
+                "delete": False,
+            },
+            {
+                "task_name": "Finish Imports",
+                "function": "api.tasks.finish_imports",
+                "time": "14:15",
+                "arguments": "",
+                "type": "MINUTES",  # DAILY, HOURLY, MINUTES
+                "start_today": True,
+                "minutes": 15,
                 "delete": False,
             },
         ]
@@ -83,6 +93,8 @@ class Command(BaseCommand):
                 schedule_type = Schedule.DAILY
             elif task["type"] == "HOURLY":
                 schedule_type = Schedule.HOURLY
+            elif task["type"] == "MINUTES":
+                schedule_type = Schedule.MINUTES
             existing_schedule = Schedule.objects.filter(
                 name=task["task_name"]
             ).first()
@@ -94,13 +106,25 @@ class Command(BaseCommand):
                     existing_schedule.args = task["arguments"]
                     existing_schedule.next_run = next_run
                     existing_schedule.schedule_type = schedule_type
+                    if task["type"] == "MINUTES":
+                        existing_schedule.minutes = task["minutes"]
                     existing_schedule.save()
             else:
                 if not task["delete"]:
-                    Schedule.objects.create(
-                        func=task["function"],
-                        args=task["arguments"],
-                        schedule_type=schedule_type,
-                        name=task["task_name"],
-                        next_run=next_run,
-                    )
+                    if task["type"] != "MINUTES":
+                        Schedule.objects.create(
+                            func=task["function"],
+                            args=task["arguments"],
+                            schedule_type=schedule_type,
+                            name=task["task_name"],
+                            next_run=next_run,
+                        )
+                    else:
+                        Schedule.objects.create(
+                            func=task["function"],
+                            args=task["arguments"],
+                            schedule_type=schedule_type,
+                            name=task["task_name"],
+                            next_run=next_run,
+                            minutes=task["minutes"],
+                        )
