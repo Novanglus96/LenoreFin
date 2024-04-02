@@ -67,11 +67,11 @@ class Command(BaseCommand):
             {
                 "task_name": "Finish Imports",
                 "function": "api.tasks.finish_imports",
-                "time": "14:15",
+                "time": "15:35",
                 "arguments": "",
                 "type": "MINUTES",  # DAILY, HOURLY, MINUTES
                 "start_today": True,
-                "minutes": 15,
+                "minutes": 5,
                 "delete": False,
             },
         ]
@@ -95,6 +95,7 @@ class Command(BaseCommand):
                 schedule_type = Schedule.HOURLY
             elif task["type"] == "MINUTES":
                 schedule_type = Schedule.MINUTES
+                next_run = timezone.now()
             existing_schedule = Schedule.objects.filter(
                 name=task["task_name"]
             ).first()

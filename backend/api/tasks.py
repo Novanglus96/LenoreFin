@@ -16,12 +16,22 @@ from api.models import (
     Option,
     LogEntry,
     TransactionDetail,
+    FileImport,
+    TransactionImport,
+    TransactionImportTag,
+    TransactionImportError,
+    TypeMapping,
+    StatusMapping,
+    TagMapping,
+    AccountMapping,
 )
 from django_q.models import Schedule
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+import csv
+from io import StringIO
 
 
 def create_message(message_text):
@@ -115,6 +125,232 @@ def convert_reminder():
                     3001003,
                     1,
                 )
+
+
+def finish_imports():
+    """
+    The function `finish_imports` imports files using the mappings defined.
+
+    Args:
+
+    Returns:
+        string_return (str): the total # of imports processed
+    """
+    # Setup variables
+    string_return = ""
+    num_of_imports = 0
+    rows = None
+    errors = 0
+
+    # Check if there are any file imports
+    file_imports = FileImport.objects.all()
+
+    # If there is an import, process it
+    if file_imports.exists():
+        try:
+            num_of_imports = file_imports.count()
+            for file_import in file_imports:
+                # Load and parse import file
+                file_content = file_import.import_file.read().decode(
+                    "utf-8-sig"
+                )
+                file_like_object = StringIO(file_content)
+                reader = csv.DictReader(file_like_object)
+                rows = list(reader)
+
+                # Load mappings
+                transaction_types = TypeMapping.objects.filter(
+                    file_import=file_import
+                )
+                transaction_statuses = StatusMapping.objects.filter(
+                    file_import=file_import
+                )
+                tag_mappings = TagMapping.objects.filter(
+                    file_import=file_import
+                )
+                account_mappings = AccountMapping.objects.filter(
+                    file_import=file_import
+                )
+                transaction_lines = TransactionImport.objects.filter(
+                    file_import=file_import
+                )
+
+                # Create transactions based on mappings
+                line_num = 0
+                for row in rows:
+                    try:
+                        transDate = None
+                        totalAmount = None
+                        statusID = None
+                        memo = None
+                        description = None
+                        typeID = None
+                        tags = None
+                        sourceAccountID = None
+                        destinationAccountID = None
+                        editDate = timezone.now().date().strftime("%Y-%m-%d")
+                        addDate = timezone.now().date().strftime("%Y-%m-%d")
+                        transaction_line = transaction_lines.filter(
+                            line_id=line_num
+                        ).first()
+                        if transaction_line is not None:
+                            transDate = transaction_line.transaction_date
+                            totalAmount = transaction_line.amount
+                            statusID = transaction_line.transaction_status_id
+                            memo = transaction_line.memo
+                            description = transaction_line.description
+                            typeID = transaction_line.transaction_type_id
+                            tags = TransactionImportTag.objects.filter(
+                                transaction_import=transaction_line
+                            )
+                            destinationAccountID = (
+                                transaction_line.destination_account_id
+                            )
+                            sourceAccountID = transaction_line.source_account_id
+                        else:
+
+                            class CustomTag:
+                                def __init__(
+                                    self, tag_name, tag_amount, tag_id
+                                ):
+                                    self.tag_name = tag_name
+                                    self.tag_amount = tag_amount
+                                    self.tag_id = tag_id
+
+                            transDate = row["TransactionDate"]
+                            totalAmount = row["Amount"]
+                            statusID = (
+                                transaction_statuses.filter(
+                                    file_status=row["TransactionStatus"]
+                                )
+                                .first()
+                                .status_id
+                            )
+                            memo = row["Memo"]
+                            description = row["Description"]
+                            typeID = (
+                                transaction_types.filter(
+                                    file_type=row["TransactionType"]
+                                )
+                                .first()
+                                .type_id
+                            )
+                            sourceAccountID = (
+                                account_mappings.filter(
+                                    file_account=row["SourceAccount"]
+                                )
+                                .first()
+                                .account_id
+                            )
+                            destinationAccount = account_mappings.filter(
+                                file_account=row["DestinationAccount"]
+                            ).first()
+                            if destinationAccount is not None:
+                                destinationAccountID = (
+                                    destinationAccount.account_id
+                                )
+                            tag_pairs = row["Tags"].split(";")
+                            tags = []
+                            for pair in tag_pairs:
+                                tag_name, tag_amount = pair.split(":")
+                                tag_name = tag_name.strip()
+                                tag_amount = float(tag_amount.strip())
+                                tag_id = (
+                                    tag_mappings.filter(file_tag=tag_name)
+                                    .first()
+                                    .tag_id
+                                )
+                                tag_dict = CustomTag(
+                                    tag_name, tag_amount, tag_id
+                                )
+                                tags.append(tag_dict)
+                        transaction = Transaction.objects.create(
+                            transaction_date=transDate,
+                            total_amount=totalAmount,
+                            status_id=statusID,
+                            memo=memo,
+                            description=description,
+                            edit_date=editDate,
+                            add_date=addDate,
+                            transaction_type_id=typeID,
+                            reminder_id=None,
+                            paycheck_id=None,
+                        )
+                        if typeID == 3:
+                            TransactionDetail.objects.create(
+                                transaction_id=transaction.id,
+                                account_id=sourceAccountID,
+                                detail_amt=totalAmount,
+                                tag_id=2,
+                            )
+                            TransactionDetail.objects.create(
+                                transaction_id=transaction.id,
+                                account_id=destinationAccountID,
+                                detail_amt=-totalAmount,
+                                tag_id=2,
+                            )
+                        else:
+                            for tag in tags:
+                                adj_amount = 0
+                                if typeID == 1:
+                                    adj_amount = -tag.tag_amount
+                                else:
+                                    adj_amount = tag.tag_amount
+                                TransactionDetail.objects.create(
+                                    transaction_id=transaction.id,
+                                    account_id=sourceAccountID,
+                                    detail_amt=adj_amount,
+                                    tag_id=tag.tag_id,
+                                )
+                        line_num += 1
+                        logToDB(
+                            "Import transaction created",
+                            None,
+                            None,
+                            None,
+                            3001001,
+                            2,
+                        )
+                    except Exception as e:
+                        error += 1
+                        logToDB(
+                            f"Import transaction not created : {str(e)}",
+                            None,
+                            None,
+                            None,
+                            3001901,
+                            3,
+                        )
+                # Send message to frontend that import was successful
+                message_obj = Message.objects.create(
+                    message_date=timezone.now(),
+                    message=f"Import # {file_import.id} completed successfully with {errors} errors",
+                    unread=True,
+                )
+
+                # Clean up file import
+                file_import.delete()
+
+                # Log success
+                logToDB(
+                    f"Import # {file_import.id} succeeded",
+                    None,
+                    None,
+                    None,
+                    3002001,
+                    2,
+                )
+        except Exception as e:
+            logToDB(
+                f"Import # {file_import.id} failed : {str(e)}",
+                None,
+                None,
+                None,
+                3002901,
+                3,
+            )
+    string_return = f"Processed {num_of_imports} imports with {errors} errors"
+    return string_return
 
 
 def update_forever_reminders():

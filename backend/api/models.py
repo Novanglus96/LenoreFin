@@ -604,12 +604,12 @@ class Message(models.Model):
     Model representing a message alert for display in the app inbox.
 
     Fields:
-    - message_date (DateField): The date of the message, defaults to today.
+    - message_date (DateTimeField): The date of the message, defaults to today.
     - message (CharField): The text of the messsage, limited to 254 characters.
     - unread (BooleanField): Whether or not this message is unread, default is True.
     """
 
-    message_date = models.DateTimeField(default=timezone.now())
+    message_date = models.DateTimeField(default=timezone.now)
     message = models.CharField(max_length=254)
     unread = models.BooleanField(default=True)
 
@@ -623,7 +623,6 @@ class FileImport(models.Model):
 
     Fields:
     - import_file (FileField): The transcation import file.
-    - mappings_file (FileField): A mapping file to map fields correctly.
     """
 
     import_file = models.FileField(upload_to=import_file_name)
