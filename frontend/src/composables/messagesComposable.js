@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import axios from "axios";
 import { useMainStore } from "@/stores/main";
+import { onUnmounted } from "vue";
 
 const apiClient = axios.create({
   baseURL: "/api/v1",
@@ -75,7 +76,11 @@ async function readAllMessagesFunction() {
 
 export function useMessages() {
   const queryClient = useQueryClient();
-  const { data: messages, isLoading } = useQuery({
+  const {
+    data: messages,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["messages"],
     queryFn: () => getMessagesFunction(),
     select: response => response,
@@ -106,6 +111,16 @@ export function useMessages() {
       console.log("Success deleting all messages");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
+  });
+
+  const refetchMessages = async () => {
+    await refetch();
+  };
+
+  const intervalId = setInterval(refetchMessages, 1 * 60 * 1000);
+
+  onUnmounted(() => {
+    clearInterval(intervalId);
   });
 
   async function addMessage(newMessage) {

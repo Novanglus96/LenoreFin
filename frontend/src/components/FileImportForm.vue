@@ -479,9 +479,7 @@
                                 auto-apply
                                 format="yyyy-MM-dd"
                                 :teleport="true"
-                                @update:model-value="
-                                  verifyErrors(item.raw.line_id)
-                                "
+                                @update:model-value="verifyErrors(i)"
                               ></VueDatePicker
                             ></v-col>
                           </v-row>
@@ -498,9 +496,7 @@
                                 v-model="item.raw.transactionTypeID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="
-                                  verifyErrors(item.raw.line_id)
-                                "
+                                @update:model-value="verifyErrors(i)"
                               ></v-autocomplete
                             ></v-col>
                             <v-col>
@@ -515,9 +511,7 @@
                                 v-model="item.raw.transactionStatusID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="
-                                  verifyErrors(item.raw.line_id)
-                                "
+                                @update:model-value="verifyErrors(i)"
                               ></v-autocomplete>
                             </v-col>
                           </v-row>
@@ -532,9 +526,7 @@
                                 type="number"
                                 step="1.00"
                                 density="compact"
-                                @update:model-value="
-                                  verifyErrors(item.raw.line_id)
-                                "
+                                @update:model-value="verifyErrors(i)"
                               ></v-text-field>
                             </v-col>
                             <v-col>
@@ -544,9 +536,7 @@
                                 label="Description*"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="
-                                  verifyErrors(item.raw.line_id)
-                                "
+                                @update:model-value="verifyErrors(i)"
                               ></v-text-field>
                             </v-col>
                           </v-row>
@@ -563,9 +553,7 @@
                                 v-model="item.raw.sourceAccountID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="
-                                  verifyErrors(item.raw.line_id)
-                                "
+                                @update:model-value="verifyErrors(i)"
                               >
                                 <template v-slot:item="{ props, item }">
                                   <v-list-item
@@ -594,9 +582,7 @@
                                 v-model="item.raw.destinationAccountID"
                                 :rules="required"
                                 density="compact"
-                                @update:model-value="
-                                  verifyErrors(item.raw.line_id)
-                                "
+                                @update:model-value="verifyErrors(i)"
                               >
                                 <template v-slot:item="{ props, item }">
                                   <v-list-item
@@ -623,9 +609,7 @@
                                 v-model="item.raw.memo"
                                 :rows="2"
                                 no-resize
-                                @update:model-value="
-                                  verifyErrors(item.raw.line_id)
-                                "
+                                @update:model-value="verifyErrors(i)"
                               ></v-textarea>
                             </v-col>
                           </v-row>
@@ -826,6 +810,11 @@
                   </v-alert>
                 </v-timeline-item>
               </v-timeline>
+              <p class="text-subtitle-2 font-italic text-error">
+                * Imports can take up to 5 minutes to process on the backend.
+                Check the inbox or logs for updates. Duplicates will not be
+                imported.
+              </p>
             </v-stepper-window-item>
           </v-stepper-window>
           <v-stepper-actions disabled="prev">
@@ -947,6 +936,22 @@ const nextStep = () => {
     allStepsComplete.value = true;
   } else {
     allStepsComplete.value = false;
+  }
+  console.log("step:", step.value);
+  if (step.value == 1) {
+    updateStep2Complete();
+  }
+  if (step.value == 2) {
+    updateStep3Complete();
+  }
+  if (step.value == 3) {
+    updateStep4Complete();
+  }
+  if (step.value == 4) {
+    updateStep5Complete();
+  }
+  if (step.value == 5) {
+    updateStep6Complete();
   }
 };
 
@@ -1279,7 +1284,7 @@ const verifyTransactions = transactions => {
  * `verifyErrors` Updates error status if errors are resolved.
  */
 const verifyErrors = i => {
-  let transaction = mappings.value.transactions[i - 1];
+  let transaction = mappings.value.transactions[i];
   for (let x = 0; x < transaction.errors.length; x++) {
     const error = transaction.errors[x];
     if (error.text == "Invalid Amount") {
@@ -1398,7 +1403,9 @@ const verifyBaseRequired = () => {
       transaction.amount !== "" &&
       transaction.amount !== null &&
       transaction.sourceAccountID !== "" &&
-      transaction.sourceAccountID !== null
+      transaction.sourceAccountID !== null &&
+      transaction.transactionDate !== null &&
+      transaction.transactionDate !== ""
     ) {
       verified += 1;
     }
@@ -1466,6 +1473,7 @@ const verifyTransactionType = () => {
  */
 const updateTags = data => {
   mappings.value.transactions[data.transID].tags = data.tags;
+  verifyErrors(data.transID);
   updateStep6Complete();
 };
 

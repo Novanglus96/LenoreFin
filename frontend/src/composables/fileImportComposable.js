@@ -39,8 +39,9 @@ export async function uploadFile(mappings, file) {
         "Content-Type": "multipart/form-data",
       },
     });
+    console.log("response:", response);
     mainstore.showSnackbar(
-      "File import ID #" + response.id + " started!",
+      "File import ID #" + response.data.id + " started!",
       "success",
     );
     return response.data;
