@@ -937,7 +937,6 @@ const nextStep = () => {
   } else {
     allStepsComplete.value = false;
   }
-  console.log("step:", step.value);
   if (step.value == 1) {
     updateStep2Complete();
   }
@@ -1050,7 +1049,6 @@ const updateStep5Complete = () => {
  * `updateStep6Complete` Updates Step 6 Completed status.
  */
 const updateStep6Complete = () => {
-  console.log("mappings:", mappings.value);
   if (
     verifyBaseRequired() == true &&
     verifyTagTotal() == true &&

@@ -33,13 +33,11 @@ export async function uploadFile(mappings, file) {
     const formData = new FormData();
     formData.append("import_file", file);
     formData.append("payload", JSON.stringify(mappings));
-    console.log("formdata:", formData);
     const response = await apiClient.post("/upload", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
-    console.log("response:", response);
     mainstore.showSnackbar(
       "File import ID #" + response.data.id + " started!",
       "success",
