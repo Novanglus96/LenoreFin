@@ -23,5 +23,6 @@ python manage.py loaddata tag_types
 python manage.py loaddata banks
 python manage.py loaddata tags
 python manage.py scheduletasks
+python manage.py loaddata django_admin_theme_money
 
 python manage.py runserver 0.0.0.0:8001
