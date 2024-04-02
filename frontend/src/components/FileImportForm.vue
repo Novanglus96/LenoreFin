@@ -812,8 +812,8 @@
               </v-timeline>
               <p class="text-subtitle-2 font-italic text-error">
                 * Imports can take up to 5 minutes to process on the backend.
-                Check the inbox or logs for updates. Duplicates will not be
-                imported.
+                Check the inbox or logs for updates.
+                <br />* Duplicates WILL be imported.
               </p>
             </v-stepper-window-item>
           </v-stepper-window>
