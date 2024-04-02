@@ -25,6 +25,6 @@ urlpatterns = [
 ]
 
 
-admin.site.site_title = "Money site admin (DEV)"
-admin.site.site_header = "Money administration"
+admin.site.site_title = "LenoreFin site admin (DEV)"
+admin.site.site_header = "LenoreFin administration"
 admin.site.index_title = "Site administration"

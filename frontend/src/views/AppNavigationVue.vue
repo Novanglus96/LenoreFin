@@ -4,7 +4,7 @@
       <v-app-bar-nav-icon
         ><v-img :width="32" aspect-ratio="1/1" cover src="Logo.png"></v-img
       ></v-app-bar-nav-icon>
-      <v-app-bar-title>Money v1.0</v-app-bar-title>
+      <v-app-bar-title>LenoreFin v1.0</v-app-bar-title>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
           <v-btn class="text-none" stacked v-bind="props">

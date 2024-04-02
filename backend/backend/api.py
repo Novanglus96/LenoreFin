@@ -87,9 +87,9 @@ class GlobalAuth(HttpBearer):
 
 
 api = NinjaAPI(auth=GlobalAuth())
-api.title = "Money API"
+api.title = "LenoreFin API"
 api.version = "1.0.0"
-api.description = "API documentation for Money"
+api.description = "API documentation for LenoreFin"
 
 
 # The class AccountTypeIn is a schema for validating account types.
