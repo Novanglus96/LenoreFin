@@ -16,6 +16,11 @@ def import_file_name(instance, filename):
     return f"imports/import-{timestamp}.csv"
 
 
+def transaction_image_name(instance, filename):
+    timestamp = timezone.now().strftime("%Y-%m-%d_%H-%M-%S")
+    return f"tran_images/{timestamp}-{filename}"
+
+
 def mapping_file_name(instance, filename):
     timestamp = timezone.now().strftime("%Y-%m-%d_%H-%M-%S")
     return f"imports/mapping-{timestamp}.csv"
@@ -504,6 +509,8 @@ class Transaction(models.Model):
     associated with this transaction.  Default is None, and is Optional.
     - paycheck (ForeignKey): A reference to the Paycheck model, representing a paycheck
     associated with this transaction.  Default is None, and is Optional.
+    - checkNumber (IntegerField): Number of a check associated with this transaction. Default
+    is None, and is Optional.
     """
 
     transaction_date = models.DateField(default=date.today)
@@ -526,6 +533,21 @@ class Transaction(models.Model):
     paycheck = models.ForeignKey(
         Paycheck, on_delete=models.SET_NULL, null=True, blank=True, default=None
     )
+    checkNumber = models.IntegerField(null=True, blank=True, default=None)
+
+
+class TransactionImage(models.Model):
+    """
+    Model representing a transaction image.
+
+    Fields:
+    - image (ImageField): The image.
+    - transaction (ForeignKey): A reference to the Transaction model, associating the
+    transaction with this image.
+    """
+
+    image = models.FileField(upload_to=transaction_image_name)
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
 
 
 class TransactionDetail(models.Model):

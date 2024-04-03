@@ -29,6 +29,7 @@ from .models import (
     StatusMapping,
     AccountMapping,
     TagMapping,
+    TransactionImage,
 )
 from django.http import HttpResponse
 
@@ -55,6 +56,7 @@ admin.site.register(TagType)
 admin.site.register(Bank)
 admin.site.register(Message)
 admin.site.register(Paycheck)
+admin.site.register(TransactionImage)
 
 
 @admin.register(
