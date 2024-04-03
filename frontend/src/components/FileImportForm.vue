@@ -1092,7 +1092,21 @@ const parseCSV = csvFile => {
     const values = line.split(",");
     const obj = {};
     for (let j = 0; j < header.length; j++) {
-      obj[header[j].trim()] = values[j].trim();
+      let formatted_header = header[j].trim();
+      let formatted_value = values[j].trim();
+      if (
+        (formatted_header.startsWith('"') && formatted_header.endsWith('"')) ||
+        (formatted_header.startsWith("'") && formatted_header.endsWith("'"))
+      ) {
+        formatted_header = formatted_header.slice(1, -1);
+      }
+      if (
+        (formatted_value.startsWith('"') && formatted_value.endsWith('"')) ||
+        (formatted_value.startsWith("'") && formatted_value.endsWith("'"))
+      ) {
+        formatted_value = formatted_value.slice(1, -1);
+      }
+      obj[formatted_header] = formatted_value;
     }
     data.push(obj);
   }
