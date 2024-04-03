@@ -308,7 +308,27 @@
                                 :rules="required"
                                 density="compact"
                                 @update:model-value="updateStep4Complete"
-                              ></v-autocomplete></v-col></v-row></v-container></v-sheet></v-col
+                              >
+                                <template v-slot:item="{ props, item }">
+                                  <v-list-item
+                                    v-bind="props"
+                                    :title="
+                                      item.raw.parent
+                                        ? item.raw.parent.tag_name
+                                        : item.raw.tag_name
+                                    "
+                                    :subtitle="
+                                      item.raw.parent ? item.raw.tag_name : null
+                                    "
+                                  >
+                                    <template v-slot:prepend>
+                                      <v-icon
+                                        icon="mdi-tag"
+                                        :color="tagColor(item.raw.tag_type.id)"
+                                      ></v-icon>
+                                    </template>
+                                  </v-list-item>
+                                </template> </v-autocomplete></v-col></v-row></v-container></v-sheet></v-col
                   ></v-row>
                 </template>
                 <template v-slot:footer="{ page, pageCount }">
@@ -1679,6 +1699,21 @@ function isValidDateFormat(dateString) {
   // If all checks passed, the string is in valid yyyy-mm-dd format and represents a valid date
   return true;
 }
+
+/**
+ * `tagColor` Sets the tag color based on tag type.
+ * @param {int} typeID - The tag type ID.
+ * @return {color} - The color of the tag.
+ */
+const tagColor = typeID => {
+  if (typeID == 1) {
+    return "red";
+  } else if (typeID == 2) {
+    return "green";
+  } else if (typeID == 3) {
+    return "grey";
+  }
+};
 
 /**
  * `isValidFloat` Validates a provided value is a valid float.
