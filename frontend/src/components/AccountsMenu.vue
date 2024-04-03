@@ -172,16 +172,6 @@
         <v-list-item-title
           ><span class="font-italic">{{ account.account_name }}</span>
         </v-list-item-title>
-        <v-list-item-subtitle
-          ><span
-            :class="
-              account.balance >= 0
-                ? 'text-green font-weight-bold font-italic'
-                : 'text-red font-weight-bold font-italic'
-            "
-            >${{ account.balance }}</span
-          ></v-list-item-subtitle
-        >
       </v-list-item>
     </v-list>
   </div>
