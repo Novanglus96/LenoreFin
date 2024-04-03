@@ -254,7 +254,21 @@
                   <h1
                     class="text-subtitle-2 font-weight-bold d-flex justify-space-between mb-4 align-center"
                   >
-                    <div class="text-truncate">Tag Mappings</div>
+                    <div class="text-truncate">
+                      Tag Mappings
+                      <v-btn
+                        prepend-icon="mdi-plus"
+                        size="small"
+                        variant="text"
+                        @click="tagAddFormDialog = true"
+                      >
+                        Add Tag
+                      </v-btn>
+                      <TagForm
+                        v-model="tagAddFormDialog"
+                        @update-dialog="updateTagAddDialog"
+                      />
+                    </div>
                     <div class="d-flex align-center">
                       <div class="d-inline-flex">
                         <v-btn
@@ -879,6 +893,7 @@ import { uploadFile } from "@/composables/fileImportComposable";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import TagTable from "@/components/TagTable";
+import TagForm from "@/components/TagForm.vue";
 
 // Define reactive variables...
 const step = ref(0);
@@ -893,6 +908,7 @@ const nextDisabled = ref(true);
 const fileIsValid = ref(true);
 const fileData = ref(null);
 const allStepsComplete = ref(false);
+const tagAddFormDialog = ref(false);
 
 // Initialize Mappings
 const mappings = ref({
@@ -940,6 +956,13 @@ const closeDialog = () => {
   };
   fileIsValid.value = true;
   emit("updateDialog", false);
+};
+
+/**
+ * `updateTagAddDialog` Closes the add Tag dialog.
+ */
+const updateTagAddDialog = () => {
+  tagAddFormDialog.value = false;
 };
 
 /**
