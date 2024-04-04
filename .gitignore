@@ -3,6 +3,9 @@ migrations/
 *.DS_Store
 static
 *.code-workspace
+my_accounts.json
+my_tags.json
+my_banks.json
 
 # ---> Python
 # Byte-compiled / optimized / DLL files
