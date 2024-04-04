@@ -24,5 +24,9 @@ python manage.py loaddata banks
 python manage.py loaddata tags
 python manage.py scheduletasks
 python manage.py loaddata django_admin_theme_money
+# test data load
+python manage.py loaddata my_banks
+python manage.py loaddata my_accounts
+python manage.py loaddata my_tags
 
 python manage.py runserver 0.0.0.0:8001
