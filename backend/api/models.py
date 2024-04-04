@@ -645,9 +645,15 @@ class FileImport(models.Model):
 
     Fields:
     - import_file (FileField): The transcation import file.
+    - processed (BooleanField): True if this file has been processed.
+    - successful (BooleanField): True if the import was successful.
+    - errors (IntegerField): Number of errors encountered during import.
     """
 
     import_file = models.FileField(upload_to=import_file_name)
+    processed = models.BooleanField(default=False)
+    successful = models.BooleanField(null=True, blank=True, default=None)
+    errors = models.IntegerField(default=0)
 
 
 class TransactionImport(models.Model):
