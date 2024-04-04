@@ -30,20 +30,20 @@ function handleApiError(error, message) {
 
 async function getAccountsFunction(account_type, inactive) {
   try {
+    let querytext = "/accounts?";
+    let account_text = "";
+    let inactive_text = "";
     if (account_type !== "all") {
-      const response = await apiClient.get(
-        "/accounts?account_type=" + account_type,
-      );
-      return response.data;
-    } else {
-      if (inactive) {
-        const response = await apiClient.get("/accounts?inactive=true");
-        return response.data;
-      } else {
-        const response = await apiClient.get("/accounts");
-        return response.data;
-      }
+      account_text = "&account_type=" + account_type;
     }
+    if (inactive) {
+      inactive_text = "inactive=true";
+    } else {
+      inactive_text = "inactive=false";
+    }
+    querytext = querytext + inactive_text + account_text;
+    const response = await apiClient.get(querytext);
+    return response.data;
   } catch (error) {
     handleApiError(error, "Accounts not fetched: ");
   }
@@ -92,11 +92,11 @@ async function updateAccountFunction(updatedAccount) {
   }
 }
 
-export function useAccounts() {
+export function useAccounts(inactive) {
   const queryClient = useQueryClient();
   const { data: accounts, isLoading } = useQuery({
-    queryKey: ["accounts", { type: "all" }],
-    queryFn: () => getAccountsFunction("all"),
+    queryKey: ["accounts", { type: "all", inactive }],
+    queryFn: () => getAccountsFunction("all", inactive),
     select: response => response,
     client: queryClient,
   });
@@ -137,8 +137,8 @@ export function useAccounts() {
   });
 
   const { data: inactive_accounts, inactive_isLoading } = useQuery({
-    queryKey: ["accounts", { inactive: true }],
-    queryFn: () => getAccountsFunction("all", true),
+    queryKey: ["accounts", { type: "0" }],
+    queryFn: () => getAccountsFunction("0", true),
     select: response => response,
     client: queryClient,
   });

@@ -2912,14 +2912,15 @@ def list_accounts(
         qs = Account.objects.all()
 
         # If inactive argument is provided, filter by active/inactive
-        if inactive:
-            qs = qs.filter(active=False)
-        else:
+        if not inactive:
             qs = qs.filter(active=True)
 
         # If account type argument is provided, filter by account type
-        if account_type is not None:
+        if account_type is not None and account_type != 0:
             qs = qs.filter(account_type__id=account_type)
+
+        if account_type is not None and account_type == 0:
+            qs = qs.filter(active=False)
 
         # Order accounts by account type id ascending, bank name ascending, and account
         # name ascending

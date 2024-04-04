@@ -928,7 +928,7 @@ const { transaction_types, isLoading: transaction_types_isLoading } =
   useTransactionTypes();
 const { transaction_statuses, isLoading: transaction_statuses_isLoading } =
   useTransactionStatuses();
-const { accounts, isLoading: accounts_isLoading } = useAccounts();
+const { accounts, isLoading: accounts_isLoading } = useAccounts(true);
 const { tags, isLoading: tags_isLoading } = useTags();
 
 // Define functions...
