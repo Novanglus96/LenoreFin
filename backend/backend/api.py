@@ -3538,7 +3538,10 @@ def list_transactions(
             transactions = []
 
             # Calculate the running account balance
-            balance = Decimal(0)
+            opening_balance = get_object_or_404(
+                Account, id=account
+            ).opening_balance
+            balance = Decimal(0) + opening_balance
             for transaction in qs:
 
                 # Initialize transaction details

@@ -520,7 +520,7 @@ class Transaction(models.Model):
     status = models.ForeignKey(
         TransactionStatus, on_delete=models.SET_NULL, null=True, blank=True
     )
-    memo = models.CharField(max_length=254)
+    memo = models.CharField(max_length=508)
     description = models.CharField(max_length=254)
     edit_date = models.DateField(default=date.today)
     add_date = models.DateField(default=date.today)
@@ -548,6 +548,11 @@ class TransactionImage(models.Model):
 
     image = models.FileField(upload_to=transaction_image_name)
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
+
+    def delete(self, *args, **kwargs):
+        # Delete the associated file when the instance is deleted
+        self.image.delete()
+        super().delete(*args, **kwargs)
 
 
 class TransactionDetail(models.Model):
@@ -655,6 +660,11 @@ class FileImport(models.Model):
     successful = models.BooleanField(null=True, blank=True, default=None)
     errors = models.IntegerField(default=0)
 
+    def delete(self, *args, **kwargs):
+        # Delete the associated file when the instance is deleted
+        self.import_file.delete()
+        super().delete(*args, **kwargs)
+
 
 class TransactionImport(models.Model):
     """
@@ -683,7 +693,7 @@ class TransactionImport(models.Model):
     description = models.CharField(max_length=254)
     source_account_id = models.IntegerField()
     destination_account_id = models.IntegerField(default=None, null=True)
-    memo = models.CharField(max_length=254)
+    memo = models.CharField(max_length=508)
     file_import = models.ForeignKey(FileImport, on_delete=models.CASCADE)
 
 
