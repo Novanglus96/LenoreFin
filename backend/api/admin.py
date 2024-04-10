@@ -33,6 +33,47 @@ from .models import (
 )
 from django.http import HttpResponse
 
+
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = [
+        "id",
+        "sort_order",
+        "transaction_date",
+        "status",
+        "checkNumber",
+        "total_amount",
+        "description",
+        "transaction_type",
+        "source_running_total",
+        "destination_running_total",
+        "edit_date",
+        "add_date",
+        "memo",
+        "reminder",
+        "paycheck",
+        "source_account_id",
+        "destination_account_id",
+    ]
+
+    ordering = ["-sort_order"]
+
+
+class LogAdmin(admin.ModelAdmin):
+    list_display = [
+        "log_date",
+        "error_level",
+        "error_num",
+        "log_entry",
+        "account",
+        "reminder",
+        "transaction",
+    ]
+
+    list_filter = ["error_level", "error_num"]
+
+    ordering = ["-log_date"]
+
+
 # Register your models here.
 
 admin.site.register(Account)
@@ -48,9 +89,9 @@ admin.site.register(Reminder)
 admin.site.register(Note)
 admin.site.register(Option)
 admin.site.register(TransactionStatus)
-admin.site.register(Transaction)
+admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(TransactionDetail)
-admin.site.register(LogEntry)
+admin.site.register(LogEntry, LogAdmin)
 admin.site.register(Payee)
 admin.site.register(TagType)
 admin.site.register(Bank)
