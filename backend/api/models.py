@@ -9,6 +9,10 @@ Date: February 15, 2024
 from django.db import models
 from datetime import date
 from django.utils import timezone
+from django.db.models.signals import post_save, pre_delete
+from django.dispatch import receiver
+from django.db.models import Case, When, Q
+from decimal import Decimal
 
 
 def import_file_name(instance, filename):
@@ -511,6 +515,8 @@ class Transaction(models.Model):
     associated with this transaction.  Default is None, and is Optional.
     - checkNumber (IntegerField): Number of a check associated with this transaction. Default
     is None, and is Optional.
+    - source_running_total (DecimalField): Running total as seen from source account.
+    - destination_running_total (DecimalField): Running total as seen from the destination account.
     """
 
     transaction_date = models.DateField(default=date.today)
@@ -534,6 +540,17 @@ class Transaction(models.Model):
         Paycheck, on_delete=models.SET_NULL, null=True, blank=True, default=None
     )
     checkNumber = models.IntegerField(null=True, blank=True, default=None)
+    source_running_total = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00
+    )
+    destination_running_total = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00
+    )
+    sort_order = models.IntegerField(null=True, blank=True, default=None)
+    source_account_id = models.IntegerField(null=True, blank=True, default=None)
+    destination_account_id = models.IntegerField(
+        null=True, blank=True, default=None
+    )
 
 
 class TransactionImage(models.Model):
@@ -793,3 +810,299 @@ class TagMapping(models.Model):
     file_tag = models.CharField(max_length=254)
     tag_id = models.IntegerField()
     file_import = models.ForeignKey(FileImport, on_delete=models.CASCADE)
+
+
+updating_running_totals = False
+
+
+@receiver(post_save, sender=Transaction)
+@receiver(pre_delete, sender=Transaction)
+def update_running_totals(sender, instance, **kwargs):
+    global updating_running_totals  # Declare the variable as global
+    if not updating_running_totals:
+        updating_running_totals = True
+        try:
+            update_sort_order(instance, kwargs.get("signal"))
+        except Exception as e:
+            print(f"Failed to update sort order: {e}")
+            updating_running_totals = False
+        try:
+            update_running_totals_util(instance, kwargs.get("signal"))
+        except Exception as e:
+            print(f"Failed to update running totals: {e}")
+            updating_running_totals = False
+        updating_running_totals = False
+
+
+def update_sort_order(instance, signal):
+    # If this is a deletion, update subsequent sort_orders
+    if signal == pre_delete:
+        delete_order = instance.sort_order
+        if delete_order is not None:
+            transactions_to_update = Transaction.objects.filter(
+                sort_order__gte=delete_order
+            ).exclude(id=instance.id)
+            for transaction in transactions_to_update:
+                transaction.sort_order -= 1
+                transaction.save()
+    # This is not a deletion.
+    else:
+        total_count = Transaction.objects.exclude(id=instance.id).count()
+        cleared_count = (
+            Transaction.objects.exclude(status__id=1)
+            .exclude(id=instance.id)
+            .count()
+        )
+        pending_count = (
+            Transaction.objects.filter(status__id=1)
+            .exclude(id=instance.id)
+            .count()
+        )
+        # This is the first transaction
+        if total_count == 0:
+            instance.sort_order = 1
+            instance.save()
+        # This is not the first transaction
+        else:
+            # This should be the first pending transaction
+            if (
+                pending_count == 0
+                and cleared_count >= 1
+                and instance.status.id == 1
+            ):
+                instance.sort_order = cleared_count + 1
+                instance.save()
+            # This is not the first pending transaction
+            else:
+                same_transactions = Transaction.objects.filter(
+                    status__id=instance.status.id,
+                    transaction_date__lte=instance.transaction_date,
+                ).exclude(id=instance.id)
+                same_date_transactions = Transaction.objects.filter(
+                    status__id=instance.status.id,
+                    transaction_date=instance.transaction_date,
+                )
+                # There are no transactions before or equal with same status
+                if same_transactions.count() == 0:
+                    # This is a pending transaction with no transactions before or equal
+                    if instance.status.id == 1:
+                        transactions_to_update = Transaction.objects.filter(
+                            status__id=1
+                        ).exclude(id=instance.id)
+                        for transaction in transactions_to_update:
+                            transaction.sort_order += 1
+                            transaction.save()
+                        instance.sort_order = cleared_count + 1
+                        instance.save()
+                    # This is a cleared transaction with no transactions before or equal
+                    else:
+                        transactions_to_update = Transaction.objects.exclude(
+                            id=instance.id
+                        )
+                        for transaction in transactions_to_update:
+                            transaction.sort_order += 1
+                            transaction.save()
+                        instance.sort_order = 1
+                        instance.save()
+                # There are transactions before or equal with same status
+                else:
+                    # There are transactions before but not equal with same status
+                    same_total = same_date_transactions.count() - 1
+                    if same_total == 0:
+                        target_sort = (
+                            same_transactions.order_by("transaction_date")
+                            .last()
+                            .sort_order
+                        ) + 1
+                        instance.sort_order = target_sort
+                        instance.save()
+                        transactions_to_update = Transaction.objects.filter(
+                            sort_order__gte=target_sort
+                        ).exclude(id=instance.id)
+                        for transaction in transactions_to_update:
+                            transaction.sort_order += 1
+                            transaction.save()
+                    # There are transactions equal with same status
+                    else:
+                        transactions = same_date_transactions.order_by(
+                            "transaction_date",
+                            "-total_amount",
+                            "id",
+                        )
+                        target_sort = 0
+                        for step, transaction in enumerate(
+                            transactions, start=0
+                        ):
+                            if transaction.id == instance.id:
+                                if step != 0:
+                                    target_sort = (
+                                        transactions[step - 1].sort_order + 1
+                                    )
+                                else:
+                                    target_sort = transactions[
+                                        step + 1
+                                    ].sort_order
+                                break
+                        instance.sort_order = target_sort
+                        instance.save()
+                        transactions_to_update = Transaction.objects.filter(
+                            sort_order__gte=target_sort
+                        ).exclude(id=instance.id)
+                        for transaction in transactions_to_update:
+                            transaction.sort_order += 1
+                            transaction.save()
+
+
+def update_running_totals_util(instance, signal):
+    # If this is a deletion, update subsequent transactions
+    if signal == pre_delete:
+        transactions_to_update = (
+            Transaction.objects.filter(
+                Q(source_account_id=instance.source_account_id)
+                | Q(destination_account_id=instance.source_account_id),
+                sort_order__gte=instance.sort_order,
+            )
+            .exclude(id=instance.id)
+            .order_by("sort_order")
+        )
+        for transaction in transactions_to_update:
+            if transaction.source_account_id == instance.source_account_id:
+                transaction.source_running_total -= Decimal(
+                    instance.total_amount
+                )
+            if transaction.destination_account_id == instance.source_account_id:
+                transaction.destination_running_total -= Decimal(
+                    abs(instance.total_amount)
+                )
+            transaction.save()
+        if instance.destination_account_id:
+            transactions_to_update = Transaction.objects.filter(
+                Q(source_account_id=instance.destination_account_id)
+                | Q(destination_account_id=instance.destination_account_id),
+                sort_order__gt=instance.sort_order,
+            ).order_by("sort_order")
+            for transaction in transactions_to_update:
+                if (
+                    transaction.source_account_id
+                    == instance.destination_account_id
+                ):
+                    transaction.source_running_total += Decimal(
+                        instance.total_amount
+                    )
+                if (
+                    transaction.destination_account_id
+                    == instance.destination_account_id
+                ):
+                    transaction.destination_running_total += Decimal(
+                        abs(instance.total_amount)
+                    )
+                transaction.save()
+    else:
+        # Update Source Account Balance
+        source_account = Account.objects.get(id=instance.source_account_id)
+        source_balance = Decimal(0.00)
+        source_balance += instance.total_amount
+        source_previous_transaction = (
+            Transaction.objects.filter(
+                Q(source_account_id=instance.source_account_id)
+                | Q(destination_account_id=instance.source_account_id),
+                sort_order__lt=instance.sort_order,
+            )
+            .order_by("sort_order")
+            .last()
+        )
+        if source_previous_transaction:
+            if (
+                source_previous_transaction.source_account_id
+                == instance.source_account_id
+            ):
+                source_balance += Decimal(
+                    source_previous_transaction.source_running_total
+                )
+            if (
+                source_previous_transaction.destination_account_id
+                == instance.source_account_id
+            ):
+                source_balance += Decimal(
+                    source_previous_transaction.destination_running_total
+                )
+        else:
+            source_balance += source_account.opening_balance
+        instance.source_running_total = source_balance
+
+        # Update Destination Account Balance
+        destination_balance = Decimal(0.00)
+        if instance.destination_account_id:
+            destination_account = Account.objects.get(
+                id=instance.destination_account_id
+            )
+            destination_balance += abs(Decimal(instance.total_amount))
+            destination_previous_transaction = (
+                Transaction.objects.filter(
+                    Q(source_account_id=instance.destination_account_id)
+                    | Q(destination_account_id=instance.destination_account_id),
+                    sort_order__lt=instance.sort_order,
+                )
+                .order_by("sort_order")
+                .last()
+            )
+            if destination_previous_transaction:
+                if (
+                    destination_previous_transaction.source_account_id
+                    == instance.destination_account_id
+                ):
+                    destination_balance += Decimal(
+                        destination_previous_transaction.source_running_total
+                    )
+                if (
+                    destination_previous_transaction.destination_account_id
+                    == instance.destination_account_id
+                ):
+                    destination_balance += Decimal(
+                        destination_previous_transaction.destination_running_total
+                    )
+            else:
+                destination_balance += destination_account.opening_balance
+        instance.destination_running_total = destination_balance
+
+        # Save changes to transaction
+        instance.save()
+
+        # Update subsequent source account transactions
+        transactions_to_update = Transaction.objects.filter(
+            Q(source_account_id=instance.source_account_id)
+            | Q(destination_account_id=instance.source_account_id),
+            sort_order__gt=instance.sort_order,
+        ).order_by("sort_order")
+        for transaction in transactions_to_update:
+            if transaction.source_account_id == instance.source_account_id:
+                source_balance += Decimal(transaction.total_amount)
+                transaction.source_running_total = source_balance
+            if transaction.destination_account_id == instance.source_account_id:
+                source_balance += Decimal(abs(transaction.total_amount))
+                transaction.destination_running_total = source_balance
+            transaction.save()
+
+        # Update subsequent destination account transactions
+        if instance.destination_account_id:
+            transactions_to_update = Transaction.objects.filter(
+                Q(source_account_id=instance.destination_account_id)
+                | Q(destination_account_id=instance.destination_account_id),
+                sort_order__gt=instance.sort_order,
+            ).order_by("sort_order")
+            for transaction in transactions_to_update:
+                if (
+                    transaction.source_account_id
+                    == instance.destination_account_id
+                ):
+                    destination_balance += Decimal(transaction.total_amount)
+                    transaction.source_running_total = destination_balance
+                if (
+                    transaction.destination_account_id
+                    == instance.destination_account_id
+                ):
+                    destination_balance += Decimal(
+                        abs(transaction.total_amount)
+                    )
+                    transaction.destination_running_total = destination_balance
+                transaction.save()

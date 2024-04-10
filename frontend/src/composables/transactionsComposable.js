@@ -1,4 +1,9 @@
-import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
+import {
+  useQuery,
+  useQueryClient,
+  useMutation,
+  keepPreviousData,
+} from "@tanstack/vue-query";
 import axios from "axios";
 import { useMainStore } from "@/stores/main";
 
@@ -28,7 +33,13 @@ function handleApiError(error, message) {
   throw error;
 }
 
-async function getTransactionsFunction(account_id, maxdays, forecast) {
+async function getTransactionsFunction(
+  account_id,
+  maxdays,
+  forecast,
+  page,
+  page_size,
+) {
   try {
     if (account_id) {
       let querytext = "?account=" + account_id;
@@ -37,6 +48,12 @@ async function getTransactionsFunction(account_id, maxdays, forecast) {
       }
       if (forecast) {
         querytext = querytext + "&forecast=" + forecast;
+      }
+      if (page) {
+        querytext = querytext + "&pageno=" + page;
+      }
+      if (page_size) {
+        querytext = querytext + "&recno=" + page_size;
       }
       const response = await apiClient.get("/transactions" + querytext);
       return response.data;
@@ -103,11 +120,22 @@ async function updateTransactionFunction(updatedTransaction) {
   }
 }
 
-export function useTransactions(account_id, maxdays, forecast) {
+export function useTransactions(
+  account_id,
+  maxdays,
+  forecast,
+  page,
+  page_size,
+) {
   const queryClient = useQueryClient();
   const { data: transactions, isLoading } = useQuery({
-    queryKey: ["transactions", { account: account_id }],
-    queryFn: () => getTransactionsFunction(account_id, maxdays, forecast),
+    queryKey: [
+      "transactions",
+      { account: account_id, page: page, page_size: page_size },
+    ],
+    queryFn: () =>
+      getTransactionsFunction(account_id, maxdays, forecast, page, page_size),
+    placeholderData: keepPreviousData,
     select: response => response,
     client: queryClient,
   });

@@ -294,6 +294,8 @@ def finish_imports():
                             transaction_type_id=typeID,
                             reminder_id=None,
                             paycheck_id=None,
+                            source_account_id=sourceAccountID,
+                            destination_account_id=destinationAccountID,
                         )
                         transactions_to_create.append(transaction)
                         detail_dict = {
@@ -408,6 +410,19 @@ def finish_imports():
                     3002001,
                     2,
                 )
+
+                # Update sort order
+                try:
+                    bulk_update_sort_order()
+                except Exception as e:
+                    print(f"Bulk update of sort order failed: {e}")
+
+                # Update running totals
+                try:
+                    bulk_update_running_totals()
+                except:
+                    print(f"Bulk update of running totals failed: {e}")
+
             except Exception as e:
                 success = False
                 print(f"Import # {file_import.id} failed : {str(e)}")
@@ -425,6 +440,30 @@ def finish_imports():
             num_of_imports = file
     string_return = f"Processed {num_of_imports} imports with {errors} errors"
     return string_return
+
+
+def bulk_update_sort_order():
+    """
+    The function `bulk_update_sort_order` updates the sort orders after an import.
+
+    Args:
+
+    Returns:
+
+    """
+    print("Bulk update of sort order started")
+
+
+def bulk_update_running_totals():
+    """
+    The function `bulk_update_sort_order` updates the sort orders after an import.
+
+    Args:
+
+    Returns:
+
+    """
+    print("Bulk update of running totals started")
 
 
 def update_forever_reminders():
@@ -470,6 +509,8 @@ def update_forever_reminders():
                 add_date=todayDate,
                 transaction_type_id=reminder.transaction_type.id,
                 reminder_id=reminder.id,
+                source_account_id=reminder.reminder_source_account.id,
+                destination_account_id=reminder.reminder_destination_account.id,
             )
             # Add Detail
             if reminder.transaction_type.id == 3:

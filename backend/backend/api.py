@@ -63,6 +63,7 @@ from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 import random
 import json
+from django.core.paginator import Paginator
 
 
 class GlobalAuth(HttpBearer):
@@ -1416,6 +1417,8 @@ def create_transaction(request, payload: TransactionIn):
                 transaction_type_id=payload.transaction_type_id,
                 reminder_id=payload.reminder_id,
                 paycheck_id=paycheck.id,
+                source_account_id=payload.source_account_id,
+                destination_account_id=payload.destination_account_id,
             )
         else:
             transaction = Transaction.objects.create(
@@ -1429,6 +1432,8 @@ def create_transaction(request, payload: TransactionIn):
                 transaction_type_id=payload.transaction_type_id,
                 reminder_id=payload.reminder_id,
                 paycheck_id=None,
+                source_account_id=payload.source_account_id,
+                destination_account_id=payload.destination_account_id,
             )
         logToDB(
             f"Transaction created : #{transaction.id}",
@@ -3468,6 +3473,8 @@ def list_transactions(
     account: Optional[int] = Query(None),
     maxdays: Optional[int] = Query(14),
     forecast: Optional[bool] = Query(False),
+    page: Optional[int] = Query(1),
+    page_size: Optional[int] = Query(20),
 ):
     """
     The function `list_transactions` retrieves a list of transactions,
@@ -3491,14 +3498,12 @@ def list_transactions(
     """
 
     try:
-        # Retrieve all transactions
-        qs = Transaction.objects.all()
 
         # If an account is specified, filter transactions for maximum days and transaction
         # details that match account
         if account is not None:
             threshold_date = timezone.now().date() + timedelta(days=maxdays)
-            qs = qs.filter(
+            qs = Transaction.objects.filter(
                 transactiondetail__account__id=account,
                 transaction_date__lt=threshold_date,
             ).distinct()
@@ -3616,13 +3621,20 @@ def list_transactions(
                         )
             if forecast is False:
                 transactions.reverse()
-            return transactions
+            if page_size is not None and page is not None:
+                paginator = Paginator(transactions, page_size)
+                page_obj = paginator.page(page)
+                print(f"page: {page_obj}")
+
+                return list(page_obj.object_list)
+            else:
+                return transactions
 
         # If an account was not specified, these should be upcoming transactions
         else:
 
             # Filter transactions for pending status and no reminders
-            qs = qs.filter(status_id=1, reminder__isnull=True)
+            qs = Transaction.objects.filter(status_id=1, reminder__isnull=True)
             custom_order = Case(
                 When(status_id=1, then=0),
                 When(status_id=2, then=1),
@@ -5101,6 +5113,8 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         transaction.description = payload.description
         transaction.edit_date = today
         transaction.transaction_type_id = payload.transaction_type_id
+        transaction.source_account_id = payload.source_account_id
+        transaction.destination_account_id = payload.destination_account_id
         if paycheck is not None:
             transaction.paycheck_id = paycheck.id
         else:
