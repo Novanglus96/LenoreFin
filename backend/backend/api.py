@@ -2155,28 +2155,79 @@ def get_forecast(
         dates = get_unformatted_dates_in_range(start_interval, end_interval)
         data = []
         datasets = []
-
-        # Retrieve the account for the forecast
-        account = get_object_or_404(Account, id=account_id)
+        opening_balance = Account.objects.get(id=account_id).opening_balance
 
         # Retrieve the transactions in the date range for the account
-        transactions = TransactionDetail.objects.filter(
-            account__id=account_id,
-            transaction__transaction_date__lt=get_forecast_end_date(
-                end_interval
-            ),
+        start_date = get_forecast_start_date(start_interval)
+        end_date = get_forecast_end_date(end_interval)
+        lowest_source_balance_object = (
+            Transaction.objects.filter(
+                source_account_id=account_id, transaction_date__lt=start_date
+            )
+            .order_by("sort_order")
+            .last()
         )
-        transactions = transactions.order_by("transaction__transaction_date")
+        lowest_destination_balance_object = (
+            Transaction.objects.filter(
+                destination_account_id=account_id,
+                transaction_date__lt=start_date,
+            )
+            .order_by("sort_order")
+            .last()
+        )
+        transactions = Transaction.objects.filter(
+            Q(source_account_id=account_id)
+            | Q(destination_account_id=account_id),
+            transaction_date__range=(start_date, end_date),
+        ).order_by("sort_order")
 
         # Calculate the daily account balance
         balance = Decimal(0)
-        balance += account.opening_balance
+        if lowest_source_balance_object and lowest_destination_balance_object:
+            if (
+                lowest_source_balance_object.transaction_date
+                <= lowest_destination_balance_object.transaction_date
+            ):
+                balance = lowest_source_balance_object.source_running_total
+            else:
+                balance = (
+                    lowest_destination_balance_object.destination_running_total
+                )
+        if (
+            lowest_source_balance_object
+            and lowest_destination_balance_object is None
+        ):
+            balance = lowest_source_balance_object.source_running_total
+        if (
+            lowest_destination_balance_object
+            and lowest_source_balance_object is None
+        ):
+            balance = (
+                lowest_destination_balance_object.destination_running_total
+            )
+        if (
+            lowest_source_balance_object is None
+            and lowest_destination_balance_object is None
+        ):
+            balance = opening_balance
         day_balance = Decimal(0)
         for label in dates:
-            day_balance = balance
-            for transaction in transactions:
-                if transaction.transaction.transaction_date <= label:
-                    day_balance += transaction.detail_amt
+            last_transaction_of_day = (
+                transactions.filter(transaction_date=label)
+                .order_by("sort_order")
+                .last()
+            )
+            if last_transaction_of_day:
+                if last_transaction_of_day.source_account_id == account_id:
+                    day_balance = last_transaction_of_day.source_running_total
+                    balance = day_balance
+                if last_transaction_of_day.destination_account_id == account_id:
+                    day_balance = (
+                        last_transaction_of_day.destination_running_total
+                    )
+                    balance = day_balance
+            else:
+                day_balance = balance
             data.append(day_balance)
 
         # Prepare the graph data for the forecast object
@@ -3502,17 +3553,25 @@ def list_transactions(
         # If an account is specified, filter transactions for maximum days and transaction
         # details that match account
         if account is not None:
+            qs = None
             threshold_date = timezone.now().date() + timedelta(days=maxdays)
-            qs = Transaction.objects.filter(
+            query = Transaction.objects.filter(
                 transactiondetail__account__id=account,
                 transaction_date__lt=threshold_date,
             ).distinct()
 
             # If this is a forecast, set sort
             if forecast is False:
-                qs = qs.order_by("sort_order")
+                query = query.order_by("sort_order")
             else:
-                qs = qs.order_by("-sort_order")
+                query = query.order_by("-sort_order")
+
+            if page_size is not None and page is not None:
+                paginator = Paginator(query, page_size)
+                page_obj = paginator.page(page)
+                qs = list(page_obj.object_list)
+            else:
+                qs = query
 
             # Initialize blank list of transactions
             transactions = []
@@ -3594,12 +3653,7 @@ def list_transactions(
                         )
             if forecast is False:
                 transactions.reverse()
-            if page_size is not None and page is not None:
-                paginator = Paginator(transactions, page_size)
-                page_obj = paginator.page(page)
-                return list(page_obj.object_list)
-            else:
-                return transactions
+            return transactions
 
         # If an account was not specified, these should be upcoming transactions
         else:
