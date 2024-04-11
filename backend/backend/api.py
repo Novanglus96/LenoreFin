@@ -3507,46 +3507,18 @@ def list_transactions(
                 transactiondetail__account__id=account,
                 transaction_date__lt=threshold_date,
             ).distinct()
-            # Set custom status order
-            custom_order = Case(
-                When(status_id=3, then=0),
-                When(status_id=2, then=0),
-                When(status_id=1, then=1),
-                output_field=models.IntegerField(),
-            )
-
-            # Set custom type order
-            custom_type_order = Case(
-                When(transaction_type_id=2, then=0),
-                When(transaction_type_id=3, then=1),
-                When(transaction_type_id=1, then=2),
-                output_field=models.IntegerField(),
-            )
 
             # If this is a forecast, set sort
             if forecast is False:
-                qs = qs.order_by(
-                    custom_order,
-                    "transaction_date",
-                    custom_type_order,
-                    "-total_amount",
-                )
+                qs = qs.order_by("sort_order")
             else:
-                qs = qs.order_by(
-                    custom_order,
-                    "transaction_date",
-                    custom_type_order,
-                    "total_amount",
-                )
+                qs = qs.order_by("-sort_order")
 
             # Initialize blank list of transactions
             transactions = []
 
             # Calculate the running account balance
-            opening_balance = get_object_or_404(
-                Account, id=account
-            ).opening_balance
-            balance = Decimal(0) + opening_balance
+            balance = Decimal(0)
             for transaction in qs:
 
                 # Initialize transaction details
@@ -3585,13 +3557,10 @@ def list_transactions(
                             destination_account_id = detail.account.id
                             if detail.account.id == account:
                                 pretty_total = -transaction.total_amount
-                        if detail.account.id == account:
-                            balance += detail.detail_amt
                     else:
                         pretty_total = transaction.total_amount
                         source_account = detail.account.account_name
                         source_account_id = detail.account.id
-                        balance += detail.detail_amt
                 if transaction.transaction_type.id == 3:
                     if source_account:
                         pretty_account = source_account
@@ -3603,6 +3572,10 @@ def list_transactions(
                         pretty_account += " => Deleted Account"  # If the destination account was deleted
                 else:
                     pretty_account = source_account
+                if transaction.source_account_id == account:
+                    balance = transaction.source_running_total
+                if transaction.destination_account_id == account:
+                    balance = transaction.destination_running_total
 
                 # Update the balance in the transaction and append to the list
                 transaction.balance = balance
@@ -3624,8 +3597,6 @@ def list_transactions(
             if page_size is not None and page is not None:
                 paginator = Paginator(transactions, page_size)
                 page_obj = paginator.page(page)
-                print(f"page: {page_obj}")
-
                 return list(page_obj.object_list)
             else:
                 return transactions
