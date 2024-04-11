@@ -24,6 +24,8 @@ from api.models import (
     StatusMapping,
     TagMapping,
     AccountMapping,
+    TransactionStatus,
+    Account,
 )
 from django_q.models import Schedule
 from datetime import date
@@ -32,7 +34,9 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 import csv
 from io import StringIO
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
+from django.db.models import F, Window
+from django.db.models.functions import RowNumber
 
 
 def create_message(message_text):
@@ -451,7 +455,35 @@ def bulk_update_sort_order():
     Returns:
 
     """
-    print("Bulk update of sort order started")
+    status_table = TransactionStatus._meta.db_table
+    table_name = Transaction._meta.db_table
+
+    # Define the raw SQL query
+    query = f"""
+    WITH ordered_rows AS (
+        SELECT t.id, ROW_NUMBER() OVER (
+            ORDER BY
+                CASE WHEN status_id = 1 THEN 2
+                    WHEN status_id = 2 THEN 0
+                    WHEN status_id = 3 THEN 0
+                    ELSE 1
+                END,
+                transaction_date,
+                total_amount DESC,
+                t.id
+        ) as row_num
+        FROM {table_name} t
+        JOIN {status_table} s ON t.status_id = s.id
+    )
+    UPDATE {table_name}
+    SET sort_order = ordered_rows.row_num
+    FROM ordered_rows
+    WHERE {table_name}.id = ordered_rows.id
+    """
+
+    # Execute the raw SQL query
+    with connection.cursor() as cursor:
+        cursor.execute(query)
 
 
 def bulk_update_running_totals():
@@ -463,7 +495,48 @@ def bulk_update_running_totals():
     Returns:
 
     """
-    print("Bulk update of running totals started")
+    balances = []
+    accounts = Account.objects.all().order_by("id")
+    for account in accounts:
+        bal_obj = {"id": account.id, "balance": account.opening_balance}
+        balances.append(bal_obj)
+    transactions = Transaction.objects.all().order_by("sort_order")
+    for transaction in transactions:
+        # Find matching source account in balances
+        source_account = next(
+            (
+                bal
+                for bal in balances
+                if bal["id"] == transaction.source_account_id
+            ),
+            None,
+        )
+        if source_account:
+            # Update transaction and balance object
+            source_account["balance"] += transaction.total_amount
+            transaction.source_running_total = source_account["balance"]
+
+        # Find matching destination account in balances
+        if transaction.destination_account_id:
+            destination_account = next(
+                (
+                    bal
+                    for bal in balances
+                    if bal["id"] == transaction.destination_account_id
+                ),
+                None,
+            )
+            if destination_account:
+                # Update transaction and balance object
+                destination_account["balance"] += abs(transaction.total_amount)
+                transaction.destination_running_total = destination_account[
+                    "balance"
+                ]
+        else:
+            transaction.destination_running_total = 0.00
+        transaction.save(
+            update_fields=["source_running_total", "destination_running_total"]
+        )
 
 
 def update_forever_reminders():
