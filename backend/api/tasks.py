@@ -499,7 +499,6 @@ def bulk_update_running_totals():
         for trans in transactions:
             trans_source_total = Decimal(0)
             trans_destination_total = Decimal(0)
-            print(f"Updating running totals for transaction #{trans.id}")
             # Find matching source account in balances
             source_account = next(
                 (
