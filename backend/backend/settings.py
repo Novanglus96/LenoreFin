@@ -173,7 +173,7 @@ LOGGING = {
 Q_CLUSTER = {
     "name": "DjangORM",
     "workers": 4,
-    "timeout": 90,
+    "timeout": None,
     "retry": 600,
     "queue_limit": 50,
     "bulk": 10,
