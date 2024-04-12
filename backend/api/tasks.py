@@ -34,9 +34,10 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 import csv
 from io import StringIO
-from django.db import IntegrityError, connection
+from django.db import IntegrityError, connection, transaction
 from django.db.models import F, Window
 from django.db.models.functions import RowNumber
+from decimal import Decimal
 
 
 def create_message(message_text):
@@ -72,24 +73,24 @@ def convert_reminder():
 
     # Check for auto_add
     if transactions.exists():
-        for transaction in transactions:
-            reminder = transaction.reminder
+        for trans in transactions:
+            reminder = trans.reminder
             repeat = reminder.repeat
             if reminder.auto_add:
                 # If auto_add is True, delete the reminder association
-                transaction.reminder = None
-                transaction.save()
+                trans.reminder = None
+                trans.save()
                 logToDB(
                     "Reminder transaction auto-added",
                     None,
                     reminder.id,
-                    transaction.id,
+                    trans.id,
                     3001002,
                     1,
                 )
             else:
                 # If auto_add is False, delete the transaction
-                transaction.delete()
+                trans.delete()
                 logToDB(
                     "Reminder transaction deleted",
                     None,
@@ -287,7 +288,7 @@ def finish_imports():
                             totalAmount = abs(float(totalAmount))
                         else:
                             totalAmount = -abs(float(totalAmount))
-                        transaction = Transaction(
+                        trans = Transaction(
                             transaction_date=transDate,
                             total_amount=totalAmount,
                             status_id=statusID,
@@ -301,7 +302,7 @@ def finish_imports():
                             source_account_id=sourceAccountID,
                             destination_account_id=destinationAccountID,
                         )
-                        transactions_to_create.append(transaction)
+                        transactions_to_create.append(trans)
                         detail_dict = {
                             "source_account_id": sourceAccountID,
                             "dest_account_id": destinationAccountID,
@@ -324,7 +325,6 @@ def finish_imports():
                     print(f"Bulk transaction chunk#{step} create error: {p}")
                 for index, obj in enumerate(created_transactions):
                     if transaction_details[index]["type_id"] == 3:
-                        print(f"trans#{obj.id} - transfer")
                         detail = TransactionDetail(
                             transaction_id=obj.id,
                             account_id=transaction_details[index][
@@ -352,9 +352,6 @@ def finish_imports():
                             transaction_details[index]["tags"]
                             and len(transaction_details[index]["tags"]) != 0
                         ):
-                            print(
-                                f"trans#{obj.id} - non transfer and loading tags"
-                            )
                             for tag in transaction_details[index]["tags"]:
                                 adj_amount = 0
                                 if transaction_details[index]["type_id"] == 1:
@@ -371,7 +368,6 @@ def finish_imports():
                                 )
                                 details_to_create.append(detail)
                         else:
-                            print(f"trans#{obj.id} - non transfer no tags")
                             detail = TransactionDetail(
                                 transaction_id=obj.id,
                                 account_id=transaction_details[index][
@@ -416,16 +412,10 @@ def finish_imports():
                 )
 
                 # Update sort order
-                try:
-                    bulk_update_sort_order()
-                except Exception as e:
-                    print(f"Bulk update of sort order failed: {e}")
+                bulk_update_sort_order()
 
                 # Update running totals
-                try:
-                    bulk_update_running_totals()
-                except:
-                    print(f"Bulk update of running totals failed: {e}")
+                bulk_update_running_totals()
 
             except Exception as e:
                 success = False
@@ -455,35 +445,38 @@ def bulk_update_sort_order():
     Returns:
 
     """
-    status_table = TransactionStatus._meta.db_table
-    table_name = Transaction._meta.db_table
+    try:
+        status_table = TransactionStatus._meta.db_table
+        table_name = Transaction._meta.db_table
 
-    # Define the raw SQL query
-    query = f"""
-    WITH ordered_rows AS (
-        SELECT t.id, ROW_NUMBER() OVER (
-            ORDER BY
-                CASE WHEN status_id = 1 THEN 2
-                    WHEN status_id = 2 THEN 0
-                    WHEN status_id = 3 THEN 0
-                    ELSE 1
-                END,
-                transaction_date,
-                total_amount DESC,
-                t.id
-        ) as row_num
-        FROM {table_name} t
-        JOIN {status_table} s ON t.status_id = s.id
-    )
-    UPDATE {table_name}
-    SET sort_order = ordered_rows.row_num
-    FROM ordered_rows
-    WHERE {table_name}.id = ordered_rows.id
-    """
+        # Define the raw SQL query
+        query = f"""
+        WITH ordered_rows AS (
+            SELECT t.id, ROW_NUMBER() OVER (
+                ORDER BY
+                    CASE WHEN status_id = 1 THEN 2
+                        WHEN status_id = 2 THEN 0
+                        WHEN status_id = 3 THEN 0
+                        ELSE 1
+                    END,
+                    transaction_date,
+                    total_amount DESC,
+                    t.id
+            ) as row_num
+            FROM {table_name} t
+            JOIN {status_table} s ON t.status_id = s.id
+        )
+        UPDATE {table_name}
+        SET sort_order = ordered_rows.row_num
+        FROM ordered_rows
+        WHERE {table_name}.id = ordered_rows.id
+        """
 
-    # Execute the raw SQL query
-    with connection.cursor() as cursor:
-        cursor.execute(query)
+        # Execute the raw SQL query
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+    except Exception as e:
+        print(f"Bulk update of sort order failed: {e}")
 
 
 def bulk_update_running_totals():
@@ -495,48 +488,64 @@ def bulk_update_running_totals():
     Returns:
 
     """
-    balances = []
-    accounts = Account.objects.all().order_by("id")
-    for account in accounts:
-        bal_obj = {"id": account.id, "balance": account.opening_balance}
-        balances.append(bal_obj)
-    transactions = Transaction.objects.all().order_by("sort_order")
-    for transaction in transactions:
-        # Find matching source account in balances
-        source_account = next(
-            (
-                bal
-                for bal in balances
-                if bal["id"] == transaction.source_account_id
-            ),
-            None,
-        )
-        if source_account:
-            # Update transaction and balance object
-            source_account["balance"] += transaction.total_amount
-            transaction.source_running_total = source_account["balance"]
-
-        # Find matching destination account in balances
-        if transaction.destination_account_id:
-            destination_account = next(
+    try:
+        balances = []
+        accounts = Account.objects.all().order_by("id")
+        for account in accounts:
+            bal_obj = {"id": account.id, "balance": account.opening_balance}
+            balances.append(bal_obj)
+        transactions = Transaction.objects.all().order_by("sort_order")
+        transactions_to_update = []
+        for trans in transactions:
+            trans_source_total = Decimal(0)
+            trans_destination_total = Decimal(0)
+            print(f"Updating running totals for transaction #{trans.id}")
+            # Find matching source account in balances
+            source_account = next(
                 (
                     bal
                     for bal in balances
-                    if bal["id"] == transaction.destination_account_id
+                    if bal["id"] == trans.source_account_id
                 ),
                 None,
             )
-            if destination_account:
+            if source_account:
                 # Update transaction and balance object
-                destination_account["balance"] += abs(transaction.total_amount)
-                transaction.destination_running_total = destination_account[
-                    "balance"
-                ]
-        else:
-            transaction.destination_running_total = 0.00
-        transaction.save(
-            update_fields=["source_running_total", "destination_running_total"]
-        )
+                source_account["balance"] += trans.total_amount
+                trans_source_total = source_account["balance"]
+
+            # Find matching destination account in balances
+            if trans.destination_account_id:
+                destination_account = next(
+                    (
+                        bal
+                        for bal in balances
+                        if bal["id"] == trans.destination_account_id
+                    ),
+                    None,
+                )
+                if destination_account:
+                    # Update transaction and balance object
+                    destination_account["balance"] += abs(trans.total_amount)
+                    trans_destination_total = destination_account["balance"]
+            else:
+                trans_destination_total = 0.00
+            trans_instance = Transaction(
+                id=trans.id,
+                source_running_total=trans_source_total,
+                destination_running_total=trans_destination_total,
+            )
+            transactions_to_update.append(trans_instance)
+        try:
+            Transaction.objects.bulk_update(
+                transactions_to_update,
+                ["source_running_total", "destination_running_total"],
+                batch_size=1000,
+            )
+        except Exception as e:
+            print(f"Unable to batch update running totals: {e}")
+    except Exception as e:
+        print(f"Bulk update of running totals failed: {e}")
 
 
 def update_forever_reminders():
@@ -627,7 +636,7 @@ def update_forever_reminders():
 # TODO: Task to look for negative dips
 # TODO: Task to look for under threshold
 # TODO: Task to update Credit Card specific information
-def logToDB(message, account, reminder, transaction, error, level):
+def logToDB(message, account, reminder, trans, error, level):
     """
     The function `logToDB` creates log entries, but only if the current logging level
     set in options is lower than the specified error level.
@@ -636,7 +645,7 @@ def logToDB(message, account, reminder, transaction, error, level):
         message (str): The log entry message.
         account (Account): Optional, the account associated with this entry.
         reminder (Reminder): Optional, the reminder associated with this entry.
-        transaction (Transaction): Optional, the transactions associated with this entry.
+        trans (Transaction): Optional, the transactions associated with this entry.
         error (int): Optional, any error number associated with this entry.
         level (ErrorLevel): The error level of this entry.
 
@@ -650,7 +659,7 @@ def logToDB(message, account, reminder, transaction, error, level):
             log_entry=message,
             account_id=account,
             reminder_id=reminder,
-            transaction_id=transaction,
+            transaction_id=trans,
             error_num=error,
             error_level_id=level,
         )
