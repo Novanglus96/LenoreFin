@@ -3562,9 +3562,9 @@ def list_transactions(
 
             # If this is a forecast, set sort
             if forecast is False:
-                query = query.order_by("sort_order")
-            else:
                 query = query.order_by("-sort_order")
+            else:
+                query = query.order_by("sort_order")
 
             if page_size is not None and page is not None:
                 paginator = Paginator(query, page_size)
@@ -3651,8 +3651,6 @@ def list_transactions(
                         transactions.append(
                             TransactionOut.from_orm(transaction)
                         )
-            if forecast is False:
-                transactions.reverse()
             return transactions
 
         # If an account was not specified, these should be upcoming transactions
