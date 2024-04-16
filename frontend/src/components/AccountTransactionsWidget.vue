@@ -122,11 +122,11 @@
         :passedFormData="blankForm"
       />
       <vue3-datatable
-        :rows="transactions"
+        :rows="transactions ? transactions.transactions : []"
         :columns="columns"
         :loading="isLoading"
-        :totalRows="transactions ? transactions.length : 0"
-        :isServerMode="false"
+        :totalRows="transactions ? transactions.total_records : 0"
+        :isServerMode="true"
         pageSize="20"
         :hasCheckbox="true"
         :stickyHeader="true"
@@ -140,6 +140,7 @@
         :showPageSize="false"
         paginationInfo="Showing {0} to {1} of {2} transactions"
         class="alt-pagination"
+        @change="pageChanged"
         ><!--height="280px"-->
         <template #status.transaction_status="row">
           <v-tooltip text="Pending" location="top">
@@ -259,7 +260,7 @@
   </v-card>
 </template>
 <script setup>
-import { ref, defineProps, defineEmits } from "vue";
+import { ref, defineProps, defineEmits, reactive, watch, onMounted } from "vue";
 import { useTransactions } from "@/composables/transactionsComposable";
 import TransactionForm from "@/components/TransactionForm";
 import FileImportForm from "@/components/FileImportForm";
@@ -330,8 +331,46 @@ const editTransaction = ref({
   source_account_id: 0,
   destination_account_id: null,
 });
+const params = reactive({
+  current_page: 3,
+  page_size: 20,
+});
 const { isLoading, transactions, removeTransaction, clearTransaction } =
-  useTransactions(props.account, props.maxdays, props.forecast);
+  useTransactions(
+    props.account,
+    props.maxdays,
+    props.forecast,
+    params.current_page,
+    params.page_size,
+  );
+const pageChanged = data => {
+  params.current_page = data.current_page;
+  useTransactions(
+    props.account,
+    props.maxdays,
+    props.forecast,
+    params.current_page,
+    params.page_size,
+  );
+};
+watch(params.current_page, async () => {
+  useTransactions(
+    props.account,
+    props.maxdays,
+    props.forecast,
+    params.current_page,
+    params.page_size,
+  );
+});
+onMounted(() => {
+  useTransactions(
+    props.account,
+    props.maxdays,
+    props.forecast,
+    params.current_page,
+    params.page_size,
+  );
+});
 const selected = ref([]);
 const columns = ref([
   { field: "id", title: "ID", isUnique: true, hide: true },

@@ -15,10 +15,10 @@
     </template>
     <template v-slot:text>
       <vue3-datatable
-        :rows="transactions"
+        :rows="transactions ? transactions.transactions : []"
         :columns="columns"
         :loading="isLoading"
-        :totalRows="transactions ? transactions.length : 0"
+        :totalRows="transactions ? transactions.transactions.length : 0"
         :isServerMode="false"
         pageSize="10"
         :hasCheckbox="false"

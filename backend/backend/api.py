@@ -680,6 +680,14 @@ class TransactionOut(Schema):
 TransactionDetailOut.update_forward_refs()
 
 
+# The class PaginatedTransactions is a schema for validating paginated transactions.
+class PaginatedTransactions(Schema):
+    transactions: List[TransactionOut]
+    current_page: int
+    total_pages: int
+    total_records: int
+
+
 # The class TransactionDetailIn is a schema for validating Transaction Details.
 class TransactionDetailIn(Schema):
     transaction_id: int
@@ -3518,7 +3526,7 @@ def list_paychecks(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@api.get("/transactions", response=List[TransactionOut])
+@api.get("/transactions", response=PaginatedTransactions)
 def list_transactions(
     request,
     account: Optional[int] = Query(None),
@@ -3565,14 +3573,15 @@ def list_transactions(
                 query = query.order_by("-sort_order")
             else:
                 query = query.order_by("sort_order")
-
+            total_pages = 0
             if page_size is not None and page is not None:
                 paginator = Paginator(query, page_size)
                 page_obj = paginator.page(page)
                 qs = list(page_obj.object_list)
+                total_pages = paginator.num_pages
             else:
                 qs = query
-
+            total_records = len(query)
             # Initialize blank list of transactions
             transactions = []
 
@@ -3651,22 +3660,24 @@ def list_transactions(
                         transactions.append(
                             TransactionOut.from_orm(transaction)
                         )
-            return transactions
+            paginated_obj = PaginatedTransactions(
+                transactions=transactions,
+                current_page=page,
+                total_pages=total_pages,
+                total_records=total_records,
+            )
+            return paginated_obj
 
         # If an account was not specified, these should be upcoming transactions
         else:
 
             # Filter transactions for pending status and no reminders
+            processed_transactions = []
             qs = Transaction.objects.filter(status_id=1, reminder__isnull=True)
-            custom_order = Case(
-                When(status_id=1, then=0),
-                When(status_id=2, then=1),
-                When(status_id=3, then=1),
-                output_field=models.IntegerField(),
-            )
 
             # Set order of transactions
-            qs = qs.order_by(custom_order, "transaction_date", "id")
+            qs = qs.order_by("sort_order")
+            qs = qs[:10]
             for transaction in qs:
 
                 # Initialize transaction details
@@ -3709,8 +3720,15 @@ def list_transactions(
                 transaction.tags = tags
                 transaction.pretty_account = pretty_account
                 transaction.pretty_total = transaction.total_amount
+                processed_transactions.append(transaction)
 
-            return qs
+            paginated_obj = PaginatedTransactions(
+                transactions=processed_transactions,
+                current_page=1,
+                total_pages=1,
+                total_records=len(qs),
+            )
+            return paginated_obj
         logToDB(
             "Transaction list retrieved",
             None,
@@ -6430,6 +6448,12 @@ def reminder_trans_add(reminder_id):
         current_date = start_date
         while current_date <= end_date:
             # Create transaction for current date
+            source_account_id = reminder.reminder_source_account.id
+            destination_account_id = None
+            if reminder.reminder_destination_account:
+                destination_account_id = (
+                    reminder.reminder_destination_account.id
+                )
             transaction = Transaction.objects.create(
                 transaction_date=current_date,
                 total_amount=reminder.amount,
@@ -6439,6 +6463,8 @@ def reminder_trans_add(reminder_id):
                 add_date=current_date,
                 transaction_type_id=reminder.transaction_type.id,
                 reminder_id=reminder_id,
+                source_account_id=source_account_id,
+                destination_account_id=destination_account_id,
             )
             # Create transaction details
             if reminder.transaction_type.id == 3:
