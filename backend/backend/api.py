@@ -38,6 +38,12 @@ from api.models import (
     StatusMapping,
     AccountMapping,
     TagMapping,
+    logToDB,
+    update_sort_order,
+    update_running_totals,
+    create_transactions,
+    CustomTag,
+    FullTransaction,
 )
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
@@ -1400,6 +1406,9 @@ def create_transaction(request, payload: TransactionIn):
 
     try:
         transaction = None
+        paycheck_id = None
+        transactions_to_create = []
+        tags = []
         # Create paycheck
         if payload.paycheck is not None:
             paycheck = Paycheck.objects.create(
@@ -1414,96 +1423,44 @@ def create_transaction(request, payload: TransactionIn):
                 four_fifty_seven_b=payload.paycheck.four_fifty_seven_b,
                 payee_id=payload.paycheck.payee_id,
             )
-            transaction = Transaction.objects.create(
-                transaction_date=payload.transaction_date,
-                total_amount=payload.total_amount,
-                status_id=payload.status_id,
-                memo=payload.memo,
-                description=payload.description,
-                edit_date=payload.edit_date,
-                add_date=payload.add_date,
-                transaction_type_id=payload.transaction_type_id,
-                reminder_id=payload.reminder_id,
-                paycheck_id=paycheck.id,
-                source_account_id=payload.source_account_id,
-                destination_account_id=payload.destination_account_id,
-            )
-        else:
-            transaction = Transaction.objects.create(
-                transaction_date=payload.transaction_date,
-                total_amount=payload.total_amount,
-                status_id=payload.status_id,
-                memo=payload.memo,
-                description=payload.description,
-                edit_date=payload.edit_date,
-                add_date=payload.add_date,
-                transaction_type_id=payload.transaction_type_id,
-                reminder_id=payload.reminder_id,
-                paycheck_id=None,
-                source_account_id=payload.source_account_id,
-                destination_account_id=payload.destination_account_id,
-            )
-        logToDB(
-            f"Transaction created : #{transaction.id}",
-            None,
-            None,
-            transaction.id,
-            3001005,
-            2,
-        )
-        # Create transaction details
+            paycheck_id = paycheck.id
         if payload.details is not None:
-            if payload.transaction_type_id == 3:
-                TransactionDetail.objects.create(
-                    transaction_id=transaction.id,
-                    account_id=payload.source_account_id,
-                    detail_amt=payload.total_amount,
-                    tag_id=2,
+            for detail in payload.details:
+                tag_obj = CustomTag(
+                    tag_name=detail.tag_pretty_name,
+                    tag_amount=detail.tag_amt,
+                    tag_id=detail.tag_id,
                 )
-                logToDB(
-                    "Transaction detail created",
-                    None,
-                    None,
-                    transaction.id,
-                    3001005,
-                    2,
-                )
-                TransactionDetail.objects.create(
-                    transaction_id=transaction.id,
-                    account_id=payload.destination_account_id,
-                    detail_amt=-payload.total_amount,
-                    tag_id=2,
-                )
-                logToDB(
-                    "Transaction detail created",
-                    None,
-                    None,
-                    transaction.id,
-                    3001005,
-                    2,
-                )
-            else:
-                for detail in payload.details:
-                    adj_amount = 0
-                    if payload.transaction_type_id == 1:
-                        adj_amount = -detail.tag_amt
-                    else:
-                        adj_amount = detail.tag_amt
-                    TransactionDetail.objects.create(
-                        transaction_id=transaction.id,
-                        account_id=payload.source_account_id,
-                        detail_amt=adj_amount,
-                        tag_id=detail.tag_id,
-                    )
-                    logToDB(
-                        "Transaction detail created",
-                        None,
-                        None,
-                        transaction.id,
-                        3001005,
-                        2,
-                    )
-        return {"id": transaction.id}
+                tags.append(tag_obj)
+        transaction = FullTransaction(
+            transaction_date=payload.transaction_date,
+            total_amount=payload.total_amount,
+            status_id=payload.status_id,
+            memo=payload.memo,
+            description=payload.description,
+            edit_date=payload.edit_date,
+            add_date=payload.add_date,
+            transaction_type_id=payload.transaction_type_id,
+            reminder_id=payload.reminder_id,
+            paycheck_id=paycheck_id,
+            source_account_id=payload.source_account_id,
+            destination_account_id=payload.destination_account_id,
+            tags=tags,
+        )
+        transactions_to_create.append(transaction)
+        if create_transactions(transactions_to_create):
+            logToDB(
+                "Transaction created",
+                None,
+                None,
+                None,
+                3001005,
+                1,
+            )
+
+            return {"id": None}
+        else:
+            raise Exception("Error creating transaction")
     except Exception as e:
         # Log other types of exceptions
         logToDB(
@@ -6383,39 +6340,6 @@ def import_file(
 
 
 # Helper Functions
-def logToDB(message, account, reminder, transaction, error, level):
-    """
-    The function `logToDB` creates log entries, but only if the current logging level
-    set in options is lower than the specified error level.
-
-    Args:
-        message (str): The log entry message.
-        account (Account): Optional, the account associated with this entry.
-        reminder (Reminder): Optional, the reminder associated with this entry.
-        transaction (Transaction): Optional, the transactions associated with this entry.
-        error (int): Optional, any error number associated with this entry.
-        level (ErrorLevel): The error level of this entry.
-
-    Returns:
-        success (int): Returns the id of the created log entry.
-    """
-
-    options = get_object_or_404(Option, id=1)
-    if options.log_level.id <= level:
-        log_entry = LogEntry.objects.create(
-            log_entry=message,
-            account_id=account,
-            reminder_id=reminder,
-            transaction_id=transaction,
-            error_num=error,
-            error_level_id=level,
-        )
-        return_id = log_entry.id
-    else:
-        return_id = 0
-    return {"success": return_id}
-
-
 def reminder_trans_add(reminder_id):
     """
     The function `reminder_trans_add` creates transactions for the specified reminder.
@@ -6446,6 +6370,12 @@ def reminder_trans_add(reminder_id):
         repeat_years = reminder.repeat.years
 
         current_date = start_date
+        transactions_to_create = []
+        tags = []
+        tag_obj = CustomTag(
+            tag_name=None, tag_amount=reminder.amount, tag_id=reminder.tag.id
+        )
+        tags.append(tag_object)
         while current_date <= end_date:
             # Create transaction for current date
             source_account_id = reminder.reminder_source_account.id
@@ -6454,45 +6384,29 @@ def reminder_trans_add(reminder_id):
                 destination_account_id = (
                     reminder.reminder_destination_account.id
                 )
-            transaction = Transaction.objects.create(
+            transaction = FullTransaction(
                 transaction_date=current_date,
                 total_amount=reminder.amount,
                 status_id=1,
+                memo=None,
                 description=reminder.description,
                 edit_date=current_date,
                 add_date=current_date,
                 transaction_type_id=reminder.transaction_type.id,
                 reminder_id=reminder_id,
+                paycheck_id=None,
                 source_account_id=source_account_id,
                 destination_account_id=destination_account_id,
+                tags=tags,
             )
-            # Create transaction details
-            if reminder.transaction_type.id == 3:
-                TransactionDetail.objects.create(
-                    transaction_id=transaction.id,
-                    account_id=reminder.reminder_source_account.id,
-                    detail_amt=reminder.amount,
-                    tag_id=reminder.tag.id,
-                )
-                TransactionDetail.objects.create(
-                    transaction_id=transaction.id,
-                    account_id=reminder.reminder_destination_account.id,
-                    detail_amt=-reminder.amount,
-                    tag_id=reminder.tag.id,
-                )
-            else:
-                TransactionDetail.objects.create(
-                    transaction_id=transaction.id,
-                    account_id=reminder.reminder_source_account.id,
-                    detail_amt=reminder.amount,
-                    tag_id=reminder.tag.id,
-                )
+            transactions_to_create.append(transaction)
 
             # Increment current date based on repeat interval
             current_date += relativedelta(days=repeat_days)
             current_date += relativedelta(weeks=repeat_weeks)
             current_date += relativedelta(months=repeat_months)
             current_date += relativedelta(years=repeat_years)
+        create_transactions(transactions_to_create)
         logToDB(
             "Reminder transactions created",
             None,
@@ -6512,6 +6426,7 @@ def reminder_trans_add(reminder_id):
             3002907,
             3,
         )
+        return {"success": False}
 
 
 def reminder_trans_update(reminder_id):

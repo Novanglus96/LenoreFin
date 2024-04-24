@@ -26,6 +26,12 @@ from api.models import (
     AccountMapping,
     TransactionStatus,
     Account,
+    logToDB,
+    update_sort_order,
+    update_running_totals,
+    create_transactions,
+    CustomTag,
+    FullTransaction,
 )
 from django_q.models import Schedule
 from datetime import date
@@ -288,7 +294,7 @@ def finish_imports():
                             totalAmount = abs(float(totalAmount))
                         else:
                             totalAmount = -abs(float(totalAmount))
-                        trans = Transaction(
+                        trans = FullTransaction(
                             transaction_date=transDate,
                             total_amount=totalAmount,
                             status_id=statusID,
@@ -301,121 +307,39 @@ def finish_imports():
                             paycheck_id=None,
                             source_account_id=sourceAccountID,
                             destination_account_id=destinationAccountID,
+                            tags=tags,
                         )
                         transactions_to_create.append(trans)
-                        detail_dict = {
-                            "source_account_id": sourceAccountID,
-                            "dest_account_id": destinationAccountID,
-                            "tags": tags,
-                            "type_id": typeID,
-                            "total_amount": totalAmount,
-                        }
-                        transaction_details.append(detail_dict)
                     except Exception as f:
                         errors += 1
                         print(f"#{step} - Error adding row to bulk : {f}")
-                try:
-                    created_transactions = []
-                    chunks = list(chunk_list(transactions_to_create, max_bulk))
-                    for step, chunk in enumerate(chunks, start=0):
-                        created_transactions.extend(
-                            Transaction.objects.bulk_create(chunk)
-                        )
-                except Exception as p:
-                    print(f"Bulk transaction chunk#{step} create error: {p}")
-                for index, obj in enumerate(created_transactions):
-                    if transaction_details[index]["type_id"] == 3:
-                        detail = TransactionDetail(
-                            transaction_id=obj.id,
-                            account_id=transaction_details[index][
-                                "source_account_id"
-                            ],
-                            detail_amt=-abs(
-                                transaction_details[index]["total_amount"]
-                            ),
-                            tag_id=2,
-                        )
-                        details_to_create.append(detail)
-                        detail = TransactionDetail(
-                            transaction_id=obj.id,
-                            account_id=transaction_details[index][
-                                "dest_account_id"
-                            ],
-                            detail_amt=abs(
-                                transaction_details[index]["total_amount"]
-                            ),
-                            tag_id=2,
-                        )
-                        details_to_create.append(detail)
-                    else:
-                        if (
-                            transaction_details[index]["tags"]
-                            and len(transaction_details[index]["tags"]) != 0
-                        ):
-                            for tag in transaction_details[index]["tags"]:
-                                adj_amount = 0
-                                if transaction_details[index]["type_id"] == 1:
-                                    adj_amount = -abs(tag.tag_amount)
-                                else:
-                                    adj_amount = abs(tag.tag_amount)
-                                detail = TransactionDetail(
-                                    transaction_id=obj.id,
-                                    account_id=transaction_details[index][
-                                        "source_account_id"
-                                    ],
-                                    detail_amt=adj_amount,
-                                    tag_id=tag.tag_id,
-                                )
-                                details_to_create.append(detail)
-                        else:
-                            detail = TransactionDetail(
-                                transaction_id=obj.id,
-                                account_id=transaction_details[index][
-                                    "source_account_id"
-                                ],
-                                detail_amt=transaction_details[index][
-                                    "total_amount"
-                                ],
-                                tag_id=1,
-                            )
-                            details_to_create.append(detail)
-                try:
-                    chunks = list(chunk_list(details_to_create, max_bulk))
-                    for step, chunk in enumerate(chunks, start=0):
-                        TransactionDetail.objects.bulk_create(chunk)
-                except Exception as p:
-                    print(
-                        f"Bulk transaction details chunk#{step} create error: {p}"
+
+                if create_transactions(transactions_to_create):
+
+                    # Send message to frontend that import was successful
+                    message_obj = Message.objects.create(
+                        message_date=timezone.now(),
+                        message=f"Import # {file_import.id} completed successfully with {errors} errors",
+                        unread=True,
                     )
 
-                # Send message to frontend that import was successful
-                message_obj = Message.objects.create(
-                    message_date=timezone.now(),
-                    message=f"Import # {file_import.id} completed successfully with {errors} errors",
-                    unread=True,
-                )
+                    # Clean up file import
+                    success = True
 
-                # Clean up file import
-                success = True
-
-                # Log success
-                print(
-                    f"Import # {file_import.id} succeeded with {errors} errors"
-                )
-                logToDB(
-                    f"Import # {file_import.id} succeeded with {errors} errors",
-                    None,
-                    None,
-                    None,
-                    3002001,
-                    2,
-                )
-
-                # Update sort order
-                bulk_update_sort_order()
-
-                # Update running totals
-                bulk_update_running_totals()
+                    # Log success
+                    print(
+                        f"Import # {file_import.id} succeeded with {errors} errors"
+                    )
+                    logToDB(
+                        f"Import # {file_import.id} succeeded with {errors} errors",
+                        None,
+                        None,
+                        None,
+                        3002001,
+                        2,
+                    )
+                else:
+                    raise Exception("Unable to create transactions")
 
             except Exception as e:
                 success = False
@@ -436,117 +360,6 @@ def finish_imports():
     return string_return
 
 
-def bulk_update_sort_order():
-    """
-    The function `bulk_update_sort_order` updates the sort orders after an import.
-
-    Args:
-
-    Returns:
-
-    """
-    try:
-        status_table = TransactionStatus._meta.db_table
-        table_name = Transaction._meta.db_table
-
-        # Define the raw SQL query
-        query = f"""
-        WITH ordered_rows AS (
-            SELECT t.id, ROW_NUMBER() OVER (
-                ORDER BY
-                    CASE WHEN status_id = 1 THEN 2
-                        WHEN status_id = 2 THEN 0
-                        WHEN status_id = 3 THEN 0
-                        ELSE 1
-                    END,
-                    transaction_date,
-                    total_amount DESC,
-                    t.id
-            ) as row_num
-            FROM {table_name} t
-            JOIN {status_table} s ON t.status_id = s.id
-        )
-        UPDATE {table_name}
-        SET sort_order = ordered_rows.row_num
-        FROM ordered_rows
-        WHERE {table_name}.id = ordered_rows.id
-        """
-
-        # Execute the raw SQL query
-        with connection.cursor() as cursor:
-            cursor.execute(query)
-    except Exception as e:
-        print(f"Bulk update of sort order failed: {e}")
-
-
-def bulk_update_running_totals():
-    """
-    The function `bulk_update_sort_order` updates the sort orders after an import.
-
-    Args:
-
-    Returns:
-
-    """
-    try:
-        balances = []
-        accounts = Account.objects.all().order_by("id")
-        for account in accounts:
-            bal_obj = {"id": account.id, "balance": account.opening_balance}
-            balances.append(bal_obj)
-        transactions = Transaction.objects.all().order_by("sort_order")
-        transactions_to_update = []
-        for trans in transactions:
-            trans_source_total = Decimal(0)
-            trans_destination_total = Decimal(0)
-            # Find matching source account in balances
-            source_account = next(
-                (
-                    bal
-                    for bal in balances
-                    if bal["id"] == trans.source_account_id
-                ),
-                None,
-            )
-            if source_account:
-                # Update transaction and balance object
-                source_account["balance"] += trans.total_amount
-                trans_source_total = source_account["balance"]
-
-            # Find matching destination account in balances
-            if trans.destination_account_id:
-                destination_account = next(
-                    (
-                        bal
-                        for bal in balances
-                        if bal["id"] == trans.destination_account_id
-                    ),
-                    None,
-                )
-                if destination_account:
-                    # Update transaction and balance object
-                    destination_account["balance"] += abs(trans.total_amount)
-                    trans_destination_total = destination_account["balance"]
-            else:
-                trans_destination_total = 0.00
-            trans_instance = Transaction(
-                id=trans.id,
-                source_running_total=trans_source_total,
-                destination_running_total=trans_destination_total,
-            )
-            transactions_to_update.append(trans_instance)
-        try:
-            Transaction.objects.bulk_update(
-                transactions_to_update,
-                ["source_running_total", "destination_running_total"],
-                batch_size=1000,
-            )
-        except Exception as e:
-            print(f"Unable to batch update running totals: {e}")
-    except Exception as e:
-        print(f"Bulk update of running totals failed: {e}")
-
-
 def update_forever_reminders():
     """
     The function `update_forever_reminders` updates reminders that have no end date to always have
@@ -558,111 +371,92 @@ def update_forever_reminders():
         trans_total (int): the total number of transactions created
 
     """
-    # setup variables
-    todayDate = timezone.now().date()
-    maxDate = todayDate + relativedelta(years=10)
-    trans_total = 0
+    try:
+        # setup variables
+        todayDate = timezone.now().date()
+        maxDate = todayDate + relativedelta(years=10)
+        trans_total = 0
+        transactions_to_create = []
 
-    # Retrieve reminders with no end date
-    reminders = Reminder.objects.filter(end_date__isnull=True)
-    for reminder in reminders:
-        # Get last transaction
-        last_transaction = (
-            Transaction.objects.filter(reminder_id=reminder.id)
-            .order_by("-transaction_date")
-            .first()
-        )
-        last_date = last_transaction.transaction_date
-        next_date = last_date
-        next_date += relativedelta(days=reminder.repeat.days)
-        next_date += relativedelta(weeks=reminder.repeat.weeks)
-        next_date += relativedelta(months=reminder.repeat.months)
-        next_date += relativedelta(years=reminder.repeat.years)
-        # Add transactions up to 10 years
-        while next_date <= maxDate:
-            # Add Transaction
-            new_transaction = Transaction.objects.create(
-                transaction_date=next_date,
-                total_amount=reminder.amount,
-                status_id=1,
-                description=reminder.description,
-                edit_date=todayDate,
-                add_date=todayDate,
-                transaction_type_id=reminder.transaction_type.id,
-                reminder_id=reminder.id,
-                source_account_id=reminder.reminder_source_account.id,
-                destination_account_id=reminder.reminder_destination_account.id,
+        # Retrieve reminders with no end date
+        reminders = Reminder.objects.filter(end_date__isnull=True)
+        for reminder in reminders:
+            # Get last transaction
+            last_transaction = (
+                Transaction.objects.filter(reminder_id=reminder.id)
+                .order_by("-transaction_date")
+                .first()
             )
-            # Add Detail
-            if reminder.transaction_type.id == 3:
-                TransactionDetail.objects.create(
-                    transaction_id=new_transaction.id,
-                    account_id=reminder.reminder_source_account.id,
-                    detail_amt=reminder.amount,
-                    tag_id=reminder.tag.id,
-                )
-                TransactionDetail.objects.create(
-                    transaction_id=new_transaction.id,
-                    account_id=reminder.reminder_destination_account.id,
-                    detail_amt=-reminder.amount,
-                    tag_id=reminder.tag.id,
-                )
-            else:
-                TransactionDetail.objects.create(
-                    transaction_id=new_transaction.id,
-                    account_id=reminder.reminder_source_account.id,
-                    detail_amt=reminder.amount,
-                    tag_id=reminder.tag.id,
-                )
-            logToDB(
-                "Reminder transactions created",
-                None,
-                reminder.id,
-                None,
-                3002007,
-                1,
-            )
-            trans_total += 1
-            # Increment next_date
+            last_date = last_transaction.transaction_date
+            next_date = last_date
             next_date += relativedelta(days=reminder.repeat.days)
             next_date += relativedelta(weeks=reminder.repeat.weeks)
             next_date += relativedelta(months=reminder.repeat.months)
             next_date += relativedelta(years=reminder.repeat.years)
-        string_return = f"Created {trans_total} new transaction(s)"
-        return string_return
+            # Add transactions up to 10 years
+            while next_date <= maxDate:
+                # Add Transaction
+                tags = []
+                tag_obj = CustomTag(
+                    tag_name=None,
+                    tag_amount=reminder.amount,
+                    tag_id=reminder.tag.id,
+                )
+                tags.append(tag_obj)
+                new_transaction = FullTransaction(
+                    transaction_date=next_date,
+                    total_amount=reminder.amount,
+                    status_id=1,
+                    description=reminder.description,
+                    edit_date=todayDate,
+                    add_date=todayDate,
+                    transaction_type_id=reminder.transaction_type.id,
+                    reminder_id=reminder.id,
+                    paycheck_id=None,
+                    source_account_id=reminder.reminder_source_account.id,
+                    destination_account_id=reminder.reminder_destination_account.id,
+                    tags=tags,
+                )
+                transactions_to_create.append(new_transaction)
+                trans_total += 1
+                # Increment next_date
+                next_date += relativedelta(days=reminder.repeat.days)
+                next_date += relativedelta(weeks=reminder.repeat.weeks)
+                next_date += relativedelta(months=reminder.repeat.months)
+                next_date += relativedelta(years=reminder.repeat.years)
+            try:
+                create_transactions(transactions_to_create)
+                logToDB(
+                    "Reminder transactions created",
+                    None,
+                    reminder.id,
+                    None,
+                    3002007,
+                    1,
+                )
+            except Exception as e:
+                logToDB(
+                    f"Reminder transactions error: {e}",
+                    None,
+                    reminder.id,
+                    None,
+                    3002907,
+                    2,
+                )
+            string_return = f"Created {trans_total} new transaction(s)"
+            return string_return
+    except Exception as e:
+        logToDB(
+            f"Reminder transactions not created: {e}",
+            None,
+            reminder.id,
+            None,
+            3002907,
+            2,
+        )
+        return f"Error updating forever reminders: {e}"
 
 
 # TODO: Task to look for negative dips
 # TODO: Task to look for under threshold
 # TODO: Task to update Credit Card specific information
-def logToDB(message, account, reminder, trans, error, level):
-    """
-    The function `logToDB` creates log entries, but only if the current logging level
-    set in options is lower than the specified error level.
-
-    Args:
-        message (str): The log entry message.
-        account (Account): Optional, the account associated with this entry.
-        reminder (Reminder): Optional, the reminder associated with this entry.
-        trans (Transaction): Optional, the transactions associated with this entry.
-        error (int): Optional, any error number associated with this entry.
-        level (ErrorLevel): The error level of this entry.
-
-    Returns:
-        success (int): Returns the id of the created log entry.
-    """
-
-    options = get_object_or_404(Option, id=1)
-    if options.log_level.id <= level:
-        log_entry = LogEntry.objects.create(
-            log_entry=message,
-            account_id=account,
-            reminder_id=reminder,
-            transaction_id=trans,
-            error_num=error,
-            error_level_id=level,
-        )
-        return_id = log_entry.id
-    else:
-        return_id = 0
-    return {"success": return_id}
