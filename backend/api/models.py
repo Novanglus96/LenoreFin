@@ -853,6 +853,13 @@ class CustomTag:
         self.tag_amount = tag_amount
         self.tag_id = tag_id
 
+    def __str__(self):
+        return (
+            f"CustomTag(tag_name={self.tag_name}, "
+            f"tag_amount={self.tag_amount}, "
+            f"tag_id={self.tag_id})"
+        )
+
 
 class FullTransaction:
 
@@ -885,6 +892,23 @@ class FullTransaction:
         self.source_account_id = source_account_id
         self.destination_account_id = destination_account_id
         self.tags = tags
+
+    def __str__(self):
+        return (
+            f"FullTransaction(transaction_date={self.transaction_date}, "
+            + f"total_amount={self.total_amount}, "
+            + f"status_id={self.status_id}, "
+            + f"memo={self.memo}, "
+            + f"description={self.description}, "
+            + f"edit_date={self.edit_date}, "
+            + f"add_date={self.add_date}, "
+            + f"transaction_type_id={self.transaction_type_id}, "
+            + f"reminder_id={self.reminder_id}, "
+            + f"paycheck_id={self.paycheck_id}, "
+            + f"source_account_id={self.source_account_id}, "
+            + f"destination_account_id={self.destination_account_id}, "
+            + f"tags={self.tags})"
+        )
 
 
 def create_transactions(transactions: List[FullTransaction]):
@@ -1002,161 +1026,159 @@ def create_transactions(transactions: List[FullTransaction]):
                 )
                 return False
     else:
-        with transaction.atomic():
+        try:
+            transactions_to_create = []
+            transaction_details = []
+            details_to_create = []
+            created_transactions = []
+            for trans in transactions:
+                trans_obj = Transaction(
+                    transaction_date=trans.transaction_date,
+                    total_amount=trans.total_amount,
+                    status_id=trans.status_id,
+                    memo=trans.memo,
+                    description=trans.description,
+                    edit_date=trans.edit_date,
+                    add_date=trans.add_date,
+                    transaction_type_id=trans.transaction_type_id,
+                    reminder_id=trans.reminder_id,
+                    paycheck_id=trans.paycheck_id,
+                    source_account_id=trans.source_account_id,
+                    destination_account_id=trans.destination_account_id,
+                )
+                transactions_to_create.append(trans_obj)
+                detail_dict = {
+                    "source_account_id": trans.source_account_id,
+                    "dest_account_id": trans.destination_account_id,
+                    "tags": trans.tags,
+                    "type_id": trans.transaction_type_id,
+                    "total_amount": trans.total_amount,
+                }
+                transaction_details.append(detail_dict)
             try:
-                transactions_to_create = []
-                transaction_details = []
-                details_to_create = []
-                created_transactions = []
-                for trans in transactions:
-                    trans = Transaction(
-                        transaction_date=trans.transaction_date,
-                        total_amount=trans.total_amount,
-                        status_id=trans.status_id,
-                        memo=trans.memo,
-                        description=trans.description,
-                        edit_date=trans.edit_date,
-                        add_date=trans.add_date,
-                        transaction_type_id=trans.transaction_type_id,
-                        reminder_id=trans.reminder_id,
-                        paycheck_id=trans.paycheck_id,
-                        source_account_id=trans.source_account_id,
-                        destination_account_id=trans.destination_account_id,
-                    )
-                    transactions_to_create.append(trans)
-                    detail_dict = {
-                        "source_account_id": trans.source_account_id,
-                        "dest_account_id": trans.destination_account_id,
-                        "tags": trans.tags,
-                        "type_id": trans.transaction_type_id,
-                        "total_amount": trans.total_amount,
-                    }
-                    transaction_details.append(detail_dict)
-                try:
-                    chunks = list(chunk_list(transactions_to_create, max_bulk))
-                    for step, chunk in enumerate(chunks, start=0):
-                        created_transactions.extend(
-                            Transaction.objects.bulk_create(chunk)
-                        )
-                    logToDB(
-                        "Transaction chunks created successfully",
-                        None,
-                        None,
-                        None,
-                        3001001,
-                        1,
-                    )
-                except Exception as e:
-                    logToDB(
-                        f"Transaction chunks not created: {e}",
-                        None,
-                        None,
-                        None,
-                        3001901,
-                        2,
-                    )
-                for index, obj in enumerate(created_transactions):
-                    if transaction_details[index]["type_id"] == 3:
-                        detail = TransactionDetail(
-                            transaction_id=obj.id,
-                            account_id=transaction_details[index][
-                                "source_account_id"
-                            ],
-                            detail_amt=-abs(
-                                transaction_details[index]["total_amount"]
-                            ),
-                            tag_id=2,
-                        )
-                        details_to_create.append(detail)
-                        detail = TransactionDetail(
-                            transaction_id=obj.id,
-                            account_id=transaction_details[index][
-                                "dest_account_id"
-                            ],
-                            detail_amt=abs(
-                                transaction_details[index]["total_amount"]
-                            ),
-                            tag_id=2,
-                        )
-                        details_to_create.append(detail)
-                    else:
-                        if (
-                            transaction_details[index]["tags"]
-                            and len(transaction_details[index]["tags"]) != 0
-                        ):
-                            for tag in transaction_details[index]["tags"]:
-                                adj_amount = 0
-                                if transaction_details[index]["type_id"] == 1:
-                                    adj_amount = -abs(tag.tag_amount)
-                                else:
-                                    adj_amount = abs(tag.tag_amount)
-                                detail = TransactionDetail(
-                                    transaction_id=obj.id,
-                                    account_id=transaction_details[index][
-                                        "source_account_id"
-                                    ],
-                                    detail_amt=adj_amount,
-                                    tag_id=tag.tag_id,
-                                )
-                                details_to_create.append(detail)
-                        else:
-                            detail = TransactionDetail(
-                                transaction_id=obj.id,
-                                account_id=transaction_details[index][
-                                    "source_account_id"
-                                ],
-                                detail_amt=transaction_details[index][
-                                    "total_amount"
-                                ],
-                                tag_id=1,
-                            )
-                            details_to_create.append(detail)
-                try:
-                    chunks = list(chunk_list(details_to_create, max_bulk))
-                    for step, chunk in enumerate(chunks, start=0):
-                        TransactionDetail.objects.bulk_create(chunk)
-                    logToDB(
-                        "Transaction detail chunks created successfully",
-                        None,
-                        None,
-                        None,
-                        3001001,
-                        1,
-                    )
-                except Exception as e:
-                    logToDB(
-                        f"Transaction detail chunks not created: {e}",
-                        None,
-                        None,
-                        None,
-                        3001901,
-                        2,
+                chunks = list(chunk_list(transactions_to_create, max_bulk))
+                for step, chunk in enumerate(chunks, start=0):
+                    created_transactions.extend(
+                        Transaction.objects.bulk_create(chunk)
                     )
                 logToDB(
-                    "Transaction(s) created successfully",
+                    "Transaction chunks created successfully",
                     None,
                     None,
                     None,
                     3001001,
                     1,
                 )
-                if created_transactions and len(created_transactions) < 1000:
-                    update_sort_order(False, False, created_transactions)
-                else:
-                    update_sort_order(True, False, None)
-                update_running_totals()
-                return True
             except Exception as e:
-                transaction.rollback()
                 logToDB(
-                    f"Transaction(s) not created: {e}",
+                    f"Transaction chunks not created: {e}",
                     None,
                     None,
                     None,
                     3001901,
                     2,
                 )
-                return False
+            for index, obj in enumerate(created_transactions):
+                if transaction_details[index]["type_id"] == 3:
+                    detail = TransactionDetail(
+                        transaction_id=obj.id,
+                        account_id=transaction_details[index][
+                            "source_account_id"
+                        ],
+                        detail_amt=-abs(
+                            transaction_details[index]["total_amount"]
+                        ),
+                        tag_id=2,
+                    )
+                    details_to_create.append(detail)
+                    detail = TransactionDetail(
+                        transaction_id=obj.id,
+                        account_id=transaction_details[index][
+                            "dest_account_id"
+                        ],
+                        detail_amt=abs(
+                            transaction_details[index]["total_amount"]
+                        ),
+                        tag_id=2,
+                    )
+                    details_to_create.append(detail)
+                else:
+                    if (
+                        transaction_details[index]["tags"]
+                        and len(transaction_details[index]["tags"]) != 0
+                    ):
+                        for tag in transaction_details[index]["tags"]:
+                            adj_amount = 0
+                            if transaction_details[index]["type_id"] == 1:
+                                adj_amount = -abs(tag.tag_amount)
+                            else:
+                                adj_amount = abs(tag.tag_amount)
+                            detail = TransactionDetail(
+                                transaction_id=obj.id,
+                                account_id=transaction_details[index][
+                                    "source_account_id"
+                                ],
+                                detail_amt=adj_amount,
+                                tag_id=tag.tag_id,
+                            )
+                            details_to_create.append(detail)
+                    else:
+                        detail = TransactionDetail(
+                            transaction_id=obj.id,
+                            account_id=transaction_details[index][
+                                "source_account_id"
+                            ],
+                            detail_amt=transaction_details[index][
+                                "total_amount"
+                            ],
+                            tag_id=1,
+                        )
+                        details_to_create.append(detail)
+            try:
+                chunks = list(chunk_list(details_to_create, max_bulk))
+                for step, chunk in enumerate(chunks, start=0):
+                    TransactionDetail.objects.bulk_create(chunk)
+                logToDB(
+                    "Transaction detail chunks created successfully",
+                    None,
+                    None,
+                    None,
+                    3001001,
+                    1,
+                )
+            except Exception as e:
+                logToDB(
+                    f"Transaction detail chunks not created: {e}",
+                    None,
+                    None,
+                    None,
+                    3001901,
+                    2,
+                )
+            logToDB(
+                "Transaction(s) created successfully",
+                None,
+                None,
+                None,
+                3001001,
+                1,
+            )
+            if created_transactions and len(created_transactions) < 1000:
+                update_sort_order(False, False, created_transactions)
+            else:
+                update_sort_order(True, False, None)
+            update_running_totals()
+            return True
+        except Exception as e:
+            logToDB(
+                f"Transaction(s) not created: {e}",
+                None,
+                None,
+                None,
+                3001901,
+                2,
+            )
+            return False
 
 
 def update_sort_order(
@@ -1176,7 +1198,7 @@ def update_sort_order(
     """
     try:
         # Perform a full update
-        if full:
+        if full or len(transactions) >= 10:
             try:
                 status_table = TransactionStatus._meta.db_table
                 table_name = Transaction._meta.db_table
@@ -1184,7 +1206,7 @@ def update_sort_order(
                 # Define the raw SQL query
                 query = f"""
                 WITH ordered_rows AS (
-                    SELECT t.id, ROW_NUMBER() OVER (`
+                    SELECT t.id, ROW_NUMBER() OVER (
                         ORDER BY
                             CASE WHEN status_id = 1 THEN 2
                                 WHEN status_id = 2 THEN 0
