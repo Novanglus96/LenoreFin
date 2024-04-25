@@ -127,7 +127,7 @@
         :loading="isLoading"
         :totalRows="transactions ? transactions.total_records : 0"
         :isServerMode="true"
-        pageSize="20"
+        pageSize="60"
         :hasCheckbox="true"
         :stickyHeader="true"
         noDataContent="No transactions"
@@ -136,7 +136,7 @@
         ref="trans_table"
         height="810px"
         skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="[20]"
+        :pageSizeOptions="[60]"
         :showPageSize="false"
         paginationInfo="Showing {0} to {1} of {2} transactions"
         class="alt-pagination"
@@ -333,7 +333,7 @@ const editTransaction = ref({
 });
 const params = reactive({
   current_page: 3,
-  page_size: 20,
+  page_size: 60,
 });
 const { isLoading, transactions, removeTransaction, clearTransaction } =
   useTransactions(

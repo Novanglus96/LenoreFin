@@ -3490,7 +3490,7 @@ def list_transactions(
     maxdays: Optional[int] = Query(14),
     forecast: Optional[bool] = Query(False),
     page: Optional[int] = Query(1),
-    page_size: Optional[int] = Query(20),
+    page_size: Optional[int] = Query(60),
 ):
     """
     The function `list_transactions` retrieves a list of transactions,
@@ -6375,7 +6375,7 @@ def reminder_trans_add(reminder_id):
         tag_obj = CustomTag(
             tag_name=None, tag_amount=reminder.amount, tag_id=reminder.tag.id
         )
-        tags.append(tag_object)
+        tags.append(tag_obj)
         while current_date <= end_date:
             # Create transaction for current date
             source_account_id = reminder.reminder_source_account.id
@@ -6388,7 +6388,7 @@ def reminder_trans_add(reminder_id):
                 transaction_date=current_date,
                 total_amount=reminder.amount,
                 status_id=1,
-                memo=None,
+                memo="",
                 description=reminder.description,
                 edit_date=current_date,
                 add_date=current_date,
@@ -6399,6 +6399,7 @@ def reminder_trans_add(reminder_id):
                 destination_account_id=destination_account_id,
                 tags=tags,
             )
+            print(f"transaction: {transaction}")
             transactions_to_create.append(transaction)
 
             # Increment current date based on repeat interval
