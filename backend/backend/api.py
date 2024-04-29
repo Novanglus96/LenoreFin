@@ -5036,7 +5036,10 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
 
             # If transaction date is equal to start date, modify start/next date
             if transaction.transaction_date == reminder.next_date:
-                if new_date <= reminder.end_date:
+                if (
+                    reminder.end_date is not None
+                    and new_date <= reminder.end_date
+                ) or reminder.end_date is None:
                     reminder.next_date = new_date
                     reminder.start_date = new_date
                     transaction.reminder_id = None
