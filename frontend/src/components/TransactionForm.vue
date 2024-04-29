@@ -306,6 +306,7 @@
                     v-model="formData.memo"
                     :rows="11"
                     no-resize
+                    @update:model-value="checkFormComplete"
                   ></v-textarea>
                 </v-col>
               </v-row>
