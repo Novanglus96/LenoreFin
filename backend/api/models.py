@@ -1198,7 +1198,7 @@ def update_sort_order(
     """
     try:
         # Perform a full update
-        if full or len(transactions) >= 10:
+        if full or len(transactions) >= 1:
             try:
                 status_table = TransactionStatus._meta.db_table
                 table_name = Transaction._meta.db_table
