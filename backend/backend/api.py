@@ -2132,49 +2132,17 @@ def get_forecast(
             .order_by("sort_order")
             .last()
         )
-        lowest_destination_balance_object = (
-            Transaction.objects.filter(
-                destination_account_id=account_id,
-                transaction_date__lt=start_date,
-            )
-            .order_by("sort_order")
-            .last()
-        )
         transactions = Transaction.objects.filter(
-            Q(source_account_id=account_id)
-            | Q(destination_account_id=account_id),
+            Q(source_account_id=account_id),
             transaction_date__range=(start_date, end_date),
         ).order_by("sort_order")
 
         # Calculate the daily account balance
         balance = Decimal(0)
-        if lowest_source_balance_object and lowest_destination_balance_object:
-            if (
-                lowest_source_balance_object.transaction_date
-                <= lowest_destination_balance_object.transaction_date
-            ):
-                balance = lowest_source_balance_object.source_running_total
-            else:
-                balance = (
-                    lowest_destination_balance_object.destination_running_total
-                )
-        if (
-            lowest_source_balance_object
-            and lowest_destination_balance_object is None
-        ):
-            balance = lowest_source_balance_object.source_running_total
-        if (
-            lowest_destination_balance_object
-            and lowest_source_balance_object is None
-        ):
-            balance = (
-                lowest_destination_balance_object.destination_running_total
-            )
-        if (
-            lowest_source_balance_object is None
-            and lowest_destination_balance_object is None
-        ):
+        if lowest_source_balance_object is None:
             balance = opening_balance
+        else:
+            balance = lowest_source_balance_object.running_total
         day_balance = Decimal(0)
         for label in dates:
             last_transaction_of_day = (
@@ -2183,14 +2151,8 @@ def get_forecast(
                 .last()
             )
             if last_transaction_of_day:
-                if last_transaction_of_day.source_account_id == account_id:
-                    day_balance = last_transaction_of_day.source_running_total
-                    balance = day_balance
-                if last_transaction_of_day.destination_account_id == account_id:
-                    day_balance = (
-                        last_transaction_of_day.destination_running_total
-                    )
-                    balance = day_balance
+                day_balance = last_transaction_of_day.running_total
+                balance = day_balance
             else:
                 day_balance = balance
             data.append(day_balance)
@@ -3552,8 +3514,26 @@ def list_transactions(
                 pretty_total = 0
                 source_account = ""
                 destination_account = ""
-                source_account_id = None
-                destination_account_id = None
+                source_account_name = None
+                related_account_name = None
+
+                # Get account info
+                if transaction.source_account_id:
+                    if Account.objects.get(id=transaction.source_account_id):
+                        source_account_name = Account.objects.get(
+                            id=transaction.source_account_id
+                        ).account_name
+                    else:
+                        source_account_name = "Deleted Account"
+                if transaction.related_transaction:
+                    if Account.objects.get(
+                        id=transaction.related_transaction.source_account_id
+                    ):
+                        related_account_name = Account.objects.get(
+                            id=transaction.related_transaction.source_account_id
+                        ).account_name
+                    else:
+                        related_account_name = "Deleted Account"
 
                 # Retrieve a list of transaction details for the transaction
                 transaction_details = TransactionDetail.objects.filter(
@@ -3567,49 +3547,29 @@ def list_transactions(
                     if detail.tag.tag_name not in tags:
                         tags.append(detail.tag.tag_name)
 
-                    # If this transaction is a transfer, add the total if the detail
-                    # source account matches account, or subtract if it does not
-                    # Change the pretty name to be source account => destintation account or
-                    # just the source account if this is not a transfer
-                    if transaction.transaction_type.id == 3:
-                        if detail.detail_amt < 0:
-                            source_account = detail.account.account_name
-                            source_account_id = detail.account.id
-                            if detail.account.id == account:
-                                pretty_total = transaction.total_amount
-                        else:
-                            destination_account = detail.account.account_name
-                            destination_account_id = detail.account.id
-                            if detail.account.id == account:
-                                pretty_total = -transaction.total_amount
-                    else:
-                        pretty_total = transaction.total_amount
-                        source_account = detail.account.account_name
-                        source_account_id = detail.account.id
                 if transaction.transaction_type.id == 3:
-                    if source_account:
-                        pretty_account = source_account
+                    if transaction.total_amount < 0:
+                        pretty_account = (
+                            source_account_name + " => " + related_account_name
+                        )
                     else:
-                        pretty_account = "Deleted Account"  # If the source account was deleted
-                    if destination_account:
-                        pretty_account += " => " + destination_account
-                    else:
-                        pretty_account += " => Deleted Account"  # If the destination account was deleted
+                        pretty_account = (
+                            related_account_name + " => " + source_account_name
+                        )
                 else:
                     pretty_account = source_account
-                if transaction.source_account_id == account:
-                    balance = transaction.source_running_total
-                if transaction.destination_account_id == account:
-                    balance = transaction.destination_running_total
+                balance = transaction.running_total
 
                 # Update the balance in the transaction and append to the list
                 transaction.balance = balance
                 transaction.pretty_account = pretty_account
                 transaction.tags = tags
-                transaction.pretty_total = pretty_total
+                transaction.pretty_total = transaction.total_amount
                 transaction.details = transaction_details
-                transaction.source_account_id = source_account_id
-                transaction.destination_account_id = destination_account_id
+                transaction.source_account_id = transaction.source_account_id
+                transaction.destination_account_id = (
+                    transaction.destination_account_id
+                )
                 if forecast is False:
                     transactions.append(TransactionOut.from_orm(transaction))
                 else:
@@ -3642,6 +3602,26 @@ def list_transactions(
                 source_account = ""
                 destination_account = ""
                 pretty_account = ""
+                source_account_name = None
+                related_account_name = None
+
+                # Get account info
+                if transaction.source_account_id:
+                    if Account.objects.get(id=transaction.source_account_id):
+                        source_account_name = Account.objects.get(
+                            id=transaction.source_account_id
+                        ).account_name
+                    else:
+                        source_account_name = "Deleted Account"
+                if transaction.related_transaction:
+                    if Account.objects.get(
+                        id=transaction.related_transaction.source_account_id
+                    ):
+                        related_account_name = Account.objects.get(
+                            id=transaction.related_transaction.source_account_id
+                        ).account_name
+                    else:
+                        related_account_name = "Deleted Account"
 
                 # Retrieve transaction details
                 transaction_details = TransactionDetail.objects.filter(
@@ -3655,25 +3635,17 @@ def list_transactions(
                     if detail.tag.tag_name not in tags:
                         tags.append(detail.tag.tag_name)
 
-                    # If this transaction is a transfer, add the total if the detail
-                    # source account matches account, or subtract if it does not
-                    # Change the pretty name to be source account => destintation account or
-                    # just the source account if this is not a transfer
-                    if transaction.transaction_type.id == 3:
-                        if detail.detail_amt < 0:
-                            source_account = detail.account.account_name
-                        else:
-                            destination_account = detail.account.account_name
-                        if source_account:
-                            pretty_account = source_account
-                        else:
-                            pretty_account = "Deleted Account"  # If the source account was deleted
-                        if destination_account:
-                            pretty_account += " => " + destination_account
-                        else:
-                            pretty_account += " => Deleted Account"  # If the destination account was deleted
+                if transaction.transaction_type.id == 3:
+                    if transaction.total_amount < 0:
+                        pretty_account = (
+                            source_account_name + " => " + related_account_name
+                        )
                     else:
-                        pretty_account = detail.account.account_name
+                        pretty_account = (
+                            related_account_name + " => " + source_account_name
+                        )
+                else:
+                    pretty_account = source_account
                 transaction.tags = tags
                 transaction.pretty_account = pretty_account
                 transaction.pretty_total = transaction.total_amount

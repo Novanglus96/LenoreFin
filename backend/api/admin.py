@@ -44,8 +44,7 @@ class TransactionAdmin(admin.ModelAdmin):
         "total_amount",
         "description",
         "transaction_type",
-        "source_running_total",
-        "destination_running_total",
+        "running_total",
         "edit_date",
         "add_date",
         "memo",
@@ -53,6 +52,7 @@ class TransactionAdmin(admin.ModelAdmin):
         "paycheck",
         "source_account_id",
         "destination_account_id",
+        "related_transaction",
     ]
 
     ordering = ["-sort_order"]
