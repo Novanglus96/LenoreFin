@@ -1102,15 +1102,19 @@ const clickTagRemove = () => {
  */
 const verifyTagTotal = () => {
   let tagtotal = 0;
-  if (formData.value.details) {
-    formData.value.details.forEach(tag => {
-      tagtotal += parseFloat(tag.tag_amt);
-    });
-  }
-  if (tagtotal == amount.value) {
-    return true;
+  if (formData.value.transaction_type_id != 3) {
+    if (formData.value.details) {
+      formData.value.details.forEach(tag => {
+        tagtotal += parseFloat(tag.tag_amt);
+      });
+    }
+    if (tagtotal == amount.value) {
+      return true;
+    } else {
+      return false;
+    }
   } else {
-    return false;
+    return true;
   }
 };
 
