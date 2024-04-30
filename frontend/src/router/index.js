@@ -8,7 +8,6 @@ import AddAccount from "@/views/AddAccount.vue";
 import ForecastView from "@/views/ForecastView.vue";
 import RemindersView from "@/views/RemindersView.vue";
 import TagsView from "@/views/TagsView.vue";
-import SettingsView from "@/views/SettingsView.vue";
 
 const routes = [
   {
@@ -50,11 +49,6 @@ const routes = [
     path: "/tags",
     name: "tags",
     component: TagsView,
-  },
-  {
-    path: "/settings",
-    name: "settings",
-    component: SettingsView,
   },
   {
     path: "/:catchAll(.*)",

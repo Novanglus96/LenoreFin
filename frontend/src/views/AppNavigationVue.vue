@@ -87,7 +87,7 @@
         ></v-list-item>
         <v-list-item
           prepend-icon="mdi-cog"
-          to="/settings"
+          to=""
           color="accent"
         ></v-list-item>
       </v-list>
@@ -162,7 +162,7 @@
           <template v-slot:activator="{ props }">
             <v-list-item
               prepend-icon="mdi-cog"
-              to="/settings"
+              to=""
               v-bind="props"
               color="accent"
             ></v-list-item>
