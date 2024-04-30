@@ -1091,14 +1091,13 @@ def create_transactions(transactions: List[FullTransaction]):
                 )
                 if trans.transaction_type_id == 3:
                     transfers_to_create.append(trans_obj)
-                    detail_dict = {
-                        "source_account_id": trans.source_account_id,
-                        "dest_account_id": trans.destination_account_id,
+                    transfer_detail_dict = {
+                        "account_id": trans.source_account_id,
                         "tags": trans.tags,
                         "type_id": trans.transaction_type_id,
                         "total_amount": amount,
                     }
-                    transfer_transaction_details.append(detail_dict)
+                    transfer_transaction_details.append(transfer_detail_dict)
                     related_obj = Transaction(
                         transaction_date=trans.transaction_date,
                         total_amount=abs(amount),
@@ -1114,19 +1113,17 @@ def create_transactions(transactions: List[FullTransaction]):
                         destination_account_id=None,
                     )
                     related_to_create.append(related_obj)
-                    detail_dict = {
-                        "source_account_id": trans.destination_account_id,
-                        "dest_account_id": None,
+                    related_detail_dict = {
+                        "account_id": trans.destination_account_id,
                         "tags": trans.tags,
                         "type_id": trans.transaction_type_id,
                         "total_amount": abs(amount),
                     }
-                    related_transaction_details.append(detail_dict)
+                    related_transaction_details.append(related_detail_dict)
                 else:
                     transactions_to_create.append(trans_obj)
                     detail_dict = {
-                        "source_account_id": trans.source_account_id,
-                        "dest_account_id": trans.destination_account_id,
+                        "account_id": trans.source_account_id,
                         "tags": trans.tags,
                         "type_id": trans.transaction_type_id,
                         "total_amount": trans.total_amount,
@@ -1229,9 +1226,7 @@ def create_transactions(transactions: List[FullTransaction]):
                             adj_amount = abs(tag.tag_amount)
                         detail = TransactionDetail(
                             transaction_id=obj.id,
-                            account_id=transaction_details[index][
-                                "source_account_id"
-                            ],
+                            account_id=transaction_details[index]["account_id"],
                             detail_amt=adj_amount,
                             tag_id=tag.tag_id,
                         )
@@ -1239,9 +1234,7 @@ def create_transactions(transactions: List[FullTransaction]):
                 else:
                     detail = TransactionDetail(
                         transaction_id=obj.id,
-                        account_id=transaction_details[index][
-                            "source_account_id"
-                        ],
+                        account_id=transaction_details[index]["account_id"],
                         detail_amt=transaction_details[index]["total_amount"],
                         tag_id=1,
                     )
@@ -1251,7 +1244,7 @@ def create_transactions(transactions: List[FullTransaction]):
                 detail = TransactionDetail(
                     transaction_id=obj.id,
                     account_id=transfer_transaction_details[index][
-                        "source_account_id"
+                        "account_id"
                     ],
                     detail_amt=transfer_transaction_details[index][
                         "total_amount"
@@ -1262,10 +1255,8 @@ def create_transactions(transactions: List[FullTransaction]):
             for index, obj in enumerate(created_related):
                 detail = TransactionDetail(
                     transaction_id=obj.id,
-                    account_id=transfer_transaction_details[index][
-                        "source_account_id"
-                    ],
-                    detail_amt=transfer_transaction_details[index][
+                    account_id=related_transaction_details[index]["account_id"],
+                    detail_amt=related_transaction_details[index][
                         "total_amount"
                     ],
                     tag_id=2,

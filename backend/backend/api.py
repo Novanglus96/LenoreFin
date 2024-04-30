@@ -1669,18 +1669,18 @@ def get_account(request, account_id: int):
         # Retrieve the account object from the database
         account = get_object_or_404(Account, id=account_id)
 
-        # Fetch all transactions exlduing pending
-        transactions = Transaction.objects.exclude(status_id=1)
-
-        # Filter transactions related to account
-        transactions = TransactionDetail.objects.filter(
-            account__id=account_id
-        ).exclude(transaction__status__id=1)
-
-        # Calculate the account balance using transactions
+        # Fetch last transaction running_total, excluding pending
         calc_balance = account.opening_balance
-        for transaction in transactions:
-            calc_balance += transaction.detail_amt
+        if Transaction.objects.filter(source_account_id=account_id).exclude(
+            status_id=1
+        ):
+            calc_balance = (
+                Transaction.objects.filter(source_account_id=account_id)
+                .exclude(status_id=1)
+                .order_by("-sort_order")
+                .first()
+                .running_total
+            )
 
         # Prepare the AccountOut object
         account_out = AccountOut(
@@ -2915,11 +2915,16 @@ def list_accounts(
         # For each account, get related transactions and calculate balance
         for account in qs:
             calc_balance = account.opening_balance
-            transactions = TransactionDetail.objects.filter(
-                account__id=account.id
-            ).exclude(transaction__status__id=1)
-            for transaction in transactions:
-                calc_balance += transaction.detail_amt
+            if Transaction.objects.filter(source_account_id=account.id).exclude(
+                status_id=1
+            ):
+                calc_balance = (
+                    Transaction.objects.filter(source_account_id=account.id)
+                    .exclude(status_id=1)
+                    .order_by("-sort_order")
+                    .first()
+                    .running_total
+                )
 
             # Prepare Account object
             account_out = AccountOut(
@@ -3483,7 +3488,7 @@ def list_transactions(
             qs = None
             threshold_date = timezone.now().date() + timedelta(days=maxdays)
             query = Transaction.objects.filter(
-                transactiondetail__account__id=account,
+                source_account_id=account,
                 transaction_date__lt=threshold_date,
             ).distinct()
 
