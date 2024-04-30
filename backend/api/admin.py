@@ -34,6 +34,11 @@ from .models import (
 from django.http import HttpResponse
 
 
+class TransactionDetailInline(admin.TabularInline):
+    model = TransactionDetail
+    extra = 1
+
+
 class TransactionAdmin(admin.ModelAdmin):
     list_display = [
         "id",
@@ -55,7 +60,11 @@ class TransactionAdmin(admin.ModelAdmin):
         "related_transaction",
     ]
 
+    list_filter = ["source_account_id"]
+
     ordering = ["-sort_order"]
+
+    inlines = [TransactionDetailInline]
 
 
 class LogAdmin(admin.ModelAdmin):
