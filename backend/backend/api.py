@@ -3486,17 +3486,21 @@ def list_transactions(
         # details that match account
         if account is not None:
             qs = None
+            query = None
             threshold_date = timezone.now().date() + timedelta(days=maxdays)
-            query = Transaction.objects.filter(
-                source_account_id=account,
-                transaction_date__lt=threshold_date,
-            ).distinct()
-
-            # If this is a forecast, set sort
             if forecast is False:
-                query = query.order_by("-sort_order")
+                query = Transaction.objects.filter(
+                    source_account_id=account,
+                    transaction_date__lt=threshold_date,
+                ).order_by("-sort_order")
             else:
-                query = query.order_by("sort_order")
+                query = Transaction.objects.filter(
+                    source_account_id=account,
+                    transaction_date__range=(
+                        timezone.now().date(),
+                        threshold_date,
+                    ),
+                ).order_by("sort_order")
             total_pages = 0
             if page_size is not None and page is not None:
                 paginator = Paginator(query, page_size)
@@ -3575,13 +3579,7 @@ def list_transactions(
                 transaction.destination_account_id = (
                     transaction.destination_account_id
                 )
-                if forecast is False:
-                    transactions.append(TransactionOut.from_orm(transaction))
-                else:
-                    if transaction.transaction_date >= timezone.now().date():
-                        transactions.append(
-                            TransactionOut.from_orm(transaction)
-                        )
+                transactions.append(TransactionOut.from_orm(transaction))
             paginated_obj = PaginatedTransactions(
                 transactions=transactions,
                 current_page=page,
