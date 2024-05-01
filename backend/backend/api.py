@@ -681,6 +681,7 @@ class TransactionOut(Schema):
     pretty_total: Optional[Decimal] = Field(
         default=None, whole_digits=10, decimal_places=2
     )
+    account_id: Optional[int] = None
     source_account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
 
@@ -2129,13 +2130,13 @@ def get_forecast(
         end_date = get_forecast_end_date(end_interval)
         lowest_source_balance_object = (
             Transaction.objects.filter(
-                source_account_id=account_id, transaction_date__lt=start_date
+                account_id=account_id, transaction_date__lt=start_date
             )
             .order_by("sort_order")
             .last()
         )
         transactions = Transaction.objects.filter(
-            Q(source_account_id=account_id),
+            Q(account_id=account_id),
             transaction_date__range=(start_date, end_date),
         ).order_by("sort_order")
 
@@ -4885,42 +4886,63 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         # Get the transaction to update
         transaction = get_object_or_404(Transaction, id=transaction_id)
 
-        # Recreate Details
-        existing_details = TransactionDetail.objects.filter(
-            transaction_id=transaction_id
-        )
-        for detail in existing_details:
-            detail.delete()
         if payload.transaction_type_id == 3:
-            TransactionDetail.objects.create(
-                transaction_id=transaction_id,
-                account_id=payload.source_account_id,
-                detail_amt=payload.total_amount,
-                tag_id=2,
-            )
-            logToDB(
-                "Transaction detail created",
-                None,
-                None,
-                transaction_id,
-                3001001,
-                1,
-            )
-            TransactionDetail.objects.create(
-                transaction_id=transaction_id,
-                account_id=payload.destination_account_id,
-                detail_amt=-payload.total_amount,
-                tag_id=2,
-            )
-            logToDB(
-                "Transaction detail created",
-                None,
-                None,
-                transaction_id,
-                3001001,
-                1,
-            )
+            try:
+                # Update Transaction and details
+                if transaction.related_transaction:
+                    if transaction.id < transaction.related_transaction.id:
+                        transaction.total_amount = -abs(payload.total_amount)
+                        transaction.account_id = payload.source_account_id
+                        detail = TransactionDetail.objects.filter(
+                            transaction_id=transaction.id
+                        ).first()
+                        detail.account_id = payload.source_account_id
+                        detail.detail_amt = -abs(payload.total_amount)
+                        detail.save()
+                    else:
+                        transaction.total_amount = abs(payload.total_amount)
+                        transaction.account_id = payload.destination_account_id
+                        detail = TransactionDetail.objects.filter(
+                            transaction_id=transaction.id
+                        ).first()
+                        detail.account_id = payload.destination_account_id
+                        detail.detail_amt = abs(payload.total_amount)
+                        detail.save()
+                transaction.transaction_date = payload.transaction_date
+                transaction.status_id = payload.status_id
+                transaction.memo = payload.memo
+                transaction.description = payload.description
+                transaction.edit_date = today
+                transaction.source_account_id = payload.source_account_id
+                transaction.destination_account_id = (
+                    payload.destination_account_id
+                )
+                transaction.save()
+                logToDB(
+                    f"Transaction updated : {transaction_id}",
+                    None,
+                    None,
+                    transaction_id,
+                    3001002,
+                    1,
+                )
+                return {"success": True}
+            except Exception as e:
+                logToDB(
+                    f"Transaction not updated : {e}",
+                    None,
+                    None,
+                    transaction_id,
+                    3001902,
+                    2,
+                )
+                return {"success": False}
         else:
+            # Get Details
+            existing_details = TransactionDetail.objects.filter(
+                transaction_id=transaction_id
+            )
+            existing_details.delete()
             for detail in payload.details:
                 adj_amount = 0
                 if payload.transaction_type_id == 1:
@@ -5096,7 +5118,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         transaction.memo = payload.memo
         transaction.description = payload.description
         transaction.edit_date = today
-        transaction.transaction_type_id = payload.transaction_type_id
+        transaction.account_id = payload.source_account_id
         transaction.source_account_id = payload.source_account_id
         transaction.destination_account_id = payload.destination_account_id
         if paycheck is not None:

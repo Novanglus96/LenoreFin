@@ -823,19 +823,55 @@ class TagMapping(models.Model):
     file_import = models.ForeignKey(FileImport, on_delete=models.CASCADE)
 
 
+updating_related_transaction = False
+
+
 @receiver(post_save, sender=Transaction)
 def update_related_transactions(sender, instance, created, **kwargs):
     """
     Signal receiver function to update related transactions when a Transaction is saved.
     """
-    # Check if the saved transaction is a transfer
-    if instance.transaction_type.id == 3:
-        # Get the related transaction
-        if instance.related_transaction:
-            related_transaction = Transaction.objects.get(
-                id=instance.related_transaction.id
+    global updating_related_transaction
+    if not updating_related_transaction:
+        updating_related_transaction = True
+        # Check if the saved transaction is a transfer
+        if instance.transaction_type.id == 3:
+            related_transaction = None
+            # Get the related transaction
+            if instance.related_transaction:
+                related_transaction = Transaction.objects.get(
+                    id=instance.related_transaction.id
+                )
+            # Update the related transaction based on the changes in the current transaction
+            if instance.related_transaction.id < instance.id:
+                related_transaction.total_amount = -abs(instance.total_amount)
+                related_transaction.account_id = instance.source_account_id
+                detail = TransactionDetail.objects.filter(
+                    transaction_id=related_transaction.id
+                ).first()
+                detail.account_id = instance.source_account_id
+                detail.detail_amt = -abs(instance.total_amount)
+                detail.save()
+            else:
+                related_transaction.total_amount = abs(instance.total_amount)
+                related_transaction.account_id = instance.destination_account_id
+                detail = TransactionDetail.objects.filter(
+                    transaction_id=related_transaction.id
+                ).first()
+                detail.account_id = instance.destination_account_id
+                detail.detail_amt = abs(instance.total_amount)
+                detail.save()
+            related_transaction.transaction_date = instance.transaction_date
+            related_transaction.status_id = instance.status_id
+            related_transaction.memo = instance.memo
+            related_transaction.description = instance.description
+            related_transaction.edit_date = timezone.now()
+            related_transaction.souce_account_id = instance.source_account_id
+            related_transaction.destination_account_id = (
+                instance.destination_account_id
             )
-        # Update the related transaction based on the changes in the current transaction
+            related_transaction.save()
+            updating_related_transaction = False
 
 
 updating_running_totals = False

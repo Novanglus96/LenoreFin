@@ -595,7 +595,8 @@ const formData = ref({
   transaction_type_id: props.passedFormData.transaction_type.id || 1,
   transaction_date: props.passedFormData.transaction_date || formattedDate,
   memo: props.passedFormData.memo || "",
-  source_account_id: props.passedFormData.source_account_id || null,
+  source_account_id:
+    props.passedFormData.source_account_id || props.passedFormData.account_id,
   destination_account_id: props.passedFormData.destination_account_id || null,
   edit_date: formattedDate,
   add_date: props.passedFormData.add_date || formattedDate,
@@ -659,7 +660,9 @@ const watchPassedFormData = () => {
         transaction_type_id: props.passedFormData.transaction_type.id,
         transaction_date: props.passedFormData.transaction_date,
         memo: props.passedFormData.memo,
-        source_account_id: props.passedFormData.source_account_id,
+        source_account_id:
+          props.passedFormData.source_account_id ||
+          props.passedFormData.account_id,
         destination_account_id: props.passedFormData.destination_account_id,
         edit_date: formattedDate,
         add_date: props.passedFormData.add_date,
