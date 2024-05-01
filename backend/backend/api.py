@@ -3562,7 +3562,7 @@ def list_transactions(
                             related_account_name + " => " + source_account_name
                         )
                 else:
-                    pretty_account = source_account
+                    pretty_account = source_account_name
                 balance = transaction.running_total
 
                 # Update the balance in the transaction and append to the list
@@ -3650,7 +3650,7 @@ def list_transactions(
                             related_account_name + " => " + source_account_name
                         )
                 else:
-                    pretty_account = source_account
+                    pretty_account = source_account_name
                 transaction.tags = tags
                 transaction.pretty_account = pretty_account
                 transaction.pretty_total = transaction.total_amount
