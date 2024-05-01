@@ -78,7 +78,7 @@ def convert_reminder():
     )
 
     # Check for auto_add
-    if transactions.exists():
+    if transactions and len(transactions) > 0:
         for trans in transactions:
             reminder = trans.reminder
             repeat = reminder.repeat
@@ -115,7 +115,10 @@ def convert_reminder():
 
             # Check if the next date is not after Reminder end date, delete
             # reminder if it is.
-            if nextDate <= reminder.end_date:
+            print(f"nextdate: {nextDate}")
+            if (
+                reminder.end_date is not None and nextDate <= reminder.end_date
+            ) or reminder.end_date is None:
                 reminder.next_date = nextDate
                 reminder.start_date = nextDate
                 reminder.save()
