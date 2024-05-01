@@ -44,6 +44,7 @@ from api.models import (
     create_transactions,
     CustomTag,
     FullTransaction,
+    update_sort_totals,
 )
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
@@ -70,6 +71,7 @@ from dateutil.relativedelta import relativedelta
 import random
 import json
 from django.core.paginator import Paginator
+from django.db.models.signals import pre_delete, post_delete
 
 
 class GlobalAuth(HttpBearer):
@@ -5777,6 +5779,12 @@ def delete_reminder(request, reminder_id: int):
     try:
         reminder = get_object_or_404(Reminder, id=reminder_id)
         reminder_description = reminder.description
+        transactions = Transaction.objects.filter(reminder=reminder)
+        pre_delete.disconnect(update_sort_totals, sender=Transaction)
+        transactions.delete()
+        pre_delete.connect(update_sort_totals, sender=Transaction)
+        update_sort_order(True, False, None)
+        update_running_totals(True, False, None)
         reminder.delete()
         logToDB(
             f"Reminder deleted : #{reminder_description}",
