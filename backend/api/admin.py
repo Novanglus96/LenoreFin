@@ -55,6 +55,7 @@ class TransactionAdmin(admin.ModelAdmin):
         "memo",
         "reminder",
         "paycheck",
+        "account_id",
         "source_account_id",
         "destination_account_id",
         "related_transaction",

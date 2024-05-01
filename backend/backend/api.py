@@ -1673,11 +1673,11 @@ def get_account(request, account_id: int):
 
         # Fetch last transaction running_total, excluding pending
         calc_balance = account.opening_balance
-        if Transaction.objects.filter(source_account_id=account_id).exclude(
+        if Transaction.objects.filter(account_id=account_id).exclude(
             status_id=1
         ):
             calc_balance = (
-                Transaction.objects.filter(source_account_id=account_id)
+                Transaction.objects.filter(account_id=account_id)
                 .exclude(status_id=1)
                 .order_by("-sort_order")
                 .first()
@@ -2917,11 +2917,11 @@ def list_accounts(
         # For each account, get related transactions and calculate balance
         for account in qs:
             calc_balance = account.opening_balance
-            if Transaction.objects.filter(source_account_id=account.id).exclude(
+            if Transaction.objects.filter(account_id=account.id).exclude(
                 status_id=1
             ):
                 calc_balance = (
-                    Transaction.objects.filter(source_account_id=account.id)
+                    Transaction.objects.filter(account_id=account.id)
                     .exclude(status_id=1)
                     .order_by("-sort_order")
                     .first()
@@ -3492,12 +3492,12 @@ def list_transactions(
             threshold_date = timezone.now().date() + timedelta(days=maxdays)
             if forecast is False:
                 query = Transaction.objects.filter(
-                    source_account_id=account,
+                    account_id=account,
                     transaction_date__lt=threshold_date,
                 ).order_by("-sort_order")
             else:
                 query = Transaction.objects.filter(
-                    source_account_id=account,
+                    account_id=account,
                     transaction_date__range=(
                         timezone.now().date(),
                         threshold_date,
@@ -3526,7 +3526,8 @@ def list_transactions(
                 source_account = ""
                 destination_account = ""
                 source_account_name = None
-                related_account_name = None
+                destination_account_name = None
+                account_name = None
 
                 # Get account info
                 if transaction.source_account_id:
@@ -3536,15 +3537,22 @@ def list_transactions(
                         ).account_name
                     else:
                         source_account_name = "Deleted Account"
-                if transaction.related_transaction:
+                if transaction.destination_account_id:
                     if Account.objects.get(
-                        id=transaction.related_transaction.source_account_id
+                        id=transaction.destination_account_id
                     ):
-                        related_account_name = Account.objects.get(
-                            id=transaction.related_transaction.source_account_id
+                        destination_account_name = Account.objects.get(
+                            id=transaction.destination_account_id
                         ).account_name
                     else:
-                        related_account_name = "Deleted Account"
+                        destination_account_name = "Deleted Account"
+                if transaction.account_id:
+                    if Account.objects.get(id=transaction.account_id):
+                        account_name = Account.objects.get(
+                            id=transaction.account_id
+                        ).account_name
+                    else:
+                        account_name = "Deleted Account"
 
                 # Retrieve a list of transaction details for the transaction
                 transaction_details = TransactionDetail.objects.filter(
@@ -3559,16 +3567,11 @@ def list_transactions(
                         tags.append(detail.tag.tag_name)
 
                 if transaction.transaction_type.id == 3:
-                    if transaction.total_amount < 0:
-                        pretty_account = (
-                            source_account_name + " => " + related_account_name
-                        )
-                    else:
-                        pretty_account = (
-                            related_account_name + " => " + source_account_name
-                        )
+                    pretty_account = (
+                        source_account_name + " => " + destination_account_name
+                    )
                 else:
-                    pretty_account = source_account_name
+                    pretty_account = account_name
                 balance = transaction.running_total
 
                 # Update the balance in the transaction and append to the list
@@ -3608,7 +3611,8 @@ def list_transactions(
                 destination_account = ""
                 pretty_account = ""
                 source_account_name = None
-                related_account_name = None
+                destination_account_name = None
+                account_name = None
 
                 # Get account info
                 if transaction.source_account_id:
@@ -3618,15 +3622,22 @@ def list_transactions(
                         ).account_name
                     else:
                         source_account_name = "Deleted Account"
-                if transaction.related_transaction:
+                if transaction.destination_account_id:
                     if Account.objects.get(
-                        id=transaction.related_transaction.source_account_id
+                        id=transaction.destination_account_id
                     ):
-                        related_account_name = Account.objects.get(
-                            id=transaction.related_transaction.source_account_id
+                        destination_account_name = Account.objects.get(
+                            id=transaction.destination_account_id
                         ).account_name
                     else:
-                        related_account_name = "Deleted Account"
+                        destination_account_name = "Deleted Account"
+                if transaction.account_id:
+                    if Account.objects.get(id=transaction.account_id):
+                        account_name = Account.objects.get(
+                            id=transaction.account_id
+                        ).account_name
+                    else:
+                        account_name = "Deleted Account"
 
                 # Retrieve transaction details
                 transaction_details = TransactionDetail.objects.filter(
@@ -3641,16 +3652,11 @@ def list_transactions(
                         tags.append(detail.tag.tag_name)
 
                 if transaction.transaction_type.id == 3:
-                    if transaction.total_amount < 0:
-                        pretty_account = (
-                            source_account_name + " => " + related_account_name
-                        )
-                    else:
-                        pretty_account = (
-                            related_account_name + " => " + source_account_name
-                        )
+                    pretty_account = (
+                        source_account_name + " => " + destination_account_name
+                    )
                 else:
-                    pretty_account = source_account_name
+                    pretty_account = account_name
                 transaction.tags = tags
                 transaction.pretty_account = pretty_account
                 transaction.pretty_total = transaction.total_amount

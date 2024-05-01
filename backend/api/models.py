@@ -9,7 +9,7 @@ Date: February 15, 2024
 from django.db import models
 from datetime import date
 from django.utils import timezone
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.db.models import Case, When, Q
 from decimal import Decimal
@@ -549,6 +549,7 @@ class Transaction(models.Model):
         max_digits=12, decimal_places=2, default=0.00
     )
     sort_order = models.IntegerField(null=True, blank=True, default=None)
+    account_id = models.IntegerField(default=0)
     source_account_id = models.IntegerField(null=True, blank=True, default=None)
     destination_account_id = models.IntegerField(
         null=True, blank=True, default=None
@@ -822,6 +823,21 @@ class TagMapping(models.Model):
     file_import = models.ForeignKey(FileImport, on_delete=models.CASCADE)
 
 
+@receiver(post_save, sender=Transaction)
+def update_related_transactions(sender, instance, created, **kwargs):
+    """
+    Signal receiver function to update related transactions when a Transaction is saved.
+    """
+    # Check if the saved transaction is a transfer
+    if instance.transaction_type.id == 3:
+        # Get the related transaction
+        if instance.related_transaction:
+            related_transaction = Transaction.objects.get(
+                id=instance.related_transaction.id
+            )
+        # Update the related transaction based on the changes in the current transaction
+
+
 updating_running_totals = False
 
 
@@ -942,11 +958,18 @@ def create_transactions(transactions: List[FullTransaction]):
             try:
                 for trans in transactions:
                     try:
+                        account_id = trans.source_account_id
+                        source_account_id = None
+                        destination_account_id = None
                         if trans.transaction_type_id == 1:
                             amount = -abs(trans.total_amount)
                         elif trans.transaction_type_id == 2:
                             amount = abs(trans.total_amount)
                         elif trans.transaction_type_id == 3:
+                            source_account_id = trans.source_account_id
+                            destination_account_id = (
+                                trans.destination_account_id
+                            )
                             amount = -abs(trans.total_amount)
                         created_transaction = Transaction.objects.create(
                             transaction_date=trans.transaction_date,
@@ -959,8 +982,9 @@ def create_transactions(transactions: List[FullTransaction]):
                             transaction_type_id=trans.transaction_type_id,
                             reminder_id=trans.reminder_id,
                             paycheck_id=trans.paycheck_id,
-                            source_account_id=trans.source_account_id,
-                            destination_account_id=trans.destination_account_id,
+                            account_id=account_id,
+                            source_account_id=source_account_id,
+                            destination_account_id=destination_account_id,
                         )
                         try:
                             if trans.transaction_type_id == 3:
@@ -975,8 +999,9 @@ def create_transactions(transactions: List[FullTransaction]):
                                     transaction_type_id=trans.transaction_type_id,
                                     reminder_id=trans.reminder_id,
                                     paycheck_id=trans.paycheck_id,
-                                    source_account_id=trans.destination_account_id,
-                                    destination_account_id=None,
+                                    account_id=destination_account_id,
+                                    source_account_id=source_account_id,
+                                    destination_account_id=destination_account_id,
                                     related_transaction=created_transaction,
                                 )
                                 created_transaction.related_transaction = (
@@ -1069,11 +1094,16 @@ def create_transactions(transactions: List[FullTransaction]):
             created_related = []
             transactions_to_update = []
             for trans in transactions:
+                account_id = trans.source_account_id
+                source_account_id = None
+                destination_account_id = None
                 if trans.transaction_type_id == 1:
                     amount = -abs(trans.total_amount)
                 elif trans.transaction_type_id == 2:
                     amount = abs(trans.total_amount)
                 elif trans.transaction_type_id == 3:
+                    source_account_id = trans.source_account_id
+                    destination_account_id = trans.destination_account_id
                     amount = -abs(trans.total_amount)
                 trans_obj = Transaction(
                     transaction_date=trans.transaction_date,
@@ -1086,8 +1116,9 @@ def create_transactions(transactions: List[FullTransaction]):
                     transaction_type_id=trans.transaction_type_id,
                     reminder_id=trans.reminder_id,
                     paycheck_id=trans.paycheck_id,
-                    source_account_id=trans.source_account_id,
-                    destination_account_id=trans.destination_account_id,
+                    account_id=account_id,
+                    source_account_id=source_account_id,
+                    destination_account_id=destination_account_id,
                 )
                 if trans.transaction_type_id == 3:
                     transfers_to_create.append(trans_obj)
@@ -1109,8 +1140,9 @@ def create_transactions(transactions: List[FullTransaction]):
                         transaction_type_id=trans.transaction_type_id,
                         reminder_id=trans.reminder_id,
                         paycheck_id=trans.paycheck_id,
-                        source_account_id=trans.destination_account_id,
-                        destination_account_id=None,
+                        account_id=destination_account_id,
+                        source_account_id=source_account_id,
+                        destination_account_id=destination_account_id,
                     )
                     related_to_create.append(related_obj)
                     related_detail_dict = {
@@ -1576,7 +1608,7 @@ def update_running_totals(
                         (
                             bal
                             for bal in balances
-                            if bal["id"] == trans.source_account_id
+                            if bal["id"] == trans.account_id
                         ),
                         None,
                     )
