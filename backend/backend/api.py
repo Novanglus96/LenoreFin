@@ -1680,7 +1680,18 @@ def get_account(request, account_id: int):
             calc_balance = (
                 Transaction.objects.filter(account_id=account_id)
                 .exclude(status_id=1)
-                .order_by("-sort_order")
+                .annotate(
+                    custom_order=Case(
+                        When(status_id=1, then=Value(2)),
+                        When(status_id=2, then=Value(0)),
+                        When(status_id=3, then=Value(0)),
+                        default=Value(1),
+                        output_field=IntegerField(),
+                    )
+                )
+                .order_by(
+                    "-custom_order", "-transaction_date", "total_amount", "-id"
+                )
                 .first()
                 .running_total
             )
@@ -2132,13 +2143,34 @@ def get_forecast(
             Transaction.objects.filter(
                 account_id=account_id, transaction_date__lt=start_date
             )
-            .order_by("sort_order")
+            .annotate(
+                custom_order=Case(
+                    When(status_id=1, then=Value(2)),
+                    When(status_id=2, then=Value(0)),
+                    When(status_id=3, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("custom_order", "transaction_date", "-total_amount", "id")
             .last()
         )
-        transactions = Transaction.objects.filter(
-            Q(account_id=account_id),
-            transaction_date__range=(start_date, end_date),
-        ).order_by("sort_order")
+        transactions = (
+            Transaction.objects.filter(
+                Q(account_id=account_id),
+                transaction_date__range=(start_date, end_date),
+            )
+            .annotate(
+                custom_order=Case(
+                    When(status_id=1, then=Value(2)),
+                    When(status_id=2, then=Value(0)),
+                    When(status_id=3, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("custom_order", "transaction_date", "-total_amount", "id")
+        )
 
         # Calculate the daily account balance
         balance = Decimal(0)
@@ -2150,7 +2182,18 @@ def get_forecast(
         for label in dates:
             last_transaction_of_day = (
                 transactions.filter(transaction_date=label)
-                .order_by("sort_order")
+                .annotate(
+                    custom_order=Case(
+                        When(status_id=1, then=Value(2)),
+                        When(status_id=2, then=Value(0)),
+                        When(status_id=3, then=Value(0)),
+                        default=Value(1),
+                        output_field=IntegerField(),
+                    )
+                )
+                .order_by(
+                    "custom_order", "transaction_date", "-total_amount", "id"
+                )
                 .last()
             )
             if last_transaction_of_day:
@@ -2924,7 +2967,21 @@ def list_accounts(
                 calc_balance = (
                     Transaction.objects.filter(account_id=account.id)
                     .exclude(status_id=1)
-                    .order_by("-sort_order")
+                    .annotate(
+                        custom_order=Case(
+                            When(status_id=1, then=Value(2)),
+                            When(status_id=2, then=Value(0)),
+                            When(status_id=3, then=Value(0)),
+                            default=Value(1),
+                            output_field=IntegerField(),
+                        )
+                    )
+                    .order_by(
+                        "-custom_order",
+                        "-transaction_date",
+                        "total_amount",
+                        "-id",
+                    )
                     .first()
                     .running_total
                 )
@@ -3492,18 +3549,52 @@ def list_transactions(
             query = None
             threshold_date = timezone.now().date() + timedelta(days=maxdays)
             if forecast is False:
-                query = Transaction.objects.filter(
-                    account_id=account,
-                    transaction_date__lt=threshold_date,
-                ).order_by("-sort_order")
+                query = (
+                    Transaction.objects.filter(
+                        account_id=account,
+                        transaction_date__lt=threshold_date,
+                    )
+                    .annotate(
+                        custom_order=Case(
+                            When(status_id=1, then=Value(2)),
+                            When(status_id=2, then=Value(0)),
+                            When(status_id=3, then=Value(0)),
+                            default=Value(1),
+                            output_field=IntegerField(),
+                        )
+                    )
+                    .order_by(
+                        "-custom_order",
+                        "-transaction_date",
+                        "total_amount",
+                        "-id",
+                    )
+                )
             else:
-                query = Transaction.objects.filter(
-                    account_id=account,
-                    transaction_date__range=(
-                        timezone.now().date(),
-                        threshold_date,
-                    ),
-                ).order_by("sort_order")
+                query = (
+                    Transaction.objects.filter(
+                        account_id=account,
+                        transaction_date__range=(
+                            timezone.now().date(),
+                            threshold_date,
+                        ),
+                    )
+                    .annotate(
+                        custom_order=Case(
+                            When(status_id=1, then=Value(2)),
+                            When(status_id=2, then=Value(0)),
+                            When(status_id=3, then=Value(0)),
+                            default=Value(1),
+                            output_field=IntegerField(),
+                        )
+                    )
+                    .order_by(
+                        "custom_order",
+                        "transaction_date",
+                        "-total_amount",
+                        "id",
+                    )
+                )
             total_pages = 0
             if page_size is not None and page is not None:
                 paginator = Paginator(query, page_size)
@@ -3602,7 +3693,17 @@ def list_transactions(
             qs = Transaction.objects.filter(status_id=1, reminder__isnull=True)
 
             # Set order of transactions
-            qs = qs.order_by("sort_order")
+            qs = qs.annotate(
+                custom_order=Case(
+                    When(status_id=1, then=Value(2)),
+                    When(status_id=2, then=Value(0)),
+                    When(status_id=3, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            ).order_by(
+                "custom_order", "transaction_date", "-total_amount", "id"
+            )
             qs = qs[:10]
             for transaction in qs:
 
@@ -5811,7 +5912,6 @@ def delete_reminder(request, reminder_id: int):
         pre_delete.disconnect(update_sort_totals, sender=Transaction)
         transactions.delete()
         pre_delete.connect(update_sort_totals, sender=Transaction)
-        update_sort_order(True, False, None)
         update_running_totals(True, False, None)
         reminder.delete()
         logToDB(

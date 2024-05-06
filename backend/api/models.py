@@ -11,7 +11,7 @@ from datetime import date
 from django.utils import timezone
 from django.db.models.signals import post_save, pre_delete, post_delete
 from django.dispatch import receiver
-from django.db.models import Case, When, Q
+from django.db.models import Case, When, Q, Value, IntegerField
 from decimal import Decimal
 import datetime
 from typing import List
@@ -887,14 +887,6 @@ def update_sort_totals(sender, instance, **kwargs):
         obj_list.append(instance)
         try:
             if kwargs.get("signal") == pre_delete:
-                update_sort_order(False, True, obj_list)
-            else:
-                update_sort_order(False, False, obj_list)
-        except Exception as e:
-            print(f"Failed to update sort order: {e}")
-            updating_running_totals = False
-        try:
-            if kwargs.get("signal") == pre_delete:
                 update_running_totals(False, True, obj_list)
             else:
                 update_running_totals(False, False, obj_list)
@@ -1359,10 +1351,6 @@ def create_transactions(transactions: List[FullTransaction]):
                 3001001,
                 1,
             )
-            if created_transactions and len(created_transactions) < 1000:
-                update_sort_order(False, False, created_transactions)
-            else:
-                update_sort_order(True, False, None)
             update_running_totals()
             return True
         except Exception as e:
@@ -1627,15 +1615,74 @@ def update_running_totals(
         # Perform a full update
         if full or len(transactions) > 0:
             try:
+                account_ids = [
+                    obj.account_id
+                    for obj in transactions
+                    if obj.account_id is not None
+                ]
+                dest_ids = [
+                    obj.destination_account_id
+                    for obj in transactions
+                    if obj.destination_account_id is not None
+                ]
+                source_ids = [
+                    obj.source_account_id
+                    for obj in transactions
+                    if obj.source_account_id is not None
+                ]
+                combined_ids = account_ids + dest_ids + source_ids
+                unique_account_ids = set(combined_ids)
+                affected_accounts = list(unique_account_ids)
+                print(f"accounts: {affected_accounts}")
                 balances = []
-                accounts = Account.objects.all().order_by("id")
+                accounts = None
+                transactions = None
+                if full:
+                    accounts = Account.objects.all().order_by("id")
+                    transactions = Transaction.objects.annotate(
+                        custom_order=Case(
+                            When(status_id=1, then=Value(2)),
+                            When(status_id=2, then=Value(0)),
+                            When(status_id=3, then=Value(0)),
+                            default=Value(1),
+                            output_field=IntegerField(),
+                        )
+                    ).order_by(
+                        "custom_order",
+                        "transaction_date",
+                        "-total_amount",
+                        "id",
+                    )
+                else:
+                    accounts = Account.objects.filter(
+                        id__in=affected_accounts
+                    ).order_by("id")
+                    transactions = (
+                        Transaction.objects.filter(
+                            account_id__in=affected_accounts
+                        )
+                        .annotate(
+                            custom_order=Case(
+                                When(status_id=1, then=Value(2)),
+                                When(status_id=2, then=Value(0)),
+                                When(status_id=3, then=Value(0)),
+                                default=Value(1),
+                                output_field=IntegerField(),
+                            )
+                        )
+                        .order_by(
+                            "custom_order",
+                            "transaction_date",
+                            "-total_amount",
+                            "id",
+                        )
+                    )
                 for account in accounts:
                     bal_obj = {
                         "id": account.id,
                         "balance": account.opening_balance,
                     }
                     balances.append(bal_obj)
-                transactions = Transaction.objects.all().order_by("sort_order")
                 transactions_to_update = []
                 for trans in transactions:
                     trans_total = Decimal(0)
@@ -1684,6 +1731,8 @@ def update_running_totals(
         # This is not a full update
         else:
             if transactions and len(transactions) != 0:
+                for trans in transactions:
+                    pass
 
                 def get_sort_order(obj):
                     return obj.sort_order
