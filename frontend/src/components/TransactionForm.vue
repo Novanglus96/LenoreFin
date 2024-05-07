@@ -38,6 +38,7 @@
                     :enable-time-picker="false"
                     auto-apply
                     format="yyyy-MM-dd"
+                    @update:model-value="checkFormComplete"
                   ></VueDatePicker>
                 </v-col>
               </v-row>
