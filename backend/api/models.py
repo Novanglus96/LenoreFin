@@ -18,6 +18,7 @@ from typing import List
 import datetime
 from django.db import IntegrityError, connection, transaction
 from django.shortcuts import get_object_or_404
+from django.db.models.query import QuerySet
 
 
 def import_file_name(instance, filename):
@@ -831,47 +832,77 @@ def update_related_transactions(sender, instance, created, **kwargs):
     """
     Signal receiver function to update related transactions when a Transaction is saved.
     """
+    print(f"Starting update_related_transaction: {instance.id}")
     global updating_related_transaction
     if not updating_related_transaction:
         updating_related_transaction = True
-        # Check if the saved transaction is a transfer
-        if instance.transaction_type.id == 3:
-            related_transaction = None
-            # Get the related transaction
-            if instance.related_transaction:
-                related_transaction = Transaction.objects.get(
-                    id=instance.related_transaction.id
+        try:
+            # Check if the saved transaction is a transfer
+            if instance.transaction_type.id == 3:
+                related_transaction = None
+                # Get the related transaction
+                if instance.related_transaction:
+                    related_transaction = Transaction.objects.get(
+                        id=instance.related_transaction.id
+                    )
+                # Update the related transaction based on the changes in the current transaction
+                if instance.related_transaction.id < instance.id:
+                    related_transaction.total_amount = -abs(
+                        instance.total_amount
+                    )
+                    related_transaction.account_id = instance.source_account_id
+                    detail = TransactionDetail.objects.filter(
+                        transaction_id=related_transaction.id
+                    ).first()
+                    detail.account_id = instance.source_account_id
+                    detail.detail_amt = -abs(instance.total_amount)
+                    detail.save()
+                else:
+                    related_transaction.total_amount = abs(
+                        instance.total_amount
+                    )
+                    related_transaction.account_id = (
+                        instance.destination_account_id
+                    )
+                    detail = TransactionDetail.objects.filter(
+                        transaction_id=related_transaction.id
+                    ).first()
+                    detail.account_id = instance.destination_account_id
+                    detail.detail_amt = abs(instance.total_amount)
+                    detail.save()
+                related_transaction.transaction_date = instance.transaction_date
+                related_transaction.status_id = instance.status_id
+                related_transaction.memo = instance.memo
+                related_transaction.description = instance.description
+                related_transaction.edit_date = timezone.now()
+                related_transaction.souce_account_id = (
+                    instance.source_account_id
                 )
-            # Update the related transaction based on the changes in the current transaction
-            if instance.related_transaction.id < instance.id:
-                related_transaction.total_amount = -abs(instance.total_amount)
-                related_transaction.account_id = instance.source_account_id
-                detail = TransactionDetail.objects.filter(
-                    transaction_id=related_transaction.id
-                ).first()
-                detail.account_id = instance.source_account_id
-                detail.detail_amt = -abs(instance.total_amount)
-                detail.save()
-            else:
-                related_transaction.total_amount = abs(instance.total_amount)
-                related_transaction.account_id = instance.destination_account_id
-                detail = TransactionDetail.objects.filter(
-                    transaction_id=related_transaction.id
-                ).first()
-                detail.account_id = instance.destination_account_id
-                detail.detail_amt = abs(instance.total_amount)
-                detail.save()
-            related_transaction.transaction_date = instance.transaction_date
-            related_transaction.status_id = instance.status_id
-            related_transaction.memo = instance.memo
-            related_transaction.description = instance.description
-            related_transaction.edit_date = timezone.now()
-            related_transaction.souce_account_id = instance.source_account_id
-            related_transaction.destination_account_id = (
-                instance.destination_account_id
-            )
-            related_transaction.save()
+                related_transaction.destination_account_id = (
+                    instance.destination_account_id
+                )
+                related_transaction.save()
+                updating_related_transaction = False
+                logToDB(
+                    "Updated related transaction",
+                    None,
+                    None,
+                    related_transaction.id,
+                    3001002,
+                    1,
+                )
+        except Exception as e:
             updating_related_transaction = False
+            logToDB(
+                f"Updating related transaction error: {e}",
+                None,
+                None,
+                None,
+                3001902,
+                2,
+            )
+    else:
+        print(f"Not updating related transaction: {instance.id}")
 
 
 updating_running_totals = False
@@ -1365,236 +1396,6 @@ def create_transactions(transactions: List[FullTransaction]):
             return False
 
 
-def update_sort_order(
-    full: bool = True,
-    delete: bool = False,
-    transactions: List[Transaction] = [],
-):
-    """
-    The function `update_sort_order` updates the sort order.
-
-    Args:
-        full (bool): Perform a full (all objects) sort order update
-        delete (bool): Is this update a result of a deletion
-        transactions (List[Transaction]): A list of transactions to update
-    Returns:
-        bool: Returns True or False depending on results
-    """
-    try:
-        # Perform a full update
-        if full or len(transactions) >= 1:
-            try:
-                status_table = TransactionStatus._meta.db_table
-                table_name = Transaction._meta.db_table
-
-                # Define the raw SQL query
-                query = f"""
-                WITH ordered_rows AS (
-                    SELECT t.id, ROW_NUMBER() OVER (
-                        ORDER BY
-                            CASE WHEN status_id = 1 THEN 2
-                                WHEN status_id = 2 THEN 0
-                                WHEN status_id = 3 THEN 0
-                                ELSE 1
-                            END,
-                            transaction_date,
-                            total_amount DESC,
-                            t.id
-                    ) as row_num
-                    FROM {table_name} t
-                    JOIN {status_table} s ON t.status_id = s.id
-                )
-                UPDATE {table_name}
-                SET sort_order = ordered_rows.row_num
-                FROM ordered_rows
-                WHERE {table_name}.id = ordered_rows.id
-                """
-
-                # Execute the raw SQL query
-                with connection.cursor() as cursor:
-                    cursor.execute(query)
-            except Exception as e:
-                logToDB(
-                    f"Full update of sort order error: {e}",
-                    None,
-                    None,
-                    None,
-                    3001902,
-                    2,
-                )
-        # Perform a partial update
-        else:
-            if transactions and len(transactions) != 0:
-
-                def get_sort_order(obj):
-                    return obj.sort_order
-
-                ordered_transactions = sorted(transactions, key=get_sort_order)
-                # Update sort order after a deletion
-                if delete:
-                    try:
-                        for trans in ordered_transactions:
-                            transactions_to_update = []
-                            filtered_transactions = Transaction.objects.filter(
-                                sort_order__gte=trans.sort_order
-                            ).exclude(id=trans.id)
-                            for obj in filtered_transactions:
-                                obj.sort_order -= 1
-                                transactions_to_update.append(obj)
-                            Transaction.objects.bulk_update(
-                                transactions_to_update,
-                                ["sort_order"],
-                                batch_size=1000,
-                            )
-                    except Exception as e:
-                        logToDB(
-                            f"Sort order after deletion error: {e}",
-                            None,
-                            None,
-                            None,
-                            3001902,
-                            2,
-                        )
-                else:
-                    # This is not a deletion
-                    try:
-                        for trans in ordered_transactions:
-                            all_transactions = Transaction.objects.exclude(
-                                id=trans.id
-                            )
-                            pending_transactions = all_transactions.filter(
-                                status__id=1
-                            ).order_by("sort_order")
-                            cleared_transactions = all_transactions.filter(
-                                status__id__gt=1
-                            ).order_by("sort_order")
-                            pending_count = pending_transactions.count()
-                            cleared_count = cleared_transactions.count()
-                            greater_transactions = None
-                            lesser_transactions = None
-                            same_transactions = None
-                            new_sort_order = 1
-                            if trans.status_id == 1:
-                                new_sort_order += cleared_count
-                                greater_transactions = pending_transactions.filter(
-                                    transaction_date__gt=trans.transaction_date
-                                )
-                                lesser_transactions = pending_transactions.filter(
-                                    transaction_date__lt=trans.transaction_date
-                                )
-                                same_transactions = pending_transactions.filter(
-                                    transaction_date=trans.transaction_date
-                                )
-                            else:
-                                greater_transactions = cleared_transactions.filter(
-                                    transaction_date__gt=trans.transaction_date
-                                )
-                                lesser_transactions = cleared_transactions.filter(
-                                    transaction_date__lt=trans.transaction_date
-                                )
-                                same_transactions = cleared_transactions.filter(
-                                    transaction_date=trans.transaction_date
-                                )
-                            if same_transactions.count() > 0:
-                                if (
-                                    same_transactions.last().total_amount
-                                    > trans.total_amount
-                                ):
-                                    new_sort_order = (
-                                        same_transactions.last().sort_order + 1
-                                    )
-                                elif (
-                                    same_transactions.first().total_amount
-                                    < trans.total_amount
-                                ):
-                                    new_sort_order = (
-                                        same_transactions.first().sort_order
-                                    )
-                                else:
-                                    for same_trans in same_transactions:
-                                        if (
-                                            same_trans.total_amount
-                                            < trans.total_amount
-                                        ):
-                                            new_sort_order = (
-                                                same_trans.sort_order
-                                            )
-                                            break
-                                        else:
-                                            if (
-                                                same_trans.total_amount
-                                                == trans.total_amount
-                                            ):
-                                                new_sort_order = (
-                                                    same_trans.sort_order
-                                                )
-                                                if same_trans.id > trans.id:
-                                                    new_sort_order = (
-                                                        same_trans.sort_order
-                                                    )
-                                                    break
-                                                else:
-                                                    new_sort_order += 1
-                            else:
-                                if lesser_transactions.count() > 0:
-                                    new_sort_order = (
-                                        lesser_transactions.last().sort_order
-                                    )
-                                else:
-                                    if greater_transactions.count() > 0:
-                                        new_sort_order = (
-                                            greater_transactions.first().sort_order
-                                        )
-                            trans.sort_order = new_sort_order
-                            transactions_to_update.append(trans)
-                            sub_transactions = (
-                                all_transactions.filter(
-                                    sort_order__gte=new_sort_order
-                                )
-                                .exclude(id=trans.id)
-                                .order_by("sort_order")
-                            )
-                            for sub_trans in sub_transactions:
-                                sub_trans.sort_order += 1
-                                transactions_to_update.append(sub_trans)
-                            Transaction.objects.bulk_update(
-                                transactions_to_update,
-                                ["sort_order"],
-                                batch_size=1000,
-                            )
-                    except Exception as e:
-                        logToDB(
-                            f"Updating sort order error: {e}",
-                            None,
-                            None,
-                            None,
-                            3001902,
-                            2,
-                        )
-                    pass
-            else:
-                raise Exception("No transactions to update")
-        logToDB(
-            "Updated sort order successfully",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
-        return True
-    except Exception as e:
-        logToDB(
-            f"Updating sort order failed: {e}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
-        return False
-
-
 def update_running_totals(
     full: bool = True,
     delete: bool = False,
@@ -1639,42 +1440,14 @@ def update_running_totals(
                 transactions = None
                 if full:
                     accounts = Account.objects.all().order_by("id")
-                    transactions = Transaction.objects.annotate(
-                        custom_order=Case(
-                            When(status_id=1, then=Value(2)),
-                            When(status_id=2, then=Value(0)),
-                            When(status_id=3, then=Value(0)),
-                            default=Value(1),
-                            output_field=IntegerField(),
-                        )
-                    ).order_by(
-                        "custom_order",
-                        "transaction_date",
-                        "-total_amount",
-                        "id",
-                    )
+                    transactions = sort_transactions(Transaction.objects.all())
                 else:
                     accounts = Account.objects.filter(
                         id__in=affected_accounts
                     ).order_by("id")
-                    transactions = (
+                    transactions = sort_transactions(
                         Transaction.objects.filter(
                             account_id__in=affected_accounts
-                        )
-                        .annotate(
-                            custom_order=Case(
-                                When(status_id=1, then=Value(2)),
-                                When(status_id=2, then=Value(0)),
-                                When(status_id=3, then=Value(0)),
-                                default=Value(1),
-                                output_field=IntegerField(),
-                            )
-                        )
-                        .order_by(
-                            "custom_order",
-                            "transaction_date",
-                            "-total_amount",
-                            "id",
                         )
                     )
                 for account in accounts:
@@ -2098,6 +1871,53 @@ def update_running_totals(
             2,
         )
         return False
+
+
+def sort_transactions(
+    transactions: QuerySet[Transaction],
+    asc: bool = True,
+):
+    """
+    The function `sort_transactions` returns the provided transactions sorted.
+
+    Args:
+        transactions (QuerySet[Transaction]): A list of transactions to sort
+        asc (bool): Perform a full (all objects) sort order update
+    Returns:
+        QuerySet[Transaction]: Sorted QuerySet of Transaction objects.
+    """
+    if asc:
+        transactions = transactions.annotate(
+            custom_order=Case(
+                When(status_id=1, then=Value(2)),
+                When(status_id=2, then=Value(0)),
+                When(status_id=3, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        ).order_by(
+            "custom_order",
+            "transaction_date",
+            "-total_amount",
+            "id",
+        )
+    else:
+        transactions = transactions.annotate(
+            custom_order=Case(
+                When(status_id=1, then=Value(2)),
+                When(status_id=2, then=Value(0)),
+                When(status_id=3, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        ).order_by(
+            "-custom_order",
+            "-transaction_date",
+            "total_amount",
+            "-id",
+        )
+
+    return transactions
 
 
 def logToDB(message, account, reminder, trans, error, level):
