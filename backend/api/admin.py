@@ -61,6 +61,8 @@ class TransactionAdmin(admin.ModelAdmin):
         "related_transaction",
     ]
 
+    search_fields = ["id"]
+
     list_filter = ["source_account_id"]
 
     ordering = ["-sort_order"]
