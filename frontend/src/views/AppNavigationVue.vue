@@ -5,7 +5,7 @@
         <v-img :width="132" aspect-ratio="1/1" cover src="logov2.png"></v-img>
       </template>
       <v-app-bar-title>
-        <span class="text-caption font-weight-bold">v1.0</span></v-app-bar-title
+        <span class="text-caption font-weight-bold">v1.0.0</span></v-app-bar-title
       >
       <v-menu location="start">
         <template v-slot:activator="{ props }">

@@ -1,3 +1,5 @@
+ver_change.sh
+publish.sh
 mediafiles/
 migrations/
 *.DS_Store
