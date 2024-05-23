@@ -32,6 +32,7 @@ from .models import (
     TransactionImage,
 )
 from django.http import HttpResponse
+from import_export.admin import ImportExportModelAdmin
 
 
 class TransactionDetailInline(admin.TabularInline):
@@ -39,7 +40,7 @@ class TransactionDetailInline(admin.TabularInline):
     extra = 1
 
 
-class TransactionAdmin(admin.ModelAdmin):
+class TransactionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     list_display = [
         "id",
         "sort_order",
@@ -70,7 +71,7 @@ class TransactionAdmin(admin.ModelAdmin):
     inlines = [TransactionDetailInline]
 
 
-class LogAdmin(admin.ModelAdmin):
+class LogAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     list_display = [
         "log_date",
         "error_level",
