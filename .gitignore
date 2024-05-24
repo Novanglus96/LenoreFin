@@ -1,9 +1,11 @@
 ver_change.sh
 publish.sh
-mediafiles/
+mediafiles
 migrations/
 *.DS_Store
 static
+media
+staticfiles
 *.code-workspace
 my_accounts.json
 my_tags.json
