@@ -184,7 +184,7 @@ Q_CLUSTER = {
 }
 
 JAZZMIN_SETTINGS = {
-    "show_ui_builder": True,
+    "show_ui_builder": bool(int(os.environ.get("DEBUG"))),
     # title of the window (Will default to current_admin_site.site_title if absent or None)
     "site_title": "Admin",
     # Title on the login screen (19 chars max) (defaults to current_admin_site.site_header if absent or None)
@@ -205,6 +205,18 @@ JAZZMIN_SETTINGS = {
     "welcome_sign": "Please log in",
     # Copyright on the footer
     "copyright": "John Adams",
+    ############
+    # Top Menu #
+    ############
+    # Links to put along the top menu
+    "topmenu_links": [
+        # external url that opens in a new window (Permissions can be added)
+        {
+            "name": "Back to Site",
+            "url": "/",
+            "new_window": False,
+        },
+    ],
 }
 
 JAZZMIN_UI_TWEAKS = {
@@ -212,22 +224,22 @@ JAZZMIN_UI_TWEAKS = {
     "footer_small_text": False,
     "body_small_text": False,
     "brand_small_text": True,
-    "brand_colour": False,
-    "accent": "accent-primary",
-    "navbar": "navbar-lightblue navbar-dark",
+    "brand_colour": "navbar-teal",
+    "accent": "accent-success",
+    "navbar": "navbar-teal navbar-dark",
     "no_navbar_border": False,
     "navbar_fixed": False,
     "layout_boxed": False,
     "footer_fixed": False,
     "sidebar_fixed": True,
-    "sidebar": "sidebar-dark-primary",
+    "sidebar": "sidebar-light-teal",
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
     "sidebar_nav_child_indent": False,
     "sidebar_nav_compact_style": True,
     "sidebar_nav_legacy_style": False,
     "sidebar_nav_flat_style": True,
-    "theme": "lumen",
+    "theme": "minty",
     "dark_mode_theme": "darkly",
     "button_classes": {
         "primary": "btn-outline-primary",
