@@ -1,5 +1,6 @@
 <template>
   <v-app>
+    <VueQueryDevtools />
     <AppNavigationVue />
     <v-main>
       <v-container class="bg-primary h-100" fluid>
@@ -21,6 +22,7 @@ import AppNavigationVue from "@/views/AppNavigationVue";
 import { useMainStore } from "@/stores/main";
 import { onMounted } from "vue";
 import { useOptions } from "@/composables/optionsComposable";
+import { VueQueryDevtools } from "@tanstack/vue-query-devtools";
 
 const mainstore = useMainStore();
 const { prefetchOptions } = useOptions();
