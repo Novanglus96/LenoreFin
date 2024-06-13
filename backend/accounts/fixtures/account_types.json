@@ -1,6 +1,6 @@
 [
   {
-    "model": "transactions.AccountType",
+    "model": "accounts.AccountType",
     "pk": 1,
     "fields": {
       "account_type": "Credit Card",
@@ -9,7 +9,7 @@
     }
   },
   {
-    "model": "transactions.AccountType",
+    "model": "accounts.AccountType",
     "pk": 2,
     "fields": {
       "account_type": "Checking",
@@ -18,7 +18,7 @@
     }
   },
   {
-    "model": "transactions.AccountType",
+    "model": "accounts.AccountType",
     "pk": 3,
     "fields": {
       "account_type": "Savings",
@@ -27,7 +27,7 @@
     }
   },
   {
-    "model": "transactions.AccountType",
+    "model": "accounts.AccountType",
     "pk": 4,
     "fields": {
       "account_type": "Investment",
@@ -36,7 +36,7 @@
     }
   },
   {
-    "model": "transactions.AccountType",
+    "model": "accounts.AccountType",
     "pk": 5,
     "fields": {
       "account_type": "Loan",

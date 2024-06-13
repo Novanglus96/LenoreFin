@@ -9,8 +9,6 @@ Date: February 13, 2024
 from ninja import NinjaAPI, Schema, Query, File
 from ninja.files import UploadedFile
 from transactions.models import (
-    Account,
-    AccountType,
     Tag,
     ChristmasGift,
     ContribRule,
@@ -27,7 +25,6 @@ from transactions.models import (
     LogEntry,
     Payee,
     TagType,
-    Bank,
     Paycheck,
     Message,
     logToDB,
@@ -48,6 +45,7 @@ from imports.models import (
     AccountMapping,
     TagMapping,
 )
+from accounts.models import AccountType, Bank, Account
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from decimal import Decimal

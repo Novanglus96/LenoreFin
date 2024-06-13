@@ -1,7 +1,5 @@
 from django.contrib import admin
 from .models import (
-    Account,
-    AccountType,
     Tag,
     ChristmasGift,
     ContribRule,
@@ -18,7 +16,6 @@ from .models import (
     LogEntry,
     Payee,
     TagType,
-    Bank,
     Message,
     Paycheck,
     TransactionImage,
@@ -81,8 +78,7 @@ class LogAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
 # Register your models here.
 
-admin.site.register(Account)
-admin.site.register(AccountType)
+
 admin.site.register(Tag)
 admin.site.register(ChristmasGift)
 admin.site.register(ContribRule)
@@ -99,7 +95,6 @@ admin.site.register(TransactionDetail)
 admin.site.register(LogEntry, LogAdmin)
 admin.site.register(Payee)
 admin.site.register(TagType)
-admin.site.register(Bank)
 admin.site.register(Message)
 admin.site.register(Paycheck)
 admin.site.register(TransactionImage)

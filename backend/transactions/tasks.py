@@ -17,7 +17,6 @@ from transactions.models import (
     LogEntry,
     TransactionDetail,
     TransactionStatus,
-    Account,
     logToDB,
     update_running_totals,
     create_transactions,
@@ -34,6 +33,7 @@ from imports.models import (
     TagMapping,
     AccountMapping,
 )
+from accounts.models import Account
 from django_q.models import Schedule
 from datetime import date
 from dateutil.relativedelta import relativedelta
