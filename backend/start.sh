@@ -13,15 +13,15 @@ if [ "$DJANGO_SUPERUSER_USERNAME" ]; then
         true
 fi
 
-python manage.py loaddata account_types
-python manage.py loaddata error_levels
-python manage.py loaddata options
-python manage.py loaddata repeats
-python manage.py loaddata transaction_statuses
-python manage.py loaddata transaction_types
-python manage.py loaddata tag_types
-python manage.py loaddata banks
-python manage.py loaddata tags
+python manage.py loaddata transactions/fixtures/account_types
+python manage.py loaddata transactions/fixtures/error_levels
+python manage.py loaddata transactions/fixtures/options
+python manage.py loaddata transactions/fixtures/repeats
+python manage.py loaddata transactions/fixtures/transaction_statuses
+python manage.py loaddata transactions/fixtures/transaction_types
+python manage.py loaddata transactions/fixtures/tag_types
+python manage.py loaddata transactions/fixtures/banks
+python manage.py loaddata transactions/fixtures/tags
 python manage.py scheduletasks
 
 gunicorn backend.wsgi:application --bind 0.0.0.0:8000

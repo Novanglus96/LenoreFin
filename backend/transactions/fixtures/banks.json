@@ -1,699 +1,699 @@
 [
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 1,
     "fields": {
         "bank_name": "Ally Financial"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 2,
     "fields": {
         "bank_name": "American Express"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 3,
     "fields": {
         "bank_name": "Ameriprise"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 4,
     "fields": {
         "bank_name": "Ameris Bancorp"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 5,
     "fields": {
         "bank_name": "Arvest Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 6,
     "fields": {
         "bank_name": "Associated Banc-Corp"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 7,
     "fields": {
         "bank_name": "Atlantic Union Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 8,
     "fields": {
         "bank_name": "Axos Financial"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 9,
     "fields": {
         "bank_name": "Bank of America"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 10,
     "fields": {
         "bank_name": "Bank of Hawaii"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 11,
     "fields": {
         "bank_name": "BankUnited"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 12,
     "fields": {
         "bank_name": "Barclays"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 13,
     "fields": {
         "bank_name": "BCI Financial Group"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 14,
     "fields": {
         "bank_name": "Beal Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 15,
     "fields": {
         "bank_name": "BMO USA"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 16,
     "fields": {
         "bank_name": "BNP Paribas"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 17,
     "fields": {
         "bank_name": "BOK Financial Corporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 18,
     "fields": {
         "bank_name": "Capital One"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 19,
     "fields": {
         "bank_name": "Cathay Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 20,
     "fields": {
         "bank_name": "Central Bancompany"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 21,
     "fields": {
         "bank_name": "Charles Schwab Corporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 22,
     "fields": {
         "bank_name": "CIBC Bank USA"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 23,
     "fields": {
         "bank_name": "Citigroup"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 24,
     "fields": {
         "bank_name": "Citizens Financial Group"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 25,
     "fields": {
         "bank_name": "Columbia Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 26,
     "fields": {
         "bank_name": "Comerica"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 27,
     "fields": {
         "bank_name": "Commerce Bancshares"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 28,
     "fields": {
         "bank_name": "Credit Suisse"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 29,
     "fields": {
         "bank_name": "Cullen/Frost Bankers, Inc."
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 30,
     "fields": {
         "bank_name": "Customers Bancorp"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 31,
     "fields": {
         "bank_name": "Deutsche Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 32,
     "fields": {
         "bank_name": "Discover Financial"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 33,
     "fields": {
         "bank_name": "East West Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 34,
     "fields": {
         "bank_name": "Eastern Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 35,
     "fields": {
         "bank_name": "Fifth Third Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 36,
     "fields": {
         "bank_name": "First BanCorp"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 37,
     "fields": {
         "bank_name": "First Citizens BancShares"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 38,
     "fields": {
         "bank_name": "First Hawaiian Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 39,
     "fields": {
         "bank_name": "First Horizon National Corporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 40,
     "fields": {
         "bank_name": "First Interstate BancSystem"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 41,
     "fields": {
         "bank_name": "First National of Nebraska"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 42,
     "fields": {
         "bank_name": "FirstBank Holding Co"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 43,
     "fields": {
         "bank_name": "FNB Corporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 44,
     "fields": {
         "bank_name": "Fulton Financial Corporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 45,
     "fields": {
         "bank_name": "Glacier Bancorp"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 46,
     "fields": {
         "bank_name": "Goldman Sachs"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 47,
     "fields": {
         "bank_name": "Hancock Whitney"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 48,
     "fields": {
         "bank_name": "Heartland Financial"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 49,
     "fields": {
         "bank_name": "Home BancShares"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 50,
     "fields": {
         "bank_name": "Hope Bancorp"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 51,
     "fields": {
         "bank_name": "HSBC Bank USA"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 52,
     "fields": {
         "bank_name": "Huntington Bancshares"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 53,
     "fields": {
         "bank_name": "Independent Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 54,
     "fields": {
         "bank_name": "John Deere"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 55,
     "fields": {
         "bank_name": "JPMorgan Chase"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 56,
     "fields": {
         "bank_name": "KeyCorp"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 57,
     "fields": {
         "bank_name": "M&T Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 58,
     "fields": {
         "bank_name": "MidFirst Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 59,
     "fields": {
         "bank_name": "Mizuho Financial Group"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 60,
     "fields": {
         "bank_name": "Morgan Stanley"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 61,
     "fields": {
         "bank_name": "MUFG Americas Holdings Corporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 62,
     "fields": {
         "bank_name": "New York Community Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 63,
     "fields": {
         "bank_name": "Northern Trust"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 64,
     "fields": {
         "bank_name": "Old National Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 65,
     "fields": {
         "bank_name": "Pacific Premier Bancorp"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 66,
     "fields": {
         "bank_name": "PacWest Bancorp"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 67,
     "fields": {
         "bank_name": "Pinnacle Financial Partners"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 68,
     "fields": {
         "bank_name": "PNC Financial Services"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 69,
     "fields": {
         "bank_name": "Popular, Inc."
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 70,
     "fields": {
         "bank_name": "Prosperity Bancshares"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 71,
     "fields": {
         "bank_name": "Raymond James Financial"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 72,
     "fields": {
         "bank_name": "RBC Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 73,
     "fields": {
         "bank_name": "Regions Financial Corporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 74,
     "fields": {
         "bank_name": "Santander Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 75,
     "fields": {
         "bank_name": "Simmons Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 76,
     "fields": {
         "bank_name": "SoFi"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 77,
     "fields": {
         "bank_name": "South State Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 78,
     "fields": {
         "bank_name": "State Street Corporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 79,
     "fields": {
         "bank_name": "Stifel"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 80,
     "fields": {
         "bank_name": "Sumitomo Mitsui Banking Corporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 81,
     "fields": {
         "bank_name": "Synchrony Financial"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 82,
     "fields": {
         "bank_name": "Synovus"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 83,
     "fields": {
         "bank_name": "TD Bank, N.A."
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 84,
     "fields": {
         "bank_name": "Texas Capital Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 85,
     "fields": {
         "bank_name": "The Bank of New York Mellon"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 86,
     "fields": {
         "bank_name": "TIA"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 87,
     "fields": {
         "bank_name": "Truist Financial"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 88,
     "fields": {
         "bank_name": "U.S. Bancorp"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 89,
     "fields": {
         "bank_name": "UBS"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 90,
     "fields": {
         "bank_name": "UMB Financial Corporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 91,
     "fields": {
         "bank_name": "United Bank (West Virginia)"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 92,
     "fields": {
         "bank_name": "United Community Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 93,
     "fields": {
         "bank_name": "USAA"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 94,
     "fields": {
         "bank_name": "Valley Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 95,
     "fields": {
         "bank_name": "Washington Federal"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 96,
     "fields": {
         "bank_name": "Webster Bank"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 97,
     "fields": {
         "bank_name": "Wells Fargo"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 98,
     "fields": {
         "bank_name": "Western Alliance Bancorporation"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 99,
     "fields": {
         "bank_name": "Wintrust Financial"
     }
   },
   {
-    "model": "api.Bank",
+    "model": "transactions.Bank",
     "pk": 100,
     "fields": {
         "bank_name": "WSFS Bank"

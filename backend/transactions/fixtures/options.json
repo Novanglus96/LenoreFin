@@ -1,6 +1,6 @@
 [
   {
-    "model": "api.Option",
+    "model": "transactions.Option",
     "pk": 1,
     "fields": {
         "log_level": 1,

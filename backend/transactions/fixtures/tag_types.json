@@ -1,20 +1,20 @@
 [
   {
-    "model": "api.TagType",
+    "model": "transactions.TagType",
     "pk": 1,
     "fields": {
         "tag_type": "Expense"
     }
   },
   {
-    "model": "api.TagType",
+    "model": "transactions.TagType",
     "pk": 2,
     "fields": {
         "tag_type": "Income"
     }
   },
   {
-    "model": "api.TagType",
+    "model": "transactions.TagType",
     "pk": 3,
     "fields": {
         "tag_type": "Misc."

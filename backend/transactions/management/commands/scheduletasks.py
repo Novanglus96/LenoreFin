@@ -39,7 +39,7 @@ class Command(BaseCommand):
         tasks = [
             {
                 "task_name": "Send Message",
-                "function": "api.tasks.create_message",
+                "function": "transactions.tasks.create_message",
                 "time": "03:15",
                 "arguments": "'Hello World'",
                 "type": "DAILY",
@@ -48,7 +48,7 @@ class Command(BaseCommand):
             },
             {
                 "task_name": "Convert Reminder Transactions",
-                "function": "api.tasks.convert_reminder",
+                "function": "transactions.tasks.convert_reminder",
                 "time": "00:01",
                 "arguments": "",
                 "type": "DAILY",  # DAILY, HOURLY, MINUTES
@@ -57,7 +57,7 @@ class Command(BaseCommand):
             },
             {
                 "task_name": "Update Forever Reminders",
-                "function": "api.tasks.update_forever_reminders",
+                "function": "transactions.tasks.update_forever_reminders",
                 "time": "00:02",
                 "arguments": "",
                 "type": "DAILY",  # DAILY, HOURLY, MINUTES
@@ -66,7 +66,7 @@ class Command(BaseCommand):
             },
             {
                 "task_name": "Finish Imports",
-                "function": "api.tasks.finish_imports",
+                "function": "transactions.tasks.finish_imports",
                 "time": "15:35",
                 "arguments": "",
                 "type": "MINUTES",  # DAILY, HOURLY, MINUTES

@@ -8,7 +8,7 @@ Date: February 13, 2024
 
 from ninja import NinjaAPI, Schema, Query, File
 from ninja.files import UploadedFile
-from api.models import (
+from transactions.models import (
     Account,
     AccountType,
     Tag,

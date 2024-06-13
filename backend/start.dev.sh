@@ -13,19 +13,19 @@ if [ "$DJANGO_SUPERUSER_USERNAME" ]; then
         true
 fi
 
-python manage.py loaddata account_types
-python manage.py loaddata error_levels
-python manage.py loaddata options
-python manage.py loaddata repeats
-python manage.py loaddata transaction_statuses
-python manage.py loaddata transaction_types
-python manage.py loaddata tag_types
-python manage.py loaddata banks
-python manage.py loaddata tags
+python manage.py loaddata transactions/fixtures/account_types
+python manage.py loaddata transactions/fixtures/error_levels
+python manage.py loaddata transactions/fixtures/options
+python manage.py loaddata transactions/fixtures/repeats
+python manage.py loaddata transactions/fixtures/transaction_statuses
+python manage.py loaddata transactions/fixtures/transaction_types
+python manage.py loaddata transactions/fixtures/tag_types
+python manage.py loaddata transactions/fixtures/banks
+python manage.py loaddata transactions/fixtures/tags
 python manage.py scheduletasks
 # test data load
-python manage.py loaddata my_banks
-python manage.py loaddata my_accounts
-python manage.py loaddata my_tags
+python manage.py loaddata transactions/fixtures/my_banks
+python manage.py loaddata transactions/fixtures/my_accounts
+python manage.py loaddata transactions/fixtures/my_tags
 
 python manage.py runserver 0.0.0.0:8001

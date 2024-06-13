@@ -1,20 +1,20 @@
 [
   {
-    "model": "api.TransactionType",
+    "model": "transactions.TransactionType",
     "pk": 1,
     "fields": {
         "transaction_type": "Expense"
     }
   },
   {
-    "model": "api.TransactionType",
+    "model": "transactions.TransactionType",
     "pk": 2,
     "fields": {
         "transaction_type": "Income"
     }
   },
   {
-    "model": "api.TransactionType",
+    "model": "transactions.TransactionType",
     "pk": 3,
     "fields": {
         "transaction_type": "Transfer"

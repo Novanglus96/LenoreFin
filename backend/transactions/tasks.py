@@ -8,7 +8,7 @@ Date: February 15, 2024
 
 from django_q.tasks import async_task, result, schedule
 import arrow
-from api.models import (
+from transactions.models import (
     Message,
     Reminder,
     Transaction,

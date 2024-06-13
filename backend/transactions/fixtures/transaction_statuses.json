@@ -1,20 +1,20 @@
 [
   {
-    "model": "api.TransactionStatus",
+    "model": "transactions.TransactionStatus",
     "pk": 1,
     "fields": {
         "transaction_status": "Pending"
     }
   },
   {
-    "model": "api.TransactionStatus",
+    "model": "transactions.TransactionStatus",
     "pk": 2,
     "fields": {
         "transaction_status": "Cleared"
     }
   },
   {
-    "model": "api.TransactionStatus",
+    "model": "transactions.TransactionStatus",
     "pk": 3,
     "fields": {
         "transaction_status": "Reconciled"
