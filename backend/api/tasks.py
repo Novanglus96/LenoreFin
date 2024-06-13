@@ -16,6 +16,15 @@ from api.models import (
     Option,
     LogEntry,
     TransactionDetail,
+    TransactionStatus,
+    Account,
+    logToDB,
+    update_running_totals,
+    create_transactions,
+    CustomTag,
+    FullTransaction,
+)
+from imports.models import (
     FileImport,
     TransactionImport,
     TransactionImportTag,
@@ -24,14 +33,6 @@ from api.models import (
     StatusMapping,
     TagMapping,
     AccountMapping,
-    TransactionStatus,
-    Account,
-    logToDB,
-    update_sort_order,
-    update_running_totals,
-    create_transactions,
-    CustomTag,
-    FullTransaction,
 )
 from django_q.models import Schedule
 from datetime import date

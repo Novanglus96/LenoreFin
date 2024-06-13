@@ -21,14 +21,6 @@ from .models import (
     Bank,
     Message,
     Paycheck,
-    FileImport,
-    TransactionImport,
-    TransactionImportTag,
-    TransactionImportError,
-    TypeMapping,
-    StatusMapping,
-    AccountMapping,
-    TagMapping,
     TransactionImage,
 )
 from django.http import HttpResponse
@@ -111,17 +103,3 @@ admin.site.register(Bank)
 admin.site.register(Message)
 admin.site.register(Paycheck)
 admin.site.register(TransactionImage)
-
-
-@admin.register(
-    FileImport,
-    TransactionImport,
-    TransactionImportTag,
-    TransactionImportError,
-    TypeMapping,
-    StatusMapping,
-    AccountMapping,
-    TagMapping,
-)
-class ImportAdmin(admin.ModelAdmin):
-    pass

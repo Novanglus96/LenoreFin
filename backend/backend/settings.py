@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "api",
+    "imports",
     "corsheaders",
     "django_filters",
     "dbbackup",
@@ -222,7 +223,7 @@ JAZZMIN_SETTINGS = {
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
     "footer_small_text": False,
-    "body_small_text": False,
+    "body_small_text": True,
     "brand_small_text": True,
     "brand_colour": "navbar-teal",
     "accent": "accent-success",
