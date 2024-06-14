@@ -5,6 +5,37 @@ from import_export.admin import ImportExportModelAdmin
 
 # Register your models here.
 
-admin.site.register(AccountType)
-admin.site.register(Account)
-admin.site.register(Bank)
+
+class AccountTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "account_type", "color", "icon"]
+
+    list_display_links = ["account_type"]
+
+    ordering = ["account_type"]
+
+
+class AccountAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "account_name", "active", "open_date", "bank"]
+
+    list_display_links = ["account_name"]
+
+    search_fields = ["account_name"]
+
+    ordering = ["account_name"]
+
+    list_filter = ["bank", "active"]
+
+
+class BankAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "bank_name"]
+
+    list_display_links = ["bank_name"]
+
+    search_fields = ["bank_name"]
+
+    ordering = ["bank_name"]
+
+
+admin.site.register(AccountType, AccountTypeAdmin)
+admin.site.register(Account, AccountAdmin)
+admin.site.register(Bank, BankAdmin)
