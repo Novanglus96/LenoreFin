@@ -91,4 +91,4 @@ class Note(models.Model):
     note_date = models.DateField(default=date.today)
 
     def __str__(self):
-        return self.note_date
+        return f"{self.note_date}"
