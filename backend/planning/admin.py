@@ -5,7 +5,48 @@ from import_export.admin import ImportExportModelAdmin
 
 # Register your models here.
 
-admin.site.register(ChristmasGift)
-admin.site.register(ContribRule)
-admin.site.register(Contribution)
-admin.site.register(Note)
+
+class ChristmasGiftAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "budget", "tag"]
+
+    list_display_links = ["id", "tag"]
+
+    ordering = ["tag"]
+
+
+class ContribRuleAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "rule", "cap"]
+
+    list_display_links = ["id", "rule"]
+
+    ordering = ["id"]
+
+
+class ContributionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = [
+        "id",
+        "contribution",
+        "per_paycheck",
+        "emergency_amt",
+        "emergency_diff",
+        "cap",
+        "active",
+    ]
+
+    list_display_links = ["contribution"]
+
+    ordering = ["id"]
+
+
+class NoteAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "note_date", "note_text"]
+
+    list_display_links = ["note_date"]
+
+    ordering = ["-note_date", "-id"]
+
+
+admin.site.register(ChristmasGift, ChristmasGiftAdmin)
+admin.site.register(ContribRule, ContribRuleAdmin)
+admin.site.register(Contribution, ContributionAdmin)
+admin.site.register(Note, NoteAdmin)
