@@ -9,18 +9,15 @@ Date: February 15, 2024
 from django_q.tasks import async_task, result, schedule
 import arrow
 from transactions.models import (
-    Message,
     Transaction,
-    Option,
-    LogEntry,
     TransactionDetail,
     TransactionStatus,
-    logToDB,
     update_running_totals,
     create_transactions,
     CustomTag,
     FullTransaction,
 )
+from administration.models import Message, Option, LogEntry, logToDB
 from imports.models import (
     FileImport,
     TransactionImport,

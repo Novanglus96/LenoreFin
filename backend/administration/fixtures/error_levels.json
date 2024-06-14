@@ -1,27 +1,27 @@
 [
   {
-    "model": "transactions.ErrorLevel",
+    "model": "administration.ErrorLevel",
     "pk": 0,
     "fields": {
         "error_level": "Debug"
     }
   },
   {
-    "model": "transactions.ErrorLevel",
+    "model": "administration.ErrorLevel",
     "pk": 1,
     "fields": {
         "error_level": "Information"
     }
   },
   {
-    "model": "transactions.ErrorLevel",
+    "model": "administration.ErrorLevel",
     "pk": 2,
     "fields": {
         "error_level": "Warning"
     }
   },
   {
-    "model": "transactions.ErrorLevel",
+    "model": "administration.ErrorLevel",
     "pk": 3,
     "fields": {
         "error_level": "Error"

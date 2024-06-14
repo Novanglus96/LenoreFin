@@ -1,14 +1,9 @@
 from django.contrib import admin
 from .models import (
-    ErrorLevel,
     TransactionType,
-    Option,
     TransactionStatus,
     Transaction,
     TransactionDetail,
-    LogEntry,
-    Payee,
-    Message,
     Paycheck,
     TransactionImage,
 )
@@ -52,32 +47,11 @@ class TransactionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     inlines = [TransactionDetailInline]
 
 
-class LogAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_display = [
-        "log_date",
-        "error_level",
-        "error_num",
-        "log_entry",
-        "account",
-        "reminder",
-        "transaction",
-    ]
-
-    list_filter = ["error_level", "error_num"]
-
-    ordering = ["-log_date"]
-
-
 # Register your models here.
 
-admin.site.register(ErrorLevel)
 admin.site.register(TransactionType)
-admin.site.register(Option)
 admin.site.register(TransactionStatus)
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(TransactionDetail)
-admin.site.register(LogEntry, LogAdmin)
-admin.site.register(Payee)
-admin.site.register(Message)
 admin.site.register(Paycheck)
 admin.site.register(TransactionImage)
