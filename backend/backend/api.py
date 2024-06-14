@@ -9,12 +9,8 @@ Date: February 13, 2024
 from ninja import NinjaAPI, Schema, Query, File
 from ninja.files import UploadedFile
 from transactions.models import (
-    ChristmasGift,
-    ContribRule,
-    Contribution,
     ErrorLevel,
     TransactionType,
-    Note,
     Option,
     TransactionStatus,
     Transaction,
@@ -44,6 +40,7 @@ from imports.models import (
 from accounts.models import AccountType, Bank, Account
 from tags.models import Tag, TagType
 from reminders.models import Repeat, Reminder
+from planning.models import ChristmasGift, ContribRule, Contribution, Note
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from decimal import Decimal

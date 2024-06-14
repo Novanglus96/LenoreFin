@@ -1,11 +1,7 @@
 from django.contrib import admin
 from .models import (
-    ChristmasGift,
-    ContribRule,
-    Contribution,
     ErrorLevel,
     TransactionType,
-    Note,
     Option,
     TransactionStatus,
     Transaction,
@@ -74,12 +70,8 @@ class LogAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
 # Register your models here.
 
-admin.site.register(ChristmasGift)
-admin.site.register(ContribRule)
-admin.site.register(Contribution)
 admin.site.register(ErrorLevel)
 admin.site.register(TransactionType)
-admin.site.register(Note)
 admin.site.register(Option)
 admin.site.register(TransactionStatus)
 admin.site.register(Transaction, TransactionAdmin)
