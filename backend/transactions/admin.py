@@ -16,6 +16,27 @@ class TransactionDetailInline(admin.TabularInline):
     extra = 1
 
 
+class TransactionImageInLine(admin.TabularInline):
+    model = TransactionImage
+    extra = 1
+
+
+class TransactionTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "transaction_type"]
+
+    list_display_links = ["transaction_type"]
+
+    ordering = ["id"]
+
+
+class TransactionStatusAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "transaction_status"]
+
+    list_display_links = ["transaction_status"]
+
+    ordering = ["id"]
+
+
 class TransactionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     list_display = [
         "id",
@@ -44,14 +65,36 @@ class TransactionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
     ordering = ["-sort_order"]
 
-    inlines = [TransactionDetailInline]
+    inlines = [TransactionDetailInline, TransactionImageInLine]
+
+
+class PaycheckAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = [
+        "id",
+        "payee",
+        "gross",
+        "net",
+        "taxes",
+        "health",
+        "pension",
+        "fsa",
+        "dca",
+        "union_dues",
+        "four_fifty_seven_b",
+    ]
+
+    list_display_links = ["id", "payee"]
+
+    search_fields = ["payee", "gross", "net"]
+
+    ordering = ["id"]
+
+    list_filter = ["payee"]
 
 
 # Register your models here.
 
-admin.site.register(TransactionType)
-admin.site.register(TransactionStatus)
+admin.site.register(TransactionType, TransactionTypeAdmin)
+admin.site.register(TransactionStatus, TransactionStatusAdmin)
 admin.site.register(Transaction, TransactionAdmin)
-admin.site.register(TransactionDetail)
-admin.site.register(Paycheck)
-admin.site.register(TransactionImage)
+admin.site.register(Paycheck, PaycheckAdmin)

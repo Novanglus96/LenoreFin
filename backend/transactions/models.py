@@ -170,6 +170,9 @@ class Transaction(models.Model):
         related_name="related_transaction_reverse",
     )
 
+    def __str__(self):
+        return f"#{self.id} | {self.transaction_date} : {self.description} (${self.total_amount})"
+
 
 class TransactionImage(models.Model):
     """
