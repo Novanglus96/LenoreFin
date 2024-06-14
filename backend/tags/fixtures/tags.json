@@ -1,6 +1,6 @@
 [
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 1,
         "fields": {
             "tag_name": "Untagged",
@@ -8,7 +8,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 2,
         "fields": {
             "tag_name": "Transfer",
@@ -16,7 +16,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 3,
         "fields": {
             "tag_name": "Car",
@@ -24,7 +24,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 4,
         "fields": {
             "tag_name": "Gasoline",
@@ -33,7 +33,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 5,
         "fields": {
             "tag_name": "Cash",
@@ -41,7 +41,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 6,
         "fields": {
             "tag_name": "Charity",
@@ -49,7 +49,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 7,
         "fields": {
             "tag_name": "Christmas",
@@ -57,7 +57,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 8,
         "fields": {
             "tag_name": "Credit Card",
@@ -65,7 +65,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 9,
         "fields": {
             "tag_name": "Debt",
@@ -73,7 +73,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 10,
         "fields": {
             "tag_name": "Car Payment",
@@ -82,7 +82,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 11,
         "fields": {
             "tag_name": "Family",
@@ -90,7 +90,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 12,
         "fields": {
             "tag_name": "Fun",
@@ -98,7 +98,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 13,
         "fields": {
             "tag_name": "Groceries",
@@ -106,7 +106,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 14,
         "fields": {
             "tag_name": "Home",
@@ -114,7 +114,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 15,
         "fields": {
             "tag_name": "Household",
@@ -122,7 +122,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 16,
         "fields": {
             "tag_name": "Income",
@@ -130,7 +130,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 17,
         "fields": {
             "tag_name": "Paycheck",
@@ -139,7 +139,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 18,
         "fields": {
             "tag_name": "Interest Earned",
@@ -147,7 +147,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 19,
         "fields": {
             "tag_name": "Interest Charged",
@@ -155,7 +155,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 20,
         "fields": {
             "tag_name": "Investment",
@@ -163,7 +163,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 21,
         "fields": {
             "tag_name": "Kids",
@@ -171,7 +171,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 22,
         "fields": {
             "tag_name": "Child Care",
@@ -180,7 +180,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 23,
         "fields": {
             "tag_name": "Diapers & Wipes",
@@ -189,7 +189,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 24,
         "fields": {
             "tag_name": "Kids Clothes",
@@ -198,7 +198,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 25,
         "fields": {
             "tag_name": "Kids Furniture",
@@ -207,7 +207,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 26,
         "fields": {
             "tag_name": "Kids Health",
@@ -216,7 +216,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 27,
         "fields": {
             "tag_name": "Kids Misc.",
@@ -225,7 +225,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 28,
         "fields": {
             "tag_name": "Toys & Books",
@@ -234,7 +234,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 29,
         "fields": {
             "tag_name": "Project",
@@ -242,7 +242,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 30,
         "fields": {
             "tag_name": "Refund",
@@ -250,7 +250,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 31,
         "fields": {
             "tag_name": "Rent",
@@ -258,7 +258,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 32,
         "fields": {
             "tag_name": "Subscriptions",
@@ -266,7 +266,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 33,
         "fields": {
             "tag_name": "Utilities",
@@ -274,7 +274,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 34,
         "fields": {
             "tag_name": "Vacation",
@@ -282,7 +282,7 @@
         }
     },
     {
-        "model": "transactions.Tag",
+        "model": "tags.Tag",
         "pk": 35,
         "fields": {
             "tag_name": "Balance Adjustment",

@@ -10,9 +10,7 @@ from django_q.tasks import async_task, result, schedule
 import arrow
 from transactions.models import (
     Message,
-    Reminder,
     Transaction,
-    Repeat,
     Option,
     LogEntry,
     TransactionDetail,
@@ -34,6 +32,7 @@ from imports.models import (
     AccountMapping,
 )
 from accounts.models import Account
+from reminders.models import Reminder, Repeat
 from django_q.models import Schedule
 from datetime import date
 from dateutil.relativedelta import relativedelta

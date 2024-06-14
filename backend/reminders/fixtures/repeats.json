@@ -1,6 +1,6 @@
 [
   {
-    "model": "transactions.Repeat",
+    "model": "reminders.Repeat",
     "pk": 1,
     "fields": {
         "repeat_name": "Every Month",
@@ -11,7 +11,7 @@
     }
   },
   {
-    "model": "transactions.Repeat",
+    "model": "reminders.Repeat",
     "pk": 2,
     "fields": {
         "repeat_name": "Every 2 Weeks",
@@ -22,7 +22,7 @@
     }
   },
   {
-    "model": "transactions.Repeat",
+    "model": "reminders.Repeat",
     "pk": 3,
     "fields": {
         "repeat_name": "Every Week",
@@ -33,7 +33,7 @@
     }
   },
   {
-    "model": "transactions.Repeat",
+    "model": "reminders.Repeat",
     "pk": 4,
     "fields": {
         "repeat_name": "Every Year",
@@ -44,7 +44,7 @@
     }
   },
   {
-    "model": "transactions.Repeat",
+    "model": "reminders.Repeat",
     "pk": 5,
     "fields": {
         "repeat_name": "Every Day",
@@ -55,7 +55,7 @@
     }
   },
   {
-    "model": "transactions.Repeat",
+    "model": "reminders.Repeat",
     "pk": 6,
     "fields": {
         "repeat_name": "Never",
@@ -66,7 +66,7 @@
     }
   },
   {
-    "model": "transactions.Repeat",
+    "model": "reminders.Repeat",
     "pk": 7,
     "fields": {
         "repeat_name": "Every 2 Months",

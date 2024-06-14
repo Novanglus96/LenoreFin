@@ -16,12 +16,12 @@ fi
 python manage.py loaddata accounts/fixtures/account_types
 python manage.py loaddata transactions/fixtures/error_levels
 python manage.py loaddata transactions/fixtures/options
-python manage.py loaddata transactions/fixtures/repeats
+python manage.py loaddata reminders/fixtures/repeats
 python manage.py loaddata transactions/fixtures/transaction_statuses
 python manage.py loaddata transactions/fixtures/transaction_types
-python manage.py loaddata transactions/fixtures/tag_types
+python manage.py loaddata tags/fixtures/tag_types
 python manage.py loaddata accounts/fixtures/banks
-python manage.py loaddata transactions/fixtures/tags
+python manage.py loaddata tags/fixtures/tags
 python manage.py scheduletasks
 
 gunicorn backend.wsgi:application --bind 0.0.0.0:8000
