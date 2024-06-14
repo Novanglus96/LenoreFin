@@ -14,6 +14,19 @@ from reminders.models import Reminder
 # Create your models here.
 
 
+class SingletonModel(models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if not self.pk and self.__class__.objects.exists():
+            raise ValidationError("There is already one instance of this model")
+        return super(SingletonModel, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("You cannot delete this object")
+
+
 class ErrorLevel(models.Model):
     """
     Model representing an error level for logging.
@@ -29,7 +42,7 @@ class ErrorLevel(models.Model):
         return self.error_level
 
 
-class Option(models.Model):
+class Option(SingletonModel):
     """
     Model representing options to be used in the application.
 
@@ -94,6 +107,10 @@ class Option(models.Model):
     widget3_expense = models.BooleanField(default=True)
     widget3_month = models.IntegerField(default=0)
     widget3_exclude = models.CharField(max_length=254)
+
+    @classmethod
+    def load(cls):
+        return cls.objects.first()
 
 
 class Payee(models.Model):
