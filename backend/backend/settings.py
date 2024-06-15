@@ -211,6 +211,8 @@ JAZZMIN_SETTINGS = {
     "welcome_sign": "Please log in",
     # Copyright on the footer
     "copyright": "John Adams",
+    # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
+    "user_avatar": None,
     ############
     # Top Menu #
     ############
@@ -223,6 +225,60 @@ JAZZMIN_SETTINGS = {
             "new_window": False,
         },
     ],
+    #############
+    # User Menu #
+    #############
+    # Additional links to include in the user menu on the top right ("app" url type is not allowed)
+    "usermenu_links": [
+        {
+            "name": "Back to Site",
+            "url": "/",
+            "new_window": False,
+        },
+    ],
+    "icons": {
+        "accounts.AccountType": "fas fa-university",
+        "accounts.Account": "fas fa-university",
+        "accounts.Bank": "fas fa-university",
+        "administration.ErrorLevel": "fas fa-exclamation-triangle",
+        "administration.LogEntry": "fas fa-clipboard-list",
+        "administration.Message": "fas fa-comment",
+        "administration.Option": "fas fa-cog",
+        "administration.Payee": "fas fa-user-circle",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "planning.ChristmasGift": "fas fa-folder",
+        "planning.ContribRule": "fas fa-folder",
+        "planning.Contribution": "fas fa-folder",
+        "planning.Note": "fas fa-folder",
+        "reminders.Reminder": "fas fa-bell",
+        "reminders.Repeat": "fas fa-redo",
+        "tags.TagType": "fas fa-tags",
+        "tags.Tag": "fas fa-tags",
+        "transactions.Paycheck": "fas fa-money-check",
+        "transactions.TransactionStatus": "fas fa-money-check",
+        "transactions.TransactionType": "fas fa-money-check",
+        "transactions.Transaction": "fas fa-money-check",
+    },
+    # Icons that are used when one is not manually specified
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-chevron-right",
+    "order_with_respect_to": [
+        "accounts",
+        "accounts.Bank",
+        "accounts.Account",
+        "accounts.AccountType",
+        "transactions",
+        "transactions.Transaction",
+        "reminders",
+        "tags",
+        "tags.Tag",
+        "tags.TagType",
+        "planning",
+        "administration.Option",
+        "imports.FileImport",
+    ],
+    "changeform_format": "collapsible",
 }
 
 JAZZMIN_UI_TWEAKS = {
