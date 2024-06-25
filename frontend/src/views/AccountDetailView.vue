@@ -29,7 +29,9 @@ import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vu
 import AccountHeaderWidget from "@/components/AccountHeaderWidget.vue";
 import { useRoute } from "vue-router";
 import { ref, watch } from "vue";
+import { useTransactionsStore } from "@/stores/transactions";
 
+const transactions_store = useTransactionsStore();
 const route = useRoute();
 const account_id = ref(route.params.accountID);
 const timeframe = ref(90);
@@ -39,6 +41,8 @@ watch(
   newAccountID => {
     // Update the account_id ref with the new value
     account_id.value = newAccountID;
+    transactions_store.pageinfo.account_id = newAccountID;
+    transactions_store.pageinfo.forecast = false;
   },
 );
 

@@ -35,12 +35,18 @@ import AccountForecastWidget from "@/components/AccountForecastWidget.vue";
 import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vue";
 import ForecastHeaderWidget from "@/components/ForecastHeaderWidget.vue";
 import { ref } from "vue";
+import { useTransactionsStore } from "@/stores/transactions";
 
+const transactions_store = useTransactionsStore();
 const account_id = ref(null);
 const timeframe = ref(90);
 
 const updateAccount = account => {
   account_id.value = account;
+  transactions_store.pageinfo.account_id = account;
+  transactions_store.pageinfo.forecast = true;
+  transactions_store.pageinfo.page = 1;
+  transactions_store.pageinfo.maxdays = 90;
 };
 
 const clickChangeTime = value => {

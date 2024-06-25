@@ -6,6 +6,7 @@ import {
 } from "@tanstack/vue-query";
 import axios from "axios";
 import { useMainStore } from "@/stores/main";
+import { useTransactionsStore } from "@/stores/transactions";
 
 const apiClient = axios.create({
   baseURL: "/api/v1",
@@ -33,27 +34,21 @@ function handleApiError(error, message) {
   throw error;
 }
 
-async function getTransactionsFunction(
-  account_id,
-  maxdays,
-  forecast,
-  page,
-  page_size,
-) {
+async function getTransactionsFunction(querydata) {
   try {
-    if (account_id) {
-      let querytext = "?account=" + account_id;
-      if (maxdays) {
-        querytext = querytext + "&maxdays=" + maxdays;
+    if (querydata.account_id) {
+      let querytext = "?account=" + querydata.account_id;
+      if (querydata.maxdays) {
+        querytext = querytext + "&maxdays=" + querydata.maxdays;
       }
-      if (forecast) {
-        querytext = querytext + "&forecast=" + forecast;
+      if (querydata.forecast) {
+        querytext = querytext + "&forecast=" + querydata.forecast;
       }
-      if (page) {
-        querytext = querytext + "&pageno=" + page;
+      if (querydata.page) {
+        querytext = querytext + "&page=" + querydata.page;
       }
-      if (page_size) {
-        querytext = querytext + "&recno=" + page_size;
+      if (querydata.page_size) {
+        querytext = querytext + "&page_size=" + querydata.page_size;
       }
       const response = await apiClient.get("/transactions" + querytext);
       return response.data;
@@ -120,21 +115,12 @@ async function updateTransactionFunction(updatedTransaction) {
   }
 }
 
-export function useTransactions(
-  account_id,
-  maxdays,
-  forecast,
-  page,
-  page_size,
-) {
+export function useTransactions() {
   const queryClient = useQueryClient();
+  const transcation_store = useTransactionsStore();
   const { data: transactions, isLoading } = useQuery({
-    queryKey: [
-      "transactions",
-      { account: account_id, page: page, page_size: page_size },
-    ],
-    queryFn: () =>
-      getTransactionsFunction(account_id, maxdays, forecast, page, page_size),
+    queryKey: ["transactions", transcation_store.pageinfo],
+    queryFn: () => getTransactionsFunction(transcation_store.pageinfo),
     placeholderData: keepPreviousData,
     select: response => response,
     client: queryClient,

@@ -5,7 +5,9 @@
         <v-img :width="132" aspect-ratio="1/1" cover src="logov2.png"></v-img>
       </template>
       <v-app-bar-title>
-        <span class="text-caption font-weight-bold">v1.0.0</span></v-app-bar-title
+        <span class="text-caption font-weight-bold"
+          >v1.0.0</span
+        ></v-app-bar-title
       >
       <v-menu location="start">
         <template v-slot:activator="{ props }">
@@ -60,8 +62,8 @@
       <v-list density="compact" nav>
         <v-list-item
           prepend-icon="mdi-view-dashboard-variant"
-          to="/"
           color="accent"
+          @click="setAccount(null, True)"
         ></v-list-item>
         <v-list-item prepend-icon="mdi-bank" to="/accounts" color="accent">
         </v-list-item>
@@ -85,11 +87,7 @@
           to="/tags"
           color="accent"
         ></v-list-item>
-        <v-list-item
-          prepend-icon="mdi-cog"
-          to=""
-          color="accent"
-        ></v-list-item>
+        <v-list-item prepend-icon="mdi-cog" to="" color="accent"></v-list-item>
       </v-list>
     </v-navigation-drawer>
     <v-navigation-drawer color="secondary" rail permanent v-if="mdAndUp">
@@ -98,9 +96,9 @@
           <template v-slot:activator="{ props }">
             <v-list-item
               prepend-icon="mdi-view-dashboard-variant"
-              to="/"
               v-bind="props"
               color="accent"
+              @click="setAccount(null, True)"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -183,10 +181,21 @@ import { useDisplay } from "vuetify";
 import AccountsMenu from "@/components/AccountsMenu.vue";
 import PlanningMenu from "@/components/PlanningMenu.vue";
 import { useMessages } from "@/composables/messagesComposable";
+import { useRouter } from "vue-router";
+import { useTransactionsStore } from "@/stores/transactions";
+
+const transactions_store = useTransactionsStore();
+const router = useRouter();
 
 const { messages, markRead, deleteAll } = useMessages();
 const { mdAndUp } = useDisplay();
 const nav_toggle = ref(true);
+
+const setAccount = (account, forecast) => {
+  transactions_store.pageinfo.account_id = account;
+  transactions_store.pageinfo.forecast = forecast;
+  router.push({ name: "dashboard" });
+};
 
 const getPrettyDate = uglyDate => {
   const newDate = new Date(uglyDate);

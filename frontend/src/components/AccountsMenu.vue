@@ -20,8 +20,8 @@
       <v-list-item
         v-for="(account, i) in checking_accounts"
         :key="i"
-        :to="'/accounts/' + account.id"
         color="accent"
+        @click="setAccount(account.id, False)"
         v-else
       >
         <v-list-item-title>{{ account.account_name }} </v-list-item-title>
@@ -49,8 +49,8 @@
       <v-list-item
         v-for="(account, i) in savings_accounts"
         :key="i"
-        :to="'/accounts/' + account.id"
         color="accent"
+        @click="setAccount(account.id, False)"
         v-else
       >
         <v-list-item-title>{{ account.account_name }} </v-list-item-title>
@@ -78,8 +78,8 @@
       <v-list-item
         v-for="(account, i) in cc_accounts"
         :key="i"
-        :to="'/accounts/' + account.id"
         color="accent"
+        @click="setAccount(account.id, False)"
         v-else
       >
         <v-list-item-title>{{ account.account_name }} </v-list-item-title>
@@ -107,8 +107,8 @@
       <v-list-item
         v-for="(account, i) in investment_accounts"
         :key="i"
-        :to="'/accounts/' + account.id"
         color="accent"
+        @click="setAccount(account.id, False)"
         v-else
       >
         <v-list-item-title>{{ account.account_name }} </v-list-item-title>
@@ -136,8 +136,8 @@
       <v-list-item
         v-for="(account, i) in loan_accounts"
         :key="i"
-        :to="'/accounts/' + account.id"
         color="accent"
+        @click="setAccount(account.id, False)"
         v-else
       >
         <v-list-item-title>{{ account.account_name }} </v-list-item-title>
@@ -165,8 +165,8 @@
       <v-list-item
         v-for="(account, i) in inactive_accounts"
         :key="i"
-        :to="'/accounts/' + account.id"
         color="accent"
+        @click="setAccount(account.id, False)"
         v-else
       >
         <v-list-item-title
@@ -179,6 +179,19 @@
 <script setup>
 import { useAccounts } from "@/composables/accountsComposable";
 import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useTransactionsStore } from "@/stores/transactions";
+
+const transactions_store = useTransactionsStore();
+const router = useRouter();
+
+const setAccount = (account, forecast) => {
+  transactions_store.pageinfo.account_id = account;
+  transactions_store.pageinfo.forecast = forecast;
+  transactions_store.pageinfo.page = 1;
+  transactions_store.pageinfo.maxdays = 14;
+  router.push("/accounts/" + account);
+};
 
 const {
   checking_accounts,

@@ -127,7 +127,7 @@
         :loading="isLoading"
         :totalRows="transactions ? transactions.total_records : 0"
         :isServerMode="true"
-        pageSize="60"
+        :pageSize="transactions_store.pageinfo.page_size"
         :hasCheckbox="true"
         :stickyHeader="true"
         noDataContent="No transactions"
@@ -260,13 +260,15 @@
   </v-card>
 </template>
 <script setup>
-import { ref, defineProps, defineEmits, reactive, watch, onMounted } from "vue";
+import { ref, defineProps, defineEmits } from "vue";
 import { useTransactions } from "@/composables/transactionsComposable";
 import TransactionForm from "@/components/TransactionForm";
 import FileImportForm from "@/components/FileImportForm";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
+import { useTransactionsStore } from "@/stores/transactions";
 
+const transactions_store = useTransactionsStore();
 const today = new Date();
 const year = today.getFullYear();
 const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -331,46 +333,14 @@ const editTransaction = ref({
   source_account_id: 0,
   destination_account_id: null,
 });
-const params = reactive({
-  current_page: 3,
-  page_size: 60,
-});
+
 const { isLoading, transactions, removeTransaction, clearTransaction } =
-  useTransactions(
-    props.account,
-    props.maxdays,
-    props.forecast,
-    params.current_page,
-    params.page_size,
-  );
+  useTransactions();
+
 const pageChanged = data => {
-  params.current_page = data.current_page;
-  useTransactions(
-    props.account,
-    props.maxdays,
-    props.forecast,
-    params.current_page,
-    params.page_size,
-  );
+  transactions_store.pageinfo.page = data.current_page;
 };
-watch(params.current_page, async () => {
-  useTransactions(
-    props.account,
-    props.maxdays,
-    props.forecast,
-    params.current_page,
-    params.page_size,
-  );
-});
-onMounted(() => {
-  useTransactions(
-    props.account,
-    props.maxdays,
-    props.forecast,
-    params.current_page,
-    params.page_size,
-  );
-});
+
 const selected = ref([]);
 const columns = ref([
   { field: "id", title: "ID", isUnique: true, hide: true },
