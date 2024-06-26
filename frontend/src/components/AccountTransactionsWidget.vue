@@ -130,6 +130,11 @@
         :pageSize="transactions_store.pageinfo.page_size"
         :hasCheckbox="true"
         :stickyHeader="true"
+        firstArrow="First"
+        lastArrow="Last"
+        previousArrow="Prev"
+        nextArrow="Next"
+        :showNumbersCount="3"
         noDataContent="No transactions"
         search=""
         @rowSelect="rowSelected"
@@ -139,8 +144,8 @@
         :pageSizeOptions="[60]"
         :showPageSize="false"
         paginationInfo="Showing {0} to {1} of {2} transactions"
-        class="alt-pagination"
         @change="pageChanged"
+        class="alt-pagination"
         ><!--height="280px"-->
         <template #status.transaction_status="row">
           <v-tooltip text="Pending" location="top">
@@ -421,8 +426,20 @@ const updateEditDialog = () => {
 };
 </script>
 <style>
+/* alt-pagination */
 .alt-pagination .bh-pagination .bh-page-item {
-  background-color: #06966a;
-  color: white;
+  width: auto; /* equivalent to w-max */
+  min-width: 32px;
+  border-radius: 0.25rem; /* equivalent to rounded */
+}
+/* Customize the color of the selected page number */
+.alt-pagination .bh-pagination .bh-page-item.bh-active {
+  background-color: #06966a; /* Change this to your desired color */
+  border-color: black;
+  font-weight: bold; /* Optional: Make the text bold */
+}
+.alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
+  background-color: #ff5900;
+  border-color: black;
 }
 </style>

@@ -130,8 +130,20 @@ const getClassForMoney = (amount, status) => {
 };
 </script>
 <style>
+/* alt-pagination */
 .alt-pagination .bh-pagination .bh-page-item {
-  background-color: #06966a;
-  color: white;
+  width: auto; /* equivalent to w-max */
+  min-width: 32px;
+  border-radius: 0.25rem; /* equivalent to rounded */
+}
+/* Customize the color of the selected page number */
+.alt-pagination .bh-pagination .bh-page-item.bh-active {
+  background-color: #06966a; /* Change this to your desired color */
+  border-color: black;
+  font-weight: bold; /* Optional: Make the text bold */
+}
+.alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
+  background-color: #ff5900;
+  border-color: black;
 }
 </style>
