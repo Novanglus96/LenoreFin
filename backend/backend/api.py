@@ -315,6 +315,8 @@ class DatasetObject(Schema):
     fill: Optional[FillObject]
     pointStyle: Optional[bool]
     label: Optional[str]
+    hoverBackgroundColor: Optional[str] = "rgba(75,192,192,0.6)"
+    hoverBorderColor: Optional[str] = "rgba(75,192,192,1)"
 
 
 # The class GraphData is a schema representing a graph data object.

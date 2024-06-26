@@ -169,10 +169,10 @@ const options = ref({
       ],
     },
     tooltip: {
+      enabled: true,
       callbacks: {
         label: function (context) {
           let label = context.dataset.label || "";
-
           if (label) {
             label += ": ";
           }
