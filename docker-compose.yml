@@ -16,8 +16,9 @@ services:
       - ./frontend:/app
     environment:
       - NODE_ENV=development
-      - TZ=America/New_York
     command: /bin/sh -c "npm run serve"
+    env_file:
+      - ./.env.dev
   backend:
     build:
       context: ./backend
@@ -27,7 +28,6 @@ services:
       - ./backend:/usr/src/app
     environment:
       - DEBUG=1
-      - TZ=America/New_York
     ports:
       - 8001:8001
     depends_on:
@@ -47,7 +47,6 @@ services:
       - ./backend:/usr/src/app
     environment:
       - DEBUG=1
-      - TZ=America/New_York
     depends_on:
       - db
       - backend
@@ -66,8 +65,6 @@ services:
     networks:
       - default
     container_name: money_db_dev
-    environment:
-      - TZ=America/New_York
 
 volumes:
   postgres_data:

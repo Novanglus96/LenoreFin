@@ -10,6 +10,8 @@ services:
       - 80
     image: money_frontend:production
     container_name: money_frontend
+    env_file:
+      - ./.env
   backend:
     build:
       context: ./backend
