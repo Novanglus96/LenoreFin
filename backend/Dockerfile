@@ -15,6 +15,9 @@ ENV PYTHONUNBUFFERED=1
 # install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends gcc
 
+# Set timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone
+
 # lint
 RUN pip install --upgrade pip
 RUN pip install flake8==6.0.0

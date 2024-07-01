@@ -10,6 +10,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+# Set timezone
+RUN apk add -U tzdata
+ENV TZ=America/New_York
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone
+
 # Copy the rest of the application
 COPY . .
 
