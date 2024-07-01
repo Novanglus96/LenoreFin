@@ -127,7 +127,7 @@ class Transaction(models.Model):
     - destination_running_total (DecimalField): Running total as seen from the destination account.
     """
 
-    transaction_date = models.DateField(default=date.today)
+    transaction_date = models.DateField(default=timezone.now().date)
     total_amount = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00
     )
@@ -136,8 +136,8 @@ class Transaction(models.Model):
     )
     memo = models.CharField(max_length=508, null=True, blank=True, default=None)
     description = models.CharField(max_length=254)
-    edit_date = models.DateField(default=date.today)
-    add_date = models.DateField(default=date.today)
+    edit_date = models.DateField(default=timezone.now().date)
+    add_date = models.DateField(default=timezone.now().date)
     transaction_type = models.ForeignKey(
         TransactionType, on_delete=models.SET_NULL, null=True, blank=True
     )

@@ -88,7 +88,7 @@ class Note(models.Model):
     """
 
     note_text = models.CharField(max_length=254)
-    note_date = models.DateField(default=date.today)
+    note_date = models.DateField(default=timezone.now().date)
 
     def __str__(self):
         return f"{self.note_date}"

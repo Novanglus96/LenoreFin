@@ -78,10 +78,10 @@ class Account(models.Model):
     apy = models.DecimalField(
         max_digits=4, decimal_places=2, default=0.00, null=True
     )
-    due_date = models.DateField(default=date.today, null=True)
+    due_date = models.DateField(default=timezone.now().date, null=True)
     active = models.BooleanField(default=True)
-    open_date = models.DateField(default=date.today, null=True)
-    next_cycle_date = models.DateField(default=date.today, null=True)
+    open_date = models.DateField(default=timezone.now().date, null=True)
+    next_cycle_date = models.DateField(default=timezone.now().date, null=True)
     statement_cycle_length = models.IntegerField(default=0, null=True)
     statement_cycle_period = models.CharField(
         max_length=1, null=True, default="d"

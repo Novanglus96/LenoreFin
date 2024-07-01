@@ -92,7 +92,7 @@ class Reminder(models.Model):
         null=True,
         blank=True,
     )
-    start_date = models.DateField(default=date.today)
+    start_date = models.DateField(default=timezone.now().date)
     next_date = models.DateField(default=None, null=True, blank=True)
     end_date = models.DateField(default=None, null=True, blank=True)
     repeat = models.ForeignKey(
