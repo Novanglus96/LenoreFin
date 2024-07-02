@@ -9,15 +9,26 @@ COPY . .
 FROM develop-stage AS build-stage
 RUN npm run build
 
-# Set timezone
-RUN apk add -U tzdata
-ENV TZ=America/New_York
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone
-
 # production stage
 FROM nginx:stable-alpine AS production-stage
 LABEL maintainer="John Adams"
 LABEL version="1.0.0"
+
+# Copy build artifacts
 COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+# Install tzdata for timezone data
+RUN apk add -U tzdata
+
+# Set timezone environment variable (default to UTC if not set)
+ARG TZ=Etc/UTC
+ENV TZ=${TZ}
+
+# Link the timezone data
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone
+
+# Expose the port
 EXPOSE 80
+
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]

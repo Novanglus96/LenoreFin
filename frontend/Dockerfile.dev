@@ -10,13 +10,15 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Set timezone
+# Install TZDATA
 RUN apk add -U tzdata
-ENV TZ=America/New_York
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone
 
 # Copy the rest of the application
 COPY . .
 
-# Command to run the development server
-CMD ["npm", "run", "serve"]
+# Copy entrypoint script to set timezone
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Command to run the entrypoint script and start the development server
+CMD ["sh", "/usr/local/bin/entrypoint.sh"]
