@@ -96,7 +96,7 @@ class GlobalAuth(HttpBearer):
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
-api.version = "1.0.0"
+api.version = "1.0.1"
 api.description = "API documentation for LenoreFin"
 
 
