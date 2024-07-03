@@ -160,7 +160,8 @@
           <template v-slot:activator="{ props }">
             <v-list-item
               prepend-icon="mdi-cog"
-              to=""
+              as="a"
+              href="/admin"
               v-bind="props"
               color="accent"
             ></v-list-item>
