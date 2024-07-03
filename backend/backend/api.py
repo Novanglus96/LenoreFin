@@ -3546,9 +3546,6 @@ def list_transactions(
                 # Initialize transaction details
                 pretty_account = ""
                 tags = []
-                pretty_total = 0
-                source_account = ""
-                destination_account = ""
                 source_account_name = None
                 destination_account_name = None
                 account_name = None
@@ -3631,8 +3628,6 @@ def list_transactions(
 
                 # Initialize transaction details
                 tags = []
-                source_account = ""
-                destination_account = ""
                 pretty_account = ""
                 source_account_name = None
                 destination_account_name = None
@@ -6295,25 +6290,25 @@ def import_file(
     try:
         importedFile = FileImport.objects.create(import_file=import_file)
         for type_mapping in payload.transaction_types:
-            typeMapping = TypeMapping.objects.create(
+            TypeMapping.objects.create(
                 file_type=type_mapping.file_type,
                 type_id=type_mapping.type_id,
                 file_import=importedFile,
             )
         for status_mapping in payload.transaction_statuses:
-            statusMapping = StatusMapping.objects.create(
+            StatusMapping.objects.create(
                 file_status=status_mapping.file_status,
                 status_id=status_mapping.status_id,
                 file_import=importedFile,
             )
         for account_mapping in payload.accounts:
-            accountMapping = AccountMapping.objects.create(
+            AccountMapping.objects.create(
                 file_account=account_mapping.file_account,
                 account_id=account_mapping.account_id,
                 file_import=importedFile,
             )
         for tag_mapping in payload.tags:
-            tagMapping = TagMapping.objects.create(
+            TagMapping.objects.create(
                 file_tag=tag_mapping.file_tag,
                 tag_id=tag_mapping.tag_id,
                 file_import=importedFile,
@@ -6332,26 +6327,22 @@ def import_file(
                 file_import=importedFile,
             )
             for tag in transaction.tags:
-                createTransactionImportTag = (
-                    TransactionImportTag.objects.create(
-                        tag_id=tag.tag_id,
-                        tag_name=tag.tag_name,
-                        tag_amount=tag.tag_amount,
-                        transaction_import=createTransaction,
-                    )
+                TransactionImportTag.objects.create(
+                    tag_id=tag.tag_id,
+                    tag_name=tag.tag_name,
+                    tag_amount=tag.tag_amount,
+                    transaction_import=createTransaction,
                 )
             for error in transaction.errors:
-                createTransactionImportError = (
-                    TransactionImportError.objects.create(
-                        text=error.text,
-                        status=error.status,
-                        transaction_import=createTransaction,
-                    )
+                TransactionImportError.objects.create(
+                    text=error.text,
+                    status=error.status,
+                    transaction_import=createTransaction,
                 )
         today = timezone.now()
         tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
         today_tz = today.astimezone(tz_timezone).date()
-        message_obj = Message.objects.create(
+        Message.objects.create(
             message_date=today_tz,
             message=f"File import ID #{importedFile.id} started",
             unread=True,
