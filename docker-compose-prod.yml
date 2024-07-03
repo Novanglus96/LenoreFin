@@ -13,7 +13,7 @@ services:
     env_file:
       - ./.env
     environment:
-      - TZ=${TZ}
+      - TZ=${TIMEZONE}
   backend:
     build:
       context: ./backend
@@ -31,8 +31,6 @@ services:
       - ./.env
     image: money_backend:production
     container_name: money_backend
-    environment:
-      - TZ=${TZ}
   worker:
     build:
       context: ./backend
@@ -49,8 +47,6 @@ services:
       - ./.env
     image: money_worker:production
     container_name: money_worker
-    environment:
-      - TZ=${TZ}
   db:
     image: postgres:15
     volumes:
@@ -61,7 +57,7 @@ services:
       - default
     container_name: money_db
     environment:
-      - TZ=${TZ}
+      - TZ=UTC
   nginx:
     image: registry.danielleandjohn.love/django_vue_proxy:latest
     volumes:
@@ -76,7 +72,7 @@ services:
       - 7000:80
     container_name: money_proxy
     environment:
-      - TZ=${TZ}
+      - TZ=${TIMEZONE}
 
 volumes:
   postgres_data:

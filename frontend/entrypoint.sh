@@ -9,5 +9,5 @@ else
     ln -snf /usr/share/zoneinfo/UTC /etc/localtime && echo "UTC" >/etc/timezone
 fi
 
-# Start the application
-npm run serve
+# Execute the main process
+exec "$@"

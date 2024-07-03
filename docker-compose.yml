@@ -16,7 +16,7 @@ services:
       - ./frontend:/app
     environment:
       - NODE_ENV=development
-      - TZ=${TZ}
+      - TZ=${TIMEZONE}
     command: /bin/sh -c "npm run serve"
     env_file:
       - ./.env.dev
@@ -67,7 +67,7 @@ services:
       - default
     container_name: money_db_dev
     environment:
-      - TZ=${TZ}
+      - TZ=UTC
 
 volumes:
   postgres_data:

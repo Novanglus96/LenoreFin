@@ -22,7 +22,7 @@ RUN apk add -U tzdata
 
 # Set timezone environment variable (default to UTC if not set)
 ARG TZ=Etc/UTC
-ENV TZ=${TZ}
+ENV TZ=${TIMEZONE}
 
 # Link the timezone data
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone
