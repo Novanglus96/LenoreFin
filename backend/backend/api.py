@@ -69,6 +69,8 @@ import random
 import json
 from django.core.paginator import Paginator
 from django.db.models.signals import pre_delete, post_delete
+import pytz
+import os
 
 
 class GlobalAuth(HttpBearer):
@@ -551,8 +553,10 @@ def get_today_formatted():
     Returns:
         return: the current date in the format "YYYY-MM-DD".
     """
-    today = timezone.now().date()
-    return today.strftime("%Y-%m-%d")
+    today = timezone.now()
+    tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+    today_tz = today.astimezone(tz_timezone).date()
+    return today_tz.strftime("%Y-%m-%d")
 
 
 def get_forecast_start_date(interval):
@@ -567,8 +571,10 @@ def get_forecast_start_date(interval):
         return: the start date for a forecast based on the given interval.
     """
 
-    today = timezone.now().date()
-    startdate = today - timedelta(days=interval)
+    today = timezone.now()
+    tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+    today_tz = today.astimezone(tz_timezone).date()
+    startdate = today_tz - timedelta(days=interval)
     return startdate
 
 
@@ -586,8 +592,10 @@ def get_forecast_end_date(interval):
             days) to the current date.
     """
 
-    today = timezone.now().date()
-    enddate = today + timedelta(days=interval)
+    today = timezone.now()
+    tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+    today_tz = today.astimezone(tz_timezone).date()
+    enddate = today_tz + timedelta(days=interval)
     return enddate
 
 
@@ -2607,8 +2615,10 @@ def get_graph(request, widget_id: int):
             month = options.widget3_month
             expense = options.widget3_expense
         exclude_list = json.loads(exclude)
-        today = timezone.now().date()
-        target_date = today - relativedelta(months=month)
+        today = timezone.now()
+        tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+        today_tz = today.astimezone(tz_timezone).date()
+        target_date = today_tz - relativedelta(months=month)
         target_month = target_date.month
         target_year = target_date.year
         labels = []
@@ -2640,7 +2650,7 @@ def get_graph(request, widget_id: int):
         ]
 
         # Sort colors randomly, seeded to stay the same for this month
-        random.seed(today.month * widget_id)
+        random.seed(today_tz.month * widget_id)
         random.shuffle(colors)
 
         # If a tag is specified in options, filter by that tag
@@ -2724,10 +2734,12 @@ def list_transactions_bytag(request, tag: int):
 
     try:
         # Calculate dates based on month, year
-        today = timezone.now().date()
-        this_month = today.month
-        this_year = today.year
-        last_year = today.year - 1
+        today = timezone.now()
+        tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+        today_tz = today.astimezone(tz_timezone).date()
+        this_month = today_tz.month
+        this_year = today_tz.year
+        last_year = today_tz.year - 1
 
         # Retrieve all transactions for tag
         alltrans = TransactionDetail.objects.filter(
@@ -3493,7 +3505,10 @@ def list_transactions(
         if account is not None:
             qs = None
             query = None
-            threshold_date = timezone.now().date() + timedelta(days=maxdays)
+            today = timezone.now()
+            tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+            today_tz = today.astimezone(tz_timezone).date()
+            threshold_date = today_tz + timedelta(days=maxdays)
             if forecast is False:
                 query = sort_transactions(
                     Transaction.objects.filter(
@@ -3507,7 +3522,7 @@ def list_transactions(
                     Transaction.objects.filter(
                         account_id=account,
                         transaction_date__range=(
-                            timezone.now().date(),
+                            today_tz,
                             threshold_date,
                         ),
                     )
@@ -6333,8 +6348,11 @@ def import_file(
                         transaction_import=createTransaction,
                     )
                 )
+        today = timezone.now()
+        tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+        today_tz = today.astimezone(tz_timezone).date()
         message_obj = Message.objects.create(
-            message_date=timezone.now(),
+            message_date=today_tz,
             message=f"File import ID #{importedFile.id} started",
             unread=True,
         )
