@@ -41,6 +41,8 @@ from django.db import IntegrityError, connection, transaction
 from django.db.models import F, Window
 from django.db.models.functions import RowNumber
 from decimal import Decimal
+import pytz
+import os
 
 
 def create_message(message_text):
@@ -67,7 +69,10 @@ def convert_reminder():
     """
 
     # Define todays date
-    todayDate = timezone.now().date().strftime("%Y-%m-%d")
+    today = timezone.now()
+    tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+    today_tz = today.astimezone(tz_timezone).date()
+    todayDate = today_tz.strftime("%Y-%m-%d")
 
     # Get transactions that have a reminder and are dated today or earlier
     transactions = Transaction.objects.filter(
@@ -372,7 +377,9 @@ def update_forever_reminders():
     """
     try:
         # setup variables
-        todayDate = timezone.now().date()
+        today = timezone.now()
+        tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+        todayDate = today.astimezone(tz_timezone).date()
         maxDate = todayDate + relativedelta(years=10)
         trans_total = 0
         transactions_to_create = []
