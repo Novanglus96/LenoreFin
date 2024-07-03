@@ -12,6 +12,8 @@ from django_q.models import Schedule
 from datetime import date, timedelta, datetime
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+import pytz
+import os
 
 
 class Command(BaseCommand):
@@ -29,8 +31,10 @@ class Command(BaseCommand):
         """
 
         # Calculate the next run date for scheduled tasks
+        today_utc = timezone.now()
+        tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+        today = today_utc.astimezone(tz_timezone).date()
         current_timezone = timezone.get_current_timezone()
-        today = timezone.localdate()
         tomorrow = today + timedelta(days=1)
         next_run_date_tomorrow = tomorrow.strftime("%Y-%m-%d")
         next_run_date_today = today.strftime("%Y-%m-%d")
@@ -88,6 +92,7 @@ class Command(BaseCommand):
                 next_run = datetime.combine(
                     tomorrow, datetime.strptime(task["time"], "%H:%M").time()
                 )
+            next_run = tz_timezone.localize(next_run)
             next_run = next_run.astimezone(current_timezone)
             if task["type"] == "DAILY":
                 schedule_type = Schedule.DAILY
