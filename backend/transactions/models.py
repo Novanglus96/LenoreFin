@@ -30,6 +30,10 @@ def transaction_image_name(instance, filename):
     return f"tran_images/{timestamp}-{filename}"
 
 
+def current_date():
+    return timezone.now().date()
+
+
 # Create your models here.
 
 
@@ -128,7 +132,7 @@ class Transaction(models.Model):
     account.
     """
 
-    transaction_date = models.DateField(default=timezone.now().date)
+    transaction_date = models.DateField(default=current_date)
     total_amount = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00
     )
@@ -137,8 +141,8 @@ class Transaction(models.Model):
     )
     memo = models.CharField(max_length=508, null=True, blank=True, default=None)
     description = models.CharField(max_length=254)
-    edit_date = models.DateField(default=timezone.now().date)
-    add_date = models.DateField(default=timezone.now().date)
+    edit_date = models.DateField(default=current_date)
+    add_date = models.DateField(default=current_date)
     transaction_type = models.ForeignKey(
         TransactionType,
         on_delete=models.SET_NULL,
