@@ -158,7 +158,12 @@ class Transaction(models.Model):
     )
     checkNumber = models.IntegerField(null=True, blank=True, default=None)
     source_account = models.ForeignKey(
-        Account, related_name="source_transactions", on_delete=models.CASCADE
+        Account,
+        related_name="source_transactions",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        default=None,
     )
     destination_account = models.ForeignKey(
         Account,

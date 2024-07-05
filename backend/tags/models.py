@@ -51,7 +51,9 @@ class SubTag(models.Model):
     """
 
     tag_name = models.CharField(max_length=254, unique=True)
-    parent = models.ForeignKey(MainTag, on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+        MainTag, on_delete=models.CASCADE, null=True, blank=True, default=None
+    )
     tag_type = models.ForeignKey(
         TagType, on_delete=models.SET_NULL, null=True, blank=True, default=None
     )
@@ -71,7 +73,9 @@ class Tag(models.Model):
     type of this tag.
     """
 
-    parent = models.ForeignKey(MainTag, on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+        MainTag, on_delete=models.CASCADE, null=True, blank=True, default=None
+    )
     child = models.ForeignKey(
         SubTag, on_delete=models.CASCADE, null=True, blank=True, default=None
     )
