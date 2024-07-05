@@ -21,6 +21,8 @@ from django.db.models.query import QuerySet
 from accounts.models import Account
 from tags.models import Tag
 from administration.models import LogEntry, Option, logToDB
+import pytz
+import os
 
 
 def transaction_image_name(instance, filename):
@@ -117,14 +119,13 @@ class Transaction(models.Model):
     - add_date (DateField): The date this transaction was added, defaults to today.
     - transaction_type (ForeignKey): A reference to the TransactionType model, representing
     the type of this transaction.
-    - reminder (ForeignKey): A reference to the Reminder model, representing a reminder
-    associated with this transaction.  Default is None, and is Optional.
     - paycheck (ForeignKey): A reference to the Paycheck model, representing a paycheck
     associated with this transaction.  Default is None, and is Optional.
     - checkNumber (IntegerField): Number of a check associated with this transaction. Default
     is None, and is Optional.
-    - source_running_total (DecimalField): Running total as seen from source account.
-    - destination_running_total (DecimalField): Running total as seen from the destination account.
+    - sourceAccount (ForeignKey): A reference to Account model, representing the source account.
+    - destinationAccount (ForeignKey): A reference to Account model, representing the destination
+    account.
     """
 
     transaction_date = models.DateField(default=timezone.now().date)
@@ -139,35 +140,29 @@ class Transaction(models.Model):
     edit_date = models.DateField(default=timezone.now().date)
     add_date = models.DateField(default=timezone.now().date)
     transaction_type = models.ForeignKey(
-        TransactionType, on_delete=models.SET_NULL, null=True, blank=True
-    )
-    reminder = models.ForeignKey(
-        "reminders.Reminder",
-        on_delete=models.CASCADE,
+        TransactionType,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        default=None,
     )
     paycheck = models.ForeignKey(
-        Paycheck, on_delete=models.SET_NULL, null=True, blank=True, default=None
+        Paycheck,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
     )
     checkNumber = models.IntegerField(null=True, blank=True, default=None)
-    running_total = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00
+    source_account = models.ForeignKey(
+        Account, related_name="source_transactions", on_delete=models.CASCADE
     )
-    sort_order = models.IntegerField(null=True, blank=True, default=None)
-    account_id = models.IntegerField(default=0)
-    source_account_id = models.IntegerField(null=True, blank=True, default=None)
-    destination_account_id = models.IntegerField(
-        null=True, blank=True, default=None
-    )
-    related_transaction = models.ForeignKey(
-        "self",
+    destination_account = models.ForeignKey(
+        Account,
+        related_name="destination_transactions",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         default=None,
-        related_name="related_transaction_reverse",
     )
 
     def __str__(self):
@@ -200,17 +195,14 @@ class TransactionDetail(models.Model):
 
     Fields:
     - transaction (ForeignKey): A reference to the Transaction model, representing
-    the parent transaction associated with this transaction detail.
-    - account (ForeignKey): A refernce to the Account model, representing the
-    account associated with this transaction detail.
-    detail_amt (DecimalField): The amount associated with this transaction detail,
+    the transaction associated with this transaction detail.
+    - detail_amt (DecimalField): The amount associated with this transaction detail,
     default is 0.00.
-    tag (ForeignKey): A refernce to the Tag model, representing the tag category
+    - tag (ForeignKey): A refernce to the Tag model, representing the tag category
     ot this transaction detail.
     """
 
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
-    account = models.ForeignKey(Account, on_delete=models.CASCADE)
     detail_amt = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00
     )

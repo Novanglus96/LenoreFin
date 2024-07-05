@@ -21,11 +21,11 @@ python manage.py loaddata transactions/fixtures/transaction_statuses
 python manage.py loaddata transactions/fixtures/transaction_types
 python manage.py loaddata tags/fixtures/tag_types
 python manage.py loaddata accounts/fixtures/banks
-python manage.py loaddata tags/fixtures/tags
+#python manage.py loaddata tags/fixtures/tags
 python manage.py scheduletasks
 # test data load
 python manage.py loaddata accounts/fixtures/my_banks
 python manage.py loaddata accounts/fixtures/my_accounts
-python manage.py loaddata tags/fixtures/my_tags
+#python manage.py loaddata tags/fixtures/my_tags
 
 python manage.py runserver 0.0.0.0:8001

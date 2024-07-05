@@ -40,30 +40,25 @@ class TransactionStatusAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 class TransactionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     list_display = [
         "id",
-        "sort_order",
         "transaction_date",
         "status",
         "checkNumber",
         "total_amount",
         "description",
         "transaction_type",
-        "running_total",
         "edit_date",
         "add_date",
         "memo",
-        "reminder",
         "paycheck",
-        "account_id",
-        "source_account_id",
-        "destination_account_id",
-        "related_transaction",
+        "source_account",
+        "destination_account",
     ]
 
     search_fields = ["id"]
 
-    list_filter = ["source_account_id"]
+    list_filter = ["source_account", "destination_account"]
 
-    ordering = ["-sort_order"]
+    ordering = []
 
     inlines = [TransactionDetailInline, TransactionImageInLine]
 
