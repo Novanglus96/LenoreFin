@@ -11,6 +11,11 @@ from django.db.models.query import QuerySet
 from tags.models import Tag
 from accounts.models import Account
 
+
+def current_date():
+    return timezone.now().date()
+
+
 # Create your models here.
 
 
@@ -92,7 +97,7 @@ class Reminder(models.Model):
         null=True,
         blank=True,
     )
-    start_date = models.DateField(default=timezone.now().date)
+    start_date = models.DateField(default=current_date)
     next_date = models.DateField(default=None, null=True, blank=True)
     end_date = models.DateField(default=None, null=True, blank=True)
     repeat = models.ForeignKey(

@@ -9,6 +9,11 @@ from django.shortcuts import get_object_or_404
 from django.db.models.query import QuerySet
 from tags.models import Tag
 
+
+def current_date():
+    return timezone.now().date()
+
+
 # Create your models here.
 
 
@@ -88,7 +93,7 @@ class Note(models.Model):
     """
 
     note_text = models.CharField(max_length=254)
-    note_date = models.DateField(default=timezone.now().date)
+    note_date = models.DateField(default=current_date)
 
     def __str__(self):
         return f"{self.note_date}"
