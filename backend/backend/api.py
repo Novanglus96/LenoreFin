@@ -15,11 +15,9 @@ from transactions.models import (
     TransactionDetail,
     Paycheck,
     sort_transactions,
-    update_running_totals,
     create_transactions,
     CustomTag,
     FullTransaction,
-    update_sort_totals,
 )
 from imports.models import (
     FileImport,
