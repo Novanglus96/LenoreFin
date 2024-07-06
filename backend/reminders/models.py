@@ -13,7 +13,10 @@ from accounts.models import Account
 
 
 def current_date():
-    return timezone.now().date()
+    today = timezone.now()
+    tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+    today_tz = today.astimezone(tz_timezone).date()
+    return today_tz
 
 
 # Create your models here.
