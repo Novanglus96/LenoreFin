@@ -255,6 +255,8 @@ JAZZMIN_SETTINGS = {
         "reminders.Repeat": "fas fa-redo",
         "tags.TagType": "fas fa-tags",
         "tags.Tag": "fas fa-tags",
+        "tags.MainTag": "fas fa-tags",
+        "tags.SubTag": "fas fa-tags",
         "transactions.Paycheck": "fas fa-money-check",
         "transactions.TransactionStatus": "fas fa-money-check",
         "transactions.TransactionType": "fas fa-money-check",
