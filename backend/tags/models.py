@@ -84,4 +84,7 @@ class Tag(models.Model):
     )
 
     def __str__(self):
-        return self.tag_name
+        if self.child:
+            return f"{self.parent.tag_name} \ {self.child.tag_name}"
+        else:
+            return f"{self.parent.tag_name}"

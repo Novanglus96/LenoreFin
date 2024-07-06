@@ -35,7 +35,7 @@ class TagAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
     list_display_links = ["id"]
 
-    ordering = ["parent", "child"]
+    ordering = ["parent__tag_name", "child__tag_name"]
 
     list_filter = ["parent", "child", "tag_type"]
 
