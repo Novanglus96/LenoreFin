@@ -21,7 +21,9 @@ python manage.py loaddata transactions/fixtures/transaction_statuses
 python manage.py loaddata transactions/fixtures/transaction_types
 python manage.py loaddata tags/fixtures/tag_types
 python manage.py loaddata accounts/fixtures/banks
-#python manage.py loaddata tags/fixtures/tags
+python manage.py loaddata tags/fixtures/maintags
+python manage.py loaddata tags/fixtures/subtags
+python manage.py loaddata tags/fixtures/tags
 python manage.py scheduletasks
 # test data load
 python manage.py loaddata accounts/fixtures/my_banks

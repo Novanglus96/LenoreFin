@@ -1,292 +1,348 @@
 [
     {
         "model": "tags.Tag",
-        "pk": 1,
+        "pk": "4",
         "fields": {
-            "tag_name": "Untagged",
-            "tag_type_id": 3
+            "parent": 24,  
+            "tag_type": 3
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 2,
+        "pk": "1",
         "fields": {
-            "tag_name": "Transfer",
-            "tag_type_id": 3
+            "parent": 2,
+            "child": 1,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 3,
+        "pk": "5",
         "fields": {
-            "tag_name": "Car",
-            "tag_type_id": 1
+            "parent": 2,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 4,
+        "pk": "6",
         "fields": {
-            "tag_name": "Gasoline",
-            "tag_type_id": 1,
-            "parent_id": 3
+            "parent": 3,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 5,
+        "pk": "7",
         "fields": {
-            "tag_name": "Cash",
-            "tag_type_id": 1
+            "parent": 4,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 6,
+        "pk": "8",
         "fields": {
-            "tag_name": "Charity",
-            "tag_type_id": 1
+            "parent": 5,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 7,
+        "pk": "9",
         "fields": {
-            "tag_name": "Christmas",
-            "tag_type_id": 1
+            "parent": 6,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 8,
+        "pk": "2",
         "fields": {
-            "tag_name": "Credit Card",
-            "tag_type_id": 1
+            "parent": 7,
+            "child": 2,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 9,
+        "pk": "10",
         "fields": {
-            "tag_name": "Debt",
-            "tag_type_id": 1
+            "parent": 7,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 10,
+        "pk": "11",
         "fields": {
-            "tag_name": "Car Payment",
-            "tag_type_id": 1,
-            "parent_id": 9
+            "parent": 8,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 11,
+        "pk": "14",
         "fields": {
-            "tag_name": "Family",
-            "tag_type_id": 1
+            "parent": 25,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 12,
+        "pk": "12",
         "fields": {
-            "tag_name": "Fun",
-            "tag_type_id": 1
+            "parent": 9,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 13,
+        "pk": "13",
         "fields": {
-            "tag_name": "Groceries",
-            "tag_type_id": 1
+            "parent": 10,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 14,
+        "pk": "15",
         "fields": {
-            "tag_name": "Home",
-            "tag_type_id": 1
+            "parent": 26,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 15,
+        "pk": "17",
         "fields": {
-            "tag_name": "Household",
-            "tag_type_id": 1
+            "parent": 11,
+            "child": 11,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 16,
+        "pk": "30",
         "fields": {
-            "tag_name": "Income",
-            "tag_type_id": 2
+            "parent": 11,
+            "child": 12,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 17,
+        "pk": "32",
         "fields": {
-            "tag_name": "Paycheck",
-            "tag_type_id": 2,
-            "parent_id": 16
+            "parent": 11,
+            "child": 13,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 18,
+        "pk": "16",
         "fields": {
-            "tag_name": "Interest Earned",
-            "tag_type_id": 2
+            "parent": 11,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 19,
+        "pk": "3",
         "fields": {
-            "tag_name": "Interest Charged",
-            "tag_type_id": 1
+            "parent": 13,
+            "child": 3,
+            "tag_type": 2
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 20,
+        "pk": "18",
         "fields": {
-            "tag_name": "Investment",
-            "tag_type_id": 1
+            "parent": 15,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 21,
+        "pk": "19",
         "fields": {
-            "tag_name": "Kids",
-            "tag_type_id": 1
+            "parent": 14,
+            "tag_type": 2
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 22,
+        "pk": "20",
         "fields": {
-            "tag_name": "Child Care",
-            "tag_type_id": 1,
-            "parent_id": 21
+            "parent": 16,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 23,
+        "pk": "21",
         "fields": {
-            "tag_name": "Diapers & Wipes",
-            "tag_type_id": 1,
-            "parent_id": 21
+            "parent": 17,
+            "child": 4,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 24,
+        "pk": "23",
         "fields": {
-            "tag_name": "Kids Clothes",
-            "tag_type_id": 1,
-            "parent_id": 21
+            "parent": 17,
+            "child": 6,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 25,
+        "pk": "22",
         "fields": {
-            "tag_name": "Kids Furniture",
-            "tag_type_id": 1,
-            "parent_id": 21
+            "parent": 17,
+            "child": 5,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 26,
+        "pk": "24",
         "fields": {
-            "tag_name": "Kids Health",
-            "tag_type_id": 1,
-            "parent_id": 21
+            "parent": 17,
+            "child": 7,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 27,
+        "pk": "26",
         "fields": {
-            "tag_name": "Kids Misc.",
-            "tag_type_id": 1,
-            "parent_id": 21
+            "parent": 17,
+            "child": 8,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 28,
+        "pk": "27",
         "fields": {
-            "tag_name": "Toys & Books",
-            "tag_type_id": 1,
-            "parent_id": 21
+            "parent": 17,
+            "child": 9,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 29,
+        "pk": "28",
         "fields": {
-            "tag_name": "Project",
-            "tag_type_id": 1
+            "parent": 17,
+            "child": 10,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 30,
+        "pk": "25",
         "fields": {
-            "tag_name": "Refund",
-            "tag_type_id": 2
+            "parent": 17,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 31,
+        "pk": "29",
         "fields": {
-            "tag_name": "Rent",
-            "tag_type_id": 1
+            "parent": 18,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 32,
+        "pk": "31",
         "fields": {
-            "tag_name": "Subscriptions",
-            "tag_type_id": 1
+            "parent": 19,
+            "tag_type": 2
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 33,
+        "pk": "33",
         "fields": {
-            "tag_name": "Utilities",
-            "tag_type_id": 1
+            "parent": 21,
+            "tag_type": 1
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 34,
+        "pk": "34",
         "fields": {
-            "tag_name": "Vacation",
-            "tag_type_id": 1
+            "parent": 1,
+            "tag_type": 3
         }
     },
     {
         "model": "tags.Tag",
-        "pk": 35,
+        "pk": "36",
         "fields": {
-            "tag_name": "Balance Adjustment",
-            "tag_type_id": 3
+            "parent": 22,
+            "child": 14,
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.Tag",
+        "pk": "37",
+        "fields": {
+            "parent": 22,
+            "child": 15,
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.Tag",
+        "pk": "38",
+        "fields": {
+            "parent": 22,
+            "child": 16,
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.Tag",
+        "pk": "39",
+        "fields": {
+            "parent": 22,
+            "child": 17,
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.Tag",
+        "pk": "40",
+        "fields": {
+            "parent": 22,
+            "child": 18,
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.Tag",
+        "pk": "35",
+        "fields": {
+            "parent": 22,
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.Tag",
+        "pk": "41",
+        "fields": {
+            "parent": 23,
+            "tag_type": 1
         }
     }
 ]

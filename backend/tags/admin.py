@@ -7,33 +7,33 @@ from import_export.admin import ImportExportModelAdmin
 
 
 class MainTagAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_display = []
+    list_display = ["id", "tag_name", "tag_type"]
 
-    list_display_links = []
+    list_display_links = ["tag_name"]
 
-    ordering = []
+    ordering = ["tag_name"]
 
-    list_filter = []
+    list_filter = ["tag_type__tag_type"]
 
     search_fields = []
 
 
 class SubTagAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_display = []
+    list_display = ["id", "tag_name", "tag_type"]
 
-    list_display_links = []
+    list_display_links = ["tag_name"]
 
-    ordering = []
+    ordering = ["tag_name"]
 
-    list_filter = []
+    list_filter = ["tag_type__tag_type"]
 
     search_fields = []
 
 
 class TagAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_display = ["id", "parent", "child", "tag_type"]
+    list_display = ["id", "tag_name", "parent", "child", "tag_type"]
 
-    list_display_links = ["id"]
+    list_display_links = ["id", "tag_name"]
 
     ordering = ["parent__tag_name", "child__tag_name"]
 

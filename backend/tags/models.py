@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 
 # Create your models here.
 
@@ -45,15 +46,11 @@ class SubTag(models.Model):
     Fields:
     - tag_name (CharField): The name of the tag, limited to 254 characters,
     and must be unique.
-    - parent (ForeignKey): A reference to MainTag, representing a parent tag.
     - tag_type (ForeignKey): A reference to TagType model, representing the
     type of this tag.
     """
 
     tag_name = models.CharField(max_length=254, unique=True)
-    parent = models.ForeignKey(
-        MainTag, on_delete=models.CASCADE, null=True, blank=True, default=None
-    )
     tag_type = models.ForeignKey(
         TagType, on_delete=models.SET_NULL, null=True, blank=True, default=None
     )
@@ -84,7 +81,24 @@ class Tag(models.Model):
     )
 
     def __str__(self):
+        return self.tag_name
+
+    @property
+    def tag_name(self):
         if self.child:
             return f"{self.parent.tag_name} \ {self.child.tag_name}"
-        else:
-            return f"{self.parent.tag_name}"
+        return f"{self.parent.tag_name}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["parent", "child"],
+                name="unique_parent_child",
+                # No condition here because we need to allow null values in child
+            ),
+            models.UniqueConstraint(
+                fields=["parent"],
+                name="unique_parent_with_null_child",
+                condition=models.Q(child__isnull=True),
+            ),
+        ]

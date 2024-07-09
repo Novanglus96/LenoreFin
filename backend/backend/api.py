@@ -30,7 +30,7 @@ from imports.models import (
     TagMapping,
 )
 from accounts.models import AccountType, Bank, Account
-from tags.models import Tag, TagType
+from tags.models import Tag, TagType, MainTag, SubTag
 from reminders.models import Repeat, Reminder
 from planning.models import ChristmasGift, ContribRule, Contribution, Note
 from administration.models import (
@@ -204,18 +204,47 @@ class TagTypeOut(Schema):
     tag_type: str
 
 
+# The class MainTagIn is a schema for validating main tags.
+class MainTagIn(Schema):
+    tag_name: str
+    tag_type_id: int
+
+
+# The class MainTagOut is a schema for representing main tags.
+class MainTagOut(Schema):
+    id: int
+    tag_name: str
+    tag_type: TagTypeOut
+
+
+# The class SubTagIn is a schema for validating sub tags.
+class SubTagIn(Schema):
+    tag_name: str
+    tag_type_id: int
+
+
+# the class SubTagOut is a schema for representing sub tags.
+class SubTagOut(Schema):
+    id: int
+    tag_name: str
+    tag_type: TagTypeOut
+
+
 # The class TagIn is a schema for validating tags.
 class TagIn(Schema):
-    tag_name: str
     parent_id: Optional[int] = None
-    tag_type_id: Optional[int] = None
+    parent_name: Optional[str] = None
+    child_id: Optional[int] = None
+    child_name: Optional[str] = None
+    tag_type_id: int
 
 
 # The class TagOut is a schema for representing tags.
 class TagOut(Schema):
     id: int
     tag_name: str
-    parent: Optional["TagOut"] = None
+    parent: MainTagOut
+    child: Optional[SubTagOut] = None
     tag_type: Optional[TagTypeOut] = None
 
 
@@ -659,7 +688,6 @@ class TransactionClear(Schema):
 class TransactionDetailOut(Schema):
     id: int
     transaction: "TransactionOut"
-    account: AccountOut
     detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     tag: TagOut
 
@@ -1001,7 +1029,93 @@ def create_tag(request, payload: TagIn):
     """
 
     try:
-        tag = Tag.objects.create(**payload.dict())
+        if payload.parent_name:
+            try:
+                parent = MainTag.objects.create(
+                    tag_name=payload.parent_name,
+                    tag_type_id=payload.tag_type_id,
+                )
+                payload.parent_id = parent.id
+            except IntegrityError as integrity_error:
+                # Check if the integrity error is due to a duplicate
+                if "unique constraint" in str(integrity_error).lower():
+                    logToDB(
+                        f"Tag not created : tag exists",
+                        None,
+                        None,
+                        None,
+                        3001004,
+                        2,
+                    )
+                    raise HttpError(400, "Tag already exists")
+                else:
+                    # Log other types of integry errors
+                    logToDB(
+                        "Tag not created : db integrity error",
+                        None,
+                        None,
+                        None,
+                        3001005,
+                        2,
+                    )
+                    raise HttpError(400, "DB integrity error")
+            except Exception as e:
+                # Log other types of exceptions
+                logToDB(
+                    f"Tag not created : {str(e)}",
+                    None,
+                    None,
+                    None,
+                    3001901,
+                    2,
+                )
+                raise HttpError(500, "Record creation error")
+        if payload.child_name:
+            try:
+                child = SubTag.objects.create(
+                    tag_name=payload.child_name,
+                    tag_type_id=payload.tag_type_id,
+                )
+                payload.child_id = child.id
+            except IntegrityError as integrity_error:
+                # Check if the integrity error is due to a duplicate
+                if "unique constraint" in str(integrity_error).lower():
+                    logToDB(
+                        f"Tag not created : tag exists",
+                        None,
+                        None,
+                        None,
+                        3001004,
+                        2,
+                    )
+                    raise HttpError(400, "Tag already exists")
+                else:
+                    # Log other types of integry errors
+                    logToDB(
+                        "Tag not created : db integrity error",
+                        None,
+                        None,
+                        None,
+                        3001005,
+                        2,
+                    )
+                    raise HttpError(400, "DB integrity error")
+            except Exception as e:
+                # Log other types of exceptions
+                logToDB(
+                    f"Tag not created : {str(e)}",
+                    None,
+                    None,
+                    None,
+                    3001901,
+                    2,
+                )
+                raise HttpError(500, "Record creation error")
+        tag = Tag.objects.create(
+            parent_id=payload.parent_id,
+            child_id=payload.child_id,
+            tag_type_id=payload.tag_type_id,
+        )
         logToDB(
             f"Tag created : {tag.tag_name}",
             None,
@@ -1015,7 +1129,7 @@ def create_tag(request, payload: TagIn):
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
             logToDB(
-                f"Tag not created : tag exists ({payload.tag_name})",
+                f"Tag not created : tag exists",
                 None,
                 None,
                 None,
@@ -1044,7 +1158,7 @@ def create_tag(request, payload: TagIn):
             3001901,
             2,
         )
-        raise HttpError(500, "Record creation error")
+        raise HttpError(500, f"Record creation error : {str(e)}")
 
 
 @api.post("/planning/contribrules")
@@ -1732,6 +1846,86 @@ def get_account(request, account_id: int):
         logToDB(
             f"Account not retrieved : {str(e)}",
             account_id,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/subtags/{subtag_id}", response=SubTagOut)
+def get_subtag(request, subtag_id: int):
+    """
+    The function `get_subtag` retrieves the sub tag by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        subtag_id (int): The id of the tag to retrieve.
+
+    Returns:
+        SubTagOut: the tag object
+
+    Raises:
+        Http404: If the sub tag with the specified ID does not exist.
+    """
+
+    try:
+        subtag = get_object_or_404(SubTag, id=subtag_id)
+        logToDB(
+            f"Sub Tag retrieved : {subtag.tag_name}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return subtag
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Sub Tag not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
+@api.get("/maintags/{maintag_id}", response=MainTagOut)
+def get_maintag(request, maintag_id: int):
+    """
+    The function `get_maintag` retrieves the main tag by id
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        maintag_id (int): The id of the main tag to retrieve.
+
+    Returns:
+        MainTagOut: the main tag object
+
+    Raises:
+        Http404: If the main tag with the specified ID does not exist.
+    """
+
+    try:
+        maintag = get_object_or_404(MainTag, id=maintag_id)
+        logToDB(
+            f"Main Tag retrieved : {maintag.tag_name}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return maintag
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Main Tag not retrieved : {str(e)}",
+            None,
             None,
             None,
             3001904,
@@ -2992,51 +3186,147 @@ def list_accounts(
         raise HttpError(500, "Record retrieval error")
 
 
-@api.get("/tags", response=List[TagOut])
-def list_tags(
+@api.get("/subtags", response=List[SubTagOut])
+def list_subtags(
     request,
     tag_type: Optional[int] = Query(None),
-    parent_only: Optional[bool] = False,
+    parent: Optional[int] = Query(None),
 ):
     """
-    The function `list_tags` retrieves a list of tags,
-    optionally filtered by tag type or if its a parent tag.
+    The function `list_subtags` retrieves a list of subtags,
+    optionally filtered by tag type or parent.
 
     Args:
         request (HttpRequest): The HTTP request object.
         tag_type (int): Optional tag type id to filter tags.
-        parent_only (bool): Optional filter on parent or not
+        parent (int): Optional filter on parent
+
+    Returns:
+        SubTagOut: a list of subtag objects
+    """
+    try:
+        # Retrive a list of  sub tags
+        qs = SubTag.objects.all()
+
+        # Filter sub tags by tag type if a tag type is specified
+        if tag_type is not None:
+            qs = qs.filter(tag_type__id=tag_type)
+
+        # Filter sub tags by parent if a parent id is specified
+        if parent is not None:
+            qs = qs.filter(parent__id=parent).exclude(tag_type__id=3)
+
+        # Order tags tag_name
+        qs = qs.order_by("tag_name")
+        logToDB(
+            "Sub Tag list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Sub Tag list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
+
+
+@api.get("/maintags", response=List[MainTagOut])
+def list_maintags(
+    request,
+    tag_type: Optional[int] = Query(None),
+):
+    """
+    The function `list_maintags` retrieves a list of main tags,
+    optionally filtered by tag type.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        tag_type (int): Optional tag type id to filter tags.
+
+    Returns:
+        MainTagOut: a list of main tag objects
+    """
+    try:
+        # Retrive a list of main tags
+        qs = MainTag.objects.all()
+
+        # Filter main tags by tag type if a tag type is specified
+        if tag_type is not None:
+            qs = qs.filter(tag_type__id=tag_type)
+
+        # Order tags by tag_name
+        qs = qs.order_by("tag_name")
+        logToDB(
+            "Main Tag list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Main Tag list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
+
+
+@api.get("/tags", response=List[TagOut])
+def list_tags(
+    request,
+    tag_type: Optional[int] = Query(None),
+    parent: Optional[int] = Query(None),
+    child: Optional[int] = Query(None),
+):
+    """
+    The function `list_tags` retrieves a list of tags,
+    optionally filtered by tag type, parent, or child.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        tag_type (int): Optional tag type id to filter tags.
+        parent (int): Optional filter on parent
+        child (int): Optional filter on child
 
     Returns:
         TagOut: a list of tag objects
     """
 
     try:
-        # Retrive a list of tags, annotating a pretty_name based on parent tag name
-        qs = Tag.objects.annotate(
-            pretty_name=Case(
-                When(
-                    parent__isnull=False,
-                    then=Concat(
-                        F("parent__tag_name"), Value(" / "), F("tag_name")
-                    ),
-                ),
-                default=F("tag_name"),
-                output_field=CharField(),
-            )
-        )
+        # Retrive a list of tags
+        qs = Tag.objects.all()
 
         # Filter tags by tag type if a tag type is specified
         if tag_type is not None:
             qs = qs.filter(tag_type__id=tag_type)
 
-        # Filter tags by parent if parent only is true
-        if parent_only is True:
-            qs = qs.filter(parent__isnull=True).exclude(tag_type__id=3)
+        # Filter tags by parent if a parent id is specified
+        if parent is not None:
+            qs = qs.filter(parent__id=parent).exclude(tag_type__id=3)
 
-        # Order tags by pretty name ascending, parent tag name ascending, and then tag name
-        # ascending
-        qs = qs.order_by("pretty_name", "parent__tag_name", "tag_name")
+        # Filter tags by child if a child id is specified
+        if child is not None:
+            qs = qs.filter(child__id=child).exclude(tag_type__id=3)
+
+        # Order tags by parent__tag_name, child__tag_name
+        qs = qs.order_by("parent__tag_name", "child__tag_name")
         logToDB(
             "Tag list retrieved",
             None,
@@ -3056,7 +3346,7 @@ def list_tags(
             3001907,
             2,
         )
-        raise HttpError(500, "Record retrieval error")
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
 @api.get("/planning/contribrules", response=List[ContribRuleOut])
@@ -4115,8 +4405,92 @@ def update_tag(request, tag_id: int, payload: TagIn):
 
     try:
         tag = get_object_or_404(Tag, id=tag_id)
-        tag.tag_name = payload.tag_name
+        maintag = None
+        subtag = None
+        if payload.parent_name:
+            try:
+                parent = MainTag.objects.create(
+                    tag_name=payload.parent_name,
+                    tag_type_id=payload.tag_type_id,
+                )
+                payload.parent_id = parent.id
+            except IntegrityError as integrity_error:
+                # Check if the integrity error is due to a duplicate
+                if "unique constraint" in str(integrity_error).lower():
+                    logToDB(
+                        f"Tag not created : tag exists",
+                        None,
+                        None,
+                        None,
+                        3001004,
+                        2,
+                    )
+                    raise HttpError(400, "Tag already exists")
+                else:
+                    # Log other types of integry errors
+                    logToDB(
+                        "Tag not created : db integrity error",
+                        None,
+                        None,
+                        None,
+                        3001005,
+                        2,
+                    )
+                    raise HttpError(400, "DB integrity error")
+            except Exception as e:
+                # Log other types of exceptions
+                logToDB(
+                    f"Tag not created : {str(e)}",
+                    None,
+                    None,
+                    None,
+                    3001901,
+                    2,
+                )
+                raise HttpError(500, "Record creation error")
+        if payload.child_name:
+            try:
+                child = SubTag.objects.create(
+                    tag_name=payload.child_name,
+                    tag_type_id=payload.tag_type_id,
+                )
+                payload.child_id = child.id
+            except IntegrityError as integrity_error:
+                # Check if the integrity error is due to a duplicate
+                if "unique constraint" in str(integrity_error).lower():
+                    logToDB(
+                        f"Tag not created : tag exists",
+                        None,
+                        None,
+                        None,
+                        3001004,
+                        2,
+                    )
+                    raise HttpError(400, "Tag already exists")
+                else:
+                    # Log other types of integry errors
+                    logToDB(
+                        "Tag not created : db integrity error",
+                        None,
+                        None,
+                        None,
+                        3001005,
+                        2,
+                    )
+                    raise HttpError(400, "DB integrity error")
+            except Exception as e:
+                # Log other types of exceptions
+                logToDB(
+                    f"Tag not created : {str(e)}",
+                    None,
+                    None,
+                    None,
+                    3001901,
+                    2,
+                )
+                raise HttpError(500, "Record creation error")
         tag.parent_id = payload.parent_id
+        tag.child_id = payload.child_id
         tag.tag_type_id = payload.tag_type_id
         tag.save()
         logToDB(
@@ -4161,7 +4535,7 @@ def update_tag(request, tag_id: int, payload: TagIn):
             3001902,
             2,
         )
-        raise HttpError(500, "Record update error")
+        raise HttpError(500, f"Record update error: {str(e)}")
 
 
 @api.put("/planning/contribrules/{contribrule_id}")

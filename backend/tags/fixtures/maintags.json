@@ -1,0 +1,194 @@
+[
+    {
+        "model": "tags.MainTag",
+        "pk": "24",
+        "fields": {
+            "tag_name": "Balance Adjustment",
+            "tag_type": 3
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "2",
+        "fields": {
+            "tag_name": "Car",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "3",
+        "fields": {
+            "tag_name": "Cash",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "4",
+        "fields": {
+            "tag_name": "Charity",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "5",
+        "fields": {
+            "tag_name": "Christmas",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "6",
+        "fields": {
+            "tag_name": "Credit Card",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "7",
+        "fields": {
+            "tag_name": "Debt",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "8",
+        "fields": {
+            "tag_name": "Family",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "25",
+        "fields": {
+            "tag_name": "FSA",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "9",
+        "fields": {
+            "tag_name": "Fun",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "10",
+        "fields": {
+            "tag_name": "Groceries",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "26",
+        "fields": {
+            "tag_name": "HOA",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "11",
+        "fields": {
+            "tag_name": "Home",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "13",
+        "fields": {
+            "tag_name": "Income",
+            "tag_type": 2
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "15",
+        "fields": {
+            "tag_name": "Interest Charged",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "14",
+        "fields": {
+            "tag_name": "Interest Earned",
+            "tag_type": 2
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "16",
+        "fields": {
+            "tag_name": "Investment",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "17",
+        "fields": {
+            "tag_name": "Kids",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "18",
+        "fields": {
+            "tag_name": "Project",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "19",
+        "fields": {
+            "tag_name": "Refund",
+            "tag_type": 2
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "21",
+        "fields": {
+            "tag_name": "Subscriptions",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "1",
+        "fields": {
+            "tag_name": "Transfer",
+            "tag_type": 3
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "22",
+        "fields": {
+            "tag_name": "Utilities",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.MainTag",
+        "pk": "23",
+        "fields": {
+            "tag_name": "Vacation",
+            "tag_type": 1
+        }
+    }
+]

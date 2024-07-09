@@ -1,0 +1,146 @@
+[
+    {
+        "model": "tags.SubTag",
+        "pk": "2",
+        "fields": {
+            "tag_name": "Car Payment",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "4",
+        "fields": {
+            "tag_name": "Child Care",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "6",
+        "fields": {
+            "tag_name": "Clothes",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "5",
+        "fields": {
+            "tag_name": "Diapers & Wipes",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "14",
+        "fields": {
+            "tag_name": "Electricity",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "7",
+        "fields": {
+            "tag_name": "Furniture",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "1",
+        "fields": {
+            "tag_name": "Gasoline",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "8",
+        "fields": {
+            "tag_name": "Health",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "11",
+        "fields": {
+            "tag_name": "Home Insurance",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "15",
+        "fields": {
+            "tag_name": "Internet",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "9",
+        "fields": {
+            "tag_name": "Misc.",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "16",
+        "fields": {
+            "tag_name": "Natural Gas",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "3",
+        "fields": {
+            "tag_name": "Paycheck",
+            "tag_type": 2
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "12",
+        "fields": {
+            "tag_name": "Property Taxes",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "13",
+        "fields": {
+            "tag_name": "Rent",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "17",
+        "fields": {
+            "tag_name": "Sewer",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "10",
+        "fields": {
+            "tag_name": "Toys & Books",
+            "tag_type": 1
+        }
+    },
+    {
+        "model": "tags.SubTag",
+        "pk": "18",
+        "fields": {
+            "tag_name": "Water",
+            "tag_type": 1
+        }
+    }
+]
