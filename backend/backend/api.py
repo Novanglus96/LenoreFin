@@ -62,7 +62,7 @@ from django.db.models import (
     OuterRef,
     FloatField,
     Window,
-    ExpressionWrapper
+    ExpressionWrapper,
 )
 from django.db import models, IntegrityError
 from django.db.models.functions import Concat, Coalesce, Abs
@@ -3894,7 +3894,7 @@ def list_transactions(
                 )
             )
             query = query.annotate(
-                running_total=Window(
+                balance=Window(
                     expression=Sum(F("pretty_total")),
                     order_by=[
                         Case(
@@ -3908,12 +3908,6 @@ def list_transactions(
                         "-pretty_total",
                         "-id",
                     ],
-                )
-            )
-            query = query.annotate(
-                balance=ExpressionWrapper(
-                    F("running_total") + Value(opening_balance),
-                    output_field=FloatField(),
                 )
             )
             query = query.annotate(
