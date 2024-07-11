@@ -3818,7 +3818,7 @@ def list_transactions(
                     tag_name_combined=Case(
                         When(child_tag__isnull=True, then=F("parent_tag")),
                         default=Concat(
-                            F("parent_tag"), Value(" \\ "), F("child_tag")
+                            F("parent_tag"), Value(" / "), F("child_tag")
                         ),
                         output_field=CharField(),
                     ),
