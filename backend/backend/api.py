@@ -3894,7 +3894,7 @@ def list_transactions(
                 )
             )
             query = query.annotate(
-                balance=Window(
+                cumulative_balance=Window(
                     expression=Sum(F("pretty_total")),
                     order_by=[
                         Case(
@@ -3911,9 +3911,9 @@ def list_transactions(
                 )
             )
             query = query.annotate(
-                tags=Coalesce(
-                    ArrayAgg(transaction_detail_subquery, distinct=True),
-                    Value([]),
+                balance=ExpressionWrapper(
+                    F("cumulative_balance") + Value(opening_balance),
+                    output_field=FloatField(),
                 )
             )
             reversed_query = list(reversed(query))
