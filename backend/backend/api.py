@@ -58,9 +58,14 @@ from django.db.models import (
     F,
     CharField,
     Sum,
+    Subquery,
+    OuterRef,
+    FloatField,
+    Window,
+    ExpressionWrapper
 )
 from django.db import models, IntegrityError
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Coalesce, Abs
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 import random
@@ -69,6 +74,7 @@ from django.core.paginator import Paginator
 from django.db.models.signals import pre_delete, post_delete
 import pytz
 import os
+from django.contrib.postgres.aggregates import ArrayAgg
 
 
 class GlobalAuth(HttpBearer):
@@ -532,18 +538,17 @@ class TransactionIn(Schema):
     transaction_date: date
     total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
     status_id: int
-    memo: str
+    memo: Optional[str] = None
     description: str
     edit_date: date
     add_date: date
     transaction_type_id: int
-    reminder_id: Optional[int] = None
     paycheck_id: Optional[int] = None
     details: Optional[List[TagDetailIn]] = None
     source_account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
     paycheck: Optional[PaycheckIn] = None
-    reminder: Optional[ReminderOut] = None
+    checkNumber: Optional[int] = None
 
 
 # The class MessageIn is a schema for validating Messages.
@@ -698,25 +703,24 @@ class TransactionOut(Schema):
     transaction_date: date
     total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
     status: TransactionStatusOut
-    memo: str
+    memo: Optional[str] = None
     description: str
     edit_date: date
     add_date: date
     transaction_type: TransactionTypeOut
-    reminder: Optional[ReminderOut] = None
     paycheck: Optional[PaycheckOut] = None
     balance: Optional[Decimal] = Field(
         default=None, whole_digits=10, decimal_places=2
     )
     pretty_account: Optional[str]
-    tags: Optional[List[str]]
+    tags: Optional[List[Optional[str]]] = []
     details: List[TransactionDetailOut] = []
     pretty_total: Optional[Decimal] = Field(
         default=None, whole_digits=10, decimal_places=2
     )
-    account_id: Optional[int] = None
     source_account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
+    checkNumber: Optional[int] = None
 
 
 TransactionDetailOut.update_forward_refs()
@@ -1563,11 +1567,11 @@ def create_transaction(request, payload: TransactionIn):
             edit_date=payload.edit_date,
             add_date=payload.add_date,
             transaction_type_id=payload.transaction_type_id,
-            reminder_id=payload.reminder_id,
             paycheck_id=paycheck_id,
             source_account_id=payload.source_account_id,
             destination_account_id=payload.destination_account_id,
             tags=tags,
+            checkNumber=payload.checkNumber,
         )
         transactions_to_create.append(transaction)
         if create_transactions(transactions_to_create):
@@ -3797,105 +3801,139 @@ def list_transactions(
             tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
             today_tz = today.astimezone(tz_timezone).date()
             threshold_date = today_tz + timedelta(days=maxdays)
-            if forecast is False:
-                query = sort_transactions(
-                    Transaction.objects.filter(
-                        account_id=account,
-                        transaction_date__lt=threshold_date,
+            source_account_name = Account.objects.filter(
+                id=OuterRef("source_account_id")
+            ).values("account_name")[:1]
+            destination_account_name = Account.objects.filter(
+                id=OuterRef("destination_account_id")
+            ).values("account_name")[:1]
+            opening_balance = Account.objects.get(id=account).opening_balance
+            transaction_detail_subquery = (
+                TransactionDetail.objects.filter(
+                    transaction_id=OuterRef("id"),
+                )
+                .annotate(
+                    parent_tag=F("tag__parent__tag_name"),
+                    child_tag=F("tag__child__tag_name"),
+                    tag_name_combined=Case(
+                        When(child_tag__isnull=True, then=F("parent_tag")),
+                        default=Concat(
+                            F("parent_tag"), Value(" \\ "), F("child_tag")
+                        ),
+                        output_field=CharField(),
                     ),
-                    False,
+                )
+                .exclude(tag_name_combined__isnull=True)
+                .values_list("tag_name_combined", flat=True)
+            )
+
+            query = Transaction.objects.filter(
+                Q(source_account_id=account) | Q(destination_account_id=account)
+            )
+
+            if forecast is False:
+                query = query.filter(
+                    transaction_date__lt=threshold_date,
                 )
             else:
-                query = sort_transactions(
-                    Transaction.objects.filter(
-                        account_id=account,
-                        transaction_date__range=(
-                            today_tz,
-                            threshold_date,
-                        ),
+                query = query.filter(
+                    transaction_date__range=(
+                        today_tz,
+                        threshold_date,
                     )
                 )
+            query = query.annotate(
+                source_name=Coalesce(
+                    Subquery(source_account_name),
+                    Value("Unknown Account"),
+                ),
+                destination_name=Coalesce(
+                    Subquery(destination_account_name),
+                    Value("Unknown Account"),
+                ),
+            )
+            query = query.annotate(
+                pretty_account=Case(
+                    When(
+                        transaction_type_id=3,
+                        then=Concat(
+                            F("source_name"),
+                            Value(" => "),
+                            F("destination_name"),
+                        ),
+                    ),
+                    default=F("source_name"),
+                    output_field=CharField(),  # Correctly specify the output field
+                )
+            )
+            query = query.annotate(
+                pretty_total=Case(
+                    When(
+                        transaction_type_id=2,
+                        then=Abs(F("total_amount")),
+                    ),
+                    When(
+                        transaction_type_id=1,
+                        then=-Abs(F("total_amount")),
+                    ),
+                    When(
+                        transaction_type_id=3,
+                        then=Case(
+                            When(
+                                source_account_id=account,
+                                then=-Abs(F("total_amount")),
+                            ),
+                            default=Abs(F("total_amount")),
+                            output_field=FloatField(),  # Ensure the correct output field
+                        ),
+                    ),
+                    default=Value(
+                        0, output_field=FloatField()
+                    ),  # Ensure the correct output field
+                    output_field=FloatField(),  # Ensure the correct output field
+                )
+            )
+            query = query.annotate(
+                running_total=Window(
+                    expression=Sum(F("pretty_total")),
+                    order_by=[
+                        Case(
+                            When(status_id=1, then=Value(2)),
+                            When(status_id=2, then=Value(0)),
+                            When(status_id=3, then=Value(0)),
+                            default=Value(1),
+                            output_field=IntegerField(),
+                        ),
+                        "transaction_date",
+                        "-pretty_total",
+                        "-id",
+                    ],
+                )
+            )
+            query = query.annotate(
+                balance=ExpressionWrapper(
+                    F("running_total") + Value(opening_balance),
+                    output_field=FloatField(),
+                )
+            )
+            query = query.annotate(
+                tags=Coalesce(
+                    ArrayAgg(transaction_detail_subquery, distinct=True),
+                    Value([]),
+                )
+            )
+            reversed_query = list(reversed(query))
             total_pages = 0
             if page_size is not None and page is not None:
-                paginator = Paginator(query, page_size)
+                paginator = Paginator(reversed_query, page_size)
                 page_obj = paginator.page(page)
                 qs = list(page_obj.object_list)
                 total_pages = paginator.num_pages
             else:
                 qs = query
             total_records = len(query)
-            # Initialize blank list of transactions
-            transactions = []
-
-            # Calculate the running account balance
-            balance = Decimal(0)
-            for transaction in qs:
-
-                # Initialize transaction details
-                pretty_account = ""
-                tags = []
-                source_account_name = None
-                destination_account_name = None
-                account_name = None
-
-                # Get account info
-                if transaction.source_account_id:
-                    if Account.objects.get(id=transaction.source_account_id):
-                        source_account_name = Account.objects.get(
-                            id=transaction.source_account_id
-                        ).account_name
-                    else:
-                        source_account_name = "Deleted Account"
-                if transaction.destination_account_id:
-                    if Account.objects.get(
-                        id=transaction.destination_account_id
-                    ):
-                        destination_account_name = Account.objects.get(
-                            id=transaction.destination_account_id
-                        ).account_name
-                    else:
-                        destination_account_name = "Deleted Account"
-                if transaction.account_id:
-                    if Account.objects.get(id=transaction.account_id):
-                        account_name = Account.objects.get(
-                            id=transaction.account_id
-                        ).account_name
-                    else:
-                        account_name = "Deleted Account"
-
-                # Retrieve a list of transaction details for the transaction
-                transaction_details = TransactionDetail.objects.filter(
-                    transaction=transaction.id
-                )
-
-                # Process each detail for this transaction
-                for detail in transaction_details:
-
-                    # If a tag doesn't already exist in the tags list, add it
-                    if detail.tag.tag_name not in tags:
-                        tags.append(detail.tag.tag_name)
-
-                if transaction.transaction_type.id == 3:
-                    pretty_account = (
-                        source_account_name + " => " + destination_account_name
-                    )
-                else:
-                    pretty_account = account_name
-                balance = transaction.running_total
-
-                # Update the balance in the transaction and append to the list
-                transaction.balance = balance
-                transaction.pretty_account = pretty_account
-                transaction.tags = tags
-                transaction.pretty_total = transaction.total_amount
-                transaction.details = transaction_details
-                transaction.source_account_id = transaction.source_account_id
-                transaction.destination_account_id = (
-                    transaction.destination_account_id
-                )
-                transactions.append(TransactionOut.from_orm(transaction))
             paginated_obj = PaginatedTransactions(
-                transactions=transactions,
+                transactions=qs,
                 current_page=page,
                 total_pages=total_pages,
                 total_records=total_records,
@@ -3994,7 +4032,7 @@ def list_transactions(
             3001907,
             2,
         )
-        raise HttpError(500, "Record retrieval error")
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
 @api.get("/transactions/details", response=List[TransactionDetailOut])
@@ -5271,88 +5309,34 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         # Setup variables
         today = get_today_formatted()
         paycheck = None
-        reminder_to_delete = None
 
         # Get the transaction to update
         transaction = get_object_or_404(Transaction, id=transaction_id)
 
-        if payload.transaction_type_id == 3:
-            try:
-                # Update Transaction and details
-                if transaction.related_transaction:
-                    if transaction.id < transaction.related_transaction.id:
-                        transaction.total_amount = -abs(payload.total_amount)
-                        transaction.account_id = payload.source_account_id
-                        detail = TransactionDetail.objects.filter(
-                            transaction_id=transaction.id
-                        ).first()
-                        detail.account_id = payload.source_account_id
-                        detail.detail_amt = -abs(payload.total_amount)
-                        detail.save()
-                    else:
-                        transaction.total_amount = abs(payload.total_amount)
-                        transaction.account_id = payload.destination_account_id
-                        detail = TransactionDetail.objects.filter(
-                            transaction_id=transaction.id
-                        ).first()
-                        detail.account_id = payload.destination_account_id
-                        detail.detail_amt = abs(payload.total_amount)
-                        detail.save()
-                transaction.transaction_date = payload.transaction_date
-                transaction.status_id = payload.status_id
-                transaction.memo = payload.memo
-                transaction.description = payload.description
-                transaction.edit_date = today
-                transaction.source_account_id = payload.source_account_id
-                transaction.destination_account_id = (
-                    payload.destination_account_id
-                )
-                transaction.save()
-                logToDB(
-                    f"Transaction updated : {transaction_id}",
-                    None,
-                    None,
-                    transaction_id,
-                    3001002,
-                    1,
-                )
-                return {"success": True}
-            except Exception as e:
-                logToDB(
-                    f"Transaction not updated : {e}",
-                    None,
-                    None,
-                    transaction_id,
-                    3001902,
-                    2,
-                )
-                return {"success": False}
-        else:
-            # Get Details
-            existing_details = TransactionDetail.objects.filter(
-                transaction_id=transaction_id
+        # Get Details
+        existing_details = TransactionDetail.objects.filter(
+            transaction_id=transaction_id
+        )
+        existing_details.delete()
+        for detail in payload.details:
+            adj_amount = 0
+            if payload.transaction_type_id == 1:
+                adj_amount = -abs(detail.tag_amt)
+            else:
+                adj_amount = abs(detail.tag_amt)
+            TransactionDetail.objects.create(
+                transaction_id=transaction_id,
+                detail_amt=adj_amount,
+                tag_id=detail.tag_id,
             )
-            existing_details.delete()
-            for detail in payload.details:
-                adj_amount = 0
-                if payload.transaction_type_id == 1:
-                    adj_amount = -detail.tag_amt
-                else:
-                    adj_amount = detail.tag_amt
-                TransactionDetail.objects.create(
-                    transaction_id=transaction_id,
-                    account_id=payload.source_account_id,
-                    detail_amt=adj_amount,
-                    tag_id=detail.tag_id,
-                )
-                logToDB(
-                    "Transaction detail created",
-                    None,
-                    None,
-                    transaction_id,
-                    3001001,
-                    1,
-                )
+            logToDB(
+                "Transaction detail created",
+                None,
+                None,
+                transaction_id,
+                3001001,
+                1,
+            )
 
         # Get existing paycheck if it exists
         if transaction.paycheck_id is not None:
@@ -5415,92 +5399,6 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
             1,
         )
 
-        # Update Reminder
-        if transaction.reminder is not None:
-            reminder = get_object_or_404(Reminder, id=transaction.reminder_id)
-            new_date = transaction.transaction_date
-            new_date += relativedelta(days=reminder.repeat.days)
-            new_date += relativedelta(weeks=reminder.repeat.weeks)
-            new_date += relativedelta(months=reminder.repeat.months)
-            new_date += relativedelta(years=reminder.repeat.years)
-            prev_date = transaction.transaction_date
-            prev_date -= relativedelta(days=reminder.repeat.days)
-            prev_date -= relativedelta(weeks=reminder.repeat.weeks)
-            prev_date -= relativedelta(months=reminder.repeat.months)
-            prev_date -= relativedelta(years=reminder.repeat.years)
-
-            # If transaction date is equal to start date, modify start/next date
-            if transaction.transaction_date == reminder.next_date:
-                if (
-                    reminder.end_date is not None
-                    and new_date <= reminder.end_date
-                ) or reminder.end_date is None:
-                    reminder.next_date = new_date
-                    reminder.start_date = new_date
-                    transaction.reminder_id = None
-                else:
-                    transaction.reminder_id = None
-                    reminder_to_delete = reminder.id
-
-            # If transaction date is greater than start date, less then end date
-            # modify original start/next date, create new reminder
-            if transaction.transaction_date > reminder.next_date:
-                new_reminder = Reminder.objects.create(
-                    tag=reminder.tag,
-                    amount=reminder.amount,
-                    reminder_source_account=reminder.reminder_source_account,
-                    reminder_destination_account=reminder.reminder_destination_account,
-                    description=reminder.description,
-                    transaction_type=reminder.transaction_type,
-                    start_date=reminder.start_date,
-                    next_date=reminder.next_date,
-                    end_date=prev_date,
-                    repeat=reminder.repeat,
-                    auto_add=reminder.auto_add,
-                )
-                trans_to_update_reminders = Transaction.objects.filter(
-                    reminder_id=reminder.id, transaction_date__lte=prev_date
-                )
-                for trans in trans_to_update_reminders:
-                    trans.reminder_id = new_reminder.id
-                    trans.save()
-                    logToDB(
-                        "Transaction updated",
-                        None,
-                        None,
-                        trans.id,
-                        3001002,
-                        1,
-                    )
-                logToDB(
-                    "Reminder created",
-                    None,
-                    new_reminder.id,
-                    None,
-                    3001001,
-                    1,
-                )
-                transaction.reminder_id = None
-                if reminder.end_date is not None:
-                    if new_date <= reminder.end_date:
-                        reminder.next_date = new_date
-                        reminder.start_date = new_date
-                    else:
-                        reminder_to_delete = reminder.id
-                else:
-                    reminder.next_date = new_date
-                    reminder.start_date = new_date
-
-            # Save changes to Reminder
-            reminder.save()
-            logToDB(
-                "Reminder updated",
-                None,
-                reminder.id,
-                None,
-                3001002,
-                1,
-            )
         # Update the transaction
         transaction.transaction_date = payload.transaction_date
         transaction.total_amount = payload.total_amount
@@ -5508,9 +5406,9 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         transaction.memo = payload.memo
         transaction.description = payload.description
         transaction.edit_date = today
-        transaction.account_id = payload.source_account_id
         transaction.source_account_id = payload.source_account_id
         transaction.destination_account_id = payload.destination_account_id
+        transaction.checkNumber = payload.checkNumber
         if paycheck is not None:
             transaction.paycheck_id = paycheck.id
         else:
@@ -5524,18 +5422,6 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
             3001002,
             1,
         )
-
-        # Delete reminder
-        if reminder_to_delete is not None:
-            get_object_or_404(Reminder, id=reminder_to_delete).delete()
-            logToDB(
-                f"Reminder deleted: #{reminder_to_delete}",
-                None,
-                None,
-                None,
-                3001003,
-                1,
-            )
 
         return {"success": True}
     except Exception as e:

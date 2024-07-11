@@ -249,11 +249,11 @@ class FullTransaction:
         edit_date: datetime.date,
         add_date: datetime.date,
         transaction_type_id: int,
-        reminder_id: int,
         paycheck_id: int,
         source_account_id: int,
         destination_account_id: int,
         tags: List[CustomTag],
+        checkNumber: int,
     ):
         self.transaction_date = transaction_date
         self.total_amount = total_amount
@@ -263,11 +263,11 @@ class FullTransaction:
         self.edit_date = edit_date
         self.add_date = add_date
         self.transaction_type_id = transaction_type_id
-        self.reminder_id = reminder_id
         self.paycheck_id = paycheck_id
         self.source_account_id = source_account_id
         self.destination_account_id = destination_account_id
         self.tags = tags
+        self.checkNumber = checkNumber
 
     def __str__(self):
         return (
@@ -279,11 +279,11 @@ class FullTransaction:
             + f"edit_date={self.edit_date}, "
             + f"add_date={self.add_date}, "
             + f"transaction_type_id={self.transaction_type_id}, "
-            + f"reminder_id={self.reminder_id}, "
             + f"paycheck_id={self.paycheck_id}, "
             + f"source_account_id={self.source_account_id}, "
             + f"destination_account_id={self.destination_account_id}, "
-            + f"tags={self.tags})"
+            + f"tags={self.tags}, "
+            + f"checkNumber={self.checkNumber})"
         )
 
 
@@ -313,18 +313,11 @@ def create_transactions(transactions: List[FullTransaction]):
             try:
                 for trans in transactions:
                     try:
-                        account_id = trans.source_account_id
-                        source_account_id = None
-                        destination_account_id = None
                         if trans.transaction_type_id == 1:
                             amount = -abs(trans.total_amount)
                         elif trans.transaction_type_id == 2:
                             amount = abs(trans.total_amount)
                         elif trans.transaction_type_id == 3:
-                            source_account_id = trans.source_account_id
-                            destination_account_id = (
-                                trans.destination_account_id
-                            )
                             amount = -abs(trans.total_amount)
                         created_transaction = Transaction.objects.create(
                             transaction_date=trans.transaction_date,
@@ -335,66 +328,23 @@ def create_transactions(transactions: List[FullTransaction]):
                             edit_date=trans.edit_date,
                             add_date=trans.add_date,
                             transaction_type_id=trans.transaction_type_id,
-                            reminder_id=trans.reminder_id,
                             paycheck_id=trans.paycheck_id,
-                            account_id=account_id,
-                            source_account_id=source_account_id,
-                            destination_account_id=destination_account_id,
+                            source_account_id=trans.source_account_id,
+                            destination_account_id=trans.destination_account_id,
+                            checkNumber=trans.checkNumber,
                         )
                         try:
-                            if trans.transaction_type_id == 3:
-                                related_transaction = Transaction.objects.create(
-                                    transaction_date=trans.transaction_date,
-                                    total_amount=abs(amount),
-                                    status_id=trans.status_id,
-                                    memo=trans.memo,
-                                    description=trans.description,
-                                    edit_date=trans.edit_date,
-                                    add_date=trans.add_date,
-                                    transaction_type_id=trans.transaction_type_id,
-                                    reminder_id=trans.reminder_id,
-                                    paycheck_id=trans.paycheck_id,
-                                    account_id=destination_account_id,
-                                    source_account_id=source_account_id,
-                                    destination_account_id=destination_account_id,
-                                    related_transaction=created_transaction,
-                                )
-                                created_transaction.related_transaction = (
-                                    related_transaction
-                                )
-                                created_transaction.save()
-                                TransactionDetail.objects.create(
-                                    transaction_id=created_transaction.id,
-                                    account_id=trans.source_account_id,
-                                    detail_amt=amount,
-                                    tag_id=2,
-                                )
-                                TransactionDetail.objects.create(
-                                    transaction_id=related_transaction.id,
-                                    account_id=trans.destination_account_id,
-                                    detail_amt=abs(amount),
-                                    tag_id=2,
-                                )
-                            else:
-                                if trans.tags and len(trans.tags) != 0:
-                                    for tag in trans.tags:
-                                        adj_amount = 0
-                                        if trans.transaction_type_id == 1:
-                                            adj_amount = -abs(tag.tag_amount)
-                                        else:
-                                            adj_amount = abs(tag.tag_amount)
-                                        TransactionDetail.objects.create(
-                                            transaction_id=created_transaction.id,
-                                            account_id=trans.source_account_id,
-                                            detail_amt=adj_amount,
-                                            tag_id=tag.tag_id,
-                                        )
-                                else:
+                            if trans.tags and len(trans.tags) != 0:
+                                for tag in trans.tags:
+                                    adj_amount = 0
+                                    if trans.transaction_type_id == 1:
+                                        adj_amount = -abs(tag.tag_amount)
+                                    else:
+                                        adj_amount = abs(tag.tag_amount)
                                     TransactionDetail.objects.create(
                                         transaction_id=created_transaction.id,
-                                        account_id=trans.source_account_id,
-                                        detail_amt=amount,
-                                        tag_id=1,
+                                        detail_amt=adj_amount,
+                                        tag_id=tag.tag_id,
                                     )
                         except Except as e:
                             logToDB(
@@ -448,17 +398,12 @@ def create_transactions(transactions: List[FullTransaction]):
             created_transfers = []
             created_related = []
             transactions_to_update = []
-            for trans in transactions:
-                account_id = trans.source_account_id
-                source_account_id = None
-                destination_account_id = None
+            for index, trans in enumerate(transactions):
                 if trans.transaction_type_id == 1:
                     amount = -abs(trans.total_amount)
                 elif trans.transaction_type_id == 2:
                     amount = abs(trans.total_amount)
                 elif trans.transaction_type_id == 3:
-                    source_account_id = trans.source_account_id
-                    destination_account_id = trans.destination_account_id
                     amount = -abs(trans.total_amount)
                 trans_obj = Transaction(
                     transaction_date=trans.transaction_date,
@@ -469,54 +414,26 @@ def create_transactions(transactions: List[FullTransaction]):
                     edit_date=trans.edit_date,
                     add_date=trans.add_date,
                     transaction_type_id=trans.transaction_type_id,
-                    reminder_id=trans.reminder_id,
                     paycheck_id=trans.paycheck_id,
-                    account_id=account_id,
-                    source_account_id=source_account_id,
-                    destination_account_id=destination_account_id,
+                    source_account_id=trans.source_account_id,
+                    destination_account_id=trans.destination_account_id,
+                    checkNumber=trans.checkNumber,
                 )
-                if trans.transaction_type_id == 3:
-                    transfers_to_create.append(trans_obj)
-                    transfer_detail_dict = {
-                        "account_id": trans.source_account_id,
-                        "tags": trans.tags,
-                        "type_id": trans.transaction_type_id,
-                        "total_amount": amount,
-                    }
-                    transfer_transaction_details.append(transfer_detail_dict)
-                    related_obj = Transaction(
-                        transaction_date=trans.transaction_date,
-                        total_amount=abs(amount),
-                        status_id=trans.status_id,
-                        memo=trans.memo,
-                        description=trans.description,
-                        edit_date=trans.edit_date,
-                        add_date=trans.add_date,
-                        transaction_type_id=trans.transaction_type_id,
-                        reminder_id=trans.reminder_id,
-                        paycheck_id=trans.paycheck_id,
-                        account_id=destination_account_id,
-                        source_account_id=source_account_id,
-                        destination_account_id=destination_account_id,
-                    )
-                    related_to_create.append(related_obj)
-                    related_detail_dict = {
-                        "account_id": trans.destination_account_id,
-                        "tags": trans.tags,
-                        "type_id": trans.transaction_type_id,
-                        "total_amount": abs(amount),
-                    }
-                    related_transaction_details.append(related_detail_dict)
-                else:
-                    transactions_to_create.append(trans_obj)
-                    detail_dict = {
-                        "account_id": trans.source_account_id,
-                        "tags": trans.tags,
-                        "type_id": trans.transaction_type_id,
-                        "total_amount": trans.total_amount,
-                    }
-                    transaction_details.append(detail_dict)
-            # Create non transfer transactions
+                transactions_to_create.append(trans_obj)
+                if trans.tags and len(trans.tags) != 0:
+                    for tag in trans.tags:
+                        adj_amount = 0
+                        if trans.transaction_type_id == 1:
+                            adj_amount = -abs(tag.tag_amount)
+                        else:
+                            adj_amount = abs(tag.tag_amount)
+                        detail_dict = {
+                            "transaction_index": index,
+                            "detail_amt": adj_amount,
+                            "tag_id": tag.tag_id,
+                        }
+                        transaction_details.append(detail_dict)
+            # Create transactions
             try:
                 chunks = list(chunk_list(transactions_to_create, max_bulk))
                 for step, chunk in enumerate(chunks, start=0):
@@ -540,113 +457,14 @@ def create_transactions(transactions: List[FullTransaction]):
                     3001901,
                     2,
                 )
-            # Create transfer transactions
-            try:
-                chunks = list(chunk_list(transfers_to_create, max_bulk))
-                for step, chunk in enumerate(chunks, start=0):
-                    created_transfers.extend(
-                        Transaction.objects.bulk_create(chunk)
-                    )
-                logToDB(
-                    "Transfer chunks created successfully",
-                    None,
-                    None,
-                    None,
-                    3001001,
-                    1,
-                )
-            except Exception as e:
-                logToDB(
-                    f"Transfer chunks not created: {e}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
-            # Create related transactions
-            for index, obj in enumerate(related_to_create):
-                obj.related_transaction = created_transfers[index]
-            try:
-                chunks = list(chunk_list(related_to_create, max_bulk))
-                for step, chunk in enumerate(chunks, start=0):
-                    created_related.extend(
-                        Transaction.objects.bulk_create(chunk)
-                    )
-                logToDB(
-                    "Related chunks created successfully",
-                    None,
-                    None,
-                    None,
-                    3001001,
-                    1,
-                )
-            except Exception as e:
-                logToDB(
-                    f"Related chunks not created: {e}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
-            # Update created transfers
-            for index, obj in enumerate(created_transfers):
-                obj.related_transaction = created_related[index]
-                transactions_to_update.append(obj)
-            Transaction.objects.bulk_update(
-                transactions_to_update,
-                ["related_transaction"],
-                batch_size=1000,
-            )
             # Create transaction details
-            for index, obj in enumerate(created_transactions):
-                if (
-                    transaction_details[index]["tags"]
-                    and len(transaction_details[index]["tags"]) != 0
-                ):
-                    for tag in transaction_details[index]["tags"]:
-                        adj_amount = 0
-                        if transaction_details[index]["type_id"] == 1:
-                            adj_amount = -abs(tag.tag_amount)
-                        else:
-                            adj_amount = abs(tag.tag_amount)
-                        detail = TransactionDetail(
-                            transaction_id=obj.id,
-                            account_id=transaction_details[index]["account_id"],
-                            detail_amt=adj_amount,
-                            tag_id=tag.tag_id,
-                        )
-                        details_to_create.append(detail)
-                else:
-                    detail = TransactionDetail(
-                        transaction_id=obj.id,
-                        account_id=transaction_details[index]["account_id"],
-                        detail_amt=transaction_details[index]["total_amount"],
-                        tag_id=1,
-                    )
-                    details_to_create.append(detail)
-            # Create transfer details
-            for index, obj in enumerate(created_transfers):
+            for trans_detail in transaction_details:
                 detail = TransactionDetail(
-                    transaction_id=obj.id,
-                    account_id=transfer_transaction_details[index][
-                        "account_id"
-                    ],
-                    detail_amt=transfer_transaction_details[index][
-                        "total_amount"
-                    ],
-                    tag_id=2,
-                )
-                details_to_create.append(detail)
-            for index, obj in enumerate(created_related):
-                detail = TransactionDetail(
-                    transaction_id=obj.id,
-                    account_id=related_transaction_details[index]["account_id"],
-                    detail_amt=related_transaction_details[index][
-                        "total_amount"
-                    ],
-                    tag_id=2,
+                    transaction_id=created_transactions[
+                        trans_detail.transaction_index
+                    ]["id"],
+                    detail_amt=trans_detail.detail_amt,
+                    tag_id=trans_detail.tag_id,
                 )
                 details_to_create.append(detail)
             try:
@@ -678,7 +496,7 @@ def create_transactions(transactions: List[FullTransaction]):
                 3001001,
                 1,
             )
-            update_running_totals()
+            # update_running_totals()
             return True
         except Exception as e:
             logToDB(
