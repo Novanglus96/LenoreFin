@@ -3146,11 +3146,18 @@ def list_accounts(
                                 then=-Abs(F("total_amount")),
                             ),
                             default=Abs(F("total_amount")),
-                            output_field=FloatField(),
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
                         ),
                     ),
-                    default=Value(0, output_field=FloatField()),
-                    output_field=FloatField(),
+                    default=Value(
+                        0,
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    ),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
                 )
             )
             .values("source_account_id")
@@ -3176,11 +3183,18 @@ def list_accounts(
                                 then=Abs(F("total_amount")),
                             ),
                             default=Abs(F("total_amount")),
-                            output_field=FloatField(),
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
                         ),
                     ),
-                    default=Value(0, output_field=FloatField()),
-                    output_field=FloatField(),
+                    default=Value(
+                        0,
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    ),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
                 )
             )
             .values("destination_account_id")
@@ -3191,21 +3205,31 @@ def list_accounts(
         # Annotate the Account queryset with the combined balance
         qs = qs.annotate(
             source_balance=Coalesce(
-                Subquery(source_balance_subquery, output_field=FloatField()),
-                Value(0, output_field=FloatField()),
+                Subquery(
+                    source_balance_subquery,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+                Value(
+                    0,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
             ),
             destination_balance=Coalesce(
                 Subquery(
-                    destination_balance_subquery, output_field=FloatField()
+                    destination_balance_subquery,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
                 ),
-                Value(0, output_field=FloatField()),
+                Value(
+                    0,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
             ),
         ).annotate(
             balance=ExpressionWrapper(
                 F("source_balance")
                 + F("destination_balance")
                 + F("opening_balance"),
-                output_field=FloatField(),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
             )
         )
         logToDB(
@@ -3924,13 +3948,20 @@ def list_transactions(
                                 then=-Abs(F("total_amount")),
                             ),
                             default=Abs(F("total_amount")),
-                            output_field=FloatField(),  # Ensure the correct output field
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),  # Ensure the correct output field
                         ),
                     ),
                     default=Value(
-                        0, output_field=FloatField()
+                        0,
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
                     ),  # Ensure the correct output field
-                    output_field=FloatField(),  # Ensure the correct output field
+                    output_field=DecimalField(
+                        max_digits=12, decimal_places=2
+                    ),  # Ensure the correct output field
                 )
             )
             query = query.annotate(
@@ -3953,7 +3984,7 @@ def list_transactions(
             query = query.annotate(
                 balance=ExpressionWrapper(
                     F("cumulative_balance") + Value(opening_balance),
-                    output_field=FloatField(),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
                 )
             )
             reversed_query = list(reversed(query))
