@@ -2861,9 +2861,9 @@ def get_graph(request, widget_id: int):
         # Otherwise, filter on expense tags or income tags
         if tagID is None:
             tag_type_id = 1 if expense else 2
-            tags = Tag.objects.filter(
-                tag_type__id=tag_type_id, child=None
-            ).exclude(id__in=exclude_list)
+            tags = Tag.objects.filter(tag_type__id=tag_type_id).exclude(
+                id__in=exclude_list
+            )
         else:
             tags = Tag.objects.filter(parent__id=tagID).exclude(
                 id__in=exclude_list
