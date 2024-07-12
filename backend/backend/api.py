@@ -2862,7 +2862,7 @@ def get_graph(request, widget_id: int):
         if tagID is None:
             tag_type_id = 1 if expense else 2
             tags = Tag.objects.filter(
-                tag_type__id=tag_type_id, parent=None
+                tag_type__id=tag_type_id, child=None
             ).exclude(id__in=exclude_list)
         else:
             tags = Tag.objects.filter(parent__id=tagID).exclude(
@@ -2874,7 +2874,7 @@ def get_graph(request, widget_id: int):
         for tag in tags:
             tag_amount = (
                 TransactionDetail.objects.filter(
-                    Q(tag=tag) | Q(tag__parent=tag),
+                    tag=tag,
                     transaction__transaction_date__month=target_month,
                     transaction__transaction_date__year=target_year,
                     transaction__status__id__gt=1,
