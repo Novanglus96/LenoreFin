@@ -63,6 +63,8 @@ from django.db.models import (
     FloatField,
     Window,
     ExpressionWrapper,
+    DecimalField,
+    Func,
 )
 from django.db import models, IntegrityError
 from django.db.models.functions import Concat, Coalesce, Abs
@@ -75,6 +77,12 @@ from django.db.models.signals import pre_delete, post_delete
 import pytz
 import os
 from django.contrib.postgres.aggregates import ArrayAgg
+from decimal import Decimal
+
+
+class Round(Func):
+    function = "ROUND"
+    template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
 class GlobalAuth(HttpBearer):
@@ -3120,54 +3128,86 @@ def list_accounts(
         # name ascending
         qs = qs.order_by("account_type__id", "bank__bank_name", "account_name")
 
-        # Initialize blank account list
-        account_list = []
-
-        # For each account, get related transactions and calculate balance
-        for account in qs:
-            calc_balance = account.opening_balance
-            if Transaction.objects.filter(account_id=account.id).exclude(
-                status_id=1
-            ):
-                calc_balance = (
-                    sort_transactions(
-                        Transaction.objects.filter(
-                            account_id=account.id
-                        ).exclude(status_id=1),
-                        False,
-                    )
-                    .first()
-                    .running_total
-                )
-
-            # Prepare Account object
-            account_out = AccountOut(
-                id=account.id,
-                account_name=account.account_name,
-                account_type=AccountTypeOut(
-                    id=account.account_type.id,
-                    account_type=account.account_type.account_type,
-                    color=account.account_type.color,
-                    icon=account.account_type.icon,
-                ),
-                opening_balance=account.opening_balance,
-                apy=account.apy,
-                due_date=account.due_date,
-                active=account.active,
-                open_date=account.open_date,
-                next_cycle_date=account.next_cycle_date,
-                statement_cycle_length=account.statement_cycle_length,
-                statement_cycle_period=account.statement_cycle_period,
-                rewards_amount=account.rewards_amount,
-                credit_limit=account.credit_limit,
-                available_credit=account.credit_limit + calc_balance,
-                balance=calc_balance,
-                bank=BankOut(
-                    id=account.bank.id, bank_name=account.bank.bank_name
-                ),
-                last_statement_amount=account.last_statement_amount,
+        # Subquery to calculate sum of pretty_total grouped by source_account_id
+        source_balance_subquery = (
+            Transaction.objects.filter(
+                source_account_id=OuterRef("pk"),
+                status_id__in=[2, 3],  # Adjust status conditions as needed
             )
-            account_list.append(account_out)
+            .annotate(
+                pretty_total=Case(
+                    When(transaction_type_id=2, then=Abs(F("total_amount"))),
+                    When(transaction_type_id=1, then=-Abs(F("total_amount"))),
+                    When(
+                        transaction_type_id=3,
+                        then=Case(
+                            When(
+                                source_account_id=OuterRef("pk"),
+                                then=-Abs(F("total_amount")),
+                            ),
+                            default=Abs(F("total_amount")),
+                            output_field=FloatField(),
+                        ),
+                    ),
+                    default=Value(0, output_field=FloatField()),
+                    output_field=FloatField(),
+                )
+            )
+            .values("source_account_id")
+            .annotate(balance=Sum("pretty_total"))
+            .values("balance")[:1]
+        )
+
+        # Subquery to calculate sum of pretty_total grouped by destination_account_id
+        destination_balance_subquery = (
+            Transaction.objects.filter(
+                destination_account_id=OuterRef("pk"),
+                status_id__in=[2, 3],  # Adjust status conditions as needed
+            )
+            .annotate(
+                pretty_total=Case(
+                    When(transaction_type_id=2, then=Abs(F("total_amount"))),
+                    When(transaction_type_id=1, then=-Abs(F("total_amount"))),
+                    When(
+                        transaction_type_id=3,
+                        then=Case(
+                            When(
+                                destination_account_id=OuterRef("pk"),
+                                then=Abs(F("total_amount")),
+                            ),
+                            default=Abs(F("total_amount")),
+                            output_field=FloatField(),
+                        ),
+                    ),
+                    default=Value(0, output_field=FloatField()),
+                    output_field=FloatField(),
+                )
+            )
+            .values("destination_account_id")
+            .annotate(balance=Sum("pretty_total"))
+            .values("balance")[:1]
+        )
+
+        # Annotate the Account queryset with the combined balance
+        qs = qs.annotate(
+            source_balance=Coalesce(
+                Subquery(source_balance_subquery, output_field=FloatField()),
+                Value(0, output_field=FloatField()),
+            ),
+            destination_balance=Coalesce(
+                Subquery(
+                    destination_balance_subquery, output_field=FloatField()
+                ),
+                Value(0, output_field=FloatField()),
+            ),
+        ).annotate(
+            balance=ExpressionWrapper(
+                F("source_balance")
+                + F("destination_balance")
+                + F("opening_balance"),
+                output_field=FloatField(),
+            )
+        )
         logToDB(
             "Account list retrieved",
             None,
@@ -3176,7 +3216,7 @@ def list_accounts(
             3001007,
             1,
         )
-        return account_list
+        return qs
     except Exception as e:
         # Log other types of exceptions
         logToDB(
@@ -3187,7 +3227,7 @@ def list_accounts(
             3001907,
             2,
         )
-        raise HttpError(500, "Record retrieval error")
+        raise HttpError(500, f"Record retrieval error : {str(e)}")
 
 
 @api.get("/subtags", response=List[SubTagOut])
