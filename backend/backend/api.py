@@ -4008,75 +4008,93 @@ def list_transactions(
         # If an account was not specified, these should be upcoming transactions
         else:
 
+            # Setup subqueries
+            source_account_name = Account.objects.filter(
+                id=OuterRef("source_account_id")
+            ).values("account_name")[:1]
+            destination_account_name = Account.objects.filter(
+                id=OuterRef("destination_account_id")
+            ).values("account_name")[:1]
+            transaction_detail_subquery = (
+                TransactionDetail.objects.filter(
+                    transaction_id=OuterRef("id"),
+                )
+                .annotate(
+                    parent_tag=F("tag__parent__tag_name"),
+                    child_tag=F("tag__child__tag_name"),
+                    tag_name_combined=Case(
+                        When(child_tag__isnull=True, then=F("parent_tag")),
+                        default=Concat(
+                            F("parent_tag"), Value(" / "), F("child_tag")
+                        ),
+                        output_field=CharField(),
+                    ),
+                )
+                .exclude(tag_name_combined__isnull=True)
+                .values_list("tag_name_combined", flat=True)
+            )
+
             # Filter transactions for pending status and no reminders
-            processed_transactions = []
-            qs = Transaction.objects.filter(status_id=1, reminder__isnull=True)
+            qs = Transaction.objects.filter(status_id=1)
 
             # Set order of transactions
             qs = sort_transactions(qs)
             qs = qs[:10]
-            for transaction in qs:
-
-                # Initialize transaction details
-                tags = []
-                pretty_account = ""
-                source_account_name = None
-                destination_account_name = None
-                account_name = None
-
-                # Get account info
-                if transaction.source_account_id:
-                    if Account.objects.get(id=transaction.source_account_id):
-                        source_account_name = Account.objects.get(
-                            id=transaction.source_account_id
-                        ).account_name
-                    else:
-                        source_account_name = "Deleted Account"
-                if transaction.destination_account_id:
-                    if Account.objects.get(
-                        id=transaction.destination_account_id
-                    ):
-                        destination_account_name = Account.objects.get(
-                            id=transaction.destination_account_id
-                        ).account_name
-                    else:
-                        destination_account_name = "Deleted Account"
-                if transaction.account_id:
-                    if Account.objects.get(id=transaction.account_id):
-                        account_name = Account.objects.get(
-                            id=transaction.account_id
-                        ).account_name
-                    else:
-                        account_name = "Deleted Account"
-
-                # Retrieve transaction details
-                transaction_details = TransactionDetail.objects.filter(
-                    transaction=transaction.id
+            qs = qs.annotate(
+                source_name=Coalesce(
+                    Subquery(source_account_name),
+                    Value("Unknown Account"),
+                ),
+                destination_name=Coalesce(
+                    Subquery(destination_account_name),
+                    Value("Unknown Account"),
+                ),
+            )
+            qs = qs.annotate(
+                pretty_account=Case(
+                    When(
+                        transaction_type_id=3,
+                        then=Concat(
+                            F("source_name"),
+                            Value(" => "),
+                            F("destination_name"),
+                        ),
+                    ),
+                    default=F("source_name"),
+                    output_field=CharField(),  # Correctly specify the output field
                 )
-
-                # Process the details for this transaction
-                for detail in transaction_details:
-
-                    # If a tag doesn't already exist in the tags list, add it
-                    if detail.tag.tag_name not in tags:
-                        tags.append(detail.tag.tag_name)
-
-                if transaction.transaction_type.id == 3:
-                    pretty_account = (
-                        source_account_name + " => " + destination_account_name
-                    )
-                else:
-                    pretty_account = account_name
-                transaction.tags = tags
-                transaction.pretty_account = pretty_account
-                transaction.pretty_total = transaction.total_amount
-                processed_transactions.append(transaction)
-
+            )
+            qs = qs.annotate(
+                pretty_total=Case(
+                    When(
+                        transaction_type_id=2,
+                        then=Abs(F("total_amount")),
+                    ),
+                    When(
+                        transaction_type_id=1,
+                        then=-Abs(F("total_amount")),
+                    ),
+                    When(
+                        transaction_type_id=3,
+                        then=-Abs(F("total_amount")),
+                    ),
+                    default=Value(
+                        0,
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    ),  # Ensure the correct output field
+                    output_field=DecimalField(
+                        max_digits=12, decimal_places=2
+                    ),  # Ensure the correct output field
+                )
+            )
+            query = list(qs)
             paginated_obj = PaginatedTransactions(
-                transactions=processed_transactions,
+                transactions=query,
                 current_page=1,
                 total_pages=1,
-                total_records=len(qs),
+                total_records=len(query),
             )
             return paginated_obj
         logToDB(
