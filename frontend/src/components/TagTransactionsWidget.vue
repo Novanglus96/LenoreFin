@@ -63,20 +63,30 @@
               <template #transaction_date="row">
                 {{ row.value.transaction_date }}
               </template>
-              <template #tag_amount="row">
+              <template #transaction.total_amount="row">
                 <span
-                  :class="row.value.tag_amount < 0 ? 'text-red' : 'text-green'"
-                  >${{ row.value.tag_amount }}</span
+                  :class="
+                    row.value.transaction.total_amount < 0
+                      ? 'text-red'
+                      : 'text-green'
+                  "
+                  >${{ row.value.transaction.total_amount }}</span
                 >
               </template>
-              <template #transaction_description="row">
-                {{ row.value.transaction_description }}
+              <template #detail_amt="row">
+                <span
+                  :class="row.value.detail_amt < 0 ? 'text-red' : 'text-green'"
+                  >${{ row.value.detail_amt }}</span
+                >
               </template>
-              <template #transaction_memo="row">
-                {{ row.transaction_memo }}
+              <template #description="row">
+                {{ row.value.description }}
               </template>
-              <template #transaction_pretty_account="row">
-                {{ row.value.transaction_pretty_account }}
+              <template #memo="row">
+                {{ row.memo }}
+              </template>
+              <template #pretty_account="row">
+                {{ row.value.pretty_account }}
               </template>
             </vue3-datatable>
           </v-card-text>
@@ -120,11 +130,22 @@ const props = defineProps({
 });
 
 const columns = ref([
-  { field: "transaction_date", title: "Date", type: "date", width: "120px" },
-  { field: "tag_amount", title: "Amount", type: "number", width: "100px" },
-  { field: "transaction_description", title: "Description" },
-  { field: "transaction_memo", title: "Memo" },
-  { field: "transaction_pretty_account", title: "Account" },
+  {
+    field: "transaction.transaction_date",
+    title: "Date",
+    type: "date",
+    width: "120px",
+  },
+  {
+    field: "transaction.total_amount",
+    title: "Trans Amount",
+    type: "number",
+    width: "100px",
+  },
+  { field: "detail_amt", title: "Tag Amount", type: "number", width: "100px" },
+  { field: "transaction.description", title: "Description" },
+  { field: "transaction.memo", title: "Memo" },
+  { field: "pretty_account", title: "Account" },
 ]);
 const { tag_transactions, isLoading } = useGraphTransactions(props.tagID);
 const this_year_avg = computed(() =>

@@ -374,26 +374,6 @@ class ForecastOut(Schema):
     datasets: List[DatasetObject]
 
 
-# The class TagTransactionOut is a schema for representing Transactions by Tag.
-class TagTransactionOut(Schema):
-    transaction_id: int
-    transaction_date: date
-    tag_amount: Decimal = Field(whole_digits=10, decimal_places=2)
-    transaction_description: str
-    transaction_memo: str
-    transaction_pretty_account: str
-
-
-# The class TagGraphOut is a schema for representing a tag bar graph data.
-class TagGraphOut(Schema):
-    data: GraphData
-    year1: int
-    year2: int
-    year1_avg: Decimal = Field(whole_digits=10, decimal_places=2)
-    year2_avg: Decimal = Field(whole_digits=10, decimal_places=2)
-    transactions: List[TagTransactionOut]
-
-
 # The class ReminderIn is a schema for validating Reminders.
 class ReminderIn(Schema):
     tag_id: int
@@ -729,6 +709,24 @@ class TransactionOut(Schema):
     source_account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
     checkNumber: Optional[int] = None
+
+
+# The class TagTransactionOut is a schema for representing Transactions by Tag.
+class TagTransactionOut(Schema):
+    transaction: TransactionOut
+    detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+    pretty_account: str
+    tag: TagOut
+
+
+# The class TagGraphOut is a schema for representing a tag bar graph data.
+class TagGraphOut(Schema):
+    data: GraphData
+    year1: int
+    year2: int
+    year1_avg: Decimal = Field(whole_digits=10, decimal_places=2)
+    year2_avg: Decimal = Field(whole_digits=10, decimal_places=2)
+    transactions: List[TagTransactionOut]
 
 
 TransactionDetailOut.update_forward_refs()
@@ -3062,11 +3060,47 @@ def list_transactions_bytag(request, tag: int):
         this_month = today_tz.month
         this_year = today_tz.year
         last_year = today_tz.year - 1
+        source_account_name = Account.objects.filter(
+            id=OuterRef("transaction__source_account_id")
+        ).values("account_name")[:1]
+        destination_account_name = Account.objects.filter(
+            id=OuterRef("transaction__destination_account_id")
+        ).values("account_name")[:1]
 
         # Retrieve all transactions for tag
         alltrans = TransactionDetail.objects.filter(
             Q(tag__id=tag) & Q(transaction__status__id__gt=1)
         ).order_by("-transaction__transaction_date")
+
+        # Annotate source account names
+        alltrans = alltrans.annotate(
+            source_name=Coalesce(
+                Subquery(source_account_name), Value("Unknown Account")
+            )
+        )
+
+        # Annotate destination account names
+        alltrans = alltrans.annotate(
+            destination_name=Coalesce(
+                Subquery(destination_account_name), Value("Unknown Account")
+            )
+        )
+
+        # Annotate pretty account
+        alltrans = alltrans.annotate(
+            pretty_account=Case(
+                When(
+                    transaction__transaction_type_id=3,
+                    then=Concat(
+                        F("source_name"),
+                        Value(" => "),
+                        F("destination_name"),
+                    ),
+                ),
+                default=F("source_name"),
+                output_field=CharField(),  # Correctly specify the output field
+            )
+        )
 
         # Filter transactions for current year
         thisyear_trans = alltrans.filter(
@@ -3110,18 +3144,6 @@ def list_transactions_bytag(request, tag: int):
         else:
             last_year_avg = 0
         last_year_avg = round(last_year_avg, 2)
-        # Prepare the transactions object
-        transaction_details = []
-        for detail in alltrans:
-            transaction_detail = TagTransactionOut(
-                transaction_id=detail.transaction.id,
-                transaction_date=detail.transaction.transaction_date,
-                tag_amount=detail.detail_amt,
-                transaction_description=detail.transaction.description,
-                transaction_memo=detail.transaction.memo,
-                transaction_pretty_account=detail.account.account_name,
-            )
-            transaction_details.append(transaction_detail)
 
         # Calculate this year monthly totals
         this_year_totals = []
@@ -3184,7 +3206,7 @@ def list_transactions_bytag(request, tag: int):
             year2=last_year,
             year1_avg=this_year_avg,
             year2_avg=last_year_avg,
-            transactions=transaction_details,
+            transactions=list(alltrans),
         )
         logToDB(
             f"Tag details retrieved : {tag}",
@@ -3205,7 +3227,7 @@ def list_transactions_bytag(request, tag: int):
             3002904,
             2,
         )
-        raise HttpError(500, "Record retrieval error")
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
 @api.get("/accounts", response=List[AccountOut])
