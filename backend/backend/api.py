@@ -1801,58 +1801,120 @@ def get_account(request, account_id: int):
 
     try:
         # Retrieve the account object from the database
-        account = get_object_or_404(Account, id=account_id)
+        qs = Account.objects.filter(id=account_id)
 
-        # Fetch last transaction running_total, excluding pending
-        calc_balance = account.opening_balance
-        if Transaction.objects.filter(account_id=account_id).exclude(
-            status_id=1
-        ):
-            calc_balance = (
-                sort_transactions(
-                    Transaction.objects.filter(account_id=account_id).exclude(
-                        status_id=1
-                    ),
-                    False,
-                )
-                .first()
-                .running_total
+        # Subquery to calculate sum of pretty_total grouped by source_account_id
+        source_balance_subquery = (
+            Transaction.objects.filter(
+                source_account_id=OuterRef("pk"),
+                status_id__in=[2, 3],  # Adjust status conditions as needed
             )
-
-        # Prepare the AccountOut object
-        account_out = AccountOut(
-            id=account.id,
-            account_name=account.account_name,
-            account_type=AccountTypeOut(
-                id=account.account_type.id,
-                account_type=account.account_type.account_type,
-                color=account.account_type.color,
-                icon=account.account_type.icon,
-            ),
-            opening_balance=account.opening_balance,
-            apy=account.apy,
-            due_date=account.due_date,
-            active=account.active,
-            open_date=account.open_date,
-            next_cycle_date=account.next_cycle_date,
-            statement_cycle_length=account.statement_cycle_length,
-            statement_cycle_period=account.statement_cycle_period,
-            rewards_amount=account.rewards_amount,
-            credit_limit=account.credit_limit,
-            available_credit=account.credit_limit + calc_balance,
-            balance=calc_balance,
-            bank=BankOut(id=account.bank.id, bank_name=account.bank.bank_name),
-            last_statement_amount=account.last_statement_amount,
+            .annotate(
+                pretty_total=Case(
+                    When(transaction_type_id=2, then=Abs(F("total_amount"))),
+                    When(transaction_type_id=1, then=-Abs(F("total_amount"))),
+                    When(
+                        transaction_type_id=3,
+                        then=Case(
+                            When(
+                                source_account_id=OuterRef("pk"),
+                                then=-Abs(F("total_amount")),
+                            ),
+                            default=Abs(F("total_amount")),
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
+                        ),
+                    ),
+                    default=Value(
+                        0,
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    ),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            )
+            .values("source_account_id")
+            .annotate(balance=Sum("pretty_total"))
+            .values("balance")[:1]
         )
+
+        # Subquery to calculate sum of pretty_total grouped by destination_account_id
+        destination_balance_subquery = (
+            Transaction.objects.filter(
+                destination_account_id=OuterRef("pk"),
+                status_id__in=[2, 3],  # Adjust status conditions as needed
+            )
+            .annotate(
+                pretty_total=Case(
+                    When(transaction_type_id=2, then=Abs(F("total_amount"))),
+                    When(transaction_type_id=1, then=-Abs(F("total_amount"))),
+                    When(
+                        transaction_type_id=3,
+                        then=Case(
+                            When(
+                                destination_account_id=OuterRef("pk"),
+                                then=Abs(F("total_amount")),
+                            ),
+                            default=Abs(F("total_amount")),
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
+                        ),
+                    ),
+                    default=Value(
+                        0,
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    ),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            )
+            .values("destination_account_id")
+            .annotate(balance=Sum("pretty_total"))
+            .values("balance")[:1]
+        )
+        qs = qs.annotate(
+            source_balance=Coalesce(
+                Subquery(
+                    source_balance_subquery,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+                Value(
+                    0,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+            ),
+            destination_balance=Coalesce(
+                Subquery(
+                    destination_balance_subquery,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+                Value(
+                    0,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+            ),
+        ).annotate(
+            balance=ExpressionWrapper(
+                F("source_balance")
+                + F("destination_balance")
+                + F("opening_balance"),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            )
+        )
+        account = qs.first()
         logToDB(
-            f"Account retrieved : {account_out.account_name}",
+            f"Account retrieved : {account.account_name}",
             account_id,
             None,
             None,
             3001006,
             1,
         )
-        return account_out
+        return account
     except Exception as e:
         # Log other types of exceptions
         logToDB(
@@ -1863,7 +1925,7 @@ def get_account(request, account_id: int):
             3001904,
             2,
         )
-        raise HttpError(500, "Record retrieval error")
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
 @api.get("/subtags/{subtag_id}", response=SubTagOut)
@@ -2342,35 +2404,91 @@ def get_forecast(
         # Retrieve the transactions in the date range for the account
         start_date = get_forecast_start_date(start_interval)
         end_date = get_forecast_end_date(end_interval)
-        lowest_source_balance_object = sort_transactions(
-            Transaction.objects.filter(
-                account_id=account_id, transaction_date__lt=start_date
-            )
-        ).last()
-        transactions = sort_transactions(
-            Transaction.objects.filter(
-                Q(account_id=account_id),
-                transaction_date__range=(start_date, end_date),
+
+        transactions = Transaction.objects.filter(
+            Q(source_account_id=account_id)
+            | Q(destination_account_id=account_id),
+            transaction_date__lt=end_date,
+        )
+
+        transactions = transactions.annotate(
+            pretty_total=Case(
+                When(
+                    transaction_type_id=2,
+                    then=Abs(F("total_amount")),
+                ),
+                When(
+                    transaction_type_id=1,
+                    then=-Abs(F("total_amount")),
+                ),
+                When(
+                    transaction_type_id=3,
+                    then=Case(
+                        When(
+                            source_account_id=account_id,
+                            then=-Abs(F("total_amount")),
+                        ),
+                        default=Abs(F("total_amount")),
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),  # Ensure the correct output field
+                    ),
+                ),
+                default=Value(
+                    0,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),  # Ensure the correct output field
+                output_field=DecimalField(
+                    max_digits=12, decimal_places=2
+                ),  # Ensure the correct output field
             )
         )
 
-        # Calculate the daily account balance
-        balance = Decimal(0)
-        if lowest_source_balance_object is None:
-            balance = opening_balance
-        else:
-            balance = lowest_source_balance_object.running_total
-        day_balance = Decimal(0)
-        for label in dates:
-            last_transaction_of_day = sort_transactions(
-                transactions.filter(transaction_date=label)
-            ).last()
-            if last_transaction_of_day:
-                day_balance = last_transaction_of_day.running_total
-                balance = day_balance
-            else:
-                day_balance = balance
-            data.append(day_balance)
+        transactions = (
+            transactions.values("transaction_date")
+            .annotate(
+                daily_total=Sum(
+                    "pretty_total",
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            )
+            .order_by("transaction_date")
+        )
+
+        transactions_up_to_start = transactions.filter(
+            transaction_date__lt=start_date
+        )
+        cumulative_balance_up_to_start = transactions_up_to_start.aggregate(
+            total=Coalesce(
+                Sum(
+                    "daily_total",
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+                Value(
+                    0,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+            )
+        )["total"]
+
+        opening_balance_as_of_start = (
+            opening_balance + cumulative_balance_up_to_start
+        )
+
+        previous_balance = opening_balance_as_of_start
+        transactions_dict = {
+            t["transaction_date"].strftime("%Y-%m-%d"): t["daily_total"]
+            for t in transactions
+        }
+
+        for label_date in labels:
+            parsed_date = datetime.strptime(label_date, "%b %d, %y")
+            formatted_date = parsed_date.strftime("%Y-%m-%d")
+            daily_total = transactions_dict.get(formatted_date, 0)
+            print(f"label: {formatted_date} total: {daily_total}")
+            current_balance = previous_balance + daily_total
+            data.append(current_balance)
+            previous_balance = current_balance
 
         # Prepare the graph data for the forecast object
         targetobject_out = TargetObject(value=0)
@@ -2408,7 +2526,7 @@ def get_forecast(
             3002902,
             2,
         )
-        raise HttpError(500, "Record retrieval error")
+        raise HttpError(500, f"Record retrieval error : {str(e)}")
 
 
 @api.get(
@@ -3892,20 +4010,11 @@ def list_transactions(
             )
 
             query = Transaction.objects.filter(
-                Q(source_account_id=account) | Q(destination_account_id=account)
+                Q(source_account_id=account)
+                | Q(destination_account_id=account),
+                transaction_date__lt=threshold_date,
             )
 
-            if forecast is False:
-                query = query.filter(
-                    transaction_date__lt=threshold_date,
-                )
-            else:
-                query = query.filter(
-                    transaction_date__range=(
-                        today_tz,
-                        threshold_date,
-                    )
-                )
             query = query.annotate(
                 source_name=Coalesce(
                     Subquery(source_account_name),
@@ -3981,12 +4090,36 @@ def list_transactions(
                     ],
                 )
             )
-            query = query.annotate(
-                balance=ExpressionWrapper(
-                    F("cumulative_balance") + Value(opening_balance),
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
+            if not forecast:
+                query = query.annotate(
+                    balance=ExpressionWrapper(
+                        F("cumulative_balance") + Value(opening_balance),
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    )
                 )
-            )
+            else:
+                transactions_up_to_today = query.filter(
+                    transaction_date__lt=today_tz
+                )
+                if transactions_up_to_today:
+                    cumulative_balance_up_to_today = (
+                        transactions_up_to_today.last().cumulative_balance
+                    )
+                else:
+                    cumulative_balance_up_to_today = 0
+                query = query.filter(transaction_date__gte=today_tz)
+                query = query.annotate(
+                    balance=ExpressionWrapper(
+                        F("cumulative_balance")
+                        + Value(opening_balance)
+                        + Value(cumulative_balance_up_to_today),
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    )
+                )
             reversed_query = list(reversed(query))
             total_pages = 0
             if page_size is not None and page is not None:
