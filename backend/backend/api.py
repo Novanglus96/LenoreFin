@@ -65,6 +65,7 @@ from django.db.models import (
     ExpressionWrapper,
     DecimalField,
     Func,
+    Count,
 )
 from django.db import models, IntegrityError
 from django.db.models.functions import Concat, Coalesce, Abs
@@ -2911,6 +2912,7 @@ def get_graph(request, widget_id: int):
         tagID = None
         month = 0
         expense = True
+        tags = None
 
         # Load the options for the specified widget ID
         options = get_object_or_404(Option, id=1)
@@ -2980,26 +2982,55 @@ def get_graph(request, widget_id: int):
             tags = Tag.objects.filter(tag_type__id=tag_type_id).exclude(
                 id__in=exclude_list
             )
-        else:
+            # Calculate month totals for each tag
+            # Use the tag name as the label and the total as the value
+            for tag in tags:
+                tag_amount = (
+                    TransactionDetail.objects.filter(
+                        tag=tag,
+                        transaction__transaction_date__month=target_month,
+                        transaction__transaction_date__year=target_year,
+                        transaction__status__id__gt=1,
+                    ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
+                    or 0
+                )
+                if tag_amount != 0:
+                    labels.append(tag.tag_name)
+                    values.append(tag_amount)
+        elif tagID != -1:
             tags = Tag.objects.filter(parent__id=tagID).exclude(
                 id__in=exclude_list
             )
 
-        # Calculate month totals for each tag
-        # Use the tag name as the label and the total as the value
-        for tag in tags:
-            tag_amount = (
-                TransactionDetail.objects.filter(
-                    tag=tag,
-                    transaction__transaction_date__month=target_month,
-                    transaction__transaction_date__year=target_year,
-                    transaction__status__id__gt=1,
-                ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
-                or 0
+            # Calculate month totals for each tag
+            # Use the tag name as the label and the total as the value
+            for tag in tags:
+                tag_amount = (
+                    TransactionDetail.objects.filter(
+                        tag=tag,
+                        transaction__transaction_date__month=target_month,
+                        transaction__transaction_date__year=target_year,
+                        transaction__status__id__gt=1,
+                    ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
+                    or 0
+                )
+                if tag_amount != 0:
+                    labels.append(tag.tag_name)
+                    values.append(tag_amount)
+        elif tagID == -1:
+            result = Transaction.objects.filter(
+                transaction_date__month=target_month,
+                transaction_date__year=target_year,
+                status__id__gt=1,
             )
-            if tag_amount != 0:
-                labels.append(tag.tag_name)
-                values.append(tag_amount)
+            result = result.annotate(tag_count=Count("transactiondetail__id"))
+            result = result.filter(tag_count=0)
+
+            result = result.aggregate(total=Sum(F("total_amount")))
+
+            untagged_total = result["total"] or 0
+            values.append(untagged_total)
+            labels.append("Untagged")
 
         # If there are no tags or totals, return None as label and 0 as value
         if not values:
@@ -3032,7 +3063,7 @@ def get_graph(request, widget_id: int):
             3002903,
             2,
         )
-        raise HttpError(500, "Record retrieval error")
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
 @api.get("/transactions_bytag", response=TagGraphOut)
