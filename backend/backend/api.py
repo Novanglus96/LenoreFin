@@ -2997,6 +2997,21 @@ def get_graph(request, widget_id: int):
                 if tag_amount != 0:
                     labels.append(tag.tag_name)
                     values.append(tag_amount)
+            result = Transaction.objects.filter(
+                transaction_date__month=target_month,
+                transaction_date__year=target_year,
+                status__id__gt=1,
+                transaction_type_id=tag_type_id,
+            )
+            result = result.annotate(tag_count=Count("transactiondetail__id"))
+            result = result.filter(tag_count=0)
+
+            result = result.aggregate(total=Sum(F("total_amount")))
+
+            untagged_total = result["total"] or 0
+            if untagged_total != 0:
+                values.append(untagged_total)
+                labels.append("Untagged")
         elif tagID != -1:
             tags = Tag.objects.filter(parent__id=tagID).exclude(
                 id__in=exclude_list
