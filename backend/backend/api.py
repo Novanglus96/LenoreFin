@@ -4188,6 +4188,26 @@ def list_transactions(
                         ),
                     )
                 )
+            for transaction in query:
+                tags = list(
+                    TransactionDetail.objects.filter(
+                        transaction_id=transaction.id
+                    )
+                    .annotate(
+                        parent_tag=F("tag__parent__tag_name"),
+                        child_tag=F("tag__child__tag_name"),
+                        tag_name_combined=Case(
+                            When(child_tag__isnull=True, then=F("parent_tag")),
+                            default=Concat(
+                                F("parent_tag"), Value(" / "), F("child_tag")
+                            ),
+                            output_field=CharField(),
+                        ),
+                    )
+                    .exclude(tag_name_combined__isnull=True)
+                    .values_list("tag_name_combined", flat=True)
+                )
+                transaction.tags = tags
             reversed_query = list(reversed(query))
             total_pages = 0
             if page_size is not None and page is not None:
@@ -4288,6 +4308,13 @@ def list_transactions(
                     output_field=DecimalField(
                         max_digits=12, decimal_places=2
                     ),  # Ensure the correct output field
+                )
+            )
+            qs = qs.annotate(
+                tags=ArrayAgg(
+                    Subquery(
+                        transaction_detail_subquery.values("tag_name_combined")
+                    )
                 )
             )
             query = list(qs)
