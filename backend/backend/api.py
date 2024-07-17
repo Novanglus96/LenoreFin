@@ -3579,8 +3579,18 @@ def list_tags(
         if child is not None:
             qs = qs.filter(child__id=child).exclude(tag_type__id=3)
 
+        qs = qs.annotate(
+            parent_tag=F("parent__tag_name"),
+            child_tag=F("child__tag_name"),
+            tag_name_combined=Case(
+                When(child_tag__isnull=True, then=F("parent_tag")),
+                default=Concat(F("parent_tag"), Value(" / "), F("child_tag")),
+                output_field=CharField(),
+            ),
+        )
+
         # Order tags by parent__tag_name, child__tag_name
-        qs = qs.order_by("parent__tag_name", "child__tag_name")
+        qs = qs.order_by("tag_name_combined")
         logToDB(
             "Tag list retrieved",
             None,

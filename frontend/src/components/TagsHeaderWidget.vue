@@ -56,10 +56,9 @@
                     }}</span>
                   </template>
                   <template v-slot:subtitle>
-                    <span
-                      :class="!tag.parent ? 'text-primary' : 'text-black'"
-                      >{{ !tag.parent ? "..." : tag.tag_name }}</span
-                    >
+                    <span :class="!tag.child ? 'text-primary' : 'text-black'">{{
+                      !tag.child ? "..." : tag.child.tag_name
+                    }}</span>
                   </template>
                 </v-card>
               </v-slide-group-item>
