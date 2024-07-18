@@ -4055,7 +4055,10 @@ def list_transactions(
         # details that match account
         if account is not None:
             qs = None
-            query = None
+            all_transactions = None
+            past_transactions = None
+            future_transactions = None
+            reminder_transactions_list = []
             today = timezone.now()
             tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
             today_tz = today.astimezone(tz_timezone).date()
@@ -4086,13 +4089,13 @@ def list_transactions(
                 .values_list("tag_name_combined", flat=True)
             )
 
-            query = Transaction.objects.filter(
+            all_transactions = Transaction.objects.filter(
                 Q(source_account_id=account)
                 | Q(destination_account_id=account),
                 transaction_date__lt=threshold_date,
             )
 
-            query = query.annotate(
+            all_transactions = all_transactions.annotate(
                 source_name=Coalesce(
                     Subquery(source_account_name),
                     Value("Unknown Account"),
@@ -4102,7 +4105,7 @@ def list_transactions(
                     Value("Unknown Account"),
                 ),
             )
-            query = query.annotate(
+            all_transactions = all_transactions.annotate(
                 pretty_account=Case(
                     When(
                         transaction_type_id=3,
@@ -4116,7 +4119,7 @@ def list_transactions(
                     output_field=CharField(),  # Correctly specify the output field
                 )
             )
-            query = query.annotate(
+            all_transactions = all_transactions.annotate(
                 pretty_total=Case(
                     When(
                         transaction_type_id=2,
@@ -4150,7 +4153,10 @@ def list_transactions(
                     ),  # Ensure the correct output field
                 )
             )
-            query = query.annotate(
+            past_transactions = all_transactions.filter(
+                transaction_date__lt=today_tz
+            )
+            past_transactions = past_transactions.annotate(
                 cumulative_balance=Window(
                     expression=Sum(F("pretty_total")),
                     order_by=[
@@ -4167,37 +4173,18 @@ def list_transactions(
                     ],
                 )
             )
-            if not forecast:
-                query = query.annotate(
-                    balance=ExpressionWrapper(
-                        F("cumulative_balance") + Value(opening_balance),
-                        output_field=DecimalField(
-                            max_digits=12, decimal_places=2
-                        ),
-                    )
+            past_transactions = past_transactions.annotate(
+                balance=ExpressionWrapper(
+                    F("cumulative_balance") + Value(opening_balance),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
                 )
-            else:
-                transactions_up_to_today = query.filter(
-                    transaction_date__lt=today_tz
+            )
+            cumulative_balance_up_to_today = opening_balance
+            if past_transactions:
+                cumulative_balance_up_to_today = (
+                    past_transactions.last().cumulative_balance
                 )
-                if transactions_up_to_today:
-                    cumulative_balance_up_to_today = (
-                        transactions_up_to_today.last().cumulative_balance
-                    )
-                else:
-                    cumulative_balance_up_to_today = 0
-                query = query.filter(transaction_date__gte=today_tz)
-                query = query.annotate(
-                    balance=ExpressionWrapper(
-                        F("cumulative_balance")
-                        + Value(opening_balance)
-                        + Value(cumulative_balance_up_to_today),
-                        output_field=DecimalField(
-                            max_digits=12, decimal_places=2
-                        ),
-                    )
-                )
-            for transaction in query:
+            for transaction in past_transactions:
                 tags = list(
                     TransactionDetail.objects.filter(
                         transaction_id=transaction.id
@@ -4217,25 +4204,149 @@ def list_transactions(
                     .values_list("tag_name_combined", flat=True)
                 )
                 transaction.tags = tags
-            """
-            TODO: 
-            Sum transactions earlier than today in a list
-            Remaining transacactions in a list
-            Create dummy reminder transactions, add to list
-            Create interest dummy transactions, add to list
-            Sort list and create running totals from last of
-            past_transactions
-            """
-            reversed_query = list(reversed(query))
+            future_transactions = all_transactions.filter(
+                transaction_date__gte=today_tz
+            )
+            future_transactions = future_transactions.annotate(
+                balance=ExpressionWrapper(
+                    Value(cumulative_balance_up_to_today),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            )
+            for transaction in future_transactions:
+                tags = list(
+                    TransactionDetail.objects.filter(
+                        transaction_id=transaction.id
+                    )
+                    .annotate(
+                        parent_tag=F("tag__parent__tag_name"),
+                        child_tag=F("tag__child__tag_name"),
+                        tag_name_combined=Case(
+                            When(child_tag__isnull=True, then=F("parent_tag")),
+                            default=Concat(
+                                F("parent_tag"), Value(" / "), F("child_tag")
+                            ),
+                            output_field=CharField(),
+                        ),
+                    )
+                    .exclude(tag_name_combined__isnull=True)
+                    .values_list("tag_name_combined", flat=True)
+                )
+                transaction.tags = tags
+            status = TransactionStatus.objects.get(id=1)
+            transaction_type = TransactionType.objects.get(id=1)
+            account = Account.objects.get(id=8)
+            new_transaction_date = datetime.strptime(
+                "2024-07-20", "%Y-%m-%d"
+            ).date()
+            new_transaction = {
+                "id": -1,
+                "transaction_date": new_transaction_date,
+                "total_amount": Decimal("-100.00"),
+                "status": status,
+                "memo": "New transaction",
+                "description": "Description of new transaction",
+                "edit_date": today_tz,
+                "add_date": today_tz,
+                "transaction_type": transaction_type,
+                "paycheck": None,
+                "checkNumber": None,
+                "pretty_total": Decimal("-100.00"),
+                "pretty_account": account.account_name,
+                "source_account_id": 8,
+                "destination_account_id": None,
+                "balance": Decimal(0.00),
+            }
+            print(f"transaction: {new_transaction}")
+            reminder_transactions_list.append(new_transaction)
+            future_transactions_list = list(future_transactions)
+            transactions_to_be_sorted = (
+                future_transactions_list + reminder_transactions_list
+            )
+
+            def get_status_id(transaction):
+                if isinstance(transaction, dict):
+                    return (
+                        transaction["status"].id
+                        if transaction["status"]
+                        else float("inf")
+                    )
+                else:
+                    return (
+                        transaction.status.id
+                        if transaction.status
+                        else float("inf")
+                    )
+
+            def get_priority(transaction):
+                if isinstance(transaction, dict):
+                    status_id = (
+                        transaction["status"].id
+                        if transaction["status"]
+                        else None
+                    )
+                else:
+                    status_id = (
+                        transaction.status.id if transaction.status else None
+                    )
+
+                if status_id == 1:
+                    return 2
+                elif status_id in [2, 3]:
+                    return 0
+                else:
+                    return 1
+
+            def get_transaction_date(transaction):
+                if isinstance(transaction, dict):
+                    return transaction["transaction_date"]
+                else:
+                    return transaction.transaction_date
+
+            def get_pretty_total(transaction):
+                if isinstance(transaction, dict):
+                    return transaction.get("pretty_total", 0)
+                else:
+                    return transaction.pretty_total
+
+            def get_id(transaction):
+                if isinstance(transaction, dict):
+                    return transaction.get("id", 0)
+                else:
+                    return transaction.id
+
+            sorted_transactions = sorted(
+                transactions_to_be_sorted,
+                key=lambda t: (
+                    get_priority(t),
+                    get_status_id(t),
+                    get_transaction_date(t),
+                    -get_pretty_total(t),
+                    -get_id(t),
+                ),
+            )
+            running_total = cumulative_balance_up_to_today
+            for transaction in sorted_transactions:
+                if isinstance(transaction, dict):
+                    running_total += transaction["pretty_total"]
+                    transaction["balance"] = running_total
+                else:
+                    running_total += transaction.pretty_total
+                    transaction.balance = running_total
+            past_transactions_list = list(past_transactions)
+            all_transactions_list = past_transactions_list + sorted_transactions
+            reversed_all_transactions_list = list(
+                reversed(all_transactions_list)
+            )
             total_pages = 0
             if page_size is not None and page is not None:
-                paginator = Paginator(reversed_query, page_size)
+                paginator = Paginator(reversed_all_transactions_list, page_size)
                 page_obj = paginator.page(page)
                 qs = list(page_obj.object_list)
                 total_pages = paginator.num_pages
             else:
-                qs = query
-            total_records = len(query)
+                qs = past_transactions
+            total_records = len(all_transactions_list)
             paginated_obj = PaginatedTransactions(
                 transactions=qs,
                 current_page=page,
