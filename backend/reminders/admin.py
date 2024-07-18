@@ -1,10 +1,18 @@
 from django.contrib import admin
-from .models import Reminder, Repeat
+from .models import Reminder, Repeat, ReminderExclusion
 from django.http import HttpResponse
 from import_export.admin import ImportExportModelAdmin
 
 
 # Register your models here.
+
+
+class ReminderExclusionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "reminder", "exclude_date"]
+
+    list_display_links = ["id", "reminder"]
+
+    ordering = ["reminder", "-exclude_date"]
 
 
 class RepeatAdmin(ImportExportModelAdmin, admin.ModelAdmin):
@@ -30,18 +38,7 @@ class ReminderAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
     ordering = ["next_date", "description", "id"]
 
-    def has_add_permission(self, request):
-        # Return False to disable adding
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        # Return False to disable deleting
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        # Return False to disable editing
-        return False
-
 
 admin.site.register(Repeat, RepeatAdmin)
 admin.site.register(Reminder, ReminderAdmin)
+admin.site.register(ReminderExclusion, ReminderExclusionAdmin)

@@ -12,7 +12,6 @@ from transactions.models import (
     Transaction,
     TransactionDetail,
     TransactionStatus,
-    update_running_totals,
     create_transactions,
     CustomTag,
     FullTransaction,
@@ -29,7 +28,7 @@ from imports.models import (
     AccountMapping,
 )
 from accounts.models import Account
-from reminders.models import Reminder, Repeat
+from reminders.models import Reminder, Repeat, ReminderExclusion
 from django_q.models import Schedule
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -74,46 +73,70 @@ def convert_reminder():
     today_tz = today.astimezone(tz_timezone).date()
     todayDate = today_tz.strftime("%Y-%m-%d")
 
-    # Get transactions that have a reminder and are dated today or earlier
-    transactions = Transaction.objects.filter(
-        transaction_date__lte=todayDate, reminder__isnull=False
-    )
+    # Get reminders that have a next date of today or earlier
+    reminders = Reminder.objects.filter(next_date__lte=todayDate)
 
-    # Check for auto_add
-    if transactions and len(transactions) > 0:
-        for trans in transactions:
-            reminder = trans.reminder
-            repeat = reminder.repeat
+    # Add transactions and modify next date
+    if reminders and len(reminders) > 0:
+        for reminder in reminders:
             if reminder.auto_add:
-                # If auto_add is True, delete the reminder association
-                trans.reminder = None
-                trans.save()
-                logToDB(
-                    "Reminder transaction auto-added",
-                    None,
-                    reminder.id,
-                    trans.id,
-                    3001002,
-                    1,
-                )
-            else:
-                # If auto_add is False, delete the transaction
-                trans.delete()
-                logToDB(
-                    "Reminder transaction deleted",
-                    None,
-                    reminder.id,
-                    None,
-                    3001003,
-                    1,
-                )
+                if not ReminderExclusion.objects.filter(
+                    reminder_id=reminder.id, exclude_date=todayDate
+                ).first():
+                    # If auto_add is True, add transaction
+                    transactions_to_create = []
+                    tags = []
+                    tag_obj = CustomTag(
+                        tag_name=reminder.tag.tag_name,
+                        tag_amount=reminder.amount,
+                        tag_id=reminder.tag.id,
+                    )
+                    tags.append(tag_obj)
+                    destination_account = None
+                    if reminder.reminder_destination_account:
+                        destination_account = (
+                            reminder.reminder_destination_account.id
+                        )
+                    transaction = FullTransaction(
+                        transaction_date=todayDate,
+                        total_amount=reminder.amount,
+                        status_id=1,
+                        memo=reminder.memo,
+                        description=reminder.description,
+                        edit_date=todayDate,
+                        add_date=todayDate,
+                        transaction_type_id=reminder.transaction_type.id,
+                        paycheck_id=None,
+                        source_account_id=reminder.reminder_source_account.id,
+                        destination_account_id=destination_account,
+                        tags=tags,
+                        checkNumber=None,
+                    )
+                    transactions_to_create.append(transaction)
+                    create_transactions(transactions_to_create)
+                    logToDB(
+                        "Reminder transaction auto-added",
+                        None,
+                        reminder.id,
+                        None,
+                        3001002,
+                        1,
+                    )
 
             # Modify the next due and start date of the reminder
-            nextDate = timezone.now().date()
-            nextDate += relativedelta(days=repeat.days)
-            nextDate += relativedelta(weeks=repeat.weeks)
-            nextDate += relativedelta(months=repeat.months)
-            nextDate += relativedelta(years=repeat.years)
+            repeat = Repeat.objects.get(id=reminder.repeat.id)
+            nextDate = today_tz
+
+            # Loop through to find next date not excluded
+            while True:
+                nextDate += relativedelta(days=repeat.days)
+                nextDate += relativedelta(weeks=repeat.weeks)
+                nextDate += relativedelta(months=repeat.months)
+                nextDate += relativedelta(years=repeat.years)
+                if not ReminderExclusion.objects.filter(
+                    reminder_id=reminder.id, exclude_date=nextDate
+                ).first():
+                    break
 
             # Check if the next date is not after Reminder end date, delete
             # reminder if it is.

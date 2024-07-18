@@ -10,6 +10,8 @@ from django.shortcuts import get_object_or_404
 from django.db.models.query import QuerySet
 from tags.models import Tag
 from accounts.models import Account
+import pytz
+import os
 
 
 def current_date():
@@ -107,6 +109,20 @@ class Reminder(models.Model):
         Repeat, on_delete=models.SET_NULL, null=True, blank=True
     )
     auto_add = models.BooleanField(default=False)
+    memo = models.CharField(max_length=508, null=True, blank=True, default=None)
 
     def __str__(self):
         return self.description
+
+
+class ReminderExclusion(models.Model):
+    """
+    Model representing a reminder exclusion, which is a date no longer part of reminder series.
+
+    Fields:
+    - reminder (ForeignKey): a reference to a reminder object
+    - exclude_date (DateField): a date to exclude
+    """
+
+    reminder = models.ForeignKey(Reminder, on_delete=models.CASCADE)
+    exclude_date = models.DateField(default=current_date)

@@ -1375,7 +1375,6 @@ def create_reminder(request, payload: ReminderIn):
             3001001,
             1,
         )
-        reminder_trans_add(reminder.id)
         return {"id": reminder.id}
     except Exception as e:
         # Log other types of exceptions
@@ -4218,6 +4217,15 @@ def list_transactions(
                     .values_list("tag_name_combined", flat=True)
                 )
                 transaction.tags = tags
+            """
+            TODO: 
+            Sum transactions earlier than today in a list
+            Remaining transacactions in a list
+            Create dummy reminder transactions, add to list
+            Create interest dummy transactions, add to list
+            Sort list and create running totals from last of
+            past_transactions
+            """
             reversed_query = list(reversed(query))
             total_pages = 0
             if page_size is not None and page is not None:
@@ -5275,7 +5283,6 @@ def update_reminder(request, reminder_id: int, payload: ReminderIn):
         reminder.repeat_id = payload.repeat_id
         reminder.auto_add = payload.auto_add
         reminder.save()
-        reminder_trans_update(reminder_id)
         logToDB(
             f"Reminder updated : #{reminder_id}",
             None,
@@ -6408,7 +6415,6 @@ def delete_reminder(request, reminder_id: int):
         pre_delete.disconnect(update_sort_totals, sender=Transaction)
         transactions.delete()
         pre_delete.connect(update_sort_totals, sender=Transaction)
-        update_running_totals(True, False, None)
         reminder.delete()
         logToDB(
             f"Reminder deleted : #{reminder_description}",
@@ -6949,128 +6955,3 @@ def import_file(
 
 
 # Helper Functions
-def reminder_trans_add(reminder_id):
-    """
-    The function `reminder_trans_add` creates transactions for the specified reminder.
-
-    Args:
-        reminder_id (int): The id of the reminder to create transactions from.
-
-    Returns:
-        success (bool): Returns true if successful.
-    """
-    try:
-        # Get the reminder object
-        reminder = get_object_or_404(Reminder, id=reminder_id)
-
-        # Starting with the start date, create transactions based on repeat
-        # until end date
-
-        # Extract reminder details
-        start_date = reminder.start_date
-        end_date = (
-            reminder.end_date
-            if reminder.end_date
-            else start_date + relativedelta(years=10)
-        )  # 10 years from start
-        repeat_days = reminder.repeat.days
-        repeat_weeks = reminder.repeat.weeks
-        repeat_months = reminder.repeat.months
-        repeat_years = reminder.repeat.years
-
-        current_date = start_date
-        transactions_to_create = []
-        tags = []
-        tag_obj = CustomTag(
-            tag_name=None, tag_amount=reminder.amount, tag_id=reminder.tag.id
-        )
-        tags.append(tag_obj)
-        while current_date <= end_date:
-            # Create transaction for current date
-            source_account_id = reminder.reminder_source_account.id
-            destination_account_id = None
-            if reminder.reminder_destination_account:
-                destination_account_id = (
-                    reminder.reminder_destination_account.id
-                )
-            transaction = FullTransaction(
-                transaction_date=current_date,
-                total_amount=reminder.amount,
-                status_id=1,
-                memo="",
-                description=reminder.description,
-                edit_date=current_date,
-                add_date=current_date,
-                transaction_type_id=reminder.transaction_type.id,
-                reminder_id=reminder_id,
-                paycheck_id=None,
-                source_account_id=source_account_id,
-                destination_account_id=destination_account_id,
-                tags=tags,
-            )
-            print(f"transaction: {transaction}")
-            transactions_to_create.append(transaction)
-
-            # Increment current date based on repeat interval
-            current_date += relativedelta(days=repeat_days)
-            current_date += relativedelta(weeks=repeat_weeks)
-            current_date += relativedelta(months=repeat_months)
-            current_date += relativedelta(years=repeat_years)
-        create_transactions(transactions_to_create)
-        logToDB(
-            "Reminder transactions created",
-            None,
-            reminder_id,
-            None,
-            3002007,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Unable to create reminder transactions : {str(e)}",
-            None,
-            reminder_id,
-            None,
-            3002907,
-            3,
-        )
-        return {"success": False}
-
-
-def reminder_trans_update(reminder_id):
-    """
-    The function `reminder_trans_update` deletes and then recreates transactions for the specified reminder.
-
-    Args:
-        reminder_id (int): The id of the reminder to update transactions.
-
-    Returns:
-        success (bool): Returns true if successful.
-    """
-
-    try:
-        # Delete the existing reminder transactions
-        transactions = Transaction.objects.filter(reminder__id=reminder_id)
-        transactions.delete()
-        logToDB(
-            "Reminder transactions deleted",
-            None,
-            reminder_id,
-            None,
-            3002008,
-            1,
-        )
-        reminder_trans_add(reminder_id)
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Unable to update reminder transactions : {str(e)}",
-            None,
-            reminder_id,
-            None,
-            3002908,
-            3,
-        )
