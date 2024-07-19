@@ -31,7 +31,7 @@ from imports.models import (
 )
 from accounts.models import AccountType, Bank, Account
 from tags.models import Tag, TagType, MainTag, SubTag
-from reminders.models import Repeat, Reminder
+from reminders.models import Repeat, Reminder, ReminderExclusion
 from planning.models import ChristmasGift, ContribRule, Contribution, Note
 from administration.models import (
     ErrorLevel,
@@ -4233,32 +4233,79 @@ def list_transactions(
                     .values_list("tag_name_combined", flat=True)
                 )
                 transaction.tags = tags
+
+            reminders = Reminder.objects.filter(
+                Q(reminder_source_account_id=account)
+                | Q(reminder_destination_account_id=account),
+                next_date__lte=threshold_date,
+            )
             status = TransactionStatus.objects.get(id=1)
-            transaction_type = TransactionType.objects.get(id=1)
-            account = Account.objects.get(id=8)
-            new_transaction_date = datetime.strptime(
-                "2024-07-20", "%Y-%m-%d"
-            ).date()
-            new_transaction = {
-                "id": -1,
-                "transaction_date": new_transaction_date,
-                "total_amount": Decimal("-100.00"),
-                "status": status,
-                "memo": "New transaction",
-                "description": "Description of new transaction",
-                "edit_date": today_tz,
-                "add_date": today_tz,
-                "transaction_type": transaction_type,
-                "paycheck": None,
-                "checkNumber": None,
-                "pretty_total": Decimal("-100.00"),
-                "pretty_account": account.account_name,
-                "source_account_id": 8,
-                "destination_account_id": None,
-                "balance": Decimal(0.00),
-            }
-            print(f"transaction: {new_transaction}")
-            reminder_transactions_list.append(new_transaction)
+            for reminder in reminders:
+                new_transaction_date = reminder.next_date
+                destination_account = None
+                destination_account_name = None
+                if reminder.reminder_destination_account:
+                    destination_account = (
+                        reminder.reminder_destination_account.id
+                    )
+                    destination_account_name = (
+                        reminder.reminder_destination_account.account_name
+                    )
+                source_account_name = (
+                    reminder.reminder_source_account.account_name
+                )
+                pretty_account = source_account_name
+                pretty_total = reminder.amount
+                if reminder.transaction_type.id == 3:
+                    pretty_account = (
+                        source_account_name + " => " + destination_account_name
+                    )
+                    if reminder.reminder_source_account.id == account:
+                        pretty_total = -abs(reminder.amount)
+                    else:
+                        pretty_total = abs(reminder.amount)
+                if reminder.transaction_type.id == 1:
+                    pretty_total = -abs(reminder.amount)
+                if reminder.transaction_type.id == 2:
+                    pretty_total = abs(reminder.amount)
+                repeat = Repeat.objects.get(id=reminder.repeat.id)
+                tags = []
+                tag_object = reminder.tag.tag_name
+                tags.append(tag_object)
+                while True:
+                    if not ReminderExclusion.objects.filter(
+                        reminder_id=reminder.id,
+                        exclude_date=new_transaction_date,
+                    ).first():
+                        new_transaction = {
+                            "id": -1,
+                            "transaction_date": new_transaction_date,
+                            "total_amount": Decimal(reminder.amount),
+                            "status": status,
+                            "memo": reminder.memo,
+                            "description": reminder.description,
+                            "edit_date": today_tz,
+                            "add_date": today_tz,
+                            "transaction_type": reminder.transaction_type,
+                            "paycheck": None,
+                            "checkNumber": None,
+                            "pretty_total": Decimal(pretty_total),
+                            "pretty_account": pretty_account,
+                            "source_account_id": reminder.reminder_source_account.id,
+                            "destination_account_id": destination_account,
+                            "balance": Decimal(0.00),
+                            "tags": tags,
+                        }
+                        reminder_transactions_list.append(new_transaction)
+                    new_transaction_date += relativedelta(days=repeat.days)
+                    new_transaction_date += relativedelta(weeks=repeat.weeks)
+                    new_transaction_date += relativedelta(months=repeat.months)
+                    new_transaction_date += relativedelta(years=repeat.years)
+                    if (
+                        new_transaction_date > threshold_date
+                        or new_transaction_date > reminder.end_date
+                    ):
+                        break
             future_transactions_list = list(future_transactions)
             transactions_to_be_sorted = (
                 future_transactions_list + reminder_transactions_list
