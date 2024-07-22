@@ -357,7 +357,10 @@ class DatasetObject(Schema):
     tension: Optional[Decimal] = Field(whole_digits=1, decimal_places=1)
     data: Optional[List[Decimal]] = Field(whole_digits=10, decimal_places=2)
     fill: Optional[FillObject]
-    pointStyle: Optional[bool]
+    pointStyle: Optional[str]
+    radius: Optional[int]
+    hitRadius: Optional[int]
+    hoverRadius: Optional[int]
     label: Optional[str]
     hoverBackgroundColor: Optional[str] = "rgba(75,192,192,0.6)"
     hoverBorderColor: Optional[str] = "rgba(75,192,192,1)"
@@ -2501,7 +2504,10 @@ def get_forecast(
             tension=0.1,
             data=data,
             fill=fillobject_out,
-            pointStyle="false",
+            pointStyle="circle",
+            radius=2,
+            hitRadius=5,
+            hoverRadius=5,
         )
         datasets.append(datasets_out)
         forecast_out = ForecastOut(labels=labels, datasets=datasets)
