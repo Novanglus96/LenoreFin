@@ -41,7 +41,7 @@ from administration.models import (
     Payee,
     logToDB,
 )
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
 from datetime import date, timedelta, datetime
@@ -4060,337 +4060,22 @@ def list_transactions(
         # If an account is specified, filter transactions for maximum days and transaction
         # details that match account
         if account is not None:
-            qs = None
-            all_transactions = None
-            past_transactions = None
-            future_transactions = None
-            reminder_transactions_list = []
-            today = timezone.now()
-            tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
-            today_tz = today.astimezone(tz_timezone).date()
-            threshold_date = today_tz + timedelta(days=maxdays)
-            source_account_name = Account.objects.filter(
-                id=OuterRef("source_account_id")
-            ).values("account_name")[:1]
-            destination_account_name = Account.objects.filter(
-                id=OuterRef("destination_account_id")
-            ).values("account_name")[:1]
-            opening_balance = Account.objects.get(id=account).opening_balance
-            transaction_detail_subquery = (
-                TransactionDetail.objects.filter(
-                    transaction_id=OuterRef("id"),
-                )
-                .annotate(
-                    parent_tag=F("tag__parent__tag_name"),
-                    child_tag=F("tag__child__tag_name"),
-                    tag_name_combined=Case(
-                        When(child_tag__isnull=True, then=F("parent_tag")),
-                        default=Concat(
-                            F("parent_tag"), Value(" / "), F("child_tag")
-                        ),
-                        output_field=CharField(),
-                    ),
-                )
-                .exclude(tag_name_combined__isnull=True)
-                .values_list("tag_name_combined", flat=True)
+            # Set end_date
+            end_date = get_todays_date_timezone_adjusted() + timedelta(
+                days=maxdays
             )
 
-            all_transactions = Transaction.objects.filter(
-                Q(source_account_id=account)
-                | Q(destination_account_id=account),
-                transaction_date__lt=threshold_date,
+            # Get a complete list of transactions, including reminders, sorted with totals
+            all_transactions_list = get_complete_transaction_list_with_totals(
+                end_date, account, False
             )
 
-            all_transactions = all_transactions.annotate(
-                source_name=Coalesce(
-                    Subquery(source_account_name),
-                    Value("Unknown Account"),
-                ),
-                destination_name=Coalesce(
-                    Subquery(destination_account_name),
-                    Value("Unknown Account"),
-                ),
-            )
-            all_transactions = all_transactions.annotate(
-                pretty_account=Case(
-                    When(
-                        transaction_type_id=3,
-                        then=Concat(
-                            F("source_name"),
-                            Value(" => "),
-                            F("destination_name"),
-                        ),
-                    ),
-                    default=F("source_name"),
-                    output_field=CharField(),  # Correctly specify the output field
-                )
-            )
-            all_transactions = all_transactions.annotate(
-                pretty_total=Case(
-                    When(
-                        transaction_type_id=2,
-                        then=Abs(F("total_amount")),
-                    ),
-                    When(
-                        transaction_type_id=1,
-                        then=-Abs(F("total_amount")),
-                    ),
-                    When(
-                        transaction_type_id=3,
-                        then=Case(
-                            When(
-                                source_account_id=account,
-                                then=-Abs(F("total_amount")),
-                            ),
-                            default=Abs(F("total_amount")),
-                            output_field=DecimalField(
-                                max_digits=12, decimal_places=2
-                            ),  # Ensure the correct output field
-                        ),
-                    ),
-                    default=Value(
-                        0,
-                        output_field=DecimalField(
-                            max_digits=12, decimal_places=2
-                        ),
-                    ),  # Ensure the correct output field
-                    output_field=DecimalField(
-                        max_digits=12, decimal_places=2
-                    ),  # Ensure the correct output field
-                )
-            )
-            past_transactions = all_transactions.filter(
-                transaction_date__lt=today_tz
-            )
-            past_transactions = past_transactions.annotate(
-                cumulative_balance=Window(
-                    expression=Sum(F("pretty_total")),
-                    order_by=[
-                        Case(
-                            When(status_id=1, then=Value(2)),
-                            When(status_id=2, then=Value(0)),
-                            When(status_id=3, then=Value(0)),
-                            default=Value(1),
-                            output_field=IntegerField(),
-                        ),
-                        "transaction_date",
-                        "-pretty_total",
-                        "-id",
-                    ],
-                )
-            )
-            past_transactions = past_transactions.annotate(
-                balance=ExpressionWrapper(
-                    F("cumulative_balance") + Value(opening_balance),
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                )
-            )
-            cumulative_balance_up_to_today = opening_balance
-            if past_transactions:
-                cumulative_balance_up_to_today = (
-                    past_transactions.last().cumulative_balance
-                )
-            for transaction in past_transactions:
-                tags = list(
-                    TransactionDetail.objects.filter(
-                        transaction_id=transaction.id
-                    )
-                    .annotate(
-                        parent_tag=F("tag__parent__tag_name"),
-                        child_tag=F("tag__child__tag_name"),
-                        tag_name_combined=Case(
-                            When(child_tag__isnull=True, then=F("parent_tag")),
-                            default=Concat(
-                                F("parent_tag"), Value(" / "), F("child_tag")
-                            ),
-                            output_field=CharField(),
-                        ),
-                    )
-                    .exclude(tag_name_combined__isnull=True)
-                    .values_list("tag_name_combined", flat=True)
-                )
-                transaction.tags = tags
-            future_transactions = all_transactions.filter(
-                transaction_date__gte=today_tz
-            )
-            future_transactions = future_transactions.annotate(
-                balance=ExpressionWrapper(
-                    Value(cumulative_balance_up_to_today),
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                )
-            )
-            for transaction in future_transactions:
-                tags = list(
-                    TransactionDetail.objects.filter(
-                        transaction_id=transaction.id
-                    )
-                    .annotate(
-                        parent_tag=F("tag__parent__tag_name"),
-                        child_tag=F("tag__child__tag_name"),
-                        tag_name_combined=Case(
-                            When(child_tag__isnull=True, then=F("parent_tag")),
-                            default=Concat(
-                                F("parent_tag"), Value(" / "), F("child_tag")
-                            ),
-                            output_field=CharField(),
-                        ),
-                    )
-                    .exclude(tag_name_combined__isnull=True)
-                    .values_list("tag_name_combined", flat=True)
-                )
-                transaction.tags = tags
-
-            reminders = Reminder.objects.filter(
-                Q(reminder_source_account_id=account)
-                | Q(reminder_destination_account_id=account),
-                next_date__lte=threshold_date,
-            )
-            status = TransactionStatus.objects.get(id=1)
-            for reminder in reminders:
-                new_transaction_date = reminder.next_date
-                destination_account = None
-                destination_account_name = None
-                if reminder.reminder_destination_account:
-                    destination_account = (
-                        reminder.reminder_destination_account.id
-                    )
-                    destination_account_name = (
-                        reminder.reminder_destination_account.account_name
-                    )
-                source_account_name = (
-                    reminder.reminder_source_account.account_name
-                )
-                pretty_account = source_account_name
-                pretty_total = reminder.amount
-                if reminder.transaction_type.id == 3:
-                    pretty_account = (
-                        source_account_name + " => " + destination_account_name
-                    )
-                    if reminder.reminder_source_account.id == account:
-                        pretty_total = -abs(reminder.amount)
-                    else:
-                        pretty_total = abs(reminder.amount)
-                if reminder.transaction_type.id == 1:
-                    pretty_total = -abs(reminder.amount)
-                if reminder.transaction_type.id == 2:
-                    pretty_total = abs(reminder.amount)
-                repeat = Repeat.objects.get(id=reminder.repeat.id)
-                tags = []
-                tag_object = reminder.tag.tag_name
-                tags.append(tag_object)
-                while True:
-                    if not ReminderExclusion.objects.filter(
-                        reminder_id=reminder.id,
-                        exclude_date=new_transaction_date,
-                    ).first():
-                        new_transaction = {
-                            "id": -1,
-                            "transaction_date": new_transaction_date,
-                            "total_amount": Decimal(reminder.amount),
-                            "status": status,
-                            "memo": reminder.memo,
-                            "description": reminder.description,
-                            "edit_date": today_tz,
-                            "add_date": today_tz,
-                            "transaction_type": reminder.transaction_type,
-                            "paycheck": None,
-                            "checkNumber": None,
-                            "pretty_total": Decimal(pretty_total),
-                            "pretty_account": pretty_account,
-                            "source_account_id": reminder.reminder_source_account.id,
-                            "destination_account_id": destination_account,
-                            "balance": Decimal(0.00),
-                            "tags": tags,
-                        }
-                        reminder_transactions_list.append(new_transaction)
-                    new_transaction_date += relativedelta(days=repeat.days)
-                    new_transaction_date += relativedelta(weeks=repeat.weeks)
-                    new_transaction_date += relativedelta(months=repeat.months)
-                    new_transaction_date += relativedelta(years=repeat.years)
-                    if (
-                        new_transaction_date > threshold_date
-                        or new_transaction_date > reminder.end_date
-                    ):
-                        break
-            future_transactions_list = list(future_transactions)
-            transactions_to_be_sorted = (
-                future_transactions_list + reminder_transactions_list
-            )
-
-            def get_status_id(transaction):
-                if isinstance(transaction, dict):
-                    return (
-                        transaction["status"].id
-                        if transaction["status"]
-                        else float("inf")
-                    )
-                else:
-                    return (
-                        transaction.status.id
-                        if transaction.status
-                        else float("inf")
-                    )
-
-            def get_priority(transaction):
-                if isinstance(transaction, dict):
-                    status_id = (
-                        transaction["status"].id
-                        if transaction["status"]
-                        else None
-                    )
-                else:
-                    status_id = (
-                        transaction.status.id if transaction.status else None
-                    )
-
-                if status_id == 1:
-                    return 2
-                elif status_id in [2, 3]:
-                    return 0
-                else:
-                    return 1
-
-            def get_transaction_date(transaction):
-                if isinstance(transaction, dict):
-                    return transaction["transaction_date"]
-                else:
-                    return transaction.transaction_date
-
-            def get_pretty_total(transaction):
-                if isinstance(transaction, dict):
-                    return transaction.get("pretty_total", 0)
-                else:
-                    return transaction.pretty_total
-
-            def get_id(transaction):
-                if isinstance(transaction, dict):
-                    return transaction.get("id", 0)
-                else:
-                    return transaction.id
-
-            sorted_transactions = sorted(
-                transactions_to_be_sorted,
-                key=lambda t: (
-                    get_priority(t),
-                    get_status_id(t),
-                    get_transaction_date(t),
-                    -get_pretty_total(t),
-                    -get_id(t),
-                ),
-            )
-            running_total = cumulative_balance_up_to_today
-            for transaction in sorted_transactions:
-                if isinstance(transaction, dict):
-                    running_total += transaction["pretty_total"]
-                    transaction["balance"] = running_total
-                else:
-                    running_total += transaction.pretty_total
-                    transaction.balance = running_total
-            past_transactions_list = list(past_transactions)
-            all_transactions_list = past_transactions_list + sorted_transactions
+            # Reverse transactions
             reversed_all_transactions_list = list(
                 reversed(all_transactions_list)
             )
+
+            # Paginate transactions
             total_pages = 0
             if page_size is not None and page is not None:
                 paginator = Paginator(reversed_all_transactions_list, page_size)
@@ -7119,3 +6804,434 @@ def import_file(
 
 
 # Helper Functions
+def get_complete_transaction_list_with_totals(
+    end_date: date,
+    account: int,
+    totals_only: bool,
+    start_date: Optional[date] = None,
+):
+    """
+    The function `get_complete_transaction_list_with_totals` returns a list of
+    transactions, temporary reminder transactions, etc.
+
+    Args:
+        start_date (Date): The first date of the transactions.
+        end_date (Date): The last date of the transactions.
+        account (Int): The ID of the account to get transactions for.
+
+    Returns:
+        transactions: List of transaction objects
+    """
+
+    # Setup variables
+    today = get_todays_date_timezone_adjusted()
+
+    # Subqueries
+    source_account_name = Account.objects.filter(
+        id=OuterRef("source_account_id")
+    ).values("account_name")[:1]
+    destination_account_name = Account.objects.filter(
+        id=OuterRef("destination_account_id")
+    ).values("account_name")[:1]
+
+    # Get Opening Balance
+    opening_balance = Account.objects.get(id=account).opening_balance
+
+    # Get all transactions less than end_date
+    all_transactions = Transaction.objects.filter(
+        Q(source_account_id=account) | Q(destination_account_id=account),
+        transaction_date__lt=end_date,
+    )
+
+    # Annotate Source, Destination, Pretty Account Names if not totals_only
+    if not totals_only:
+        all_transactions = all_transactions.annotate(
+            source_name=Coalesce(
+                Subquery(source_account_name),
+                Value("Unknown Account"),
+            ),
+            destination_name=Coalesce(
+                Subquery(destination_account_name),
+                Value("Unknown Account"),
+            ),
+        )
+        all_transactions = all_transactions.annotate(
+            pretty_account=Case(
+                When(
+                    transaction_type_id=3,
+                    then=Concat(
+                        F("source_name"),
+                        Value(" => "),
+                        F("destination_name"),
+                    ),
+                ),
+                default=F("source_name"),
+                output_field=CharField(),  # Correctly specify the output field
+            )
+        )
+
+    # Annotate pretty total
+    all_transactions = all_transactions.annotate(
+        pretty_total=Case(
+            When(
+                transaction_type_id=2,
+                then=Abs(F("total_amount")),
+            ),
+            When(
+                transaction_type_id=1,
+                then=-Abs(F("total_amount")),
+            ),
+            When(
+                transaction_type_id=3,
+                then=Case(
+                    When(
+                        source_account_id=account,
+                        then=-Abs(F("total_amount")),
+                    ),
+                    default=Abs(F("total_amount")),
+                    output_field=DecimalField(
+                        max_digits=12, decimal_places=2
+                    ),  # Ensure the correct output field
+                ),
+            ),
+            default=Value(
+                0,
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            ),  # Ensure the correct output field
+            output_field=DecimalField(
+                max_digits=12, decimal_places=2
+            ),  # Ensure the correct output field
+        )
+    )
+
+    # Get Past Transactions
+    past_transactions = all_transactions.filter(transaction_date__lt=today)
+
+    # Annotate Past Transactions with balance
+    past_transactions = past_transactions.annotate(
+        cumulative_balance=Window(
+            expression=Sum(F("pretty_total")),
+            order_by=[
+                Case(
+                    When(status_id=1, then=Value(2)),
+                    When(status_id=2, then=Value(0)),
+                    When(status_id=3, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                ),
+                "transaction_date",
+                "-pretty_total",
+                "-id",
+            ],
+        )
+    )
+    past_transactions = past_transactions.annotate(
+        balance=ExpressionWrapper(
+            F("cumulative_balance") + Value(opening_balance),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+    )
+
+    # Calculate cumulative balance up to to today
+    cumulative_balance_up_to_today = opening_balance
+    if past_transactions:
+        cumulative_balance_up_to_today = (
+            past_transactions.last().cumulative_balance
+        )
+
+    # Add tags to past transactions if not totals_only
+    if not totals_only:
+        for transaction in past_transactions:
+            tags = list(
+                TransactionDetail.objects.filter(transaction_id=transaction.id)
+                .annotate(
+                    parent_tag=F("tag__parent__tag_name"),
+                    child_tag=F("tag__child__tag_name"),
+                    tag_name_combined=Case(
+                        When(child_tag__isnull=True, then=F("parent_tag")),
+                        default=Concat(
+                            F("parent_tag"), Value(" / "), F("child_tag")
+                        ),
+                        output_field=CharField(),
+                    ),
+                )
+                .exclude(tag_name_combined__isnull=True)
+                .values_list("tag_name_combined", flat=True)
+            )
+            transaction.tags = tags
+
+    # Create list from past transactions
+    past_transactions_list = list(past_transactions)
+
+    # Get future transactions
+    future_transactions = all_transactions.filter(transaction_date__gte=today)
+
+    # Annotate future transactions with balance
+    future_transactions = future_transactions.annotate(
+        balance=ExpressionWrapper(
+            Value(cumulative_balance_up_to_today),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+    )
+
+    # Add tags to future transactions if not totals_only
+    if not totals_only:
+        for transaction in future_transactions:
+            tags = list(
+                TransactionDetail.objects.filter(transaction_id=transaction.id)
+                .annotate(
+                    parent_tag=F("tag__parent__tag_name"),
+                    child_tag=F("tag__child__tag_name"),
+                    tag_name_combined=Case(
+                        When(child_tag__isnull=True, then=F("parent_tag")),
+                        default=Concat(
+                            F("parent_tag"), Value(" / "), F("child_tag")
+                        ),
+                        output_field=CharField(),
+                    ),
+                )
+                .exclude(tag_name_combined__isnull=True)
+                .values_list("tag_name_combined", flat=True)
+            )
+            transaction.tags = tags
+
+    # Create a list from future_transactions
+    future_transactions_list = list(future_transactions)
+
+    # Get a list of transactions based on reminders
+    reminder_transactions_list = get_reminder_transaction_list(
+        end_date, account, start_date
+    )
+
+    # Combine future and reminder transactions
+    transactions_to_be_sorted = (
+        future_transactions_list + reminder_transactions_list
+    )
+
+    # Sort the list of transactions
+    sorted_transactions = sort_transaction_list(transactions_to_be_sorted)
+
+    # Add balances to sorted transactions
+    sorted_transactions_with_balances = add_balances_to_transaction_list(
+        sorted_transactions, cumulative_balance_up_to_today
+    )
+
+    # Combine past transactions with sorted transactions with balances
+    transactions = past_transactions_list + sorted_transactions_with_balances
+    return transactions
+
+
+def get_reminder_transaction_list(
+    end_date: date, account: int, start_date: Optional[date] = None
+):
+    """
+    The function `get_reminder_transaction_list` returns a list of
+    temporary reminder transactions
+
+    Args:
+        start_date (Date): The first date of the transactions.
+        end_date (Date): The last date of the transactions.
+        account (Int): The ID of the account to get transactions for.
+
+    Returns:
+        transactions: List of reminder transaction objects
+    """
+
+    # Setup variables
+    today = get_todays_date_timezone_adjusted()
+    reminder_transactions_list = []
+
+    # Get Reminders for account that have a next date within time frame
+    reminders = Reminder.objects.filter(
+        Q(reminder_source_account_id=account)
+        | Q(reminder_destination_account_id=account),
+        next_date__lte=end_date,
+    )
+
+    # Get a Pending status object
+    status = TransactionStatus.objects.get(id=1)
+
+    # Create temporary transactions based on reminders
+    for reminder in reminders:
+        new_transaction_date = reminder.next_date
+        destination_account = None
+        destination_account_name = None
+        if reminder.reminder_destination_account:
+            destination_account = reminder.reminder_destination_account.id
+            destination_account_name = (
+                reminder.reminder_destination_account.account_name
+            )
+        source_account_name = reminder.reminder_source_account.account_name
+        pretty_account = source_account_name
+        pretty_total = reminder.amount
+        if reminder.transaction_type.id == 3:
+            pretty_account = (
+                source_account_name + " => " + destination_account_name
+            )
+            if reminder.reminder_source_account.id == account:
+                pretty_total = -abs(reminder.amount)
+            else:
+                pretty_total = abs(reminder.amount)
+        if reminder.transaction_type.id == 1:
+            pretty_total = -abs(reminder.amount)
+        if reminder.transaction_type.id == 2:
+            pretty_total = abs(reminder.amount)
+        repeat = Repeat.objects.get(id=reminder.repeat.id)
+        tags = []
+        tag_object = reminder.tag.tag_name
+        tags.append(tag_object)
+        while True:
+            if not ReminderExclusion.objects.filter(
+                reminder_id=reminder.id,
+                exclude_date=new_transaction_date,
+            ).first():
+                new_transaction = {
+                    "id": -1,
+                    "transaction_date": new_transaction_date,
+                    "total_amount": Decimal(reminder.amount),
+                    "status": status,
+                    "memo": reminder.memo,
+                    "description": reminder.description,
+                    "edit_date": today,
+                    "add_date": today,
+                    "transaction_type": reminder.transaction_type,
+                    "paycheck": None,
+                    "checkNumber": None,
+                    "pretty_total": Decimal(pretty_total),
+                    "pretty_account": pretty_account,
+                    "source_account_id": reminder.reminder_source_account.id,
+                    "destination_account_id": destination_account,
+                    "balance": Decimal(0.00),
+                    "tags": tags,
+                }
+                reminder_transactions_list.append(new_transaction)
+            new_transaction_date += relativedelta(days=repeat.days)
+            new_transaction_date += relativedelta(weeks=repeat.weeks)
+            new_transaction_date += relativedelta(months=repeat.months)
+            new_transaction_date += relativedelta(years=repeat.years)
+            if (
+                new_transaction_date > end_date
+                or new_transaction_date > reminder.end_date
+            ):
+                break
+    return reminder_transactions_list
+
+
+def sort_transaction_list(transactions: List[Any]) -> List[Any]:
+    """
+    The function `sort_transaction_list` sorts a provided list of
+    transactions.
+
+    Args:
+
+    Returns:
+        transactions: List of sorted transactions
+    """
+
+    # Helper function to sort by status
+    def get_status_id(transaction):
+        if isinstance(transaction, dict):
+            return (
+                transaction["status"].id
+                if transaction["status"]
+                else float("inf")
+            )
+        else:
+            return transaction.status.id if transaction.status else float("inf")
+
+    # Helper function to sort by priority
+    def get_priority(transaction):
+        if isinstance(transaction, dict):
+            status_id = (
+                transaction["status"].id if transaction["status"] else None
+            )
+        else:
+            status_id = transaction.status.id if transaction.status else None
+
+        if status_id == 1:
+            return 2
+        elif status_id in [2, 3]:
+            return 0
+        else:
+            return 1
+
+    # Helper function to sort by transaction date
+    def get_transaction_date(transaction):
+        if isinstance(transaction, dict):
+            return transaction["transaction_date"]
+        else:
+            return transaction.transaction_date
+
+    # Helper function to sort by pretty total
+    def get_pretty_total(transaction):
+        if isinstance(transaction, dict):
+            return transaction.get("pretty_total", 0)
+        else:
+            return transaction.pretty_total
+
+    # Helper function to sort by id
+    def get_id(transaction):
+        if isinstance(transaction, dict):
+            return transaction.get("id", 0)
+        else:
+            return transaction.id
+
+    # Sort transactions
+    sorted_transactions = sorted(
+        transactions,
+        key=lambda t: (
+            get_priority(t),
+            get_status_id(t),
+            get_transaction_date(t),
+            -get_pretty_total(t),
+            -get_id(t),
+        ),
+    )
+
+    return sorted_transactions
+
+
+def add_balances_to_transaction_list(
+    transactions: List[Any], start_balance: Decimal
+) -> List[Any]:
+    """
+    The function `add_balances_to_transaction_list` adds balances
+    to a list of transactions and returns the list
+
+    Args:
+        transactions (List): A list of transactions to update.
+        start_balance (Decimal): The starting balance.
+
+    Returns:
+        transactions: List of transactions with balances
+    """
+
+    # Setup variables
+    running_total = start_balance
+
+    # Calculate and add balances
+    for transaction in transactions:
+        if isinstance(transaction, dict):
+            running_total += transaction["pretty_total"]
+            transaction["balance"] = running_total
+        else:
+            running_total += transaction.pretty_total
+            transaction.balance = running_total
+
+    return transactions
+
+
+def get_todays_date_timezone_adjusted() -> date:
+    """
+    The function `get_todays_date_timezone_adjusted` returns todays date
+    adjusted for the local timezone of the app.
+
+    Args:
+
+    Returns:
+        date: todays date
+    """
+    today = timezone.now()
+    tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+    today_tz = today.astimezone(tz_timezone).date()
+    return today_tz
