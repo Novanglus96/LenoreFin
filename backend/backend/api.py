@@ -4067,18 +4067,25 @@ def list_transactions(
 
             # Get a complete list of transactions, including reminders, sorted with totals
             all_transactions_list = get_complete_transaction_list_with_totals(
-                end_date, account, False
+                end_date, account, False, forecast
             )
 
-            # Reverse transactions
-            reversed_all_transactions_list = list(
-                reversed(all_transactions_list)
-            )
+            # Reverse transactions if not forecast
+            if not forecast:
+                reversed_all_transactions_list = list(
+                    reversed(all_transactions_list)
+                )
 
             # Paginate transactions
             total_pages = 0
             if page_size is not None and page is not None:
-                paginator = Paginator(reversed_all_transactions_list, page_size)
+                paginator = None
+                if not forecast:
+                    paginator = Paginator(
+                        reversed_all_transactions_list, page_size
+                    )
+                else:
+                    paginator = Paginator(all_transactions_list, page_size)
                 page_obj = paginator.page(page)
                 qs = list(page_obj.object_list)
                 total_pages = paginator.num_pages
@@ -6808,7 +6815,7 @@ def get_complete_transaction_list_with_totals(
     end_date: date,
     account: int,
     totals_only: bool,
-    start_date: Optional[date] = None,
+    forecast: Optional[bool] = False,
 ):
     """
     The function `get_complete_transaction_list_with_totals` returns a list of
@@ -7000,7 +7007,7 @@ def get_complete_transaction_list_with_totals(
 
     # Get a list of transactions based on reminders
     reminder_transactions_list = get_reminder_transaction_list(
-        end_date, account, start_date
+        end_date, account, forecast
     )
 
     # Combine future and reminder transactions
@@ -7018,11 +7025,30 @@ def get_complete_transaction_list_with_totals(
 
     # Combine past transactions with sorted transactions with balances
     transactions = past_transactions_list + sorted_transactions_with_balances
-    return transactions
+
+    # Filter transactions for status and greater than today
+    if forecast:
+        filtered_transactions = []
+        for transaction in transactions:
+            if isinstance(transaction, dict):
+                if (
+                    transaction["status"].id == 1
+                    and transaction["transaction_date"] >= today
+                ):
+                    filtered_transactions.append(transaction)
+            else:
+                if (
+                    transaction.transaction_date >= today
+                    and transaction.status.id == 1
+                ):
+                    filtered_transactions.append(transaction)
+        return filtered_transactions
+    else:
+        return transactions
 
 
 def get_reminder_transaction_list(
-    end_date: date, account: int, start_date: Optional[date] = None
+    end_date: date, account: int, forecast: Optional[bool] = False
 ):
     """
     The function `get_reminder_transaction_list` returns a list of
