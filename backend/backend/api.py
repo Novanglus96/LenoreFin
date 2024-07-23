@@ -7136,10 +7136,8 @@ def get_reminder_transaction_list(
             new_transaction_date += relativedelta(weeks=repeat.weeks)
             new_transaction_date += relativedelta(months=repeat.months)
             new_transaction_date += relativedelta(years=repeat.years)
-            if (
-                not reminder.end_date
-                or new_transaction_date > end_date
-                or new_transaction_date > reminder.end_date
+            if new_transaction_date > end_date or (
+                reminder.end_date and new_transaction_date > reminder.end_date
             ):
                 break
     return reminder_transactions_list
