@@ -79,6 +79,7 @@ import pytz
 import os
 from django.contrib.postgres.aggregates import ArrayAgg
 from decimal import Decimal
+import traceback
 
 
 class Round(Func):
@@ -7136,7 +7137,8 @@ def get_reminder_transaction_list(
             new_transaction_date += relativedelta(months=repeat.months)
             new_transaction_date += relativedelta(years=repeat.years)
             if (
-                new_transaction_date > end_date
+                not reminder.end_date
+                or new_transaction_date > end_date
                 or new_transaction_date > reminder.end_date
             ):
                 break
