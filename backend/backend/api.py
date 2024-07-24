@@ -2407,90 +2407,42 @@ def get_forecast(
         start_date = get_forecast_start_date(start_interval)
         end_date = get_forecast_end_date(end_interval)
 
-        transactions = Transaction.objects.filter(
-            Q(source_account_id=account_id)
-            | Q(destination_account_id=account_id),
-            transaction_date__lt=end_date,
-        )
-
-        transactions = transactions.annotate(
-            pretty_total=Case(
-                When(
-                    transaction_type_id=2,
-                    then=Abs(F("total_amount")),
-                ),
-                When(
-                    transaction_type_id=1,
-                    then=-Abs(F("total_amount")),
-                ),
-                When(
-                    transaction_type_id=3,
-                    then=Case(
-                        When(
-                            source_account_id=account_id,
-                            then=-Abs(F("total_amount")),
-                        ),
-                        default=Abs(F("total_amount")),
-                        output_field=DecimalField(
-                            max_digits=12, decimal_places=2
-                        ),  # Ensure the correct output field
-                    ),
-                ),
-                default=Value(
-                    0,
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                ),  # Ensure the correct output field
-                output_field=DecimalField(
-                    max_digits=12, decimal_places=2
-                ),  # Ensure the correct output field
+        # Get list of transactions
+        transactions_list, previous_balance = (
+            get_complete_transaction_list_with_totals(
+                end_date, account_id, True, True, start_date
             )
         )
 
-        transactions = (
-            transactions.values("transaction_date")
-            .annotate(
-                daily_total=Sum(
-                    "pretty_total",
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                )
-            )
-            .order_by("transaction_date")
-        )
+        # Get the initial balance
+        # Use opening balance or first previous balance available
+        daily_total = 0
 
-        transactions_up_to_start = transactions.filter(
-            transaction_date__lt=start_date
-        )
-        cumulative_balance_up_to_start = transactions_up_to_start.aggregate(
-            total=Coalesce(
-                Sum(
-                    "daily_total",
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                ),
-                Value(
-                    0,
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                ),
-            )
-        )["total"]
-
-        opening_balance_as_of_start = (
-            opening_balance + cumulative_balance_up_to_start
-        )
-
-        previous_balance = opening_balance_as_of_start
-        transactions_dict = {
-            t["transaction_date"].strftime("%Y-%m-%d"): t["daily_total"]
-            for t in transactions
-        }
-
+        # Get the totals by day
         for label_date in labels:
             parsed_date = datetime.strptime(label_date, "%b %d, %y")
             formatted_date = parsed_date.strftime("%Y-%m-%d")
-            daily_total = transactions_dict.get(formatted_date, 0)
-            print(f"label: {formatted_date} total: {daily_total}")
-            current_balance = previous_balance + daily_total
+            transactions_today = []
+            for transaction in transactions_list:
+                if isinstance(transaction, dict):
+                    if str(transaction["transaction_date"]) == str(
+                        formatted_date
+                    ):
+                        transactions_today.append(transaction)
+                else:
+                    if str(transaction.transaction_date) == str(formatted_date):
+                        transactions_today.append(transaction)
+            if len(transactions_today) > 0:
+                last_transaction_today = transactions_today[-1]
+                if isinstance(last_transaction_today, dict):
+                    daily_total = last_transaction_today["balance"]
+                else:
+                    daily_total = last_transaction_today.balance
+            else:
+                daily_total = previous_balance
+            current_balance = daily_total
+            previous_balance = daily_total
             data.append(current_balance)
-            previous_balance = current_balance
 
         # Prepare the graph data for the forecast object
         targetobject_out = TargetObject(value=0)
@@ -4067,8 +4019,10 @@ def list_transactions(
             )
 
             # Get a complete list of transactions, including reminders, sorted with totals
-            all_transactions_list = get_complete_transaction_list_with_totals(
-                end_date, account, False, forecast
+            all_transactions_list, previous_balance = (
+                get_complete_transaction_list_with_totals(
+                    end_date, account, False, forecast
+                )
             )
 
             # Reverse transactions if not forecast
@@ -6817,6 +6771,7 @@ def get_complete_transaction_list_with_totals(
     account: int,
     totals_only: bool,
     forecast: Optional[bool] = False,
+    start_date: Optional[date] = None,
 ):
     """
     The function `get_complete_transaction_list_with_totals` returns a list of
@@ -7027,25 +6982,40 @@ def get_complete_transaction_list_with_totals(
     # Combine past transactions with sorted transactions with balances
     transactions = past_transactions_list + sorted_transactions_with_balances
 
-    # Filter transactions for status and greater than today
+    # Filter transactions for status and greater than start date, record previous balance
     if forecast:
         filtered_transactions = []
-        for transaction in transactions:
+        last_index = -1
+        previous_balance = opening_balance
+        if start_date:
+            start = start_date
+        else:
+            start = today
+        for index, transaction in enumerate(transactions):
             if isinstance(transaction, dict):
-                if (
-                    transaction["status"].id == 1
-                    and transaction["transaction_date"] >= today
-                ):
-                    filtered_transactions.append(transaction)
+                if transaction["transaction_date"] >= start:
+                    if transaction["status"].id == 1:
+                        filtered_transactions.append(transaction)
+                    if last_index == -1:
+                        last_index = index
             else:
-                if (
-                    transaction.transaction_date >= today
-                    and transaction.status.id == 1
+                if transaction.transaction_date >= start:
+                    if transaction.status.id == 1:
+                        filtered_transactions.append(transaction)
+                    if last_index == -1:
+                        last_index = index
+        if last_index != -1:
+            if last_index > 0:
+                if isinstance(
+                    transactions[last_index - 1],
+                    dict,
                 ):
-                    filtered_transactions.append(transaction)
-        return filtered_transactions
+                    previous_balance = transactions[last_index - 1]["balance"]
+                else:
+                    previous_balance = transactions[last_index - 1].balance
+        return filtered_transactions, previous_balance
     else:
-        return transactions
+        return transactions, Decimal(0.00)
 
 
 def get_reminder_transaction_list(
