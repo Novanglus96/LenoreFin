@@ -7051,6 +7051,7 @@ def get_reminder_transaction_list(
     # Setup variables
     today = get_todays_date_timezone_adjusted()
     reminder_transactions_list = []
+    temp_id = -1
 
     # Get Reminders for account that have a next date within time frame
     reminders = Reminder.objects.filter(
@@ -7097,7 +7098,7 @@ def get_reminder_transaction_list(
                 exclude_date=new_transaction_date,
             ).first():
                 new_transaction = {
-                    "id": -1,
+                    "id": temp_id,
                     "transaction_date": new_transaction_date,
                     "total_amount": Decimal(reminder.amount),
                     "status": status,
@@ -7116,6 +7117,7 @@ def get_reminder_transaction_list(
                     "tags": tags,
                 }
                 reminder_transactions_list.append(new_transaction)
+                temp_id -= 1
             new_transaction_date += relativedelta(days=repeat.days)
             new_transaction_date += relativedelta(weeks=repeat.weeks)
             new_transaction_date += relativedelta(months=repeat.months)
