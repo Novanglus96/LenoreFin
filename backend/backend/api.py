@@ -6994,18 +6994,32 @@ def get_complete_transaction_list_with_totals(
         for index, transaction in enumerate(transactions):
             if isinstance(transaction, dict):
                 if transaction["transaction_date"] >= start:
-                    if transaction["status"].id == 1:
+                    if start == today:
+                        if transaction["status"].id == 1:
+                            filtered_transactions.append(transaction)
+                    else:
                         filtered_transactions.append(transaction)
                     if last_index == -1:
                         last_index = index
             else:
                 if transaction.transaction_date >= start:
-                    if transaction.status.id == 1:
+                    if start == today:
+                        if transaction.status.id == 1:
+                            filtered_transactions.append(transaction)
+                    else:
                         filtered_transactions.append(transaction)
                     if last_index == -1:
                         last_index = index
         if last_index != -1:
             if last_index > 0:
+                if isinstance(
+                    transactions[last_index - 1],
+                    dict,
+                ):
+                    previous_balance = transactions[last_index - 1]["balance"]
+                else:
+                    previous_balance = transactions[last_index - 1].balance
+            elif last_index == 0 and start == today:
                 if isinstance(
                     transactions[last_index - 1],
                     dict,
