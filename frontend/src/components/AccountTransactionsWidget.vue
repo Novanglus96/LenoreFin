@@ -29,12 +29,12 @@
       <span class="text-subtitle-2 text-secondary">Transactions</span>
     </template>
     <template v-slot:text>
-      <v-tooltip text="Clear Transaction(s)" location="top">
+      <v-tooltip text="Clear / Add Transaction(s)" location="top">
         <template v-slot:activator="{ props }">
           <v-btn
             icon="mdi-invoice-text-clock"
             flat
-            :disabled="selected && selected.length === 0"
+            :disabled="clearDisable"
             variant="plain"
             @click="clickClearTransaction(selected)"
             v-bind="props"
@@ -47,7 +47,9 @@
             icon="mdi-invoice-text-edit"
             flat
             :disabled="
-              (selected && selected.length === 0) || selected.length > 1
+              (selected && selected.length === 0) ||
+              selected.length > 1 ||
+              editDisable
             "
             variant="plain"
             @click="transactionEditFormDialog = true"
@@ -69,7 +71,7 @@
           <v-btn
             icon="mdi-invoice-remove"
             flat
-            :disabled="selected && selected.length === 0"
+            :disabled="(selected && selected.length === 0) || deleteDisable"
             variant="plain"
             color="error"
             v-bind="props"
@@ -182,7 +184,7 @@
             <template v-slot:activator="{ props }">
               <v-icon
                 icon="mdi-bell"
-                v-if="row.value.reminder"
+                v-if="row.value.id < 0"
                 color="amber"
                 v-bind="props"
               ></v-icon>
@@ -283,6 +285,9 @@ const showDeleteDialog = ref(false);
 const transactionAddFormDialog = ref(false);
 const importFileDialog = ref(false);
 const transactionEditFormDialog = ref(false);
+const deleteDisable = ref(true);
+const editDisable = ref(true);
+const clearDisable = ref(true);
 const props = defineProps({
   account: Number,
   maxdays: { type: Number, default: 14 },
@@ -347,6 +352,7 @@ const pageChanged = data => {
 };
 
 const selected = ref([]);
+const reminder_selected = ref([]);
 const columns = ref([
   { field: "id", title: "ID", isUnique: true, hide: true },
   { field: "status.transaction_status", title: "", width: "70px" },
@@ -381,10 +387,27 @@ const getClassForMoney = (amount, status) => {
 };
 const rowSelected = () => {
   selected.value = [];
+  reminder_selected.value = [];
   let selectedrows = trans_table.value.getSelectedRows();
   for (const selectedrow of selectedrows) {
-    selected.value.push(selectedrow.id);
-    editTransaction.value = selectedrow;
+    if (selectedrow.id > 0) {
+      selected.value.push(selectedrow.id);
+      editTransaction.value = selectedrow;
+    } else {
+      reminder_selected.value.push(selectedrow.id);
+    }
+  }
+  if (reminder_selected.value.length == 0) {
+    deleteDisable.value = false;
+    editDisable.value = false;
+  } else {
+    deleteDisable.value = true;
+    editDisable.value = true;
+  }
+  if (selected.value.length > 0 || reminder_selected.value.length > 0) {
+    clearDisable.value = false;
+  } else {
+    clearDisable.value = true;
   }
 };
 const trans_table = ref(null);
