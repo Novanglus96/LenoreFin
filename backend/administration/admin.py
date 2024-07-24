@@ -30,9 +30,9 @@ class LogAdmin(admin.ModelAdmin):
         # Return False to disable adding
         return False
 
-    def has_delete_permission(self, request, obj=None):
-        # Return False to disable deleting
-        return False
+    # def has_delete_permission(self, request, obj=None):
+    # Return False to disable deleting
+    #   return False
 
     def has_change_permission(self, request, obj=None):
         # Return False to disable editing
