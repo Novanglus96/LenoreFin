@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getAccountsFunction(account_type, inactive) {
   try {
-    let querytext = "/accounts?";
+    let querytext = "/accounts/list?";
     let account_text = "";
     let inactive_text = "";
     if (account_type !== "all") {
@@ -51,7 +51,7 @@ async function getAccountsFunction(account_type, inactive) {
 
 async function getAccountByIDFunction(account_id) {
   try {
-    const response = await apiClient.get("/accounts/" + account_id);
+    const response = await apiClient.get("/accounts/get/" + account_id);
     return response.data;
   } catch (error) {
     handleApiError(error, "Account not fetched: ");
@@ -61,7 +61,7 @@ async function getAccountByIDFunction(account_id) {
 async function createAccountFunction(newAccount) {
   const chorestore = useMainStore();
   try {
-    const response = await apiClient.post("/accounts", newAccount);
+    const response = await apiClient.post("/accounts/create", newAccount);
     chorestore.showSnackbar("Account created successfully!", "success");
     return response.data;
   } catch (error) {
@@ -72,7 +72,9 @@ async function createAccountFunction(newAccount) {
 async function deleteAccountFunction(deletedAccount) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.delete("/accounts/" + deletedAccount);
+    const response = await apiClient.delete(
+      "/accounts/delete/" + deletedAccount,
+    );
     mainstore.showSnackbar("Account deleted successfully!", "success");
     return response.data;
   } catch (error) {
@@ -83,7 +85,7 @@ async function deleteAccountFunction(deletedAccount) {
 async function updateAccountFunction(updatedAccount) {
   try {
     const response = await apiClient.patch(
-      "/accounts/" + updatedAccount.id,
+      "/accounts/update/" + updatedAccount.id,
       updatedAccount,
     );
     return response.data;
