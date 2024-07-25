@@ -12,7 +12,7 @@ class ReminderExclusionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
     list_display_links = ["id", "reminder"]
 
-    ordering = ["reminder", "-exclude_date"]
+    ordering = ["reminder", "exclude_date"]
 
 
 class RepeatAdmin(ImportExportModelAdmin, admin.ModelAdmin):
