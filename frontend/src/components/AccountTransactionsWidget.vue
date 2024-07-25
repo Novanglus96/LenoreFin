@@ -36,7 +36,7 @@
             flat
             :disabled="clearDisable"
             variant="plain"
-            @click="clickClearTransaction(selected)"
+            @click="clickClearTransaction(selected, reminder_selected)"
             v-bind="props"
           ></v-btn>
         </template>
@@ -269,6 +269,7 @@
 <script setup>
 import { ref, defineProps, defineEmits } from "vue";
 import { useTransactions } from "@/composables/transactionsComposable";
+import { useReminders } from "@/composables/remindersComposable";
 import TransactionForm from "@/components/TransactionForm";
 import FileImportForm from "@/components/FileImportForm";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
@@ -347,6 +348,7 @@ const editTransaction = ref({
 const { isLoading, transactions, removeTransaction, clearTransaction } =
   useTransactions();
 
+const { addReminderTransaction } = useReminders();
 const pageChanged = data => {
   transactions_store.pageinfo.page = data.current_page;
 };
@@ -362,6 +364,7 @@ const columns = ref([
   { field: "description", title: "Description" },
   { field: "tags", title: "Tag(s)", width: "200px" },
   { field: "pretty_account", title: "Account" },
+  { field: "reminder_id", title: "reminder_id", hide: true },
 ]);
 const getClassForMoney = (amount, status) => {
   let color = "";
@@ -394,7 +397,11 @@ const rowSelected = () => {
       selected.value.push(selectedrow.id);
       editTransaction.value = selectedrow;
     } else {
-      reminder_selected.value.push(selectedrow.id);
+      let reminder_trans_obj = {
+        reminder_id: selectedrow.reminder_id,
+        transaction_date: selectedrow.transaction_date,
+      };
+      reminder_selected.value.push(reminder_trans_obj);
     }
   }
   if (reminder_selected.value.length == 0) {
@@ -424,12 +431,16 @@ const clickRemoveTransaction = async transactions => {
   trans_table.value.clearSelectedRows();
 };
 
-const clickClearTransaction = async transactions => {
+const clickClearTransaction = async (transactions, reminderTransactions) => {
   transactions.forEach(transaction => {
     clearTransaction(transaction);
-    selected.value = [];
   });
   trans_table.value.clearSelectedRows();
+  reminderTransactions.forEach(transaction => {
+    addReminderTransaction(transaction);
+  });
+  selected.value = [];
+  reminder_selected.value = [];
 };
 
 const clickEditTransaction = async transaction_id => {

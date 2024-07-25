@@ -71,6 +71,18 @@ async function updateReminderFunction(updatedReminder) {
   }
 }
 
+async function addReminderTrans(reminderTransObject) {
+  try {
+    const response = await apiClient.put(
+      "/reminders/" + reminderTransObject.reminder_id + "/addtrans",
+      reminderTransObject,
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Reminder transaction not added: ");
+  }
+}
+
 export function useReminders() {
   const queryClient = useQueryClient();
   const { data: reminders, isLoading } = useQuery({
@@ -116,6 +128,18 @@ export function useReminders() {
     },
   });
 
+  const addReminderTransMutation = useMutation({
+    mutationFn: addReminderTrans,
+    onSuccess: () => {
+      console.log("Success adding reminder transaction");
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
+      queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["reminders"] });
+    },
+  });
+
   async function removeReminder(deletedReminder) {
     deleteReminderMutation.mutate(deletedReminder);
   }
@@ -128,11 +152,16 @@ export function useReminders() {
     updateReminderMutation.mutate(updatedReminder);
   }
 
+  async function addReminderTransaction(reminderTransObject) {
+    addReminderTransMutation.mutate(reminderTransObject);
+  }
+
   return {
     isLoading,
     reminders,
     removeReminder,
     addReminder,
     updateReminder,
+    addReminderTransaction,
   };
 }

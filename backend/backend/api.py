@@ -571,6 +571,11 @@ class MessageList(Schema):
     messages: List[MessageOut]
 
 
+# The classs ReminderTransIn is a schema for adding reminder transactions.
+class ReminderTransIn(Schema):
+    transaction_date: date
+
+
 def get_today_formatted():
     """
     The function `get_today_formatted` returns the current date in the format "YYYY-MM-DD".
@@ -714,6 +719,7 @@ class TransactionOut(Schema):
     source_account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
     checkNumber: Optional[int] = None
+    reminder_id: Optional[int] = None
 
 
 # The class TagTransactionOut is a schema for representing Transactions by Tag.
@@ -5060,6 +5066,113 @@ def update_repeat(request, repeat_id: int, payload: RepeatIn):
         raise HttpError(500, "Record update error")
 
 
+@api.put("/reminders/{reminder_id}/addtrans")
+def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
+    """
+    The function `add_reminder_trans` converts a reminder temp transaction into
+    a transaction and exludes the date from the reminder series.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        reminder_id (int): the id of the reminder to update
+        payload (ReminderTransIn): a ReminderTransIn object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the reminder with the specified ID does not exist.
+    """
+
+    try:
+        # Load the reminder information
+        reminder = Reminder.objects.get(id=reminder_id)
+
+        # Verify the transaction doesn't exist
+        existing_transaction = Transaction.objects.filter(
+            transaction_date=payload.transaction_date,
+            total_amount=reminder.amount,
+            memo=reminder.memo,
+            description=reminder.description,
+            transaction_type=reminder.transaction_type,
+            destination_account=reminder.reminder_destination_account,
+            source_account=reminder.reminder_source_account,
+        ).last()
+        if not existing_transaction:
+            transactions_to_create = []
+            tags = []
+            destination_account = None
+            if reminder.reminder_destination_account:
+                destination_account = reminder.reminder_destination_account.id
+            # Create tags list
+            tag_obj = CustomTag(
+                tag_name=None,
+                tag_amount=reminder.amount,
+                tag_id=reminder.tag.id,
+            )
+            tags.append(tag_obj)
+
+            # Add transaction
+            transaction = FullTransaction(
+                transaction_date=payload.transaction_date,
+                total_amount=reminder.amount,
+                status_id=1,
+                memo=reminder.memo,
+                description=reminder.description,
+                edit_date=get_todays_date_timezone_adjusted(),
+                add_date=get_todays_date_timezone_adjusted(),
+                transaction_type_id=reminder.transaction_type.id,
+                paycheck_id=None,
+                source_account_id=reminder.reminder_source_account.id,
+                destination_account_id=destination_account,
+                tags=tags,
+                checkNumber=None,
+            )
+            transactions_to_create.append(transaction)
+            if create_transactions(transactions_to_create):
+                logToDB(
+                    "Transaction created",
+                    None,
+                    None,
+                    None,
+                    3001005,
+                    1,
+                )
+
+        # Verify the exclusion doesn't exist
+        existing_exclusion = ReminderExclusion.objects.filter(
+            reminder=reminder, exclude_date=payload.transaction_date
+        ).last()
+
+        if not existing_exclusion:
+            exclusion = ReminderExclusion.objects.create(
+                reminder=reminder,
+                exclude_date=payload.transaction_date,
+            )
+
+        # Add exclusion
+        logToDB(
+            f"Reminder transaction added : #{reminder_id}",
+            None,
+            reminder_id,
+            None,
+            3001002,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Reminder transaction not added: {str(e)}",
+            None,
+            reminder_id,
+            None,
+            3001902,
+            2,
+        )
+        raise HttpError(500, f"Record update error : {str(e)}")
+
+
 @api.put("/reminders/{reminder_id}")
 def update_reminder(request, reminder_id: int, payload: ReminderIn):
     """
@@ -5596,18 +5709,17 @@ def clear_transaction(request, transaction_id: int, payload: TransactionClear):
 
     try:
         transaction = get_object_or_404(Transaction, id=transaction_id)
-        if transaction.reminder is None:
-            transaction.status_id = payload.status_id
-            transaction.edit_date = payload.edit_date
-            transaction.save()
-            logToDB(
-                f"Transaction cleared : #{transaction_id}",
-                None,
-                None,
-                transaction_id,
-                3002005,
-                1,
-            )
+        transaction.status_id = payload.status_id
+        transaction.edit_date = payload.edit_date
+        transaction.save()
+        logToDB(
+            f"Transaction cleared : #{transaction_id}",
+            None,
+            None,
+            transaction_id,
+            3002005,
+            1,
+        )
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
@@ -7115,6 +7227,7 @@ def get_reminder_transaction_list(
                     "destination_account_id": destination_account,
                     "balance": Decimal(0.00),
                     "tags": tags,
+                    "reminder_id": reminder.id,
                 }
                 reminder_transactions_list.append(new_transaction)
                 temp_id -= 1
