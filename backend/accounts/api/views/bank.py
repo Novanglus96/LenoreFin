@@ -211,3 +211,45 @@ def list_banks(request):
             2,
         )
         raise HttpError(500, "Record retrieval error")
+
+
+@bank_router.delete("/accounts/banks/{bank_id}")
+def delete_bank(request, bank_id: int):
+    """
+    The function `delete_bank` deletes the bank specified by id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        bank_id (int): the id of the bank to delete
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the bank with the specified ID does not exist.
+    """
+
+    try:
+        bank = get_object_or_404(Bank, id=bank_id)
+        bank_name = bank.bank_name
+        bank.delete()
+        logToDB(
+            f"Bank deleted : {bank_name}",
+            None,
+            None,
+            None,
+            3001003,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Bank not deleted : {str(e)}",
+            None,
+            None,
+            None,
+            3001903,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
