@@ -10,7 +10,7 @@ from typing import List
 bank_router = Router(tags=["Banks"])
 
 
-@bank_router.post("/accounts/banks")
+@bank_router.post("/create")
 def create_bank(request, payload: BankIn):
     """
     The function `create_bank` creates a bank
@@ -70,7 +70,7 @@ def create_bank(request, payload: BankIn):
         raise HttpError(500, "Record creation error")
 
 
-@bank_router.put("/accounts/banks/{bank_id}")
+@bank_router.put("/update/{bank_id}")
 def update_bank(request, bank_id: int, payload: BankIn):
     """
     The function `update_bank` updates the bank specified by id.
@@ -136,7 +136,7 @@ def update_bank(request, bank_id: int, payload: BankIn):
         raise HttpError(500, "Record update error")
 
 
-@bank_router.get("/accounts/banks/{bank_id}", response=BankOut)
+@bank_router.get("/get/{bank_id}", response=BankOut)
 def get_bank(request, bank_id: int):
     """
     The function `get_bank` retrieves the bank by id
@@ -176,7 +176,7 @@ def get_bank(request, bank_id: int):
         raise HttpError(500, "Record retrieval error")
 
 
-@bank_router.get("/accounts/banks", response=List[BankOut])
+@bank_router.get("/list", response=List[BankOut])
 def list_banks(request):
     """
     The function `list_banks` retrieves a list of banks,
@@ -213,7 +213,7 @@ def list_banks(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@bank_router.delete("/accounts/banks/{bank_id}")
+@bank_router.delete("/delete/{bank_id}")
 def delete_bank(request, bank_id: int):
     """
     The function `delete_bank` deletes the bank specified by id.

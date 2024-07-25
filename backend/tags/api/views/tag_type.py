@@ -31,7 +31,7 @@ from typing import List, Optional, Dict, Any
 tag_type_router = Router(tags=["Tag Types"])
 
 
-@tag_type_router.get("/tagtypes", response=List[TagTypeOut])
+@tag_type_router.get("/list", response=List[TagTypeOut])
 def list_tag_types(request):
     """
     The function `list_tag_types` retrieves a list of tag types,

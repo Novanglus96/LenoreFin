@@ -32,7 +32,7 @@ from typing import List, Optional, Dict, Any
 account_router = Router(tags=["Accounts"])
 
 
-@account_router.post("/accounts")
+@account_router.post("/create")
 def create_account(request, payload: AccountIn):
     """
     The function `create_account` creates an account
@@ -92,7 +92,7 @@ def create_account(request, payload: AccountIn):
         raise HttpError(500, f"Record creation error: {str(e)}")
 
 
-@account_router.get("/accounts/{account_id}", response=AccountOut)
+@account_router.get("/get/{account_id}", response=AccountOut)
 def get_account(request, account_id: int):
     """
     The function `get_account` retrieves the account by id
@@ -237,7 +237,7 @@ def get_account(request, account_id: int):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@account_router.get("/accounts", response=List[AccountOut])
+@account_router.get("/list", response=List[AccountOut])
 def list_accounts(
     request,
     account_type: Optional[int] = Query(None),
@@ -401,7 +401,7 @@ def list_accounts(
         raise HttpError(500, f"Record retrieval error : {str(e)}")
 
 
-@account_router.patch("/accounts/{account_id}")
+@account_router.patch("/update/{account_id}")
 def update_account(request, account_id: int, payload: AccountUpdate):
     """
     The function `update_account` updates the account specified by id,
@@ -495,7 +495,7 @@ def update_account(request, account_id: int, payload: AccountUpdate):
         raise HttpError(500, "Record update error")
 
 
-@account_router.delete("/accounts/{account_id}")
+@account_router.delete("/delete/{account_id}")
 def delete_account(request, account_id: int):
     """
     The function `delete_account` deletes the account specified by id,

@@ -30,7 +30,7 @@ from typing import List, Optional, Dict, Any
 tag_router = Router(tags=["Tags"])
 
 
-@tag_router.post("/tags")
+@tag_router.post("/create")
 def create_tag(request, payload: TagIn):
     """
     The function `create_tag` creates a tag
@@ -176,7 +176,7 @@ def create_tag(request, payload: TagIn):
         raise HttpError(500, f"Record creation error : {str(e)}")
 
 
-@tag_router.put("/tags/{tag_id}")
+@tag_router.put("/update/{tag_id}")
 def update_tag(request, tag_id: int, payload: TagIn):
     """
     The function `update_tag` updates the tag specified by id.
@@ -328,7 +328,7 @@ def update_tag(request, tag_id: int, payload: TagIn):
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
-@tag_router.get("/tags/{tag_id}", response=TagOut)
+@tag_router.get("/get/{tag_id}", response=TagOut)
 def get_tag(request, tag_id: int):
     """
     The function `get_tag` retrieves the tag by id
@@ -368,7 +368,7 @@ def get_tag(request, tag_id: int):
         raise HttpError(500, "Record retrieval error")
 
 
-@tag_router.get("/tags", response=List[TagOut])
+@tag_router.get("/list", response=List[TagOut])
 def list_tags(
     request,
     tag_type: Optional[int] = Query(None),
@@ -439,7 +439,7 @@ def list_tags(
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@tag_router.delete("/tags/{tag_id}")
+@tag_router.delete("/delete/{tag_id}")
 def delete_tag(request, tag_id: int):
     """
     The function `delete_tag` deletes the tag specified by id.

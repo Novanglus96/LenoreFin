@@ -35,13 +35,13 @@ api.version = "1.0.1"
 api.description = "API documentation for LenoreFin"
 
 # Add routers to the API
-api.add_router("/", account_router)
-api.add_router("/", account_type_router)
-api.add_router("/", bank_router)
-api.add_router("/", tag_type_router)
-api.add_router("/", main_tag_router)
-api.add_router("/", sub_tag_router)
-api.add_router("/", tag_router)
+api.add_router("/accounts", account_router)
+api.add_router("/accounts/account-types", account_type_router)
+api.add_router("/accounts/banks", bank_router)
+api.add_router("/tags/tag-types", tag_type_router)
+api.add_router("/tags/main-tags", main_tag_router)
+api.add_router("/tags/sub-tags", sub_tag_router)
+api.add_router("/tags", tag_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

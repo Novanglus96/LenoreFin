@@ -30,7 +30,7 @@ from typing import List, Optional, Dict, Any
 sub_tag_router = Router(tags=["Sub Tags"])
 
 
-@sub_tag_router.get("/subtags/{subtag_id}", response=SubTagOut)
+@sub_tag_router.get("/get/{subtag_id}", response=SubTagOut)
 def get_subtag(request, subtag_id: int):
     """
     The function `get_subtag` retrieves the sub tag by id
@@ -70,7 +70,7 @@ def get_subtag(request, subtag_id: int):
         raise HttpError(500, "Record retrieval error")
 
 
-@sub_tag_router.get("/subtags", response=List[SubTagOut])
+@sub_tag_router.get("/list", response=List[SubTagOut])
 def list_subtags(
     request,
     tag_type: Optional[int] = Query(None),

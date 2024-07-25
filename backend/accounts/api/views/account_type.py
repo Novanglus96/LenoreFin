@@ -10,7 +10,7 @@ from typing import List
 account_type_router = Router(tags=["Account Types"])
 
 
-@account_type_router.post("/accounts/types")
+@account_type_router.post("/create")
 def create_account_type(request, payload: AccountTypeIn):
     """
     The function `create_account_type` creates an account type
@@ -70,9 +70,7 @@ def create_account_type(request, payload: AccountTypeIn):
         raise HttpError(500, "Record creation error")
 
 
-@account_type_router.get(
-    "/accounts/types/{accounttype_id}", response=AccountTypeOut
-)
+@account_type_router.get("/get/{accounttype_id}", response=AccountTypeOut)
 def get_account_type(request, accounttype_id: int):
     """
     The function `get_account_type` retrieves the account type by id
@@ -112,7 +110,7 @@ def get_account_type(request, accounttype_id: int):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@account_type_router.get("/accounts/types", response=List[AccountTypeOut])
+@account_type_router.get("/list", response=List[AccountTypeOut])
 def list_account_types(request):
     """
     The function `list_account_types` retrieves a list of account types,
@@ -149,7 +147,7 @@ def list_account_types(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@account_type_router.put("/accounts/types/{accounttype_id}")
+@account_type_router.put("/update/{accounttype_id}")
 def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
     """
     The function `update_account_type` updates the account type specified by id.
@@ -217,7 +215,7 @@ def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
         raise HttpError(500, "Record update error")
 
 
-@account_type_router.delete("/accounts/types/{accounttype_id}")
+@account_type_router.delete("/delete/{accounttype_id}")
 def delete_account_type(request, accounttype_id: int):
     """
     The function `delete_account_type` deletes the account type specified by id.

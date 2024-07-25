@@ -30,7 +30,7 @@ from typing import List, Optional, Dict, Any
 main_tag_router = Router(tags=["Main Tags"])
 
 
-@main_tag_router.get("/maintags/{maintag_id}", response=MainTagOut)
+@main_tag_router.get("/get/{maintag_id}", response=MainTagOut)
 def get_maintag(request, maintag_id: int):
     """
     The function `get_maintag` retrieves the main tag by id
@@ -70,7 +70,7 @@ def get_maintag(request, maintag_id: int):
         raise HttpError(500, "Record retrieval error")
 
 
-@main_tag_router.get("/maintags", response=List[MainTagOut])
+@main_tag_router.get("/list", response=List[MainTagOut])
 def list_maintags(
     request,
     tag_type: Optional[int] = Query(None),
