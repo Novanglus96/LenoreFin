@@ -24,6 +24,7 @@ from administration.api.dependencies.auth import GlobalAuth
 from accounts.api.routers.account_type import account_type_router
 from accounts.api.routers.bank import bank_router
 from accounts.api.routers.account import account_router
+from tags.api.routers.tag_type import tag_type_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
@@ -34,6 +35,7 @@ api.description = "API documentation for LenoreFin"
 api.add_router("/", account_router)
 api.add_router("/", account_type_router)
 api.add_router("/", bank_router)
+api.add_router("/", tag_type_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

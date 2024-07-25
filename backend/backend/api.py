@@ -87,17 +87,6 @@ class Round(Func):
     template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
-# The class TagTypeIn is a schema for validating tag types.
-class TagTypeIn(Schema):
-    tag_type: str
-
-
-# The class TagTypeOut is a schema for representing tag types.
-class TagTypeOut(Schema):
-    id: int
-    tag_type: str
-
-
 # The class MainTagIn is a schema for validating main tags.
 class MainTagIn(Schema):
     tag_name: str
@@ -3531,43 +3520,6 @@ def list_messages(request):
         # Log other types of exceptions
         logToDB(
             f"Message list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
-
-
-@api.get("/tagtypes", response=List[TagTypeOut])
-def list_tag_types(request):
-    """
-    The function `list_tag_types` retrieves a list of tag types,
-    ordered by id ascending and excluding Misc. tags (id=3)
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        TagTypeOut: a list of tag type objects
-    """
-
-    try:
-        qs = TagType.objects.exclude(id=3).order_by("id")
-        logToDB(
-            "Tag type list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
-        return qs
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Tag type list not retrieved : {str(e)}",
             None,
             None,
             None,
