@@ -5144,13 +5144,28 @@ def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
             reminder=reminder, exclude_date=payload.transaction_date
         ).last()
 
+        # Add exclusion
         if not existing_exclusion:
             exclusion = ReminderExclusion.objects.create(
                 reminder=reminder,
                 exclude_date=payload.transaction_date,
             )
 
-        # Add exclusion
+        # Change next date to next not excluded date
+        nextDate = reminder.next_date
+        repeat = Repeat.objects.get(id=reminder.repeat.id)
+        while True:
+            if not ReminderExclusion.objects.filter(
+                reminder_id=reminder.id, exclude_date=nextDate
+            ).first():
+                break
+            nextDate += relativedelta(days=repeat.days)
+            nextDate += relativedelta(weeks=repeat.weeks)
+            nextDate += relativedelta(months=repeat.months)
+            nextDate += relativedelta(years=repeat.years)
+        reminder.next_date = nextDate
+        reminder.save()
+
         logToDB(
             f"Reminder transaction added : #{reminder_id}",
             None,
