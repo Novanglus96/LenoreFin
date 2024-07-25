@@ -17,7 +17,19 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from .api import api
+from ninja import NinjaAPI
+from administration.api.dependencies.auth import GlobalAuth
+
+# Import routers from apps
+from accounts.api.routers.account_type import account_type_router
+
+api = NinjaAPI(auth=GlobalAuth())
+api.title = "LenoreFin API"
+api.version = "1.0.1"
+api.description = "API documentation for LenoreFin"
+
+# Add routers to the API
+api.add_router("/", account_type_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
