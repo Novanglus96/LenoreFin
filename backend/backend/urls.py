@@ -26,6 +26,7 @@ from accounts.api.routers.bank import bank_router
 from accounts.api.routers.account import account_router
 from tags.api.routers.tag_type import tag_type_router
 from tags.api.routers.main_tag import main_tag_router
+from tags.api.routers.sub_tag import sub_tag_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
@@ -38,6 +39,7 @@ api.add_router("/", account_type_router)
 api.add_router("/", bank_router)
 api.add_router("/", tag_type_router)
 api.add_router("/", main_tag_router)
+api.add_router("/", sub_tag_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
