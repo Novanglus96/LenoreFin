@@ -6349,10 +6349,6 @@ def delete_reminder(request, reminder_id: int):
     try:
         reminder = get_object_or_404(Reminder, id=reminder_id)
         reminder_description = reminder.description
-        transactions = Transaction.objects.filter(reminder=reminder)
-        pre_delete.disconnect(update_sort_totals, sender=Transaction)
-        transactions.delete()
-        pre_delete.connect(update_sort_totals, sender=Transaction)
         reminder.delete()
         logToDB(
             f"Reminder deleted : #{reminder_description}",
@@ -6373,7 +6369,7 @@ def delete_reminder(request, reminder_id: int):
             3001903,
             2,
         )
-        raise HttpError(500, "Record retrieval error")
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
 @api.delete("/planning/notes/{note_id}")
