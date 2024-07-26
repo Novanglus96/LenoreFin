@@ -29,6 +29,7 @@ from tags.api.routers.main_tag import main_tag_router
 from tags.api.routers.sub_tag import sub_tag_router
 from tags.api.routers.tag import tag_router
 from planning.api.routers.contrib_rule import contrib_rule_router
+from planning.api.routers.contribution import contribution_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
@@ -44,6 +45,7 @@ api.add_router("/tags/main-tags", main_tag_router)
 api.add_router("/tags/sub-tags", sub_tag_router)
 api.add_router("/tags", tag_router)
 api.add_router("/planning/contrib-rules", contrib_rule_router)
+api.add_router("/planning/contributions", contribution_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

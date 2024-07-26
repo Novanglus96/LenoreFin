@@ -87,27 +87,6 @@ class Round(Func):
     template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
-# The class ContributionIn is a schema for validating Contributions.
-class ContributionIn(Schema):
-    contribution: str
-    per_paycheck: Decimal = Field(whole_digits=10, decimal_places=2)
-    emergency_diff: Decimal = Field(whole_digits=10, decimal_places=2)
-    emergency_amt: Decimal = Field(whole_digits=10, decimal_places=2)
-    cap: Decimal = Field(whole_digits=10, decimal_places=2)
-    active: bool
-
-
-# The class ContributionOut is a schema for representing Contributions.
-class ContributionOut(Schema):
-    id: int
-    contribution: str
-    per_paycheck: Decimal = Field(whole_digits=10, decimal_places=2)
-    emergency_diff: Decimal = Field(whole_digits=10, decimal_places=2)
-    emergency_amt: Decimal = Field(whole_digits=10, decimal_places=2)
-    cap: Decimal = Field(whole_digits=10, decimal_places=2)
-    active: bool
-
-
 # The class ErrorLevelIn is a schema for validating Error Levels.
 class ErrorLevelIn(Schema):
     error_level: str
@@ -666,66 +645,6 @@ class MappingDefinition(Schema):
     transactions: List[TransactionImportSchema]
 
 
-@api.post("/planning/contributions")
-def create_contribution(request, payload: ContributionIn):
-    """
-    The function `create_contribution` creates a contribution
-
-    Args:
-        request ():
-        payload (ContributionIn): An object using schema of ContributionIn.
-
-    Returns:
-        id: returns the id of the created contribution
-    """
-
-    try:
-        contribution = Contribution.objects.create(**payload.dict())
-        logToDB(
-            f"Contribution created : {payload.contribution}",
-            None,
-            None,
-            None,
-            3001001,
-            1,
-        )
-        return {"id": contribution.id}
-    except IntegrityError as integrity_error:
-        # Check if the integrity error is due to a duplicate
-        if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Contribution not created : contribution exists ({payload.contribution})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
-            )
-            raise HttpError(400, "Conitribution already exists")
-        else:
-            # Log other types of integry errors
-            logToDB(
-                "Contribution not created : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
-            raise HttpError(400, "DB integrity error")
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Contribution not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
-        raise HttpError(500, "Record creation error")
-
-
 @api.post("/reminders/repeats")
 def create_repeat(request, payload: RepeatIn):
     """
@@ -1133,46 +1052,6 @@ def create_message(request, payload: MessageIn):
             2,
         )
         raise HttpError(500, "Record creation error")
-
-
-@api.get("/planning/contributions/{contribution_id}", response=ContributionOut)
-def get_contribution(request, contribution_id: int):
-    """
-    The function `get_contribution` retrieves the contribution by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        contribution_id (int): The id of the contribution to retrieve.
-
-    Returns:
-        ContributionOut: the contribution object
-
-    Raises:
-        Http404: If the contribution with the specified ID does not exist.
-    """
-
-    try:
-        contribution = get_object_or_404(Contribution, id=contribution_id)
-        logToDB(
-            f"Contribution retrieved : {contribution.rule}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
-        return contribution
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Contribution not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/errorlevels/{errorlevel_id}", response=ErrorLevelOut)
@@ -2205,43 +2084,6 @@ def list_transactions_bytag(request, tag: int):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@api.get("/planning/contributions", response=List[ContributionOut])
-def list_contributions(request):
-    """
-    The function `list_contributions` retrieves a list of contributions,
-    ordered by id ascending.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        ContributionOut: a list of contribution objects
-    """
-
-    try:
-        qs = Contribution.objects.all().order_by("id")
-        logToDB(
-            "Contribution list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
-        return qs
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Contribution list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
-
-
 @api.get("/errorlevels", response=List[ErrorLevelOut])
 def list_errorlevels(request):
     """
@@ -2894,77 +2736,6 @@ def list_messages(request):
             2,
         )
         raise HttpError(500, "Record retrieval error")
-
-
-@api.put("/planning/contributions/{contribution_id}")
-def update_contribution(request, contribution_id: int, payload: ContributionIn):
-    """
-    The function `update_contribution` updates the contribution specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        contribution_id (int): the id of the contribution to update
-        payload (ContributionIn): a contribution object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the contribution with the specified ID does not exist.
-    """
-
-    try:
-        contribution = get_object_or_404(Contribution, id=contribution_id)
-        contribution.contribution = payload.contribution
-        contribution.per_paycheck = payload.per_paycheck
-        contribution.emergency_amt = payload.emergency_amt
-        contribution.emergency_diff = payload.emergency_diff
-        contribution.cap = payload.cap
-        contribution.active = payload.active
-        contribution.save()
-        logToDB(
-            f"Contribution updated : {contribution.contribution}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
-        return {"success": True}
-    except IntegrityError as integrity_error:
-        # Check if the integrity error is due to a duplicate
-        if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Contribution not updated : contribution exists ({payload.contribution})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
-            )
-            raise HttpError(400, "Contribution already exists")
-        else:
-            # Log other types of integry errors
-            logToDB(
-                "Contribution not updated : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
-            raise HttpError(400, "DB integrity error")
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Contribution not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
-        raise HttpError(500, "Record update error")
 
 
 @api.put("/errorlevels/{errorlevel_id}")
@@ -4039,48 +3810,6 @@ def update_messages(request, message_id: int, payload: AllMessage):
             2,
         )
         raise HttpError(500, "Messages not marked read error")
-
-
-@api.delete("/planning/contributions/{contribution_id}")
-def delete_contribution(request, contribution_id: int):
-    """
-    The function `delete_contribution` deletes the contribution specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        contribution_id (int): the id of the contribution to delete
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the contribution with the specified ID does not exist.
-    """
-
-    try:
-        contribution = get_object_or_404(Contribution, id=contribution_id)
-        contribution_name = contribution.contribution
-        contribution.delete()
-        logToDB(
-            f"Contribution deleted : {contribution_name}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Contribution not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/errorlevels/{errorlevel_id}")
