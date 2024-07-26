@@ -87,17 +87,6 @@ class Round(Func):
     template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
-# The class TransactionTypeIn is a schema for validating transaction types.
-class TransactionTypeIn(Schema):
-    transaction_type: str
-
-
-# The class TransactionTypeOut is a schema for representing transaction types.
-class TransactionTypeOut(Schema):
-    id: int
-    transaction_type: str
-
-
 # The class RepeatIn is a schema for validating Repeat Intervals.
 class RepeatIn(Schema):
     repeat_name: str
@@ -1041,50 +1030,6 @@ def create_message(request, payload: MessageIn):
             2,
         )
         raise HttpError(500, "Record creation error")
-
-
-@api.get(
-    "/transaction/types/{transaction_type_id}", response=TransactionTypeOut
-)
-def get_transaction_type(request, transaction_type_id: int):
-    """
-    The function `get_transaction_type` retrieves the transaction type by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transaction_type_id (int): The id of the transaction type to retrieve.
-
-    Returns:
-        TransactionTypeOut: the transaction type object
-
-    Raises:
-        Http404: If the transaction type with the specified ID does not exist.
-    """
-
-    try:
-        transaction_type = get_object_or_404(
-            TransactionType, id=transaction_type_id
-        )
-        logToDB(
-            f"Transaction type retrieved : {transaction_type.transaction_type}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
-        return transaction_type
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction type not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/reminders/repeats/{repeat_id}", response=RepeatOut)
@@ -2033,43 +1978,6 @@ def list_transactions_bytag(request, tag: int):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@api.get("/transaction/types", response=List[TransactionTypeOut])
-def list_transaction_types(request):
-    """
-    The function `list_transaction_types` retrieves a list of transaction types,
-    ordered by id ascending.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        TransactionTypeOut: a list of transaction type objects
-    """
-
-    try:
-        qs = TransactionType.objects.all().order_by("id")
-        logToDB(
-            "Transaction type list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
-        return qs
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction type list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
-
-
 @api.get("/reminders/repeats", response=List[RepeatOut])
 def list_repeats(request):
     """
@@ -2648,76 +2556,6 @@ def list_messages(request):
             2,
         )
         raise HttpError(500, "Record retrieval error")
-
-
-@api.put("/transaction/types/{transaction_type_id}")
-def update_transaction_type(
-    request, transaction_type_id: int, payload: TransactionTypeIn
-):
-    """
-    The function `update_transaction_type` updates the transaction type specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transactiontype_id (int): the id of the transaction type to update
-        payload (TransactionTypeIn): a transaction type object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the transaction type with the specified ID does not exist.
-    """
-
-    try:
-        transaction_type = get_object_or_404(
-            TransactionType, id=transaction_type_id
-        )
-        transaction_type.transaction_type = payload.transaction_type
-        transaction_type.save()
-        logToDB(
-            f"Transaction type updated : {transaction_type.transaction_type}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
-        return {"success": True}
-    except IntegrityError as integrity_error:
-        # Check if the integrity error is due to a duplicate
-        if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Transaction type not updated : transaction type exists ({payload.transaction_type})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
-            )
-            raise HttpError(400, "Transaction type already exists")
-        else:
-            # Log other types of integry errors
-            logToDB(
-                "Transaction type not updated : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
-            raise HttpError(400, "DB integrity error")
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction type not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
-        raise HttpError(500, "Record update error")
 
 
 @api.put("/reminders/repeats/{repeat_id}")
@@ -3656,50 +3494,6 @@ def update_messages(request, message_id: int, payload: AllMessage):
             2,
         )
         raise HttpError(500, "Messages not marked read error")
-
-
-@api.delete("/transaction/types/{transaction_type_id}")
-def delete_transaction_type(request, transaction_type_id: int):
-    """
-    The function `delete_transaction_type` deletes the transaction type specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transaction_type_id (int): the id of the transaction type to delete
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the transaction type with the specified ID does not exist.
-    """
-
-    try:
-        transaction_type = get_object_or_404(
-            TransactionType, id=transaction_type_id
-        )
-        transaction_type_name = transaction_type.transaction_type
-        transaction_type.delete()
-        logToDB(
-            f"Transaction type deleted : {transaction_type_name}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction type not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/reminders/repeats/{repeat_id}")
