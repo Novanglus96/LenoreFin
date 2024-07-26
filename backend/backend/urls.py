@@ -33,6 +33,7 @@ from planning.api.routers.contribution import contribution_router
 from administration.api.routers.error_level import error_level_router
 from transactions.api.routers.transaction_type import transaction_type_router
 from reminders.api.routers.repeat import repeat_router
+from accounts.api.routers.forecast import forecast_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
@@ -52,6 +53,7 @@ api.add_router("/planning/contributions", contribution_router)
 api.add_router("/administration/error-levels", error_level_router)
 api.add_router("/transactions/transaction-types", transaction_type_router)
 api.add_router("/reminders/repeat", repeat_router)
+api.add_router("/accounts/forecast", forecast_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
