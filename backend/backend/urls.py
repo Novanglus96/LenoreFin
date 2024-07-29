@@ -36,6 +36,7 @@ from reminders.api.routers.repeat import repeat_router
 from accounts.api.routers.forecast import forecast_router
 from reminders.api.routers.reminder import reminder_router
 from planning.api.routers.note import note_router
+from administration.api.routers.option import option_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
@@ -58,6 +59,7 @@ api.add_router("/reminders/repeat", repeat_router)
 api.add_router("/accounts/forecast", forecast_router)
 api.add_router("/reminders", reminder_router)
 api.add_router("/planning/notes", note_router)
+api.add_router("/administration/options", option_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

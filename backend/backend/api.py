@@ -87,51 +87,6 @@ class Round(Func):
     template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
-# The class OptionIn is a schema for validating Options.
-class OptionIn(Schema):
-    log_level_id: Optional[int]
-    alert_balance: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
-    alert_period: Optional[int]
-    widget1_graph_name: Optional[str]
-    widget1_tag_id: Optional[int] = None
-    widget1_expense: Optional[bool] = True
-    widget1_month: Optional[int] = 0
-    widget1_exclude: Optional[str] = "[0]"
-    widget2_graph_name: Optional[str]
-    widget2_tag_id: Optional[int] = None
-    widget2_expense: Optional[bool] = True
-    widget2_month: Optional[int] = 0
-    widget2_exclude: Optional[str] = "[0]"
-    widget3_graph_name: Optional[str]
-    widget3_tag_id: Optional[int] = None
-    widget3_expense: Optional[bool] = True
-    widget3_month: Optional[int] = 0
-    widget3_exclude: Optional[str] = "[0]"
-
-
-# The class OptionOut is a schema for representing Options.
-class OptionOut(Schema):
-    id: int
-    log_level: ErrorLevelOut
-    alert_balance: Decimal = Field(whole_digits=10, decimal_places=2)
-    alert_period: int
-    widget1_graph_name: str
-    widget1_tag_id: Optional[int] = None
-    widget1_expense: bool = True
-    widget1_month: int = 0
-    widget1_exclude: Optional[str] = "[0]"
-    widget2_graph_name: str
-    widget2_tag_id: Optional[int] = None
-    widget2_expense: bool = True
-    widget2_month: int = 0
-    widget2_exclude: Optional[str] = "[0]"
-    widget3_graph_name: str
-    widget3_tag_id: Optional[int] = None
-    widget3_expense: bool = True
-    widget3_month: int = 0
-    widget3_exclude: Optional[str] = "[0]"
-
-
 # The class TransactionStatusIn is a schema for validating transaction status.
 class TransactionStatusIn(Schema):
     transaction_status: str
@@ -701,46 +656,6 @@ def create_message(request, payload: MessageIn):
             2,
         )
         raise HttpError(500, "Record creation error")
-
-
-@api.get("/options/{option_id}", response=OptionOut)
-def get_option(request, option_id: int):
-    """
-    The function `get_option` retrieves the option by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        option_id (int): The id of the option to retrieve.
-
-    Returns:
-        OptionOut: the option object
-
-    Raises:
-        Http404: If the option with the specified ID does not exist.
-    """
-
-    try:
-        option = get_object_or_404(Option, id=option_id)
-        logToDB(
-            f"Option retrieved : #{option.id}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
-        return option
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Option not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.get(
@@ -1417,43 +1332,6 @@ def list_transactions_bytag(request, tag: int):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@api.get("/options", response=List[OptionOut])
-def list_options(request):
-    """
-    The function `list_options` retrieves a list of options,
-    ordered by id ascending.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        OptionOut: a list of option objects
-    """
-
-    try:
-        qs = Option.objects.all().order_by("id")
-        logToDB(
-            "Option list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
-        return qs
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Option list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
-
-
 @api.get("/transaction/statuses", response=List[TransactionStatusOut])
 def list_transaction_statuses(request):
     """
@@ -2006,85 +1884,6 @@ def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
             2,
         )
         raise HttpError(500, f"Record update error : {str(e)}")
-
-
-@api.patch("/options/{option_id}")
-def update_option(request, option_id: int, payload: OptionIn):
-    """
-    The function `update_option` updates the option specified by id,
-    patching the option if a field is sent in the payload.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        option_id (int): the id of the option to update
-        payload (OptionIn): an option object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the option with the specified ID does not exist.
-    """
-
-    try:
-        option = get_object_or_404(Option, id=option_id)
-        if payload.log_level_id is not None:
-            option.log_level_id = payload.log_level_id
-        if payload.alert_balance is not None:
-            option.alert_balance = payload.alert_balance
-        if payload.alert_period is not None:
-            option.alert_period = payload.alert_period
-        if payload.widget1_graph_name is not None:
-            option.widget1_graph_name = payload.widget1_graph_name
-        if payload.widget1_tag_id is not None:
-            option.widget1_tag_id = payload.widget1_tag_id
-        if payload.widget1_expense is not None:
-            option.widget1_expense = payload.widget1_expense
-        if payload.widget1_month is not None:
-            option.widget1_month = payload.widget1_month
-        if payload.widget1_exclude is not None:
-            option.widget1_exclude = payload.widget1_exclude
-        if payload.widget2_graph_name is not None:
-            option.widget2_graph_name = payload.widget2_graph_name
-        if payload.widget2_tag_id is not None:
-            option.widget2_tag_id = payload.widget2_tag_id
-        if payload.widget2_expense is not None:
-            option.widget2_expense = payload.widget2_expense
-        if payload.widget2_month is not None:
-            option.widget2_month = payload.widget2_month
-        if payload.widget2_exclude is not None:
-            option.widget2_exclude = payload.widget2_exclude
-        if payload.widget3_graph_name is not None:
-            option.widget3_graph_name = payload.widget3_graph_name
-        if payload.widget3_tag_id is not None:
-            option.widget3_tag_id = payload.widget3_tag_id
-        if payload.widget3_expense is not None:
-            option.widget3_expense = payload.widget3_expense
-        if payload.widget3_month is not None:
-            option.widget3_month = payload.widget3_month
-        if payload.widget3_exclude is not None:
-            option.widget3_exclude = payload.widget3_exclude
-        option.save()
-        logToDB(
-            f"Option updated : {option_id}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Option not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
-        raise HttpError(500, "Record update error")
 
 
 @api.put("/transaction/statuses/{transactionstatus_id}")
@@ -2652,47 +2451,6 @@ def update_messages(request, message_id: int, payload: AllMessage):
             2,
         )
         raise HttpError(500, "Messages not marked read error")
-
-
-@api.delete("/options/{option_id}")
-def delete_option(request, option_id: int):
-    """
-    The function `delete_option` deletes the option specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        option_id (int): the id of the option to delete
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the option with the specified ID does not exist.
-    """
-
-    try:
-        option = get_object_or_404(Option, id=option_id)
-        option.delete()
-        logToDB(
-            f"Option deleted : #{option_id}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Option not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/transaction/statuses/{transactionstatus_id}")
