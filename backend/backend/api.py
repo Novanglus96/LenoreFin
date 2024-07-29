@@ -87,37 +87,6 @@ class Round(Func):
     template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
-# The class ReminderIn is a schema for validating Reminders.
-class ReminderIn(Schema):
-    tag_id: int
-    amount: Decimal = Field(whole_digits=10, decimal_places=2)
-    reminder_source_account_id: int
-    reminder_destination_account_id: Optional[int]
-    description: str
-    transaction_type_id: int
-    start_date: date
-    next_date: Optional[date]
-    end_date: Optional[date]
-    repeat_id: int
-    auto_add: bool
-
-
-# The class ReminderOut is a schema for representing Reminders.
-class ReminderOut(Schema):
-    id: int
-    tag: TagOut
-    amount: Decimal = Field(whole_digits=10, decimal_places=2)
-    reminder_source_account: AccountOut
-    reminder_destination_account: Optional[AccountOut]
-    description: str
-    transaction_type: TransactionTypeOut
-    start_date: date
-    next_date: Optional[date]
-    end_date: Optional[date]
-    repeat: RepeatOut
-    auto_add: bool
-
-
 # The class NoteIn is a schema for validating a Note.
 class NoteIn(Schema):
     note_text: str
@@ -472,43 +441,6 @@ class MappingDefinition(Schema):
     transactions: List[TransactionImportSchema]
 
 
-@api.post("/reminders")
-def create_reminder(request, payload: ReminderIn):
-    """
-    The function `create_reminder` creates a reminder
-
-    Args:
-        request ():
-        payload (ReminderIn): An object using schema of ReminderIn.
-
-    Returns:
-        id: returns the id of the created reminder
-    """
-
-    try:
-        reminder = Reminder.objects.create(**payload.dict())
-        logToDB(
-            f"Reminder created : {reminder.description}",
-            None,
-            reminder.id,
-            None,
-            3001001,
-            1,
-        )
-        return {"id": reminder.id}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Reminder not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
-        raise HttpError(500, "Record creation error")
-
-
 @api.post("/planning/notes")
 def create_note(request, payload: NoteIn):
     """
@@ -819,46 +751,6 @@ def create_message(request, payload: MessageIn):
             2,
         )
         raise HttpError(500, "Record creation error")
-
-
-@api.get("/reminders/{reminder_id}", response=ReminderOut)
-def get_reminder(request, reminder_id: int):
-    """
-    The function `get_reminder` retrieves the reminder by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        reminder_id (int): The id of the reminder to retrieve.
-
-    Returns:
-        ReminderOut: the reminder object
-
-    Raises:
-        Http404: If the reminder with the specified ID does not exist.
-    """
-
-    try:
-        reminder = get_object_or_404(Reminder, id=reminder_id)
-        logToDB(
-            f"Reminder retrieved : {reminder.description}",
-            None,
-            reminder.id,
-            None,
-            3001006,
-            1,
-        )
-        return reminder
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Reminder not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/planning/notes/{note_id}", response=NoteOut)
@@ -1615,43 +1507,6 @@ def list_transactions_bytag(request, tag: int):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@api.get("/reminders", response=List[ReminderOut])
-def list_reminders(request):
-    """
-    The function `list_reminders` retrieves a list of reminders,
-    ordered by next date ascending and then id ascending.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        ReminderOut: a list of reminders objects
-    """
-
-    try:
-        qs = Reminder.objects.all().order_by("next_date", "id")
-        logToDB(
-            "Reminder list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
-        return qs
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Reminder list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
-
-
 @api.get("/planning/notes", response=List[NoteOut])
 def list_notes(request):
     """
@@ -2278,62 +2133,6 @@ def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
             2,
         )
         raise HttpError(500, f"Record update error : {str(e)}")
-
-
-@api.put("/reminders/{reminder_id}")
-def update_reminder(request, reminder_id: int, payload: ReminderIn):
-    """
-    The function `update_reminder` updates the reminder specified by id.
-    Related transactions are deleted and recreated.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        reminder_id (int): the id of the reminder to update
-        payload (ReminderIn): a reminder object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the reminder with the specified ID does not exist.
-    """
-
-    try:
-        reminder = get_object_or_404(Reminder, id=reminder_id)
-        reminder.tag_id = payload.tag_id
-        reminder.amount = payload.amount
-        reminder.reminder_source_account_id = payload.reminder_source_account_id
-        reminder.reminder_destination_account_id = (
-            payload.reminder_destination_account_id
-        )
-        reminder.description = payload.description
-        reminder.transaction_type_id = payload.transaction_type_id
-        reminder.start_date = payload.start_date
-        reminder.next_date = payload.next_date
-        reminder.end_date = payload.end_date
-        reminder.repeat_id = payload.repeat_id
-        reminder.auto_add = payload.auto_add
-        reminder.save()
-        logToDB(
-            f"Reminder updated : #{reminder_id}",
-            None,
-            reminder_id,
-            None,
-            3001002,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Reminder not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
-        raise HttpError(500, "Record update error")
 
 
 @api.put("/planning/notes/{note_id}")
@@ -3026,48 +2825,6 @@ def update_messages(request, message_id: int, payload: AllMessage):
         raise HttpError(500, "Messages not marked read error")
 
 
-@api.delete("/reminders/{reminder_id}")
-def delete_reminder(request, reminder_id: int):
-    """
-    The function `delete_reminder` deletes the reminder specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        reminder_id (int): the id of the reminder to delete
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the reminder with the specified ID does not exist.
-    """
-
-    try:
-        reminder = get_object_or_404(Reminder, id=reminder_id)
-        reminder_description = reminder.description
-        reminder.delete()
-        logToDB(
-            f"Reminder deleted : #{reminder_description}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Reminder not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
-        raise HttpError(500, f"Record retrieval error: {str(e)}")
-
-
 @api.delete("/planning/notes/{note_id}")
 def delete_note(request, note_id: int):
     """
@@ -3585,6 +3342,3 @@ def import_file(
 
 
 # Helper Functions
-
-
-
