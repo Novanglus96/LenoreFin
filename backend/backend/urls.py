@@ -42,6 +42,7 @@ from transactions.api.routers.transaction_status import (
 )
 from administration.api.routers.payee import payee_router
 from transactions.api.routers.paycheck import paycheck_router
+from transactions.api.routers.transaction import transaction_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
@@ -68,6 +69,7 @@ api.add_router("/administration/options", option_router)
 api.add_router("/transactions/transaction-statuses", transaction_status_router)
 api.add_router("/administration/payees", payee_router)
 api.add_router("/transactions/paychecks", paycheck_router)
+api.add_router("/transactions", transaction_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

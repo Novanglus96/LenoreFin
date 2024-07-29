@@ -12,10 +12,12 @@ from transactions.models import (
     Transaction,
     TransactionDetail,
     TransactionStatus,
-    create_transactions,
-    CustomTag,
-    FullTransaction,
 )
+from tags.api.dependencies.custom_tag import CustomTag
+from transactions.api.dependencies.create_transactions import (
+    create_transactions,
+)
+from transactions.api.dependencies.full_transaction import FullTransaction
 from administration.models import Message, Option, LogEntry, logToDB
 from imports.models import (
     FileImport,
