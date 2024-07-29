@@ -80,6 +80,9 @@ import os
 from django.contrib.postgres.aggregates import ArrayAgg
 from decimal import Decimal
 import traceback
+from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+    get_todays_date_timezone_adjusted,
+)
 
 
 class Round(Func):
@@ -87,28 +90,12 @@ class Round(Func):
     template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
-# The classs ReminderTransIn is a schema for adding reminder transactions.
-class ReminderTransIn(Schema):
-    transaction_date: date
-
-
-def get_today_formatted():
-    """
-    The function `get_today_formatted` returns the current date in the format "YYYY-MM-DD".
-
-    Returns:
-        return: the current date in the format "YYYY-MM-DD".
-    """
-    today = timezone.now()
-    tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
-    today_tz = today.astimezone(tz_timezone).date()
-    return today_tz.strftime("%Y-%m-%d")
-
-
 # The class TransactionClear is a schema for clearing Transactions.
 class TransactionClear(Schema):
     status_id: int
-    edit_date: Optional[date] = Field(default_factory=get_today_formatted)
+    edit_date: Optional[date] = Field(
+        default_factory=get_todays_date_timezone_adjusted()
+    )
 
 
 # The class TransactionDetailOut is a schema for representing Transaction Details.
@@ -1121,126 +1108,6 @@ def list_log_entries(request, log_level: Optional[int] = Query(0)):
         raise HttpError(500, "Record retrieval error")
 
 
-@api.put("/reminders/{reminder_id}/addtrans")
-def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
-    """
-    The function `add_reminder_trans` converts a reminder temp transaction into
-    a transaction and exludes the date from the reminder series.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        reminder_id (int): the id of the reminder to update
-        payload (ReminderTransIn): a ReminderTransIn object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the reminder with the specified ID does not exist.
-    """
-
-    try:
-        # Load the reminder information
-        reminder = Reminder.objects.get(id=reminder_id)
-
-        # Verify the transaction doesn't exist
-        existing_transaction = Transaction.objects.filter(
-            transaction_date=payload.transaction_date,
-            total_amount=reminder.amount,
-            memo=reminder.memo,
-            description=reminder.description,
-            transaction_type=reminder.transaction_type,
-            destination_account=reminder.reminder_destination_account,
-            source_account=reminder.reminder_source_account,
-        ).last()
-        if not existing_transaction:
-            transactions_to_create = []
-            tags = []
-            destination_account = None
-            if reminder.reminder_destination_account:
-                destination_account = reminder.reminder_destination_account.id
-            # Create tags list
-            tag_obj = CustomTag(
-                tag_name=None,
-                tag_amount=reminder.amount,
-                tag_id=reminder.tag.id,
-            )
-            tags.append(tag_obj)
-
-            # Add transaction
-            transaction = FullTransaction(
-                transaction_date=payload.transaction_date,
-                total_amount=reminder.amount,
-                status_id=1,
-                memo=reminder.memo,
-                description=reminder.description,
-                edit_date=get_todays_date_timezone_adjusted(),
-                add_date=get_todays_date_timezone_adjusted(),
-                transaction_type_id=reminder.transaction_type.id,
-                paycheck_id=None,
-                source_account_id=reminder.reminder_source_account.id,
-                destination_account_id=destination_account,
-                tags=tags,
-                checkNumber=None,
-            )
-            transactions_to_create.append(transaction)
-            if create_transactions(transactions_to_create):
-                logToDB(
-                    "Transaction created",
-                    None,
-                    None,
-                    None,
-                    3001005,
-                    1,
-                )
-
-        # Verify the exclusion doesn't exist
-        existing_exclusion = ReminderExclusion.objects.filter(
-            reminder=reminder, exclude_date=payload.transaction_date
-        ).last()
-
-        # Add exclusion
-        if not existing_exclusion:
-            exclusion = ReminderExclusion.objects.create(
-                reminder=reminder,
-                exclude_date=payload.transaction_date,
-            )
-
-        # Change next date to next not excluded date
-        nextDate = reminder.next_date
-        repeat = Repeat.objects.get(id=reminder.repeat.id)
-        while True:
-            if not ReminderExclusion.objects.filter(
-                reminder_id=reminder.id, exclude_date=nextDate
-            ).first():
-                break
-            nextDate += relativedelta(days=repeat.days)
-            nextDate += relativedelta(weeks=repeat.weeks)
-            nextDate += relativedelta(months=repeat.months)
-            nextDate += relativedelta(years=repeat.years)
-        reminder.next_date = nextDate
-        reminder.save()
-
-        logToDB(
-            f"Reminder transaction added : #{reminder_id}",
-            None,
-            reminder_id,
-            None,
-            3001002,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Reminder transaction not added: {str(e)}",
-            None,
-            reminder_id,
-            None,
-            3001902,
-            2,
-        )
-        raise HttpError(500, f"Record update error : {str(e)}")
 
 
 @api.put("/transactions/{transaction_id}")
@@ -1262,7 +1129,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
 
     try:
         # Setup variables
-        today = get_today_formatted()
+        today = get_todays_date_timezone_adjusted()
         paycheck = None
 
         # Get the transaction to update

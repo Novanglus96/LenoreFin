@@ -38,3 +38,8 @@ class ReminderOut(Schema):
     end_date: Optional[date]
     repeat: RepeatOut
     auto_add: bool
+
+
+# The classs ReminderTransIn is a schema for adding reminder transactions.
+class ReminderTransIn(Schema):
+    transaction_date: date
