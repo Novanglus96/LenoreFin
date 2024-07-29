@@ -2,7 +2,7 @@ from ninja import Router, Query
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from transactions.models import Transaction, Paycheck
-from transactions.api.schemas.transaction import TransactionIn
+from transactions.api.schemas.transaction import TransactionIn, TransactionClear
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
@@ -118,3 +118,48 @@ def create_transaction(request, payload: TransactionIn):
         )
         raise HttpError(500, f"Record creation error : {str(e)}")
         traceback.print_exc()
+
+
+@transaction_router.patch("/clear/{transaction_id}")
+def clear_transaction(request, transaction_id: int, payload: TransactionClear):
+    """
+    The function `clear_transaction` changes the status to cleared, edit date to today
+    of the transaction specified by id.  Skips transactions with a related Reminder.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        transaction_id (int): the id of the transaction to update
+        payload (TransactionClear): a transaction clear object
+
+    Returns:
+        success: True
+
+    Raises:
+        Http404: If the transaction with the specified ID does not exist.
+    """
+
+    try:
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+        transaction.status_id = payload.status_id
+        transaction.edit_date = payload.edit_date
+        transaction.save()
+        logToDB(
+            f"Transaction cleared : #{transaction_id}",
+            None,
+            None,
+            transaction_id,
+            3002005,
+            1,
+        )
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Transaction not cleared : {str(e)}",
+            None,
+            None,
+            transaction_id,
+            3002905,
+            2,
+        )
+        raise HttpError(500, "Transaction clear error")

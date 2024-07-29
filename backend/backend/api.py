@@ -90,14 +90,6 @@ class Round(Func):
     template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
-# The class TransactionClear is a schema for clearing Transactions.
-class TransactionClear(Schema):
-    status_id: int
-    edit_date: Optional[date] = Field(
-        default_factory=get_todays_date_timezone_adjusted()
-    )
-
-
 # The class TransactionDetailOut is a schema for representing Transaction Details.
 class TransactionDetailOut(Schema):
     id: int
@@ -1108,8 +1100,6 @@ def list_log_entries(request, log_level: Optional[int] = Query(0)):
         raise HttpError(500, "Record retrieval error")
 
 
-
-
 @api.put("/transactions/{transaction_id}")
 def update_transaction(request, transaction_id: int, payload: TransactionIn):
     """
@@ -1259,49 +1249,6 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         raise HttpError(500, "Record update error")
 
 
-@api.patch("/transactions/clear/{transaction_id}")
-def clear_transaction(request, transaction_id: int, payload: TransactionClear):
-    """
-    The function `clear_transaction` changes the status to cleared, edit date to today
-    of the transaction specified by id.  Skips transactions with a related Reminder.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transaction_id (int): the id of the transaction to update
-        payload (TransactionClear): a transaction clear object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the transaction with the specified ID does not exist.
-    """
-
-    try:
-        transaction = get_object_or_404(Transaction, id=transaction_id)
-        transaction.status_id = payload.status_id
-        transaction.edit_date = payload.edit_date
-        transaction.save()
-        logToDB(
-            f"Transaction cleared : #{transaction_id}",
-            None,
-            None,
-            transaction_id,
-            3002005,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction not cleared : {str(e)}",
-            None,
-            None,
-            transaction_id,
-            3002905,
-            2,
-        )
-        raise HttpError(500, "Transaction clear error")
 
 
 @api.put("/transactions/details/{transactiondetail_id}")
