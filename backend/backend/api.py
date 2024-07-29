@@ -87,19 +87,6 @@ class Round(Func):
     template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
-# The class NoteIn is a schema for validating a Note.
-class NoteIn(Schema):
-    note_text: str
-    note_date: date
-
-
-# The class NoteOut is a schema for representing a Note.
-class NoteOut(Schema):
-    id: int
-    note_text: str
-    note_date: date
-
-
 # The class OptionIn is a schema for validating Options.
 class OptionIn(Schema):
     log_level_id: Optional[int]
@@ -441,43 +428,6 @@ class MappingDefinition(Schema):
     transactions: List[TransactionImportSchema]
 
 
-@api.post("/planning/notes")
-def create_note(request, payload: NoteIn):
-    """
-    The function `create_note` creates a note
-
-    Args:
-        request ():
-        payload (NoteIn): An object using schema of NoteIn.
-
-    Returns:
-        id: returns the id of the created note
-    """
-
-    try:
-        note = Note.objects.create(**payload.dict())
-        logToDB(
-            f"Note created : {note.note_date}",
-            None,
-            None,
-            None,
-            3001005,
-            2,
-        )
-        return {"id": note.id}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Note not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
-        raise HttpError(500, "Record creation error")
-
-
 @api.post("/payees")
 def create_payee(request, payload: PayeeIn):
     """
@@ -751,46 +701,6 @@ def create_message(request, payload: MessageIn):
             2,
         )
         raise HttpError(500, "Record creation error")
-
-
-@api.get("/planning/notes/{note_id}", response=NoteOut)
-def get_note(request, note_id: int):
-    """
-    The function `get_note` retrieves the note by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        note_id (int): The id of the note to retrieve.
-
-    Returns:
-        NoteOut: the note object
-
-    Raises:
-        Http404: If the note with the specified ID does not exist.
-    """
-
-    try:
-        note = get_object_or_404(Note, id=note_id)
-        logToDB(
-            f"Note retrieved : #{note.id}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
-        return note
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Note not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/options/{option_id}", response=OptionOut)
@@ -1507,43 +1417,6 @@ def list_transactions_bytag(request, tag: int):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@api.get("/planning/notes", response=List[NoteOut])
-def list_notes(request):
-    """
-    The function `list_notes` retrieves a list of notes,
-    ordered by note date descending.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        NoteOut: a list of note objects
-    """
-
-    try:
-        qs = Note.objects.all().order_by("-note_date")
-        logToDB(
-            "Note list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
-        return qs
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Note list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
-
-
 @api.get("/options", response=List[OptionOut])
 def list_options(request):
     """
@@ -2135,50 +2008,6 @@ def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
         raise HttpError(500, f"Record update error : {str(e)}")
 
 
-@api.put("/planning/notes/{note_id}")
-def update_note(request, note_id: int, payload: NoteIn):
-    """
-    The function `update_note` updates the note specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        note_id (int): the id of the note to update
-        payload (NoteIn): a note object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the note with the specified ID does not exist.
-    """
-
-    try:
-        note = get_object_or_404(Note, id=note_id)
-        note.note_text = payload.note_text
-        note.note_date = payload.note_date
-        note.save()
-        logToDB(
-            f"Note updated : #{note_id}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Note not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
-        raise HttpError(500, "Record update error")
-
-
 @api.patch("/options/{option_id}")
 def update_option(request, option_id: int, payload: OptionIn):
     """
@@ -2336,7 +2165,7 @@ def update_payee(request, payee_id: int, payload: PayeeIn):
     Args:
         request (HttpRequest): The HTTP request object.
         payee_id (int): the id of the payee to update
-        payload (NoteIn): a note object
+        payload (PayeeIn): a note object
 
     Returns:
         success: True
@@ -2823,48 +2652,6 @@ def update_messages(request, message_id: int, payload: AllMessage):
             2,
         )
         raise HttpError(500, "Messages not marked read error")
-
-
-@api.delete("/planning/notes/{note_id}")
-def delete_note(request, note_id: int):
-    """
-    The function `delete_note` deletes the note specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        note_id (int): the id of the note to delete
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the note with the specified ID does not exist.
-    """
-
-    try:
-        note = get_object_or_404(Note, id=note_id)
-        note_date = note.note_date
-        note.delete()
-        logToDB(
-            f"Note deleted from {note_date}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Note not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/options/{option_id}")
