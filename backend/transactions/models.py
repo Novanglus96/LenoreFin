@@ -20,7 +20,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models.query import QuerySet
 from accounts.models import Account
 from tags.models import Tag
-from administration.models import LogEntry, Option, logToDB
+from administration.models import LogEntry, Option
 import pytz
 import os
 

@@ -3,7 +3,7 @@ from django.db import IntegrityError
 from ninja.errors import HttpError
 from planning.models import Contribution
 from planning.api.schemas.contribution import ContributionIn, ContributionOut
-from administration.models import logToDB
+from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
 from django.db.models import (

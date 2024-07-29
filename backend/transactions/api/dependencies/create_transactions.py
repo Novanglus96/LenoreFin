@@ -4,7 +4,7 @@ from transactions.api.dependencies.full_transaction import FullTransaction
 from django.db.models.functions import Concat, Coalesce, Abs
 from transactions.models import Transaction, TransactionDetail
 from django.db import IntegrityError, connection, transaction
-from administration.models import logToDB
+from administration.api.dependencies.log_to_db import logToDB
 
 
 def create_transactions(transactions: List[FullTransaction]):

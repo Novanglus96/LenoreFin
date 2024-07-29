@@ -3,7 +3,7 @@ from django.db import IntegrityError
 from ninja.errors import HttpError
 from accounts.models import AccountType
 from accounts.api.schemas.account_type import AccountTypeIn, AccountTypeOut
-from administration.models import logToDB
+from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
 

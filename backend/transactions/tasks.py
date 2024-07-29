@@ -18,7 +18,7 @@ from transactions.api.dependencies.create_transactions import (
     create_transactions,
 )
 from transactions.api.dependencies.full_transaction import FullTransaction
-from administration.models import Message, Option, LogEntry, logToDB
+from administration.models import Message, Option, LogEntry
 from imports.models import (
     FileImport,
     TransactionImport,
@@ -44,6 +44,7 @@ from django.db.models.functions import RowNumber
 from decimal import Decimal
 import pytz
 import os
+from administration.api.dependencies.log_to_db import logToDB
 
 
 def create_message(message_text):

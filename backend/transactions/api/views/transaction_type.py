@@ -6,7 +6,7 @@ from transactions.api.schemas.transaction_type import (
     TransactionTypeIn,
     TransactionTypeOut,
 )
-from administration.models import logToDB
+from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
 from django.db.models import (
