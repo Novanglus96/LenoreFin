@@ -87,35 +87,6 @@ class Round(Func):
     template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
-# The class PayCheckIn is a schema for validating Paycheck information.
-class PaycheckIn(Schema):
-    gross: Decimal = Field(whole_digits=10, decimal_places=2)
-    net: Decimal = Field(whole_digits=10, decimal_places=2)
-    taxes: Decimal = Field(whole_digits=10, decimal_places=2)
-    health: Decimal = Field(whole_digits=10, decimal_places=2)
-    pension: Decimal = Field(whole_digits=10, decimal_places=2)
-    fsa: Decimal = Field(whole_digits=10, decimal_places=2)
-    dca: Decimal = Field(whole_digits=10, decimal_places=2)
-    union_dues: Decimal = Field(whole_digits=10, decimal_places=2)
-    four_fifty_seven_b: Decimal = Field(whole_digits=10, decimal_places=2)
-    payee_id: int
-
-
-# The class PayCheckOut is a schema for representing Paycheck information.
-class PaycheckOut(Schema):
-    id: int
-    gross: Decimal = Field(whole_digits=10, decimal_places=2)
-    net: Decimal = Field(whole_digits=10, decimal_places=2)
-    taxes: Decimal = Field(whole_digits=10, decimal_places=2)
-    health: Decimal = Field(whole_digits=10, decimal_places=2)
-    pension: Decimal = Field(whole_digits=10, decimal_places=2)
-    fsa: Decimal = Field(whole_digits=10, decimal_places=2)
-    dca: Decimal = Field(whole_digits=10, decimal_places=2)
-    union_dues: Decimal = Field(whole_digits=10, decimal_places=2)
-    four_fifty_seven_b: Decimal = Field(whole_digits=10, decimal_places=2)
-    payee: PayeeOut
-
-
 # The class TagDetailIn is a schema for validating transaction tag details.
 class TagDetailIn(Schema):
     tag_amt: Decimal = Field(whole_digits=10, decimal_places=2)
@@ -361,43 +332,6 @@ class MappingDefinition(Schema):
     transactions: List[TransactionImportSchema]
 
 
-@api.post("/paychecks")
-def create_paycheck(request, payload: PaycheckIn):
-    """
-    The function `create_paycheck` creates a paycheck
-
-    Args:
-        request ():
-        payload (PaycheckIn): An object using schema of PaycheckIn.
-
-    Returns:
-        id: returns the id of the created paycheck
-    """
-
-    try:
-        paycheck = Paycheck.objects.create(**payload.dict())
-        logToDB(
-            f"Paycheck created : #{paycheck.id}",
-            None,
-            None,
-            None,
-            3001001,
-            1,
-        )
-        return {"id": paycheck.id}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Paycheck not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
-        raise HttpError(500, "Record creation error")
-
-
 @api.post("/transactions")
 def create_transaction(request, payload: TransactionIn):
     """
@@ -574,46 +508,6 @@ def create_message(request, payload: MessageIn):
             2,
         )
         raise HttpError(500, "Record creation error")
-
-
-@api.get("/paychecks/{paycheck_id}", response=PaycheckOut)
-def get_paycheck(request, paycheck_id: int):
-    """
-    The function `get_paycheck` retrieves the paycheck by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        paycheck_id (int): The id of the paycheck to retrieve.
-
-    Returns:
-        PaycheckOut: the payee object
-
-    Raises:
-        Http404: If the paycheck with the specified ID does not exist.
-    """
-
-    try:
-        paycheck = get_object_or_404(Paycheck, id=paycheck_id)
-        logToDB(
-            f"Paycheck retrieved : #{paycheck.id}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
-        return paycheck
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Paycheck not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/transactions/{transaction_id}", response=TransactionOut)
@@ -1165,43 +1059,6 @@ def list_transactions_bytag(request, tag: int):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@api.get("/paychecks", response=List[PaycheckOut])
-def list_paychecks(request):
-    """
-    The function `list_paychecks` retrieves a list of paychecks,
-    ordered by id ascending.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        PaycheckOut: a list of paycheck objects
-    """
-
-    try:
-        qs = Paycheck.objects.all().order_by("id")
-        logToDB(
-            "Paycheck list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
-        return qs
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Paycheck list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
-
-
 @api.get("/transactions", response=PaginatedTransactions)
 def list_transactions(
     request,
@@ -1645,58 +1502,6 @@ def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
         raise HttpError(500, f"Record update error : {str(e)}")
 
 
-@api.put("/paychecks/{paycheck_id}")
-def update_paycheck(request, paycheck_id: int, payload: PaycheckIn):
-    """
-    The function `update_paycheck` updates the paycheck specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        paycheck_id (int): the id of the paycheck to update
-        payload (PaycheckIn): a paycheck object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the paycheck with the specified ID does not exist.
-    """
-
-    try:
-        paycheck = get_object_or_404(Paycheck, id=paycheck_id)
-        paycheck.gross = payload.gross
-        paycheck.net = payload.net
-        paycheck.taxes = payload.taxes
-        paycheck.health = payload.health
-        paycheck.pension = payload.pension
-        paycheck.fsa = payload.fsa
-        paycheck.dca = payload.dca
-        paycheck.union_dues = payload.union_dues
-        paycheck.four_fifty_seven_b = payload.four_fifty_seven_b
-        paycheck.payee_id = payload.payee_id
-        paycheck.save()
-        logToDB(
-            f"Paycheck updated : #{paycheck_id}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Paycheck not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
-        raise HttpError(500, "Record update error")
-
-
 @api.put("/transactions/{transaction_id}")
 def update_transaction(request, transaction_id: int, payload: TransactionIn):
     """
@@ -2074,47 +1879,6 @@ def update_messages(request, message_id: int, payload: AllMessage):
             2,
         )
         raise HttpError(500, "Messages not marked read error")
-
-
-@api.delete("/paychecks/{paycheck_id}")
-def delete_paycheck(request, paycheck_id: int):
-    """
-    The function `delete_paycheck` deletes the paycheck specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        paycheck_id (int): the id of the paycheck to delete
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the paycheck with the specified ID does not exist.
-    """
-
-    try:
-        paycheck = get_object_or_404(Paycheck, id=paycheck_id)
-        paycheck.delete()
-        logToDB(
-            f"Paycheck deleted : {paycheck_id}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Paycheck not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/transactions/{transaction_id}")
