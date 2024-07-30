@@ -240,6 +240,7 @@ JAZZMIN_SETTINGS = {
         "accounts.AccountType": "fas fa-university",
         "accounts.Account": "fas fa-university",
         "accounts.Bank": "fas fa-university",
+        "accounts.Reward": "fas fa-university",
         "administration.ErrorLevel": "fas fa-exclamation-triangle",
         "administration.LogEntry": "fas fa-clipboard-list",
         "administration.Message": "fas fa-comment",

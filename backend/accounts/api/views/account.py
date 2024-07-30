@@ -1,7 +1,7 @@
 from ninja import Router, Query
 from django.db import IntegrityError
 from ninja.errors import HttpError
-from accounts.models import Account
+from accounts.models import Account, Reward
 from transactions.models import Transaction, TransactionDetail
 from accounts.api.schemas.account import AccountIn, AccountOut, AccountUpdate
 from administration.api.dependencies.log_to_db import logToDB
@@ -47,6 +47,11 @@ def create_account(request, payload: AccountIn):
 
     try:
         account = Account.objects.create(**payload.dict())
+        if payload.rewards_amount:
+            Reward.objects.create(
+                reward_amount=payload.rewards_amount,
+                reward_account=account,
+            )
         logToDB(
             f"Account created : {account.account_name}",
             account.id,
@@ -111,6 +116,16 @@ def get_account(request, account_id: int):
     try:
         # Retrieve the account object from the database
         qs = Account.objects.filter(id=account_id)
+
+        # Subquery to get the latest rewards amount
+        rewards_total_amount = 0
+        rewards_total_object = (
+            Reward.objects.filter(reward_account_id=account_id)
+            .order_by("-reward_date", "-id")
+            .first()
+        )
+        if rewards_total_object:
+            rewards_total_amount = rewards_total_object.reward_amount
 
         # Subquery to calculate sum of pretty_total grouped by source_account_id
         source_balance_subquery = (
@@ -185,6 +200,14 @@ def get_account(request, account_id: int):
             .annotate(balance=Sum("pretty_total"))
             .values("balance")[:1]
         )
+
+        qs = qs.annotate(
+            rewards_amount=Value(
+                rewards_total_amount,
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            ),
+        )
+
         qs = qs.annotate(
             source_balance=Coalesce(
                 Subquery(
@@ -442,7 +465,10 @@ def update_account(request, account_id: int, payload: AccountUpdate):
         if payload.statement_cycle_period is not None:
             account.statement_cycle_period = payload.statement_cycle_period
         if payload.rewards_amount is not None:
-            account.rewards_amount = payload.rewards_amount
+            Reward.objects.create(
+                reward_amount=payload.rewards_amount,
+                reward_account_id=account_id,
+            )
         if payload.credit_limit is not None:
             account.credit_limit = payload.credit_limit
         if payload.bank_id is not None:

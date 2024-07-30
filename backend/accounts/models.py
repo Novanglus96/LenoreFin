@@ -96,9 +96,6 @@ class Account(models.Model):
     statement_cycle_period = models.CharField(
         max_length=1, null=True, default="d"
     )
-    rewards_amount = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00, null=True
-    )
     credit_limit = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00, null=True
     )
@@ -109,3 +106,25 @@ class Account(models.Model):
 
     def __str__(self):
         return self.account_name
+
+
+class Reward(models.Model):
+    """
+    Model representing a reward to be used for cc accounts.
+
+    Fields:
+    - reward_date (Date): The date the award amount was added
+    - reward_amount (DecimalField): The amount of the rewards on
+    this date
+    - reward_account (ForeignKey): The account associated with this
+    reward
+    """
+
+    reward_date = models.DateField(default=current_date)
+    reward_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00, null=True
+    )
+    reward_account = models.ForeignKey(Account, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.reward_date} : {self.reward_account.account_name} (${self.reward_amount})"

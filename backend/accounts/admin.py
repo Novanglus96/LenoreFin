@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AccountType, Bank, Account
+from .models import AccountType, Bank, Account, Reward
 from django.http import HttpResponse
 from import_export.admin import ImportExportModelAdmin
 
@@ -36,6 +36,25 @@ class BankAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     ordering = ["bank_name"]
 
 
+class RewardAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = [
+        "id",
+        "reward_date",
+        "reward_account",
+        "reward_amount",
+    ]
+
+    list_display_links = [
+        "id",
+        "reward_date",
+        "reward_account",
+        "reward_amount",
+    ]
+
+    ordering = ["-id"]
+
+
 admin.site.register(AccountType, AccountTypeAdmin)
 admin.site.register(Account, AccountAdmin)
 admin.site.register(Bank, BankAdmin)
+admin.site.register(Reward, RewardAdmin)
