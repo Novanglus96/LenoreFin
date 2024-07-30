@@ -64,7 +64,10 @@ async function getTransactionsFunction(querydata) {
 async function createTransactionFunction(newTransaction) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.post("/transactions", newTransaction);
+    const response = await apiClient.post(
+      "/transactions/create",
+      newTransaction,
+    );
     mainstore.showSnackbar("Transaction created successfully!", "success");
 
     return response.id;
