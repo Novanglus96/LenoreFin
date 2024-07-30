@@ -49,6 +49,7 @@ from transactions.api.routers.transaction_detail import (
 )
 from tags.api.routers.tag_graph import tag_graph_router
 from administration.api.routers.log_entry import log_entry_router
+from tags.api.routers.graph_by_tags import graph_by_tags_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
@@ -80,6 +81,7 @@ api.add_router("/administration/messages", message_router)
 api.add_router("/transactions/transaction-details", transaction_detail_router)
 api.add_router("/tags/tag-graphs", tag_graph_router)
 api.add_router("/administration/log-entries", log_entry_router)
+api.add_router("/tags/graph-by-tags", graph_by_tags_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
