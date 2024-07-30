@@ -10,6 +10,7 @@ from administration.api.dependencies.get_todays_date_timezone_adjusted import (
 )
 from transactions.api.schemas.transaction_status import TransactionStatusOut
 from transactions.api.schemas.transaction_type import TransactionTypeOut
+from tags.api.schemas.tag import TagOut
 
 
 # The class TransactionIn is a schema for validating Transaction information.
@@ -68,3 +69,11 @@ class TransactionOut(Schema):
 from transactions.api.schemas.transaction_detail import TransactionDetailOut
 
 TransactionOut.update_forward_refs()
+
+
+# The class TagTransactionOut is a schema for representing Transactions by Tag.
+class TagTransactionOut(Schema):
+    transaction: TransactionOut
+    detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+    pretty_account: str
+    tag: TagOut
