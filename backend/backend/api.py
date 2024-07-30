@@ -90,41 +90,6 @@ class Round(Func):
     template = "%(function)s(%(expressions)s::numeric, 2)"
 
 
-# The class TransactionDetailOut is a schema for representing Transaction Details.
-class TransactionDetailOut(Schema):
-    id: int
-    transaction: "TransactionOut"
-    detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
-    tag: TagOut
-
-
-# The class TransactionOut is a schema for representing Transactions.
-class TransactionOut(Schema):
-    id: int
-    transaction_date: date
-    total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
-    status: TransactionStatusOut
-    memo: Optional[str] = None
-    description: str
-    edit_date: date
-    add_date: date
-    transaction_type: TransactionTypeOut
-    paycheck: Optional[PaycheckOut] = None
-    balance: Optional[Decimal] = Field(
-        default=None, whole_digits=10, decimal_places=2
-    )
-    pretty_account: Optional[str]
-    tags: Optional[List[Optional[str]]] = []
-    details: List[TransactionDetailOut] = []
-    pretty_total: Optional[Decimal] = Field(
-        default=None, whole_digits=10, decimal_places=2
-    )
-    source_account_id: Optional[int] = None
-    destination_account_id: Optional[int] = None
-    checkNumber: Optional[int] = None
-    reminder_id: Optional[int] = None
-
-
 # The class TagTransactionOut is a schema for representing Transactions by Tag.
 class TagTransactionOut(Schema):
     transaction: TransactionOut
@@ -143,23 +108,12 @@ class TagGraphOut(Schema):
     transactions: List[TagTransactionOut]
 
 
-TransactionDetailOut.update_forward_refs()
-
-
 # The class PaginatedTransactions is a schema for validating paginated transactions.
 class PaginatedTransactions(Schema):
     transactions: List[TransactionOut]
     current_page: int
     total_pages: int
     total_records: int
-
-
-# The class TransactionDetailIn is a schema for validating Transaction Details.
-class TransactionDetailIn(Schema):
-    transaction_id: int
-    account_id: int
-    detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
-    tag_id: int
 
 
 # The class LogEntryIn is a schema for validating Log Entries.
@@ -259,43 +213,6 @@ class MappingDefinition(Schema):
     transactions: List[TransactionImportSchema]
 
 
-@api.post("/transactions/details")
-def create_transaction_detail(request, payload: TransactionDetailIn):
-    """
-    The function `create_transaction_detail` creates a transaction detail
-
-    Args:
-        request ():
-        payload (TransactionDetailIn): An object using schema of TransactionDetailIn.
-
-    Returns:
-        id: returns the id of the created transaction detail
-    """
-
-    try:
-        transaction_detail = TransactionDetail.objects.create(**payload.dict())
-        logToDB(
-            f"Transaction detail created : #{transaction_detail.transaction.id}",
-            None,
-            None,
-            payload.transaction_id,
-            3001005,
-            2,
-        )
-        return {"id": transaction_detail.id}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction detail not created : {str(e)}",
-            None,
-            None,
-            payload.transaction_id,
-            3001901,
-            2,
-        )
-        raise HttpError(500, "Record creation error")
-
-
 @api.post("/logentries")
 def create_log_entry(request, payload: LogEntryIn):
     """
@@ -315,91 +232,6 @@ def create_log_entry(request, payload: LogEntryIn):
         log_entry = LogEntry.objects.create(**payload.dict())
         return {"id": log_entry.id}
     return {"id": 0}
-
-
-@api.get("/transactions/{transaction_id}", response=TransactionOut)
-def get_transaction(request, transaction_id: int):
-    """
-    The function `get_transaction` retrieves the transaction by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transaction_id (int): The id of the transaction to retrieve.
-
-    Returns:
-        TransactionOut: the transaction object
-
-    Raises:
-        Http404: If the transaction with the specified ID does not exist.
-    """
-
-    try:
-        transaction = get_object_or_404(Transaction, id=transaction_id)
-        logToDB(
-            f"Transaction retrieved : #{transaction.id}",
-            None,
-            None,
-            transaction.id,
-            3001006,
-            1,
-        )
-        return transaction
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
-
-
-@api.get(
-    "/transactions/details/{transactiondetail_id}",
-    response=TransactionDetailOut,
-)
-def get_transaction_detail(request, transactiondetail_id: int):
-    """
-    The function `get_transaction_detail` retrieves the transaction detail by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transactiondetail_id (int): The id of the transaction detail to retrieve.
-
-    Returns:
-        TransactionDetailOut: the transaction detail object
-
-    Raises:
-        Http404: If the transaction detail with the specified ID does not exist.
-    """
-
-    try:
-        transaction_detail = get_object_or_404(
-            TransactionDetail, id=transactiondetail_id
-        )
-        logToDB(
-            f"Transaction detail retrieved : #{transaction_detail.id}",
-            None,
-            None,
-            transaction_detail.transaction.id,
-            3001006,
-            1,
-        )
-        return transaction_detail
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction detail not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.get("/logentries/{logentry_id}", response=LogEntryOut)
@@ -1023,43 +855,6 @@ def list_transactions(
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@api.get("/transactions/details", response=List[TransactionDetailOut])
-def list_transactiondetails(request):
-    """
-    The function `list_transactiondetails` retrieves a list of transaction details,
-    ordered by id ascending.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        TransactionDetailOut: a list of transaction detail objects
-    """
-
-    try:
-        qs = TransactionDetail.objects.all().order_by("id")
-        logToDB(
-            "Transaction detail list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
-        return qs
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction detail list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
-
-
 @api.get("/logentries", response=List[LogEntryOut])
 def list_log_entries(request, log_level: Optional[int] = Query(0)):
     """
@@ -1098,207 +893,6 @@ def list_log_entries(request, log_level: Optional[int] = Query(0)):
             2,
         )
         raise HttpError(500, "Record retrieval error")
-
-
-@api.put("/transactions/{transaction_id}")
-def update_transaction(request, transaction_id: int, payload: TransactionIn):
-    """
-    The function `update_transaction` updates the transaction specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transaction_id (int): the id of the transaction to update
-        payload (TransactionIn): a transaction object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the transaction with the specified ID does not exist.
-    """
-
-    try:
-        # Setup variables
-        today = get_todays_date_timezone_adjusted()
-        paycheck = None
-
-        # Get the transaction to update
-        transaction = get_object_or_404(Transaction, id=transaction_id)
-
-        # Get Details
-        existing_details = TransactionDetail.objects.filter(
-            transaction_id=transaction_id
-        )
-        existing_details.delete()
-        for detail in payload.details:
-            adj_amount = 0
-            if payload.transaction_type_id == 1:
-                adj_amount = -abs(detail.tag_amt)
-            else:
-                adj_amount = abs(detail.tag_amt)
-            TransactionDetail.objects.create(
-                transaction_id=transaction_id,
-                detail_amt=adj_amount,
-                tag_id=detail.tag_id,
-            )
-            logToDB(
-                "Transaction detail created",
-                None,
-                None,
-                transaction_id,
-                3001001,
-                1,
-            )
-
-        # Get existing paycheck if it exists
-        if transaction.paycheck_id is not None:
-            paycheck = get_object_or_404(Paycheck, id=transaction.paycheck_id)
-
-        # Update existing paycheck
-        if payload.paycheck is not None and paycheck is not None:
-            paycheck.gross = payload.paycheck.gross
-            paycheck.net = payload.paycheck.net
-            paycheck.taxes = payload.paycheck.taxes
-            paycheck.health = payload.paycheck.health
-            paycheck.pension = payload.paycheck.pension
-            paycheck.fsa = payload.paycheck.fsa
-            paycheck.dca = payload.paycheck.dca
-            paycheck.union_dues = payload.paycheck.union_dues
-            paycheck.four_fifty_seven_b = payload.paycheck.four_fifty_seven_b
-            paycheck.payee_id = payload.paycheck.payee_id
-            paycheck.save()
-            logToDB(
-                "Paycheck updated",
-                None,
-                None,
-                transaction_id,
-                3001002,
-                1,
-            )
-
-        # Create new paycheck
-        if payload.paycheck is not None and paycheck is None:
-            paycheck = Paycheck.objects.create(
-                gross=payload.paycheck.gross,
-                net=payload.paycheck.net,
-                taxes=payload.paycheck.taxes,
-                health=payload.paycheck.health,
-                pension=payload.paycheck.pension,
-                fsa=payload.paycheck.fsa,
-                dca=payload.paycheck.dca,
-                union_dues=payload.paycheck.union_dues,
-                four_fifty_seven_b=payload.paycheck.four_fifty_seven_b,
-                payee_id=payload.paycheck.payee_id,
-            )
-            logToDB(
-                "Paycheck created",
-                None,
-                None,
-                transaction_id,
-                3001001,
-                1,
-            )
-
-        # Delete existing paycheck if no paycheck info passed
-        if payload.paycheck is None and paycheck is not None:
-            paycheck.delete()
-        logToDB(
-            "Paycheck deleted",
-            None,
-            None,
-            transaction_id,
-            3001003,
-            1,
-        )
-
-        # Update the transaction
-        transaction.transaction_date = payload.transaction_date
-        transaction.total_amount = payload.total_amount
-        transaction.status_id = payload.status_id
-        transaction.memo = payload.memo
-        transaction.description = payload.description
-        transaction.edit_date = today
-        transaction.source_account_id = payload.source_account_id
-        transaction.destination_account_id = payload.destination_account_id
-        transaction.checkNumber = payload.checkNumber
-        if paycheck is not None:
-            transaction.paycheck_id = paycheck.id
-        else:
-            transaction.paycheck_id = None
-        transaction.save()
-        logToDB(
-            f"Transaction updated : {transaction_id}",
-            None,
-            None,
-            transaction_id,
-            3001002,
-            1,
-        )
-
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction not updated : {str(e)}",
-            None,
-            None,
-            transaction_id,
-            3001902,
-            2,
-        )
-        raise HttpError(500, "Record update error")
-
-
-
-
-@api.put("/transactions/details/{transactiondetail_id}")
-def update_transaction_detail(
-    request, transactiondetail_id: int, payload: TransactionDetailIn
-):
-    """
-    The function `update_transaction_detail` updates the transacion detail specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transactiondetail_id (int): the id of the transaction detail to update
-        payload (TransactionDetailIn): a transaction detail object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the transaction detail with the specified ID does not exist.
-    """
-
-    try:
-        transaction_detail = get_object_or_404(
-            TransactionDetail, id=transactiondetail_id
-        )
-        transaction_detail.transaction_id = payload.transaction_id
-        transaction_detail.account_id = payload.account_id
-        transaction_detail.detail_amt = payload.detail_amt
-        transaction_detail.tag_id = payload.tag_id
-        transaction_detail.save()
-        logToDB(
-            f"Transaction detail updated : #{transactiondetail_id}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction detail not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
-        raise HttpError(500, "Record update error")
 
 
 @api.put("/logentries/{logentry_id}")
@@ -1348,92 +942,6 @@ def update_log_entry(request, logentry_id: int, payload: LogEntryIn):
             2,
         )
         raise HttpError(500, "Record update error")
-
-
-@api.delete("/transactions/{transaction_id}")
-def delete_transaction(request, transaction_id: int):
-    """
-    The function `delete_transaction` deletes the transaction specified by id,
-    but skips any that have a related reminder.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transaction_id (int): the id of the transaction to delete
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the transaction with the specified ID does not exist.
-    """
-
-    try:
-        transaction = get_object_or_404(Transaction, id=transaction_id)
-        if transaction.reminder is None:
-            transaction.delete()
-            logToDB(
-                f"Transaction deleted : #{transaction_id}",
-                None,
-                None,
-                None,
-                3001003,
-                1,
-            )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
-
-
-@api.delete("/transactions/details/{transactiondetail_id}")
-def delete_transaction_detail(request, transactiondetail_id: int):
-    """
-    The function `delete_transaction_detail` deletes the transaction detail specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        transactiondetail_id (int): the id of the transaction detail to delete
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the transaction detail with the specified ID does not exist.
-    """
-
-    try:
-        transaction_detail = get_object_or_404(
-            TransactionDetail, id=transactiondetail_id
-        )
-        transaction_detail.delete()
-        logToDB(
-            f"Transaction detail deleted : #{transactiondetail_id}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
-        return {"success": True}
-    except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Transaction detail not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
-        raise HttpError(500, "Record retrieval error")
 
 
 @api.delete("/logentries/{logentry_id}")

@@ -44,6 +44,9 @@ from administration.api.routers.payee import payee_router
 from transactions.api.routers.paycheck import paycheck_router
 from transactions.api.routers.transaction import transaction_router
 from administration.api.routers.message import message_router
+from transactions.api.routers.transaction_detail import (
+    transaction_detail_router,
+)
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
@@ -72,6 +75,7 @@ api.add_router("/administration/payees", payee_router)
 api.add_router("/transactions/paychecks", paycheck_router)
 api.add_router("/transactions", transaction_router)
 api.add_router("/administration/messages", message_router)
+api.add_router("/transactions/transaction-details", transaction_detail_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
