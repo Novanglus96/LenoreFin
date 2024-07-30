@@ -77,3 +77,11 @@ class TagTransactionOut(Schema):
     detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     pretty_account: str
     tag: TagOut
+
+
+# The class PaginatedTransactions is a schema for validating paginated transactions.
+class PaginatedTransactions(Schema):
+    transactions: List[TransactionOut]
+    current_page: int
+    total_pages: int
+    total_records: int

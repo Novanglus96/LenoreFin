@@ -25,7 +25,7 @@ from django.db.models import (
     Func,
     Count,
 )
-from transactions.models import Transaction
+from transactions.models import Transaction, TransactionDetail
 from django.db.models.functions import Concat, Coalesce, Abs
 from transactions.api.dependencies.get_reminder_transaction_list import (
     get_reminder_transaction_list,
