@@ -31,7 +31,7 @@ function handleApiError(error, message) {
 
 async function getMessagesFunction() {
   try {
-    const response = await apiClient.get("/messages");
+    const response = await apiClient.get("/administration/messages/list");
     return response.data;
   } catch (error) {
     handleApiError(error, "Messages not fetched: ");
@@ -41,7 +41,10 @@ async function getMessagesFunction() {
 async function createMessageFunction(newMessage) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.post("/messages", newMessage);
+    const response = await apiClient.post(
+      "/administration/messages/create",
+      newMessage,
+    );
     mainstore.showSnackbar("Message created successfully!", "success");
     return response.data;
   } catch (error) {
@@ -52,7 +55,9 @@ async function createMessageFunction(newMessage) {
 async function deleteAllMessagesFunction() {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.delete("/messages/deleteall/0");
+    const response = await apiClient.delete(
+      "/administration/messages/deleteall/0",
+    );
     mainstore.showSnackbar("Messages deleted successfully!", "success");
     return response.data;
   } catch (error) {
@@ -66,7 +71,10 @@ async function readAllMessagesFunction() {
     const payload = {
       unread: false,
     };
-    const response = await apiClient.patch("/messages/readall/0", payload);
+    const response = await apiClient.patch(
+      "/administration/messages/readall/0",
+      payload,
+    );
     mainstore.showSnackbar("Messages marked read successfully!", "success");
     return response.data;
   } catch (error) {

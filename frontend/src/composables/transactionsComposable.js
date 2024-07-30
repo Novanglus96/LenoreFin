@@ -50,10 +50,10 @@ async function getTransactionsFunction(querydata) {
       if (querydata.page_size) {
         querytext = querytext + "&page_size=" + querydata.page_size;
       }
-      const response = await apiClient.get("/transactions" + querytext);
+      const response = await apiClient.get("/transactions/list" + querytext);
       return response.data;
     } else {
-      const response = await apiClient.get("/transactions");
+      const response = await apiClient.get("/transactions/list");
       return response.data;
     }
   } catch (error) {
@@ -77,7 +77,7 @@ async function deleteTransactionFunction(deletedTransaction) {
   const mainstore = useMainStore();
   try {
     const response = await apiClient.delete(
-      "/transactions/" + deletedTransaction,
+      "/transactions/delete/" + deletedTransaction,
     );
     mainstore.showSnackbar("Transaction deleted successfully!", "success");
     return response.data;
@@ -106,7 +106,7 @@ async function clearTransactionFunction(clearedTransaction) {
 async function updateTransactionFunction(updatedTransaction) {
   try {
     const response = await apiClient.put(
-      "/transactions/" + updatedTransaction.id,
+      "/transactions/update/" + updatedTransaction.id,
       updatedTransaction,
     );
     return response.data;

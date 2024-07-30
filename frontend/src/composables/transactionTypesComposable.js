@@ -30,7 +30,9 @@ function handleApiError(error, message) {
 
 async function getTransactionTypesFunction() {
   try {
-    const response = await apiClient.get("/transaction/types");
+    const response = await apiClient.get(
+      "/transactions/transaction-types/list",
+    );
     return response.data;
   } catch (error) {
     handleApiError(error, "Transaction types not fetched: ");

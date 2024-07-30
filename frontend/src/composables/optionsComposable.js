@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getOptionsFunction() {
   try {
-    const response = await apiClient.get("/options/1");
+    const response = await apiClient.get("/administration/options/get/1");
     return response.data;
   } catch (error) {
     handleApiError(error, "Options not fetched: ");
@@ -39,7 +39,10 @@ async function getOptionsFunction() {
 
 async function updateOptionsFunction(updatedOptions) {
   try {
-    const response = await apiClient.patch("/options/1", updatedOptions);
+    const response = await apiClient.patch(
+      "/administration/options/update/1",
+      updatedOptions,
+    );
     return response.data;
   } catch (error) {
     handleApiError(error, "Options not updated: ");

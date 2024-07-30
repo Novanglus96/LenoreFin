@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getRemindersFunction() {
   try {
-    const response = await apiClient.get("/reminders");
+    const response = await apiClient.get("/reminders/list");
     return response.data;
   } catch (error) {
     handleApiError(error, "Reminders not fetched: ");
@@ -40,7 +40,9 @@ async function getRemindersFunction() {
 async function deleteReminderFunction(deletedReminder) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.delete("/reminders/" + deletedReminder);
+    const response = await apiClient.delete(
+      "/reminders/delete/" + deletedReminder,
+    );
     mainstore.showSnackbar("Reminder deleted successfully!", "success");
     return response.data;
   } catch (error) {
@@ -51,7 +53,7 @@ async function deleteReminderFunction(deletedReminder) {
 async function createReminderFunction(newReminder) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.post("/reminders", newReminder);
+    const response = await apiClient.post("/reminders/create", newReminder);
     mainstore.showSnackbar("Reminder created successfully!", "success");
     return response.data;
   } catch (error) {
@@ -62,7 +64,7 @@ async function createReminderFunction(newReminder) {
 async function updateReminderFunction(updatedReminder) {
   try {
     const response = await apiClient.put(
-      "/reminders/" + updatedReminder.id,
+      "/reminders/update/" + updatedReminder.id,
       updatedReminder,
     );
     return response.data;
@@ -74,7 +76,7 @@ async function updateReminderFunction(updatedReminder) {
 async function addReminderTrans(reminderTransObject) {
   try {
     const response = await apiClient.put(
-      "/reminders/" + reminderTransObject.reminder_id + "/addtrans",
+      "/reminders/addtrans/" + reminderTransObject.reminder_id,
       reminderTransObject,
     );
     return response.data;

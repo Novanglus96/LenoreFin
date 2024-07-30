@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getLogEntriesFunction() {
   try {
-    const response = await apiClient.get("/logentries");
+    const response = await apiClient.get("/administration/log-entries/list");
     return response.data;
   } catch (error) {
     handleApiError(error, "Log entries not fetched: ");

@@ -34,7 +34,7 @@ async function getTagsFunction(tag_type) {
     if (tag_type) {
       querytext = "?tag_type=" + tag_type;
     }
-    const response = await apiClient.get("/tags" + querytext);
+    const response = await apiClient.get("/tags/list" + querytext);
     return response.data;
   } catch (error) {
     handleApiError(error, "Tags not fetched: ");
@@ -43,7 +43,7 @@ async function getTagsFunction(tag_type) {
 
 async function getParentTagsFunction() {
   try {
-    const response = await apiClient.get("/tags?parent_only=true");
+    const response = await apiClient.get("/tags/list?parent_only=true");
     return response.data;
   } catch (error) {
     handleApiError(error, "Parent Tags not fetched: ");
@@ -53,7 +53,7 @@ async function getParentTagsFunction() {
 async function getGraphByTagsFunction(widget_id) {
   try {
     const response = await apiClient.get(
-      "/graphs_bytags?widget_id=" + widget_id,
+      "/tags/graph-by-tags/get?widget_id=" + widget_id,
     );
     return response.data;
   } catch (error) {
@@ -63,7 +63,7 @@ async function getGraphByTagsFunction(widget_id) {
 
 async function getTransactionsByTagsFunction(tag_id) {
   try {
-    const response = await apiClient.get("/transactions_bytag?tag=" + tag_id);
+    const response = await apiClient.get("/tags/tag-graphs/list?tag=" + tag_id);
     return response.data;
   } catch (error) {
     handleApiError(error, "Transactions by tag not fetched: ");
@@ -73,7 +73,7 @@ async function getTransactionsByTagsFunction(tag_id) {
 async function createTagFunction(newTag) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.post("/tags", newTag);
+    const response = await apiClient.post("/tags/create", newTag);
     mainstore.showSnackbar("Tag created successfully!", "success");
     return response.data;
   } catch (error) {

@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getAccountTypesFunction() {
   try {
-    const response = await apiClient.get("/accounts/types");
+    const response = await apiClient.get("/accounts/account-types/list");
     return response.data;
   } catch (error) {
     handleApiError(error, "Account types not fetched: ");

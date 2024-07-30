@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getRepeatsFunction() {
   try {
-    const response = await apiClient.get("/reminders/repeats");
+    const response = await apiClient.get("/reminders/repeat/list");
     return response.data;
   } catch (error) {
     handleApiError(error, "Repeats not fetched: ");

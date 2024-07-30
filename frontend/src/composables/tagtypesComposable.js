@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getTagTypesFunction() {
   try {
-    const response = await apiClient.get("/tagtypes");
+    const response = await apiClient.get("/tags/tag-types/list");
     return response.data;
   } catch (error) {
     handleApiError(error, "Tag types not fetched: ");

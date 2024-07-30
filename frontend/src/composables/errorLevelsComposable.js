@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getErrorLevelsFunction() {
   try {
-    const response = await apiClient.get("/errorlevels");
+    const response = await apiClient.get("/administration/error-levels/list");
     return response.data;
   } catch (error) {
     handleApiError(error, "Error Levels not fetched: ");

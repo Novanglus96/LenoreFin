@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getBanksFunction() {
   try {
-    const response = await apiClient.get("/accounts/banks");
+    const response = await apiClient.get("/accounts/banks/list");
     return response.data;
   } catch (error) {
     handleApiError(error, "Banks not fetched: ");
@@ -40,7 +40,7 @@ async function getBanksFunction() {
 async function createBankFunction(newBank) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.post("/accounts/banks", newBank);
+    const response = await apiClient.post("/accounts/banks/create", newBank);
     mainstore.showSnackbar("Bank created successfully!", "success");
     return response.data;
   } catch (error) {

@@ -30,7 +30,7 @@ function handleApiError(error, message) {
 
 async function getPayeesFunction() {
   try {
-    const response = await apiClient.get("/payees");
+    const response = await apiClient.get("/administration/payees/list");
     return response.data;
   } catch (error) {
     handleApiError(error, "Payees not fetched: ");
@@ -40,7 +40,10 @@ async function getPayeesFunction() {
 async function createPayeeFunction(newPayee) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.post("/payees", newPayee);
+    const response = await apiClient.post(
+      "/administration/payees/create",
+      newPayee,
+    );
     mainstore.showSnackbar("Payee created successfully!", "success");
     return response.data;
   } catch (error) {

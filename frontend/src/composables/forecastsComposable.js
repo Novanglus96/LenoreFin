@@ -35,9 +35,9 @@ async function getAccountForecastFunction(
 ) {
   try {
     const response = await apiClient.get(
-      "/accounts/" +
+      "/accounts/forecast/get/" +
         account_id +
-        "/forecast?start_interval=" +
+        "?start_interval=" +
         start_integer +
         "&end_interval=" +
         end_integer,
