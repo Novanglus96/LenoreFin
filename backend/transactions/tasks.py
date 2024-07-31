@@ -45,6 +45,9 @@ from decimal import Decimal
 import pytz
 import os
 from administration.api.dependencies.log_to_db import logToDB
+from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+    get_todays_date_timezone_adjusted,
+)
 
 
 def create_message(message_text):
@@ -57,7 +60,7 @@ def create_message(message_text):
     """
 
     message_obj = Message.objects.create(
-        message_date=timezone.now(),
+        message_date=get_todays_date_timezone_adjusted(True),
         message=message_text,
         unread=True,
     )

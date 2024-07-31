@@ -13,7 +13,7 @@ from imports.models import (
     AccountMapping,
     TagMapping,
 )
-from administration.api.schemas.import_file import (
+from imports.api.schemas.import_file import (
     AccountMappingSchema,
     TypeMappingSchema,
     StatusMappingSchema,
@@ -49,6 +49,9 @@ from typing import List, Optional, Dict, Any
 import pytz
 import os
 from django.utils import timezone
+from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+    get_todays_date_timezone_adjusted,
+)
 
 import_file_router = Router(tags=["File Imports"])
 
@@ -122,11 +125,8 @@ def import_file(
                     status=error.status,
                     transaction_import=createTransaction,
                 )
-        today = timezone.now()
-        tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
-        today_tz = today.astimezone(tz_timezone).date()
         Message.objects.create(
-            message_date=today_tz,
+            message_date=get_todays_date_timezone_adjusted(True),
             message=f"File import ID #{importedFile.id} started",
             unread=True,
         )
