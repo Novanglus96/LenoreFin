@@ -43,7 +43,7 @@ async function getTagsFunction(tag_type) {
 
 async function getParentTagsFunction() {
   try {
-    const response = await apiClient.get("/tags/list?parent_only=true");
+    const response = await apiClient.get("/tags/main-tags/list");
     return response.data;
   } catch (error) {
     handleApiError(error, "Parent Tags not fetched: ");
@@ -73,7 +73,20 @@ async function getTransactionsByTagsFunction(tag_id) {
 async function createTagFunction(newTag) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.post("/tags/create", newTag);
+    let data = {};
+    if (newTag.parent_id == null) {
+      data = {
+        parent_name: newTag.tag_name,
+        tag_type_id: newTag.tag_type_id,
+      };
+    } else {
+      data = {
+        child_name: newTag.tag_name,
+        tag_type_id: newTag.tag_type_id,
+        parent_id: newTag.parent_id,
+      };
+    }
+    const response = await apiClient.post("/tags/create", data);
     mainstore.showSnackbar("Tag created successfully!", "success");
     return response.data;
   } catch (error) {

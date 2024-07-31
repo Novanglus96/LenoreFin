@@ -126,11 +126,14 @@ def create_tag(request, payload: TagIn):
                     2,
                 )
                 raise HttpError(500, "Record creation error")
-        tag = Tag.objects.create(
-            parent_id=payload.parent_id,
-            child_id=payload.child_id,
-            tag_type_id=payload.tag_type_id,
-        )
+        if payload.parent_name or (payload.child_name and payload.parent_id):
+            tag = Tag.objects.create(
+                parent_id=payload.parent_id,
+                child_id=payload.child_id,
+                tag_type_id=payload.tag_type_id,
+            )
+        else:
+            raise HttpError(500, "Invalid tag data")
         logToDB(
             f"Tag created : {tag.tag_name}",
             None,
