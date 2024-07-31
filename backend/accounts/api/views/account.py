@@ -237,6 +237,19 @@ def get_account(request, account_id: int):
                 output_field=DecimalField(max_digits=12, decimal_places=2),
             )
         )
+
+        qs = qs.annotate(
+            available_credit=Coalesce(
+                ExpressionWrapper(
+                    F("credit_limit") - Abs(F("balance")),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+                Value(
+                    0,
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+            )
+        )
         account = qs.first()
         logToDB(
             f"Account retrieved : {account.account_name}",
