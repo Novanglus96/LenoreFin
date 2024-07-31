@@ -239,7 +239,7 @@ def finish_imports():
                         memo = None
                         description = None
                         typeID = None
-                        tags = None
+                        tags = []
                         sourceAccountID = None
                         destinationAccountID = None
                         editDate = None
@@ -264,15 +264,6 @@ def finish_imports():
                             editDate = transDate
                             addDate = transDate
                         else:
-
-                            class CustomTag:
-                                def __init__(
-                                    self, tag_name, tag_amount, tag_id
-                                ):
-                                    self.tag_name = tag_name
-                                    self.tag_amount = tag_amount
-                                    self.tag_id = tag_id
-
                             transDate = row["TransactionDate"]
                             totalAmount = float(row["Amount"])
                             statusID = (
@@ -307,7 +298,6 @@ def finish_imports():
                                 )
                             if row["Tags"] and row["Tags"] != 0:
                                 tag_pairs = row["Tags"].split(";")
-                                tags = []
                                 for pair in tag_pairs:
                                     tag_name, tag_amount = pair.split(":")
                                     tag_name = tag_name.strip()
@@ -317,10 +307,12 @@ def finish_imports():
                                         .first()
                                         .tag_id
                                     )
-                                    tag_dict = CustomTag(
-                                        tag_name, tag_amount, tag_id
+                                    tag_obj = CustomTag(
+                                        tag_name=tag_name,
+                                        tag_amount=tag_amount,
+                                        tag_id=tag_id,
                                     )
-                                    tags.append(tag_dict)
+                                    tags.append(tag_obj)
                             addDate = transDate
                             editDate = transDate
                         if typeID == 2:
@@ -336,11 +328,11 @@ def finish_imports():
                             edit_date=editDate,
                             add_date=addDate,
                             transaction_type_id=typeID,
-                            reminder_id=None,
                             paycheck_id=None,
                             source_account_id=sourceAccountID,
                             destination_account_id=destinationAccountID,
                             tags=tags,
+                            checkNumber=None,
                         )
                         transactions_to_create.append(trans)
                     except Exception as f:
@@ -351,7 +343,7 @@ def finish_imports():
 
                     # Send message to frontend that import was successful
                     message_obj = Message.objects.create(
-                        message_date=timezone.now(),
+                        message_date=get_todays_date_timezone_adjusted(True),
                         message=f"Import # {file_import.id} completed successfully with {errors} errors",
                         unread=True,
                     )
@@ -372,7 +364,7 @@ def finish_imports():
                         2,
                     )
                 else:
-                    raise Exception("Unable to create transactions")
+                    raise Exception(f"Unable to create transactions: ")
 
             except Exception as e:
                 success = False

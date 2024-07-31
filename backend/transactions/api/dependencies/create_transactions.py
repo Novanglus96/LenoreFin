@@ -179,12 +179,16 @@ def create_transactions(transactions: List[FullTransaction]):
                 )
             # Create transaction details
             for trans_detail in transaction_details:
+                transaction_index = trans_detail["transaction_index"]
+                detail_amt = trans_detail["detail_amt"]
+                tag_id = trans_detail["tag_id"]
+                print(
+                    f"index: {transaction_index}, amt: {detail_amt}, tag_id:{tag_id}"
+                )
                 detail = TransactionDetail(
-                    transaction_id=created_transactions[
-                        trans_detail.transaction_index
-                    ]["id"],
-                    detail_amt=trans_detail.detail_amt,
-                    tag_id=trans_detail.tag_id,
+                    transaction_id=created_transactions[transaction_index].id,
+                    detail_amt=detail_amt,
+                    tag_id=tag_id,
                 )
                 details_to_create.append(detail)
             try:

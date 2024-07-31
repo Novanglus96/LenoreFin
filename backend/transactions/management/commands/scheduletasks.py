@@ -76,7 +76,7 @@ class Command(BaseCommand):
                 "type": "MINUTES",  # DAILY, HOURLY, MINUTES
                 "start_today": True,
                 "minutes": 5,
-                "delete": True,
+                "delete": False,
             },
         ]
 
