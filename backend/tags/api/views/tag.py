@@ -87,11 +87,18 @@ def create_tag(request, payload: TagIn):
                 raise HttpError(500, "Record creation error")
         if payload.child_name:
             try:
-                child = SubTag.objects.create(
-                    tag_name=payload.child_name,
-                    tag_type_id=payload.tag_type_id,
-                )
-                payload.child_id = child.id
+                existing_child = SubTag.objects.filter(
+                    tag_name=payload.child_name
+                ).first()
+                child = None
+                if not existing_child:
+                    child = SubTag.objects.create(
+                        tag_name=payload.child_name,
+                        tag_type_id=payload.tag_type_id,
+                    )
+                    payload.child_id = child.id
+                else:
+                    payload.child_id = existing_child.id
             except IntegrityError as integrity_error:
                 # Check if the integrity error is due to a duplicate
                 if "unique constraint" in str(integrity_error).lower():
