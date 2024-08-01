@@ -1,10 +1,5 @@
 <template>
-  <v-sheet
-    border
-    rounded
-    :height="200 + props.noItems * 40"
-    :color="verifyTagTotal() ? 'white' : 'red-lighten-5'"
-  >
+  <v-sheet border rounded :height="200 + props.noItems * 40" color="white">
     <v-container class="pa-0 ma-1">
       <v-row dense>
         <v-col cols="1">
@@ -210,6 +205,7 @@ const checkTagComplete = () => {
   if (
     tagAmount.value !== null &&
     tagAmount.value !== "" &&
+    tagAmount.value <= local_amount.value &&
     tagToAdd.value !== null &&
     tagToAdd.value !== ""
   ) {
@@ -223,17 +219,10 @@ const checkTagComplete = () => {
  * `clickTagAdd` Adds a tag to the tag table.
  */
 const clickTagAdd = () => {
-  let pretty_name = "";
-  if (tagToAdd.value.parent) {
-    pretty_name =
-      tagToAdd.value.parent.tag_name + " : " + tagToAdd.value.tag_name;
-  } else {
-    pretty_name = tagToAdd.value.tag_name;
-  }
   let tag_row = {
     tag_id: tagToAdd.value.id,
     tag_amount: parseFloat(Math.abs(tagAmount.value)).toFixed(2),
-    tag_name: pretty_name,
+    tag_name: tagToAdd.value.tag_name,
   };
   local_tags.value.push(tag_row);
   tag_table.value.reset();

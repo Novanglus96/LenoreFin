@@ -171,7 +171,7 @@
                     rounded
                     v-if="formData.transaction_type_id != 3"
                     :height="300"
-                    :color="verifyTagTotal() ? 'white' : 'red-lighten-5'"
+                    color="white"
                   >
                     <v-container class="pa-0 ma-1">
                       <v-row dense>
@@ -236,6 +236,7 @@
                             step="1.00"
                             @update:focused="reformatNumberToMoney"
                             density="compact"
+                            :max="amount"
                           ></v-text-field>
                         </v-col>
                         <v-col cols="1">
@@ -520,7 +521,14 @@
  */
 
 // Import Vue composition functions and components...
-import { ref, defineEmits, defineProps, onMounted, watchEffect } from "vue";
+import {
+  ref,
+  defineEmits,
+  defineProps,
+  onMounted,
+  watchEffect,
+  watch,
+} from "vue";
 import { useTransactionTypes } from "@/composables/transactionTypesComposable";
 import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
 import { useAccounts } from "@/composables/accountsComposable";
@@ -1065,21 +1073,20 @@ const checkTagComplete = () => {
   }
 };
 
+watch(tagAmount, newVal => {
+  if (newVal > amount.value) {
+    tagAmount.value = amount.value;
+  }
+});
+
 /**
  * `clickTagAdd` Adds a tag to the tag table.
  */
 const clickTagAdd = () => {
-  let pretty_name = "";
-  if (tagToAdd.value.parent) {
-    pretty_name =
-      tagToAdd.value.parent.tag_name + " : " + tagToAdd.value.tag_name;
-  } else {
-    pretty_name = tagToAdd.value.tag_name;
-  }
   let tag_row = {
     tag_id: tagToAdd.value.id,
     tag_amt: parseFloat(Math.abs(tagAmount.value)).toFixed(2),
-    tag_pretty_name: pretty_name,
+    tag_pretty_name: tagToAdd.value.tag_name,
   };
   formData.value.details.push(tag_row);
   details_table.value.reset();
@@ -1105,21 +1112,7 @@ const clickTagRemove = () => {
  * @returns - Returns True if totals match
  */
 const verifyTagTotal = () => {
-  let tagtotal = 0;
-  if (formData.value.transaction_type_id != 3) {
-    if (formData.value.details) {
-      formData.value.details.forEach(tag => {
-        tagtotal += parseFloat(tag.tag_amt);
-      });
-    }
-    if (tagtotal == amount.value) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    return true;
-  }
+  return true;
 };
 
 // Lifecycle hook...
