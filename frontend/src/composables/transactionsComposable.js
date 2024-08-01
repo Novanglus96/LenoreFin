@@ -121,7 +121,11 @@ async function updateTransactionFunction(updatedTransaction) {
 export function useTransactions() {
   const queryClient = useQueryClient();
   const transcation_store = useTransactionsStore();
-  const { data: transactions, isLoading } = useQuery({
+  const {
+    data: transactions,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["transactions", transcation_store.pageinfo],
     queryFn: () => getTransactionsFunction(transcation_store.pageinfo),
     placeholderData: keepPreviousData,
@@ -191,6 +195,7 @@ export function useTransactions() {
 
   return {
     isLoading,
+    isFetching,
     transactions,
     addTransaction,
     removeTransaction,

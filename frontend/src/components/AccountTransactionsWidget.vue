@@ -126,7 +126,7 @@
       <vue3-datatable
         :rows="transactions ? transactions.transactions : []"
         :columns="columns"
-        :loading="isLoading"
+        :loading="isActive"
         :totalRows="transactions ? transactions.total_records : 0"
         :isServerMode="true"
         :pageSize="transactions_store.pageinfo.page_size"
@@ -267,7 +267,7 @@
   </v-card>
 </template>
 <script setup>
-import { ref, defineProps, defineEmits } from "vue";
+import { ref, defineProps, defineEmits, computed } from "vue";
 import { useTransactions } from "@/composables/transactionsComposable";
 import { useReminders } from "@/composables/remindersComposable";
 import TransactionForm from "@/components/TransactionForm";
@@ -345,9 +345,17 @@ const editTransaction = ref({
   destination_account_id: null,
 });
 
-const { isLoading, transactions, removeTransaction, clearTransaction } =
-  useTransactions();
+const {
+  isLoading,
+  isFetching,
+  transactions,
+  removeTransaction,
+  clearTransaction,
+} = useTransactions();
 
+const isActive = computed(
+  () => !(isLoading.value === false && isFetching.value === false),
+);
 const { addReminderTransaction } = useReminders();
 const pageChanged = data => {
   transactions_store.pageinfo.page = data.current_page;
