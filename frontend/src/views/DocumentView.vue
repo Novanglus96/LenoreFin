@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, defineOptions } from "vue";
 import { DoxenSidebar, VueDoxen } from "vue-doxen";
 
 // OPTIONAL: CSS file for minor layout/affordance improvements
