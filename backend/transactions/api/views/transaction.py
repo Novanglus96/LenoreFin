@@ -163,7 +163,7 @@ def clear_transaction(request, transaction_id: int, payload: TransactionClear):
     try:
         transaction = get_object_or_404(Transaction, id=transaction_id)
         transaction.status_id = payload.status_id
-        transaction.edit_date = payload.edit_date
+        transaction.edit_date = get_todays_date_timezone_adjusted()
         transaction.save()
         logToDB(
             f"Transaction cleared : #{transaction_id}",

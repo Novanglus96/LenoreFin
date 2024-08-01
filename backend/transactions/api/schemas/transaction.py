@@ -34,9 +34,7 @@ class TransactionIn(Schema):
 # The class TransactionClear is a schema for clearing Transactions.
 class TransactionClear(Schema):
     status_id: int
-    edit_date: Optional[date] = Field(
-        default_factory=get_todays_date_timezone_adjusted()
-    )
+    edit_date: Optional[date] = None
 
 
 # The class TransactionOut is a schema for representing Transactions.
