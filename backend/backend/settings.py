@@ -263,6 +263,7 @@ JAZZMIN_SETTINGS = {
         "transactions.TransactionStatus": "fas fa-money-check",
         "transactions.TransactionType": "fas fa-money-check",
         "transactions.Transaction": "fas fa-money-check",
+        "transactions.TransactionDetail": "fas fa-money-check",
     },
     # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",

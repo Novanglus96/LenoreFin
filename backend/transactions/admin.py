@@ -21,6 +21,18 @@ class TransactionImageInLine(admin.TabularInline):
     extra = 1
 
 
+class TransactionDetailAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "transaction", "tag", "detail_amt"]
+
+    list_display_links = ["id"]
+
+    ordering = ["-transaction__transaction_date"]
+
+    search_fields = ["detail_amt"]
+
+    list_filter = ["tag"]
+
+
 class TransactionTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     list_display = ["id", "transaction_type"]
 
@@ -93,3 +105,4 @@ admin.site.register(TransactionType, TransactionTypeAdmin)
 admin.site.register(TransactionStatus, TransactionStatusAdmin)
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Paycheck, PaycheckAdmin)
+admin.site.register(TransactionDetail, TransactionDetailAdmin)
