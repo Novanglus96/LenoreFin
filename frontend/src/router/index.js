@@ -8,12 +8,18 @@ import AddAccount from "@/views/AddAccount.vue";
 import ForecastView from "@/views/ForecastView.vue";
 import RemindersView from "@/views/RemindersView.vue";
 import TagsView from "@/views/TagsView.vue";
+import DocumentView from "@/views/DocumentView.vue";
 
 const routes = [
   {
     path: "/",
     name: "dashboard",
     component: DashBoard,
+  },
+  {
+    path: "/docs",
+    name: "docs",
+    component: DocumentView,
   },
   {
     path: "/accounts",
