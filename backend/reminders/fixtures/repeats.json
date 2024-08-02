@@ -75,5 +75,16 @@
         "months": 2,
         "years": 0
     }
+  },
+  {
+    "model": "reminders.Repeat",
+    "pk": 8,
+    "fields": {
+        "repeat_name": "Quarterly",
+        "days": 0,
+        "weeks": 0,
+        "months": 3,
+        "years": 0
+    }
   }
 ]
