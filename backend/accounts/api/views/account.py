@@ -47,11 +47,6 @@ def create_account(request, payload: AccountIn):
 
     try:
         account = Account.objects.create(**payload.dict())
-        if payload.rewards_amount:
-            Reward.objects.create(
-                reward_amount=payload.rewards_amount,
-                reward_account=account,
-            )
         logToDB(
             f"Account created : {account.account_name}",
             account.id,

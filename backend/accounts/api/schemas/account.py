@@ -21,7 +21,6 @@ class AccountIn(Schema):
     next_cycle_date: Optional[date]
     statement_cycle_length: Optional[int]
     statement_cycle_period: Optional[str]
-    rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     bank_id: int
     last_statement_amount: Optional[Decimal] = Field(
@@ -43,7 +42,6 @@ class AccountUpdate(Schema):
     next_cycle_date: Optional[date]
     statement_cycle_length: Optional[int]
     statement_cycle_period: Optional[str]
-    rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     bank_id: Optional[int]
     last_statement_amount: Optional[Decimal] = Field(

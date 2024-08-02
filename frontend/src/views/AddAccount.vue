@@ -210,7 +210,6 @@ const formData = ref({
   next_cycle_date: null,
   statement_cycle_length: null,
   statement_cycle_period: null,
-  rewards_amount: 0,
   credit_limit: 0,
   bank_id: null,
 });
@@ -230,7 +229,6 @@ const goBack = async () => {
   formData.value.next_cycle_date = null;
   formData.value.statement_cycle_length = null;
   formData.value.statement_cycle_period = null;
-  formData.value.rewards_amount = 0;
   formData.value.credit_limit = 0;
 };
 
@@ -248,8 +246,6 @@ const checkNext = async () => {
   if (
     formData.value.apy !== null &&
     formData.value.apy !== "" &&
-    formData.value.rewards_amount !== null &&
-    formData.value.rewards_amount !== "" &&
     formData.value.credit_limit !== null &&
     formData.value.credit_limit !== "" &&
     formData.value.open_date !== null &&
