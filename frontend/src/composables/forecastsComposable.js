@@ -50,7 +50,11 @@ async function getAccountForecastFunction(
 
 export function useAccountForecasts(account_id, start_integer, end_integer) {
   const queryClient = useQueryClient();
-  const { data: account_forecast, isLoading } = useQuery({
+  const {
+    data: account_forecast,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["account_forecast", { account: account_id }],
     queryFn: () =>
       getAccountForecastFunction(account_id, start_integer, end_integer),
@@ -60,6 +64,7 @@ export function useAccountForecasts(account_id, start_integer, end_integer) {
 
   return {
     isLoading,
+    isFetching,
     account_forecast,
   };
 }

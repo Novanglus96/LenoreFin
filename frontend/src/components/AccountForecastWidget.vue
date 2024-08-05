@@ -8,7 +8,7 @@
             flat
             size="xs"
             v-bind="props"
-            :disabled="isLoading"
+            :disabled="isActive"
           >
           </v-btn>
         </template>
@@ -51,13 +51,13 @@
         indeterminate
         :size="300"
         :width="12"
-        v-if="isLoading"
+        v-if="isActive"
         >Loading...</v-progress-circular
       >
       <Line
         :data="account_forecast"
         :options="options"
-        v-if="!isLoading"
+        v-if="!isActive"
         ref="Forecast"
         aria-label="Account Forecast"
         >Unable to load forecast</Line
@@ -66,7 +66,7 @@
   </v-card>
 </template>
 <script setup>
-import { ref, defineProps, defineEmits } from "vue";
+import { ref, defineProps, defineEmits, computed } from "vue";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -91,12 +91,14 @@ const props = defineProps({
 });
 const emit = defineEmits(["changeTime"]);
 const chips = ref(props.end_integer);
-const { isLoading, account_forecast } = useAccountForecasts(
+const { isLoading, account_forecast, isFetching } = useAccountForecasts(
   props.account,
   props.start_integer,
   props.end_integer,
 );
-
+const isActive = computed(
+  () => !(isLoading.value === false && isFetching.value === false),
+);
 ChartJS.register(
   CategoryScale,
   LinearScale,
