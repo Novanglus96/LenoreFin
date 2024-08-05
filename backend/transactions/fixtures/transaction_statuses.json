@@ -19,5 +19,12 @@
     "fields": {
         "transaction_status": "Reconciled"
     }
+  },
+  {
+    "model": "transactions.TransactionStatus",
+    "pk": 4,
+    "fields": {
+        "transaction_status": "Archived"
+    }
   }
 ]

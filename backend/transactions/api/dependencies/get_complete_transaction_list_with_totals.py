@@ -72,11 +72,14 @@ def get_complete_transaction_list_with_totals(
     # Get Opening Balance
     opening_balance = Account.objects.get(id=account).opening_balance
 
-    # Get all transactions less than end_date
+    # Get Archive Balance
+    archive_balance = Account.objects.get(id=account).archive_balance
+
+    # Get all non archived transactions less than end_date
     all_transactions = Transaction.objects.filter(
         Q(source_account_id=account) | Q(destination_account_id=account),
         transaction_date__lt=end_date,
-    )
+    ).exclude(status_id=4)
 
     # Annotate Source, Destination, Pretty Account Names if not totals_only
     if not totals_only:
@@ -139,44 +142,55 @@ def get_complete_transaction_list_with_totals(
         )
     )
 
-    # Get Past Transactions
-    past_transactions = all_transactions.filter(transaction_date__lt=today)
+    # Get Cleared Transactions
+    cleared_transactions = all_transactions.exclude(status_id=1)
 
-    # Annotate Past Transactions with balance
-    past_transactions = past_transactions.annotate(
+    # Add custom sorting to Cleared Transactions
+    cleared_transactions = cleared_transactions.annotate(
+        custom_ordering=Case(
+            When(status_id=1, then=Value(2)),
+            When(status_id=2, then=Value(0)),
+            When(status_id=3, then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField(),
+        )
+    )
+
+    # Annotate Cleared Transactions with balance
+    cleared_transactions = cleared_transactions.annotate(
         cumulative_balance=Window(
             expression=Sum(F("pretty_total")),
             order_by=[
-                Case(
-                    When(status_id=1, then=Value(2)),
-                    When(status_id=2, then=Value(0)),
-                    When(status_id=3, then=Value(0)),
-                    default=Value(1),
-                    output_field=IntegerField(),
-                ),
+                "custom_ordering",
                 "transaction_date",
                 "-pretty_total",
                 "-id",
             ],
         )
     )
-    past_transactions = past_transactions.annotate(
+    cleared_transactions = cleared_transactions.annotate(
         balance=ExpressionWrapper(
-            F("cumulative_balance") + Value(opening_balance),
+            F("cumulative_balance")
+            + Value(opening_balance)
+            + Value(archive_balance),
             output_field=DecimalField(max_digits=12, decimal_places=2),
         )
     )
 
-    # Calculate cumulative balance up to to today
-    cumulative_balance_up_to_today = opening_balance
-    if past_transactions:
-        cumulative_balance_up_to_today = (
-            past_transactions.last().cumulative_balance
+    # Calculate cumulative balance up to to last cleared transaction
+    cleared_balance = opening_balance + archive_balance
+    if cleared_transactions:
+        cleared_balance = (
+            cleared_transactions.order_by(
+                "custom_ordering", "transaction_date", "-pretty_total", "-id"
+            )
+            .last()
+            .balance
         )
 
-    # Add tags to past transactions if not totals_only
+    # Add tags to cleared transactions if not totals_only
     if not totals_only:
-        for transaction in past_transactions:
+        for transaction in cleared_transactions:
             tags = list(
                 TransactionDetail.objects.filter(transaction_id=transaction.id)
                 .annotate(
@@ -195,23 +209,23 @@ def get_complete_transaction_list_with_totals(
             )
             transaction.tags = tags
 
-    # Create list from past transactions
-    past_transactions_list = list(past_transactions)
+    # Create list from cleared transactions
+    cleared_transactions_list = list(cleared_transactions)
 
-    # Get future transactions
-    future_transactions = all_transactions.filter(transaction_date__gte=today)
+    # Get pending transactions
+    pending_transactions = all_transactions.filter(status_id=1)
 
-    # Annotate future transactions with balance
-    future_transactions = future_transactions.annotate(
+    # Annotate pending transactions with balance
+    pending_transactions = pending_transactions.annotate(
         balance=ExpressionWrapper(
-            Value(cumulative_balance_up_to_today),
+            Value(cleared_balance),
             output_field=DecimalField(max_digits=12, decimal_places=2),
         )
     )
 
-    # Add tags to future transactions if not totals_only
+    # Add tags to pending transactions if not totals_only
     if not totals_only:
-        for transaction in future_transactions:
+        for transaction in pending_transactions:
             tags = list(
                 TransactionDetail.objects.filter(transaction_id=transaction.id)
                 .annotate(
@@ -230,17 +244,17 @@ def get_complete_transaction_list_with_totals(
             )
             transaction.tags = tags
 
-    # Create a list from future_transactions
-    future_transactions_list = list(future_transactions)
+    # Create a list from pending_transactions
+    pending_transactions_list = list(pending_transactions)
 
     # Get a list of transactions based on reminders
     reminder_transactions_list = get_reminder_transaction_list(
         end_date, account, forecast
     )
 
-    # Combine future and reminder transactions
+    # Combine pending and reminder transactions
     transactions_to_be_sorted = (
-        future_transactions_list + reminder_transactions_list
+        pending_transactions_list + reminder_transactions_list
     )
 
     # Sort the list of transactions
@@ -248,17 +262,17 @@ def get_complete_transaction_list_with_totals(
 
     # Add balances to sorted transactions
     sorted_transactions_with_balances = add_balances_to_transaction_list(
-        sorted_transactions, cumulative_balance_up_to_today
+        sorted_transactions, cleared_balance
     )
 
-    # Combine past transactions with sorted transactions with balances
-    transactions = past_transactions_list + sorted_transactions_with_balances
+    # Combine cleared transactions with sorted transactions with balances
+    transactions = cleared_transactions_list + sorted_transactions_with_balances
 
     # Filter transactions for status and greater than start date, record previous balance
     if forecast:
         filtered_transactions = []
         last_index = -1
-        previous_balance = opening_balance
+        previous_balance = opening_balance + archive_balance
         if start_date:
             start = start_date
         else:
