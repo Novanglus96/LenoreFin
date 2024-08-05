@@ -191,9 +191,12 @@ def get_complete_transaction_list_with_totals(
     # Add tags to cleared transactions if not totals_only
     if not totals_only:
         for transaction in cleared_transactions:
+            transaction_details = TransactionDetail.objects.filter(
+                transaction_id=transaction.id
+            )
+            details = list(transaction_details)
             tags = list(
-                TransactionDetail.objects.filter(transaction_id=transaction.id)
-                .annotate(
+                transaction_details.annotate(
                     parent_tag=F("tag__parent__tag_name"),
                     child_tag=F("tag__child__tag_name"),
                     tag_name_combined=Case(
@@ -208,6 +211,7 @@ def get_complete_transaction_list_with_totals(
                 .values_list("tag_name_combined", flat=True)
             )
             transaction.tags = tags
+            transaction.details = details
 
     # Create list from cleared transactions
     cleared_transactions_list = list(cleared_transactions)
@@ -226,9 +230,12 @@ def get_complete_transaction_list_with_totals(
     # Add tags to pending transactions if not totals_only
     if not totals_only:
         for transaction in pending_transactions:
+            transaction_details = TransactionDetail.objects.filter(
+                transaction_id=transaction.id
+            )
+            details = list(transaction_details)
             tags = list(
-                TransactionDetail.objects.filter(transaction_id=transaction.id)
-                .annotate(
+                transaction_details.annotate(
                     parent_tag=F("tag__parent__tag_name"),
                     child_tag=F("tag__child__tag_name"),
                     tag_name_combined=Case(
@@ -243,6 +250,7 @@ def get_complete_transaction_list_with_totals(
                 .values_list("tag_name_combined", flat=True)
             )
             transaction.tags = tags
+            transaction.details = details
 
     # Create a list from pending_transactions
     pending_transactions_list = list(pending_transactions)
