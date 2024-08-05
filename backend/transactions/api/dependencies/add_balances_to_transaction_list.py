@@ -19,7 +19,7 @@ def add_balances_to_transaction_list(
 
     # Setup variables
     running_total = start_balance
-    print(f"starting_balance={running_total}")
+
     # Calculate and add balances
     for transaction in transactions:
         if isinstance(transaction, dict):
