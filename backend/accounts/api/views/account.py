@@ -228,7 +228,8 @@ def get_account(request, account_id: int):
             balance=ExpressionWrapper(
                 F("source_balance")
                 + F("destination_balance")
-                + F("opening_balance"),
+                + F("opening_balance")
+                + F("archive_balance"),
                 output_field=DecimalField(max_digits=12, decimal_places=2),
             )
         )
@@ -406,7 +407,8 @@ def list_accounts(
             balance=ExpressionWrapper(
                 F("source_balance")
                 + F("destination_balance")
-                + F("opening_balance"),
+                + F("opening_balance")
+                + F("archive_balance"),
                 output_field=DecimalField(max_digits=12, decimal_places=2),
             )
         )

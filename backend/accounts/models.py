@@ -86,25 +86,29 @@ class Account(models.Model):
         max_digits=12, decimal_places=2, default=0.00, null=True
     )
     apy = models.DecimalField(
-        max_digits=4, decimal_places=2, default=0.00, null=True
+        max_digits=4, decimal_places=2, default=0.00, null=True, blank=True
     )
-    due_date = models.DateField(default=current_date, null=True)
+    due_date = models.DateField(default=current_date, null=True, blank=True)
     active = models.BooleanField(default=True)
     open_date = models.DateField(default=current_date, null=True)
-    next_cycle_date = models.DateField(default=current_date, null=True)
-    statement_cycle_length = models.IntegerField(default=0, null=True)
+    next_cycle_date = models.DateField(
+        default=current_date, null=True, blank=True
+    )
+    statement_cycle_length = models.IntegerField(
+        default=0, null=True, blank=True
+    )
     statement_cycle_period = models.CharField(
-        max_length=1, null=True, default="d"
+        max_length=1, null=True, default="d", blank=True
     )
     credit_limit = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00, null=True
+        max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE)
     last_statement_amount = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00, null=True
+        max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
     archive_balance = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00, null=True
+        max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
 
     def __str__(self):
