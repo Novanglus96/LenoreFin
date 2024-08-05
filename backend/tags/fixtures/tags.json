@@ -344,5 +344,13 @@
             "parent": 23,
             "tag_type": 1
         }
+    },
+    {
+        "model": "tags.Tag",
+        "pk": "76",
+        "fields": {
+            "parent": 13,
+            "tag_type": 2
+        }
     }
 ]
