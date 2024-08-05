@@ -107,6 +107,8 @@ class Option(SingletonModel):
     widget3_expense = models.BooleanField(default=True)
     widget3_month = models.IntegerField(default=0)
     widget3_exclude = models.CharField(max_length=254)
+    auto_archive = models.BooleanField(default=True)
+    archive_length = models.IntegerField(default=2)
 
     @classmethod
     def load(cls):

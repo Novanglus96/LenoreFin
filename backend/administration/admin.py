@@ -61,9 +61,21 @@ class OptionAdmin(admin.ModelAdmin):
                 request, object_id, form_url, extra_context
             )
 
-    list_display = ["log_level", "alert_balance", "alert_period"]
+    list_display = [
+        "log_level",
+        "alert_balance",
+        "alert_period",
+        "auto_archive",
+        "archive_length",
+    ]
 
-    list_display_links = ["log_level", "alert_balance", "alert_period"]
+    list_display_links = [
+        "log_level",
+        "alert_balance",
+        "alert_period",
+        "auto_archive",
+        "archive_length",
+    ]
 
 
 class ErrorLevelAdmin(admin.ModelAdmin):
