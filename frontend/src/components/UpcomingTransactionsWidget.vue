@@ -73,6 +73,7 @@
             <v-icon
               icon="mdi-tag"
               :color="row.value.status.id == 1 ? 'grey' : 'black'"
+              v-if="tag"
             ></v-icon>
             {{ tag }}&nbsp;
           </span>
