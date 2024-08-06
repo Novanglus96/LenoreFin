@@ -39,8 +39,25 @@ from django.utils import timezone
 import csv
 from io import StringIO
 from django.db import IntegrityError, connection, transaction
-from django.db.models import F, Window
-from django.db.models.functions import RowNumber
+from django.db.models import (
+    Case,
+    When,
+    Q,
+    IntegerField,
+    Value,
+    F,
+    CharField,
+    Sum,
+    Subquery,
+    OuterRef,
+    FloatField,
+    Window,
+    ExpressionWrapper,
+    DecimalField,
+    Func,
+    Count,
+)
+from django.db.models.functions import Concat, Coalesce, Abs, RowNumber
 from decimal import Decimal
 import pytz
 import os
@@ -385,103 +402,189 @@ def finish_imports():
     return string_return
 
 
-def update_forever_reminders():
+def archive_transactions():
     """
-    The function `update_forever_reminders` updates reminders that have no end date to always have
-    data for 10 years.
+    The function `archive_transactions` archives older transactions based on the
+    options set.
 
     Args:
 
     Returns:
-        trans_total (int): the total number of transactions created
 
     """
     try:
-        # setup variables
-        today = timezone.now()
-        tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
-        todayDate = today.astimezone(tz_timezone).date()
-        maxDate = todayDate + relativedelta(years=10)
-        trans_total = 0
-        transactions_to_create = []
+        # Load archive options
+        options = Option.objects.get(id=1)
 
-        # Retrieve reminders with no end date
-        reminders = Reminder.objects.filter(end_date__isnull=True)
-        for reminder in reminders:
-            # Get last transaction
-            last_transaction = (
-                Transaction.objects.filter(reminder_id=reminder.id)
-                .order_by("-transaction_date")
-                .first()
+        if options.auto_archive == True:
+            # Set variables
+            today = get_todays_date_timezone_adjusted(False)
+            year_offset = options.archive_length + 1
+            past_date = today - relativedelta(years=year_offset)
+            cutoff_year = past_date.year
+            cutoff_date = date(cutoff_year, 12, 31)
+            print(f"Cutoff date: {cutoff_date}")
+
+            # Set matching transactions status to archive
+            transactions = Transaction.objects.filter(
+                transaction_date__lte=cutoff_date
             )
-            last_date = last_transaction.transaction_date
-            next_date = last_date
-            next_date += relativedelta(days=reminder.repeat.days)
-            next_date += relativedelta(weeks=reminder.repeat.weeks)
-            next_date += relativedelta(months=reminder.repeat.months)
-            next_date += relativedelta(years=reminder.repeat.years)
-            # Add transactions up to 10 years
-            while next_date <= maxDate:
-                # Add Transaction
-                tags = []
-                tag_obj = CustomTag(
-                    tag_name=None,
-                    tag_amount=reminder.amount,
-                    tag_id=reminder.tag.id,
+            transactions.update(status_id=4)
+
+            # For each account, update archive balance with the sum of all
+            # archived transactions
+
+            # Subquery to calculate sum of pretty_total grouped by source_account_id
+            source_balance_subquery = (
+                Transaction.objects.filter(
+                    source_account_id=OuterRef("pk"),
+                    status_id=4,
                 )
-                tags.append(tag_obj)
-                new_transaction = FullTransaction(
-                    transaction_date=next_date,
-                    total_amount=reminder.amount,
-                    status_id=1,
-                    description=reminder.description,
-                    edit_date=todayDate,
-                    add_date=todayDate,
-                    transaction_type_id=reminder.transaction_type.id,
-                    reminder_id=reminder.id,
-                    paycheck_id=None,
-                    source_account_id=reminder.reminder_source_account.id,
-                    destination_account_id=reminder.reminder_destination_account.id,
-                    tags=tags,
+                .annotate(
+                    pretty_total=Case(
+                        When(
+                            transaction_type_id=2, then=Abs(F("total_amount"))
+                        ),
+                        When(
+                            transaction_type_id=1, then=-Abs(F("total_amount"))
+                        ),
+                        When(
+                            transaction_type_id=3,
+                            then=Case(
+                                When(
+                                    source_account_id=OuterRef("pk"),
+                                    then=-Abs(F("total_amount")),
+                                ),
+                                default=Abs(F("total_amount")),
+                                output_field=DecimalField(
+                                    max_digits=12, decimal_places=2
+                                ),
+                            ),
+                        ),
+                        default=Value(
+                            0,
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
+                        ),
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    )
                 )
-                transactions_to_create.append(new_transaction)
-                trans_total += 1
-                # Increment next_date
-                next_date += relativedelta(days=reminder.repeat.days)
-                next_date += relativedelta(weeks=reminder.repeat.weeks)
-                next_date += relativedelta(months=reminder.repeat.months)
-                next_date += relativedelta(years=reminder.repeat.years)
-            try:
-                create_transactions(transactions_to_create)
-                logToDB(
-                    "Reminder transactions created",
-                    None,
-                    reminder.id,
-                    None,
-                    3002007,
-                    1,
+                .values("source_account_id")
+                .annotate(balance=Sum("pretty_total"))
+                .values("balance")[:1]
+            )
+
+            # Subquery to calculate sum of pretty_total grouped by destination_account_id
+            destination_balance_subquery = (
+                Transaction.objects.filter(
+                    destination_account_id=OuterRef("pk"),
+                    status_id=4,
                 )
-            except Exception as e:
-                logToDB(
-                    f"Reminder transactions error: {e}",
-                    None,
-                    reminder.id,
-                    None,
-                    3002907,
-                    2,
+                .annotate(
+                    pretty_total=Case(
+                        When(
+                            transaction_type_id=2, then=Abs(F("total_amount"))
+                        ),
+                        When(
+                            transaction_type_id=1, then=-Abs(F("total_amount"))
+                        ),
+                        When(
+                            transaction_type_id=3,
+                            then=Case(
+                                When(
+                                    destination_account_id=OuterRef("pk"),
+                                    then=Abs(F("total_amount")),
+                                ),
+                                default=Abs(F("total_amount")),
+                                output_field=DecimalField(
+                                    max_digits=12, decimal_places=2
+                                ),
+                            ),
+                        ),
+                        default=Value(
+                            0,
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
+                        ),
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    )
                 )
-            string_return = f"Created {trans_total} new transaction(s)"
-            return string_return
+                .values("destination_account_id")
+                .annotate(balance=Sum("pretty_total"))
+                .values("balance")[:1]
+            )
+
+            # Annotate the Account queryset with the combined balance
+            accounts = (
+                Account.objects.all()
+                .annotate(
+                    source_balance=Coalesce(
+                        Subquery(
+                            source_balance_subquery,
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
+                        ),
+                        Value(
+                            0,
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
+                        ),
+                    ),
+                    destination_balance=Coalesce(
+                        Subquery(
+                            destination_balance_subquery,
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
+                        ),
+                        Value(
+                            0,
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
+                        ),
+                    ),
+                )
+                .annotate(
+                    balance=ExpressionWrapper(
+                        F("source_balance") + F("destination_balance"),
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    )
+                )
+            )
+            for account in accounts:
+                account.archive_balance = account.balance
+                account.save()
+        else:
+            print(f"No auto archive")
+        logToDB(
+            "Transactions successfully archived.",
+            None,
+            None,
+            None,
+            3001002,
+            1,
+        )
     except Exception as e:
         logToDB(
-            f"Reminder transactions not created: {e}",
+            f"Transactions not archived: {e}",
             None,
-            reminder.id,
             None,
-            3002907,
+            None,
+            3001902,
             2,
         )
-        return f"Error updating forever reminders: {e}"
+        return f"Error archiving transactions: {e}"
 
 
 # TODO: Task to look for negative dips

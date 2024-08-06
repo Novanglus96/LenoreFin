@@ -69,6 +69,15 @@ class Command(BaseCommand):
                 "delete": True,
             },
             {
+                "task_name": "Archive Transactions",
+                "function": "transactions.tasks.archive_transactions",
+                "time": "00:02",
+                "arguments": "",
+                "type": "DAILY",  # DAILY, HOURLY, MINUTES
+                "start_today": False,
+                "delete": False,
+            },
+            {
                 "task_name": "Finish Imports",
                 "function": "transactions.tasks.finish_imports",
                 "time": "15:35",
