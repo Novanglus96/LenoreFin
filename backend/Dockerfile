@@ -37,7 +37,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requir
 FROM python:3.11.4-slim-buster
 
 LABEL maintainer="John Adams"
-LABEL version="1.0.007"
+LABEL version="1.0.008"
 
 # create directory for the app user
 RUN mkdir -p /home/app
