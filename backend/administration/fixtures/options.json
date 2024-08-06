@@ -17,7 +17,7 @@
         "widget2_month": 0,
         "widget2_exclude": [0],
         "widget3_graph_name": "Untagged",
-        "widget3_tag_id": 1,
+        "widget3_tag_id": -1,
         "widget3_expense": true,
         "widget3_month": 0,
         "widget3_exclude": [0]

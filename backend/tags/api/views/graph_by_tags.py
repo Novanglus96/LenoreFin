@@ -176,7 +176,7 @@ def get_graph(request, widget_id: int):
                     or 0
                 )
                 if tag_amount != 0:
-                    labels.append(tag.tag_name)
+                    labels.append(tag.child.tag_name)
                     values.append(tag_amount)
         elif tagID == -1:
             result = Transaction.objects.filter(
