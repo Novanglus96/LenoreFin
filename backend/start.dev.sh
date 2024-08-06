@@ -16,6 +16,7 @@ fi
 python manage.py loaddata accounts/fixtures/account_types
 python manage.py loaddata administration/fixtures/error_levels
 python manage.py loaddata administration/fixtures/options
+python manage.py loaddata administration/fixtures/version
 python manage.py loaddata reminders/fixtures/repeats
 python manage.py loaddata transactions/fixtures/transaction_statuses
 python manage.py loaddata transactions/fixtures/transaction_types

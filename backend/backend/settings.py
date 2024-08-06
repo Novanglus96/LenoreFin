@@ -246,6 +246,7 @@ JAZZMIN_SETTINGS = {
         "administration.Message": "fas fa-comment",
         "administration.Option": "fas fa-cog",
         "administration.Payee": "fas fa-user-circle",
+        "administration.Version": "fas fa-info",
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
         "planning.ChristmasGift": "fas fa-folder",

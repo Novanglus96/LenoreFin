@@ -1,0 +1,9 @@
+[
+  {
+    "model": "administration.Version",
+    "pk": 1,
+    "fields": {
+        "version_number": "1.0.009"
+    }
+  }
+]

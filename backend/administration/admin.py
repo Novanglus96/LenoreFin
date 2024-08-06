@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ErrorLevel, Option, LogEntry, Message, Payee
+from .models import ErrorLevel, Option, LogEntry, Message, Payee, Version
 from django.http import HttpResponse
 from import_export.admin import ImportExportModelAdmin
 
@@ -114,8 +114,29 @@ class MessageAdmin(admin.ModelAdmin):
         return False
 
 
+class VersionAdmin(admin.ModelAdmin):
+    list_display = ["version_number"]
+
+    list_display_links = ["version_number"]
+
+    ordering = ["version_number"]
+
+    def has_add_permission(self, request):
+        # Return False to disable adding
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Return False to disable deleting
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        # Return False to disable editing
+        return False
+
+
 admin.site.register(ErrorLevel, ErrorLevelAdmin)
 admin.site.register(Option, OptionAdmin)
 admin.site.register(LogEntry, LogAdmin)
 admin.site.register(Payee, PayeeAdmin)
 admin.site.register(Message, MessageAdmin)
+admin.site.register(Version, VersionAdmin)

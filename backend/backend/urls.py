@@ -54,7 +54,7 @@ from imports.api.routers.import_file import import_file_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
-api.version = "1.0.0080403"
+api.version = "1.0.0090403"
 api.description = "API documentation for LenoreFin"
 
 # Add routers to the API

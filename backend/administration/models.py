@@ -195,3 +195,17 @@ class Message(models.Model):
 
     def __str__(self):
         return self.message
+
+
+class Version(SingletonModel):
+    """
+    Model representing app version.
+
+    Fields:
+    - version_number (CharField): The current version of the app.
+    """
+
+    version_number = models.CharField(max_length=10)
+
+    def __str__(self):
+        return self.version_number
