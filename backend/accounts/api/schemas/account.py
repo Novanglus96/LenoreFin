@@ -47,6 +47,7 @@ class AccountUpdate(Schema):
     last_statement_amount: Optional[Decimal] = Field(
         whole_digits=2, decimal_places=2
     )
+    rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
 
 
 # The class AccountOut is a schema for representing accounts.

@@ -528,7 +528,7 @@ def update_account(request, account_id: int, payload: AccountUpdate):
             3001902,
             2,
         )
-        raise HttpError(500, "Record update error")
+        raise HttpError(500, f"Record update error: {str(e)}")
 
 
 @account_router.delete("/delete/{account_id}")
