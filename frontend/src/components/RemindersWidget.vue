@@ -106,7 +106,7 @@
         :stickyHeader="true"
         noDataContent="No reminders"
         ref="reminders_table"
-        :height="props.allowEdit ? '880px' : '220px'"
+        :height="props.allowEdit ? '880px' : '230px'"
         skin="bh-table-striped bh-table-compact"
         :pageSizeOptions="props.allowEdit ? [5, 10, 20] : [5]"
         :showPageSize="props.allowEdit"

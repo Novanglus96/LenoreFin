@@ -25,7 +25,7 @@
         :stickyHeader="true"
         noDataContent="No transactions"
         ref="trans_table"
-        height="405px"
+        height="425px"
         skin="bh-table-striped bh-table-compact"
         :pageSizeOptions="[10]"
         :showPageSize="false"
