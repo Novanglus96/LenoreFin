@@ -106,7 +106,9 @@ const clickAdjustBalance = async () => {
   } else {
     balanceForm.value.transaction_type_id = 2;
   }
-  balanceForm.value.total_amount = new_balance.value - currentBalance.value;
+  balanceForm.value.total_amount = parseFloat(
+    (new_balance.value - currentBalance.value).toFixed(2),
+  );
   await addTransaction(balanceForm.value);
   emit("updateDialog", false);
   new_balance.value = "";
