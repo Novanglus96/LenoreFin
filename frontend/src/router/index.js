@@ -68,4 +68,21 @@ const router = createRouter({
   routes,
 });
 
+// Add a global beforeEach guard
+router.beforeEach((to, from, next) => {
+  const isPageReload = sessionStorage.getItem("isPageReload");
+  sessionStorage.removeItem("isPageReload");
+
+  if (isPageReload && to.fullPath !== "/") {
+    next("/");
+  } else {
+    next();
+  }
+});
+
+// Set a flag to detect page reload
+window.addEventListener("beforeunload", () => {
+  sessionStorage.setItem("isPageReload", "true");
+});
+
 export default router;
