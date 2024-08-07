@@ -68,6 +68,7 @@ export function useOptions() {
       queryFn: () => getOptionsFunction(),
     });
   };
+  
   const updateOptionsMutation = useMutation({
     mutationFn: updateOptionsFunction,
     onSuccess: () => {
