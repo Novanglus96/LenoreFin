@@ -125,15 +125,17 @@ def get_graph(request, widget_id: int):
         # Otherwise, filter on expense tags or income tags
         if tagID is None:
             tag_type_id = 1 if expense else 2
-            tags = Tag.objects.filter(tag_type__id=tag_type_id).exclude(
-                id__in=exclude_list
+            tags = (
+                Tag.objects.filter(tag_type__id=tag_type_id)
+                .exclude(id__in=exclude_list)
+                .exclude(child__isnull=False)
             )
             # Calculate month totals for each tag
             # Use the tag name as the label and the total as the value
             for tag in tags:
                 tag_amount = (
                     TransactionDetail.objects.filter(
-                        tag=tag,
+                        tag__parent=tag.parent,
                         transaction__transaction_date__month=target_month,
                         transaction__transaction_date__year=target_year,
                         transaction__status__id__gt=1,
