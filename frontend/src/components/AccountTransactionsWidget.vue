@@ -239,14 +239,15 @@
           <span
             :class="
               row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
+                ? 'font-italic text-grey text-body-2'
+                : 'font-weight-bold text-black text-body-2'
             "
             v-for="tag in row.value.tags"
             :key="tag"
           >
             <v-icon
               icon="mdi-tag"
+              size="x-small"
               :color="row.value.status.id == 1 ? 'grey' : 'black'"
             ></v-icon>
             {{ tag }}&nbsp;

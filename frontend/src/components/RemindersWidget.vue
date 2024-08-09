@@ -1,15 +1,5 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-white">
-    <template v-slot:append>
-      <v-menu location="start">
-        <template v-slot:activator="{ props }">
-          <v-btn icon="mdi-cog" flat size="xs" v-bind="props"> </v-btn>
-        </template>
-        <v-card width="100">
-          <v-card-text>Test</v-card-text>
-        </v-card>
-      </v-menu>
-    </template>
     <template v-slot:title>
       <span class="text-subtitle-2 text-secondary" v-if="!props.allowEdit"
         >Upcoming Reminders</span

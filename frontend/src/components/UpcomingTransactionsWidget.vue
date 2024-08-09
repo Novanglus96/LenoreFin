@@ -1,15 +1,5 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-white">
-    <template v-slot:append>
-      <v-menu location="start">
-        <template v-slot:activator="{ props }">
-          <v-btn icon="mdi-cog" flat size="xs" v-bind="props"> </v-btn>
-        </template>
-        <v-card width="100">
-          <v-card-text>Test</v-card-text>
-        </v-card>
-      </v-menu>
-    </template>
     <template v-slot:title>
       <span class="text-subtitle-2 text-secondary">Upcoming Transactions</span>
     </template>
@@ -64,14 +54,15 @@
           <span
             :class="
               row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
+                ? 'font-italic text-grey text-body-2'
+                : 'font-weight-bold text-black text-body-2'
             "
             v-for="tag in row.value.tags"
             :key="tag"
           >
             <v-icon
               icon="mdi-tag"
+              size="x-small"
               :color="row.value.status.id == 1 ? 'grey' : 'black'"
               v-if="tag"
             ></v-icon>
