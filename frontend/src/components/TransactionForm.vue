@@ -578,7 +578,7 @@ const tagComplete = ref(false); // True when tag/amount are filled out, enables 
 const formComplete = ref(false); // True when form is validated, enables add/update button
 const selected = ref([]); // The objects of the rows selected in table
 const details_table = ref(null); // The reference to the table
-const tab = ref(1); // Tab model
+const tab = ref(null); // Tab model
 const isPaycheck = ref(null); // True if this transaction a paycheck
 const paycheckTotalsMatch = ref(false); // True if the paycheck fields total = gross
 
