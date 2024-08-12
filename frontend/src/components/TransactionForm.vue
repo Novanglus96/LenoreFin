@@ -25,6 +25,7 @@
         <v-tabs v-model="tab" color="accent">
           <v-tab value="trans" density="compact">Transaction Details</v-tab>
           <v-tab value="pay" density="compact">Paycheck Info</v-tab>
+          <v-tab value="attachments" density="compact">Attachments</v-tab>
         </v-tabs>
         <v-window v-model="tab">
           <v-window-item value="trans">
@@ -509,6 +510,28 @@
             </v-container>
           </v-window-item>
         </v-window>
+        <v-window v-model="tab">
+          <v-window-item value="attachments">
+            <v-container>
+              <v-carousel>
+                <v-carousel-item
+                  src="https://cdn.vuetifyjs.com/images/cards/docks.jpg"
+                  cover
+                ></v-carousel-item>
+
+                <v-carousel-item
+                  src="https://cdn.vuetifyjs.com/images/cards/hotel.jpg"
+                  cover
+                ></v-carousel-item>
+
+                <v-carousel-item
+                  src="https://cdn.vuetifyjs.com/images/cards/sunshine.jpg"
+                  cover
+                ></v-carousel-item>
+              </v-carousel>
+            </v-container>
+          </v-window-item>
+        </v-window>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -555,7 +578,7 @@ const tagComplete = ref(false); // True when tag/amount are filled out, enables 
 const formComplete = ref(false); // True when form is validated, enables add/update button
 const selected = ref([]); // The objects of the rows selected in table
 const details_table = ref(null); // The reference to the table
-const tab = ref(null); // Tab model
+const tab = ref(1); // Tab model
 const isPaycheck = ref(null); // True if this transaction a paycheck
 const paycheckTotalsMatch = ref(false); // True if the paycheck fields total = gross
 
