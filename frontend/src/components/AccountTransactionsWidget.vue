@@ -185,9 +185,9 @@
           <v-tooltip text="Paycheck" location="top">
             <template v-slot:activator="{ props }">
               <v-icon
-                icon="mdi-checkbook-arrow-left"
+                icon="mdi-cash-multiple"
                 v-if="row.value.paycheck"
-                color="success"
+                color="amber"
                 v-bind="props"
               ></v-icon>
             </template>
@@ -195,7 +195,7 @@
           <v-tooltip text="Check" location="top">
             <template v-slot:activator="{ props }">
               <v-icon
-                icon="mdi-checkbook-arrow-right"
+                icon="mdi-checkbook"
                 v-if="row.value.checkNumber"
                 color="amber"
                 v-bind="props"

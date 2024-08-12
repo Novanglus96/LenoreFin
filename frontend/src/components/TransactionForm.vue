@@ -76,7 +76,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col cols="6">
+                <v-col cols="3">
                   <v-text-field
                     v-model="amount"
                     variant="outlined"
@@ -90,11 +90,12 @@
                     density="compact"
                   ></v-text-field>
                 </v-col>
-                <v-col cols="1">
+                <v-col cols="3">
                   <v-text-field
                     v-model="formData.checkNumber"
                     variant="outlined"
-                    label="#"
+                    label="Check #"
+                    type="number"
                     @update:model-value="
                       () => {
                         checkFormComplete();
@@ -104,7 +105,7 @@
                     density="compact"
                   ></v-text-field>
                 </v-col>
-                <v-col cols="5">
+                <v-col cols="6">
                   <v-text-field
                     v-model="formData.description"
                     variant="outlined"
@@ -263,7 +264,7 @@
                                 color="success"
                                 @click="clickTagAdd"
                                 v-bind="props"
-                                :disabled="!tagComplete && !verifyTagTotal()"
+                                :disabled="!tagComplete"
                               ></v-btn>
                             </template>
                           </v-tooltip>
@@ -535,14 +536,7 @@
  */
 
 // Import Vue composition functions and components...
-import {
-  ref,
-  defineEmits,
-  defineProps,
-  onMounted,
-  watchEffect,
-  watch,
-} from "vue";
+import { ref, defineEmits, defineProps, onMounted, watchEffect } from "vue";
 import { useTransactionTypes } from "@/composables/transactionTypesComposable";
 import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
 import { useAccounts } from "@/composables/accountsComposable";
@@ -1081,20 +1075,17 @@ const checkTagComplete = () => {
   if (
     tagAmount.value !== null &&
     tagAmount.value !== "" &&
+    parseFloat(tagAmount.value).toFixed(2) <=
+      parseFloat(amount.value).toFixed(2) &&
     tagToAdd.value !== null &&
-    tagToAdd.value !== ""
+    tagToAdd.value !== "" &&
+    !formData.value.details.some(tag => tag.tag_id === tagToAdd.value.id)
   ) {
     tagComplete.value = true;
   } else {
     tagComplete.value = false;
   }
 };
-
-watch(tagAmount, newVal => {
-  if (newVal > amount.value) {
-    tagAmount.value = amount.value;
-  }
-});
 
 /**
  * `clickTagAdd` Adds a tag to the tag table.
@@ -1108,6 +1099,9 @@ const clickTagAdd = () => {
   formData.value.details.push(tag_row);
   details_table.value.reset();
   checkFormComplete();
+  tagComplete.value = false;
+  tagToAdd.value = null;
+  tagAmount.value = null;
 };
 
 /**
