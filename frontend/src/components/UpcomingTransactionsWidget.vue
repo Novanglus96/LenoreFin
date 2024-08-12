@@ -40,6 +40,17 @@
             >${{ row.value.pretty_total }}</span
           >
         </template>
+        <template #checkNumber="row">
+          <span
+            :class="
+              row.value.status.id == 1
+                ? 'font-italic text-grey'
+                : 'font-weight-bold text-black'
+            "
+            v-if="row.value.checkNumber"
+            >#{{ row.value.checkNumber }}</span
+          >
+        </template>
         <template #description="row">
           <span
             :class="
@@ -93,6 +104,7 @@ const { isLoading, transactions } = useTransactions();
 const columns = ref([
   { field: "transaction_date", title: "Date", type: "date", width: "120px" },
   { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
+  { field: "checkNumber", tilte: "", width: "25px" },
   { field: "description", title: "Description" },
   { field: "tags", title: "Tag(s)", width: "200px" },
   { field: "pretty_account", title: "Account" },
