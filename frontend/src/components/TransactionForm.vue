@@ -76,7 +76,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col cols="6">
                   <v-text-field
                     v-model="amount"
                     variant="outlined"
@@ -90,7 +90,21 @@
                     density="compact"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col cols="1">
+                  <v-text-field
+                    v-model="formData.checkNumber"
+                    variant="outlined"
+                    label="#"
+                    @update:model-value="
+                      () => {
+                        checkFormComplete();
+                        resetTagField();
+                      }
+                    "
+                    density="compact"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="5">
                   <v-text-field
                     v-model="formData.description"
                     variant="outlined"
@@ -610,6 +624,7 @@ const formData = ref({
   edit_date: formattedDate,
   add_date: props.passedFormData.add_date || formattedDate,
   total_amount: props.passedFormData.total_amount || 0,
+  checkNumber: props.passedFormData.checkNumber || null,
   description: props.passedFormData.description || null,
   details: [],
   paycheck: null,
@@ -677,6 +692,7 @@ const watchPassedFormData = () => {
         add_date: props.passedFormData.add_date,
         tag_id: props.passedFormData.tag_id,
         total_amount: props.passedFormData.total_amount,
+        checkNumber: props.passedFormData.checkNumber,
         description: props.passedFormData.description,
         details: fillTagTable(props.passedFormData.details),
         reminder: props.passedFormData.reminder,
@@ -930,6 +946,7 @@ const closeDialog = () => {
     edit_date: formattedDate,
     add_date: props.passedFormData.add_date || formattedDate,
     total_amount: props.passedFormData.total_amount || 0,
+    checkNumber: props.passedFormData.checkNumber || null,
     description: props.passedFormData.description || null,
     details: fillTagTable(props.passedFormData.details),
     paycheck: null,
