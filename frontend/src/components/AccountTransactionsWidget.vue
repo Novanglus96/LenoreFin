@@ -172,6 +172,16 @@
               ></v-icon>
             </template>
           </v-tooltip>
+          <v-tooltip text="Image(s)" location="top">
+            <template v-slot:activator="{ props }">
+              <v-icon
+                icon="mdi-paperclip"
+                v-if="row.value.attachments"
+                color="grey"
+                v-bind="props"
+              ></v-icon>
+            </template>
+          </v-tooltip>
           <v-tooltip text="Reminder" location="top">
             <template v-slot:activator="{ props }">
               <v-icon
@@ -194,22 +204,21 @@
           </v-tooltip>
           <v-tooltip text="Check" location="top">
             <template v-slot:activator="{ props }">
-              <v-icon
-                icon="mdi-checkbook"
-                v-if="row.value.checkNumber"
-                color="amber"
-                v-bind="props"
-              ></v-icon>
-            </template>
-          </v-tooltip>
-          <v-tooltip text="Image(s)" location="top">
-            <template v-slot:activator="{ props }">
-              <v-icon
-                icon="mdi-paperclip"
-                v-if="row.value.attachments"
-                color="grey"
-                v-bind="props"
-              ></v-icon>
+              <div class="icon-with-text" v-if="row.value.checkNumber">
+                <v-icon
+                  icon="mdi-checkbook"
+                  color="amber"
+                  v-bind="props"
+                ></v-icon>
+                <span
+                  :class="
+                    row.value.status.id == 1
+                      ? 'font-italic text-grey icon-text'
+                      : 'font-weight-bold text-black icon-text'
+                  "
+                  >#{{ row.value.checkNumber }}</span
+                >
+              </div>
             </template>
           </v-tooltip>
         </template>
@@ -235,17 +244,6 @@
           <span
             :class="getClassForMoney(row.value.balance, row.value.status.id)"
             >${{ row.value.balance }}</span
-          >
-        </template>
-        <template #checkNumber="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-            v-if="row.value.checkNumber"
-            >#{{ row.value.checkNumber }}</span
           >
         </template>
         <template #description="row">
@@ -389,11 +387,10 @@ const selected = ref([]);
 const reminder_selected = ref([]);
 const columns = ref([
   { field: "id", title: "ID", isUnique: true, hide: true },
-  { field: "status.transaction_status", title: "", width: "105px" },
+  { field: "status.transaction_status", title: "", width: "115px" },
   { field: "transaction_date", title: "Date", type: "date", width: "120px" },
   { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
   { field: "balance", title: "Balance", width: "100px" },
-  { field: "checkNumber", title: "", width: "25px" },
   { field: "description", title: "Description" },
   { field: "tags", title: "Tag(s)", width: "200px" },
   { field: "pretty_account", title: "Account" },
@@ -508,5 +505,19 @@ const updateEditDialog = () => {
 .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
   background-color: #ff5900;
   border-color: black;
+}
+
+.icon-with-text {
+  position: relative;
+  display: inline-block;
+}
+
+.icon-text {
+  position: absolute;
+  top: 0;
+  right: 1;
+  color: black;
+  padding: 4px 1px;
+  font-size: 0.7rem;
 }
 </style>

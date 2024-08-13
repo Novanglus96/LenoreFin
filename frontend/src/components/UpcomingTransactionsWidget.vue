@@ -41,15 +41,25 @@
           >
         </template>
         <template #checkNumber="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-            v-if="row.value.checkNumber"
-            >#{{ row.value.checkNumber }}</span
-          >
+          <v-tooltip text="Check" location="top">
+            <template v-slot:activator="{ props }">
+              <div class="icon-with-text" v-if="row.value.checkNumber">
+                <v-icon
+                  icon="mdi-checkbook"
+                  color="amber"
+                  v-bind="props"
+                ></v-icon>
+                <span
+                  :class="
+                    row.value.status.id == 1
+                      ? 'font-italic text-grey icon-text'
+                      : 'font-weight-bold text-black icon-text'
+                  "
+                  >#{{ row.value.checkNumber }}</span
+                >
+              </div>
+            </template>
+          </v-tooltip>
         </template>
         <template #description="row">
           <span
@@ -104,7 +114,7 @@ const { isLoading, transactions } = useTransactions();
 const columns = ref([
   { field: "transaction_date", title: "Date", type: "date", width: "120px" },
   { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
-  { field: "checkNumber", tilte: "", width: "25px" },
+  { field: "checkNumber", tilte: "Check #", width: "75px" },
   { field: "description", title: "Description" },
   { field: "tags", title: "Tag(s)", width: "200px" },
   { field: "pretty_account", title: "Account" },
@@ -149,5 +159,19 @@ const getClassForMoney = (amount, status) => {
 .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
   background-color: #ff5900;
   border-color: black;
+}
+
+.icon-with-text {
+  position: relative;
+  display: inline-block;
+}
+
+.icon-text {
+  position: absolute;
+  top: 0;
+  right: 1;
+  color: black;
+  padding: 4px 1px;
+  font-size: 0.7rem;
 }
 </style>
