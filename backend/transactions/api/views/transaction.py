@@ -505,24 +505,6 @@ def list_transactions(
             destination_account_name = Account.objects.filter(
                 id=OuterRef("destination_account_id")
             ).values("account_name")[:1]
-            transaction_detail_subquery = (
-                TransactionDetail.objects.filter(
-                    transaction_id=OuterRef("id"),
-                )
-                .annotate(
-                    parent_tag=F("tag__parent__tag_name"),
-                    child_tag=F("tag__child__tag_name"),
-                    tag_name_combined=Case(
-                        When(child_tag__isnull=True, then=F("parent_tag")),
-                        default=Concat(
-                            F("parent_tag"), Value(" / "), F("child_tag")
-                        ),
-                        output_field=CharField(),
-                    ),
-                )
-                .exclude(tag_name_combined__isnull=True)
-                .values_list("tag_name_combined", flat=True)
-            )
 
             # Filter transactions for pending status and no reminders
             qs = Transaction.objects.filter(status_id=1)
@@ -579,13 +561,30 @@ def list_transactions(
                     ),  # Ensure the correct output field
                 )
             )
-            qs = qs.annotate(
-                tags=ArrayAgg(
-                    Subquery(
-                        transaction_detail_subquery.values("tag_name_combined")
-                    )
+
+            # Add tags
+            for transaction in qs:
+                transaction_details = TransactionDetail.objects.filter(
+                    transaction_id=transaction.id
                 )
-            )
+                details = list(transaction_details)
+                tags = list(
+                    transaction_details.annotate(
+                        parent_tag=F("tag__parent__tag_name"),
+                        child_tag=F("tag__child__tag_name"),
+                        tag_name_combined=Case(
+                            When(child_tag__isnull=True, then=F("parent_tag")),
+                            default=Concat(
+                                F("parent_tag"), Value(" / "), F("child_tag")
+                            ),
+                            output_field=CharField(),
+                        ),
+                    )
+                    .exclude(tag_name_combined__isnull=True)
+                    .values_list("tag_name_combined", flat=True)
+                )
+                transaction.tags = tags
+                transaction.details = details
             query = list(qs)
             paginated_obj = PaginatedTransactions(
                 transactions=query,
