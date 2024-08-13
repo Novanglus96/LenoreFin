@@ -57,10 +57,10 @@ def create_transactions(transactions: List[FullTransaction]):
                             if trans.tags and len(trans.tags) != 0:
                                 for tag in trans.tags:
                                     adj_amount = 0
-                                    if trans.transaction_type_id == 1:
-                                        adj_amount = -abs(tag.tag_amount)
-                                    else:
+                                    if trans.transaction_type_id == 2:
                                         adj_amount = abs(tag.tag_amount)
+                                    else:
+                                        adj_amount = -abs(tag.tag_amount)
                                     TransactionDetail.objects.create(
                                         transaction_id=created_transaction.id,
                                         detail_amt=adj_amount,
@@ -143,10 +143,10 @@ def create_transactions(transactions: List[FullTransaction]):
                 if trans.tags and len(trans.tags) != 0:
                     for tag in trans.tags:
                         adj_amount = 0
-                        if trans.transaction_type_id == 1:
-                            adj_amount = -abs(tag.tag_amount)
-                        else:
+                        if trans.transaction_type_id == 2:
                             adj_amount = abs(tag.tag_amount)
+                        else:
+                            adj_amount = -abs(tag.tag_amount)
                         detail_dict = {
                             "transaction_index": index,
                             "detail_amt": adj_amount,

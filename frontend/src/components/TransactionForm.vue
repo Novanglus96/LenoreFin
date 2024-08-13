@@ -104,6 +104,7 @@
                       }
                     "
                     density="compact"
+                    v-if="formData.transaction_type_id != 3"
                   ></v-text-field>
                 </v-col>
                 <v-col cols="6">
@@ -182,13 +183,7 @@
               <v-row dense>
                 <v-col>
                   <!-- TODO: Enable adding tags here -->
-                  <v-sheet
-                    border
-                    rounded
-                    v-if="formData.transaction_type_id != 3"
-                    :height="300"
-                    color="white"
-                  >
+                  <v-sheet border rounded :height="300" color="white">
                     <v-container class="pa-0 ma-1">
                       <v-row dense>
                         <v-col cols="1">
@@ -929,9 +924,9 @@ const verifyPaycheck = () => {
  */
 const submitForm = async () => {
   if (formData.value.transaction_type_id == 2) {
-    formData.value.total_amount = amount.value;
+    formData.value.total_amount = Math.abs(amount.value);
   } else {
-    formData.value.total_amount = -amount.value;
+    formData.value.total_amount = -Math.abs(amount.value);
   }
   if (isPaycheck.value) {
     paycheck.value.net = amount.value;

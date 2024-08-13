@@ -301,10 +301,10 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         existing_details.delete()
         for detail in payload.details:
             adj_amount = 0
-            if payload.transaction_type_id == 1:
-                adj_amount = -abs(detail.tag_amt)
-            else:
+            if payload.transaction_type_id == 2:
                 adj_amount = abs(detail.tag_amt)
+            else:
+                adj_amount = -abs(detail.tag_amt)
             TransactionDetail.objects.create(
                 transaction_id=transaction_id,
                 detail_amt=adj_amount,
