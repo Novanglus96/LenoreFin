@@ -192,6 +192,19 @@
               ></v-switch>
             </v-col>
           </v-row>
+          <v-row>
+            <v-col
+              ><v-textarea
+                clearable
+                label="Memo"
+                variant="outlined"
+                v-model="formData.memo"
+                :rows="4"
+                no-resize
+                @update:model-value="checkFormComplete"
+              ></v-textarea
+            ></v-col>
+          </v-row>
         </v-container>
       </v-card-text>
       <v-card-actions>
@@ -254,6 +267,7 @@ const formData = ref({
   end_date: props.passedFormData.end_date || null,
   repeat_id: props.passedFormData.repeat.id || null,
   auto_add: props.passedFormData.auto_add || true,
+  memo: props.passedFormData.memo || null,
 });
 
 const { tags, isLoading: tags_isLoading } = useTags();
@@ -278,6 +292,7 @@ const watchPassedFormData = () => {
         end_date: props.passedFormData.end_date,
         repeat_id: props.passedFormData.repeat.id,
         auto_add: props.passedFormData.auto_add,
+        memo: props.passedFormData.memo,
       };
       amount.value = props.passedFormData.amount
         ? parseFloat(Math.abs(props.passedFormData.amount)).toFixed(2)
