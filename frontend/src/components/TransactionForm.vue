@@ -509,8 +509,6 @@
               </v-row>
             </v-container>
           </v-window-item>
-        </v-window>
-        <v-window v-model="tab">
           <v-window-item value="attachments">
             <v-container>
               <v-carousel>
