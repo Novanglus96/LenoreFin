@@ -114,6 +114,7 @@ def update_reminder(request, reminder_id: int, payload: ReminderIn):
         reminder.end_date = payload.end_date
         reminder.repeat_id = payload.repeat_id
         reminder.auto_add = payload.auto_add
+        reminder.memo = payload.memo
         reminder.save()
         logToDB(
             f"Reminder updated : #{reminder_id}",

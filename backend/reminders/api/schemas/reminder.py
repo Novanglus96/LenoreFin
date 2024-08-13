@@ -22,6 +22,7 @@ class ReminderIn(Schema):
     end_date: Optional[date]
     repeat_id: int
     auto_add: bool
+    memo: Optional[str]
 
 
 # The class ReminderOut is a schema for representing Reminders.
@@ -38,6 +39,7 @@ class ReminderOut(Schema):
     end_date: Optional[date]
     repeat: RepeatOut
     auto_add: bool
+    memo: Optional[str]
 
 
 # The classs ReminderTransIn is a schema for adding reminder transactions.
