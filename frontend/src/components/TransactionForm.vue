@@ -244,7 +244,6 @@
                             prefix="$"
                             @update:model-value="checkTagComplete"
                             type="number"
-                            step="1.00"
                             @update:focused="reformatNumberToMoney"
                             density="compact"
                             :max="amount"
@@ -1087,8 +1086,7 @@ const checkTagComplete = () => {
   if (
     tagAmount.value !== null &&
     tagAmount.value !== "" &&
-    parseFloat(tagAmount.value).toFixed(2) <=
-      parseFloat(amount.value).toFixed(2) &&
+    parseFloat(tagAmount.value) <= parseFloat(amount.value) &&
     tagToAdd.value !== null &&
     tagToAdd.value !== "" &&
     !formData.value.details.some(tag => tag.tag_id === tagToAdd.value.id)
