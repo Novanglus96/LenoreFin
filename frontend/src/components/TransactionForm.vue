@@ -766,11 +766,7 @@ const fillTagTable = details => {
   let pretty_name = "";
   if (details) {
     for (const detail of details) {
-      if (detail.tag.parent) {
-        pretty_name = detail.tag.parent.tag_name + " : " + detail.tag.tag_name;
-      } else {
-        pretty_name = detail.tag.tag_name;
-      }
+      pretty_name = detail.tag.tag_name;
       let tag_row = {
         tag_id: detail.tag.id,
         tag_amt: parseFloat(Math.abs(detail.detail_amt)).toFixed(2),
