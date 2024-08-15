@@ -183,132 +183,11 @@
               <v-row dense>
                 <v-col>
                   <!-- TODO: Enable adding tags here -->
-                  <v-sheet border rounded :height="300" color="white">
-                    <v-container class="pa-0 ma-1">
-                      <v-row dense>
-                        <v-col cols="1">
-                          <v-tooltip text="Delete Tag(s)" location="top">
-                            <template v-slot:activator="{ props }">
-                              <v-btn
-                                icon="mdi-tag-minus"
-                                flat
-                                variant="plain"
-                                color="error"
-                                @click="clickTagRemove"
-                                v-bind="props"
-                                :disabled="selected && selected.length === 0"
-                              ></v-btn>
-                            </template>
-                          </v-tooltip>
-                        </v-col>
-                        <v-col>
-                          <v-autocomplete
-                            clearable
-                            label="Tag"
-                            :items="tags"
-                            variant="outlined"
-                            :loading="tags_isLoading"
-                            item-title="tag_name"
-                            v-model="tagToAdd"
-                            @update:model-value="checkTagComplete"
-                            density="compact"
-                            return-object
-                          >
-                            <template v-slot:item="{ props, item }">
-                              <v-list-item
-                                v-bind="props"
-                                :title="
-                                  item.raw.parent
-                                    ? item.raw.parent.tag_name
-                                    : item.raw.tag_name
-                                "
-                                :subtitle="
-                                  item.raw.parent ? item.raw.tag_name : null
-                                "
-                              >
-                                <template v-slot:prepend>
-                                  <v-icon
-                                    icon="mdi-tag"
-                                    :color="tagColor(item.raw.tag_type.id)"
-                                  ></v-icon>
-                                </template>
-                              </v-list-item>
-                            </template>
-                          </v-autocomplete>
-                        </v-col>
-                        <v-col cols="4">
-                          <v-text-field
-                            v-model="tagAmount"
-                            variant="outlined"
-                            label="Amount"
-                            prefix="$"
-                            @update:model-value="checkTagComplete"
-                            type="number"
-                            @update:focused="reformatNumberToMoney"
-                            density="compact"
-                            :max="amount"
-                          ></v-text-field>
-                        </v-col>
-                        <v-col cols="1">
-                          <v-tooltip text="Add New Tag" location="top">
-                            <template v-slot:activator="{ props }">
-                              <v-btn
-                                icon="mdi-tag-plus"
-                                flat
-                                variant="plain"
-                                color="success"
-                                @click="clickTagAdd"
-                                v-bind="props"
-                                :disabled="!tagComplete"
-                              ></v-btn>
-                            </template>
-                          </v-tooltip>
-                        </v-col>
-                      </v-row>
-                      <v-row dense>
-                        <v-col
-                          ><span
-                            class="text-error text-subtitle-2 font-italic"
-                            v-if="!verifyTagTotal()"
-                            >* Tags must equal total</span
-                          ></v-col
-                        >
-                      </v-row>
-                    </v-container>
-                    <vue3-datatable
-                      :rows="formData.details"
-                      :columns="columns"
-                      :totalRows="
-                        formData.details ? formData.details.length : 0
-                      "
-                      :isServerMode="false"
-                      pageSize="4"
-                      :hasCheckbox="true"
-                      :stickyHeader="true"
-                      noDataContent="No Tags"
-                      search=""
-                      @rowSelect="rowSelected"
-                      ref="details_table"
-                      height="210px"
-                      skin="bh-table-striped bh-table-compact"
-                      :pageSizeOptions="[4]"
-                      :showPageSize="false"
-                      paginationInfo="{0} to {1} of {2}"
-                      class="alt-pagination"
-                    >
-                      <template #tag_pretty_name="row">
-                        <v-icon icon="mdi-tag"></v-icon>
-                        <span class="font-weight-bold text-black">{{
-                          row.value.tag_pretty_name
-                        }}</span>
-                      </template>
-                      <template #tag_amt="row">
-                        <span class="font-weight-bold text-black"
-                          >${{ row.value.tag_amt }}</span
-                        >
-                      </template>
-                    </vue3-datatable>
-                  </v-sheet>
+                  <TagTable
+                    :tags="formData.details"
+                    :totalAmount="parseFloat(amount)"
+                    @tag-table-updated="tagsUpdated"
+                  />
                 </v-col>
                 <v-col>
                   <v-textarea
@@ -555,21 +434,16 @@ import { ref, defineEmits, defineProps, onMounted, watchEffect } from "vue";
 import { useTransactionTypes } from "@/composables/transactionTypesComposable";
 import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
 import { useAccounts } from "@/composables/accountsComposable";
-import { useTags } from "@/composables/tagsComposable";
 import { useTransactions } from "@/composables/transactionsComposable";
 import { usePayees } from "@/composables/payeesComposable";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
-import Vue3Datatable from "@bhplugin/vue3-datatable";
-import "@bhplugin/vue3-datatable/dist/style.css";
+import TagTable from "@/components/TagTable.vue";
 
 // Define reactive variables...
 const tagToAdd = ref(null); // Tag object to add to tag list
 const tagAmount = ref(null); // Tag amount to add to tag list
-const tagComplete = ref(false); // True when tag/amount are filled out, enables add button
 const formComplete = ref(false); // True when form is validated, enables add/update button
-const selected = ref([]); // The objects of the rows selected in table
-const details_table = ref(null); // The reference to the table
 const tab = ref(0); // Tab model
 const isPaycheck = ref(null); // True if this transaction a paycheck
 const paycheckTotalsMatch = ref(false); // True if the paycheck fields total = gross
@@ -600,7 +474,6 @@ const { transaction_types, isLoading: transaction_types_isLoading } =
 const { transaction_statuses, isLoading: transaction_statuses_isLoading } =
   useTransactionStatuses();
 const { addTransaction, editTransaction } = useTransactions();
-const { tags, isLoading: tags_isLoading } = useTags();
 const { payees, isLoading: payees_isLoading } = usePayees();
 
 // Define props...
@@ -661,24 +534,7 @@ const amount = ref(
     : null,
 );
 
-// Define table columns...
-const columns = ref([
-  { field: "tag_id", title: "ID", isUnique: true, hide: true },
-  { field: "tag_pretty_name", title: "Tag" },
-  { field: "tag_amt", title: "Amount", type: "number", width: "100px" },
-]);
-
 // Define functions...
-/**
- * `rowSelected` Populates selected variable with selected rows in table.
- */
-const rowSelected = () => {
-  selected.value = [];
-  let selectedrows = details_table.value.getSelectedRows();
-  for (const selectedrow of selectedrows) {
-    selected.value.push(selectedrow.tag_id);
-  }
-};
 
 /**
  * `watchpassedFormData` Watches for changes to passedFormData prop and updates
@@ -1005,53 +861,46 @@ const closeDialog = () => {
 };
 
 /**
- * `tagColor` Sets the tag color based on tag type.
- * @param {int} typeID - The tag type ID.
- * @return {color} - The color of the tag.
- */
-const tagColor = typeID => {
-  if (typeID == 1) {
-    return "red";
-  } else if (typeID == 2) {
-    return "green";
-  } else if (typeID == 3) {
-    return "grey";
-  }
-};
-
-/**
  * `reformatNumberToMoney` Formats an amount to currency.
  */
 const reformatNumberToMoney = () => {
   if (amount.value) {
-    amount.value = parseFloat(amount.value).toFixed(2);
+    amount.value = Math.abs(parseFloat(amount.value).toFixed(2));
   }
   if (paycheck.value.dca) {
-    paycheck.value.dca = parseFloat(paycheck.value.dca).toFixed(2);
+    paycheck.value.dca = Math.abs(parseFloat(paycheck.value.dca).toFixed(2));
   }
   if (paycheck.value.four_fifty_seven_b) {
-    paycheck.value.four_fifty_seven_b = parseFloat(
-      paycheck.value.four_fifty_seven_b,
-    ).toFixed(2);
+    paycheck.value.four_fifty_seven_b = Math.abs(
+      parseFloat(paycheck.value.four_fifty_seven_b).toFixed(2),
+    );
   }
   if (paycheck.value.fsa) {
-    paycheck.value.fsa = parseFloat(paycheck.value.fsa).toFixed(2);
+    paycheck.value.fsa = Math.abs(parseFloat(paycheck.value.fsa).toFixed(2));
   }
   if (paycheck.value.gross) {
-    paycheck.value.gross = parseFloat(paycheck.value.gross).toFixed(2);
+    paycheck.value.gross = Math.abs(
+      parseFloat(paycheck.value.gross).toFixed(2),
+    );
   }
   if (paycheck.value.health) {
-    paycheck.value.health = parseFloat(paycheck.value.health).toFixed(2);
+    paycheck.value.health = Math.abs(
+      parseFloat(paycheck.value.health).toFixed(2),
+    );
   }
   if (paycheck.value.pension) {
-    paycheck.value.pension = parseFloat(paycheck.value.pension).toFixed(2);
+    paycheck.value.pension = Math.abs(
+      parseFloat(paycheck.value.pension).toFixed(2),
+    );
   }
   if (paycheck.value.taxes) {
-    paycheck.value.taxes = parseFloat(paycheck.value.taxes).toFixed(2);
+    paycheck.value.taxes = Math.abs(
+      parseFloat(paycheck.value.taxes).toFixed(2),
+    );
   }
   if (paycheck.value.union_dues) {
-    paycheck.value.union_dues = parseFloat(paycheck.value.union_dues).toFixed(
-      2,
+    paycheck.value.union_dues = Math.abs(
+      parseFloat(paycheck.value.union_dues).toFixed(2),
     );
   }
 };
@@ -1080,51 +929,10 @@ const resetTagField = () => {
 };
 
 /**
- * `checkTagComplete` Checks if tag and amount are selected to add to table.
- */
-const checkTagComplete = () => {
-  if (
-    tagAmount.value !== null &&
-    tagAmount.value !== "" &&
-    parseFloat(tagAmount.value) <= parseFloat(amount.value) &&
-    tagToAdd.value !== null &&
-    tagToAdd.value !== "" &&
-    !formData.value.details.some(tag => tag.tag_id === tagToAdd.value.id)
-  ) {
-    tagComplete.value = true;
-  } else {
-    tagComplete.value = false;
-  }
-};
-
-/**
  * `clickTagAdd` Adds a tag to the tag table.
  */
-const clickTagAdd = () => {
-  let tag_row = {
-    tag_id: tagToAdd.value.id,
-    tag_amt: parseFloat(Math.abs(tagAmount.value)).toFixed(2),
-    tag_pretty_name: tagToAdd.value.tag_name,
-  };
-  formData.value.details.push(tag_row);
-  details_table.value.reset();
-  checkFormComplete();
-  tagComplete.value = false;
-  tagToAdd.value = null;
-  tagAmount.value = null;
-};
-
-/**
- * `clickTagRemove` Removes a tag from the tag table.
- */
-const clickTagRemove = () => {
-  if (selected.value) {
-    for (const tag of selected.value) {
-      formData.value.details = formData.value.details.filter(
-        item => item.tag_id !== tag,
-      );
-    }
-  }
+const tagsUpdated = data => {
+  formData.value.details = data.tags;
   checkFormComplete();
 };
 

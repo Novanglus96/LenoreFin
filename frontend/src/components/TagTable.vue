@@ -1,5 +1,5 @@
 <template>
-  <v-sheet border rounded :height="200 + props.noItems * 40" color="white">
+  <v-sheet border rounded :height="300" color="white">
     <v-container class="pa-0 ma-1">
       <v-row dense>
         <v-col cols="1">
@@ -10,7 +10,7 @@
                 flat
                 variant="plain"
                 color="error"
-                @click="clickTagRemove()"
+                @click="clickTagRemove"
                 v-bind="props"
                 :disabled="selected && selected.length === 0"
               ></v-btn>
@@ -56,8 +56,9 @@
             prefix="$"
             @update:model-value="checkTagComplete"
             type="number"
-            step="1.00"
+            @update:focused="reformatNumberToMoney"
             density="compact"
+            :max="props.totalAmount"
           ></v-text-field>
         </v-col>
         <v-col cols="1">
@@ -68,9 +69,9 @@
                 flat
                 variant="plain"
                 color="success"
-                @click="clickTagAdd()"
+                @click="clickTagAdd"
                 v-bind="props"
-                :disabled="!tagComplete && !verifyTagTotal()"
+                :disabled="!tagComplete"
               ></v-btn>
             </template>
           </v-tooltip>
@@ -91,29 +92,29 @@
       :columns="columns"
       :totalRows="local_tags ? local_tags.length : 0"
       :isServerMode="false"
-      :pageSize="props.noItems"
+      pageSize="4"
       :hasCheckbox="true"
       :stickyHeader="true"
       noDataContent="No Tags"
       search=""
-      @rowSelect="rowSelected()"
+      @rowSelect="rowSelected"
       ref="tag_table"
-      :height="35 + props.noItems * 40 + 'px'"
+      height="210px"
       skin="bh-table-striped bh-table-compact"
-      :pageSizeOptions="[props.noItems]"
+      :pageSizeOptions="[4]"
       :showPageSize="false"
       paginationInfo="{0} to {1} of {2}"
       class="alt-pagination"
     >
-      <template #tag_name="row">
+      <template #tag_pretty_name="row">
         <v-icon icon="mdi-tag"></v-icon>
         <span class="font-weight-bold text-black">{{
-          row.value.tag_name
+          row.value.tag_pretty_name
         }}</span>
       </template>
-      <template #tag_amount="row">
+      <template #tag_amt="row">
         <span class="font-weight-bold text-black"
-          >${{ row.value.tag_amount }}</span
+          >${{ row.value.tag_amt }}</span
         >
       </template>
     </vue3-datatable>
@@ -138,6 +139,7 @@ const props = defineProps({
   },
   transID: {
     type: Number,
+    default: 0,
   },
 });
 
@@ -156,8 +158,8 @@ const local_amount = ref(null); // Mutable amount
 // Define table columns...
 const columns = ref([
   { field: "tag_id", title: "ID", isUnique: true, hide: true },
-  { field: "tag_name", title: "Tag" },
-  { field: "tag_amount", title: "Amount", type: "number", width: "100px" },
+  { field: "tag_pretty_name", title: "Tag" },
+  { field: "tag_amt", title: "Amount", type: "number", width: "100px" },
 ]);
 
 // API calls and data retrieval...
@@ -176,6 +178,7 @@ const watchPassedProps = () => {
     }
     if (props.totalAmount) {
       local_amount.value = props.totalAmount;
+      tagAmount.value = props.totalAmount;
     }
   });
 };
@@ -185,17 +188,7 @@ const watchPassedProps = () => {
  * @returns - Returns True if totals match
  */
 const verifyTagTotal = () => {
-  let tagtotal = 0;
-  if (local_tags.value) {
-    local_tags.value.forEach(tag => {
-      tagtotal += parseFloat(tag.tag_amount);
-    });
-  }
-  if (tagtotal == local_amount.value) {
-    return true;
-  } else {
-    return false;
-  }
+  return true;
 };
 
 /**
@@ -205,9 +198,10 @@ const checkTagComplete = () => {
   if (
     tagAmount.value !== null &&
     tagAmount.value !== "" &&
-    tagAmount.value <= local_amount.value &&
+    Math.abs(parseFloat(tagAmount.value)) <= parseFloat(props.totalAmount) &&
     tagToAdd.value !== null &&
-    tagToAdd.value !== ""
+    tagToAdd.value !== "" &&
+    !local_tags.value.some(tag => tag.tag_id === tagToAdd.value.id)
   ) {
     tagComplete.value = true;
   } else {
@@ -221,11 +215,12 @@ const checkTagComplete = () => {
 const clickTagAdd = () => {
   let tag_row = {
     tag_id: tagToAdd.value.id,
-    tag_amount: parseFloat(Math.abs(tagAmount.value)).toFixed(2),
-    tag_name: tagToAdd.value.tag_name,
+    tag_amt: parseFloat(Math.abs(tagAmount.value)).toFixed(2),
+    tag_pretty_name: tagToAdd.value.tag_name,
   };
   local_tags.value.push(tag_row);
   tag_table.value.reset();
+  tagComplete.value = false;
   emit("tagTableUpdated", { transID: props.transID, tags: local_tags.value });
 };
 
@@ -250,6 +245,12 @@ const rowSelected = () => {
   let selectedrows = tag_table.value.getSelectedRows();
   for (const selectedrow of selectedrows) {
     selected.value.push(selectedrow.tag_id);
+  }
+};
+
+const reformatNumberToMoney = () => {
+  if (tagAmount.value) {
+    tagAmount.value = Math.abs(parseFloat(tagAmount.value).toFixed(2));
   }
 };
 
