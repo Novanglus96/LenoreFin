@@ -179,6 +179,7 @@ const watchPassedProps = () => {
     if (props.totalAmount) {
       local_amount.value = props.totalAmount;
       tagAmount.value = props.totalAmount;
+      checkTagComplete();
     }
   });
 };
