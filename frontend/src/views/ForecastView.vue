@@ -9,7 +9,7 @@
       <v-col class="rounded text-center">
         <AccountForecastWidget
           :key="account_id + ':' + timeframe"
-          :account="account_id"
+          :account="[account_id]"
           :start_integer="0"
           :end_integer="timeframe"
           v-if="account_id"

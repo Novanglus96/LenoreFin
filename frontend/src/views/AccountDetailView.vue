@@ -2,7 +2,10 @@
   <div>
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded">
-        <AccountHeaderWidget :key="account_id" :account="account_id" />
+        <AccountHeaderWidget
+          :key="account_id"
+          :account="[parseFloat(account_id)]"
+        />
       </v-col>
     </v-row>
     <v-row class="pa-1 ga-1" no-gutters>
@@ -11,14 +14,17 @@
           :key="account_id + ':' + timeframe"
           :start_integer="14"
           :end_integer="timeframe"
-          :account="account_id"
+          :account="[account_id]"
           @change-time="clickChangeTime"
         />
       </v-col>
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded">
-        <AccountTransactionsWidget :key="account_id" :account="account_id" />
+        <AccountTransactionsWidget
+          :key="account_id"
+          :account="parseFloat(account_id)"
+        />
       </v-col>
     </v-row>
   </div>
