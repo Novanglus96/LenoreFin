@@ -30,3 +30,4 @@ class TagDetailIn(Schema):
     tag_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     tag_pretty_name: str
     tag_id: int
+    tag_full_toggle: bool

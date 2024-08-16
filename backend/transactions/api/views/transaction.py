@@ -97,6 +97,7 @@ def create_transaction(request, payload: TransactionIn):
                     tag_name=detail.tag_pretty_name,
                     tag_amount=detail.tag_amt,
                     tag_id=detail.tag_id,
+                    tag_full_toggle=detail.tag_full_toggle,
                 )
                 tags.append(tag_obj)
         transaction = FullTransaction(
@@ -302,13 +303,20 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         for detail in payload.details:
             adj_amount = 0
             if payload.transaction_type_id == 2:
-                adj_amount = abs(detail.tag_amt)
+                if not detail.tag_full_toggle:
+                    adj_amount = abs(detail.tag_amt)
+                else:
+                    adj_amount = abs(payload.total_amount)
             else:
-                adj_amount = -abs(detail.tag_amt)
+                if not detail.tag_full_toggle:
+                    adj_amount = -abs(detail.tag_amt)
+                else:
+                    adj_amount = -abs(payload.total_amount)
             TransactionDetail.objects.create(
                 transaction_id=transaction_id,
                 detail_amt=adj_amount,
                 tag_id=detail.tag_id,
+                full_toggle=detail.tag_full_toggle,
             )
             logToDB(
                 "Transaction detail created",
@@ -415,7 +423,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
             3001902,
             2,
         )
-        raise HttpError(500, "Record update error")
+        raise HttpError(500, f"Record update error: {str(e)}")
 
 
 @transaction_router.get("/list", response=PaginatedTransactions)

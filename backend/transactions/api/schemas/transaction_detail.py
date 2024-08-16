@@ -11,6 +11,7 @@ class TransactionDetailOut(Schema):
     transaction: "TransactionOut"
     detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     tag: TagOut
+    full_toggle: bool
 
 
 from transactions.api.schemas.transaction import TransactionOut
@@ -24,3 +25,4 @@ class TransactionDetailIn(Schema):
     account_id: int
     detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     tag_id: int
+    full_toggle: bool

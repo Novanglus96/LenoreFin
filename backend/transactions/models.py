@@ -221,3 +221,4 @@ class TransactionDetail(models.Model):
     tag = models.ForeignKey(
         Tag, on_delete=models.SET_NULL, null=True, blank=True
     )
+    full_toggle = models.BooleanField(default=False)

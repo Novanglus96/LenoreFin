@@ -58,13 +58,22 @@ def create_transactions(transactions: List[FullTransaction]):
                                 for tag in trans.tags:
                                     adj_amount = 0
                                     if trans.transaction_type_id == 2:
-                                        adj_amount = abs(tag.tag_amount)
+                                        if not tag.tag_full_toggle:
+                                            adj_amount = abs(tag.tag_amount)
+                                        else:
+                                            adj_amount = abs(trans.total_amount)
                                     else:
-                                        adj_amount = -abs(tag.tag_amount)
+                                        if not tag.tag_full_toggle:
+                                            adj_amount = -abs(tag.tag_amount)
+                                        else:
+                                            adj_amount = -abs(
+                                                trans.total_amount
+                                            )
                                     TransactionDetail.objects.create(
                                         transaction_id=created_transaction.id,
                                         detail_amt=adj_amount,
                                         tag_id=tag.tag_id,
+                                        full_toggle=tag.tag_full_toggle,
                                     )
                         except Except as e:
                             logToDB(
@@ -144,13 +153,20 @@ def create_transactions(transactions: List[FullTransaction]):
                     for tag in trans.tags:
                         adj_amount = 0
                         if trans.transaction_type_id == 2:
-                            adj_amount = abs(tag.tag_amount)
+                            if not tag.tag_full_toggle:
+                                adj_amount = abs(tag.tag_amount)
+                            else:
+                                adj_amount = abs(trans.total_amount)
                         else:
-                            adj_amount = -abs(tag.tag_amount)
+                            if not tag.tag_full_toggle:
+                                adj_amount = -abs(tag.tag_amount)
+                            else:
+                                adj_amount = -abs(trans.total_amount)
                         detail_dict = {
                             "transaction_index": index,
                             "detail_amt": adj_amount,
                             "tag_id": tag.tag_id,
+                            "full_toggle": tag.tag_full_toggle,
                         }
                         transaction_details.append(detail_dict)
             # Create transactions
@@ -182,6 +198,7 @@ def create_transactions(transactions: List[FullTransaction]):
                 transaction_index = trans_detail["transaction_index"]
                 detail_amt = trans_detail["detail_amt"]
                 tag_id = trans_detail["tag_id"]
+                full_toggle = trans_detail["full_toggle"]
                 print(
                     f"index: {transaction_index}, amt: {detail_amt}, tag_id:{tag_id}"
                 )
@@ -189,6 +206,7 @@ def create_transactions(transactions: List[FullTransaction]):
                     transaction_id=created_transactions[transaction_index].id,
                     detail_amt=detail_amt,
                     tag_id=tag_id,
+                    full_toggle=full_toggle,
                 )
                 details_to_create.append(detail)
             try:

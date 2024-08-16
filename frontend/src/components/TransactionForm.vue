@@ -619,13 +619,20 @@ const watchPassedFormData = () => {
 const fillTagTable = details => {
   let table = [];
   let pretty_name = "";
+  let tag_full_toggle = null;
   if (details) {
     for (const detail of details) {
+      if (detail.full_toggle) {
+        tag_full_toggle = detail.full_toggle;
+      } else {
+        tag_full_toggle = false;
+      }
       pretty_name = detail.tag.tag_name;
       let tag_row = {
         tag_id: detail.tag.id,
         tag_amt: parseFloat(Math.abs(detail.detail_amt)).toFixed(2),
         tag_pretty_name: pretty_name,
+        tag_full_toggle: tag_full_toggle,
       };
       table.push(tag_row);
     }

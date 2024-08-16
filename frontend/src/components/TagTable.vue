@@ -48,7 +48,7 @@
             </template>
           </v-autocomplete>
         </v-col>
-        <v-col cols="4">
+        <v-col cols="3">
           <v-text-field
             v-model="tagAmount"
             variant="outlined"
@@ -56,11 +56,19 @@
             prefix="$"
             @update:model-value="checkTagComplete"
             type="number"
-            @update:focused="reformatNumberToMoney"
             density="compact"
-            :max="props.totalAmount"
+            :max="local_amount"
+            :disabled="local_full_toggle"
           ></v-text-field>
         </v-col>
+        <v-col cols="1">
+          <v-tooltip text="Full Amount" location="top">
+            <template v-slot:activator="{ props }"
+              ><v-checkbox
+                v-bind="props"
+                v-model="local_full_toggle"
+              ></v-checkbox></template></v-tooltip
+        ></v-col>
         <v-col cols="1">
           <v-tooltip text="Add New Tag" location="top">
             <template v-slot:activator="{ props }">
@@ -113,8 +121,13 @@
         }}</span>
       </template>
       <template #tag_amt="row">
-        <span class="font-weight-bold text-black"
+        <span
+          class="font-weight-bold text-black"
+          v-if="!row.value.tag_full_toggle"
           >${{ row.value.tag_amt }}</span
+        >
+        <span class="font-weight-bold text-black font-italic" v-else
+          >(Full)</span
         >
       </template>
     </vue3-datatable>
@@ -154,12 +167,19 @@ const selected = ref([]); // The objects of the rows selected in table
 const tag_table = ref(null); // The reference to the table
 const local_tags = ref([]); // Mutable tags array
 const local_amount = ref(null); // Mutable amount
+const local_full_toggle = ref(true);
 
 // Define table columns...
 const columns = ref([
   { field: "tag_id", title: "ID", isUnique: true, hide: true },
   { field: "tag_pretty_name", title: "Tag" },
   { field: "tag_amt", title: "Amount", type: "number", width: "100px" },
+  {
+    field: "tag_full_toggle",
+    title: "Full Amount",
+    type: "boolean",
+    hide: true,
+  },
 ]);
 
 // API calls and data retrieval...
@@ -178,7 +198,6 @@ const watchPassedProps = () => {
     }
     if (props.totalAmount) {
       local_amount.value = props.totalAmount;
-      tagAmount.value = props.totalAmount;
       checkTagComplete();
     }
   });
@@ -199,7 +218,7 @@ const checkTagComplete = () => {
   if (
     tagAmount.value !== null &&
     tagAmount.value !== "" &&
-    Math.abs(parseFloat(tagAmount.value)) <= parseFloat(props.totalAmount) &&
+    Math.abs(parseFloat(tagAmount.value)) <= parseFloat(local_amount.value) &&
     tagToAdd.value !== null &&
     tagToAdd.value !== "" &&
     !local_tags.value.some(tag => tag.tag_id === tagToAdd.value.id)
@@ -218,6 +237,7 @@ const clickTagAdd = () => {
     tag_id: tagToAdd.value.id,
     tag_amt: parseFloat(Math.abs(tagAmount.value)).toFixed(2),
     tag_pretty_name: tagToAdd.value.tag_name,
+    tag_full_toggle: local_full_toggle.value,
   };
   local_tags.value.push(tag_row);
   tag_table.value.reset();
@@ -246,12 +266,6 @@ const rowSelected = () => {
   let selectedrows = tag_table.value.getSelectedRows();
   for (const selectedrow of selectedrows) {
     selected.value.push(selectedrow.tag_id);
-  }
-};
-
-const reformatNumberToMoney = () => {
-  if (tagAmount.value) {
-    tagAmount.value = Math.abs(parseFloat(tagAmount.value).toFixed(2));
   }
 };
 
