@@ -216,9 +216,11 @@ const verifyTagTotal = () => {
  */
 const checkTagComplete = () => {
   if (
-    tagAmount.value !== null &&
-    tagAmount.value !== "" &&
-    Math.abs(parseFloat(tagAmount.value)) <= parseFloat(local_amount.value) &&
+    ((tagAmount.value !== null &&
+      tagAmount.value !== "" &&
+      Math.abs(parseFloat(tagAmount.value)) <=
+        parseFloat(local_amount.value)) ||
+      local_full_toggle.value) &&
     tagToAdd.value !== null &&
     tagToAdd.value !== "" &&
     !local_tags.value.some(tag => tag.tag_id === tagToAdd.value.id)
