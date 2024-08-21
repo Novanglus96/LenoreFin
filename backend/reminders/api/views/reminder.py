@@ -300,6 +300,7 @@ def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
                 tag_name=None,
                 tag_amount=reminder.amount,
                 tag_id=reminder.tag.id,
+                tag_full_toggle=True,
             )
             tags.append(tag_obj)
 
