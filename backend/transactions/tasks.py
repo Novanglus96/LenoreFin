@@ -113,6 +113,7 @@ def convert_reminder():
                         tag_name=reminder.tag.tag_name,
                         tag_amount=reminder.amount,
                         tag_id=reminder.tag.id,
+                        tag_full_toggle=True,
                     )
                     tags.append(tag_obj)
                     destination_account = None
@@ -328,6 +329,7 @@ def finish_imports():
                                         tag_name=tag_name,
                                         tag_amount=tag_amount,
                                         tag_id=tag_id,
+                                        tag_full_toggle=False,
                                     )
                                     tags.append(tag_obj)
                             addDate = transDate
