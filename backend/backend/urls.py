@@ -52,6 +52,9 @@ from administration.api.routers.log_entry import log_entry_router
 from tags.api.routers.graph_by_tags import graph_by_tags_router
 from imports.api.routers.import_file import import_file_router
 from administration.api.routers.version import version_router
+from administration.api.routers.decription_history import (
+    description_history_router,
+)
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
@@ -86,6 +89,9 @@ api.add_router("/administration/log-entries", log_entry_router)
 api.add_router("/tags/graph-by-tags", graph_by_tags_router)
 api.add_router("/file-imports", import_file_router)
 api.add_router("/administration/version", version_router)
+api.add_router(
+    "/administration/description-histories", description_history_router
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

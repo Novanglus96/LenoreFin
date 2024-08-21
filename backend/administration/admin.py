@@ -1,5 +1,13 @@
 from django.contrib import admin
-from .models import ErrorLevel, Option, LogEntry, Message, Payee, Version
+from .models import (
+    ErrorLevel,
+    Option,
+    LogEntry,
+    Message,
+    Payee,
+    Version,
+    DescriptionHistory,
+)
 from django.http import HttpResponse
 from import_export.admin import ImportExportModelAdmin
 
@@ -134,9 +142,18 @@ class VersionAdmin(admin.ModelAdmin):
         return False
 
 
+class DescriptionHistoryAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "description_pretty", "tag"]
+
+    list_display_links = ["description_pretty"]
+
+    ordering = ["id"]
+
+
 admin.site.register(ErrorLevel, ErrorLevelAdmin)
 admin.site.register(Option, OptionAdmin)
 admin.site.register(LogEntry, LogAdmin)
 admin.site.register(Payee, PayeeAdmin)
 admin.site.register(Message, MessageAdmin)
 admin.site.register(Version, VersionAdmin)
+admin.site.register(DescriptionHistory, DescriptionHistoryAdmin)

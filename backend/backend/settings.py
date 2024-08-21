@@ -247,6 +247,7 @@ JAZZMIN_SETTINGS = {
         "administration.Option": "fas fa-cog",
         "administration.Payee": "fas fa-user-circle",
         "administration.Version": "fas fa-info",
+        "administration.DescriptionHistory": "fas fa-clipboard-list",
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
         "planning.ChristmasGift": "fas fa-folder",

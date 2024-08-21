@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models.query import QuerySet
 from accounts.models import Account
 from reminders.models import Reminder
+from tags.models import Tag
 
 # Create your models here.
 
@@ -209,3 +210,22 @@ class Version(SingletonModel):
 
     def __str__(self):
         return self.version_number
+
+
+class DescriptionHistory(models.Model):
+    """
+    Model representing a history of transaction descriptions.
+
+    Fields:
+    - description (CharField): A unique description, limited to 254 characters.
+    - tag (ForeignKey): Optional last used tag for this description.
+    """
+
+    description_normalized = models.CharField(max_length=254, unique=True)
+    description_pretty = models.CharField(max_length=254, default=None)
+    tag = models.ForeignKey(
+        Tag, on_delete=models.SET_NULL, null=True, blank=True, default=None
+    )
+
+    class Meta:
+        verbose_name_plural = "Description histories"

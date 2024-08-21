@@ -2,6 +2,7 @@ from ninja import Router, Query
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from transactions.models import Transaction, Paycheck, TransactionDetail
+from administration.models import DescriptionHistory
 from accounts.models import Account
 from transactions.api.schemas.transaction import (
     TransactionIn,
@@ -11,7 +12,6 @@ from transactions.api.schemas.transaction import (
 )
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
-from typing import List
 from django.db.models import (
     Case,
     When,
@@ -76,6 +76,26 @@ def create_transaction(request, payload: TransactionIn):
         paycheck_id = None
         transactions_to_create = []
         tags = []
+        # Update Description History
+        try:
+            existing_description = DescriptionHistory.objects.get(
+                description_normalized=payload.description.lower()
+            )
+            if payload.details:
+                existing_description.tag_id = payload.details[0].tag_id
+            else:
+                existing_description.tag_id = None
+            existing_description.save()
+        except DescriptionHistory.DoesNotExist:
+            tag_id = None
+            if payload.details:
+                tag_id = payload.details[0].tag_id
+            DescriptionHistory.objects.create(
+                description_normalized=payload.description.lower(),
+                description_pretty=payload.description,
+                tag_id=tag_id,
+            )
+
         # Create paycheck
         if payload.paycheck is not None:
             paycheck = Paycheck.objects.create(
@@ -294,6 +314,26 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
 
         # Get the transaction to update
         transaction = get_object_or_404(Transaction, id=transaction_id)
+
+        # Update Description History
+        try:
+            existing_description = DescriptionHistory.objects.get(
+                description_normalized=payload.description.lower()
+            )
+            if payload.details:
+                existing_description.tag_id = payload.details[0].tag_id
+            else:
+                existing_description.tag_id = None
+            existing_description.save()
+        except DescriptionHistory.DoesNotExist:
+            tag_id = None
+            if payload.details:
+                tag_id = payload.details[0].tag_id
+            DescriptionHistory.objects.create(
+                description_normalized=payload.description.lower(),
+                description_pretty=payload.description,
+                tag_id=tag_id,
+            )
 
         # Get Details
         existing_details = TransactionDetail.objects.filter(

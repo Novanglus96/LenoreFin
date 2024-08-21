@@ -108,10 +108,17 @@
                   ></v-text-field>
                 </v-col>
                 <v-col cols="6">
-                  <v-text-field
+                  <v-combobox
                     v-model="formData.description"
-                    variant="outlined"
+                    :items="
+                      descriptionHistory.map(item => item.description_pretty)
+                    "
                     label="Description*"
+                    clearable
+                    hide-no-data
+                    hide-selected
+                    :loading="description_history_isLoading"
+                    variant="outlined"
                     :rules="required"
                     @update:model-value="
                       () => {
@@ -120,7 +127,9 @@
                       }
                     "
                     density="compact"
-                  ></v-text-field>
+                    auto-select-first="exact"
+                    return-object="false"
+                  />
                 </v-col>
               </v-row>
               <v-row dense>
@@ -439,6 +448,7 @@ import { usePayees } from "@/composables/payeesComposable";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import TagTable from "@/components/TagTable.vue";
+import { useDescriptionHistory } from "@/composables/descriptionHistoryComposable";
 
 // Define reactive variables...
 const tagToAdd = ref(null); // Tag object to add to tag list
@@ -475,7 +485,8 @@ const { transaction_statuses, isLoading: transaction_statuses_isLoading } =
   useTransactionStatuses();
 const { addTransaction, editTransaction } = useTransactions();
 const { payees, isLoading: payees_isLoading } = usePayees();
-
+const { descriptionHistory, isLoading: description_history_isLoading } =
+  useDescriptionHistory();
 // Define props...
 const props = defineProps({
   itemFormDialog: {
