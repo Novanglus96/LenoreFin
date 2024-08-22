@@ -92,7 +92,7 @@
                 </v-container>
               </v-card-text>
               <v-card-actions>
-                <v-btn @click="resetForm">Reset</v-btn>
+                <!--<v-btn @click="resetForm">Reset</v-btn>-->
                 <v-btn
                   :disabled="!formComplete"
                   @click="submitForm()"
@@ -266,8 +266,12 @@ const checkFormComplete = async () => {
     formData.value.graph_name !== "" &&
     formData.value.month !== null &&
     formData.value.month !== "" &&
-    formData.value.expense !== "" &&
-    formData.value.expense !== null
+    formData.value.graph_type !== "" &&
+    formData.value.graph_type !== null &&
+    (formData.value.graph_type !== 4 ||
+      (formData.value.graph_type == 4 &&
+        formData.value.tag_id !== null &&
+        formData.value.tag_id !== ""))
   ) {
     formComplete.value = true;
   } else {
