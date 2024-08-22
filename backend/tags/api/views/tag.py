@@ -384,6 +384,7 @@ def list_tags(
     tag_type: Optional[int] = Query(None),
     parent: Optional[int] = Query(None),
     child: Optional[int] = Query(None),
+    main_only: Optional[bool] = Query(False),
 ):
     """
     The function `list_tags` retrieves a list of tags,
@@ -414,6 +415,10 @@ def list_tags(
         # Filter tags by child if a child id is specified
         if child is not None:
             qs = qs.filter(child__id=child).exclude(tag_type__id=3)
+
+        # Filter tags for only Main tags if main_only is true
+        if main_only:
+            qs = qs.filter(child__isnull=True)
 
         qs = qs.annotate(
             parent_tag=F("parent__tag_name"),

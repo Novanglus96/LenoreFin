@@ -25,6 +25,7 @@ python manage.py loaddata tags/fixtures/maintags
 python manage.py loaddata tags/fixtures/subtags
 python manage.py loaddata tags/fixtures/tags
 python manage.py scheduletasks
+python manage.py loaddata administration/fixtures/graph_types
 python manage.py load_options
 
 gunicorn backend.wsgi:application --bind 0.0.0.0:8000

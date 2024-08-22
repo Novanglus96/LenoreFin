@@ -2,6 +2,7 @@ from ninja import Schema
 from decimal import Decimal
 from typing import List, Optional, Dict, Any
 from administration.api.schemas.error_level import ErrorLevelOut
+from administration.api.schemas.graph_type import GraphTypeOut
 from pydantic import BaseModel, Field
 
 
@@ -12,19 +13,19 @@ class OptionIn(Schema):
     alert_period: Optional[int]
     widget1_graph_name: Optional[str]
     widget1_tag_id: Optional[int] = None
-    widget1_expense: Optional[bool] = True
+    widget1_type_id: Optional[int] = None
     widget1_month: Optional[int] = 0
-    widget1_exclude: Optional[str] = "[0]"
+    widget1_exclude: Optional[str] = None
     widget2_graph_name: Optional[str]
     widget2_tag_id: Optional[int] = None
-    widget2_expense: Optional[bool] = True
+    widget2_type_id: Optional[int] = None
     widget2_month: Optional[int] = 0
-    widget2_exclude: Optional[str] = "[0]"
+    widget2_exclude: Optional[str] = None
     widget3_graph_name: Optional[str]
     widget3_tag_id: Optional[int] = None
-    widget3_expense: Optional[bool] = True
+    widget3_type_id: Optional[int] = None
     widget3_month: Optional[int] = 0
-    widget3_exclude: Optional[str] = "[0]"
+    widget3_exclude: Optional[str] = None
 
 
 # The class OptionOut is a schema for representing Options.
@@ -35,16 +36,16 @@ class OptionOut(Schema):
     alert_period: int
     widget1_graph_name: str
     widget1_tag_id: Optional[int] = None
-    widget1_expense: bool = True
+    widget1_type: Optional[GraphTypeOut] = None
     widget1_month: int = 0
-    widget1_exclude: Optional[str] = "[0]"
+    widget1_exclude: Optional[str] = None
     widget2_graph_name: str
     widget2_tag_id: Optional[int] = None
-    widget2_expense: bool = True
+    widget2_type: Optional[GraphTypeOut] = None
     widget2_month: int = 0
-    widget2_exclude: Optional[str] = "[0]"
+    widget2_exclude: Optional[str] = None
     widget3_graph_name: str
     widget3_tag_id: Optional[int] = None
-    widget3_expense: bool = True
+    widget3_type: Optional[GraphTypeOut] = None
     widget3_month: int = 0
-    widget3_exclude: Optional[str] = "[0]"
+    widget3_exclude: Optional[str] = None

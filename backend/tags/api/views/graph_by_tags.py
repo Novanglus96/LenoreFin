@@ -57,8 +57,9 @@ def get_graph(request, widget_id: int):
         exclude = "[0]"
         tagID = None
         month = 0
-        expense = True
+        type_id = 0
         tags = None
+        result = None
 
         # Load the options for the specified widget ID
         options = get_object_or_404(Option, id=1)
@@ -69,19 +70,19 @@ def get_graph(request, widget_id: int):
             exclude = options.widget1_exclude
             tagID = options.widget1_tag_id
             month = options.widget1_month
-            expense = options.widget1_expense
+            type_id = options.widget1_type_id
         if widget_id == 2:
             graph_name = options.widget2_graph_name
             exclude = options.widget2_exclude
             tagID = options.widget2_tag_id
             month = options.widget2_month
-            expense = options.widget2_expense
+            type_id = options.widget2_type_id
         if widget_id == 3:
             graph_name = options.widget3_graph_name
             exclude = options.widget3_exclude
             tagID = options.widget3_tag_id
             month = options.widget3_month
-            expense = options.widget3_expense
+            type_id = options.widget3_type_id
         exclude_list = json.loads(exclude)
         today = timezone.now()
         tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
@@ -123,16 +124,47 @@ def get_graph(request, widget_id: int):
 
         # If a tag is specified in options, filter by that tag
         # Otherwise, filter on expense tags or income tags
-        if tagID is None:
-            tag_type_id = 1 if expense else 2
+        if type_id == 1:
             tags = (
-                Tag.objects.filter(tag_type__id=tag_type_id)
+                Tag.objects.filter(tag_type__id=1)
                 .exclude(id__in=exclude_list)
                 .exclude(child__isnull=False)
             )
-            # Calculate month totals for each tag
-            # Use the tag name as the label and the total as the value
-            for tag in tags:
+            result = Transaction.objects.filter(
+                transaction_date__month=target_month,
+                transaction_date__year=target_year,
+                status__id__gt=1,
+                transaction_type_id=1,
+            )
+        elif type_id == 2:
+            tags = (
+                Tag.objects.filter(tag_type__id=2)
+                .exclude(id__in=exclude_list)
+                .exclude(child__isnull=False)
+            )
+            result = Transaction.objects.filter(
+                transaction_date__month=target_month,
+                transaction_date__year=target_year,
+                status__id__gt=1,
+                transaction_type_id=2,
+            )
+        elif type_id == 3:
+            tags = []
+            result = Transaction.objects.filter(
+                transaction_date__month=target_month,
+                transaction_date__year=target_year,
+                status__id__gt=1,
+            )
+        elif type_id == 4:
+            tags = Tag.objects.filter(parent__id=tagID).exclude(
+                id__in=exclude_list
+            )
+
+        # Calculate month totals for each tag
+        # Use the tag name as the label and the total as the value
+        for tag in tags:
+            tag_amount = 0
+            if type_id != 4:
                 tag_amount = (
                     TransactionDetail.objects.filter(
                         tag__parent=tag.parent,
@@ -145,29 +177,7 @@ def get_graph(request, widget_id: int):
                 if tag_amount != 0:
                     labels.append(tag.tag_name)
                     values.append(tag_amount)
-            result = Transaction.objects.filter(
-                transaction_date__month=target_month,
-                transaction_date__year=target_year,
-                status__id__gt=1,
-                transaction_type_id=tag_type_id,
-            )
-            result = result.annotate(tag_count=Count("transactiondetail__id"))
-            result = result.filter(tag_count=0)
-
-            result = result.aggregate(total=Sum(F("total_amount")))
-
-            untagged_total = result["total"] or 0
-            if untagged_total != 0:
-                values.append(untagged_total)
-                labels.append("Untagged")
-        elif tagID != -1:
-            tags = Tag.objects.filter(parent__id=tagID).exclude(
-                id__in=exclude_list
-            )
-
-            # Calculate month totals for each tag
-            # Use the tag name as the label and the total as the value
-            for tag in tags:
+            else:
                 tag_amount = (
                     TransactionDetail.objects.filter(
                         tag=tag,
@@ -178,22 +188,22 @@ def get_graph(request, widget_id: int):
                     or 0
                 )
                 if tag_amount != 0:
-                    labels.append(tag.child.tag_name)
+                    if tag.child:
+                        labels.append(tag.child.tag_name)
+                    else:
+                        labels.append(tag.parent.tag_name)
                     values.append(tag_amount)
-        elif tagID == -1:
-            result = Transaction.objects.filter(
-                transaction_date__month=target_month,
-                transaction_date__year=target_year,
-                status__id__gt=1,
-            )
+
+        if result:
             result = result.annotate(tag_count=Count("transactiondetail__id"))
             result = result.filter(tag_count=0)
 
             result = result.aggregate(total=Sum(F("total_amount")))
 
             untagged_total = result["total"] or 0
-            values.append(untagged_total)
-            labels.append("Untagged")
+            if untagged_total != 0:
+                values.append(untagged_total)
+                labels.append("Untagged")
 
         # If there are no tags or totals, return None as label and 0 as value
         if not values:

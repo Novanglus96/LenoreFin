@@ -1,0 +1,30 @@
+[
+  {
+    "model": "administration.GraphType",
+    "pk": 1,
+    "fields": {
+        "graph_type": "All Expenses"
+    }
+  },
+  {
+    "model": "administration.GraphType",
+    "pk": 2,
+    "fields": {
+        "graph_type": "All Income"
+    }
+  },
+  {
+    "model": "administration.GraphType",
+    "pk": 3,
+    "fields": {
+        "graph_type": "Untagged"
+    }
+  },
+  {
+    "model": "administration.GraphType",
+    "pk": 4,
+    "fields": {
+        "graph_type": "Custom"
+    }
+  }
+]

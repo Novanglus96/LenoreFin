@@ -43,6 +43,20 @@ class ErrorLevel(models.Model):
         return self.error_level
 
 
+class GraphType(models.Model):
+    """
+    Model representing a graph type.
+
+    Fields:
+    - graph_type (CharField): The name of the graph type.
+    """
+
+    graph_type = models.CharField(max_length=25, unique=True)
+
+    def __str__(self):
+        return self.graph_type
+
+
 class Option(SingletonModel):
     """
     Model representing options to be used in the application.
@@ -95,17 +109,38 @@ class Option(SingletonModel):
     alert_period = models.IntegerField(default=3)
     widget1_graph_name = models.CharField(max_length=254)
     widget1_tag_id = models.IntegerField(default=None, null=True, blank=True)
-    widget1_expense = models.BooleanField(default=True)
+    widget1_type = models.ForeignKey(
+        GraphType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+        related_name="widget1_options",
+    )
     widget1_month = models.IntegerField(default=0)
     widget1_exclude = models.CharField(max_length=254)
     widget2_graph_name = models.CharField(max_length=254)
     widget2_tag_id = models.IntegerField(default=None, null=True, blank=True)
-    widget2_expense = models.BooleanField(default=True)
+    widget2_type = models.ForeignKey(
+        GraphType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+        related_name="widget2_options",
+    )
     widget2_month = models.IntegerField(default=0)
     widget2_exclude = models.CharField(max_length=254)
     widget3_graph_name = models.CharField(max_length=254)
     widget3_tag_id = models.IntegerField(default=None, null=True, blank=True)
-    widget3_expense = models.BooleanField(default=True)
+    widget3_type = models.ForeignKey(
+        GraphType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+        related_name="widget3_options",
+    )
     widget3_month = models.IntegerField(default=0)
     widget3_exclude = models.CharField(max_length=254)
     auto_archive = models.BooleanField(default=True)

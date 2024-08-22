@@ -50,6 +50,15 @@ async function getParentTagsFunction() {
   }
 }
 
+async function getMainTagsFunction() {
+  try {
+    const response = await apiClient.get("/tags/list?main_only=true");
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Main Tags not fetched: ");
+  }
+}
+
 async function getGraphByTagsFunction(widget_id) {
   try {
     const response = await apiClient.get(
@@ -134,6 +143,21 @@ export function useParentTags() {
   return {
     isLoading,
     parent_tags,
+  };
+}
+
+export function useMainTags() {
+  const queryClient = useQueryClient();
+  const { data: main_tags, isLoading } = useQuery({
+    queryKey: ["tags", { main_only: true }],
+    queryFn: () => getMainTagsFunction(),
+    select: response => response,
+    client: queryClient,
+  });
+
+  return {
+    isLoading,
+    main_tags,
   };
 }
 

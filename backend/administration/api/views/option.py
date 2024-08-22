@@ -60,8 +60,8 @@ def update_option(request, option_id: int, payload: OptionIn):
             option.widget1_graph_name = payload.widget1_graph_name
         if payload.widget1_tag_id is not None:
             option.widget1_tag_id = payload.widget1_tag_id
-        if payload.widget1_expense is not None:
-            option.widget1_expense = payload.widget1_expense
+        if payload.widget1_type_id is not None:
+            option.widget1_type_id = payload.widget1_type_id
         if payload.widget1_month is not None:
             option.widget1_month = payload.widget1_month
         if payload.widget1_exclude is not None:
@@ -70,8 +70,8 @@ def update_option(request, option_id: int, payload: OptionIn):
             option.widget2_graph_name = payload.widget2_graph_name
         if payload.widget2_tag_id is not None:
             option.widget2_tag_id = payload.widget2_tag_id
-        if payload.widget2_expense is not None:
-            option.widget2_expense = payload.widget2_expense
+        if payload.widget2_type_id is not None:
+            option.widget2_type_id = payload.widget2_type_id
         if payload.widget2_month is not None:
             option.widget2_month = payload.widget2_month
         if payload.widget2_exclude is not None:
@@ -80,8 +80,8 @@ def update_option(request, option_id: int, payload: OptionIn):
             option.widget3_graph_name = payload.widget3_graph_name
         if payload.widget3_tag_id is not None:
             option.widget3_tag_id = payload.widget3_tag_id
-        if payload.widget3_expense is not None:
-            option.widget3_expense = payload.widget3_expense
+        if payload.widget3_type_id is not None:
+            option.widget3_type_id = payload.widget3_type_id
         if payload.widget3_month is not None:
             option.widget3_month = payload.widget3_month
         if payload.widget3_exclude is not None:

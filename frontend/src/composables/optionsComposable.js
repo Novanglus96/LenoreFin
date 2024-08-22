@@ -39,6 +39,7 @@ async function getOptionsFunction() {
 
 async function updateOptionsFunction(updatedOptions) {
   try {
+    console.log("update_options:", updatedOptions);
     const response = await apiClient.patch(
       "/administration/options/update/1",
       updatedOptions,
@@ -68,7 +69,7 @@ export function useOptions() {
       queryFn: () => getOptionsFunction(),
     });
   };
-  
+
   const updateOptionsMutation = useMutation({
     mutationFn: updateOptionsFunction,
     onSuccess: () => {
