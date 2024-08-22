@@ -8,19 +8,19 @@
         "alert_period": 3,
         "widget1_graph_name": "Expenses",
         "widget1_tag_id": null,
-        "widget1_type_id": 1,
+        "widget1_type": 1,
         "widget1_month": 0,
-        "widget1_exclude": null,
+        "widget1_exclude": "[]",
         "widget2_graph_name": "Income",
         "widget2_tag_id": null,
-        "widget2_type_id": 2,
+        "widget2_type": 2,
         "widget2_month": 0,
-        "widget2_exclude": null,
+        "widget2_exclude": "[]",
         "widget3_graph_name": "Untagged",
-        "widget3_tag_id": -1,
-        "widget3_type_id": 3,
+        "widget3_tag_id": null,
+        "widget3_type": 3,
         "widget3_month": 0,
-        "widget3_exclude": null
+        "widget3_exclude": "[]"
     }
   }
 ]
