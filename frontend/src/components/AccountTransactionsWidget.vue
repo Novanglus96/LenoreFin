@@ -462,9 +462,7 @@ const clickRemoveTransaction = async transactions => {
 };
 
 const clickClearTransaction = async (transactions, reminderTransactions) => {
-  transactions.forEach(transaction => {
-    clearTransaction(transaction);
-  });
+  clearTransaction(transactions);
   trans_table.value.clearSelectedRows();
   reminderTransactions.forEach(transaction => {
     addReminderTransaction(transaction);

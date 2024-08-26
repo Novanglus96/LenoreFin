@@ -91,14 +91,11 @@ async function deleteTransactionFunction(deletedTransaction) {
 
 async function clearTransactionFunction(clearedTransaction) {
   const mainstore = useMainStore();
-  const payload = {
-    status_id: 2,
+  let payload = {
+    transactions: clearedTransaction,
   };
   try {
-    const response = await apiClient.patch(
-      "/transactions/clear/" + clearedTransaction,
-      payload,
-    );
+    const response = await apiClient.patch("/transactions/clear", payload);
     mainstore.showSnackbar("Transaction cleared successfully!", "success");
     return response.data;
   } catch (error) {

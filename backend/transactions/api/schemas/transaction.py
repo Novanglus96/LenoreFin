@@ -33,8 +33,14 @@ class TransactionIn(Schema):
 
 # The class TransactionClear is a schema for clearing Transactions.
 class TransactionClear(Schema):
+    id: int
     status_id: int
     edit_date: Optional[date] = None
+
+
+# The class TransactionClearList is a schema for a list of clearing Transactions.
+class TransactionClearList(Schema):
+    transactions: List[int]
 
 
 # The class TransactionOut is a schema for representing Transactions.

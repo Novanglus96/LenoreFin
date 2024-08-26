@@ -7,6 +7,7 @@ from accounts.models import Account
 from transactions.api.schemas.transaction import (
     TransactionIn,
     TransactionClear,
+    TransactionClearList,
     TransactionOut,
     PaginatedTransactions,
 )
@@ -163,49 +164,58 @@ def create_transaction(request, payload: TransactionIn):
         traceback.print_exc()
 
 
-@transaction_router.patch("/clear/{transaction_id}")
-def clear_transaction(request, transaction_id: int, payload: TransactionClear):
+@transaction_router.patch("/clear")
+def clear_transaction(request, payload: TransactionClearList):
     """
-    The function `clear_transaction` changes the status to cleared, edit date to today
-    of the transaction specified by id.  Skips transactions with a related Reminder.
+    The function `clear_transaction` changes the status to cleared, edits the date to today
+    of the transaction(s) specified by id. Skips transactions with a related Reminder.
 
     Args:
         request (HttpRequest): The HTTP request object.
-        transaction_id (int): the id of the transaction to update
-        payload (TransactionClear): a transaction clear object
+        payload (TransactionClearList): A list of transaction ids to clear.
 
     Returns:
-        success: True
+        dict: A dictionary with the key 'success' and value True.
 
     Raises:
-        Http404: If the transaction with the specified ID does not exist.
+        HttpError: Raises an HTTP error if there's an exception during processing.
     """
-
     try:
-        transaction = get_object_or_404(Transaction, id=transaction_id)
-        transaction.status_id = payload.status_id
-        transaction.edit_date = get_todays_date_timezone_adjusted()
-        transaction.save()
-        logToDB(
-            f"Transaction cleared : #{transaction_id}",
-            None,
-            None,
-            transaction_id,
-            3002005,
-            1,
-        )
+        # Fetch all relevant transactions at once
+        transactions = Transaction.objects.filter(id__in=payload.transactions)
+
+        # Prepare a list to hold transactions that need to be updated
+        transactions_to_update = []
+
+        for transaction in transactions:
+            if transaction.status_id == 2:
+                transaction.status_id = 1
+            elif transaction.status_id == 1:
+                transaction.status_id = 2
+
+            transaction.edit_date = get_todays_date_timezone_adjusted()
+            transactions_to_update.append(transaction)
+
+            # Log the transaction
+            logToDB(
+                f"Transaction cleared: #{transaction.id}",
+                None,
+                None,
+                transaction.id,
+                3002005,
+                1,
+            )
+
+        # Perform a bulk update on the modified transactions
+        if transactions_to_update:
+            Transaction.objects.bulk_update(
+                transactions_to_update, ["status_id", "edit_date"]
+            )
+
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction not cleared : {str(e)}",
-            None,
-            None,
-            transaction_id,
-            3002905,
-            2,
-        )
-        raise HttpError(500, "Transaction clear error")
+        raise HttpError(500, f"Transaction clear error: {str(e)}")
 
 
 @transaction_router.get("/get/{transaction_id}", response=TransactionOut)
