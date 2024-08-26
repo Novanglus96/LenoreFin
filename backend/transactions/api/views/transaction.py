@@ -7,7 +7,7 @@ from accounts.models import Account
 from transactions.api.schemas.transaction import (
     TransactionIn,
     TransactionClear,
-    TransactionClearList,
+    TransactionList,
     TransactionOut,
     PaginatedTransactions,
 )
@@ -165,14 +165,14 @@ def create_transaction(request, payload: TransactionIn):
 
 
 @transaction_router.patch("/clear")
-def clear_transaction(request, payload: TransactionClearList):
+def clear_transaction(request, payload: TransactionList):
     """
     The function `clear_transaction` changes the status to cleared, edits the date to today
     of the transaction(s) specified by id. Skips transactions with a related Reminder.
 
     Args:
         request (HttpRequest): The HTTP request object.
-        payload (TransactionClearList): A list of transaction ids to clear.
+        payload (TransactionList): A list of transaction ids to clear.
 
     Returns:
         dict: A dictionary with the key 'success' and value True.
@@ -258,34 +258,36 @@ def get_transaction(request, transaction_id: int):
         raise HttpError(500, "Record retrieval error")
 
 
-@transaction_router.delete("/delete/{transaction_id}")
-def delete_transaction(request, transaction_id: int):
+@transaction_router.patch("/delete")
+def delete_transaction(request, payload: TransactionList):
     """
-    The function `delete_transaction` deletes the transaction specified by id,
+    The function `delete_transaction` deletes the transaction(s) specified by id,
     but skips any that have a related reminder.
 
     Args:
         request (HttpRequest): The HTTP request object.
-        transaction_id (int): the id of the transaction to delete
+        payload (TransactionList): list of transaction ids to delete
 
     Returns:
         success: True
 
     Raises:
-        Http404: If the transaction with the specified ID does not exist.
     """
 
     try:
-        transaction = get_object_or_404(Transaction, id=transaction_id)
-        transaction.delete()
-        logToDB(
-            f"Transaction deleted : #{transaction_id}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        print(f"payload: {payload}")
+        # Fetch all relevant transactions at once
+        transactions = Transaction.objects.filter(id__in=payload.transactions)
+        transactions.delete()
+        for transaction in payload.transactions:
+            logToDB(
+                f"Transaction deleted : #{transaction}",
+                None,
+                None,
+                None,
+                3001003,
+                1,
+            )
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions

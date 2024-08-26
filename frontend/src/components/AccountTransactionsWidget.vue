@@ -454,10 +454,7 @@ const clickAddTransaction = async () => {
 };
 
 const clickRemoveTransaction = async transactions => {
-  transactions.forEach(transaction => {
-    removeTransaction(transaction);
-    selected.value = [];
-  });
+  removeTransaction(transactions);
   trans_table.value.clearSelectedRows();
 };
 

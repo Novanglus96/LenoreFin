@@ -39,7 +39,7 @@ class TransactionClear(Schema):
 
 
 # The class TransactionClearList is a schema for a list of clearing Transactions.
-class TransactionClearList(Schema):
+class TransactionList(Schema):
     transactions: List[int]
 
 

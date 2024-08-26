@@ -78,10 +78,11 @@ async function createTransactionFunction(newTransaction) {
 
 async function deleteTransactionFunction(deletedTransaction) {
   const mainstore = useMainStore();
+  let payload = {
+    transactions: deletedTransaction,
+  };
   try {
-    const response = await apiClient.delete(
-      "/transactions/delete/" + deletedTransaction,
-    );
+    const response = await apiClient.patch("/transactions/delete", payload);
     mainstore.showSnackbar("Transaction deleted successfully!", "success");
     return response.data;
   } catch (error) {
