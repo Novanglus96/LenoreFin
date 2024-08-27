@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models.query import QuerySet
 import pytz
 import os
+from django.core.exceptions import ValidationError
 
 
 def current_date():
@@ -76,6 +77,7 @@ class Account(models.Model):
     - credit_limit (DecimalField): The credit limit of the account, defaulting to 0.00.
     - bank (ForeignKey): A reference to the Bank model representing the bank associated with the account.
     - last_statement_amount (DecimalField): The amount of the last statement for the account, defaulting to 0.00.
+    - funding_account (ForeignKey): A reference to another Account that funds this account, can be null.
     """
 
     account_name = models.CharField(max_length=254, unique=True)
@@ -110,6 +112,31 @@ class Account(models.Model):
     archive_balance = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
+    funding_account = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        related_name="funded_accounts",
+    )
+
+    def clean(self):
+        # Ensure an account cannot fund itself
+        if self.funding_account and self.funding_account == self:
+            raise ValidationError(
+                "An account cannot be its own funding account."
+            )
+        # Ensure the funding account is a checking account
+        if self.funding_account and self.funding_account.account_type.id != 2:
+            raise ValidationError(
+                "A funding account must be a checking account"
+            )
+        # Ensure the account is a credit card
+        if self.funding_account and self.account_type.id != 1:
+            raise ValidationError(
+                "A funding account can only be set for Credit Card accounts"
+            )
 
     def __str__(self):
         return self.account_name

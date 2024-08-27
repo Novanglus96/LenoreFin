@@ -485,6 +485,8 @@ def update_account(request, account_id: int, payload: AccountUpdate):
             account.bank_id = payload.bank_id
         if payload.last_statement_amount is not None:
             account.last_statement_amount = payload.last_statement_amount
+        if payload.funding_account_id is not None:
+            account.funding_account_id = payload.funding_account_id
         account.save()
         logToDB(
             f"Account updated : {account.account_name}",

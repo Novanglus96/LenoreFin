@@ -26,28 +26,7 @@ class AccountIn(Schema):
     last_statement_amount: Optional[Decimal] = Field(
         whole_digits=2, decimal_places=2
     )
-
-
-# The class AccountUpdate is a schema for updating account information.
-class AccountUpdate(Schema):
-    account_name: Optional[str]
-    account_type_id: Optional[int]
-    opening_balance: Optional[Decimal] = Field(
-        whole_digits=10, decimal_places=2
-    )
-    apy: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
-    due_date: Optional[date]
-    active: Optional[bool]
-    open_date: Optional[date]
-    next_cycle_date: Optional[date]
-    statement_cycle_length: Optional[int]
-    statement_cycle_period: Optional[str]
-    credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
-    bank_id: Optional[int]
-    last_statement_amount: Optional[Decimal] = Field(
-        whole_digits=2, decimal_places=2
-    )
-    rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    funding_account_id: Optional[int]
 
 
 # The class AccountOut is a schema for representing accounts.
@@ -73,3 +52,27 @@ class AccountOut(Schema):
     last_statement_amount: Optional[Decimal] = Field(
         whole_digits=2, decimal_places=2
     )
+    funding_account: Optional["AccountOut"]
+
+
+# The class AccountUpdate is a schema for updating account information.
+class AccountUpdate(Schema):
+    account_name: Optional[str]
+    account_type_id: Optional[int]
+    opening_balance: Optional[Decimal] = Field(
+        whole_digits=10, decimal_places=2
+    )
+    apy: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    due_date: Optional[date]
+    active: Optional[bool]
+    open_date: Optional[date]
+    next_cycle_date: Optional[date]
+    statement_cycle_length: Optional[int]
+    statement_cycle_period: Optional[str]
+    credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    bank_id: Optional[int]
+    last_statement_amount: Optional[Decimal] = Field(
+        whole_digits=2, decimal_places=2
+    )
+    rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
+    funding_account_id: Optional[int]
