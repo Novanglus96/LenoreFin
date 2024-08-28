@@ -98,6 +98,10 @@ class Option(SingletonModel):
     Default is 0.
     - widget3_exclude (CharField): a list of tag ids to exclude from the graph.  Optional
     Default is blank.
+    - auto_archive (BooleanField): enable auto archiving of transactions
+    - archive_length (IntegerField): how many full years to keep when auto-archiving is enabled,
+    default is 2
+    - enable_cc_bill_calculation (BooleanField): enable Credit Card bill forecast, default is True
     """
 
     log_level = models.ForeignKey(
@@ -145,6 +149,7 @@ class Option(SingletonModel):
     widget3_exclude = models.CharField(max_length=254)
     auto_archive = models.BooleanField(default=True)
     archive_length = models.IntegerField(default=2)
+    enable_cc_bill_calculation = models.BooleanField(default=True)
 
     @classmethod
     def load(cls):
