@@ -133,7 +133,7 @@
         search=""
         @rowSelect="rowSelected"
         ref="trans_table"
-        height="810px"
+        height="1230px"
         skin="bh-table-striped bh-table-compact"
         :pageSizeOptions="[60]"
         :showPageSize="false"

@@ -7,7 +7,7 @@ export const useTransactionsStore = defineStore("transactions", {
       maxdays: 14,
       forecast: true,
       page: 1,
-      page_size: 20,
+      page_size: 30,
       view_type: 2,
       rule_id: null,
     },
