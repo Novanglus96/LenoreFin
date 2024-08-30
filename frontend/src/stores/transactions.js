@@ -8,6 +8,8 @@ export const useTransactionsStore = defineStore("transactions", {
       forecast: true,
       page: 1,
       page_size: 20,
+      view_type: 2,
+      rule_id: null,
     },
   }),
   getters: {},

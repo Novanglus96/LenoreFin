@@ -42,8 +42,21 @@
         class="alt-pagination"
         rowClass="cursor-pointer"
         @rowClick="rowClick"
-      ></vue3-datatable>
-    </template>
+      >
+        <template #rule_total="data">
+          <span>${{ data.value.rule_total }}</span>
+        </template>
+        <template #actions="data">
+          <div>
+            <v-btn
+              icon="mdi-delete"
+              flat
+              variant="plain"
+              @click="deleteRule(data.value.id)"
+            ></v-btn>
+          </div>
+        </template> </vue3-datatable
+    ></template>
   </v-card>
 </template>
 <script setup>
@@ -57,4 +70,59 @@ const columns = ref([
   { field: "rule_total", title: "Total", type: "number", width: "100px" },
   { field: "actions", title: "Actions", width: "100px" },
 ]);
+
+const calculator_rules = ref([
+  {
+    id: 1,
+    rule_name: "Test",
+    rule_total: 100,
+  },
+  {
+    id: 2,
+    rule_name: "Test #2",
+    rule_total: 200,
+  },
+  {
+    id: 3,
+    rule_name: "Test #3",
+    rule_total: 300,
+  },
+  {
+    id: 4,
+    rule_name: "Test #4",
+    rule_total: 400,
+  },
+]);
 </script>
+<style>
+/* alt-pagination */
+.alt-pagination .bh-pagination .bh-page-item {
+  width: auto; /* equivalent to w-max */
+  min-width: 32px;
+  border-radius: 0.25rem; /* equivalent to rounded */
+}
+/* Customize the color of the selected page number */
+.alt-pagination .bh-pagination .bh-page-item.bh-active {
+  background-color: #06966a; /* Change this to your desired color */
+  border-color: black;
+  font-weight: bold; /* Optional: Make the text bold */
+}
+.alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
+  background-color: #ff5900;
+  border-color: black;
+}
+
+.icon-with-text {
+  position: relative;
+  display: inline-block;
+}
+
+.icon-text {
+  position: absolute;
+  top: 0;
+  right: 1;
+  color: black;
+  padding: 4px 1px;
+  font-size: 0.7rem;
+}
+</style>

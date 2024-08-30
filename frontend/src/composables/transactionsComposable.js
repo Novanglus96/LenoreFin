@@ -50,6 +50,13 @@ async function getTransactionsFunction(querydata) {
       if (querydata.page_size) {
         querytext = querytext + "&page_size=" + querydata.page_size;
       }
+      if (querydata.view_type) {
+        querytext = querytext + "&view_type=" + querydata.view_type;
+      }
+      if (querydata.rule_id) {
+        querytext = querytext + "&rule_id=" + querydata.rule_id;
+      }
+      console.log("querytext:", querytext);
       const response = await apiClient.get("/transactions/list" + querytext);
       return response.data;
     } else {

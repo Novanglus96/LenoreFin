@@ -190,6 +190,7 @@ const setAccount = (account, forecast) => {
   transactions_store.pageinfo.forecast = forecast;
   transactions_store.pageinfo.page = 1;
   transactions_store.pageinfo.maxdays = 14;
+  transactions_store.pageinfo.view_type = 1;
   router.push("/accounts/" + account);
 };
 

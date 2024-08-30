@@ -15,7 +15,12 @@
       <v-col class="rounded"> <RemindersWidget /> </v-col>
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
-      <v-col class="rounded"> <UpcomingTransactionsWidget /> </v-col>
+      <v-col class="rounded">
+        <UpcomingTransactionsWidget
+          key="upcoming"
+          view_type="Upcoming Transactions"
+        />
+      </v-col>
     </v-row>
   </div>
 </template>

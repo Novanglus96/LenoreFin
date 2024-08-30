@@ -481,11 +481,13 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
 @transaction_router.get("/list", response=PaginatedTransactions)
 def list_transactions(
     request,
+    view_type: Optional[int] = Query(2),
     account: Optional[int] = Query(None),
     maxdays: Optional[int] = Query(14),
     forecast: Optional[bool] = Query(False),
     page: Optional[int] = Query(1),
     page_size: Optional[int] = Query(60),
+    rule_id: Optional[int] = Query(None),
 ):
     """
     The function `list_transactions` retrieves a list of transactions,
@@ -510,9 +512,9 @@ def list_transactions(
 
     try:
 
-        # If an account is specified, filter transactions for maximum days and transaction
+        # If view_type is 1, filter transactions for maximum days and transaction
         # details that match account
-        if account is not None:
+        if view_type == 1:
             # Set end_date
             end_date = get_todays_date_timezone_adjusted() + timedelta(
                 days=maxdays
@@ -555,8 +557,11 @@ def list_transactions(
             )
             return paginated_obj
 
-        # If an account was not specified, these should be upcoming transactions
+        # If view_type is not 1
         else:
+
+            # Initialize queryset
+            qs = None
 
             # Setup subqueries
             source_account_name = Account.objects.filter(
@@ -566,12 +571,26 @@ def list_transactions(
                 id=OuterRef("destination_account_id")
             ).values("account_name")[:1]
 
-            # Filter transactions for pending status and no reminders
-            qs = Transaction.objects.filter(status_id=1)
+            # If this is upcoming transaction
+            # Filter transactions for pending status
+            if view_type == 2:
+                qs = Transaction.objects.filter(status_id=1)
+            # If this is rule transactions
+            # Filter by tag and maxdays
+            elif view_type == 3:
+                end_date = get_todays_date_timezone_adjusted()
+                start_date = get_todays_date_timezone_adjusted() - timedelta(
+                    days=maxdays
+                )
+                qs = Transaction.objects.filter(
+                    add_date__range=(start_date, end_date)
+                )
 
             # Set order of transactions
             qs = sort_transactions(qs)
-            qs = qs[:10]
+            # Return only 10 records for upcoming transactions
+            if view_type == 2:
+                qs = qs[:10]
             qs = qs.annotate(
                 source_name=Coalesce(
                     Subquery(source_account_name),
