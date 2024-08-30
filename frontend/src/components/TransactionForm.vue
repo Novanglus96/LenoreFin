@@ -464,7 +464,7 @@ const emit = defineEmits(["updateDialog"]);
 // Define validation rules
 const required = [
   value => {
-    if (value) return true;
+    if (value !== null && value !== undefined && value !== "") return true;
 
     return "This field is required.";
   },
@@ -744,6 +744,7 @@ const verifyPaycheck = () => {
     if (paycheck.value.union_dues) {
       paychecksum += parseFloat(paycheck.value.union_dues);
     }
+    console.log("paychecksum:", paychecksum);
     if (
       paycheck.value.dca !== null &&
       paycheck.value.dca !== "" &&
@@ -770,9 +771,14 @@ const verifyPaycheck = () => {
     } else {
       payfields = false;
     }
-    if (paycheck.value.gross === paychecksum.toFixed(2)) {
-      paytotal = true;
-      paycheckTotalsMatch.value = true;
+    if (paycheck.value.gross) {
+      if (parseFloat(paycheck.value.gross) === parseFloat(paychecksum)) {
+        paytotal = true;
+        paycheckTotalsMatch.value = true;
+      } else {
+        paytotal = false;
+        paycheckTotalsMatch.value = false;
+      }
     } else {
       paytotal = false;
       paycheckTotalsMatch.value = false;
