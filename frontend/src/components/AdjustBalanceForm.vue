@@ -91,7 +91,14 @@ const balanceForm = ref({
   destination_account_id: null,
   edit_date: formattedDate,
   add_date: formattedDate,
-  tag_id: 35,
+  details: [
+    {
+      tag_id: 4,
+      tag_amt: 0,
+      tag_pretty_name: "Balance Adjustment",
+      tag_full_toggle: true,
+    },
+  ],
   total_amount: "",
   description: "Balance Adjustment",
 });
@@ -101,7 +108,7 @@ const balanceSubmit = ref(true);
 const emit = defineEmits(["updateDialog"]);
 const { addTransaction } = useTransactions();
 const clickAdjustBalance = async () => {
-  if (currentBalance.value > new_balance.value) {
+  if (new_balance.value - currentBalance.value < 0) {
     balanceForm.value.transaction_type_id = 1;
   } else {
     balanceForm.value.transaction_type_id = 2;
@@ -109,6 +116,7 @@ const clickAdjustBalance = async () => {
   balanceForm.value.total_amount = parseFloat(
     (new_balance.value - currentBalance.value).toFixed(2),
   );
+  console.log("adjBal:", balanceForm.value);
   await addTransaction(balanceForm.value);
   emit("updateDialog", false);
   new_balance.value = "";
