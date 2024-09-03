@@ -12,406 +12,383 @@
           color="amber"
         ></v-icon>
       </v-card-title>
-      <v-card-subtitle>
-        <span
-          class="text-subtitle-2 font-italic text-red-lighten-2"
-          v-if="props.passedFormData.reminder"
-          >* This transaction is part of a reminder. Modifying it will remove it
-          from the reminder.</span
-        >
-      </v-card-subtitle>
 
       <v-card-text>
-        <v-tabs v-model="tab" color="accent">
-          <v-tab value="trans" density="compact">Transaction Details</v-tab>
-          <v-tab value="pay" density="compact">Paycheck Info</v-tab>
-          <v-tab value="attachments" density="compact">Attachments</v-tab>
-        </v-tabs>
-        <v-window v-model="tab">
-          <v-window-item value="trans">
-            <v-container>
-              <v-row dense>
-                <v-col>
-                  <VueDatePicker
-                    v-model="formData.transaction_date"
-                    timezone="America/New_York"
-                    model-type="yyyy-MM-dd"
-                    :enable-time-picker="false"
-                    auto-apply
-                    format="yyyy-MM-dd"
-                    @update:model-value="checkFormComplete"
-                  ></VueDatePicker>
-                </v-col>
-              </v-row>
-              <v-row dense>
-                <v-col>
-                  <v-autocomplete
-                    clearable
-                    label="Transaction Type*"
-                    :items="transaction_types"
-                    variant="outlined"
-                    :loading="transaction_types_isLoading"
-                    item-title="transaction_type"
-                    item-value="id"
-                    v-model="formData.transaction_type_id"
-                    :rules="required"
-                    @update:model-value="checkFormComplete"
-                    :disabled="props.isEdit"
-                    density="compact"
-                  ></v-autocomplete>
-                </v-col>
-                <v-col>
-                  <v-autocomplete
-                    clearable
-                    label="Transaction Status*"
-                    :items="transaction_statuses"
-                    variant="outlined"
-                    :loading="transaction_statuses_isLoading"
-                    item-title="transaction_status"
-                    item-value="id"
-                    v-model="formData.status_id"
-                    :rules="required"
-                    @update:model-value="checkFormComplete"
-                    density="compact"
-                  ></v-autocomplete>
-                </v-col>
-              </v-row>
-              <v-row dense>
-                <v-col cols="3">
-                  <v-text-field
-                    v-model="amount"
-                    variant="outlined"
-                    label="Amount*"
-                    :rules="required"
-                    prefix="$"
-                    @update:model-value="checkFormComplete"
-                    type="number"
-                    step="1.00"
-                    @update:focused="reformatNumberToMoney"
-                    density="compact"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="3">
-                  <v-text-field
-                    v-model="formData.checkNumber"
-                    variant="outlined"
-                    label="Check #"
-                    type="number"
-                    @update:model-value="
-                      () => {
-                        checkFormComplete();
-                        resetTagField();
-                      }
-                    "
-                    density="compact"
-                    v-if="formData.transaction_type_id != 3"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="6">
-                  <v-combobox
-                    v-model="formData.description"
-                    :items="
-                      descriptionHistory.map(item => item.description_pretty)
-                    "
-                    label="Description*"
-                    clearable
-                    hide-no-data
-                    hide-selected
-                    :loading="description_history_isLoading"
-                    variant="outlined"
-                    :rules="required"
-                    @update:model-value="
-                      () => {
-                        checkFormComplete();
-                        resetTagField();
-                      }
-                    "
-                    density="compact"
-                    auto-select-first="exact"
-                    return-object="false"
-                  />
-                </v-col>
-              </v-row>
-              <v-row dense>
-                <v-col>
-                  <v-autocomplete
-                    clearable
-                    label="Source Account*"
-                    :items="accounts"
-                    variant="outlined"
-                    :loading="accounts_isLoading"
-                    item-title="account_name"
-                    item-value="id"
-                    v-model="formData.source_account_id"
-                    :rules="required"
-                    @update:model-value="checkFormComplete"
-                    density="compact"
-                  >
-                    <template v-slot:item="{ props, item }">
-                      <v-list-item
-                        v-bind="props"
-                        :title="item.raw.account_name"
-                        :subtitle="item.raw.bank.bank_name"
-                      >
-                        <template v-slot:prepend>
-                          <v-icon :icon="item.raw.account_type.icon"></v-icon>
-                        </template>
-                      </v-list-item>
-                    </template>
-                  </v-autocomplete>
-                </v-col>
-                <v-col>
-                  <v-autocomplete
-                    clearable
-                    label="Destination Account*"
-                    :items="accounts"
-                    variant="outlined"
-                    :loading="accounts_isLoading"
-                    item-title="account_name"
-                    item-value="id"
-                    v-model="formData.destination_account_id"
-                    :rules="required"
-                    @update:model-value="checkFormComplete"
-                    v-if="formData.transaction_type_id == 3"
-                    density="compact"
-                  >
-                    <template v-slot:item="{ props, item }">
-                      <v-list-item
-                        v-bind="props"
-                        :title="item.raw.account_name"
-                        :subtitle="item.raw.bank.bank_name"
-                      >
-                        <template v-slot:prepend>
-                          <v-icon :icon="item.raw.account_type.icon"></v-icon>
-                        </template>
-                      </v-list-item>
-                    </template>
-                  </v-autocomplete>
-                </v-col>
-              </v-row>
-              <v-row dense>
-                <v-col>
-                  <!-- TODO: Enable adding tags here -->
-                  <TagTable
-                    :tags="formData.details"
-                    :totalAmount="parseFloat(amount)"
-                    @tag-table-updated="tagsUpdated"
-                  />
-                </v-col>
-                <v-col>
-                  <v-textarea
-                    clearable
-                    label="Memo"
-                    variant="outlined"
-                    v-model="formData.memo"
-                    :rows="11"
-                    no-resize
-                    @update:model-value="checkFormComplete"
-                  ></v-textarea>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-window-item>
-          <v-window-item value="pay">
-            <v-container>
-              <v-row dense>
-                <v-col>
-                  <v-checkbox
-                    v-model="isPaycheck"
-                    label="Is this a Paycheck?"
-                    @update:model-value="selectPaycheckChange()"
-                  ></v-checkbox>
-                </v-col>
-                <v-col>
-                  <span
-                    class="text-subtitle-2 text-red font-italic"
-                    v-if="!paycheckTotalsMatch && isPaycheck"
-                    >* Paycheck fields must total Gross</span
-                  >
-                </v-col>
-              </v-row>
-              <v-row dense>
-                <v-col>
-                  <v-text-field
-                    v-model="paycheck.gross"
-                    variant="outlined"
-                    label="Gross*"
-                    :rules="required"
-                    prefix="$"
-                    @update:model-value="checkFormComplete"
-                    type="number"
-                    step="1.00"
-                    @update:focused="reformatNumberToMoney"
-                    density="compact"
-                    :disabled="!isPaycheck"
-                  ></v-text-field>
-                </v-col>
-                <v-col>
-                  <v-text-field
-                    v-model="amount"
-                    variant="outlined"
-                    label="Net*"
-                    :rules="required"
-                    prefix="$"
-                    @update:model-value="checkFormComplete"
-                    type="number"
-                    step="1.00"
-                    @update:focused="reformatNumberToMoney"
-                    density="compact"
-                    :disabled="!isPaycheck"
-                  ></v-text-field>
-                </v-col>
-                <v-col>
-                  <v-text-field
-                    v-model="paycheck.taxes"
-                    variant="outlined"
-                    label="Taxes*"
-                    :rules="required"
-                    prefix="$"
-                    @update:model-value="checkFormComplete"
-                    type="number"
-                    step="1.00"
-                    @update:focused="reformatNumberToMoney"
-                    density="compact"
-                    :disabled="!isPaycheck"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-              <v-row dense>
-                <v-col>
-                  <v-text-field
-                    v-model="paycheck.health"
-                    variant="outlined"
-                    label="Health*"
-                    :rules="required"
-                    prefix="$"
-                    @update:model-value="checkFormComplete"
-                    type="number"
-                    step="1.00"
-                    @update:focused="reformatNumberToMoney"
-                    density="compact"
-                    :disabled="!isPaycheck"
-                  ></v-text-field>
-                </v-col>
-                <v-col>
-                  <v-text-field
-                    v-model="paycheck.pension"
-                    variant="outlined"
-                    label="Pension*"
-                    :rules="required"
-                    prefix="$"
-                    @update:model-value="checkFormComplete"
-                    type="number"
-                    step="1.00"
-                    @update:focused="reformatNumberToMoney"
-                    density="compact"
-                    :disabled="!isPaycheck"
-                  ></v-text-field>
-                </v-col>
-                <v-col>
-                  <v-text-field
-                    v-model="paycheck.fsa"
-                    variant="outlined"
-                    label="FSA*"
-                    :rules="required"
-                    prefix="$"
-                    @update:model-value="checkFormComplete"
-                    type="number"
-                    step="1.00"
-                    @update:focused="reformatNumberToMoney"
-                    density="compact"
-                    :disabled="!isPaycheck"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-              <v-row dense>
-                <v-col>
-                  <v-text-field
-                    v-model="paycheck.dca"
-                    variant="outlined"
-                    label="DCA*"
-                    :rules="required"
-                    prefix="$"
-                    @update:model-value="checkFormComplete"
-                    type="number"
-                    step="1.00"
-                    @update:focused="reformatNumberToMoney"
-                    density="compact"
-                    :disabled="!isPaycheck"
-                  ></v-text-field>
-                </v-col>
-                <v-col>
-                  <v-text-field
-                    v-model="paycheck.union_dues"
-                    variant="outlined"
-                    label="Union Dues*"
-                    :rules="required"
-                    prefix="$"
-                    @update:model-value="checkFormComplete"
-                    type="number"
-                    step="1.00"
-                    @update:focused="reformatNumberToMoney"
-                    density="compact"
-                    :disabled="!isPaycheck"
-                  ></v-text-field>
-                </v-col>
-                <v-col>
-                  <v-text-field
-                    v-model="paycheck.four_fifty_seven_b"
-                    variant="outlined"
-                    label="457b*"
-                    :rules="required"
-                    prefix="$"
-                    @update:model-value="checkFormComplete"
-                    type="number"
-                    step="1.00"
-                    @update:focused="reformatNumberToMoney"
-                    density="compact"
-                    :disabled="!isPaycheck"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-              <v-row dense>
-                <v-col>
-                  <v-autocomplete
-                    clearable
-                    label="Payee*"
-                    :items="payees"
-                    variant="outlined"
-                    :loading="payees_isLoading"
-                    item-title="payee_name"
-                    item-value="id"
-                    v-model="paycheck.payee_id"
-                    :rules="required"
-                    @update:model-value="checkFormComplete"
-                    density="compact"
-                    :disabled="!isPaycheck"
-                  ></v-autocomplete>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-window-item>
-          <v-window-item value="attachments">
-            <v-container>
-              <v-carousel>
-                <v-carousel-item
-                  src="https://cdn.vuetifyjs.com/images/cards/docks.jpg"
-                  cover
-                ></v-carousel-item>
+        <v-form v-model="formValid" @submit.prevent ref="transactionForm">
+          <v-tabs v-model="tab" color="accent">
+            <v-tab value="trans" density="compact">Transaction Details</v-tab>
+            <v-tab value="pay" density="compact">Paycheck Info</v-tab>
+            <v-tab value="attachments" density="compact">Attachments</v-tab>
+          </v-tabs>
+          <v-window v-model="tab">
+            <v-window-item value="trans">
+              <v-container>
+                <v-row dense>
+                  <v-col>
+                    <VueDatePicker
+                      v-model="formData.transaction_date"
+                      timezone="America/New_York"
+                      model-type="yyyy-MM-dd"
+                      :enable-time-picker="false"
+                      auto-apply
+                      format="yyyy-MM-dd"
+                      :state="!formData.transaction_date ? false : null"
+                    ></VueDatePicker>
+                  </v-col>
+                  <v-col>
+                    <span
+                      v-if="!formData.transaction_date"
+                      class="text-red text-caption"
+                      >This field is required.</span
+                    >
+                  </v-col>
+                </v-row>
+                <v-row dense>
+                  <v-col>
+                    <v-autocomplete
+                      clearable
+                      label="Transaction Type*"
+                      :items="transaction_types"
+                      variant="outlined"
+                      :loading="transaction_types_isLoading"
+                      item-title="transaction_type"
+                      item-value="id"
+                      v-model="formData.transaction_type_id"
+                      :rules="required"
+                      :disabled="props.isEdit"
+                      density="compact"
+                    ></v-autocomplete>
+                  </v-col>
+                  <v-col>
+                    <v-autocomplete
+                      clearable
+                      label="Transaction Status*"
+                      :items="transaction_statuses"
+                      variant="outlined"
+                      :loading="transaction_statuses_isLoading"
+                      item-title="transaction_status"
+                      item-value="id"
+                      v-model="formData.status_id"
+                      :rules="required"
+                      density="compact"
+                    ></v-autocomplete>
+                  </v-col>
+                </v-row>
+                <v-row dense>
+                  <v-col cols="3">
+                    <v-text-field
+                      v-model="amount"
+                      variant="outlined"
+                      label="Amount*"
+                      :rules="required"
+                      prefix="$"
+                      type="number"
+                      step="1.00"
+                      @update:focused="reformatNumberToMoney"
+                      density="compact"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col cols="3">
+                    <v-text-field
+                      v-model="formData.checkNumber"
+                      variant="outlined"
+                      label="Check #"
+                      type="number"
+                      @update:model-value="
+                        () => {
+                          resetTagField();
+                        }
+                      "
+                      density="compact"
+                      v-if="formData.transaction_type_id != 3"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col cols="6">
+                    <v-combobox
+                      v-model="formData.description"
+                      :items="
+                        descriptionHistory.map(item => item.description_pretty)
+                      "
+                      label="Description*"
+                      clearable
+                      hide-no-data
+                      hide-selected
+                      :loading="description_history_isLoading"
+                      variant="outlined"
+                      :rules="required"
+                      @update:model-value="
+                        () => {
+                          resetTagField();
+                        }
+                      "
+                      density="compact"
+                      auto-select-first="exact"
+                      return-object="false"
+                    />
+                  </v-col>
+                </v-row>
+                <v-row dense>
+                  <v-col>
+                    <v-autocomplete
+                      clearable
+                      label="Source Account*"
+                      :items="accounts"
+                      variant="outlined"
+                      :loading="accounts_isLoading"
+                      item-title="account_name"
+                      item-value="id"
+                      v-model="formData.source_account_id"
+                      :rules="required"
+                      density="compact"
+                    >
+                      <template v-slot:item="{ props, item }">
+                        <v-list-item
+                          v-bind="props"
+                          :title="item.raw.account_name"
+                          :subtitle="item.raw.bank.bank_name"
+                        >
+                          <template v-slot:prepend>
+                            <v-icon :icon="item.raw.account_type.icon"></v-icon>
+                          </template>
+                        </v-list-item>
+                      </template>
+                    </v-autocomplete>
+                  </v-col>
+                  <v-col>
+                    <v-autocomplete
+                      clearable
+                      label="Destination Account*"
+                      :items="accounts"
+                      variant="outlined"
+                      :loading="accounts_isLoading"
+                      item-title="account_name"
+                      item-value="id"
+                      v-model="formData.destination_account_id"
+                      :rules="required"
+                      v-if="formData.transaction_type_id == 3"
+                      density="compact"
+                    >
+                      <template v-slot:item="{ props, item }">
+                        <v-list-item
+                          v-bind="props"
+                          :title="item.raw.account_name"
+                          :subtitle="item.raw.bank.bank_name"
+                        >
+                          <template v-slot:prepend>
+                            <v-icon :icon="item.raw.account_type.icon"></v-icon>
+                          </template>
+                        </v-list-item>
+                      </template>
+                    </v-autocomplete>
+                  </v-col>
+                </v-row>
+                <v-row dense>
+                  <v-col>
+                    <!-- TODO: Enable adding tags here -->
+                    <TagTable
+                      :tags="formData.details"
+                      :totalAmount="parseFloat(amount)"
+                      @tag-table-updated="tagsUpdated"
+                    />
+                  </v-col>
+                  <v-col>
+                    <v-textarea
+                      clearable
+                      label="Memo"
+                      variant="outlined"
+                      v-model="formData.memo"
+                      :rows="11"
+                      no-resize
+                    ></v-textarea>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-window-item>
+            <v-window-item value="pay">
+              <v-container>
+                <v-row dense>
+                  <v-col>
+                    <v-checkbox
+                      v-model="isPaycheck"
+                      label="Is this a Paycheck?"
+                      @update:model-value="selectPaycheckChange()"
+                    ></v-checkbox>
+                  </v-col>
+                  <v-col> </v-col>
+                </v-row>
+                <v-row dense>
+                  <v-col>
+                    <v-text-field
+                      v-model="paycheck.gross"
+                      variant="outlined"
+                      label="Gross*"
+                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      prefix="$"
+                      type="number"
+                      step="1.00"
+                      @update:focused="reformatNumberToMoney"
+                      density="compact"
+                      :disabled="!isPaycheck"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col>
+                    <v-text-field
+                      v-model="amount"
+                      variant="outlined"
+                      label="Net*"
+                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      prefix="$"
+                      type="number"
+                      step="1.00"
+                      @update:focused="reformatNumberToMoney"
+                      density="compact"
+                      :disabled="!isPaycheck"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col>
+                    <v-text-field
+                      v-model="paycheck.taxes"
+                      variant="outlined"
+                      label="Taxes*"
+                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      prefix="$"
+                      type="number"
+                      step="1.00"
+                      @update:focused="reformatNumberToMoney"
+                      density="compact"
+                      :disabled="!isPaycheck"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+                <v-row dense>
+                  <v-col>
+                    <v-text-field
+                      v-model="paycheck.health"
+                      variant="outlined"
+                      label="Health*"
+                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      prefix="$"
+                      type="number"
+                      step="1.00"
+                      @update:focused="reformatNumberToMoney"
+                      density="compact"
+                      :disabled="!isPaycheck"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col>
+                    <v-text-field
+                      v-model="paycheck.pension"
+                      variant="outlined"
+                      label="Pension*"
+                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      prefix="$"
+                      type="number"
+                      step="1.00"
+                      @update:focused="reformatNumberToMoney"
+                      density="compact"
+                      :disabled="!isPaycheck"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col>
+                    <v-text-field
+                      v-model="paycheck.fsa"
+                      variant="outlined"
+                      label="FSA*"
+                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      prefix="$"
+                      type="number"
+                      step="1.00"
+                      @update:focused="reformatNumberToMoney"
+                      density="compact"
+                      :disabled="!isPaycheck"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+                <v-row dense>
+                  <v-col>
+                    <v-text-field
+                      v-model="paycheck.dca"
+                      variant="outlined"
+                      label="DCA*"
+                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      prefix="$"
+                      type="number"
+                      step="1.00"
+                      @update:focused="reformatNumberToMoney"
+                      density="compact"
+                      :disabled="!isPaycheck"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col>
+                    <v-text-field
+                      v-model="paycheck.union_dues"
+                      variant="outlined"
+                      label="Union Dues*"
+                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      prefix="$"
+                      type="number"
+                      step="1.00"
+                      @update:focused="reformatNumberToMoney"
+                      density="compact"
+                      :disabled="!isPaycheck"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col>
+                    <v-text-field
+                      v-model="paycheck.four_fifty_seven_b"
+                      variant="outlined"
+                      label="457b*"
+                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      prefix="$"
+                      type="number"
+                      step="1.00"
+                      @update:focused="reformatNumberToMoney"
+                      density="compact"
+                      :disabled="!isPaycheck"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+                <v-row dense>
+                  <v-col>
+                    <v-autocomplete
+                      clearable
+                      label="Payee*"
+                      :items="payees"
+                      variant="outlined"
+                      :loading="payees_isLoading"
+                      item-title="payee_name"
+                      item-value="id"
+                      v-model="paycheck.payee_id"
+                      :rules="requiredPaycheck"
+                      density="compact"
+                      :disabled="!isPaycheck"
+                    ></v-autocomplete>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-window-item>
+            <v-window-item value="attachments">
+              <v-container>
+                <v-carousel>
+                  <v-carousel-item
+                    src="https://cdn.vuetifyjs.com/images/cards/docks.jpg"
+                    cover
+                  ></v-carousel-item>
 
-                <v-carousel-item
-                  src="https://cdn.vuetifyjs.com/images/cards/hotel.jpg"
-                  cover
-                ></v-carousel-item>
+                  <v-carousel-item
+                    src="https://cdn.vuetifyjs.com/images/cards/hotel.jpg"
+                    cover
+                  ></v-carousel-item>
 
-                <v-carousel-item
-                  src="https://cdn.vuetifyjs.com/images/cards/sunshine.jpg"
-                  cover
-                ></v-carousel-item>
-              </v-carousel>
-            </v-container>
-          </v-window-item>
-        </v-window>
+                  <v-carousel-item
+                    src="https://cdn.vuetifyjs.com/images/cards/sunshine.jpg"
+                    cover
+                  ></v-carousel-item>
+                </v-carousel>
+              </v-container>
+            </v-window-item>
+          </v-window>
+        </v-form>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -422,7 +399,8 @@
           color="secondary"
           variant="text"
           @click="submitForm"
-          :disabled="!formComplete"
+          :disabled="!formValid"
+          type="submit"
         >
           {{ props.isEdit ? "Update" : "Add" }}
         </v-btn>
@@ -439,7 +417,14 @@
  */
 
 // Import Vue composition functions and components...
-import { ref, defineEmits, defineProps, onMounted, watchEffect } from "vue";
+import {
+  ref,
+  defineEmits,
+  defineProps,
+  onMounted,
+  watchEffect,
+  computed,
+} from "vue";
 import { useTransactionTypes } from "@/composables/transactionTypesComposable";
 import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
 import { useAccounts } from "@/composables/accountsComposable";
@@ -453,22 +438,59 @@ import { useDescriptionHistory } from "@/composables/descriptionHistoryComposabl
 // Define reactive variables...
 const tagToAdd = ref(null); // Tag object to add to tag list
 const tagAmount = ref(null); // Tag amount to add to tag list
-const formComplete = ref(false); // True when form is validated, enables add/update button
 const tab = ref(0); // Tab model
 const isPaycheck = ref(null); // True if this transaction a paycheck
 const paycheckTotalsMatch = ref(false); // True if the paycheck fields total = gross
+const formValid = ref(false);
+const transactionForm = ref(null);
 
 // Define emits
 const emit = defineEmits(["updateDialog"]);
 
 // Define validation rules
+// General required validation rule
 const required = [
   value => {
     if (value !== null && value !== undefined && value !== "") return true;
-
     return "This field is required.";
   },
 ];
+
+// Computed property for conditional validation based on `isPaycheck`
+const requiredPaycheck = computed(() => {
+  return isPaycheck.value
+    ? [
+        value => {
+          if (value !== null && value !== undefined && value !== "")
+            return true;
+          return "This field is required for paycheck.";
+        },
+      ]
+    : [];
+});
+
+// Computed property for conditional validation based on `isPaycheck`
+const grossTotal = computed(() => {
+  return isPaycheck.value
+    ? [
+        () => {
+          if (
+            paycheck.value.dca +
+              paycheck.value.four_fifty_seven_b +
+              paycheck.value.fsa +
+              paycheck.value.health +
+              paycheck.value.pension +
+              paycheck.value.taxes +
+              paycheck.value.union_dues +
+              amount.value ===
+            paycheck.value.gross
+          )
+            return true;
+          return "All fields must total gross.";
+        },
+      ]
+    : [];
+});
 
 // Date variables...
 const today = new Date();
@@ -653,148 +675,6 @@ const fillTagTable = details => {
 };
 
 /**
- * `checkFormComplete` Validates form completion.
- * @returns {formComplete} - Sets to True when form is validated.
- */
-const checkFormComplete = () => {
-  if (
-    verifyBaseRequired() == true &&
-    verifyTagTotal() == true &&
-    verifyTransactionType() == true &&
-    verifyPaycheck() == true
-  ) {
-    formComplete.value = true;
-  } else {
-    formComplete.value = false;
-  }
-};
-
-/**
- * `verifyBaseRequired` Verifies base requirements for form completeion
- * @returns {boolean}- True if base requirements met
- */
-const verifyBaseRequired = () => {
-  if (
-    formData.value.transaction_type_id !== null &&
-    formData.value.transaction_type_id !== "" &&
-    formData.value.status_id !== null &&
-    formData.value.status_id !== "" &&
-    formData.value.description !== "" &&
-    formData.value.description !== null &&
-    amount.value !== "" &&
-    amount.value !== null &&
-    formData.value.source_account_id !== "" &&
-    formData.value.source_account_id !== null
-  ) {
-    return true;
-  } else {
-    return false;
-  }
-};
-
-/**
- * `verifyTransactionType` Verifies destination_account filled if this is transfer
- * @returns {boolean}- True if transfer and destination_account filled out
- */
-const verifyTransactionType = () => {
-  if (formData.value.transaction_type_id == 3) {
-    if (
-      formData.value.destination_account_id !== null &&
-      formData.value.destination_account_id !== ""
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    return true;
-  }
-};
-
-/**
- * `verifyPaycheck` Verifies paycheck info is filled out if this is a paycheck
- * @returns {boolean}- True if all paycheck fields are filled and totals = gross
- */
-const verifyPaycheck = () => {
-  let payfields = false;
-  let paytotal = false;
-  let paychecksum = 0;
-  if (isPaycheck.value) {
-    if (paycheck.value.dca) {
-      paychecksum += parseFloat(paycheck.value.dca);
-    }
-    if (paycheck.value.four_fifty_seven_b) {
-      paychecksum += parseFloat(paycheck.value.four_fifty_seven_b);
-    }
-    if (paycheck.value.fsa) {
-      paychecksum += parseFloat(paycheck.value.fsa);
-    }
-    if (paycheck.value.health) {
-      paychecksum += parseFloat(paycheck.value.health);
-    }
-    if (amount.value) {
-      paychecksum += parseFloat(amount.value);
-    }
-    if (paycheck.value.pension) {
-      paychecksum += parseFloat(paycheck.value.pension);
-    }
-    if (paycheck.value.taxes) {
-      paychecksum += parseFloat(paycheck.value.taxes);
-    }
-    if (paycheck.value.union_dues) {
-      paychecksum += parseFloat(paycheck.value.union_dues);
-    }
-    console.log("paychecksum:", paychecksum);
-    if (
-      paycheck.value.dca !== null &&
-      paycheck.value.dca !== "" &&
-      paycheck.value.four_fifty_seven_b !== null &&
-      paycheck.value.four_fifty_seven_b !== "" &&
-      paycheck.value.fsa !== null &&
-      paycheck.value.fsa !== "" &&
-      paycheck.value.gross !== null &&
-      paycheck.value.gross !== "" &&
-      paycheck.value.health !== null &&
-      paycheck.value.health !== "" &&
-      amount.value !== null &&
-      amount.value !== "" &&
-      paycheck.value.payee_id !== null &&
-      paycheck.value.payee_id !== "" &&
-      paycheck.value.pension !== null &&
-      paycheck.value.pension !== "" &&
-      paycheck.value.taxes !== null &&
-      paycheck.value.taxes !== "" &&
-      paycheck.value.union_dues !== null &&
-      paycheck.value.union_dues !== ""
-    ) {
-      payfields = true;
-    } else {
-      payfields = false;
-    }
-    if (paycheck.value.gross) {
-      if (parseFloat(paycheck.value.gross) === parseFloat(paychecksum)) {
-        paytotal = true;
-        paycheckTotalsMatch.value = true;
-      } else {
-        paytotal = false;
-        paycheckTotalsMatch.value = false;
-      }
-    } else {
-      paytotal = false;
-      paycheckTotalsMatch.value = false;
-    }
-  } else {
-    payfields = true;
-    paytotal = true;
-  }
-  if (payfields && paytotal) {
-    return true;
-  } else {
-    return false;
-  }
-};
-
-/**
  * `submitForm` Submits the formData and creates/edits transaction.
  */
 const submitForm = async () => {
@@ -880,7 +760,6 @@ const closeDialog = () => {
     isPaycheck.value = false;
   }
   tab.value = 0;
-  formComplete.value = false;
   emit("updateDialog", false);
 };
 
@@ -927,6 +806,7 @@ const reformatNumberToMoney = () => {
       parseFloat(paycheck.value.union_dues).toFixed(2),
     );
   }
+  transactionForm.value.validate();
 };
 
 /**
@@ -942,7 +822,7 @@ const selectPaycheckChange = () => {
   paycheck.value.pension = null;
   paycheck.value.taxes = null;
   paycheck.value.union_dues = null;
-  checkFormComplete();
+  transactionForm.value.validate();
 };
 
 /**
@@ -957,15 +837,6 @@ const resetTagField = () => {
  */
 const tagsUpdated = data => {
   formData.value.details = data.tags;
-  checkFormComplete();
-};
-
-/**
- * `verifyTagTotal` Verifies the total of tags equals total amount.
- * @returns - Returns True if totals match
- */
-const verifyTagTotal = () => {
-  return true;
 };
 
 // Lifecycle hook...
