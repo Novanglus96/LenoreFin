@@ -58,7 +58,7 @@ from administration.api.routers.decription_history import (
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
-api.version = "1.0.026"
+api.version = "1.0.027"
 api.description = "API documentation for LenoreFin"
 
 # Add routers to the API
