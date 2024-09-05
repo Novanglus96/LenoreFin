@@ -100,3 +100,20 @@ class Note(models.Model):
 
     def __str__(self):
         return f"{self.note_date}"
+
+
+class CalculationRule(models.Model):
+    """
+    Model representing a caluclation rule used to add amounts to relevant transfers.
+
+    Fields:
+    - tag_ids (CharField): A string array of tag ids.
+    - name (CharFieldField): A name for this rule
+    - source_account_id (int): The ID of the source account for transfers
+    - destination_account_id (int): The ID of the destination account for transfers
+    """
+
+    tag_ids = models.CharField(max_length=254)
+    name = models.CharField(max_length=254, unique=True)
+    source_account_id = models.IntegerField()
+    destination_account_id = models.IntegerField()

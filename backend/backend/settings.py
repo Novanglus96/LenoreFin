@@ -250,6 +250,7 @@ JAZZMIN_SETTINGS = {
         "administration.DescriptionHistory": "fas fa-clipboard-list",
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
+        "planning.CalculationRule": "fas fa-folder",
         "planning.ChristmasGift": "fas fa-folder",
         "planning.ContribRule": "fas fa-folder",
         "planning.Contribution": "fas fa-folder",

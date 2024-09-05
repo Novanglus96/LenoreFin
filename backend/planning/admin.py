@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import ChristmasGift, ContribRule, Contribution, Note
+from .models import (
+    ChristmasGift,
+    ContribRule,
+    Contribution,
+    Note,
+    CalculationRule,
+)
 from django.http import HttpResponse
 from import_export.admin import ImportExportModelAdmin
 
@@ -46,7 +52,16 @@ class NoteAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     ordering = ["-note_date", "-id"]
 
 
+class CalculationRuleAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "name"]
+
+    list_display_links = ["name"]
+
+    ordering = ["id"]
+
+
 admin.site.register(ChristmasGift, ChristmasGiftAdmin)
 admin.site.register(ContribRule, ContribRuleAdmin)
 admin.site.register(Contribution, ContributionAdmin)
 admin.site.register(Note, NoteAdmin)
+admin.site.register(CalculationRule, CalculationRuleAdmin)
