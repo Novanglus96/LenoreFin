@@ -121,6 +121,45 @@ def update_calculation_rule(
         raise HttpError(500, "Record update error")
 
 
+@calculator_router.get(
+    "/calculation_rule/list", response=List[CalculationRuleOut]
+)
+def list_calculation_rules(request):
+    """
+    The function `list_calculation_rules` retrieves a list of calculation rules,
+    ordered by name.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        CaclculationRuleOut: a list of calculation rule objects
+    """
+
+    try:
+        qs = CalculationRule.objects.all().order_by("name")
+        logToDB(
+            "Calculation rule list retrieved",
+            None,
+            None,
+            None,
+            3001007,
+            1,
+        )
+        return qs
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Calculation rule list not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+        raise HttpError(500, "Record retrieval error")
+
+
 @calculator_router.delete("/calculation_rule/delete/{calculation_rule_id}")
 def delete_calculation_rule(request, calculation_rule_id: int):
     """
