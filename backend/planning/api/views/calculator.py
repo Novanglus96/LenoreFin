@@ -2,9 +2,11 @@ from ninja import Router, Query
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from planning.models import CalculationRule
+from transactions.models import Transaction, TransactionDetail
 from planning.api.schemas.calculator import (
     CalculationRuleIn,
     CalculationRuleOut,
+    CalculatorOut,
 )
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
@@ -29,6 +31,14 @@ from django.db.models import (
 )
 from django.db.models.functions import Concat, Coalesce, Abs
 from typing import List, Optional, Dict, Any
+from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+    get_todays_date_timezone_adjusted,
+)
+from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
+    get_complete_transaction_list_with_totals,
+)
+from dateutil.relativedelta import relativedelta
+import json
 
 calculator_router = Router(tags=["Calculator"])
 
@@ -202,3 +212,85 @@ def delete_calculation_rule(request, calculation_rule_id: int):
             2,
         )
         raise HttpError(500, "Record retrieval error")
+
+
+@calculator_router.get("/get/{calculation_rule_id}", response=CalculatorOut)
+def get_calculator(request, calculation_rule_id: int, timeframe: int):
+    """
+    The function `get_calculator` retrieves a calculator based on
+    provided calculation rule
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        calculation_rule_id (int): The id of a calcluation rule.
+
+    Returns:
+        CalculatorOut: the calculator object
+
+    Raises:
+        Http404: If the calculation rule with the specified ID does not exist.
+    """
+
+    try:
+        calculation_rule = get_object_or_404(
+            CalculationRule, id=calculation_rule_id
+        )
+        tags = json.loads(calculation_rule.tag_ids)
+        end_date = get_todays_date_timezone_adjusted()
+        start_date = end_date - relativedelta(days=timeframe)
+        transfer_start = get_todays_date_timezone_adjusted()
+        transfer_end = transfer_start + relativedelta(days=45)
+        transfers = []
+        transfers, balances = get_complete_transaction_list_with_totals(
+            transfer_end,
+            1,
+            False,
+            False,
+            transfer_start,
+            True,
+            [
+                calculation_rule.source_account_id,
+                calculation_rule.destination_account_id,
+            ],
+        )
+        # Get reminders that are transfers between source and destination,
+        # and have dates that fall in the next 2 months
+
+        # Create temporary transacions based on reminders
+
+        # Add temporary transactions to transfers list
+
+        # Get transactions that are transfers between source and destination,
+        # and have dates that fall in the next 2 months.
+
+        # Add transactions to transfers list
+        transactions = []
+        transactions = Transaction.objects.filter(
+            add_date__range=[start_date, end_date],
+            transactiondetail__tag_id__in=tags,
+        ).order_by("-add_date", "-id")
+        calculator = CalculatorOut(
+            rule=calculation_rule,
+            transfers=list(transfers),
+            transactions=list(transactions),
+        )
+        logToDB(
+            f"Calculator retrieved : #{calculation_rule_id}",
+            None,
+            None,
+            None,
+            3001006,
+            1,
+        )
+        return calculator
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Calculator not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3001904,
+            2,
+        )
+        raise HttpError(500, f"Record retrieval error: {str(e)}")

@@ -29,7 +29,11 @@ from django.db.models import (
 
 
 def get_reminder_transaction_list(
-    end_date: date, account: int, forecast: Optional[bool] = False
+    end_date: date,
+    account: int,
+    forecast: Optional[bool] = False,
+    transfers_only: Optional[bool] = False,
+    transfer_ids: Optional[List[int]] = [],
 ):
     """
     The function `get_reminder_transaction_list` returns a list of
@@ -48,13 +52,22 @@ def get_reminder_transaction_list(
     today = get_todays_date_timezone_adjusted()
     reminder_transactions_list = []
     temp_id = -1
+    reminders = None
 
     # Get Reminders for account that have a next date within time frame
-    reminders = Reminder.objects.filter(
-        Q(reminder_source_account_id=account)
-        | Q(reminder_destination_account_id=account),
-        next_date__lte=end_date,
-    )
+    if transfers_only:
+        reminders = Reminder.objects.filter(
+            reminder_source_account_id=transfer_ids[0],
+            reminder_destination_account_id=transfer_ids[1],
+            transaction_type_id=3,
+            next_date__lte=end_date,
+        )
+    else:
+        reminders = Reminder.objects.filter(
+            Q(reminder_source_account_id=account)
+            | Q(reminder_destination_account_id=account),
+            next_date__lte=end_date,
+        )
 
     # Get a Pending status object
     status = TransactionStatus.objects.get(id=1)

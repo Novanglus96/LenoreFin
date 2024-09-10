@@ -44,6 +44,8 @@ def get_complete_transaction_list_with_totals(
     totals_only: bool,
     forecast: Optional[bool] = False,
     start_date: Optional[date] = None,
+    transfers_only: Optional[bool] = False,
+    transfer_ids: Optional[List[int]] = [],
 ):
     """
     The function `get_complete_transaction_list_with_totals` returns a list of
@@ -80,6 +82,15 @@ def get_complete_transaction_list_with_totals(
         Q(source_account_id=account) | Q(destination_account_id=account),
         transaction_date__lt=end_date,
     ).exclude(status_id=4)
+
+    # Filter for transactions and source/destination for transfers
+    if transfers_only:
+        all_transactions = all_transactions.filter(
+            transaction_type=3,
+            source_account_id=transfer_ids[0],
+            destination_account_id=transfer_ids[1],
+            status_id=1,
+        )
 
     # Annotate Source, Destination, Pretty Account Names if not totals_only
     if not totals_only:
@@ -256,9 +267,14 @@ def get_complete_transaction_list_with_totals(
     pending_transactions_list = list(pending_transactions)
 
     # Get a list of transactions based on reminders
-    reminder_transactions_list = get_reminder_transaction_list(
-        end_date, account, forecast
-    )
+    if transfers_only:
+        reminder_transactions_list = get_reminder_transaction_list(
+            end_date, 0, False, True, [transfer_ids[0], transfer_ids[1]]
+        )
+    else:
+        reminder_transactions_list = get_reminder_transaction_list(
+            end_date, account, forecast
+        )
 
     # Combine pending and reminder transactions
     transactions_to_be_sorted = (
