@@ -17,101 +17,45 @@
       <span class="text-subtitle-2 text-secondary">Rules</span>
     </template>
     <template v-slot:text>
-      <vue3-datatable
-        :rows="calculator_rules ? calculator_rules : []"
-        :columns="columns"
-        :loading="isLoading"
-        :totalRows="calculator_rules ? calculator_rules.length : 0"
-        :isServerMode="false"
-        pageSize="10"
-        :hasCheckbox="false"
-        :stickyHeader="true"
-        firstArrow="First"
-        lastArrow="Last"
-        previousArrow="Prev"
-        nextArrow="Next"
-        :showNumbersCount="3"
-        noDataContent="No rules"
-        search=""
-        ref="rules_table"
-        height="650px"
-        :pageSizeOptions="[60]"
-        :showPageSize="false"
-        paginationInfo="Showing {0} to {1} of {2} rules"
-        @change="pageChanged"
-        class="alt-pagination"
-        rowClass="cursor-pointer"
-        @rowClick="rowClick"
-      >
-        <template #rule_total="data">
-          <span>${{ data.value.rule_total }}</span>
-        </template>
-        <template #actions="data">
-          <div>
-            <v-btn
-              icon="mdi-delete"
-              flat
-              variant="plain"
-              @click="deleteRule(data.value.id)"
-            ></v-btn>
-          </div>
-        </template> </vue3-datatable
-    ></template>
+      <v-list :selected="rule_selected" nav>
+        <v-list-item
+          v-for="(item, i) in props.rules"
+          :key="i"
+          @click="selectRule(item.id)"
+          color="accent"
+          :value="item.id"
+        >
+          <v-list-item-title>{{ item.name }}</v-list-item-title>
+          <template #append>
+            <v-btn variant="plain" icon @click.stop="editRule(item.id)">
+              <v-icon>mdi-pencil</v-icon>
+            </v-btn>
+            <v-btn variant="plain" icon @click.stop="deleteRule(item.id)">
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
+          </template>
+        </v-list-item>
+      </v-list>
+    </template>
   </v-card>
 </template>
 <script setup>
-import { ref } from "vue";
-import Vue3Datatable from "@bhplugin/vue3-datatable";
-import "@bhplugin/vue3-datatable/dist/style.css";
+import { ref, defineProps, defineEmits } from "vue";
 
-const columns = ref([
-  { field: "id", title: "ID", isUnique: true, hide: true },
-  { field: "rule_name", title: "Rule Name" },
-  { field: "rule_total", title: "Total", type: "number", width: "100px" },
-  { field: "actions", title: "Actions", width: "100px" },
-]);
+const emit = defineEmits(["ruleSelected"]);
 
-const calculator_rules = ref([
-  {
-    id: 1,
-    rule_name: "Test",
-    rule_total: 100,
-  },
-  {
-    id: 2,
-    rule_name: "Test #2",
-    rule_total: 200,
-  },
-  {
-    id: 3,
-    rule_name: "Test #3",
-    rule_total: 300,
-  },
-  {
-    id: 4,
-    rule_name: "Test #4",
-    rule_total: 400,
-  },
-]);
+const rule_selected = ref(null);
+
+const props = defineProps({
+  rules: Object,
+  isLoading: Boolean,
+});
+
+const selectRule = value => {
+  emit("ruleSelected", value);
+};
 </script>
 <style>
-/* alt-pagination */
-.alt-pagination .bh-pagination .bh-page-item {
-  width: auto; /* equivalent to w-max */
-  min-width: 32px;
-  border-radius: 0.25rem; /* equivalent to rounded */
-}
-/* Customize the color of the selected page number */
-.alt-pagination .bh-pagination .bh-page-item.bh-active {
-  background-color: #06966a; /* Change this to your desired color */
-  border-color: black;
-  font-weight: bold; /* Optional: Make the text bold */
-}
-.alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-  background-color: #ff5900;
-  border-color: black;
-}
-
 .icon-with-text {
   position: relative;
   display: inline-block;

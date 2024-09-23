@@ -18,14 +18,16 @@
       />
     </template>
     <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary">Transfers</span>
+      <span class="text-subtitle-2 text-secondary"
+        >{{ calculator ? calculator.rule.name : null }} Transfers</span
+      >
     </template>
     <template v-slot:text>
       <vue3-datatable
-        :rows="rule_transfers ? rule_transfers : []"
+        :rows="calculator ? calculator.transfers : []"
         :columns="columns"
-        :loading="isLoading"
-        :totalRows="rule_transfers ? rule_transfers.length : 0"
+        :loading="calculator_isLoading"
+        :totalRows="calculator ? calculator.transfers.length : 0"
         :isServerMode="false"
         pageSize="3"
         :hasCheckbox="false"
@@ -62,9 +64,27 @@
   </v-card>
 </template>
 <script setup>
-import { ref } from "vue";
+import { ref, defineProps, watch } from "vue";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
+import { useCalculator } from "@/composables/calculatorComposable";
+
+const props = defineProps({
+  ruleID: {
+    type: Number,
+  },
+  timeframe: {
+    type: Number,
+  },
+});
+
+const local_rule_id = ref(props.ruleID);
+const local_timeframe = ref(props.timeframe);
+
+const { calculator, isLoading: calculator_isLoading } = useCalculator(
+  local_rule_id.value,
+  local_timeframe.value,
+);
 
 const columns = ref([
   { field: "id", title: "ID", isUnique: true, hide: true },
@@ -79,43 +99,13 @@ const columns = ref([
   { field: "memo", title: "Memo" },
   { field: "actions", title: "Actions" },
 ]);
-const rule_transfers = ref([
-  {
-    id: 1,
-    transaction_date: "2024-08-01",
-    transaction_total: 100,
-    description: "Some transfer",
-    memo: "40 Target 60 Wawa",
-  },
-  {
-    id: 2,
-    transaction_date: "2024-08-01",
-    transaction_total: 200,
-    description: "Some transfer # 2",
-    memo: "140 Target 60 Wawa",
-  },
-  {
-    id: 3,
-    transaction_date: "2024-08-01",
-    transaction_total: 300,
-    description: "Some transfer # 3",
-    memo: "240 Target 60 Wawa",
-  },
-  {
-    id: 4,
-    transaction_date: "2024-08-01",
-    transaction_total: 400,
-    description: "Some transfer # 4",
-    memo: "340 Target 60 Wawa",
-  },
-  {
-    id: 5,
-    transaction_date: "2024-08-01",
-    transaction_total: 500,
-    description: "Some transfer # 5",
-    memo: "440 Target 60 Wawa",
-  },
-]);
+
+watch(props.ruleID, newValue => {
+  local_rule_id.value = newValue;
+});
+watch(props.timeframe, newValue => {
+  local_timeframe.value = newValue;
+});
 </script>
 <style>
 /* alt-pagination */

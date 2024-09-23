@@ -2,7 +2,11 @@
   <v-container>
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded text-center" cols="4">
-        <CalculatorRulesWidget />
+        <CalculatorRulesWidget
+          :rules="calculation_rules"
+          :isLoading="calculation_rules_isLoading"
+          @rule-selected="ruleSelected"
+        />
       </v-col>
       <v-col class="rounded text-center">
         <v-card variant="outlined" :elevation="4" class="bg-white">
@@ -17,8 +21,20 @@
               v-model="selectedTimeframe"
               chips
             ></v-autocomplete>
-            <CalculatorTransfersWidget />
-            <CalculatorTransactionsWidget />
+            <CalculatorTransfersWidget
+              :transfers="calculator ? calculator.transfers : []"
+              :isLoading="calculator_isLoading"
+              :key="selected_rule"
+              :ruleID="selected_rule"
+              :timeframe="selectedTimeframe"
+            />
+            <CalculatorTransactionsWidget
+              :transactions="calculator ? calculator.transactions : []"
+              :isLoading="calculator_isLoading"
+              :key="selected_rule"
+              :ruleID="selected_rule"
+              :timeframe="selectedTimeframe"
+            />
           </v-card-text>
         </v-card>
       </v-col>
@@ -29,9 +45,14 @@
 import CalculatorRulesWidget from "../components/CalculatorRulesWidget.vue";
 import CalculatorTransfersWidget from "../components/CalculatorTransfersWidget.vue";
 import CalculatorTransactionsWidget from "../components/CalculatorTransactionsWidget.vue";
-
 import { ref } from "vue";
+import { useCalculationRule } from "@/composables/calculatorComposable";
 
+const selected_rule = ref(null);
+const selectedTimeframe = ref(0);
+
+const { calculation_rules, isLoading: calculation_rules_isLoading } =
+  useCalculationRule();
 const timeframe = ref([
   {
     name: "Today",
@@ -51,5 +72,7 @@ const timeframe = ref([
   },
 ]);
 
-const selectedTimeframe = ref(0);
+const ruleSelected = rule_id => {
+  selected_rule.value = rule_id;
+};
 </script>

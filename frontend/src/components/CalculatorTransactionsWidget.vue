@@ -1,14 +1,16 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-white">
     <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary">Rule Transactions</span>
+      <span class="text-subtitle-2 text-secondary"
+        >{{ calculator ? calculator.rule.name : null }} Transactions</span
+      >
     </template>
     <template v-slot:text>
       <vue3-datatable
-        :rows="transactions ? transactions.transactions : []"
+        :rows="calculator ? calculator.transactions : []"
         :columns="columns"
-        :loading="isLoading"
-        :totalRows="transactions ? transactions.transactions.length : 0"
+        :loading="calculator_isLoading"
+        :totalRows="calculator ? calculator.transactions.length : 0"
         :isServerMode="false"
         pageSize="10"
         :hasCheckbox="false"
@@ -105,12 +107,28 @@
   </v-card>
 </template>
 <script setup>
-import { useTransactions } from "@/composables/transactionsComposable";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
-import { ref } from "vue";
+import { ref, defineProps, watch } from "vue";
+import { useCalculator } from "@/composables/calculatorComposable";
 
-const { isLoading, transactions } = useTransactions();
+const props = defineProps({
+  ruleID: {
+    type: Number,
+  },
+  timeframe: {
+    type: Number,
+  },
+});
+
+const local_rule_id = ref(props.ruleID);
+const local_timeframe = ref(props.timeframe);
+
+const { calculator, isLoading: calculator_isLoading } = useCalculator(
+  local_rule_id.value,
+  local_timeframe.value,
+);
+
 const columns = ref([
   { field: "transaction_date", title: "Date", type: "date", width: "120px" },
   { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
@@ -142,6 +160,12 @@ const getClassForMoney = (amount, status) => {
 
   return color + " " + font;
 };
+watch(props.ruleID, newValue => {
+  local_rule_id.value = newValue;
+});
+watch(props.timeframe, newValue => {
+  local_timeframe.value = newValue;
+});
 </script>
 <style>
 /* alt-pagination */

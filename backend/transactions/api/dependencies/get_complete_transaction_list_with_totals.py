@@ -46,6 +46,7 @@ def get_complete_transaction_list_with_totals(
     start_date: Optional[date] = None,
     transfers_only: Optional[bool] = False,
     transfer_ids: Optional[List[int]] = [],
+    tags: Optional[List[int]] = [],
 ):
     """
     The function `get_complete_transaction_list_with_totals` returns a list of
@@ -77,11 +78,18 @@ def get_complete_transaction_list_with_totals(
     # Get Archive Balance
     archive_balance = Account.objects.get(id=account).archive_balance
 
-    # Get all non archived transactions less than end_date
-    all_transactions = Transaction.objects.filter(
-        Q(source_account_id=account) | Q(destination_account_id=account),
-        transaction_date__lt=end_date,
-    ).exclude(status_id=4)
+    all_transactions = None
+    if not tags:
+        # Get all non archived transactions less than end_date
+        all_transactions = Transaction.objects.filter(
+            Q(source_account_id=account) | Q(destination_account_id=account),
+            transaction_date__lt=end_date,
+        ).exclude(status_id=4)
+    else:
+        transactions = Transaction.objects.filter(
+            add_date__range=[start_date, end_date],
+            transactiondetail__tag_id__in=tags,
+        ).order_by("-add_date", "-id")
 
     # Filter for transactions and source/destination for transfers
     if transfers_only:
