@@ -9,6 +9,7 @@ staticfiles
 my_accounts.json
 my_tags.json
 my_banks.json
+backups
 
 # ---> Python
 # Byte-compiled / optimized / DLL files

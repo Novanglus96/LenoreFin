@@ -29,6 +29,7 @@ services:
       - ./.env.dev
     volumes:
       - ./backend:/usr/src/app
+      - ./backups:/backups
     environment:
       - DEBUG=1
     ports:
@@ -48,6 +49,7 @@ services:
       - ./.env.dev
     volumes:
       - ./backend:/usr/src/app
+      - ./backups:/backups
     environment:
       - DEBUG=1
     depends_on:
@@ -73,3 +75,4 @@ volumes:
   postgres_data:
   static_volume:
   media_volume:
+  postgres_bkp:
