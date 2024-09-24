@@ -44,7 +44,7 @@ def list_description_histories(request):
     """
 
     try:
-        qs = DescriptionHistory.objects.all()
+        qs = DescriptionHistory.objects.all().order_by("description_normalized")
         qs = list(qs)
         logToDB(
             "Description Histories retrieved",
