@@ -153,7 +153,9 @@ CORS_ORIGIN_WHITELIST = os.environ.get("CSRF_TRUSTED_ORIGINS").split(" ")
 CORS_ALLOW_ALL_ORIGINS = True
 
 DBBACKUP_STORAGE = "django.core.files.storage.FileSystemStorage"
-DBBACKUP_STORAGE_OPTIONS = {"location": "/backup/"}
+DBBACKUP_STORAGE_OPTIONS = {"location": "/backups/"}
+DBBACKUP_CLEANUP_KEEP = 2
+DBBACKUP_CLEANUP_KEEP_MEDIA = 2
 
 LOGGING = {
     "version": 1,

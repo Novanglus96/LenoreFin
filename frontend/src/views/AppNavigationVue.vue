@@ -6,7 +6,7 @@
       </template>
       <v-app-bar-title>
         <span class="text-caption font-weight-bold"
-          >v1.0.027</span
+          >v1.0.028</span
         ></v-app-bar-title
       >
       <v-menu location="start">

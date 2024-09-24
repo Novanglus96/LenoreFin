@@ -87,6 +87,15 @@ class Command(BaseCommand):
                 "minutes": 5,
                 "delete": False,
             },
+            {
+                "task_name": "Backup Database",
+                "function": "transactions.tasks.create_backup",
+                "time": "00:00",
+                "arguments": "True,0",
+                "type": "HOURLY",  # DAILY, HOURLY, MINUTES
+                "start_today": True,
+                "delete": False,
+            },
         ]
 
         # Schedule or modify tasks

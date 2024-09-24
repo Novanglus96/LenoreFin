@@ -65,6 +65,20 @@ from administration.api.dependencies.log_to_db import logToDB
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
+from django.core.management import call_command
+import time
+from pathlib import Path
+
+
+def create_backup(clean=True, keep=0):
+    """
+    The function `create_backup` creates a database backup and optionally
+    keeps only the last x backups, default is 1.
+
+    Args:
+    """
+    call_command("dbbackup", "--clean", "--compress")
+    call_command("mediabackup", "--clean", "--compress")
 
 
 def create_message(message_text):
