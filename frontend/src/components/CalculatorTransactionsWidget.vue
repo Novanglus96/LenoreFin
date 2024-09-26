@@ -112,7 +112,9 @@ import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
 import { ref, defineProps, watch } from "vue";
 import { useCalculator } from "@/composables/calculatorComposable";
+import { usePlanningStore } from "@/stores/planning";
 
+const planningstore = usePlanningStore();
 const props = defineProps({
   ruleID: {
     type: Number,
@@ -143,6 +145,7 @@ const columns = ref([
 
 const rowSelected = () => {
   selected.value = trans_table.value.getSelectedRows();
+  planningstore.calculator.selected_transactions = selected.value;
 };
 
 const getClassForMoney = (amount, status) => {

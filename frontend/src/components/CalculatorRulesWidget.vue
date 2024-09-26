@@ -67,6 +67,9 @@
 import { ref, defineProps, defineEmits } from "vue";
 import CalculatorRuleForm from "./CalculatorRuleForm.vue";
 import { useCalculationRule } from "@/composables/calculatorComposable";
+import { usePlanningStore } from "@/stores/planning";
+
+const planningstore = usePlanningStore();
 
 const emit = defineEmits(["ruleSelected"]);
 const { removeCalculationRule } = useCalculationRule();
@@ -83,6 +86,7 @@ const props = defineProps({
 });
 
 const selectRule = value => {
+  planningstore.calculator.selected_transactions = [];
   emit("ruleSelected", value);
 };
 const clickEditRule = item => {

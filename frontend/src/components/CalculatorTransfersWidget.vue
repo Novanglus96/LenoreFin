@@ -9,6 +9,11 @@
             variant="plain"
             v-bind="props"
             @click="importFileDialog = true"
+            :disabled="
+              planningstore.calculator.selected_transactions.length == 0
+                ? true
+                : false
+            "
           ></v-btn>
         </template>
       </v-tooltip>
@@ -59,6 +64,11 @@
               flat
               variant="plain"
               @click="editTransfer(data.value.id)"
+              :disabled="
+                planningstore.calculator.selected_transactions.length == 0
+                  ? true
+                  : false
+              "
             ></v-btn>
           </div>
         </template> </vue3-datatable
@@ -70,6 +80,9 @@ import { ref, defineProps, watch } from "vue";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
 import { useCalculator } from "@/composables/calculatorComposable";
+import { usePlanningStore } from "@/stores/planning";
+
+const planningstore = usePlanningStore();
 
 const props = defineProps({
   ruleID: {
