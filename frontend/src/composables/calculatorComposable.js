@@ -57,9 +57,15 @@ async function getCalculatorFunction(rule_id, timeframe) {
 async function createCalculationRuleFunction(newRule) {
   const mainstore = useMainStore();
   try {
+    const data = {
+      name: newRule.name,
+      tag_ids: JSON.stringify(newRule.tag_ids),
+      source_account_id: newRule.source_account_id,
+      destination_account_id: newRule.destination_account_id,
+    };
     const response = await apiClient.post(
       "/planning/calculator/calculation_rule/create",
-      newRule,
+      data,
     );
     mainstore.showSnackbar("Calculation rule created successfully!", "success");
     return response.data;
@@ -78,6 +84,26 @@ async function deleteCalculationRuleFunction(ruleToDelete) {
     return response.data;
   } catch (error) {
     handleApiError(error, "Calculation rule not deleted: ");
+  }
+}
+
+async function updateCalculationRuleFunction(ruleToEdit) {
+  const mainstore = useMainStore();
+  try {
+    const data = {
+      name: ruleToEdit.name,
+      tag_ids: JSON.stringify(ruleToEdit.tag_ids),
+      source_account_id: ruleToEdit.source_account_id,
+      destination_account_id: ruleToEdit.destination_account_id,
+    };
+    const response = await apiClient.put(
+      "/planning/calculator/calculation_rule/update/" + ruleToEdit.id,
+      data,
+    );
+    mainstore.showSnackbar("Calculation rule updated successfully!", "success");
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Calculation rule not updated: ");
   }
 }
 
@@ -106,6 +132,14 @@ export function useCalculationRule() {
     },
   });
 
+  const updateCalculationRuleMutation = useMutation({
+    mutationFn: updateCalculationRuleFunction,
+    onSuccess: () => {
+      console.log("Success updating calculation rule");
+      queryClient.invalidateQueries({ queryKey: ["calculation_rules"] });
+    },
+  });
+
   async function addCalculationRule(newRule) {
     createCalculationRuleMutation.mutate(newRule);
   }
@@ -114,11 +148,16 @@ export function useCalculationRule() {
     deleteCalculationRuleMutation.mutate(ruleToDelete);
   }
 
+  async function editCalculationRule(ruleToEdit) {
+    updateCalculationRuleMutation.mutate(ruleToEdit);
+  }
+
   return {
     isLoading,
     calculation_rules,
     addCalculationRule,
     removeCalculationRule,
+    editCalculationRule,
   };
 }
 

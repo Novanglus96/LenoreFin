@@ -47,8 +47,10 @@
         paginationInfo="Showing {0} to {1} of {2} transfers"
         class="alt-pagination"
       >
-        <template #transaction_total="data">
-          <span>${{ data.value.transaction_total }}</span>
+        <template #pretty_total="row">
+          <span :class="getClassForMoney(row.value.pretty_total)"
+            >${{ row.value.pretty_total }}</span
+          >
         </template>
         <template #actions="data">
           <div>
@@ -90,7 +92,7 @@ const columns = ref([
   { field: "id", title: "ID", isUnique: true, hide: true },
   { field: "transaction_date", title: "Date", type: "date", width: "120px" },
   {
-    field: "transaction_total",
+    field: "pretty_total",
     title: "Amount",
     type: "number",
     width: "100px",
@@ -106,6 +108,19 @@ watch(props.ruleID, newValue => {
 watch(props.timeframe, newValue => {
   local_timeframe.value = newValue;
 });
+const getClassForMoney = amount => {
+  let color = "";
+  let font = "";
+
+  font = "font-weight-bold";
+  if (amount < 0) {
+    color = "text-red";
+  } else {
+    color = "text-green";
+  }
+
+  return color + " " + font;
+};
 </script>
 <style>
 /* alt-pagination */

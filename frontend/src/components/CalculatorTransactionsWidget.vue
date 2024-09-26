@@ -13,7 +13,7 @@
         :totalRows="calculator ? calculator.transactions.length : 0"
         :isServerMode="false"
         pageSize="10"
-        :hasCheckbox="false"
+        :hasCheckbox="true"
         :stickyHeader="true"
         noDataContent="No transactions"
         ref="trans_table"
@@ -23,6 +23,7 @@
         :showPageSize="false"
         paginationInfo="Showing {0} to {1} of {2} transactions"
         class="alt-pagination"
+        @rowSelect="rowSelected"
         ><!--height="280px"-->
         <template #transaction_date="row">
           <span
@@ -123,6 +124,8 @@ const props = defineProps({
 
 const local_rule_id = ref(props.ruleID);
 const local_timeframe = ref(props.timeframe);
+const selected = ref([]);
+const trans_table = ref(null);
 
 const { calculator, isLoading: calculator_isLoading } = useCalculator(
   local_rule_id.value,
@@ -137,6 +140,10 @@ const columns = ref([
   { field: "tags", title: "Tag(s)", width: "200px" },
   { field: "pretty_account", title: "Account" },
 ]);
+
+const rowSelected = () => {
+  selected.value = trans_table.value.getSelectedRows();
+};
 
 const getClassForMoney = (amount, status) => {
   let color = "";

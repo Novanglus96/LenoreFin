@@ -253,22 +253,12 @@ def get_calculator(request, calculation_rule_id: int, timeframe: int):
                 calculation_rule.destination_account_id,
             ],
         )
-        # Get reminders that are transfers between source and destination,
-        # and have dates that fall in the next 2 months
-
-        # Create temporary transacions based on reminders
-
-        # Add temporary transactions to transfers list
-
-        # Get transactions that are transfers between source and destination,
-        # and have dates that fall in the next 2 months.
 
         # Add transactions to transfers list
         transactions = []
-        transactions = Transaction.objects.filter(
-            add_date__range=[start_date, end_date],
-            transactiondetail__tag_id__in=tags,
-        ).order_by("-add_date", "-id")
+        transactions, balances = get_complete_transaction_list_with_totals(
+            end_date, 1, False, False, start_date, False, [], tags
+        )
         calculator = CalculatorOut(
             rule=calculation_rule,
             transfers=list(transfers),

@@ -86,7 +86,7 @@ def get_complete_transaction_list_with_totals(
             transaction_date__lt=end_date,
         ).exclude(status_id=4)
     else:
-        transactions = Transaction.objects.filter(
+        all_transactions = Transaction.objects.filter(
             add_date__range=[start_date, end_date],
             transactiondetail__tag_id__in=tags,
         ).order_by("-add_date", "-id")

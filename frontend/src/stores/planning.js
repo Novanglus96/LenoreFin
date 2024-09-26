@@ -5,6 +5,7 @@ export const usePlanningStore = defineStore("planning", {
     calculator: {
       selected_rule: null,
       timeframe: 0,
+      selected_transactions: []
     },
   }),
   getters: {},
