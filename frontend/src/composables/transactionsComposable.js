@@ -147,6 +147,7 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["description-history"] });
+      queryClient.invalidateQueries({ queryKey: ["calculator"] });
     },
   });
 
@@ -158,6 +159,7 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["calculator"] });
     },
   });
 
@@ -169,6 +171,7 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["calculator"] });
     },
   });
 
@@ -181,6 +184,7 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["description-history"] });
+      queryClient.invalidateQueries({ queryKey: ["calculator"] });
     },
   });
 

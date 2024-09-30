@@ -8,7 +8,7 @@
             flat
             variant="plain"
             v-bind="props"
-            @click="importFileDialog = true"
+            @click="addTransfer"
             :disabled="
               planningstore.calculator.selected_transactions.length == 0
                 ? true
@@ -17,9 +17,13 @@
           ></v-btn>
         </template>
       </v-tooltip>
-      <FileImportForm
-        v-model="importFileDialog"
-        @update-dialog="updateImportFileDialog"
+
+      <CalculatorTransactionForm
+        v-model="calculatorAddTransactionDialog"
+        @update-dialog="updateCalculatorAddTransactionDialog"
+        :isEdit="false"
+        :key="0"
+        :passedFormData="newTransferData"
       />
     </template>
     <template v-slot:title>
@@ -63,7 +67,7 @@
               icon="mdi-pencil"
               flat
               variant="plain"
-              @click="editTransfer(data.value.id)"
+              @click="editTransfer(data.value)"
               :disabled="
                 planningstore.calculator.selected_transactions.length == 0
                   ? true
@@ -71,8 +75,17 @@
               "
             ></v-btn>
           </div>
-        </template> </vue3-datatable
-    ></template>
+        </template>
+      </vue3-datatable>
+      <CalculatorTransactionForm
+        v-model="calculatorEditTransactionDialog"
+        @update-dialog="updateCalculatorEditTransactionDialog"
+        :isEdit="true"
+        :key="1"
+        :passedFormData="selectedTransaction"
+        :newTotal="newTotal"
+        :newMemo="newMemo"
+    /></template>
   </v-card>
 </template>
 <script setup>
@@ -81,6 +94,7 @@ import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
 import { useCalculator } from "@/composables/calculatorComposable";
 import { usePlanningStore } from "@/stores/planning";
+import CalculatorTransactionForm from "./CalculatorTransactionForm.vue";
 
 const planningstore = usePlanningStore();
 
@@ -95,12 +109,18 @@ const props = defineProps({
 
 const local_rule_id = ref(props.ruleID);
 const local_timeframe = ref(props.timeframe);
+const calculatorAddTransactionDialog = ref(false);
+const calculatorEditTransactionDialog = ref(false);
+const selectedTransaction = ref(null);
+const newMemo = ref(null);
+const newTotal = ref(null);
 
 const { calculator, isLoading: calculator_isLoading } = useCalculator(
   local_rule_id.value,
   local_timeframe.value,
 );
 
+const newTransferData = ref(null);
 const columns = ref([
   { field: "id", title: "ID", isUnique: true, hide: true },
   { field: "transaction_date", title: "Date", type: "date", width: "120px" },
@@ -133,6 +153,67 @@ const getClassForMoney = amount => {
   }
 
   return color + " " + font;
+};
+
+const updateCalculatorAddTransactionDialog = value => {
+  calculatorAddTransactionDialog.value = value;
+};
+
+const updateCalculatorEditTransactionDialog = value => {
+  calculatorEditTransactionDialog.value = value;
+};
+
+// Date variables...
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, "0");
+const day = String(today.getDate()).padStart(2, "0");
+const formattedDate = `${year}-${month}-${day}`;
+
+const addTransfer = () => {
+  calculatorAddTransactionDialog.value = true;
+  let memo = "";
+  let description = calculator.value.rule.name + " Transfer";
+  let totalAmount = 0;
+  for (const transaction of planningstore.calculator.selected_transactions) {
+    totalAmount += parseFloat(transaction.total_amount);
+    memo += transaction.total_amount + " " + transaction.description + "\n";
+  }
+  memo = memo.trimEnd();
+  newTransferData.value = {
+    transaction_date: formattedDate,
+    total_amount: totalAmount,
+    status_id: 1,
+    memo: memo,
+    description: description,
+    edit_date: formattedDate,
+    add_date: formattedDate,
+    transaction_type_id: 3,
+    paycheck_id: null,
+    details: [
+      {
+        tag_amt: totalAmount,
+        tag_pretty_name: "Transfer",
+        tag_id: 34,
+        tag_full_toggle: true,
+      },
+    ],
+    source_account_id: calculator.value.rule.source_account_id,
+    destination_account_id: calculator.value.rule.destination_account_id,
+  };
+};
+const editTransfer = trans => {
+  selectedTransaction.value = trans;
+  let memo = "";
+  let totalAmount = 0;
+  for (const transaction of planningstore.calculator.selected_transactions) {
+    totalAmount += parseFloat(transaction.total_amount);
+    memo += transaction.total_amount + " " + transaction.description + "\n";
+  }
+  memo = memo.trimEnd();
+  newTotal.value = totalAmount;
+  newMemo.value = memo;
+  calculatorEditTransactionDialog.value = true;
 };
 </script>
 <style>
