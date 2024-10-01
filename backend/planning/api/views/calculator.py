@@ -243,7 +243,7 @@ def get_calculator(request, calculation_rule_id: int, timeframe: int):
         transfers = []
         transfers, balances = get_complete_transaction_list_with_totals(
             transfer_end,
-            1,
+            calculation_rule.source_account_id,
             False,
             False,
             transfer_start,

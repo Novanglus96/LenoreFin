@@ -94,7 +94,7 @@ def get_complete_transaction_list_with_totals(
     # Filter for transactions and source/destination for transfers
     if transfers_only:
         all_transactions = all_transactions.filter(
-            transaction_type=3,
+            transaction_type_id=3,
             source_account_id=transfer_ids[0],
             destination_account_id=transfer_ids[1],
             status_id=1,

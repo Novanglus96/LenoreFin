@@ -69,7 +69,8 @@
               variant="plain"
               @click="editTransfer(data.value)"
               :disabled="
-                planningstore.calculator.selected_transactions.length == 0
+                planningstore.calculator.selected_transactions.length == 0 ||
+                data.value.id < 0
                   ? true
                   : false
               "
