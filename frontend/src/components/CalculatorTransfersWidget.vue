@@ -61,6 +61,11 @@
             >${{ row.value.pretty_total }}</span
           >
         </template>
+        <template #memo="row">
+          <span :style="{ whiteSpace: 'pre-line' }" class="text-body-2">{{
+            row.value.memo
+          }}</span>
+        </template>
         <template #actions="data">
           <div>
             <v-btn
