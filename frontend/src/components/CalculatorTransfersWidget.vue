@@ -178,7 +178,14 @@ const addTransfer = () => {
   let totalAmount = 0;
   for (const transaction of planningstore.calculator.selected_transactions) {
     totalAmount += parseFloat(transaction.total_amount);
-    memo += transaction.total_amount + " " + transaction.description + "\n";
+    memo +=
+      Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(Math.abs(transaction.total_amount)) +
+      " " +
+      transaction.description +
+      "\n";
   }
   memo = memo.trimEnd();
   newTransferData.value = {
