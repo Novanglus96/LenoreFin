@@ -165,7 +165,7 @@ def list_notes(request):
     """
 
     try:
-        qs = Note.objects.all().order_by("-note_date")
+        qs = Note.objects.all().order_by("-note_date", "-id")
         logToDB(
             "Note list retrieved",
             None,
