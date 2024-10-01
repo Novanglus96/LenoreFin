@@ -57,7 +57,7 @@ import { useField, useForm } from "vee-validate";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 
-const { handleSubmit, handleReset } = useForm({
+const { handleSubmit } = useForm({
   validationSchema: {
     note_text(value) {
       if (value?.length >= 2 && value?.length <= 254) return true;
