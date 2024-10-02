@@ -6,6 +6,7 @@ from typing import List, Optional, Dict, Any
 class ContribRuleIn(Schema):
     rule: str
     cap: Optional[str] = None
+    order: Optional[int] = 0
 
 
 # The class ContribRuleOut is a schema representing Contribution Rules.
@@ -13,3 +14,4 @@ class ContribRuleOut(Schema):
     id: int
     rule: str
     cap: Optional[str] = None
+    order: Optional[int] = 0

@@ -108,6 +108,14 @@ const { notes, addNote, removeNote, editNote, isLoading } = useNotes();
 const addNoteDialog = ref(false);
 const editNoteDialog = ref(false);
 const deleteNoteDialog = ref(false);
+
+// Date variables...
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, "0");
+const day = String(today.getDate()).padStart(2, "0");
+const formattedDate = `${year}-${month}-${day}`;
+
 const clampedStyle = {
   whiteSpace: "pre-line",
   display: "-webkit-box",
@@ -118,8 +126,8 @@ const clampedStyle = {
 };
 const newNoteData = ref({
   id: 0,
-  note_date: "2024-10-01",
-  note_text: "Test",
+  note_date: formattedDate,
+  note_text: null,
 });
 const selectedNote = ref(null);
 

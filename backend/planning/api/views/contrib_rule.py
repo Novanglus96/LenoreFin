@@ -111,6 +111,7 @@ def update_contrib_rule(request, contribrule_id: int, payload: ContribRuleIn):
         contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
         contrib_rule.rule = payload.rule
         contrib_rule.cap = payload.cap
+        contrib_rule.order = payload.order
         contrib_rule.save()
         logToDB(
             f"Contribution rule updated : {contrib_rule.rule}",
@@ -211,7 +212,7 @@ def list_contrib_rules(request):
     """
 
     try:
-        qs = ContribRule.objects.all().order_by("id")
+        qs = ContribRule.objects.all().order_by("order", "id")
         logToDB(
             "Contribution rule list retrieved",
             None,

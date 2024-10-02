@@ -49,6 +49,7 @@ class ContribRule(models.Model):
 
     rule = models.CharField(max_length=254, unique=True)
     cap = models.CharField(max_length=254, null=True, blank=True, default=None)
+    order = models.IntegerField(default=0)
 
     def __str__(self):
         return self.rule
