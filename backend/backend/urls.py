@@ -59,7 +59,7 @@ from planning.api.routers.calculator import calculator_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
-api.version = "1.0.031"
+api.version = "1.0.032"
 api.description = "API documentation for LenoreFin"
 
 # Add routers to the API
