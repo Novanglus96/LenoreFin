@@ -23,3 +23,12 @@ class ContributionOut(Schema):
     emergency_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     cap: Decimal = Field(whole_digits=10, decimal_places=2)
     active: bool
+
+
+# The class ContributionsWithTotals is a schema for representing Contributions
+# with totals
+class ContributionWithTotals(Schema):
+    contributions: List[ContributionOut]
+    per_paycheck_total: Decimal = Field(whole_digits=10, decimal_places=2)
+    emergency_paycheck_total: Decimal = Field(whole_digits=10, decimal_places=2)
+    total_emergency: Decimal = Field(whole_digits=10, decimal_places=2)

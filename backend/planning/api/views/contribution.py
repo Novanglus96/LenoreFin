@@ -2,7 +2,11 @@ from ninja import Router, Query
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from planning.models import Contribution
-from planning.api.schemas.contribution import ContributionIn, ContributionOut
+from planning.api.schemas.contribution import (
+    ContributionIn,
+    ContributionOut,
+    ContributionWithTotals,
+)
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
@@ -201,7 +205,7 @@ def get_contribution(request, contribution_id: int):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@contribution_router.get("/list", response=List[ContributionOut])
+@contribution_router.get("/list", response=ContributionWithTotals)
 def list_contributions(request):
     """
     The function `list_contributions` retrieves a list of contributions,
@@ -216,6 +220,21 @@ def list_contributions(request):
 
     try:
         qs = Contribution.objects.all().order_by("id")
+
+        # Compute totals (this can be customized based on your business logic)
+        per_paycheck_total = sum([contrib.per_paycheck for contrib in qs])
+        emergency_paycheck_total = sum(
+            [contrib.emergency_amt for contrib in qs]
+        )
+        total_emergency = sum([contrib.emergency_diff for contrib in qs])
+
+        # Create the ContributionWithTotals object
+        contributions_with_totals = ContributionWithTotals(
+            contributions=list(qs),
+            per_paycheck_total=per_paycheck_total,
+            emergency_paycheck_total=emergency_paycheck_total,
+            total_emergency=total_emergency,
+        )
         logToDB(
             "Contribution list retrieved",
             None,
@@ -224,7 +243,7 @@ def list_contributions(request):
             3001007,
             1,
         )
-        return qs
+        return contributions_with_totals
     except Exception as e:
         # Log other types of exceptions
         logToDB(
@@ -235,7 +254,7 @@ def list_contributions(request):
             3001907,
             2,
         )
-        raise HttpError(500, "Record retrieval error")
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
 @contribution_router.delete("/delete/{contribution_id}")
