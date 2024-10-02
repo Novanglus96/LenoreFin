@@ -13,27 +13,38 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
-                  <VueDatePicker
-                    v-model="note_date.value.value"
-                    timezone="America/New_York"
-                    model-type="yyyy-MM-dd"
-                    :enable-time-picker="false"
-                    auto-apply
-                    format="yyyy-MM-dd"
-                  ></VueDatePicker
+                <v-col cols="10">
+                  <v-text-field
+                    v-model="rule.value.value"
+                    variant="outlined"
+                    label="Rule"
+                    density="compact"
+                    :error-messages="rule.errorMessage.value"
+                    :counter="254"
+                  ></v-text-field
                 ></v-col>
+                <v-col cols="2">
+                  <v-text-field
+                    v-model="order.value.value"
+                    variant="outlined"
+                    label="Order"
+                    density="compact"
+                    :error-messages="order.errorMessage.value"
+                    type="number"
+                    step="1"
+                  ></v-text-field>
+                </v-col>
               </v-row>
               <v-row dense
                 ><v-col>
                   <v-textarea
                     clearable
-                    label="Note"
+                    label="Cap"
                     variant="outlined"
-                    v-model="note_text.value.value"
-                    :rows="11"
+                    v-model="cap.value.value"
+                    :rows="9"
                     no-resize
-                    :error-messages="note_text.errorMessage.value"
+                    :error-messages="cap.errorMessage.value"
                     :counter="254"
                   ></v-textarea> </v-col
               ></v-row>
@@ -44,7 +55,7 @@
           ><v-spacer></v-spacer
           ><v-btn @click="clickClose" color="secondary">Close</v-btn
           ><v-btn color="secondary" type="submit">{{
-            props.isEdit ? "Save Changes" : "Add Note"
+            props.isEdit ? "Save Changes" : "Add Rule"
           }}</v-btn></v-card-actions
         >
       </v-card>
@@ -54,27 +65,31 @@
 <script setup>
 import { defineEmits, defineProps, watchEffect, onMounted } from "vue";
 import { useField, useForm } from "vee-validate";
-import VueDatePicker from "@vuepic/vue-datepicker";
-import "@vuepic/vue-datepicker/dist/main.css";
 
 const { handleSubmit } = useForm({
   validationSchema: {
-    note_text(value) {
+    rule(value) {
       if (value?.length >= 2 && value?.length <= 254) return true;
 
-      return "Note needs to be at least 2 characters, and less than 254.";
+      return "Rule needs to be at least 2 characters, and less than 254.";
     },
-    note_date(value) {
+    order(value) {
       if (value) return true;
 
-      return "Must provide a date.";
+      return "Order is required.";
+    },
+    cap(value) {
+      if (value) return true;
+
+      return "Cap is required.";
     },
   },
 });
 
 const id = useField("id");
-const note_date = useField("note_date");
-const note_text = useField("note_text");
+const rule = useField("rule");
+const order = useField("order");
+const cap = useField("cap");
 
 const props = defineProps({
   isEdit: {
@@ -88,21 +103,26 @@ const watchPassedFormData = () => {
   watchEffect(() => {
     if (props.passedFormData) {
       id.value.value = props.passedFormData.id;
-      note_date.value.value = props.passedFormData.note_date;
-      note_text.value.value = props.passedFormData.note_text;
+      rule.value.value = props.passedFormData.rule;
+      order.value.value = props.passedFormData.order;
+      cap.value.value = props.passedFormData.cap;
     }
   });
 };
 const submit = handleSubmit(values => {
   if (props.isEdit) {
-    emit("editNote", values);
+    emit("editContributionRule", values);
   } else {
-    emit("addNote", values);
+    emit("addContributionRule", values);
   }
   emit("updateDialog", false);
 });
 
-const emit = defineEmits(["updateDialog", "addNote", "editNote"]);
+const emit = defineEmits([
+  "updateDialog",
+  "addContributionRule",
+  "editContributionRule",
+]);
 
 const clickClose = () => {
   emit("updateDialog", false);

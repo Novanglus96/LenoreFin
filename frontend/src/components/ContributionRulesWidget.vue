@@ -38,13 +38,18 @@
         :stickyHeader="true"
         noDataContent="No rules"
         ref="contrib_rules_table"
-        height="440px"
+        height="240px"
         skin="bh-table-striped bh-table-compact"
         :pageSizeOptions="[10]"
         :showPageSize="false"
         paginationInfo="Showing {0} to {1} of {2} rules"
         class="alt-pagination"
       >
+        <template #cap="row">
+          <span :style="clampedStyle" class="text-body-2">{{
+            row.value.cap
+          }}</span>
+        </template>
         <template #order="row">
           <span class="font-weight-bold">#{{ row.value.order }}</span>
         </template>
@@ -104,7 +109,12 @@ const editContributionRuleDialog = ref(false);
 const addContributionRuleDialog = ref(false);
 const deleteContributionRuleDialog = ref(false);
 const selectedContributionRule = ref(null);
-const newContributionRuleData = ref({});
+const newContributionRuleData = ref({
+  id: 0,
+  rule: null,
+  order: 1,
+  cap: null,
+});
 
 const {
   contributionRules,
@@ -162,6 +172,15 @@ const clickDeleteContributionRule = contributionRule => {
 const clickAddContributionRule = contributionRule => {
   addContributionRule(contributionRule);
   addContributionRuleDialog.value = false;
+};
+
+const clampedStyle = {
+  whiteSpace: "pre-line",
+  display: "-webkit-box",
+  WebkitLineClamp: 9, // Limit to 3 lines
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+  textOverflow: "ellipsis", // Add "..." at the end if text is truncated
 };
 </script>
 <style>

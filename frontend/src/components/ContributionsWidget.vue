@@ -29,19 +29,15 @@
     <template v-slot:text>
       <v-container
         ><v-row dense
-          ><v-col class="text-right text-subtitle-2 font-weight-bold"
+          ><v-col class="text-right text-subtitle-2 font-weight-bold" cols="3"
             >Paycheck Total(non Emergency)</v-col
-          ><v-col class="text-left text-body-2">$10</v-col></v-row
-        >
-        <v-row dense
-          ><v-col class="text-right text-subtitle-2 font-weight-bold"
+          ><v-col class="text-left text-body-2" cols="1">$10</v-col
+          ><v-col cols="3" class="text-right text-subtitle-2 font-weight-bold"
             >Paycheck Total(Emergency)</v-col
-          ><v-col class="text-left text-body-2">$10</v-col></v-row
-        >
-        <v-row dense
-          ><v-col class="text-right text-subtitle-2 font-weight-bold"
+          ><v-col class="text-left text-body-2" cols="1">$10</v-col
+          ><v-col class="text-right text-subtitle-2 font-weight-bold" cols="3"
             >Emergency Total</v-col
-          ><v-col class="text-left text-body-2">$10</v-col></v-row
+          ><v-col class="text-left text-body-2" cols="1">$10</v-col></v-row
         >
       </v-container>
       <vue3-datatable
