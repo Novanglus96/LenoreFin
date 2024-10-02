@@ -31,20 +31,28 @@
         ><v-row dense
           ><v-col class="text-right text-subtitle-2 font-weight-bold" cols="3"
             >Paycheck Total(non Emergency)</v-col
-          ><v-col class="text-left text-body-2" cols="1">$10</v-col
+          ><v-col class="text-left text-body-2" cols="1"
+            >${{
+              contributions ? contributions.per_paycheck_total : "0"
+            }}</v-col
           ><v-col cols="3" class="text-right text-subtitle-2 font-weight-bold"
             >Paycheck Total(Emergency)</v-col
-          ><v-col class="text-left text-body-2" cols="1">$10</v-col
+          ><v-col class="text-left text-body-2" cols="1"
+            >${{
+              contributions ? contributions.emergency_paycheck_total : "0"
+            }}</v-col
           ><v-col class="text-right text-subtitle-2 font-weight-bold" cols="3"
             >Emergency Total</v-col
-          ><v-col class="text-left text-body-2" cols="1">$10</v-col></v-row
+          ><v-col class="text-left text-body-2" cols="1"
+            >${{ contributions ? contributions.total_emergency : "0" }}</v-col
+          ></v-row
         >
       </v-container>
       <vue3-datatable
-        :rows="contributions ? contributions : []"
+        :rows="contributions ? contributions.contributions : []"
         :columns="columns"
         :loading="isLoading"
-        :totalRows="contributions ? contributions.length : 0"
+        :totalRows="contributions ? contributions.contributions.length : 0"
         :isServerMode="false"
         pageSize="10"
         :hasCheckbox="false"
