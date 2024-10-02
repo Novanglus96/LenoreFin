@@ -219,14 +219,19 @@ def list_contributions(request):
     """
 
     try:
-        qs = Contribution.objects.all().order_by("id")
+        qs = Contribution.objects.all().order_by("-active", "id")
+        active_contribs = qs.filter(active=True)
 
         # Compute totals (this can be customized based on your business logic)
-        per_paycheck_total = sum([contrib.per_paycheck for contrib in qs])
-        emergency_paycheck_total = sum(
-            [contrib.emergency_amt for contrib in qs]
+        per_paycheck_total = sum(
+            [contrib.per_paycheck for contrib in active_contribs]
         )
-        total_emergency = sum([contrib.emergency_diff for contrib in qs])
+        emergency_paycheck_total = sum(
+            [contrib.emergency_amt for contrib in active_contribs]
+        )
+        total_emergency = sum(
+            [contrib.emergency_diff for contrib in active_contribs]
+        )
 
         # Create the ContributionWithTotals object
         contributions_with_totals = ContributionWithTotals(
