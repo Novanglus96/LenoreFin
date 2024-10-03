@@ -2,7 +2,7 @@
   <div>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded">
-        <v-card v-if="!isLoading">
+        <v-card v-if="!props.isLoading">
           <v-card-title>{{ props.graphName }}</v-card-title>
           <v-card-text>
             <v-container>
@@ -63,6 +63,7 @@ const props = defineProps({
   graphName: {
     type: String,
   },
+  isLoading: Boolean,
 });
 const this_year_avg = computed(() => (props.data ? props.data.year1_avg : 0));
 const show_year1 = computed(() => (props.data.year1_avg !== 0 ? true : false));

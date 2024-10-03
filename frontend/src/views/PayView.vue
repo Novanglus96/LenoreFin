@@ -18,49 +18,78 @@
             ><ReportGraphWidget
               :data="pay.gross"
               graphName="Gross"
-              key="gross" /></v-window-item
+              key="gross"
+              :isLoading="isLoading" /></v-window-item
           ><v-window-item value="net"
-            ><ReportGraphWidget :data="pay.net" graphName="Net" key="net"
+            ><ReportGraphWidget
+              :data="pay.net"
+              graphName="Net"
+              key="net"
+              :isLoading="isLoading"
           /></v-window-item>
           <v-window-item value="taxes"
-            ><ReportGraphWidget :data="pay.taxes" graphName="Taxes" key="taxes"
+            ><ReportGraphWidget
+              :data="pay.taxes"
+              graphName="Taxes"
+              key="taxes"
+              :isLoading="isLoading"
           /></v-window-item>
           <v-window-item value="health"
             ><ReportGraphWidget
               :data="pay.health"
               graphName="Health"
               key="health"
+              :isLoading="isLoading"
           /></v-window-item>
           <v-window-item value="pension"
             ><ReportGraphWidget
               :data="pay.pension"
               graphName="Pension"
               key="pension"
+              :isLoading="isLoading"
           /></v-window-item>
           <v-window-item value="fsa"
-            ><ReportGraphWidget :data="pay.fsa" graphName="FSA" key="fsa"
+            ><ReportGraphWidget
+              :data="pay.fsa"
+              graphName="FSA"
+              key="fsa"
+              :isLoading="isLoading"
           /></v-window-item>
           <v-window-item value="dca"
-            ><ReportGraphWidget :data="pay.dca" graphName="DCA" key="dca"
+            ><ReportGraphWidget
+              :data="pay.dca"
+              graphName="DCA"
+              key="dca"
+              :isLoading="isLoading"
           /></v-window-item>
           <v-window-item value="union"
             ><ReportGraphWidget
               :data="pay.union"
               graphName="Union Dues"
               key="union"
+              :isLoading="isLoading"
           /></v-window-item>
           <v-window-item value="457b"
             ><ReportGraphWidget
               :data="pay.fourfiftysevenb"
               graphName="457B"
-              key="457b" /></v-window-item></v-window></v-col></v-row
-  ></v-container>
+              key="457b"
+              :isLoading="
+                isLoading
+              " /></v-window-item></v-window></v-col></v-row
+    ><v-row class="pa-1 ga-1" no-gutters>
+      <v-col class="rounded text-center"
+        ><PayTableWidget :isLoading="isLoading" :data="pay" /></v-col
+    ></v-row>
+  </v-container>
 </template>
 <script setup>
 import { ref } from "vue";
 import ReportGraphWidget from "@/components/ReportGraphWidget.vue";
+import PayTableWidget from "@/components/PayTableWidget.vue";
 
 const tab = ref(0); // Tab model
+const isLoading = ref(false);
 const pay = ref({
   gross: {
     data: {
@@ -94,6 +123,8 @@ const pay = ref({
             "100",
             "200",
             "300",
+            "300",
+            "400",
           ],
           fill: null,
           pointStyle: null,
@@ -170,6 +201,8 @@ const pay = ref({
             "100",
             "200",
             "300",
+            "300",
+            "400",
           ],
           fill: null,
           pointStyle: null,
@@ -246,6 +279,8 @@ const pay = ref({
             "100",
             "200",
             "300",
+            "300",
+            "400",
           ],
           fill: null,
           pointStyle: null,
@@ -322,6 +357,8 @@ const pay = ref({
             "100",
             "200",
             "300",
+            "300",
+            "400",
           ],
           fill: null,
           pointStyle: null,
@@ -398,6 +435,8 @@ const pay = ref({
             "100",
             "200",
             "300",
+            "300",
+            "400",
           ],
           fill: null,
           pointStyle: null,
@@ -474,6 +513,8 @@ const pay = ref({
             "100",
             "200",
             "300",
+            "300",
+            "400",
           ],
           fill: null,
           pointStyle: null,
@@ -550,6 +591,8 @@ const pay = ref({
             "100",
             "200",
             "300",
+            "300",
+            "400",
           ],
           fill: null,
           pointStyle: null,
@@ -626,6 +669,8 @@ const pay = ref({
             "100",
             "200",
             "300",
+            "300",
+            "400",
           ],
           fill: null,
           pointStyle: null,
@@ -702,6 +747,8 @@ const pay = ref({
             "100",
             "200",
             "300",
+            "300",
+            "400",
           ],
           fill: null,
           pointStyle: null,
