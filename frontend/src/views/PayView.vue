@@ -3,95 +3,41 @@
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded text-center">
         <v-tabs v-model="tab" color="accent">
-          <v-tab value="gross" density="compact">Gross</v-tab>
-          <v-tab value="net" density="compact">Net</v-tab>
-          <v-tab value="taxes" density="compact">Taxes</v-tab>
-          <v-tab value="health" density="compact">Health</v-tab>
-          <v-tab value="pension" density="compact">Pension</v-tab>
-          <v-tab value="fsa" density="compact">FSA</v-tab>
-          <v-tab value="dca" density="compact">DCA</v-tab>
-          <v-tab value="union" density="compact">Union Dues</v-tab>
-          <v-tab value="457b" density="compact">457B</v-tab>
+          <v-tab
+            v-for="(item, index) in pay"
+            :key="index"
+            :value="item.key_name"
+            >{{ item.pretty_name }}</v-tab
+          >
         </v-tabs>
         <v-window v-model="tab">
-          <v-window-item value="gross"
-            ><ReportGraphWidget
-              :data="pay.gross"
-              graphName="Gross"
-              key="gross"
-              :isLoading="isLoading" /></v-window-item
-          ><v-window-item value="net"
-            ><ReportGraphWidget
-              :data="pay.net"
-              graphName="Net"
-              key="net"
-              :isLoading="isLoading"
-          /></v-window-item>
-          <v-window-item value="taxes"
-            ><ReportGraphWidget
-              :data="pay.taxes"
-              graphName="Taxes"
-              key="taxes"
-              :isLoading="isLoading"
-          /></v-window-item>
-          <v-window-item value="health"
-            ><ReportGraphWidget
-              :data="pay.health"
-              graphName="Health"
-              key="health"
-              :isLoading="isLoading"
-          /></v-window-item>
-          <v-window-item value="pension"
-            ><ReportGraphWidget
-              :data="pay.pension"
-              graphName="Pension"
-              key="pension"
-              :isLoading="isLoading"
-          /></v-window-item>
-          <v-window-item value="fsa"
-            ><ReportGraphWidget
-              :data="pay.fsa"
-              graphName="FSA"
-              key="fsa"
-              :isLoading="isLoading"
-          /></v-window-item>
-          <v-window-item value="dca"
-            ><ReportGraphWidget
-              :data="pay.dca"
-              graphName="DCA"
-              key="dca"
-              :isLoading="isLoading"
-          /></v-window-item>
-          <v-window-item value="union"
-            ><ReportGraphWidget
-              :data="pay.union"
-              graphName="Union Dues"
-              key="union"
-              :isLoading="isLoading"
-          /></v-window-item>
-          <v-window-item value="457b"
-            ><ReportGraphWidget
-              :data="pay.fourfiftysevenb"
-              graphName="457B"
-              key="457b"
+          <v-window-item
+            v-for="(item, index) in pay"
+            :key="index"
+            :value="item.key_name"
+          >
+            <ReportGraphWidget
+              :data="item"
+              :graphName="item.pretty_name"
+              :key="index"
               :isLoading="
                 isLoading
               " /></v-window-item></v-window></v-col></v-row
     ><v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded text-center"
-        ><PayTableWidget :isLoading="isLoading" :data="pay" /></v-col
+        ><ReportTableWidget :isLoading="isLoading" :data="pay" /></v-col
     ></v-row>
   </v-container>
 </template>
 <script setup>
 import { ref } from "vue";
 import ReportGraphWidget from "@/components/ReportGraphWidget.vue";
-import PayTableWidget from "@/components/PayTableWidget.vue";
+import ReportTableWidget from "@/components/ReportTableWidget.vue";
 
 const tab = ref(0); // Tab model
 const isLoading = ref(false);
-const pay = ref({
-  gross: {
+const pay = ref([
+  {
     data: {
       labels: [
         "January",
@@ -168,8 +114,10 @@ const pay = ref({
     year2: 2023,
     year1_avg: "150.0",
     year2_avg: "200.0",
+    pretty_name: "Gross",
+    key_name: "gross",
   },
-  net: {
+  {
     data: {
       labels: [
         "January",
@@ -246,8 +194,10 @@ const pay = ref({
     year2: 2023,
     year1_avg: "150.0",
     year2_avg: "200.0",
+    pretty_name: "Net",
+    key_name: "net",
   },
-  taxes: {
+  {
     data: {
       labels: [
         "January",
@@ -324,8 +274,10 @@ const pay = ref({
     year2: 2023,
     year1_avg: "150.0",
     year2_avg: "200.0",
+    pretty_name: "Taxes",
+    key_name: "taxes",
   },
-  health: {
+  {
     data: {
       labels: [
         "January",
@@ -402,8 +354,10 @@ const pay = ref({
     year2: 2023,
     year1_avg: "150.0",
     year2_avg: "200.0",
+    pretty_name: "Health",
+    key_name: "health",
   },
-  pension: {
+  {
     data: {
       labels: [
         "January",
@@ -480,8 +434,10 @@ const pay = ref({
     year2: 2023,
     year1_avg: "150.0",
     year2_avg: "200.0",
+    pretty_name: "Pension",
+    key_name: "pension",
   },
-  fsa: {
+  {
     data: {
       labels: [
         "January",
@@ -558,8 +514,10 @@ const pay = ref({
     year2: 2023,
     year1_avg: "150.0",
     year2_avg: "200.0",
+    pretty_name: "FSA",
+    key_name: "fsa",
   },
-  dca: {
+  {
     data: {
       labels: [
         "January",
@@ -636,8 +594,10 @@ const pay = ref({
     year2: 2023,
     year1_avg: "150.0",
     year2_avg: "200.0",
+    pretty_name: "DCA",
+    key_name: "dca",
   },
-  union: {
+  {
     data: {
       labels: [
         "January",
@@ -714,8 +674,10 @@ const pay = ref({
     year2: 2023,
     year1_avg: "150.0",
     year2_avg: "200.0",
+    pretty_name: "Union Dues",
+    key_name: "union",
   },
-  fourfiftysevenb: {
+  {
     data: {
       labels: [
         "January",
@@ -792,6 +754,8 @@ const pay = ref({
     year2: 2023,
     year1_avg: "150.0",
     year2_avg: "200.0",
+    pretty_name: "457B",
+    key_name: "fourfiftysevenb",
   },
-});
+]);
 </script>
