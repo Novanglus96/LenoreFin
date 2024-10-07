@@ -79,7 +79,6 @@ def list_graph_totals(request, graph_type: str):
             for tag in report_individual:
                 sub_graph_data = []
                 tag_detail = Tag.objects.get(parent_id=tag, child__isnull=True)
-                print(f"tag_detail: {tag_detail}")
                 title = tag_detail.parent.tag_name
                 sub_tags = Tag.objects.filter(parent__id=tag)
                 transactions_by_tag = sub_tags.annotate(
@@ -482,7 +481,6 @@ def list_graph_totals(request, graph_type: str):
                         output_field=CharField(),
                     ),
                 )
-                print(f"transactions_by_tag: {transactions_by_tag}")
                 for sub_tag in transactions_by_tag:
                     pretty_name = sub_tag.pretty_name
                     key_name = pretty_name.replace(" ", "_").lower()
