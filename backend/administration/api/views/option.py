@@ -86,6 +86,16 @@ def update_option(request, option_id: int, payload: OptionIn):
             option.widget3_month = payload.widget3_month
         if payload.widget3_exclude is not None:
             option.widget3_exclude = payload.widget3_exclude
+        if payload.auto_archive is not None:
+            option.auto_archive = payload.auto_archive
+        if payload.enable_cc_bill_calculation is not None:
+            option.enable_cc_bill_calculation = (
+                payload.enable_cc_bill_calculation
+            )
+        if payload.report_main is not None:
+            option.report_main = payload.report_main
+        if payload.report_individual is not None:
+            option.report_individual = payload.report_individual
         option.save()
         logToDB(
             f"Option updated : {option_id}",

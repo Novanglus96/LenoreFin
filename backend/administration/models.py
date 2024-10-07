@@ -150,6 +150,12 @@ class Option(SingletonModel):
     auto_archive = models.BooleanField(default=True)
     archive_length = models.IntegerField(default=2)
     enable_cc_bill_calculation = models.BooleanField(default=True)
+    report_main = models.CharField(
+        max_length=254, default=None, null=True, blank=True
+    )
+    report_individual = models.CharField(
+        max_length=254, default=None, null=True, blank=True
+    )
 
     @classmethod
     def load(cls):

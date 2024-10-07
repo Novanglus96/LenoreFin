@@ -20,7 +20,9 @@
         "widget3_tag_id": null,
         "widget3_type": 3,
         "widget3_month": 0,
-        "widget3_exclude": "[]"
+        "widget3_exclude": "[]",
+        "report_main": "[2,3,4,5,6,7,8,9,10,11,15,16,17,21,22,23]",
+        "report_individual": "[17,11,22]"
     }
   }
 ]

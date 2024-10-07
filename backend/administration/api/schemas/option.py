@@ -26,6 +26,11 @@ class OptionIn(Schema):
     widget3_type_id: Optional[int] = None
     widget3_month: Optional[int] = 0
     widget3_exclude: Optional[str] = None
+    auto_archive: Optional[bool] = True
+    archive_length: Optional[str] = 2
+    enable_cc_bill_calculation: Optional[bool] = True
+    report_main: Optional[str] = None
+    report_individual: Optional[str] = None
 
 
 # The class OptionOut is a schema for representing Options.
@@ -49,3 +54,8 @@ class OptionOut(Schema):
     widget3_type: Optional[GraphTypeOut] = None
     widget3_month: int = 0
     widget3_exclude: Optional[str] = None
+    auto_archive: Optional[bool] = True
+    archive_length: Optional[int] = 2
+    enable_cc_bill_calculation: Optional[bool] = True
+    report_main: Optional[str] = None
+    report_individual: Optional[str] = None

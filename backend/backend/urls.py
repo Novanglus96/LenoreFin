@@ -56,6 +56,7 @@ from administration.api.routers.decription_history import (
     description_history_router,
 )
 from planning.api.routers.calculator import calculator_router
+from planning.api.routers.planning_graph import planning_graph_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
@@ -94,6 +95,7 @@ api.add_router(
     "/administration/description-histories", description_history_router
 )
 api.add_router("/planning/calculator", calculator_router)
+api.add_router("planning/graph", planning_graph_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
