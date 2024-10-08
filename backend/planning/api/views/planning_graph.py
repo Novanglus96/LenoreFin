@@ -68,19 +68,575 @@ def list_graph_totals(request, graph_type: str):
 
         # If expenses
         if graph_type == "expense":
-            alltrans = TransactionDetail.objects.filter(
-                transaction__transaction_date__year__gte=last_year,
-                transaction__status__id__gt=1,
-            ).order_by("-transaction__transaction_date")
             options = get_object_or_404(Option, id=1)
             report_main = json.loads(options.report_main)
             report_individual = json.loads(options.report_individual)
+            # Retrieve main report transactions
+            title = "Main"
+            sub_graph_data = []
+            for tag in report_main:
+                tag_detail = Tag.objects.get(parent_id=tag, child__isnull=True)
+                pretty_name = tag_detail.parent.tag_name
+                key_name = pretty_name.replace(" ", "_").lower()
+                tag_group_totals = Tag.objects.filter(parent_id=tag).annotate(
+                    total_this_year=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_last_year=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_jan_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=1
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_feb_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=2
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_mar_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=3
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_apr_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=4
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_may_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=5
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_jun_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=6
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_jul_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=7
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_aug_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=8
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_sep_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=9
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_oct_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=10
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_nov_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=11
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_dec_current=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=12
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=this_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_jan_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=1
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_feb_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=2
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_mar_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=3
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_apr_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=4
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_may_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=5
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_jun_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=6
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_jul_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=7
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_aug_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=8
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_sep_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=9
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_oct_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=10
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_nov_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=11
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    total_dec_last=Coalesce(
+                        Sum(
+                            "transactiondetail__detail_amt",
+                            filter=Q(
+                                transactiondetail__transaction__transaction_date__month=12
+                            )
+                            & Q(
+                                transactiondetail__transaction__transaction_date__year=last_year
+                            ),
+                            output_field=FloatField(),
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                )
+                # Prepare the datasets
+                datasets = []
+                this_year_dataset = DatasetObject(
+                    label=this_year,
+                    backgroundColor="#046959",
+                    data=[
+                        abs(
+                            sum(
+                                item.total_jan_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_feb_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_mar_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_apr_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_may_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_jun_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_jul_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_aug_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_sep_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_oct_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_nov_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_dec_current
+                                for item in tag_group_totals
+                            )
+                        ),
+                    ],
+                )
+                datasets.append(this_year_dataset)
+                last_year_dataset = DatasetObject(
+                    label=last_year,
+                    backgroundColor="#c2fff5",
+                    data=[
+                        abs(
+                            sum(
+                                item.total_jan_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_feb_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_mar_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_apr_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_may_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_jun_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_jul_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_aug_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_sep_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_oct_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_nov_last for item in tag_group_totals
+                            )
+                        ),
+                        abs(
+                            sum(
+                                item.total_dec_last for item in tag_group_totals
+                            )
+                        ),
+                    ],
+                )
+                datasets.append(last_year_dataset)
+
+                # Prepare the GraphData object
+                graph_data = GraphData(
+                    labels=[
+                        "January",
+                        "February",
+                        "March",
+                        "April",
+                        "May",
+                        "June",
+                        "July",
+                        "August",
+                        "September",
+                        "October",
+                        "November",
+                        "December",
+                    ],
+                    datasets=datasets,
+                )
+
+                # Calculate averages
+                current_avg = abs(
+                    sum(item.total_this_year for item in tag_group_totals)
+                    / this_month
+                )
+                last_avg = abs(
+                    sum(item.total_last_year for item in tag_group_totals) / 12
+                )
+
+                # Prepare the planning graph out object
+                tag_graph_out = PlanningGraphOut(
+                    data=graph_data,
+                    year1=this_year,
+                    year2=last_year,
+                    year1_avg=current_avg,
+                    year2_avg=last_avg,
+                    pretty_name=pretty_name,
+                    key_name=key_name,
+                )
+                sub_graph_data.append(tag_graph_out)
+            graph_object = PlanningGraphList(title=title, data=sub_graph_data)
+            all_reports.append(graph_object)
+
             # Retrieve individual report transactions
             for tag in report_individual:
                 sub_graph_data = []
                 tag_detail = Tag.objects.get(parent_id=tag, child__isnull=True)
                 title = tag_detail.parent.tag_name
-                sub_tags = Tag.objects.filter(parent__id=tag)
+                sub_tags = Tag.objects.filter(
+                    parent__id=tag, child__isnull=False
+                )
                 transactions_by_tag = sub_tags.annotate(
                     total_this_year=Coalesce(
                         Sum(
@@ -491,18 +1047,18 @@ def list_graph_totals(request, graph_type: str):
                         label=this_year,
                         backgroundColor="#046959",
                         data=[
-                            sub_tag.total_jan_current,
-                            sub_tag.total_feb_current,
-                            sub_tag.total_mar_current,
-                            sub_tag.total_apr_current,
-                            sub_tag.total_may_current,
-                            sub_tag.total_jun_current,
-                            sub_tag.total_jul_current,
-                            sub_tag.total_aug_current,
-                            sub_tag.total_sep_current,
-                            sub_tag.total_oct_current,
-                            sub_tag.total_nov_current,
-                            sub_tag.total_dec_current,
+                            abs(sub_tag.total_jan_current),
+                            abs(sub_tag.total_feb_current),
+                            abs(sub_tag.total_mar_current),
+                            abs(sub_tag.total_apr_current),
+                            abs(sub_tag.total_may_current),
+                            abs(sub_tag.total_jun_current),
+                            abs(sub_tag.total_jul_current),
+                            abs(sub_tag.total_aug_current),
+                            abs(sub_tag.total_sep_current),
+                            abs(sub_tag.total_oct_current),
+                            abs(sub_tag.total_nov_current),
+                            abs(sub_tag.total_dec_current),
                         ],
                     )
                     datasets.append(this_year_dataset)
@@ -510,18 +1066,18 @@ def list_graph_totals(request, graph_type: str):
                         label=last_year,
                         backgroundColor="#c2fff5",
                         data=[
-                            sub_tag.total_jan_last,
-                            sub_tag.total_feb_last,
-                            sub_tag.total_mar_last,
-                            sub_tag.total_apr_last,
-                            sub_tag.total_may_last,
-                            sub_tag.total_jun_last,
-                            sub_tag.total_jul_last,
-                            sub_tag.total_aug_last,
-                            sub_tag.total_sep_last,
-                            sub_tag.total_oct_last,
-                            sub_tag.total_nov_last,
-                            sub_tag.total_dec_last,
+                            abs(sub_tag.total_jan_last),
+                            abs(sub_tag.total_feb_last),
+                            abs(sub_tag.total_mar_last),
+                            abs(sub_tag.total_apr_last),
+                            abs(sub_tag.total_may_last),
+                            abs(sub_tag.total_jun_last),
+                            abs(sub_tag.total_jul_last),
+                            abs(sub_tag.total_aug_last),
+                            abs(sub_tag.total_sep_last),
+                            abs(sub_tag.total_oct_last),
+                            abs(sub_tag.total_nov_last),
+                            abs(sub_tag.total_dec_last),
                         ],
                     )
                     datasets.append(last_year_dataset)
@@ -550,8 +1106,8 @@ def list_graph_totals(request, graph_type: str):
                         data=graph_data,
                         year1=this_year,
                         year2=last_year,
-                        year1_avg=sub_tag.current_year_avg,
-                        year2_avg=sub_tag.last_year_avg,
+                        year1_avg=abs(sub_tag.current_year_avg),
+                        year2_avg=abs(sub_tag.last_year_avg),
                         pretty_name=pretty_name,
                         key_name=key_name,
                     )
