@@ -1468,8 +1468,8 @@ def prepare_planning_graph(
         data=graph_data,
         year1=this_year,
         year2=last_year,
-        year1_avg=this_year_data[12],
-        year2_avg=last_year_data[12],
+        year1_avg=round(this_year_data[12], 2),
+        year2_avg=round(last_year_data[12], 2),
         pretty_name=pretty_name,
         key_name=key_name,
     )
