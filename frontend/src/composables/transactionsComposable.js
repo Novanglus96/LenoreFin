@@ -148,6 +148,8 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["description-history"] });
       queryClient.invalidateQueries({ queryKey: ["calculator"] });
+      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
     },
   });
 
@@ -160,6 +162,8 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["calculator"] });
+      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
     },
   });
 
@@ -172,6 +176,8 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["calculator"] });
+      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
     },
   });
 
@@ -185,6 +191,8 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["description-history"] });
       queryClient.invalidateQueries({ queryKey: ["calculator"] });
+      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
     },
   });
 
