@@ -33,7 +33,7 @@ import os
 from django.utils import timezone
 from accounts.api.schemas.forecast import DatasetObject, GraphData
 from administration.models import Option
-from transactions.models import Transaction, TransactionDetail
+from transactions.models import Transaction, TransactionDetail, Paycheck
 from tags.models import Tag
 import json
 
@@ -1116,6 +1116,427 @@ def list_graph_totals(request, graph_type: str):
                     title=title, data=sub_graph_data
                 )
                 all_reports.append(graph_object)
+        elif graph_type == "pay":
+            sub_graph_data = []
+            paychecks = Paycheck.objects.filter(
+                transaction__transaction_date__year__gte=last_year
+            )
+            fields = [
+                "gross",
+                "net",
+                "taxes",
+                "health",
+                "pension",
+                "fsa",
+                "dca",
+                "union_dues",
+                "four_fifty_seven_b",
+            ]
+            fields_pretty = [
+                "Gross",
+                "Net",
+                "Taxes",
+                "Health",
+                "Pension",
+                "FSA",
+                "DCA",
+                "Union Dues",
+                "457B",
+            ]
+            for i, field in enumerate(fields):
+                totals_this_year = paychecks.filter(
+                    transaction__transaction_date__year=this_year
+                ).aggregate(
+                    jan_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=1,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    feb_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=2,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    mar_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=3,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    apr_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=4,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    may_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=5,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    jun_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=6,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    jul_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=7,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    aug_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=8,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    sep_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=9,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    oct_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=10,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    nov_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=11,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    dec_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=12,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    year_total=Coalesce(
+                        Sum(field), Value(0.0), output_field=FloatField()
+                    ),
+                )
+                totals_last_year = paychecks.filter(
+                    transaction__transaction_date__year=last_year
+                ).aggregate(
+                    jan_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=1,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    feb_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=2,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    mar_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=3,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    apr_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=4,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    may_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=5,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    jun_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=6,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    jul_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=7,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    aug_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=8,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    sep_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=9,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    oct_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=10,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    nov_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=11,
+                                    then=field,
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    dec_total=Coalesce(
+                        Sum(
+                            Case(
+                                When(
+                                    transaction__transaction_date__month=12,
+                                    then="gross",
+                                ),
+                                default=0.0,
+                                output_field=FloatField(),
+                            )
+                        ),
+                        Value(0.0),
+                        output_field=FloatField(),
+                    ),
+                    year_total=Coalesce(
+                        Sum(field), Value(0.0), output_field=FloatField()
+                    ),
+                )
+                this_year_avg = totals_this_year["year_total"] / this_month
+                last_year_avg = totals_last_year["year_total"] / 12
+                this_year_data = [
+                    totals_this_year["jan_total"],
+                    totals_this_year["feb_total"],
+                    totals_this_year["mar_total"],
+                    totals_this_year["apr_total"],
+                    totals_this_year["may_total"],
+                    totals_this_year["jun_total"],
+                    totals_this_year["jul_total"],
+                    totals_this_year["aug_total"],
+                    totals_this_year["sep_total"],
+                    totals_this_year["oct_total"],
+                    totals_this_year["nov_total"],
+                    totals_this_year["dec_total"],
+                    this_year_avg,
+                ]
+                last_year_data = [
+                    totals_last_year["jan_total"],
+                    totals_last_year["feb_total"],
+                    totals_last_year["mar_total"],
+                    totals_last_year["apr_total"],
+                    totals_last_year["may_total"],
+                    totals_last_year["jun_total"],
+                    totals_last_year["jul_total"],
+                    totals_last_year["aug_total"],
+                    totals_last_year["sep_total"],
+                    totals_last_year["oct_total"],
+                    totals_last_year["nov_total"],
+                    totals_last_year["dec_total"],
+                    last_year_avg,
+                ]
+                graph_data = prepare_planning_graph(
+                    fields_pretty[i],
+                    this_year_data,
+                    last_year_data,
+                    this_year,
+                    last_year,
+                )
+                sub_graph_data.append(graph_data)
+            graph_object = PlanningGraphList(title="Pay", data=sub_graph_data)
+            all_reports.append(graph_object)
+
         return all_reports
     except Exception as e:
         # Log other types of exceptions
@@ -1128,3 +1549,79 @@ def list_graph_totals(request, graph_type: str):
             2,
         )
         raise HttpError(500, f"Record retrieval error: {str(e)}")
+
+
+def prepare_planning_graph(
+    pretty_name: str,
+    this_year_data: List[float],
+    last_year_data: List[float],
+    this_year: int,
+    last_year: int,
+):
+    """
+    The function `prepare_planning_graph` sets up a planning graph
+    object based on supplied data for current and last year.
+
+    Args:
+        pretty_name (str): The HTTP request object.
+        this_year_data (List[float]): A list of totals for this year
+        last_year_data (List[float]): A list of totals for last year
+        this_year (int): The 4 digit year for this year
+        last_year (int): The 4 digit year for last year
+
+    Returns:
+        planning_graph_out (PlanningGraphOut): the planning graph object
+    """
+    key_name = pretty_name.replace(" ", "_").lower()
+    this_year_monthly_data = []
+    last_year_monthly_data = []
+    for i in range(0, 12):
+        this_year_monthly_data.append(abs(this_year_data[i]))
+        last_year_monthly_data.append(abs(last_year_data[i]))
+
+    # Prepare the datasets
+    datasets = []
+    this_year_dataset = DatasetObject(
+        label=this_year,
+        backgroundColor="#046959",
+        data=this_year_monthly_data,
+    )
+    datasets.append(this_year_dataset)
+    last_year_dataset = DatasetObject(
+        label=last_year,
+        backgroundColor="#c2fff5",
+        data=last_year_monthly_data,
+    )
+    datasets.append(last_year_dataset)
+
+    # Prepare the GraphData object
+    graph_data = GraphData(
+        labels=[
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ],
+        datasets=datasets,
+    )
+
+    # Prepare the planning graph out object
+    planning_graph_out = PlanningGraphOut(
+        data=graph_data,
+        year1=this_year,
+        year2=last_year,
+        year1_avg=this_year_data[12],
+        year2_avg=last_year_data[12],
+        pretty_name=pretty_name,
+        key_name=key_name,
+    )
+
+    return planning_graph_out
