@@ -1059,6 +1059,14 @@ def list_graph_totals(request, graph_type: str):
                         title=title, data=sub_graph_data
                     )
                     all_reports.append(graph_object)
+                logToDB(
+                    f"{graph_type} graph details retrieved",
+                    None,
+                    None,
+                    None,
+                    3002004,
+                    0,
+                )
             except Exception as e:
                 # Log other types of exceptions
                 logToDB(
@@ -1495,10 +1503,18 @@ def list_graph_totals(request, graph_type: str):
                     title="Pay", data=sub_graph_data
                 )
                 all_reports.append(graph_object)
+                logToDB(
+                    f"{graph_type} graph details retrieved",
+                    None,
+                    None,
+                    None,
+                    3002004,
+                    0,
+                )
             except Exception as e:
                 # Log other types of exceptions
                 logToDB(
-                    f"{graph_type} graph details not retrieved : {str(e)}",
+                    f"{graph_type} graph details not retrieved(Pay) : {str(e)}",
                     None,
                     None,
                     None,
@@ -1506,8 +1522,17 @@ def list_graph_totals(request, graph_type: str):
                     2,
                 )
                 raise HttpError(
-                    500, f"{graph_type} graph details retrieval error: {str(e)}"
+                    500,
+                    f"{graph_type} graph details retrieval error(Pay): {str(e)}",
                 )
+        logToDB(
+            f"{graph_type} planning graph retrieved",
+            None,
+            None,
+            None,
+            3002004,
+            0,
+        )
         return all_reports
     except Exception as e:
         # Log other types of exceptions
@@ -1597,12 +1622,19 @@ def prepare_planning_graph(
             pretty_name=pretty_name,
             key_name=key_name,
         )
-
+        logToDB(
+            f"Planning graph prepared({pretty_name})",
+            None,
+            None,
+            None,
+            3002004,
+            0,
+        )
         return planning_graph_out
     except Exception as e:
         # Log other types of exceptions
         logToDB(
-            f"Planning graph not prepared : {str(e)}",
+            f"Planning graph not prepared({pretty_name}) : {str(e)}",
             None,
             None,
             None,
