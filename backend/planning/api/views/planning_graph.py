@@ -79,7 +79,6 @@ def list_graph_totals(request, graph_type: str):
                         parent_id=tag, child__isnull=True
                     )
                     pretty_name = tag_detail.parent.tag_name
-                    key_name = pretty_name.replace(" ", "_").lower()
                     tag_group_totals = Tag.objects.filter(
                         parent_id=tag
                     ).annotate(
@@ -1575,8 +1574,8 @@ def prepare_planning_graph(
         this_year_monthly_data = []
         last_year_monthly_data = []
         for i in range(0, 12):
-            this_year_monthly_data.append(abs(this_year_data[i]))
-            last_year_monthly_data.append(abs(last_year_data[i]))
+            this_year_monthly_data.append(round(abs(this_year_data[i]), 2))
+            last_year_monthly_data.append(round(abs(last_year_data[i]), 2))
 
         # Prepare the datasets
         datasets = []
