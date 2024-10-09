@@ -1445,7 +1445,7 @@ def list_graph_totals(request, graph_type: str):
                                 Case(
                                     When(
                                         transaction__transaction_date__month=12,
-                                        then="gross",
+                                        then=field,
                                     ),
                                     default=0.0,
                                     output_field=FloatField(),
