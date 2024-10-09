@@ -475,15 +475,16 @@ const grossTotal = computed(() => {
     ? [
         () => {
           if (
-            paycheck.value.dca +
-              paycheck.value.four_fifty_seven_b +
-              paycheck.value.fsa +
-              paycheck.value.health +
-              paycheck.value.pension +
-              paycheck.value.taxes +
-              paycheck.value.union_dues +
-              amount.value ===
-            paycheck.value.gross
+            roundToTwoDecimals(
+              parseFloat(paycheck.value.dca) +
+                parseFloat(paycheck.value.four_fifty_seven_b) +
+                parseFloat(paycheck.value.fsa) +
+                parseFloat(paycheck.value.health) +
+                parseFloat(paycheck.value.pension) +
+                parseFloat(paycheck.value.taxes) +
+                parseFloat(paycheck.value.union_dues) +
+                parseFloat(amount.value),
+            ) === roundToTwoDecimals(parseFloat(paycheck.value.gross))
           )
             return true;
           return "All fields must total gross.";
@@ -491,6 +492,10 @@ const grossTotal = computed(() => {
       ]
     : [];
 });
+
+function roundToTwoDecimals(value) {
+  return Math.round(value * 100) / 100; // Round to 2 decimal places
+}
 
 // Date variables...
 const today = new Date();
