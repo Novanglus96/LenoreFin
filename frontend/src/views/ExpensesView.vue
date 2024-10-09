@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-row class="pa-1 ga-1" no-gutters>
+    <v-row class="pa-1 ga-1" no-gutters v-if="!isLoading">
       <v-col class="rounded text-center">
         <v-tabs v-model="main_tab" color="accent">
           <v-tab
@@ -43,6 +43,27 @@
           </v-window-item>
         </v-window> </v-col
     ></v-row>
+    <div v-else>
+      <v-row
+        ><v-col cols="3"></v-col
+        ><v-col
+          class="text-subtitle-2 text-uppercase text-center font-italic text-accent"
+        >
+          Loading Data...</v-col
+        ><v-col cols="3"></v-col
+      ></v-row>
+      <v-row
+        ><v-col cols="3"></v-col
+        ><v-col>
+          <v-progress-linear
+            color="accent"
+            height="6"
+            indeterminate
+            rounded
+          ></v-progress-linear> </v-col
+        ><v-col cols="3"></v-col
+      ></v-row>
+    </div>
   </v-container>
 </template>
 <script setup>
