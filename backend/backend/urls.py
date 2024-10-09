@@ -60,7 +60,7 @@ from planning.api.routers.planning_graph import planning_graph_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
-api.version = "1.0.038"
+api.version = "1.0.039"
 api.description = "API documentation for LenoreFin"
 
 # Add routers to the API
