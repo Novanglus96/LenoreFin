@@ -237,13 +237,13 @@
             :class="
               getClassForMoney(row.value.pretty_total, row.value.status.id)
             "
-            >${{ row.value.pretty_total }}</span
+            >{{ formatCurrency(row.value.pretty_total) }}</span
           >
         </template>
         <template #balance="row">
           <span
             :class="getClassForMoney(row.value.balance, row.value.status.id)"
-            >${{ row.value.balance }}</span
+            >{{ formatCurrency(row.value.balance) }}</span
           >
         </template>
         <template #description="row">
@@ -482,6 +482,14 @@ const updateImportFileDialog = () => {
 
 const updateEditDialog = () => {
   transactionEditFormDialog.value = false;
+};
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 };
 </script>
 <style>

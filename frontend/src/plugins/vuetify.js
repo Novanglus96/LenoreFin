@@ -22,6 +22,11 @@ const myCustomLightTheme = {
 export default createVuetify({
   theme: {
     defaultTheme: "myCustomLightTheme",
+    variations: {
+      colors: ["primary", "secondary", "accent"],
+      lighten: 3,
+      darken: 3,
+    },
     themes: {
       myCustomLightTheme,
     },

@@ -40,7 +40,7 @@
             :class="
               getClassForMoney(row.value.pretty_total, row.value.status.id)
             "
-            >${{ row.value.pretty_total }}</span
+            >{{ formatCurrency(row.value.pretty_total) }}</span
           >
         </template>
         <template #checkNumber="row">
@@ -176,6 +176,14 @@ watch(props.ruleID, newValue => {
 watch(props.timeframe, newValue => {
   local_timeframe.value = newValue;
 });
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
 </script>
 <style>
 /* alt-pagination */

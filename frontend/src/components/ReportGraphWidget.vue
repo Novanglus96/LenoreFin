@@ -14,16 +14,14 @@
               <v-row>
                 <v-col class="text-right"
                   ><span class="text-subtitle-2"
-                    >{{ props.data.year1 }} Avg: ${{
-                      props.data.year1_avg
-                    }}</span
+                    >{{ props.data.year1 }} Avg:
+                    {{ formatCurrency(props.data.year1_avg) }}</span
                   ></v-col
                 >
                 <v-col class="text-left"
                   ><span class="text-subtitle-2"
-                    >{{ props.data.year2 }} Avg: ${{
-                      props.data.year2_avg
-                    }}</span
+                    >{{ props.data.year2 }} Avg:
+                    {{ formatCurrency(props.data.year2_avg) }}</span
                   ></v-col
                 >
               </v-row>
@@ -128,4 +126,12 @@ const options = ref({
     },
   },
 });
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
 </script>

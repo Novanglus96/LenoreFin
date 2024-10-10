@@ -57,9 +57,9 @@
         class="alt-pagination"
       >
         <template #pretty_total="row">
-          <span :class="getClassForMoney(row.value.pretty_total)"
-            >${{ row.value.pretty_total }}</span
-          >
+          <span :class="getClassForMoney(row.value.pretty_total)">{{
+            formatCurrency(row.value.pretty_total)
+          }}</span>
         </template>
         <template #memo="row">
           <span :style="{ whiteSpace: 'pre-line' }" class="text-body-2">{{
@@ -227,6 +227,14 @@ const editTransfer = trans => {
   newTotal.value = totalAmount;
   newMemo.value = memo;
   calculatorEditTransactionDialog.value = true;
+};
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 };
 </script>
 <style>

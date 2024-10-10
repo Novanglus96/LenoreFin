@@ -32,7 +32,7 @@
                 ? 'text-green font-weight-bold'
                 : 'text-red font-weight-bold'
             "
-            >${{ account.balance }}</span
+            >{{ formatCurrency(account.balance) }}</span
           ></v-list-item-subtitle
         >
       </v-list-item>
@@ -61,7 +61,7 @@
                 ? 'text-green font-weight-bold'
                 : 'text-red font-weight-bold'
             "
-            >${{ account.balance }}</span
+            >{{ formatCurrency(account.balance) }}</span
           ></v-list-item-subtitle
         >
       </v-list-item>
@@ -90,7 +90,7 @@
                 ? 'text-green font-weight-bold'
                 : 'text-red font-weight-bold'
             "
-            >${{ account.balance }}</span
+            >{{ formatCurrency(account.balance) }}</span
           ></v-list-item-subtitle
         >
       </v-list-item>
@@ -119,7 +119,7 @@
                 ? 'text-green font-weight-bold'
                 : 'text-red font-weight-bold'
             "
-            >${{ account.balance }}</span
+            >{{ formatCurrency(account.balance) }}</span
           ></v-list-item-subtitle
         >
       </v-list-item>
@@ -148,7 +148,7 @@
                 ? 'text-green font-weight-bold'
                 : 'text-red font-weight-bold'
             "
-            >${{ account.balance }}</span
+            >{{ formatCurrency(account.balance) }}</span
           ></v-list-item-subtitle
         >
       </v-list-item>
@@ -203,4 +203,12 @@ const {
   inactive_accounts,
 } = useAccounts();
 const add_account_link = ref("/accounts/add");
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
 </script>

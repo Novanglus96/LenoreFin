@@ -37,7 +37,7 @@
             :class="
               getClassForMoney(row.value.pretty_total, row.value.status.id)
             "
-            >${{ row.value.pretty_total }}</span
+            >{{ formatCurrency(row.value.pretty_total) }}</span
           >
         </template>
         <template #checkNumber="row">
@@ -141,6 +141,14 @@ const getClassForMoney = (amount, status) => {
   }
 
   return color + " " + font;
+};
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 };
 </script>
 <style>

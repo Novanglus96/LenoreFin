@@ -14,16 +14,14 @@
               <v-row>
                 <v-col class="text-right"
                   ><span class="text-subtitle-2"
-                    >{{ tag_transactions.year1 }} Avg: ${{
-                      tag_transactions.year1_avg
-                    }}</span
+                    >{{ tag_transactions.year1 }} Avg:
+                    {{ formatCurrency(tag_transactions.year1_avg) }}</span
                   ></v-col
                 >
                 <v-col class="text-left"
                   ><span class="text-subtitle-2"
-                    >{{ tag_transactions.year2 }} Avg: ${{
-                      tag_transactions.year2_avg
-                    }}</span
+                    >{{ tag_transactions.year2 }} Avg:
+                    {{ formatCurrency(tag_transactions.year2_avg) }}</span
                   ></v-col
                 >
               </v-row>
@@ -70,13 +68,15 @@
                       ? 'text-red'
                       : 'text-green'
                   "
-                  >${{ row.value.transaction.total_amount }}</span
+                  >{{
+                    formatCurrency(row.value.transaction.total_amount)
+                  }}</span
                 >
               </template>
               <template #detail_amt="row">
                 <span
                   :class="row.value.detail_amt < 0 ? 'text-red' : 'text-green'"
-                  >${{ row.value.detail_amt }}</span
+                  >{{ formatCurrency(row.value.detail_amt) }}</span
                 >
               </template>
               <template #description="row">
@@ -219,6 +219,14 @@ const options = ref({
     },
   },
 });
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
 </script>
 <style>
 /* alt-pagination */

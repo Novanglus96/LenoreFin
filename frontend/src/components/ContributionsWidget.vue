@@ -31,21 +31,25 @@
         ><v-row dense
           ><v-col class="text-right text-subtitle-2 font-weight-bold" cols="3"
             >Paycheck Total(non Emergency)</v-col
-          ><v-col class="text-left text-body-2" cols="1"
-            >${{
-              contributions ? contributions.per_paycheck_total : "0"
-            }}</v-col
+          ><v-col class="text-left text-body-2" cols="1">{{
+            contributions
+              ? formatCurrency(contributions.per_paycheck_total)
+              : formatCurrency(0)
+          }}</v-col
           ><v-col cols="3" class="text-right text-subtitle-2 font-weight-bold"
             >Paycheck Total(Emergency)</v-col
-          ><v-col class="text-left text-body-2" cols="1"
-            >${{
-              contributions ? contributions.emergency_paycheck_total : "0"
-            }}</v-col
+          ><v-col class="text-left text-body-2" cols="1">{{
+            contributions
+              ? formatCurrency(contributions.emergency_paycheck_total)
+              : formatCurrency(0)
+          }}</v-col
           ><v-col class="text-right text-subtitle-2 font-weight-bold" cols="3"
             >Emergency Total</v-col
-          ><v-col class="text-left text-body-2" cols="1"
-            >${{ contributions ? contributions.total_emergency : "0" }}</v-col
-          ></v-row
+          ><v-col class="text-left text-body-2" cols="1">{{
+            contributions
+              ? formatCurrency(contributions.total_emergency)
+              : formatCurrency(0)
+          }}</v-col></v-row
         >
       </v-container>
       <vue3-datatable
@@ -78,24 +82,24 @@
           >
         </template>
         <template #per_paycheck="row">
-          <span :class="row.value.active ? '' : 'font-italic'"
-            >${{ row.value.per_paycheck }}</span
-          >
+          <span :class="row.value.active ? '' : 'font-italic'">{{
+            formatCurrency(row.value.per_paycheck)
+          }}</span>
         </template>
         <template #emergency_amt="row">
-          <span :class="row.value.active ? '' : 'font-italic'"
-            >${{ row.value.emergency_amt }}</span
-          >
+          <span :class="row.value.active ? '' : 'font-italic'">{{
+            formatCurrency(row.value.emergency_amt)
+          }}</span>
         </template>
         <template #emergency_diff="row">
-          <span :class="row.value.active ? '' : 'font-italic'"
-            >${{ row.value.emergency_diff }}</span
-          >
+          <span :class="row.value.active ? '' : 'font-italic'">{{
+            formatCurrency(row.value.emergency_diff)
+          }}</span>
         </template>
         <template #cap="row">
-          <span :class="row.value.active ? '' : 'font-italic'"
-            >${{ row.value.cap }}</span
-          >
+          <span :class="row.value.active ? '' : 'font-italic'">{{
+            formatCurrency(row.value.cap)
+          }}</span>
         </template>
         <template #edit="row">
           <v-btn variant="plain" icon @click="clickEditButton(row.value)"
@@ -249,6 +253,14 @@ const clickDeleteContribution = contribution => {
 const clickAddContribution = contribution => {
   addContribution(contribution);
   addContributionDialog.value = false;
+};
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 };
 </script>
 <style>

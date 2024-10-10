@@ -110,9 +110,9 @@
           }}</span>
         </template>
         <template #amount="row">
-          <span :class="getClassForMoney(row.value.amount)"
-            >${{ row.value.amount }}</span
-          >
+          <span :class="getClassForMoney(row.value.amount)">{{
+            formatCurrency(row.value.amount)
+          }}</span>
         </template>
         <template #description="row">
           <span class="font-weight-bold text-black">{{
@@ -259,6 +259,14 @@ const updateAddDialog = () => {
 
 const updateEditDialog = () => {
   reminderEditFormDialog.value = false;
+};
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 };
 </script>
 <style>

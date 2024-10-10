@@ -6,83 +6,128 @@
       :class="account.active ? 'bg-secondary' : 'bg-grey'"
       v-if="!isLoading"
     >
-      <template v-slot:append>
-        <v-tooltip text="Adjust Balance" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-cash-edit"
-              flat
-              variant="plain"
-              @click="adjBalDialog = true"
-              v-bind="props"
-            />
-          </template>
-        </v-tooltip>
-        <AdjustBalanceForm
-          v-model="adjBalDialog"
-          :account="account"
-          @update-dialog="updateAdjBalDialog"
-        />
-        <v-tooltip text="Edit Account" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-application-edit"
-              flat
-              variant="plain"
-              @click="editDialog = true"
-              v-bind="props"
-            />
-          </template>
-        </v-tooltip>
-        <EditAccountForm
-          v-model="editDialog"
-          :account="account"
-          @update-dialog="updateEditDialog"
-        />
-        <v-tooltip
-          :text="account.active ? 'Delete Account' : 'Enable Account'"
-          location="top"
-        >
-          <template v-slot:activator="{ props }">
-            <v-btn
-              :icon="account.active ? 'mdi-bank-remove' : 'mdi-bank-check'"
-              :color="account.active ? 'red' : 'green'"
-              flat
-              variant="plain"
-              @click="deleteDialog = true"
-              v-bind="props"
-            />
-          </template>
-        </v-tooltip>
-        <DeleteAccountForm
-          v-model="deleteDialog"
-          :account="account"
-          @update-dialog="updateDeleteDialog"
-        />
-      </template>
-      <template v-slot:title>
-        {{
-          account.active
-            ? account.account_name
-            : account.account_name + " (Inactive)"
-        }}
-      </template>
-      <template v-slot:subtitle> ${{ account.balance }} </template>
       <template v-slot:text>
-        <v-row desnity="compact" v-if="account.account_type.id == 1">
-          <v-col col="2" class="text-right text-black font-weight-bold"
-            >Statement Ending:</v-col
-          ><v-col col="2">{{ account.next_cycle_date }}</v-col>
-          <v-col col="2" class="text-right text-black font-weight-bold"
-            >Last Statement:</v-col
-          ><v-col col="2">${{ account.last_statement_amount }}</v-col>
-          <v-col col="2" class="text-right text-black font-weight-bold"
-            >Rewards:</v-col
-          ><v-col col="2">${{ account.rewards_amount }}</v-col>
-          <v-col col="2" class="text-right text-black font-weight-bold"
-            >Available Credit:</v-col
-          ><v-col col="2">${{ account.available_credit }}</v-col>
-        </v-row>
+        <v-container fluid>
+          <v-row density="compact"
+            ><v-col
+              class="text-primary text-center text-h6 font-weight-bold pa-0 ma-0 ga-0"
+              >{{
+                account.active
+                  ? account.account_name
+                  : account.account_name + " (Inactive)"
+              }}</v-col
+            ></v-row
+          ><v-row density="compact"
+            ><v-col class="text-center pa-0 ma-0 ga-0"
+              ><v-tooltip text="Adjust Balance" location="top">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    icon="mdi-cash-edit"
+                    flat
+                    variant="plain"
+                    @click="adjBalDialog = true"
+                    v-bind="props"
+                  />
+                </template>
+              </v-tooltip>
+              <AdjustBalanceForm
+                v-model="adjBalDialog"
+                :account="account"
+                @update-dialog="updateAdjBalDialog" />
+              <v-tooltip text="Edit Account" location="top">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    icon="mdi-application-edit"
+                    flat
+                    variant="plain"
+                    @click="editDialog = true"
+                    v-bind="props"
+                  />
+                </template>
+              </v-tooltip>
+              <EditAccountForm
+                v-model="editDialog"
+                :account="account"
+                @update-dialog="updateEditDialog" />
+              <v-tooltip
+                :text="account.active ? 'Delete Account' : 'Enable Account'"
+                location="top"
+              >
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    :icon="
+                      account.active ? 'mdi-bank-remove' : 'mdi-bank-check'
+                    "
+                    :color="account.active ? 'red' : 'green'"
+                    flat
+                    variant="plain"
+                    @click="deleteDialog = true"
+                    v-bind="props"
+                  />
+                </template>
+              </v-tooltip>
+              <DeleteAccountForm
+                v-model="deleteDialog"
+                :account="account"
+                @update-dialog="updateDeleteDialog" /></v-col></v-row
+          ><v-row density="compact"
+            ><v-col class="text-center align-content-end"
+              ><div class="text-accent-lighten-1 font-weight-bold text-h4">
+                {{ formatCurrency(account.balance) }}
+              </div>
+              <div class="text-secondary-lighten-2">current balance</div></v-col
+            >
+            <v-col
+              v-if="account.account_type.id == 1"
+              class="text-center align-content-end"
+              ><div class="text-white font-weight-bold text-body">
+                {{ formatDate(account.next_cycle_date) }}
+              </div>
+              <div class="text-secondary-lighten-2">
+                statement end date
+              </div></v-col
+            ><v-col
+              v-if="account.account_type.id == 1"
+              class="text-center align-content-end"
+              ><div class="text-white font-weight-bold text-body">
+                {{ formatCurrency(account.last_statement_amount) }}
+              </div>
+              <div class="text-secondary-lighten-2">
+                last statement balance
+              </div></v-col
+            ><v-col
+              v-if="account.account_type.id == 1"
+              class="text-center align-content-end"
+              ><div class="text-white font-weight-bold text-body">
+                {{ formatDate(account.due_date) }}
+              </div>
+              <div class="text-secondary-lighten-2">due date</div></v-col
+            ><v-col
+              v-if="account.account_type.id == 1"
+              class="text-center align-content-end"
+              ><div
+                class="text-white font-weight-bold text-body"
+                @click="handleClick"
+                tabindex="0"
+                @keydown.enter="handleClick"
+                role="button"
+                aria-pressed="false"
+              >
+                {{ formatCurrency(account.rewards_amount) }}
+              </div>
+              <div class="text-secondary-lighten-2">rewards</div></v-col
+            ><v-col
+              v-if="account.account_type.id == 1"
+              class="text-center align-content-end"
+              ><div class="text-white font-weight-bold text-body">
+                {{ formatCurrency(account.available_credit) }}
+              </div>
+              <div class="text-secondary-lighten-2">
+                available credit
+              </div></v-col
+            ></v-row
+          >
+        </v-container>
       </template>
     </v-card>
     <v-skeleton-loader
@@ -118,5 +163,23 @@ const updateEditDialog = value => {
 };
 const updateDeleteDialog = value => {
   deleteDialog.value = value;
+};
+const formatDate = dateString => {
+  const date = new Date(dateString + "T00:00:00Z");
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+};
+
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 };
 </script>

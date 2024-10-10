@@ -124,7 +124,7 @@
         <span
           class="font-weight-bold text-black"
           v-if="!row.value.tag_full_toggle"
-          >${{ row.value.tag_amt }}</span
+          >{{ formatCurrency(row.value.tag_amt) }}</span
         >
         <span class="font-weight-bold text-black font-italic" v-else
           >(Full)</span
@@ -292,6 +292,14 @@ onMounted(() => {
   // Perform actions on mount
   watchPassedProps();
 });
+const formatCurrency = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
 </script>
 <style>
 /* alt-pagination */
