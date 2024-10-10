@@ -9,48 +9,57 @@
       <template v-slot:text>
         <v-container fluid>
           <v-row density="compact" class=""
+            ><v-col cols="2"></v-col
             ><v-col
               class="text-primary text-center text-h6 font-weight-bold pa-0 ma-0 ga-0 align-content-center"
-              >{{
-                account.active
-                  ? account.account_name
-                  : account.account_name + " (Inactive)"
-              }}<v-tooltip text="Edit Account" location="top">
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    icon="mdi-application-edit"
-                    flat
-                    variant="plain"
-                    @click="editDialog = true"
-                    v-bind="props"
-                  />
-                </template>
-              </v-tooltip>
-              <EditAccountForm
-                v-model="editDialog"
-                :account="account"
-                @update-dialog="updateEditDialog" />
-              <v-tooltip
-                :text="account.active ? 'Delete Account' : 'Enable Account'"
-                location="top"
-              >
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    :icon="
-                      account.active ? 'mdi-bank-remove' : 'mdi-bank-check'
-                    "
-                    :color="account.active ? 'red' : 'green'"
-                    flat
-                    variant="plain"
-                    @click="deleteDialog = true"
-                    v-bind="props"
-                  />
-                </template>
-              </v-tooltip>
-              <DeleteAccountForm
-                v-model="deleteDialog"
-                :account="account"
-                @update-dialog="updateDeleteDialog" /></v-col></v-row
+              ><v-card
+                class="d-flex align-center justify-center mx-1 px-1 gx-1 bg-secondary-lighten-1"
+                variant="outlined"
+                ><v-tooltip text="Edit Account" location="top">
+                  <template v-slot:activator="{ props }">
+                    <span
+                      class="mx-1"
+                      @click="editDialog = true"
+                      tabindex="0"
+                      @keydown.enter="editDialog = true"
+                      role="button"
+                      aria-pressed="false"
+                      v-bind="props"
+                      >{{
+                        account.active
+                          ? account.account_name
+                          : account.account_name + " (Inactive)"
+                      }}</span
+                    ></template
+                  >
+                </v-tooltip>
+                <EditAccountForm
+                  v-model="editDialog"
+                  :account="account"
+                  @update-dialog="updateEditDialog" />
+                <v-tooltip
+                  :text="account.active ? 'Delete Account' : 'Enable Account'"
+                  location="top"
+                >
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      :icon="
+                        account.active ? 'mdi-delete' : 'mdi-delete-restore'
+                      "
+                      flat
+                      variant="text"
+                      @click="deleteDialog = true"
+                      v-bind="props"
+                      size="small"
+                      class="mx-0"
+                    />
+                  </template>
+                </v-tooltip>
+                <DeleteAccountForm
+                  v-model="deleteDialog"
+                  :account="account"
+                  @update-dialog="updateDeleteDialog" /></v-card></v-col
+            ><v-col cols="2"></v-col></v-row
           ><v-row density="compact"
             ><v-col class="text-center align-content-end"
               ><v-tooltip text="Adjust Balance" location="top">
@@ -78,7 +87,11 @@
               v-if="account.account_type.id == 1"
               class="text-center align-content-end"
               ><div class="text-white font-weight-bold text-body">
-                {{ formatDate(account.next_cycle_date) }}
+                {{
+                  account.next_cycle_date
+                    ? formatDate(account.next_cycle_date)
+                    : "n/a"
+                }}
               </div>
               <div class="text-secondary-lighten-2">
                 statement end date
@@ -96,7 +109,7 @@
               v-if="account.account_type.id == 1"
               class="text-center align-content-end"
               ><div class="text-white font-weight-bold text-body">
-                {{ formatDate(account.due_date) }}
+                {{ account.due_date ? formatDate(account.due_date) : "n/a" }}
               </div>
               <div class="text-secondary-lighten-2">due date</div></v-col
             ><v-col
