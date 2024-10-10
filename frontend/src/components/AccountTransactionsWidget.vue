@@ -315,6 +315,7 @@ const props = defineProps({
   account: Number,
   maxdays: { type: Number, default: 14 },
   forecast: { type: Boolean, default: false },
+  dateLimit: String,
 });
 const emit = defineEmits([
   "addTransaction",

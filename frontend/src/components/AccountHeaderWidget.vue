@@ -65,13 +65,14 @@
               ><v-tooltip text="Adjust Balance" location="top">
                 <template v-slot:activator="{ props }"
                   ><div
-                    class="text-accent-lighten-1 font-weight-bold text-h4"
+                    class="text-accent-lighten-1 font-weight-bold text-h4 d-inline-block"
                     @click="adjBalDialog = true"
                     tabindex="0"
                     @keydown.enter="adjBalDialog = true"
                     role="button"
                     aria-pressed="false"
                     v-bind="props"
+                    width="200"
                   >
                     {{ formatCurrency(account.balance) }}
                   </div></template
@@ -116,7 +117,7 @@
               v-if="account.account_type.id == 1"
               class="text-center align-content-end"
               ><div
-                class="text-white font-weight-bold text-body"
+                class="text-white font-weight-bold text-body d-inline-block"
                 @click="handleClick"
                 tabindex="0"
                 @keydown.enter="handleClick"
