@@ -8,33 +8,14 @@
     >
       <template v-slot:text>
         <v-container fluid>
-          <v-row density="compact"
+          <v-row density="compact" class=""
             ><v-col
-              class="text-primary text-center text-h6 font-weight-bold pa-0 ma-0 ga-0"
+              class="text-primary text-center text-h6 font-weight-bold pa-0 ma-0 ga-0 align-content-center"
               >{{
                 account.active
                   ? account.account_name
                   : account.account_name + " (Inactive)"
-              }}</v-col
-            ></v-row
-          ><v-row density="compact"
-            ><v-col class="text-center pa-0 ma-0 ga-0"
-              ><v-tooltip text="Adjust Balance" location="top">
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    icon="mdi-cash-edit"
-                    flat
-                    variant="plain"
-                    @click="adjBalDialog = true"
-                    v-bind="props"
-                  />
-                </template>
-              </v-tooltip>
-              <AdjustBalanceForm
-                v-model="adjBalDialog"
-                :account="account"
-                @update-dialog="updateAdjBalDialog" />
-              <v-tooltip text="Edit Account" location="top">
+              }}<v-tooltip text="Edit Account" location="top">
                 <template v-slot:activator="{ props }">
                   <v-btn
                     icon="mdi-application-edit"
@@ -72,9 +53,25 @@
                 @update-dialog="updateDeleteDialog" /></v-col></v-row
           ><v-row density="compact"
             ><v-col class="text-center align-content-end"
-              ><div class="text-accent-lighten-1 font-weight-bold text-h4">
-                {{ formatCurrency(account.balance) }}
-              </div>
+              ><v-tooltip text="Adjust Balance" location="top">
+                <template v-slot:activator="{ props }"
+                  ><div
+                    class="text-accent-lighten-1 font-weight-bold text-h4"
+                    @click="adjBalDialog = true"
+                    tabindex="0"
+                    @keydown.enter="adjBalDialog = true"
+                    role="button"
+                    aria-pressed="false"
+                    v-bind="props"
+                  >
+                    {{ formatCurrency(account.balance) }}
+                  </div></template
+                ></v-tooltip
+              ><AdjustBalanceForm
+                v-model="adjBalDialog"
+                :account="account"
+                @update-dialog="updateAdjBalDialog"
+              />
               <div class="text-secondary-lighten-2">current balance</div></v-col
             >
             <v-col
