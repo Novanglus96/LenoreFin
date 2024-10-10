@@ -84,7 +84,12 @@
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @update:focused="reformatNumberToMoney"
+                      @blur="
+                        () => {
+                          amount = formatCurrencyNoSymbol(amount);
+                          transactionForm.validate();
+                        }
+                      "
                       density="compact"
                     ></v-text-field>
                   </v-col>
@@ -212,6 +217,9 @@
                       v-model="isPaycheck"
                       label="Is this a Paycheck?"
                       @update:model-value="selectPaycheckChange()"
+                      :disabled="
+                        formData.transaction_type_id == 2 ? false : true
+                      "
                     ></v-checkbox>
                   </v-col>
                   <v-col> </v-col>
@@ -226,7 +234,14 @@
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @update:focused="reformatNumberToMoney"
+                      @blur="
+                        () => {
+                          paycheck.gross = formatCurrencyNoSymbol(
+                            paycheck.gross,
+                          );
+                          transactionForm.validate();
+                        }
+                      "
                       density="compact"
                       :disabled="!isPaycheck"
                     ></v-text-field>
@@ -240,7 +255,12 @@
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @update:focused="reformatNumberToMoney"
+                      @blur="
+                        () => {
+                          amount = formatCurrencyNoSymbol(amount);
+                          transactionForm.validate();
+                        }
+                      "
                       density="compact"
                       :disabled="!isPaycheck"
                     ></v-text-field>
@@ -254,7 +274,14 @@
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @update:focused="reformatNumberToMoney"
+                      @blur="
+                        () => {
+                          paycheck.taxes = formatCurrencyNoSymbol(
+                            paycheck.taxes,
+                          );
+                          transactionForm.validate();
+                        }
+                      "
                       density="compact"
                       :disabled="!isPaycheck"
                     ></v-text-field>
@@ -270,7 +297,14 @@
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @update:focused="reformatNumberToMoney"
+                      @blur="
+                        () => {
+                          paycheck.health = formatCurrencyNoSymbol(
+                            paycheck.health,
+                          );
+                          transactionForm.validate();
+                        }
+                      "
                       density="compact"
                       :disabled="!isPaycheck"
                     ></v-text-field>
@@ -284,7 +318,14 @@
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @update:focused="reformatNumberToMoney"
+                      @blur="
+                        () => {
+                          paycheck.pension = formatCurrencyNoSymbol(
+                            paycheck.pension,
+                          );
+                          transactionForm.validate();
+                        }
+                      "
                       density="compact"
                       :disabled="!isPaycheck"
                     ></v-text-field>
@@ -298,7 +339,12 @@
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @update:focused="reformatNumberToMoney"
+                      @blur="
+                        () => {
+                          paycheck.fsa = formatCurrencyNoSymbol(paycheck.fsa);
+                          transactionForm.validate();
+                        }
+                      "
                       density="compact"
                       :disabled="!isPaycheck"
                     ></v-text-field>
@@ -314,7 +360,12 @@
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @update:focused="reformatNumberToMoney"
+                      @blur="
+                        () => {
+                          paycheck.dca = formatCurrencyNoSymbol(paycheck.dca);
+                          transactionForm.validate();
+                        }
+                      "
                       density="compact"
                       :disabled="!isPaycheck"
                     ></v-text-field>
@@ -328,7 +379,14 @@
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @update:focused="reformatNumberToMoney"
+                      @blur="
+                        () => {
+                          paycheck.union_dues = formatCurrencyNoSymbol(
+                            paycheck.union_dues,
+                          );
+                          transactionForm.validate();
+                        }
+                      "
                       density="compact"
                       :disabled="!isPaycheck"
                     ></v-text-field>
@@ -342,7 +400,14 @@
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @update:focused="reformatNumberToMoney"
+                      @blur="
+                        () => {
+                          paycheck.four_fifty_seven_b = formatCurrencyNoSymbol(
+                            paycheck.four_fifty_seven_b,
+                          );
+                          transactionForm.validate();
+                        }
+                      "
                       density="compact"
                       :disabled="!isPaycheck"
                     ></v-text-field>
@@ -769,52 +834,6 @@ const closeDialog = () => {
 };
 
 /**
- * `reformatNumberToMoney` Formats an amount to currency.
- */
-const reformatNumberToMoney = () => {
-  if (amount.value) {
-    amount.value = Math.abs(parseFloat(amount.value).toFixed(2));
-  }
-  if (paycheck.value.dca) {
-    paycheck.value.dca = Math.abs(parseFloat(paycheck.value.dca).toFixed(2));
-  }
-  if (paycheck.value.four_fifty_seven_b) {
-    paycheck.value.four_fifty_seven_b = Math.abs(
-      parseFloat(paycheck.value.four_fifty_seven_b).toFixed(2),
-    );
-  }
-  if (paycheck.value.fsa) {
-    paycheck.value.fsa = Math.abs(parseFloat(paycheck.value.fsa).toFixed(2));
-  }
-  if (paycheck.value.gross) {
-    paycheck.value.gross = Math.abs(
-      parseFloat(paycheck.value.gross).toFixed(2),
-    );
-  }
-  if (paycheck.value.health) {
-    paycheck.value.health = Math.abs(
-      parseFloat(paycheck.value.health).toFixed(2),
-    );
-  }
-  if (paycheck.value.pension) {
-    paycheck.value.pension = Math.abs(
-      parseFloat(paycheck.value.pension).toFixed(2),
-    );
-  }
-  if (paycheck.value.taxes) {
-    paycheck.value.taxes = Math.abs(
-      parseFloat(paycheck.value.taxes).toFixed(2),
-    );
-  }
-  if (paycheck.value.union_dues) {
-    paycheck.value.union_dues = Math.abs(
-      parseFloat(paycheck.value.union_dues).toFixed(2),
-    );
-  }
-  transactionForm.value.validate();
-};
-
-/**
  * `selectPaycheckChange` Handles when switching between paycheck or not.
  */
 const selectPaycheckChange = () => {
@@ -850,6 +869,14 @@ onMounted(() => {
   // Perform actions on mount
   watchPassedFormData();
 });
+const formatCurrencyNoSymbol = value => {
+  return new Intl.NumberFormat("en-US", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: false,
+  }).format(value);
+};
 </script>
 <style>
 /* alt-pagination */
