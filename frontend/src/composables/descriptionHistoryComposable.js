@@ -33,7 +33,6 @@ async function getDescriptionHistoryFunction() {
     const response = await apiClient.get(
       "/administration/description-histories/list",
     );
-    console.log("Fetched Description History:", response.data);
     return response.data;
   } catch (error) {
     handleApiError(error, "Description Histories not fetched: ");

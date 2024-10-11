@@ -56,7 +56,6 @@ async function getTransactionsFunction(querydata) {
       if (querydata.rule_id) {
         querytext = querytext + "&rule_id=" + querydata.rule_id;
       }
-      console.log("querytext:", querytext);
       const response = await apiClient.get("/transactions/list" + querytext);
       return response.data;
     } else {
