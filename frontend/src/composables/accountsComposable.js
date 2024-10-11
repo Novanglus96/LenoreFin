@@ -148,7 +148,6 @@ export function useAccounts(inactive) {
   const createAccountMutation = useMutation({
     mutationFn: createAccountFunction,
     onSuccess: () => {
-      console.log("Success adding account");
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
   });
