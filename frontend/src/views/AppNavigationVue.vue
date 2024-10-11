@@ -105,7 +105,7 @@
         <v-tooltip text="Accounts">
           <template v-slot:activator="{ props }">
             <v-list-item
-              active-color="white"
+              base-color="white"
               :active="nav_toggle"
               prepend-icon="mdi-bank"
               @click="nav_toggle = true"
@@ -137,7 +137,7 @@
         <v-tooltip text="Planning">
           <template v-slot:activator="{ props }">
             <v-list-item
-              active-color="white"
+              base-color="white"
               :active="!nav_toggle"
               prepend-icon="mdi-folder"
               @click="nav_toggle = false"
