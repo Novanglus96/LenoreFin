@@ -24,8 +24,6 @@
         </v-tooltip>
         <ReminderForm
           v-model="reminderEditFormDialog"
-          @add-reminder="clickAddReminder"
-          @edit-reminder="clickEditReminder"
           :isEdit="true"
           @update-dialog="updateEditDialog"
           :passedFormData="editReminder"
@@ -78,8 +76,6 @@
         </v-tooltip>
         <ReminderForm
           v-model="reminderAddFormDialog"
-          @add-reminder="clickAddReminder"
-          @edit-reminder="clickEditReminder"
           :isEdit="false"
           @update-dialog="updateAddDialog"
           :passedFormData="blankForm"
