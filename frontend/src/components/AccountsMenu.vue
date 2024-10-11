@@ -155,24 +155,33 @@
     </v-list>
     <v-divider></v-divider>
     <v-list density="compact" nav>
-      <v-list-subheader color="secondary"
-        ><v-icon icon="mdi-bank-off"></v-icon> INACTIVE</v-list-subheader
+      <v-list-group
+        collapse-icon="mdi-chevron-down"
+        expand-icon="mdi-chevron-up"
+        v-model="groupActive"
       >
-      <v-list-item
-        title="No Accounts"
-        v-if="inactive_accounts && inactive_accounts.length == 0"
-      ></v-list-item>
-      <v-list-item
-        v-for="(account, i) in inactive_accounts"
-        :key="i"
-        color="accent"
-        @click="setAccount(account.id, False)"
-        v-else
-      >
-        <v-list-item-title
-          ><span class="font-italic">{{ account.account_name }}</span>
-        </v-list-item-title>
-      </v-list-item>
+        <template v-slot:activator="{ props, isActive }">
+          <v-list-subheader color="secondary" v-bind="props"
+            ><v-icon icon="mdi-bank-off"></v-icon> INACTIVE<v-icon
+              :icon="isActive ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+            ></v-icon></v-list-subheader
+        ></template>
+        <v-list-item
+          title="No Accounts"
+          v-if="inactive_accounts && inactive_accounts.length == 0"
+        ></v-list-item>
+        <v-list-item
+          v-for="(account, i) in inactive_accounts"
+          :key="i"
+          color="accent"
+          @click="setAccount(account.id, False)"
+          v-else
+        >
+          <v-list-item-title
+            ><span class="font-italic">{{ account.account_name }}</span>
+          </v-list-item-title>
+        </v-list-item>
+      </v-list-group>
     </v-list>
   </div>
 </template>
@@ -184,6 +193,7 @@ import { useTransactionsStore } from "@/stores/transactions";
 
 const transactions_store = useTransactionsStore();
 const router = useRouter();
+const groupActive = ref(false);
 
 const setAccount = (account, forecast) => {
   transactions_store.pageinfo.account_id = account;
