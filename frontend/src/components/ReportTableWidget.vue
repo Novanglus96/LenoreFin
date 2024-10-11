@@ -23,12 +23,10 @@
                     nextArrow="Next"
                     :showNumbersCount="3"
                     noDataContent="No data"
-                    @rowSelect="rowSelected"
                     ref="pay_table"
                     height="600px"
                     :pageSizeOptions="[14]"
                     :showPageSize="false"
-                    @change="pageChanged"
                     :pagination="false"
                     skin="bh-table-striped bh-table-hover bh-table-bordered bh-table-compact"
                   >
