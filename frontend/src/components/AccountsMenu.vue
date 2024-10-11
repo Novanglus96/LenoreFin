@@ -10,162 +10,197 @@
       </v-list-item>
     </v-list>
     <v-list density="compact" nav>
-      <v-list-subheader color="secondary"
-        ><v-icon icon="mdi-checkbook"></v-icon> CHECKING</v-list-subheader
-      >
-      <v-list-item
-        title="No Accounts"
-        v-if="checking_accounts && checking_accounts.length == 0"
-      ></v-list-item>
-      <v-list-item
-        v-for="(account, i) in checking_accounts"
-        :key="i"
-        color="accent"
-        @click="setAccount(account.id, False)"
-        v-else
-      >
-        <v-list-item-title>{{ account.account_name }} </v-list-item-title>
-        <v-list-item-subtitle
-          ><span
-            :class="
-              account.balance >= 0
-                ? 'text-green font-weight-bold'
-                : 'text-red font-weight-bold'
-            "
-            >{{ formatCurrency(account.balance) }}</span
-          ></v-list-item-subtitle
-        >
-      </v-list-item>
-    </v-list>
-    <v-divider></v-divider>
-    <v-list density="compact" nav>
-      <v-list-subheader color="secondary"
-        ><v-icon icon="mdi-piggy-bank"></v-icon> SAVINGS</v-list-subheader
-      >
-      <v-list-item
-        title="No Accounts"
-        v-if="savings_accounts && savings_accounts.length == 0"
-      ></v-list-item>
-      <v-list-item
-        v-for="(account, i) in savings_accounts"
-        :key="i"
-        color="accent"
-        @click="setAccount(account.id, False)"
-        v-else
-      >
-        <v-list-item-title>{{ account.account_name }} </v-list-item-title>
-        <v-list-item-subtitle
-          ><span
-            :class="
-              account.balance >= 0
-                ? 'text-green font-weight-bold'
-                : 'text-red font-weight-bold'
-            "
-            >{{ formatCurrency(account.balance) }}</span
-          ></v-list-item-subtitle
-        >
-      </v-list-item>
-    </v-list>
-    <v-divider></v-divider>
-    <v-list density="compact" nav>
-      <v-list-subheader color="secondary"
-        ><v-icon icon="mdi-credit-card"></v-icon> CREDIT CARD</v-list-subheader
-      >
-      <v-list-item
-        title="No Accounts"
-        v-if="cc_accounts && cc_accounts.length == 0"
-      ></v-list-item>
-      <v-list-item
-        v-for="(account, i) in cc_accounts"
-        :key="i"
-        color="accent"
-        @click="setAccount(account.id, False)"
-        v-else
-      >
-        <v-list-item-title>{{ account.account_name }} </v-list-item-title>
-        <v-list-item-subtitle
-          ><span
-            :class="
-              account.balance >= 0
-                ? 'text-green font-weight-bold'
-                : 'text-red font-weight-bold'
-            "
-            >{{ formatCurrency(account.balance) }}</span
-          ></v-list-item-subtitle
-        >
-      </v-list-item>
-    </v-list>
-    <v-divider></v-divider>
-    <v-list density="compact" nav>
-      <v-list-subheader color="secondary"
-        ><v-icon icon="mdi-finance"></v-icon> INVESTMENT</v-list-subheader
-      >
-      <v-list-item
-        title="No Accounts"
-        v-if="investment_accounts && investment_accounts.length == 0"
-      ></v-list-item>
-      <v-list-item
-        v-for="(account, i) in investment_accounts"
-        :key="i"
-        color="accent"
-        @click="setAccount(account.id, False)"
-        v-else
-      >
-        <v-list-item-title>{{ account.account_name }} </v-list-item-title>
-        <v-list-item-subtitle
-          ><span
-            :class="
-              account.balance >= 0
-                ? 'text-green font-weight-bold'
-                : 'text-red font-weight-bold'
-            "
-            >{{ formatCurrency(account.balance) }}</span
-          ></v-list-item-subtitle
-        >
-      </v-list-item>
-    </v-list>
-    <v-divider></v-divider>
-    <v-list density="compact" nav>
-      <v-list-subheader color="secondary"
-        ><v-icon icon="mdi-car-back"></v-icon> LOAN</v-list-subheader
-      >
-      <v-list-item
-        title="No Accounts"
-        v-if="loan_accounts && loan_accounts.length == 0"
-      ></v-list-item>
-      <v-list-item
-        v-for="(account, i) in loan_accounts"
-        :key="i"
-        color="accent"
-        @click="setAccount(account.id, False)"
-        v-else
-      >
-        <v-list-item-title>{{ account.account_name }} </v-list-item-title>
-        <v-list-item-subtitle
-          ><span
-            :class="
-              account.balance >= 0
-                ? 'text-green font-weight-bold'
-                : 'text-red font-weight-bold'
-            "
-            >{{ formatCurrency(account.balance) }}</span
-          ></v-list-item-subtitle
-        >
-      </v-list-item>
-    </v-list>
-    <v-divider></v-divider>
-    <v-list density="compact" nav>
       <v-list-group
-        collapse-icon="mdi-chevron-down"
-        expand-icon="mdi-chevron-up"
+        collapse-icon="mdi-chevron-up"
+        expand-icon="mdi-chevron-down"
         v-model="groupActive"
+        value="checking"
       >
-        <template v-slot:activator="{ props, isActive }">
-          <v-list-subheader color="secondary" v-bind="props"
-            ><v-icon icon="mdi-bank-off"></v-icon> INACTIVE<v-icon
-              :icon="isActive ? 'mdi-chevron-up' : 'mdi-chevron-down'"
-            ></v-icon></v-list-subheader
-        ></template>
+        <template v-slot:activator="{ props }">
+          <v-list-item color="secondary" base-color="secondary" v-bind="props"
+            ><v-icon icon="mdi-checkbook"></v-icon> CHECKING</v-list-item
+          ></template
+        >
+        <v-list-item
+          title="No Accounts"
+          v-if="checking_accounts && checking_accounts.length == 0"
+        ></v-list-item>
+        <v-list-item
+          v-for="(account, i) in checking_accounts"
+          :key="i"
+          color="accent"
+          @click="setAccount(account.id, False)"
+          v-else
+        >
+          <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+          <v-list-item-subtitle
+            ><span
+              :class="
+                account.balance >= 0
+                  ? 'text-green font-weight-bold'
+                  : 'text-red font-weight-bold'
+              "
+              >{{ formatCurrency(account.balance) }}</span
+            ></v-list-item-subtitle
+          >
+        </v-list-item>
+      </v-list-group>
+      <v-divider></v-divider>
+      <v-list-group
+        collapse-icon="mdi-chevron-up"
+        expand-icon="mdi-chevron-down"
+        v-model="groupActive"
+        value="savings"
+      >
+        <template v-slot:activator="{ props }">
+          <v-list-item color="secondary" base-color="secondary" v-bind="props"
+            ><v-icon icon="mdi-piggy-bank"></v-icon> SAVINGS</v-list-item
+          ></template
+        >
+        <v-list-item
+          title="No Accounts"
+          v-if="savings_accounts && savings_accounts.length == 0"
+        ></v-list-item>
+        <v-list-item
+          v-for="(account, i) in savings_accounts"
+          :key="i"
+          color="accent"
+          @click="setAccount(account.id, False)"
+          v-else
+        >
+          <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+          <v-list-item-subtitle
+            ><span
+              :class="
+                account.balance >= 0
+                  ? 'text-green font-weight-bold'
+                  : 'text-red font-weight-bold'
+              "
+              >{{ formatCurrency(account.balance) }}</span
+            ></v-list-item-subtitle
+          >
+        </v-list-item>
+      </v-list-group>
+      <v-divider></v-divider>
+      <v-list-group
+        collapse-icon="mdi-chevron-up"
+        expand-icon="mdi-chevron-down"
+        v-model="groupActive"
+        value="cc"
+      >
+        <template v-slot:activator="{ props }">
+          <v-list-item color="secondary" base-color="secondary" v-bind="props"
+            ><v-icon icon="mdi-credit-card"></v-icon> CREDIT CARD</v-list-item
+          ></template
+        >
+        <v-list-item
+          title="No Accounts"
+          v-if="cc_accounts && cc_accounts.length == 0"
+        ></v-list-item>
+        <v-list-item
+          v-for="(account, i) in cc_accounts"
+          :key="i"
+          color="accent"
+          @click="setAccount(account.id, False)"
+          v-else
+        >
+          <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+          <v-list-item-subtitle
+            ><span
+              :class="
+                account.balance >= 0
+                  ? 'text-green font-weight-bold'
+                  : 'text-red font-weight-bold'
+              "
+              >{{ formatCurrency(account.balance) }}</span
+            ></v-list-item-subtitle
+          >
+        </v-list-item>
+      </v-list-group>
+      <v-divider></v-divider>
+      <v-list-group
+        collapse-icon="mdi-chevron-up"
+        expand-icon="mdi-chevron-down"
+        v-model="groupActive"
+        value="investment"
+      >
+        <template v-slot:activator="{ props }">
+          <v-list-item color="secondary" base-color="secondary" v-bind="props"
+            ><v-icon icon="mdi-finance"></v-icon> INVESTMENT</v-list-item
+          ></template
+        >
+        <v-list-item
+          title="No Accounts"
+          v-if="investment_accounts && investment_accounts.length == 0"
+        ></v-list-item>
+        <v-list-item
+          v-for="(account, i) in investment_accounts"
+          :key="i"
+          color="accent"
+          @click="setAccount(account.id, False)"
+          v-else
+        >
+          <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+          <v-list-item-subtitle
+            ><span
+              :class="
+                account.balance >= 0
+                  ? 'text-green font-weight-bold'
+                  : 'text-red font-weight-bold'
+              "
+              >{{ formatCurrency(account.balance) }}</span
+            ></v-list-item-subtitle
+          >
+        </v-list-item>
+      </v-list-group>
+      <v-divider></v-divider>
+      <v-list-group
+        collapse-icon="mdi-chevron-up"
+        expand-icon="mdi-chevron-down"
+        v-model="groupActive"
+        value="loan"
+      >
+        <template v-slot:activator="{ props }">
+          <v-list-item color="secondary" base-color="secondary" v-bind="props"
+            ><v-icon icon="mdi-car-back"></v-icon> LOAN</v-list-item
+          ></template
+        >
+        <v-list-item
+          title="No Accounts"
+          v-if="loan_accounts && loan_accounts.length == 0"
+        ></v-list-item>
+        <v-list-item
+          v-for="(account, i) in loan_accounts"
+          :key="i"
+          color="accent"
+          @click="setAccount(account.id, False)"
+          v-else
+        >
+          <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+          <v-list-item-subtitle
+            ><span
+              :class="
+                account.balance >= 0
+                  ? 'text-green font-weight-bold'
+                  : 'text-red font-weight-bold'
+              "
+              >{{ formatCurrency(account.balance) }}</span
+            ></v-list-item-subtitle
+          >
+        </v-list-item>
+      </v-list-group>
+      <v-divider></v-divider>
+      <v-list-group
+        collapse-icon="mdi-chevron-up"
+        expand-icon="mdi-chevron-down"
+        v-model="groupActive"
+        value="inactive"
+      >
+        <template v-slot:activator="{ props }">
+          <v-list-item color="secondary" v-bind="props" base-color="secondary"
+            ><v-icon icon="mdi-bank-off"></v-icon> INACTIVE</v-list-item
+          ></template
+        >
         <v-list-item
           title="No Accounts"
           v-if="inactive_accounts && inactive_accounts.length == 0"
@@ -193,7 +228,7 @@ import { useTransactionsStore } from "@/stores/transactions";
 
 const transactions_store = useTransactionsStore();
 const router = useRouter();
-const groupActive = ref(false);
+const groupActive = ref(null);
 
 const setAccount = (account, forecast) => {
   transactions_store.pageinfo.account_id = account;
