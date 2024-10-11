@@ -21,7 +21,7 @@
           <v-autocomplete
             clearable
             label="Tag"
-            :items="tags"
+            :items="tags_data"
             variant="outlined"
             :loading="tags_isLoading"
             item-title="tag_name"
@@ -183,7 +183,7 @@ const columns = ref([
 ]);
 
 // API calls and data retrieval...
-const { tags, isLoading: tags_isLoading } = useTags();
+const { tags: tags_data, isLoading: tags_isLoading } = useTags();
 
 // Define functions...
 
