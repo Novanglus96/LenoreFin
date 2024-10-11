@@ -17,8 +17,18 @@
         value="checking"
       >
         <template v-slot:activator="{ props }">
-          <v-list-item color="secondary" base-color="secondary" v-bind="props"
-            ><v-icon icon="mdi-checkbook"></v-icon> CHECKING</v-list-item
+          <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <v-list-item-title
+              ><v-icon icon="mdi-checkbook"></v-icon>
+              CHECKING</v-list-item-title
+            ><v-list-item-subtitle
+              >{{ checking_accounts ? checking_accounts.length : 0 }}
+              {{
+                checking_accounts && checking_accounts.length == 1
+                  ? "account"
+                  : "accounts"
+              }}</v-list-item-subtitle
+            ></v-list-item
           ></template
         >
         <v-list-item
@@ -53,8 +63,18 @@
         value="savings"
       >
         <template v-slot:activator="{ props }">
-          <v-list-item color="secondary" base-color="secondary" v-bind="props"
-            ><v-icon icon="mdi-piggy-bank"></v-icon> SAVINGS</v-list-item
+          <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <v-list-item-title
+              ><v-icon icon="mdi-piggy-bank"></v-icon>
+              SAVINGS</v-list-item-title
+            ><v-list-item-subtitle
+              >{{ savings_accounts ? savings_accounts.length : 0 }}
+              {{
+                savings_accounts && savings_accounts.length == 1
+                  ? "account"
+                  : "accounts"
+              }}</v-list-item-subtitle
+            ></v-list-item
           ></template
         >
         <v-list-item
@@ -89,8 +109,16 @@
         value="cc"
       >
         <template v-slot:activator="{ props }">
-          <v-list-item color="secondary" base-color="secondary" v-bind="props"
-            ><v-icon icon="mdi-credit-card"></v-icon> CREDIT CARD</v-list-item
+          <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <v-list-item-title
+              ><v-icon icon="mdi-credit-card"></v-icon> CREDIT
+              CARD</v-list-item-title
+            ><v-list-item-subtitle
+              >{{ cc_accounts ? cc_accounts.length : 0 }}
+              {{
+                cc_accounts && cc_accounts.length == 1 ? "account" : "accounts"
+              }}</v-list-item-subtitle
+            ></v-list-item
           ></template
         >
         <v-list-item
@@ -125,8 +153,18 @@
         value="investment"
       >
         <template v-slot:activator="{ props }">
-          <v-list-item color="secondary" base-color="secondary" v-bind="props"
-            ><v-icon icon="mdi-finance"></v-icon> INVESTMENT</v-list-item
+          <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <v-list-item-title
+              ><v-icon icon="mdi-finance"></v-icon>
+              INVESTMENT</v-list-item-title
+            ><v-list-item-subtitle
+              >{{ investment_accounts ? investment_accounts.length : 0 }}
+              {{
+                investment_accounts && investment_accounts.length == 1
+                  ? "account"
+                  : "accounts"
+              }}</v-list-item-subtitle
+            ></v-list-item
           ></template
         >
         <v-list-item
@@ -161,8 +199,17 @@
         value="loan"
       >
         <template v-slot:activator="{ props }">
-          <v-list-item color="secondary" base-color="secondary" v-bind="props"
-            ><v-icon icon="mdi-car-back"></v-icon> LOAN</v-list-item
+          <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <v-list-item-title
+              ><v-icon icon="mdi-car-back"></v-icon> LOAN</v-list-item-title
+            ><v-list-item-subtitle
+              >{{ loan_accounts ? loan_accounts.length : 0 }}
+              {{
+                loan_accounts && loan_accounts.length == 1
+                  ? "account"
+                  : "accounts"
+              }}</v-list-item-subtitle
+            ></v-list-item
           ></template
         >
         <v-list-item
@@ -197,8 +244,17 @@
         value="inactive"
       >
         <template v-slot:activator="{ props }">
-          <v-list-item color="secondary" v-bind="props" base-color="secondary"
-            ><v-icon icon="mdi-bank-off"></v-icon> INACTIVE</v-list-item
+          <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <v-list-item-title
+              ><v-icon icon="mdi-bank-off"></v-icon> INACTIVE</v-list-item-title
+            ><v-list-item-subtitle
+              >{{ inactive_accounts ? inactive_accounts.length : 0 }}
+              {{
+                inactive_accounts && inactive_accounts.length == 1
+                  ? "account"
+                  : "accounts"
+              }}</v-list-item-subtitle
+            ></v-list-item
           ></template
         >
         <v-list-item
