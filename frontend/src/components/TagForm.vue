@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="show" persistent width="1024">
+  <v-dialog persistent width="1024">
     <v-card>
       <v-card-title>
         <span class="text-h5">Add Tag</span>
