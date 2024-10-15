@@ -36,6 +36,9 @@ from transactions.api.dependencies.add_balances_to_transaction_list import (
 from transactions.api.dependencies.sort_transaction_list import (
     sort_transaction_list,
 )
+from transactions.api.dependencies.forecast_transaction import (
+    ForecastTransaction,
+)
 
 
 def get_complete_transaction_list_with_totals(
