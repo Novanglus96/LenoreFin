@@ -305,49 +305,55 @@ def get_complete_transaction_list_with_totals(
 
     # Filter transactions for status and greater than start date, record previous balance
     if forecast:
-        filtered_transactions = []
-        last_index = -1
+
+        def get_transaction_date(transaction):
+            # Check if the item is an object with an attribute 'transaction_date'
+            if hasattr(transaction, "transaction_date"):
+                return transaction.transaction_date
+            # Check if the item is a dictionary with a 'transaction_date' key
+            elif (
+                isinstance(transaction, dict)
+                and "transaction_date" in transaction
+            ):
+                return transaction["transaction_date"]
+            # Return None if neither applies
+            return None
+
+        def filter_new_transactions(transactions, start_date):
+            # Filter the transactions where transaction_date is greater than today
+            return [
+                transaction
+                for transaction in transactions
+                if get_transaction_date(transaction)
+                and get_transaction_date(transaction) >= start_date
+            ]
+
+        def filter_previous_transactions(transactions, start_date):
+            # Filter the transactions where transaction_date is greater than today
+            return [
+                transaction
+                for transaction in transactions
+                if get_transaction_date(transaction)
+                and get_transaction_date(transaction) < start_date
+            ]
+
         previous_balance = opening_balance + archive_balance
         if start_date:
             start = start_date
         else:
             start = today
-        for index, transaction in enumerate(transactions):
-            if isinstance(transaction, dict):
-                if transaction["transaction_date"] >= start:
-                    if start == today:
-                        if transaction["status"].id == 1:
-                            filtered_transactions.append(transaction)
-                    else:
-                        filtered_transactions.append(transaction)
-                    if last_index == -1:
-                        last_index = index
+        filtered_transactions = filter_new_transactions(transactions, start)
+        previous_transactions = filter_previous_transactions(
+            transactions, start
+        )
+        if previous_transactions:
+            if isinstance(
+                previous_transactions[-1],
+                dict,
+            ):
+                previous_balance = previous_transactions[-1]["balance"]
             else:
-                if transaction.transaction_date >= start:
-                    if start == today:
-                        if transaction.status.id == 1:
-                            filtered_transactions.append(transaction)
-                    else:
-                        filtered_transactions.append(transaction)
-                    if last_index == -1:
-                        last_index = index
-        if last_index != -1:
-            if last_index > 0:
-                if isinstance(
-                    transactions[last_index - 1],
-                    dict,
-                ):
-                    previous_balance = transactions[last_index - 1]["balance"]
-                else:
-                    previous_balance = transactions[last_index - 1].balance
-            elif last_index == 0 and start == today:
-                if isinstance(
-                    transactions[last_index - 1],
-                    dict,
-                ):
-                    previous_balance = transactions[last_index - 1]["balance"]
-                else:
-                    previous_balance = transactions[last_index - 1].balance
+                previous_balance = previous_transactions[-1].balance
         return filtered_transactions, previous_balance
     else:
         return transactions, Decimal(0.00)
