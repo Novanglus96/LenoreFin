@@ -47,6 +47,7 @@ const updateAccount = account => {
   transactions_store.pageinfo.forecast = true;
   transactions_store.pageinfo.page = 1;
   transactions_store.pageinfo.maxdays = 90;
+  transactions_store.pageinfo.view_type = 1;
 };
 
 const clickChangeTime = value => {
