@@ -50,6 +50,9 @@
         class="alt-pagination"
         rowClass="cursor-pointer"
         @rowClick="rowClick"
+        :sortable="false"
+        sortColumn="note_date"
+        sortDirection="desc"
       >
         <template #note_text="row">
           <span :style="clampedStyle" class="text-body-2">{{

@@ -99,6 +99,9 @@
         paginationInfo="Showing {0} to {1} of {2} reminders"
         class="alt-pagination"
         @rowSelect="rowSelected"
+        :sortable="false"
+        sortColumn="next_date"
+        sortDirection="asc"
         ><!--height="280px"-->
         <template #next_date="row">
           <span class="font-weight-bold text-black">{{
