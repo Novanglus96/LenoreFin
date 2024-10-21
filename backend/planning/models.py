@@ -8,6 +8,7 @@ from django.db import IntegrityError, connection, transaction
 from django.shortcuts import get_object_or_404
 from django.db.models.query import QuerySet
 from tags.models import Tag
+from reminders.models import Repeat
 import pytz
 import os
 
@@ -120,3 +121,34 @@ class CalculationRule(models.Model):
     name = models.CharField(max_length=254, unique=True)
     source_account_id = models.IntegerField()
     destination_account_id = models.IntegerField()
+
+
+class Budget(models.Model):
+    """
+    Model representing a budget.
+
+    Fields:
+    - tag_ids (CharField): A string array of tag ids.
+    - name (CharFieldField): A name for this rule
+    - amount (DecimalField): A max amount for this budget.
+    - roll_over (BooleanField): A boolean to turn on roll over.
+    - repeat (ForeignKey): A repeat object
+    - start_day (DateField): A day to start this budget.
+    - roll_over_amt (DecimalField): The amount rolled over.
+    - active (BooleanField): A boolean to activate/deactivate budget.
+    - widget (BooleanField): A boolean to show/not show in widget.
+    """
+
+    tag_ids = models.CharField(max_length=254)
+    name = models.CharField(max_length=254, unique=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    roll_over = models.BooleanField(default=True)
+    repeat = models.ForeignKey(
+        Repeat, null=True, on_delete=models.SET_NULL, default=None
+    )
+    start_day = models.DateField(default=current_date)
+    roll_over_amt = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00
+    )
+    active = models.BooleanField(default=True)
+    widget = models.BooleanField(default=True)

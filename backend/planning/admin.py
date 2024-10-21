@@ -5,6 +5,7 @@ from .models import (
     Contribution,
     Note,
     CalculationRule,
+    Budget,
 )
 from django.http import HttpResponse
 from import_export.admin import ImportExportModelAdmin
@@ -60,8 +61,17 @@ class CalculationRuleAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     ordering = ["id"]
 
 
+class BudgetAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "name", "amount", "start_day"]
+
+    list_display_links = ["name"]
+
+    ordering = ["name"]
+
+
 admin.site.register(ChristmasGift, ChristmasGiftAdmin)
 admin.site.register(ContribRule, ContribRuleAdmin)
 admin.site.register(Contribution, ContributionAdmin)
 admin.site.register(Note, NoteAdmin)
 admin.site.register(CalculationRule, CalculationRuleAdmin)
+admin.site.register(Budget, BudgetAdmin)
