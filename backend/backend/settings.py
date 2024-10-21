@@ -257,6 +257,7 @@ JAZZMIN_SETTINGS = {
         "planning.ContribRule": "fas fa-folder",
         "planning.Contribution": "fas fa-folder",
         "planning.Note": "fas fa-folder",
+        "planning.Budget": "fas fa-folder",
         "reminders.ReminderExclusion": "fas fa-bell-slash",
         "reminders.Reminder": "fas fa-bell",
         "reminders.Repeat": "fas fa-redo",
