@@ -216,8 +216,16 @@ def get_complete_transaction_list_with_totals(
             transaction_details = TransactionDetail.objects.filter(
                 transaction_id=transaction.id
             )
+            if tags:
+                transaction_details = transaction_details.filter(
+                    tag_id__in=tags,
+                )
+                tag_sum = 0
+                for detail in transaction_details:
+                    tag_sum += detail.detail_amt
+                transaction.tag_total = tag_sum
             details = list(transaction_details)
-            tags = list(
+            tag_list = list(
                 transaction_details.annotate(
                     parent_tag=F("tag__parent__tag_name"),
                     child_tag=F("tag__child__tag_name"),
@@ -232,7 +240,7 @@ def get_complete_transaction_list_with_totals(
                 .exclude(tag_name_combined__isnull=True)
                 .values_list("tag_name_combined", flat=True)
             )
-            transaction.tags = tags
+            transaction.tags = tag_list
             transaction.details = details
 
     # Create list from cleared transactions
@@ -255,8 +263,16 @@ def get_complete_transaction_list_with_totals(
             transaction_details = TransactionDetail.objects.filter(
                 transaction_id=transaction.id
             )
+            if tags:
+                transaction_details = transaction_details.filter(
+                    tag_id__in=tags,
+                )
+                tag_sum = 0
+                for detail in transaction_details:
+                    tag_sum += detail.detail_amt
+                transaction.tag_total = tag_sum
             details = list(transaction_details)
-            tags = list(
+            tag_list = list(
                 transaction_details.annotate(
                     parent_tag=F("tag__parent__tag_name"),
                     child_tag=F("tag__child__tag_name"),
@@ -271,7 +287,7 @@ def get_complete_transaction_list_with_totals(
                 .exclude(tag_name_combined__isnull=True)
                 .values_list("tag_name_combined", flat=True)
             )
-            transaction.tags = tags
+            transaction.tags = tag_list
             transaction.details = details
 
     # Create a list from pending_transactions

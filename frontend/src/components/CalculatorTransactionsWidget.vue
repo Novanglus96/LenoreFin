@@ -43,26 +43,28 @@
             >{{ formatCurrency(row.value.pretty_total) }}</span
           >
         </template>
-        <template #checkNumber="row">
-          <v-tooltip text="Check" location="top">
-            <template v-slot:activator="{ props }">
-              <div class="icon-with-text" v-if="row.value.checkNumber">
-                <v-icon
-                  icon="mdi-checkbook"
-                  color="amber"
-                  v-bind="props"
-                ></v-icon>
-                <span
-                  :class="
-                    row.value.status.id == 1
-                      ? 'font-italic text-grey icon-text'
-                      : 'font-weight-bold text-black icon-text'
-                  "
-                  >#{{ row.value.checkNumber }}</span
-                >
-              </div>
-            </template>
-          </v-tooltip>
+        <template #details="row">
+          <span
+            :class="
+              row.value.status.id == 1
+                ? 'font-italic text-grey text-body-2'
+                : 'font-weight-bold text-black text-body-2'
+            "
+            v-for="detail in row.value.details"
+            :key="detail"
+          >
+            <v-icon
+              icon="mdi-tag"
+              size="x-small"
+              :color="row.value.status.id == 1 ? 'grey' : 'black'"
+              v-if="detail"
+            ></v-icon>
+            {{ detail.tag.tag_name }} :
+            <span
+              :class="getClassForMoney(detail.detail_amt, row.value.status.id)"
+              >{{ formatCurrency(detail.detail_amt) }}</span
+            >&nbsp;
+          </span>
         </template>
         <template #description="row">
           <span
@@ -73,25 +75,6 @@
             "
             >{{ row.value.description }}</span
           >
-        </template>
-        <template #tags="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey text-body-2'
-                : 'font-weight-bold text-black text-body-2'
-            "
-            v-for="tag in row.value.tags"
-            :key="tag"
-          >
-            <v-icon
-              icon="mdi-tag"
-              size="x-small"
-              :color="row.value.status.id == 1 ? 'grey' : 'black'"
-              v-if="tag"
-            ></v-icon>
-            {{ tag }}&nbsp;
-          </span>
         </template>
         <template #pretty_account="row">
           <span
@@ -136,10 +119,9 @@ const { calculator, isLoading: calculator_isLoading } = useCalculator(
 
 const columns = ref([
   { field: "transaction_date", title: "Date", type: "date", width: "120px" },
-  { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
-  { field: "checkNumber", tilte: "Check #", width: "75px" },
+  { field: "pretty_total", title: "Total", type: "number", width: "100px" },
+  { field: "details", title: "Tag Amounts", type: "number", width: "120px" },
   { field: "description", title: "Description" },
-  { field: "tags", title: "Tag(s)", width: "200px" },
   { field: "pretty_account", title: "Account" },
 ]);
 

@@ -182,15 +182,28 @@ const addTransfer = () => {
   let description = calculator.value.rule.name + " Transfer";
   let totalAmount = 0;
   for (const transaction of planningstore.calculator.selected_transactions) {
-    totalAmount += parseFloat(transaction.total_amount);
-    memo +=
-      Intl.NumberFormat("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(Math.abs(transaction.total_amount)) +
-      " " +
-      transaction.description +
-      "\n";
+    totalAmount += parseFloat(transaction.tag_total);
+    if (
+      parseFloat(transaction.tag_total) != parseFloat(transaction.total_amount)
+    ) {
+      memo +=
+        Intl.NumberFormat("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(Math.abs(transaction.tag_total)) +
+        " " +
+        transaction.description +
+        " (Split)\n";
+    } else {
+      memo +=
+        Intl.NumberFormat("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(Math.abs(transaction.tag_total)) +
+        " " +
+        transaction.description +
+        "\n";
+    }
   }
   memo = memo.trimEnd();
   newTransferData.value = {
@@ -220,8 +233,15 @@ const editTransfer = trans => {
   let memo = "";
   let totalAmount = 0;
   for (const transaction of planningstore.calculator.selected_transactions) {
-    totalAmount += parseFloat(transaction.total_amount);
-    memo += transaction.total_amount + " " + transaction.description + "\n";
+    totalAmount += parseFloat(transaction.tag_total);
+    if (
+      parseFloat(transaction.tag_total) != parseFloat(transaction.total_amount)
+    ) {
+      memo +=
+        transaction.tag_total + " " + transaction.description + " (Split)\n";
+    } else {
+      memo += transaction.tag_total + " " + transaction.description + "\n";
+    }
   }
   memo = memo.trimEnd();
   newTotal.value = totalAmount;
