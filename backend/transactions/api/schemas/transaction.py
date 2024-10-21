@@ -68,6 +68,9 @@ class TransactionOut(Schema):
     destination_account_id: Optional[int] = None
     checkNumber: Optional[int] = None
     reminder_id: Optional[int] = None
+    tag_total: Optional[Decimal] = Field(
+        default=None, whole_digits=10, decimal_places=2
+    )
 
 
 from transactions.api.schemas.transaction_detail import TransactionDetailOut
