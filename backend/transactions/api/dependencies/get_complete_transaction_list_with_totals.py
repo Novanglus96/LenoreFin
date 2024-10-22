@@ -50,6 +50,7 @@ def get_complete_transaction_list_with_totals(
     transfers_only: Optional[bool] = False,
     transfer_ids: Optional[List[int]] = [],
     tags: Optional[List[int]] = [],
+    cleared_only: Optional[bool] = False,
 ):
     """
     The function `get_complete_transaction_list_with_totals` returns a list of
@@ -246,62 +247,66 @@ def get_complete_transaction_list_with_totals(
     # Create list from cleared transactions
     cleared_transactions_list = list(cleared_transactions)
 
-    # Get pending transactions
-    pending_transactions = all_transactions.filter(status_id=1)
+    pending_transactions_list = []
+    if not cleared_only:
+        # Get pending transactions
+        pending_transactions = all_transactions.filter(status_id=1)
 
-    # Annotate pending transactions with balance
-    pending_transactions = pending_transactions.annotate(
-        balance=ExpressionWrapper(
-            Value(cleared_balance),
-            output_field=DecimalField(max_digits=12, decimal_places=2),
-        )
-    )
-
-    # Add tags to pending transactions if not totals_only
-    if not totals_only:
-        for transaction in pending_transactions:
-            transaction_details = TransactionDetail.objects.filter(
-                transaction_id=transaction.id
+        # Annotate pending transactions with balance
+        pending_transactions = pending_transactions.annotate(
+            balance=ExpressionWrapper(
+                Value(cleared_balance),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
             )
-            if tags:
-                transaction_details = transaction_details.filter(
-                    tag_id__in=tags,
+        )
+
+        # Add tags to pending transactions if not totals_only
+        if not totals_only:
+            for transaction in pending_transactions:
+                transaction_details = TransactionDetail.objects.filter(
+                    transaction_id=transaction.id
                 )
-                tag_sum = 0
-                for detail in transaction_details:
-                    tag_sum += detail.detail_amt
-                transaction.tag_total = tag_sum
-            details = list(transaction_details)
-            tag_list = list(
-                transaction_details.annotate(
-                    parent_tag=F("tag__parent__tag_name"),
-                    child_tag=F("tag__child__tag_name"),
-                    tag_name_combined=Case(
-                        When(child_tag__isnull=True, then=F("parent_tag")),
-                        default=Concat(
-                            F("parent_tag"), Value(" / "), F("child_tag")
+                if tags:
+                    transaction_details = transaction_details.filter(
+                        tag_id__in=tags,
+                    )
+                    tag_sum = 0
+                    for detail in transaction_details:
+                        tag_sum += detail.detail_amt
+                    transaction.tag_total = tag_sum
+                details = list(transaction_details)
+                tag_list = list(
+                    transaction_details.annotate(
+                        parent_tag=F("tag__parent__tag_name"),
+                        child_tag=F("tag__child__tag_name"),
+                        tag_name_combined=Case(
+                            When(child_tag__isnull=True, then=F("parent_tag")),
+                            default=Concat(
+                                F("parent_tag"), Value(" / "), F("child_tag")
+                            ),
+                            output_field=CharField(),
                         ),
-                        output_field=CharField(),
-                    ),
+                    )
+                    .exclude(tag_name_combined__isnull=True)
+                    .values_list("tag_name_combined", flat=True)
                 )
-                .exclude(tag_name_combined__isnull=True)
-                .values_list("tag_name_combined", flat=True)
+                transaction.tags = tag_list
+                transaction.details = details
+
+        # Create a list from pending_transactions
+        pending_transactions_list = list(pending_transactions)
+
+    reminder_transactions_list = []
+    if not cleared_only:
+        # Get a list of transactions based on reminders
+        if transfers_only:
+            reminder_transactions_list = get_reminder_transaction_list(
+                end_date, 0, False, True, [transfer_ids[0], transfer_ids[1]]
             )
-            transaction.tags = tag_list
-            transaction.details = details
-
-    # Create a list from pending_transactions
-    pending_transactions_list = list(pending_transactions)
-
-    # Get a list of transactions based on reminders
-    if transfers_only:
-        reminder_transactions_list = get_reminder_transaction_list(
-            end_date, 0, False, True, [transfer_ids[0], transfer_ids[1]]
-        )
-    else:
-        reminder_transactions_list = get_reminder_transaction_list(
-            end_date, account, forecast
-        )
+        else:
+            reminder_transactions_list = get_reminder_transaction_list(
+                end_date, account, forecast
+            )
 
     # Combine pending and reminder transactions
     transactions_to_be_sorted = (

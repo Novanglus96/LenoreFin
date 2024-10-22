@@ -3,6 +3,7 @@ from django.db import IntegrityError
 from ninja.errors import HttpError
 from planning.models import Budget
 from planning.api.schemas.budget import BudgetIn, BudgetOut, BudgetWithTotal
+from reminders.models import Repeat
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
@@ -26,6 +27,16 @@ from django.db.models import (
 )
 from django.db.models.functions import Concat, Coalesce, Abs
 from typing import List, Optional, Dict, Any
+from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
+    get_complete_transaction_list_with_totals,
+)
+import json
+from datetime import date, timedelta, datetime
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta
+from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+    get_todays_date_timezone_adjusted,
+)
 
 budget_router = Router(tags=["Budgets"])
 
@@ -205,7 +216,10 @@ def get_budget(request, budget_id: int):
 
 
 @budget_router.get("/list", response=List[BudgetWithTotal])
-def list_budgets(request):
+def list_budgets(
+    request,
+    widget: Optional[bool] = Query(True),
+):
     """
     The function `list_budgets` retrieves a list of budgets,
     ordered by id ascending.
@@ -218,27 +232,38 @@ def list_budgets(request):
     """
 
     try:
-        qs = Budget.objects.all().order_by("-active", "id")
-        active_contribs = qs.filter(active=True)
+        budgets_with_totals = []
+        budgets = (
+            Budget.objects.all().filter(active=True).order_by("name", "id")
+        )
+        if widget:
+            budgets = budgets.filter(widget=True)
 
-        # Compute totals (this can be customized based on your business logic)
-        per_paycheck_total = sum(
-            [contrib.per_paycheck for contrib in active_contribs]
-        )
-        emergency_paycheck_total = sum(
-            [contrib.emergency_amt for contrib in active_contribs]
-        )
-        total_emergency = sum(
-            [contrib.emergency_diff for contrib in active_contribs]
-        )
-
-        # Create the BudgetWithTotals object
-        budgets_with_totals = BudgetWithTotals(
-            budgets=list(qs),
-            per_paycheck_total=per_paycheck_total,
-            emergency_paycheck_total=emergency_paycheck_total,
-            total_emergency=total_emergency,
-        )
+        for budget in budgets:
+            # Create the BudgetWithTotals object
+            transactions = []
+            # Get transactions and total for budget
+            start_date, end_date = calculate_repeat_window(
+                budget.start_day, budget.repeat
+            )
+            transactions, balances = get_complete_transaction_list_with_totals(
+                end_date,
+                1,
+                False,
+                False,
+                start_date,
+                False,
+                [],
+                json.loads(budget.tag_ids),
+                True,
+            )
+            total = 0
+            for transaction in transactions:
+                total += transaction.tag_total
+            new_budget_with_total = BudgetWithTotal(
+                budget=budget, transactions=transactions, used_total=total
+            )
+            budgets_with_totals.append(new_budget_with_total)
         logToDB(
             "Budget list retrieved",
             None,
@@ -301,3 +326,39 @@ def delete_budget(request, budget_id: int):
             2,
         )
         raise HttpError(500, "Record retrieval error")
+
+
+def calculate_repeat_window(start_date: datetime, repeat: Repeat) -> tuple:
+    """
+    Calculate the current repeat window (start and end date) based on the Repeat object.
+
+    Args:
+        start_date (datetime or date): The date when the repetition started.
+        repeat (Repeat): The Repeat object containing the interval (days, weeks, months, years).
+
+    Returns:
+        tuple: A tuple of (window_start, window_end) for the current repeat window.
+    """
+    # Combine repeat fields into a single period using relativedelta
+    total_period = relativedelta(
+        days=repeat.days,
+        weeks=repeat.weeks,
+        months=repeat.months,
+        years=repeat.years,
+    )
+
+    # Get the current date (you can use your timezone-adjusted function here)
+    today = get_todays_date_timezone_adjusted()
+
+    # Calculate how many total periods have passed since the start date
+    periods_passed = 0
+    current_period_start = start_date
+
+    while current_period_start + total_period <= today:
+        current_period_start += total_period
+        periods_passed += 1
+
+    window_start = current_period_start
+    window_end = window_start + total_period + relativedelta(days=-1)
+
+    return window_start, window_end
