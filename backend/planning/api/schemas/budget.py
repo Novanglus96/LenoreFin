@@ -39,3 +39,4 @@ class BudgetWithTotal(Schema):
     budget: BudgetOut
     transactions: List[TransactionOut]
     used_total: Decimal = Field(whole_digits=10, decimal_places=2)
+    used_percentage: int

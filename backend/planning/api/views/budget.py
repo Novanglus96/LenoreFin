@@ -260,8 +260,15 @@ def list_budgets(
             total = 0
             for transaction in transactions:
                 total += transaction.tag_total
+            if total:
+                used_percentage = round(abs(total) / (abs(budget.amount)) * 100)
+            else:
+                used_percentage = 0
             new_budget_with_total = BudgetWithTotal(
-                budget=budget, transactions=transactions, used_total=total
+                budget=budget,
+                transactions=transactions,
+                used_total=total,
+                used_percentage=used_percentage,
             )
             budgets_with_totals.append(new_budget_with_total)
         logToDB(
