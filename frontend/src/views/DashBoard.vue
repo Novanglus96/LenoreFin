@@ -12,6 +12,9 @@
       </v-col>
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
+      <v-col class="rounded"> <BudgetsWidget /> </v-col>
+    </v-row>
+    <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded"> <RemindersWidget /> </v-col>
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
@@ -28,6 +31,7 @@
 import PieGraphWidget from "@/components/PieGraphWidget.vue";
 import RemindersWidget from "@/components/RemindersWidget.vue";
 import UpcomingTransactionsWidget from "@/components/UpcomingTransactionsWidget.vue";
+import BudgetsWidget from "@/components/BudgetsWidget.vue";
 </script>
 <style scoped>
 .custom-height {
