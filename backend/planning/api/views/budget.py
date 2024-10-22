@@ -260,8 +260,11 @@ def list_budgets(
             total = 0
             for transaction in transactions:
                 total += transaction.tag_total
+            budget_total = budget.amount
+            if budget.roll_over:
+                budget_total += budget.roll_over_amt
             if total:
-                used_percentage = round(abs(total) / (abs(budget.amount)) * 100)
+                used_percentage = round(abs(total) / (abs(budget_total)) * 100)
             else:
                 used_percentage = 0
             new_budget_with_total = BudgetWithTotal(

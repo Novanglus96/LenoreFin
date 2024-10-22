@@ -12,7 +12,11 @@
         v-if="isLoading"
       >
         <v-slide-group-item
-          ><v-skeleton-loader type="card" height="200" width="150"></v-skeleton-loader
+          ><v-skeleton-loader
+            type="card"
+            height="220"
+            width="150"
+          ></v-skeleton-loader
         ></v-slide-group-item>
       </v-slide-group>
       <v-slide-group
@@ -23,7 +27,7 @@
         v-else
       >
         <v-slide-group-item v-for="budget in budgets" :key="budget.id">
-          <v-card class="ma-4 text-center" height="200"
+          <v-card class="ma-4 text-center" height="220"
             ><v-card-text
               ><v-progress-circular
                 :model-value="budget.used_percentage"
@@ -36,7 +40,23 @@
                 {{ budget.budget.name }}
               </div>
               <div class="text-subtitle-2 text-center">
-                Budgeted: {{ formatCurrency(budget.budget.amount) }}
+                Budget: {{ formatCurrency(budget.budget.amount) }}
+                <span
+                  :class="
+                    budget.budget.roll_over_amt < 0 ? 'text-red' : 'text-green'
+                  "
+                  v-if="budget.budget.roll_over"
+                  >({{ formatCurrency(budget.budget.roll_over_amt) }})</span
+                >
+              </div>
+              <div class="text-subtitle-2 text-center">
+                Total:
+                {{
+                  formatCurrency(
+                    parseFloat(budget.budget.amount) +
+                      parseFloat(budget.budget.roll_over_amt),
+                  )
+                }}
               </div>
               <div class="text-subtitle-2 text-center">
                 Used: {{ formatCurrency(Math.abs(budget.used_total)) }}
