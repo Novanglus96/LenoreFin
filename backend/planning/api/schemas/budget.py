@@ -18,6 +18,7 @@ class BudgetIn(Schema):
     roll_over_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     active: bool
     widget: bool
+    next_start: date
 
 
 # The class BudgetOut is a schema for representing Budgets.
@@ -32,6 +33,7 @@ class BudgetOut(Schema):
     roll_over_amt: Decimal = Field(whole_digits=10, decimal_places=2)
     active: bool
     widget: bool
+    next_start: date
 
 
 # The class BudgetTotals is a schema for representing Budgets with totals.

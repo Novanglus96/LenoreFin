@@ -29,18 +29,30 @@
         <v-slide-group-item v-for="budget in budgets" :key="budget.id">
           <v-card class="ma-4 text-center" height="220"
             ><v-card-text
-              ><v-progress-circular
+              ><div class="text-subtitle-2 text-center font-weight-bold">
+                {{ budget.budget.name }}
+              </div>
+              <v-progress-circular
                 :model-value="budget.used_percentage"
                 :size="100"
                 :width="12"
-                color="accent"
-                >{{ budget.used_percentage }}%</v-progress-circular
+                :color="graphColor(budget.used_percentage)"
+                >{{
+                  formatCurrency(
+                    parseFloat(budget.budget.amount) +
+                      parseFloat(budget.budget.roll_over_amt)-
+                      parseFloat(Math.abs(budget.used_total)),
+                  )
+                }}</v-progress-circular
               >
-              <div class="text-subtitle-2 text-center font-weight-bold">
-                {{ budget.budget.name }}
-              </div>
               <div class="text-subtitle-2 text-center">
-                Budget: {{ formatCurrency(budget.budget.amount) }}
+                Budget:
+                {{
+                  formatCurrency(
+                    parseFloat(budget.budget.amount) +
+                      parseFloat(budget.budget.roll_over_amt) ,
+                  )
+                }}
                 <span
                   :class="
                     budget.budget.roll_over_amt < 0 ? 'text-red' : 'text-green'
@@ -48,15 +60,6 @@
                   v-if="budget.budget.roll_over"
                   >({{ formatCurrency(budget.budget.roll_over_amt) }})</span
                 >
-              </div>
-              <div class="text-subtitle-2 text-center">
-                Total:
-                {{
-                  formatCurrency(
-                    parseFloat(budget.budget.amount) +
-                      parseFloat(budget.budget.roll_over_amt),
-                  )
-                }}
               </div>
               <div class="text-subtitle-2 text-center">
                 Used: {{ formatCurrency(Math.abs(budget.used_total)) }}
@@ -80,6 +83,17 @@ const formatCurrency = value => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+};
+const graphColor = value => {
+  if (value <= 50) {
+    return "success";
+  }
+  if (value > 50 && value <= 75) {
+    return "warning";
+  }
+  if (value > 75) {
+    return "error";
+  }
 };
 </script>
 <style>

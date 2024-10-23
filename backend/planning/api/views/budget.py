@@ -129,6 +129,7 @@ def update_budget(request, budget_id: int, payload: BudgetIn):
         budget.roll_over_amt = payload.roll_over_amt
         budget.active = payload.active
         budget.widget = payload.widget
+        budget.next_start = payload.next_start
         budget.save()
         logToDB(
             f"Budget updated : {budget.name}",

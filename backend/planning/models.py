@@ -152,3 +152,7 @@ class Budget(models.Model):
     )
     active = models.BooleanField(default=True)
     widget = models.BooleanField(default=True)
+    next_start = models.DateField(default=current_date)
+
+    def __str__(self):
+        return f"{self.name}"

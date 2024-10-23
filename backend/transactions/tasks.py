@@ -32,7 +32,7 @@ from imports.models import (
 from accounts.models import Account
 from reminders.models import Reminder, Repeat, ReminderExclusion
 from django_q.models import Schedule
-from datetime import date
+from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -68,6 +68,11 @@ from administration.api.dependencies.get_todays_date_timezone_adjusted import (
 from django.core.management import call_command
 import time
 from pathlib import Path
+from planning.models import Budget
+from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
+    get_complete_transaction_list_with_totals,
+)
+import json
 
 
 def create_backup(clean=True, keep=0):
@@ -202,6 +207,102 @@ def convert_reminder():
                     3001003,
                     1,
                 )
+
+
+def roll_over_budgets():
+    """
+    The function `roll_over_budgets` calculates roll over amounts for budgets.
+
+    Args:
+
+    Returns:
+        string_return (str): the total # of budgets processed
+    """
+    try:
+        today = get_todays_date_timezone_adjusted()
+        budgets = (
+            Budget.objects.all().filter(active=True).order_by("name", "id")
+        )
+        roll_over_budgets = budgets.filter(
+            roll_over=True, next_start__lte=today
+        )
+        non_roll_over_budgets = budgets.filter(roll_over=False)
+        non_roll_over_budgets.update(roll_over_amt=0)
+        num_of_budgets = 0
+        for budget in roll_over_budgets:
+            transactions = []
+            start_date, end_date, periods_passed, next_start = (
+                calculate_repeat_window(budget.start_day, budget.repeat)
+            )
+            transactions, balances = get_complete_transaction_list_with_totals(
+                end_date,
+                1,
+                False,
+                False,
+                start_date,
+                False,
+                [],
+                json.loads(budget.tag_ids),
+                True,
+            )
+            total = 0
+            for transaction in transactions:
+                total += transaction.tag_total
+            total_budget = budget.amount * periods_passed
+            roll_over_amt = total_budget - abs(total)
+            budget.roll_over_amt = roll_over_amt
+            budget.next_start = next_start
+            budget.save()
+            num_of_budgets += 1
+        return f"Processed {num_of_budgets}"
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Budget roll overs not calculated : {str(e)}",
+            None,
+            None,
+            None,
+            3001907,
+            2,
+        )
+
+
+def calculate_repeat_window(start_date: datetime, repeat: Repeat) -> tuple:
+    """
+    Calculate the current repeat window (start and end date) based on the Repeat object.
+
+    Args:
+        start_date (datetime or date): The date when the repetition started.
+        repeat (Repeat): The Repeat object containing the interval (days, weeks, months, years).
+
+    Returns:
+        tuple: A tuple of (window_start, window_end) for the current repeat window.
+    """
+    # Combine repeat fields into a single period using relativedelta
+    total_period = relativedelta(
+        days=repeat.days,
+        weeks=repeat.weeks,
+        months=repeat.months,
+        years=repeat.years,
+    )
+
+    # Get the current date (you can use your timezone-adjusted function here)
+    today = get_todays_date_timezone_adjusted()
+
+    # Calculate how many total periods have passed since the start date
+    periods_passed = 0
+    current_period_start = start_date
+
+    while current_period_start + total_period <= today:
+        current_period_start += total_period
+        periods_passed += 1
+
+    window_start = current_period_start
+    window_end = window_start + total_period + relativedelta(days=-1)
+    previous_end = current_period_start + relativedelta(days=-1)
+    next_start = window_start + total_period
+
+    return start_date, previous_end, periods_passed, next_start
 
 
 def finish_imports():

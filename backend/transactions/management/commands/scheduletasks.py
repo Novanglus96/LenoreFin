@@ -96,6 +96,15 @@ class Command(BaseCommand):
                 "start_today": True,
                 "delete": False,
             },
+            {
+                "task_name": "Roll Over Budgets",
+                "function": "transactions.tasks.roll_over_budgets",
+                "time": "00:00",
+                "arguments": "",
+                "type": "DAILY",  # DAILY, HOURLY, MINUTES
+                "start_today": True,
+                "delete": False,
+            },
         ]
 
         # Schedule or modify tasks

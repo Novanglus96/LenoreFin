@@ -248,53 +248,53 @@ def get_complete_transaction_list_with_totals(
     cleared_transactions_list = list(cleared_transactions)
 
     pending_transactions_list = []
-    if not cleared_only:
-        # Get pending transactions
-        pending_transactions = all_transactions.filter(status_id=1)
 
-        # Annotate pending transactions with balance
-        pending_transactions = pending_transactions.annotate(
-            balance=ExpressionWrapper(
-                Value(cleared_balance),
-                output_field=DecimalField(max_digits=12, decimal_places=2),
-            )
+    # Get pending transactions
+    pending_transactions = all_transactions.filter(status_id=1)
+
+    # Annotate pending transactions with balance
+    pending_transactions = pending_transactions.annotate(
+        balance=ExpressionWrapper(
+            Value(cleared_balance),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
         )
+    )
 
-        # Add tags to pending transactions if not totals_only
-        if not totals_only:
-            for transaction in pending_transactions:
-                transaction_details = TransactionDetail.objects.filter(
-                    transaction_id=transaction.id
+    # Add tags to pending transactions if not totals_only
+    if not totals_only:
+        for transaction in pending_transactions:
+            transaction_details = TransactionDetail.objects.filter(
+                transaction_id=transaction.id
+            )
+            if tags:
+                transaction_details = transaction_details.filter(
+                    tag_id__in=tags,
                 )
-                if tags:
-                    transaction_details = transaction_details.filter(
-                        tag_id__in=tags,
-                    )
-                    tag_sum = 0
-                    for detail in transaction_details:
-                        tag_sum += detail.detail_amt
-                    transaction.tag_total = tag_sum
-                details = list(transaction_details)
-                tag_list = list(
-                    transaction_details.annotate(
-                        parent_tag=F("tag__parent__tag_name"),
-                        child_tag=F("tag__child__tag_name"),
-                        tag_name_combined=Case(
-                            When(child_tag__isnull=True, then=F("parent_tag")),
-                            default=Concat(
-                                F("parent_tag"), Value(" / "), F("child_tag")
-                            ),
-                            output_field=CharField(),
+                tag_sum = 0
+                for detail in transaction_details:
+                    tag_sum += detail.detail_amt
+                transaction.tag_total = tag_sum
+            details = list(transaction_details)
+            tag_list = list(
+                transaction_details.annotate(
+                    parent_tag=F("tag__parent__tag_name"),
+                    child_tag=F("tag__child__tag_name"),
+                    tag_name_combined=Case(
+                        When(child_tag__isnull=True, then=F("parent_tag")),
+                        default=Concat(
+                            F("parent_tag"), Value(" / "), F("child_tag")
                         ),
-                    )
-                    .exclude(tag_name_combined__isnull=True)
-                    .values_list("tag_name_combined", flat=True)
+                        output_field=CharField(),
+                    ),
                 )
-                transaction.tags = tag_list
-                transaction.details = details
+                .exclude(tag_name_combined__isnull=True)
+                .values_list("tag_name_combined", flat=True)
+            )
+            transaction.tags = tag_list
+            transaction.details = details
 
-        # Create a list from pending_transactions
-        pending_transactions_list = list(pending_transactions)
+    # Create a list from pending_transactions
+    pending_transactions_list = list(pending_transactions)
 
     reminder_transactions_list = []
     if not cleared_only:
