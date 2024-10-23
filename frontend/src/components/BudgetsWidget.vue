@@ -14,7 +14,7 @@
         <v-slide-group-item
           ><v-skeleton-loader
             type="card"
-            height="220"
+            height="200"
             width="150"
           ></v-skeleton-loader
         ></v-slide-group-item>
@@ -27,7 +27,7 @@
         v-else
       >
         <v-slide-group-item v-for="budget in budgets" :key="budget.id">
-          <v-card class="ma-4 text-center" height="220"
+          <v-card class="ma-4 text-center" height="200"
             ><v-card-text
               ><div class="text-subtitle-2 text-center font-weight-bold">
                 {{ budget.budget.name }}
