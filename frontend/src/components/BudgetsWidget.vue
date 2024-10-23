@@ -1,31 +1,18 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white">
+  <v-card variant="outlined" :elevation="4" class="bg-white ma-0 pa-0 ga-0">
     <template v-slot:title>
       <span class="text-subtitle-2 text-secondary">Budgets</span>
     </template>
     <template v-slot:text>
-      <v-slide-group
-        v-model="model"
-        class="pa-4"
-        center-active
-        show-arrows
-        v-if="isLoading"
-      >
-        <v-slide-group-item
+      <v-slide-group v-model="model" class="pa-4" center-active show-arrows
+        ><v-slide-group-item
           ><v-skeleton-loader
             type="card"
             height="200"
             width="150"
+            v-if="isLoading"
           ></v-skeleton-loader
         ></v-slide-group-item>
-      </v-slide-group>
-      <v-slide-group
-        v-model="model"
-        class="pa-4"
-        center-active
-        show-arrows
-        v-else
-      >
         <v-slide-group-item v-for="budget in budgets" :key="budget.id">
           <v-card class="ma-4 text-center" height="200"
             ><v-card-text
@@ -40,7 +27,7 @@
                 >{{
                   formatCurrency(
                     parseFloat(budget.budget.amount) +
-                      parseFloat(budget.budget.roll_over_amt)-
+                      parseFloat(budget.budget.roll_over_amt) -
                       parseFloat(Math.abs(budget.used_total)),
                   )
                 }}</v-progress-circular
@@ -50,7 +37,7 @@
                 {{
                   formatCurrency(
                     parseFloat(budget.budget.amount) +
-                      parseFloat(budget.budget.roll_over_amt) ,
+                      parseFloat(budget.budget.roll_over_amt),
                   )
                 }}
                 <span
@@ -67,6 +54,15 @@
             >
           </v-card>
         </v-slide-group-item>
+        <v-slide-group-item v-if="budgets && budgets.length == 0">
+          <v-card class="ma-4 text-center"
+            ><v-card-text
+              ><div class="text-subtitle-2 text-center font-weight-bold">
+                No Budgets
+              </div></v-card-text
+            ></v-card
+          ></v-slide-group-item
+        >
       </v-slide-group>
     </template>
   </v-card>

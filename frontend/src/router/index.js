@@ -16,6 +16,7 @@ import ContributionsView from "@/views/ContributionsView.vue";
 import ExpensesView from "@/views/ExpensesView.vue";
 import NotesView from "@/views/NotesView.vue";
 import RetirementView from "@/views/RetirementView.vue";
+import BudgetsView from "@/views/BudgetsView.vue";
 
 const routes = [
   {
@@ -77,6 +78,11 @@ const routes = [
     path: "/planning/contributions",
     name: "contributions",
     component: ContributionsView,
+  },
+  {
+    path: "/planning/budgets",
+    name: "budgets",
+    component: BudgetsView,
   },
   {
     path: "/planning/expenses",

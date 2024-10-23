@@ -38,6 +38,12 @@ const planning_menu = ref([
     personal: false,
   },
   {
+    title: "Budgets",
+    link: "/planning/budgets",
+    icon: "mdi-pail",
+    personal: false,
+  },
+  {
     title: "Contributions",
     link: "/planning/contributions",
     icon: "mdi-pail",
