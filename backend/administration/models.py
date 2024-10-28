@@ -156,6 +156,15 @@ class Option(SingletonModel):
     report_individual = models.CharField(
         max_length=254, default=None, null=True, blank=True
     )
+    retirement_accounts = models.CharField(
+        max_length=254, default=None, null=True, blank=True
+    )
+    christmas_accounts = models.CharField(
+        max_length=254, default=None, null=True, blank=True
+    )
+    christmas_rewards = models.CharField(
+        max_length=254, default=None, null=True, blank=True
+    )
 
     @classmethod
     def load(cls):
