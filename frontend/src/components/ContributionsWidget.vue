@@ -31,26 +31,25 @@
         ><v-row dense
           ><v-col class="text-right text-subtitle-2 font-weight-bold" cols="3"
             >Paycheck Total(non Emergency)</v-col
-          ><v-col class="text-left text-body-2" cols="1">{{
-            contributions
-              ? formatCurrency(contributions.per_paycheck_total)
-              : formatCurrency(0)
-          }}</v-col
+          ><v-col class="text-left text-body-2" cols="1">
+            <NumberFlow
+              :value="contributions ? contributions.per_paycheck_total : 0"
+              :format="{ style: 'currency', currency: 'USD' }" /></v-col
           ><v-col cols="3" class="text-right text-subtitle-2 font-weight-bold"
             >Paycheck Total(Emergency)</v-col
-          ><v-col class="text-left text-body-2" cols="1">{{
-            contributions
-              ? formatCurrency(contributions.emergency_paycheck_total)
-              : formatCurrency(0)
-          }}</v-col
+          ><v-col class="text-left text-body-2" cols="1"
+            ><NumberFlow
+              :value="
+                contributions ? contributions.emergency_paycheck_total : 0
+              "
+              :format="{ style: 'currency', currency: 'USD' }" /></v-col
           ><v-col class="text-right text-subtitle-2 font-weight-bold" cols="3"
             >Emergency Total</v-col
-          ><v-col class="text-left text-body-2" cols="1">{{
-            contributions
-              ? formatCurrency(contributions.total_emergency)
-              : formatCurrency(0)
-          }}</v-col></v-row
-        >
+          ><v-col class="text-left text-body-2" cols="1"
+            ><NumberFlow
+              :value="contributions ? contributions.total_emergency : 0"
+              :format="{ style: 'currency', currency: 'USD' }" /></v-col
+        ></v-row>
       </v-container>
       <vue3-datatable
         :rows="contributions ? contributions.contributions : []"
@@ -151,6 +150,7 @@ import "@bhplugin/vue3-datatable/dist/style.css";
 import { ref } from "vue";
 import { useContributions } from "@/composables/contributionsComposable";
 import ContributionForm from "@/components/ContributionForm.vue";
+import NumberFlow from "@number-flow/vue";
 
 const contrib_table = ref(null);
 const editContributionDialog = ref(false);
