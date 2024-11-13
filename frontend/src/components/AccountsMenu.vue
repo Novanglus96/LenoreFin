@@ -50,9 +50,11 @@
                   ? 'text-green font-weight-bold'
                   : 'text-red font-weight-bold'
               "
-              >{{ formatCurrency(account.balance) }}</span
-            ></v-list-item-subtitle
-          >
+            >
+              <NumberFlow
+                :value="account.balance"
+                :format="{ style: 'currency', currency: 'USD' }" /></span
+          ></v-list-item-subtitle>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -96,9 +98,10 @@
                   ? 'text-green font-weight-bold'
                   : 'text-red font-weight-bold'
               "
-              >{{ formatCurrency(account.balance) }}</span
-            ></v-list-item-subtitle
-          >
+              ><NumberFlow
+                :value="account.balance"
+                :format="{ style: 'currency', currency: 'USD' }" /></span
+          ></v-list-item-subtitle>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -140,9 +143,10 @@
                   ? 'text-green font-weight-bold'
                   : 'text-red font-weight-bold'
               "
-              >{{ formatCurrency(account.balance) }}</span
-            ></v-list-item-subtitle
-          >
+              ><NumberFlow
+                :value="account.balance"
+                :format="{ style: 'currency', currency: 'USD' }" /></span
+          ></v-list-item-subtitle>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -186,9 +190,10 @@
                   ? 'text-green font-weight-bold'
                   : 'text-red font-weight-bold'
               "
-              >{{ formatCurrency(account.balance) }}</span
-            ></v-list-item-subtitle
-          >
+              ><NumberFlow
+                :value="account.balance"
+                :format="{ style: 'currency', currency: 'USD' }" /></span
+          ></v-list-item-subtitle>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -231,9 +236,10 @@
                   ? 'text-green font-weight-bold'
                   : 'text-red font-weight-bold'
               "
-              >{{ formatCurrency(account.balance) }}</span
-            ></v-list-item-subtitle
-          >
+              ><NumberFlow
+                :value="account.balance"
+                :format="{ style: 'currency', currency: 'USD' }" /></span
+          ></v-list-item-subtitle>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -281,6 +287,7 @@ import { useAccounts } from "@/composables/accountsComposable";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useTransactionsStore } from "@/stores/transactions";
+import NumberFlow from "@number-flow/vue";
 
 const transactions_store = useTransactionsStore();
 const router = useRouter();
@@ -304,12 +311,4 @@ const {
   inactive_accounts,
 } = useAccounts();
 const add_account_link = ref("/accounts/add");
-const formatCurrency = value => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
 </script>

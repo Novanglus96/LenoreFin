@@ -74,9 +74,10 @@
                     v-bind="props"
                     width="200"
                   >
-                    {{ formatCurrency(account.balance) }}
-                  </div></template
-                ></v-tooltip
+                    <NumberFlow
+                      :value="account.balance"
+                      :format="{ style: 'currency', currency: 'USD' }"
+                    /></div></template></v-tooltip
               ><AdjustBalanceForm
                 v-model="adjBalDialog"
                 :account="account"
@@ -101,7 +102,10 @@
               v-if="account.account_type.id == 1"
               class="text-center align-content-end"
               ><div class="text-white font-weight-bold text-body">
-                {{ formatCurrency(account.last_statement_amount) }}
+                <NumberFlow
+                  :value="account.last_statement_amount"
+                  :format="{ style: 'currency', currency: 'USD' }"
+                />
               </div>
               <div class="text-secondary-lighten-2">
                 last statement balance
@@ -124,14 +128,20 @@
                 role="button"
                 aria-pressed="false"
               >
-                {{ formatCurrency(account.rewards_amount) }}
+                <NumberFlow
+                  :value="account.rewards_amount"
+                  :format="{ style: 'currency', currency: 'USD' }"
+                />
               </div>
               <div class="text-secondary-lighten-2">rewards</div></v-col
             ><v-col
               v-if="account.account_type.id == 1"
               class="text-center align-content-end"
               ><div class="text-white font-weight-bold text-body">
-                {{ formatCurrency(account.available_credit) }}
+                <NumberFlow
+                  :value="account.available_credit"
+                  :format="{ style: 'currency', currency: 'USD' }"
+                />
               </div>
               <div class="text-secondary-lighten-2">
                 available credit
@@ -155,6 +165,7 @@ import { useAccountByID } from "@/composables/accountsComposable";
 import EditAccountForm from "./EditAccountForm.vue";
 import AdjustBalanceForm from "./AdjustBalanceForm.vue";
 import DeleteAccountForm from "./DeleteAccountForm.vue";
+import NumberFlow from "@number-flow/vue";
 
 const adjBalDialog = ref(false);
 const editDialog = ref(false);
@@ -183,14 +194,5 @@ const formatDate = dateString => {
     day: "numeric",
     timeZone: "UTC",
   }).format(date);
-};
-
-const formatCurrency = value => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
 };
 </script>
