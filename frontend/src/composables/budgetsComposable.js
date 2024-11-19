@@ -28,9 +28,19 @@ function handleApiError(error, message) {
   throw error;
 }
 
-async function getBudgetsFunction() {
+async function getBudgetsFunction(widget) {
   try {
-    const response = await apiClient.get("/planning/budget/list");
+    let options = "";
+    let onlyWidgets = true;
+    if (widget === undefined) {
+      onlyWidgets = true;
+    } else if (widget === false) {
+      onlyWidgets = false;
+    } else {
+      onlyWidgets = true;
+    }
+    options = "?widget=" + onlyWidgets;
+    const response = await apiClient.get("/planning/budget/list" + options);
     return response.data;
   } catch (error) {
     handleApiError(error, "Budgets not fetched: ");
@@ -75,11 +85,11 @@ async function updateBudgetFunction(budget) {
   }
 }
 
-export function useBudgets() {
+export function useBudgets(widget) {
   const queryClient = useQueryClient();
   const { data: budgets, isLoading } = useQuery({
-    queryKey: ["budgets"],
-    queryFn: () => getBudgetsFunction(),
+    queryKey: ["budgets", { widget: widget }],
+    queryFn: () => getBudgetsFunction(widget),
     select: response => response,
     client: queryClient,
   });

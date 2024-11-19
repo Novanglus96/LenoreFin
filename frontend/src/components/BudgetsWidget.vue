@@ -4,7 +4,12 @@
       <span class="text-subtitle-2 text-secondary">Budgets</span>
     </template>
     <template v-slot:text>
-      <v-slide-group v-model="model" class="pa-4" center-active show-arrows
+      <v-slide-group
+        v-model="budget_selected"
+        class="pa-4"
+        center-active
+        show-arrows
+        selected-class="bg-accent"
         ><v-slide-group-item
           ><v-skeleton-loader
             type="card"
@@ -13,8 +18,18 @@
             v-if="isLoading"
           ></v-skeleton-loader
         ></v-slide-group-item>
-        <v-slide-group-item v-for="budget in budgets" :key="budget.id">
-          <v-card class="ma-4 text-center" height="200"
+        <v-slide-group-item
+          v-for="budget in budgets"
+          :key="budget.id"
+          v-slot="{ toggle, selectedClass }"
+          @group:selected="clickSelectBudget"
+          :value="budget.id"
+          :disabled="props.widget"
+        >
+          <v-card
+            :class="['ma-4 text-center', selectedClass]"
+            height="200"
+            @click="toggle"
             ><v-card-text
               ><div class="text-subtitle-2 text-center font-weight-bold">
                 {{ budget.budget.name }}
@@ -68,9 +83,15 @@
   </v-card>
 </template>
 <script setup>
+import { defineProps, ref, defineEmits } from "vue";
 import { useBudgets } from "@/composables/budgetsComposable";
 
-const { budgets, isLoading } = useBudgets();
+const props = defineProps({
+  widget: Boolean,
+});
+const budget_selected = ref(null);
+const emit = defineEmits(["budgetSelected"]);
+const { budgets, isLoading } = useBudgets(props.widget);
 
 const formatCurrency = value => {
   return new Intl.NumberFormat("en-US", {
@@ -90,6 +111,10 @@ const graphColor = value => {
   if (value > 75) {
     return "error";
   }
+};
+
+const clickSelectBudget = () => {
+  emit("budgetSelected", budget_selected.value);
 };
 </script>
 <style>

@@ -12,7 +12,7 @@
       </v-col>
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
-      <v-col class="rounded"> <BudgetsWidget /> </v-col>
+      <v-col class="rounded"> <BudgetsWidget :widget="true" /> </v-col>
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded"> <RemindersWidget /> </v-col>
