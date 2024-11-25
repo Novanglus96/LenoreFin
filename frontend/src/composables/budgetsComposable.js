@@ -50,7 +50,20 @@ async function getBudgetsFunction(widget) {
 async function createBudgetFunction(newBudget) {
   const mainstore = useMainStore();
   try {
-    const response = await apiClient.post("/planning/budget/create", newBudget);
+    const data = {
+      id: newBudget.id,
+      start_day: formatDateToYYYYMMDD(newBudget.start_date),
+      next_start: formatDateToYYYYMMDD(newBudget.next_date),
+      name: newBudget.name,
+      active: newBudget.active,
+      widget: newBudget.widget,
+      amount: newBudget.amount,
+      tag_ids: JSON.stringify(newBudget.tag_ids),
+      roll_over: newBudget.roll_over,
+      repeat_id: newBudget.repeat.id,
+      roll_over_amt: 0,
+    };
+    const response = await apiClient.post("/planning/budget/create", data);
     mainstore.showSnackbar("Budget created successfully!", "success");
     return response.data;
   } catch (error) {
@@ -74,9 +87,21 @@ async function deleteBudgetFunction(budget) {
 async function updateBudgetFunction(budget) {
   const mainstore = useMainStore();
   try {
+    const data = {
+      id: budget.id,
+      start_day: formatDateToYYYYMMDD(budget.start_date),
+      next_start: formatDateToYYYYMMDD(budget.next_date),
+      name: budget.name,
+      active: budget.active,
+      widget: budget.widget,
+      amount: budget.amount,
+      tag_ids: JSON.stringify(budget.tag_ids),
+      roll_over: budget.roll_over,
+      repeat_id: budget.repeat.id,
+    };
     const response = await apiClient.put(
-      "/planning/budget/update/" + budget.id,
-      budget,
+      "/planning/budget/update/" + data.id,
+      data,
     );
     mainstore.showSnackbar("Budget updated successfully!", "success");
     return response.data;
@@ -137,4 +162,12 @@ export function useBudgets(widget) {
     removeBudget,
     editBudget,
   };
+}
+
+function formatDateToYYYYMMDD(date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
 }

@@ -4,6 +4,7 @@ import * as components from "vuetify/components";
 import * as directives from "vuetify/directives";
 import { aliases, mdi } from "vuetify/iconsets/mdi";
 import "@mdi/font/css/materialdesignicons.css";
+import { VDateInput } from "vuetify/labs/VDateInput"; // Import the lab component
 
 const myCustomLightTheme = {
   dark: false,
@@ -38,6 +39,9 @@ export default createVuetify({
       mdi,
     },
   },
-  components,
+  components: {
+    ...components, // Spread the default Vuetify components
+    VDateInput, // Add the lab component
+  },
   directives,
 });

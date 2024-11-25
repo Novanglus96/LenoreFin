@@ -126,7 +126,8 @@ def update_budget(request, budget_id: int, payload: BudgetIn):
         budget.roll_over = payload.roll_over
         budget.repeat_id = payload.repeat_id
         budget.start_day = payload.start_day
-        budget.roll_over_amt = payload.roll_over_amt
+        if payload.roll_over_amt:
+            budget.roll_over_amt = payload.roll_over_amt
         budget.active = payload.active
         budget.widget = payload.widget
         budget.next_start = payload.next_start

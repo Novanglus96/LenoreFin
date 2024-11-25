@@ -11,7 +11,6 @@ import TagsView from "@/views/TagsView.vue";
 import DocumentView from "@/views/DocumentView.vue";
 import CalculatorView from "@/views/CalculatorView.vue";
 import PayView from "@/views/PayView.vue";
-import ChristmasView from "@/views/ChristmasView.vue";
 import ContributionsView from "@/views/ContributionsView.vue";
 import ExpensesView from "@/views/ExpensesView.vue";
 import NotesView from "@/views/NotesView.vue";
@@ -68,11 +67,6 @@ const routes = [
     path: "/planning/calculator",
     name: "calculator",
     component: CalculatorView,
-  },
-  {
-    path: "/planning/christmas",
-    name: "christmas",
-    component: ChristmasView,
   },
   {
     path: "/planning/contributions",

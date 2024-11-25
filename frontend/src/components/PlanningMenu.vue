@@ -56,12 +56,6 @@ const planning_menu = ref([
     personal: false,
   },
   {
-    title: "Christmas",
-    link: "/planning/christmas",
-    icon: "mdi-pine-tree",
-    personal: true,
-  },
-  {
     title: "Notes",
     link: "/planning/notes",
     icon: "mdi-note",

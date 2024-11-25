@@ -2,15 +2,27 @@
   <v-card variant="outlined" :elevation="4" class="bg-white ma-0 pa-0 ga-0">
     <template v-slot:title>
       <span class="text-subtitle-2 text-secondary">Budgets</span>
+      <v-tooltip text="Add Budget" v-if="!props.widget">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            icon="mdi-plus-circle"
+            variant="plain"
+            size="small"
+            @click="showAddForm = true"
+            v-bind="props"
+          ></v-btn> </template
+      ></v-tooltip>
+      <AddBudgetForm v-model="showAddForm" @update-dialog="closeAddForm" />
     </template>
+
     <template v-slot:text>
       <v-slide-group
         v-model="budget_selected"
         class="pa-4"
-        center-active
         show-arrows
         selected-class="bg-accent"
-        ><v-slide-group-item
+        center-active
+        ><v-slide-group-item :key="-1" v-if="isLoading"
           ><v-skeleton-loader
             type="card"
             height="200"
@@ -20,10 +32,10 @@
         ></v-slide-group-item>
         <v-slide-group-item
           v-for="budget in budgets"
-          :key="budget.id"
+          :key="budget.budget.id"
           v-slot="{ toggle, selectedClass }"
           @group:selected="clickSelectBudget"
-          :value="budget.id"
+          :value="budget"
           :disabled="props.widget"
         >
           <v-card
@@ -69,7 +81,7 @@
             >
           </v-card>
         </v-slide-group-item>
-        <v-slide-group-item v-if="budgets && budgets.length == 0">
+        <v-slide-group-item v-if="budgets && budgets.length == 0" :key="-2">
           <v-card class="ma-4 text-center"
             ><v-card-text
               ><div class="text-subtitle-2 text-center font-weight-bold">
@@ -85,6 +97,7 @@
 <script setup>
 import { defineProps, ref, defineEmits } from "vue";
 import { useBudgets } from "@/composables/budgetsComposable";
+import AddBudgetForm from "./AddBudgetForm.vue";
 
 const props = defineProps({
   widget: Boolean,
@@ -92,6 +105,7 @@ const props = defineProps({
 const budget_selected = ref(null);
 const emit = defineEmits(["budgetSelected"]);
 const { budgets, isLoading } = useBudgets(props.widget);
+const showAddForm = ref(false);
 
 const formatCurrency = value => {
   return new Intl.NumberFormat("en-US", {
@@ -115,6 +129,10 @@ const graphColor = value => {
 
 const clickSelectBudget = () => {
   emit("budgetSelected", budget_selected.value);
+};
+
+const closeAddForm = () => {
+  showAddForm.value = false;
 };
 </script>
 <style>
