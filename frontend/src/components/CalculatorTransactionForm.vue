@@ -224,14 +224,18 @@ const watchPassedFormData = () => {
         ? (props.passedFormData.memo + "\n" + props.newMemo).trim()
         : props.passedFormData.memo;
       total_amount.value.value = props.newTotal
-        ? parseFloat(props.newTotal) +
-          parseFloat(props.passedFormData.total_amount)
+        ? addDecimals(
+            parseFloat(props.newTotal),
+            parseFloat(props.passedFormData.total_amount),
+          )
         : props.passedFormData.total_amount;
       transaction_date.value.value = props.passedFormData.transaction_date;
       oldTotal.value = props.passedFormData.total_amount;
       pretty_total.value.value = props.newTotal
-        ? parseFloat(props.newTotal) +
-          parseFloat(props.passedFormData.total_amount)
+        ? addDecimals(
+            parseFloat(props.newTotal),
+            parseFloat(props.passedFormData.total_amount),
+          )
         : props.passedFormData.total_amount;
       id.value.value = props.passedFormData.id ? props.passedFormData.id : 0;
       status_id.value.value = props.passedFormData.status
@@ -245,8 +249,10 @@ const watchPassedFormData = () => {
       details.value.value = [
         {
           tag_amt: props.newTotal
-            ? parseFloat(props.newTotal) +
-              parseFloat(props.passedFormData.total_amount)
+            ? addDecimals(
+                parseFloat(props.newTotal),
+                parseFloat(props.passedFormData.total_amount),
+              )
             : props.passedFormData.total_amount,
           tag_pretty_name: "Transfer",
           tag_id: 34,
@@ -278,4 +284,9 @@ const clickClose = () => {
 onMounted(() => {
   watchPassedFormData();
 });
+
+function addDecimals(num1, num2, precision = 2) {
+  const factor = Math.pow(10, precision);
+  return Math.round((num1 + num2) * factor) / factor;
+}
 </script>

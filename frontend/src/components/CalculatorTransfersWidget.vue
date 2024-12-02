@@ -182,7 +182,7 @@ const addTransfer = () => {
   let description = calculator.value.rule.name + " Transfer";
   let totalAmount = 0;
   for (const transaction of planningstore.calculator.selected_transactions) {
-    totalAmount += parseFloat(transaction.tag_total);
+    totalAmount = addDecimals(totalAmount, parseFloat(transaction.tag_total));
     if (
       parseFloat(transaction.tag_total) != parseFloat(transaction.total_amount)
     ) {
@@ -233,7 +233,7 @@ const editTransfer = trans => {
   let memo = "";
   let totalAmount = 0;
   for (const transaction of planningstore.calculator.selected_transactions) {
-    totalAmount += parseFloat(transaction.tag_total);
+    totalAmount = addDecimals(totalAmount, parseFloat(transaction.tag_total));
     if (
       parseFloat(transaction.tag_total) != parseFloat(transaction.total_amount)
     ) {
@@ -256,6 +256,11 @@ const formatCurrency = value => {
     maximumFractionDigits: 2,
   }).format(value);
 };
+
+function addDecimals(num1, num2, precision = 2) {
+  const factor = Math.pow(10, precision);
+  return Math.round((num1 + num2) * factor) / factor;
+}
 </script>
 <style>
 /* alt-pagination */
