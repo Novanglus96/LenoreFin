@@ -133,9 +133,9 @@
         search=""
         @rowSelect="rowSelected"
         ref="trans_table"
-        height="1230px"
+        :height="tableSize"
         skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="[60]"
+        :pageSizeOptions="[transactions_store.pageinfo.page_size]"
         :showPageSize="false"
         paginationInfo="Showing {0} to {1} of {2} transactions"
         @change="pageChanged"
@@ -375,6 +375,14 @@ const {
   removeTransaction,
   clearTransaction,
 } = useTransactions();
+
+const tableSize = computed(() => {
+  let total_size = "";
+  const pixelRatio = 43;
+  total_size = transactions_store.pageinfo.page_size * pixelRatio;
+  total_size += "px";
+  return total_size;
+});
 
 const isActive = computed(
   () => !(isLoading.value === false && isFetching.value === false),
