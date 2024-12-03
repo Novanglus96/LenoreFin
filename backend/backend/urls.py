@@ -61,7 +61,7 @@ from planning.api.routers.budget import budget_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
-api.version = "1.0.052"
+api.version = "1.0.053"
 api.description = "API documentation for LenoreFin"
 
 # Add routers to the API
