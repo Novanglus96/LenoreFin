@@ -10,6 +10,7 @@ from transactions.api.schemas.transaction import (
     TransactionList,
     TransactionOut,
     PaginatedTransactions,
+    MultiTranscationDate,
 )
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
@@ -162,6 +163,49 @@ def create_transaction(request, payload: TransactionIn):
         )
         raise HttpError(500, f"Record creation error : {str(e)}")
         traceback.print_exc()
+
+
+@transaction_router.patch("/multiedit")
+def multiedit_transactions(request, payload: MultiTranscationDate):
+    """
+    The function `multiedit_transactions` changes the transaction dates of mutliple
+    transactions.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        payload (MultiTransactionDate): A list of transactions and date to change.
+
+    Returns:
+        dict: A dictionary with the key 'success' and value True.
+
+    Raises:
+        HttpError: Raises an HTTP error if there's an exception during processing.
+    """
+    try:
+        edit_date = get_todays_date_timezone_adjusted()
+        # Fetch all relevant transactions at once
+        transactions = Transaction.objects.filter(
+            id__in=payload.transaction_ids
+        )
+
+        # Make changes
+        transactions.update(
+            transaction_date=payload.new_date, edit_date=edit_date
+        )
+
+        logToDB(
+            f"Transaction dates updated: #{payload.transaction_ids}",
+            None,
+            None,
+            None,
+            3002005,
+            1,
+        )
+
+        return {"success": True}
+    except Exception as e:
+        # Log other types of exceptions
+        raise HttpError(500, f"Transaction dates error: {str(e)}")
 
 
 @transaction_router.patch("/clear")

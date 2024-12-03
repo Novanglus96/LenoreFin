@@ -96,6 +96,21 @@ async function deleteTransactionFunction(deletedTransaction) {
   }
 }
 
+async function multiEditTransactionsFunction(data) {
+  const mainstore = useMainStore();
+  let payload = {
+    transaction_ids: data.transaction_ids,
+    new_date: formatDateToYYYYMMDD(data.new_date),
+  };
+  try {
+    const response = await apiClient.patch("/transactions/multiedit", payload);
+    mainstore.showSnackbar("Transaction dates edited successfully!", "success");
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Transaction dates not edited: ");
+  }
+}
+
 async function clearTransactionFunction(clearedTransaction) {
   const mainstore = useMainStore();
   let payload = {
@@ -180,6 +195,20 @@ export function useTransactions() {
     },
   });
 
+  const multiEditTransactionsMutation = useMutation({
+    mutationFn: multiEditTransactionsFunction,
+    onSuccess: () => {
+      console.log("Success editing dates of transactions");
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
+      queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["calculator"] });
+      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
+    },
+  });
+
   const updateTransactionMutation = useMutation({
     mutationFn: updateTransactionFunction,
     onSuccess: () => {
@@ -211,6 +240,10 @@ export function useTransactions() {
     clearTransactionMutation.mutate(clearedTransaction);
   }
 
+  async function mutliEditTransactions(data) {
+    multiEditTransactionsMutation.mutate(data);
+  }
+
   return {
     isLoading,
     isFetching,
@@ -219,5 +252,14 @@ export function useTransactions() {
     removeTransaction,
     clearTransaction,
     editTransaction,
+    mutliEditTransactions,
   };
+}
+
+function formatDateToYYYYMMDD(date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
 }

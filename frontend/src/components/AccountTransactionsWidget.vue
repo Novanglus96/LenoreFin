@@ -206,26 +206,20 @@
             ></v-btn>
           </template>
         </v-tooltip>
-        <v-tooltip text="Edit Transaction" location="top">
+        <v-tooltip text="Edit Transaction(s)" location="top">
           <template v-slot:activator="{ props }">
             <v-btn
-              icon="mdi-invoice-text-edit"
+              :icon="
+                selected.length > 1
+                  ? 'mdi-calendar-edit'
+                  : 'mdi-invoice-text-edit'
+              "
               flat
-              :disabled="
-                (selected && selected.length === 0) ||
-                selected.length > 1 ||
-                editDisable
-              "
+              :disabled="(selected && selected.length === 0) || editDisable"
               variant="plain"
-              @click="transactionEditFormDialog = true"
+              @click="displayEditForm"
               v-bind="props"
-              v-if="
-                !(
-                  (selected && selected.length === 0) ||
-                  selected.length > 1 ||
-                  editDisable
-                )
-              "
+              v-if="!((selected && selected.length === 0) || editDisable)"
             ></v-btn>
           </template>
         </v-tooltip>
@@ -237,7 +231,11 @@
           @update-dialog="updateEditDialog"
           :passedFormData="editTransaction"
         />
-
+        <MultipleTransactionEditForm
+          v-model="showMultipleTransactionEditDialog"
+          @update-dialog="updateMultipleEditDialog"
+          :transactionIds="editTransactions"
+        />
         <v-tooltip text="Remove Transaction(s)" location="top">
           <template v-slot:activator="{ props }">
             <v-btn
@@ -310,6 +308,7 @@ import FileImportForm from "@/components/FileImportForm";
 import Vue3Datatable from "@bhplugin/vue3-datatable";
 import "@bhplugin/vue3-datatable/dist/style.css";
 import { useTransactionsStore } from "@/stores/transactions";
+import MultipleTransactionEditForm from "@/components/MultipleTransactionEditForm";
 
 const transactions_store = useTransactionsStore();
 const today = new Date();
@@ -318,12 +317,15 @@ const month = String(today.getMonth() + 1).padStart(2, "0");
 const day = String(today.getDate()).padStart(2, "0");
 const formattedDate = `${year}-${month}-${day}`;
 const showDeleteDialog = ref(false);
+const showMultipleTransactionEditDialog = ref(false);
 const transactionAddFormDialog = ref(false);
 const importFileDialog = ref(false);
 const transactionEditFormDialog = ref(false);
 const deleteDisable = ref(true);
 const editDisable = ref(true);
 const clearDisable = ref(true);
+const editTransactions = ref([]);
+
 const props = defineProps({
   account: Number,
   maxdays: { type: Number, default: 14 },
@@ -388,6 +390,15 @@ const {
   removeTransaction,
   clearTransaction,
 } = useTransactions();
+
+const displayEditForm = () => {
+  if (selected.value.length === 1) {
+    transactionEditFormDialog.value = true;
+  } else {
+    editTransactions.value = selected.value;
+    showMultipleTransactionEditDialog.value = true;
+  }
+};
 
 const tableSize = computed(() => {
   let total_size = "";
@@ -504,6 +515,9 @@ const updateImportFileDialog = () => {
 
 const updateEditDialog = () => {
   transactionEditFormDialog.value = false;
+};
+const updateMultipleEditDialog = () => {
+  showMultipleTransactionEditDialog.value = false;
 };
 const formatCurrency = value => {
   return new Intl.NumberFormat("en-US", {

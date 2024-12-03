@@ -43,6 +43,13 @@ class TransactionList(Schema):
     transactions: List[int]
 
 
+# The class MultiTransactionDate is a schema for editing dates of transactions.
+class MultiTranscationDate(Schema):
+    transaction_ids: List[int]
+    new_date: date
+    edit_date: Optional[date]
+
+
 # The class TransactionOut is a schema for representing Transactions.
 class TransactionOut(Schema):
     id: int
