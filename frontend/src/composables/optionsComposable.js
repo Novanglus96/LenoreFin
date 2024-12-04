@@ -76,6 +76,7 @@ export function useOptions() {
       console.log("Success updating options");
       queryClient.invalidateQueries({ queryKey: ["options"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
     },
   });
 

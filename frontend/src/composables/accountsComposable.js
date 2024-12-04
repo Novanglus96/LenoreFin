@@ -192,6 +192,7 @@ export function useAccountByID(account_id) {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
     },
   });
 
@@ -203,6 +204,7 @@ export function useAccountByID(account_id) {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
     },
   });
 

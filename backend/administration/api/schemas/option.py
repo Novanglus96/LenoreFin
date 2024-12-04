@@ -31,6 +31,7 @@ class OptionIn(Schema):
     enable_cc_bill_calculation: Optional[bool] = True
     report_main: Optional[str] = None
     report_individual: Optional[str] = None
+    retirement_accounts: Optional[str] = None
 
 
 # The class OptionOut is a schema for representing Options.
@@ -59,3 +60,4 @@ class OptionOut(Schema):
     enable_cc_bill_calculation: Optional[bool] = True
     report_main: Optional[str] = None
     report_individual: Optional[str] = None
+    retirement_accounts: Optional[str] = None

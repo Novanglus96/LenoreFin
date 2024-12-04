@@ -164,6 +164,7 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["calculator"] });
       queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
       queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
     },
   });
 
@@ -178,6 +179,7 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["calculator"] });
       queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
       queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
     },
   });
 
@@ -192,6 +194,7 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["calculator"] });
       queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
       queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
     },
   });
 
@@ -206,6 +209,7 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["calculator"] });
       queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
       queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
     },
   });
 
@@ -221,6 +225,7 @@ export function useTransactions() {
       queryClient.invalidateQueries({ queryKey: ["calculator"] });
       queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
       queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
     },
   });
 

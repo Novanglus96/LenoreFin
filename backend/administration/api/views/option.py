@@ -96,6 +96,8 @@ def update_option(request, option_id: int, payload: OptionIn):
             option.report_main = payload.report_main
         if payload.report_individual is not None:
             option.report_individual = payload.report_individual
+        if payload.retirement_accounts is not None:
+            option.retirement_accounts = payload.retirement_accounts
         option.save()
         logToDB(
             f"Option updated : {option_id}",
