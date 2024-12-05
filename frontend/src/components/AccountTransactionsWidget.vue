@@ -30,7 +30,6 @@
         :isServerMode="true"
         :pageSize="transactions_store.pageinfo.page_size"
         :hasCheckbox="true"
-        :stickyHeader="true"
         firstArrow="First"
         lastArrow="Last"
         previousArrow="Prev"
@@ -40,7 +39,6 @@
         search=""
         @rowSelect="rowSelected"
         ref="trans_table"
-        :height="tableSize"
         skin="bh-table-striped bh-table-compact"
         :pageSizeOptions="[transactions_store.pageinfo.page_size]"
         :showPageSize="false"
@@ -399,14 +397,6 @@ const displayEditForm = () => {
     showMultipleTransactionEditDialog.value = true;
   }
 };
-
-const tableSize = computed(() => {
-  let total_size = "";
-  const pixelRatio = 43;
-  total_size = transactions_store.pageinfo.page_size * pixelRatio;
-  total_size += "px";
-  return total_size;
-});
 
 const isActive = computed(
   () => !(isLoading.value === false && isFetching.value === false),
