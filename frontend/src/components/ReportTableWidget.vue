@@ -26,7 +26,7 @@
                     :pageSizeOptions="[14]"
                     :showPageSize="false"
                     :pagination="false"
-                    skin="bh-table-striped bh-table-hover bh-table-bordered bh-table-compact"
+                    :stickyFirstColumn="true"
                   >
                   </vue3-datatable></v-col
               ></v-row>
@@ -79,7 +79,6 @@ const local_data = computed(() => {
   return formatted_data;
 });
 const columns = ref([
-  { field: "id", title: "ID", isUnique: true, hide: true },
   {
     field: "item",
     title: "",
@@ -170,6 +169,7 @@ const columns = ref([
     cellClass: "text-center font-weight-bold text-accent text-caption",
     headerClass: "text-center",
   },
+  { field: "id", title: "ID", isUnique: true, hide: true },
 ]);
 
 const formatToUSD = amount => {
