@@ -41,9 +41,13 @@ async function getTagsFunction(tag_type) {
   }
 }
 
-async function getParentTagsFunction() {
+async function getParentTagsFunction(tag_type) {
   try {
-    const response = await apiClient.get("/tags/main-tags/list");
+    let query = "";
+    if (tag_type) {
+      query = "?tag_type=" + tag_type;
+    }
+    const response = await apiClient.get("/tags/main-tags/list" + query);
     return response.data;
   } catch (error) {
     handleApiError(error, "Parent Tags not fetched: ");
@@ -131,11 +135,11 @@ export function useTags(tag_type) {
   };
 }
 
-export function useParentTags() {
+export function useParentTags(tag_type) {
   const queryClient = useQueryClient();
   const { data: parent_tags, isLoading } = useQuery({
     queryKey: ["tags", { parent_only: true }],
-    queryFn: () => getParentTagsFunction(),
+    queryFn: () => getParentTagsFunction(tag_type),
     select: response => response,
     client: queryClient,
   });

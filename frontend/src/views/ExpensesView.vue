@@ -2,6 +2,60 @@
   <v-container>
     <v-row class="pa-1 ga-1" no-gutters v-if="!isLoading">
       <v-col class="rounded text-center">
+        <v-btn
+          icon="mdi-cog"
+          flat
+          size="xs"
+          :disabled="isActive"
+          @click="showOptions = true"
+        ></v-btn>
+        <v-dialog width="300" v-model="showOptions">
+          <v-card>
+            <form @submit.prevent="submit">
+              <v-card-title
+                ><span class="text-secondary text-h6"
+                  >Choose Expenses</span
+                ></v-card-title
+              >
+              <v-card-text>
+                <v-autocomplete
+                  clearable
+                  chips
+                  multiple
+                  label="Main Report Tags"
+                  :items="parent_tags"
+                  variant="outlined"
+                  :loading="parent_tags_isLoading"
+                  item-title="tag_name"
+                  item-value="id"
+                  v-model="main_report_tags.value.value"
+                  density="compact"
+                  :error-messages="main_report_tags.errorMessage.value"
+                ></v-autocomplete
+                ><v-autocomplete
+                  clearable
+                  chips
+                  multiple
+                  label="Individual Report Tags"
+                  :items="parent_tags"
+                  variant="outlined"
+                  :loading="parent_tags_isLoading"
+                  item-title="tag_name"
+                  item-value="id"
+                  v-model="individual_report_tags.value.value"
+                  density="compact"
+                  :error-messages="individual_report_tags.errorMessage.value"
+                ></v-autocomplete
+              ></v-card-text>
+              <v-card-actions
+                ><v-spacer></v-spacer
+                ><v-btn color="secondary" type="submit"
+                  >Save Changes</v-btn
+                ></v-card-actions
+              >
+            </form>
+          </v-card>
+        </v-dialog>
         <v-tabs v-model="main_tab" color="accent">
           <v-tab
             v-for="(main, index) in expenses"
@@ -67,14 +121,54 @@
   </v-container>
 </template>
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import ReportGraphWidget from "@/components/ReportGraphWidget.vue";
 import ReportTableWidget from "@/components/ReportTableWidget.vue";
 import { useExpenseGraph } from "@/composables/planningGraphComposable";
+import { useField, useForm } from "vee-validate";
+import { useOptions } from "@/composables/optionsComposable";
+import { useParentTags } from "@/composables/tagsComposable";
 
+const { options: appOptions, editOptions } = useOptions();
 const { expense_graph: expenses, isLoading } = useExpenseGraph();
+const { parent_tags, isLoading: parent_tags_isLoading } = useParentTags(1);
+
+const { handleSubmit } = useForm({
+  validationSchema: {
+    main_report_tags(value) {
+      if (value && value.length > 0) return true;
+
+      return "Must select at least 1 tag.";
+    },
+  },
+});
+
+const main_report_tags = useField("main_report_tags");
+const individual_report_tags = useField("individual_report_tags");
+watch(
+  appOptions,
+  newOptions => {
+    if (newOptions) {
+      individual_report_tags.value.value = JSON.parse(
+        newOptions.report_individual,
+      );
+      main_report_tags.value.value = JSON.parse(newOptions.report_main);
+    }
+  },
+  { immediate: true },
+);
 
 const main_tab = ref(0);
+const showOptions = ref(false);
 
 const tab = ref(Array(expenses.length).fill(0));
+
+const submit = handleSubmit(values => {
+  let data = {
+    report_main: JSON.stringify(values.main_report_tags),
+    report_individual: JSON.stringify(values.individual_report_tags),
+  };
+  editOptions(data);
+  showOptions.value = false;
+});
 </script>

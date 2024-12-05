@@ -77,6 +77,7 @@ export function useOptions() {
       queryClient.invalidateQueries({ queryKey: ["options"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
+      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
     },
   });
 
