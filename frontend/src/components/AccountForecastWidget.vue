@@ -82,7 +82,9 @@ import { Line } from "vue-chartjs";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { useAccountForecasts } from "@/composables/forecastsComposable";
 import { useMainStore } from "@/stores/main";
+import { useTransactionsStore } from "@/stores/transactions";
 
+const transactions_store = useTransactionsStore();
 const mainstore = useMainStore();
 const props = defineProps({
   account: Array,
@@ -184,6 +186,7 @@ const options = ref({
 });
 
 const clickChangeTime = () => {
+  transactions_store.pageinfo.maxdays = chips.value;
   emit("changeTime", chips.value);
 };
 
