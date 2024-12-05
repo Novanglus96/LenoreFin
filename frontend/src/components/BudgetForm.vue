@@ -6,6 +6,9 @@
           class="d-flex align-center justify-space-between"
           v-if="props.edit"
         >
+          <span class="text-secondary text-h6" v-if="!canEdit">{{
+            props.budget ? props.budget.name : ""
+          }}</span>
           <v-spacer></v-spacer>
           <v-btn
             color="error"
@@ -49,135 +52,136 @@
         </div></template
       >
       <template v-slot:text>
-        <v-container
-          ><v-row dense
-            ><v-col cols="8"
-              ><v-text-field
-                clearable
-                label="Name"
-                variant="outlined"
-                v-model="name.value.value"
-                :error-messages="name.errorMessage.value"
-                :counter="254"
-                density="compact"
-                :disabled="!canEdit"
-              ></v-text-field></v-col
-            ><v-col cols="2"
-              ><v-checkbox
-                label="Active"
-                v-model="active.value.value"
-                density="compact"
-                :disabled="!canEdit"
-              ></v-checkbox></v-col
-            ><v-col cols="2"
-              ><v-checkbox
-                label="Dashboard"
-                v-model="widget.value.value"
-                density="compact"
-                :disabled="!canEdit"
-              ></v-checkbox></v-col
-          ></v-row>
-          <v-row dense
-            ><v-col cols="2"
-              ><v-text-field
-                v-model="amount.value.value"
-                variant="outlined"
-                label="Amount"
-                prefix="$"
-                type="number"
-                step="1.00"
-                density="compact"
-                :disabled="!canEdit"
-                :error-messages="amount.errorMessage.value"
-              ></v-text-field></v-col
-            ><v-col cols="10"
-              ><v-autocomplete
-                clearable
-                chips
-                multiple
-                label="Tag(s)"
-                :items="tag_items"
-                variant="outlined"
-                :loading="tags_isLoading"
-                item-title="tag_name"
-                item-value="id"
-                v-model="tag_ids.value.value"
-                density="compact"
-                :error-messages="tag_ids.errorMessage.value"
-                :disabled="!canEdit"
-              >
-                <template v-slot:item="{ props, item }">
-                  <v-list-item
-                    v-bind="props"
-                    :title="
-                      item.raw.parent
-                        ? item.raw.parent.tag_name
-                        : item.raw.tag_name
-                    "
-                    :subtitle="item.raw.parent ? item.raw.tag_name : null"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon
-                        icon="mdi-tag"
-                        :color="tagColor(item.raw.tag_type.id)"
-                      ></v-icon>
-                    </template>
-                  </v-list-item>
-                </template> </v-autocomplete></v-col
-          ></v-row>
-          <v-row dense
-            ><v-col
-              ><v-autocomplete
-                clearable
-                label="Repeat"
-                :items="repeats"
-                variant="outlined"
-                :loading="repeats_isLoading"
-                item-title="repeat_name"
-                v-model="repeat.value.value"
-                density="compact"
-                :error-messages="repeat.errorMessage.value"
-                return-object
-                :disabled="!canEdit"
-                @update:model-value="updateNextDate"
-              ></v-autocomplete></v-col
-            ><v-col
-              ><v-checkbox
-                label="Roll Over"
-                v-model="roll_over.value.value"
-                density="compact"
-                :disabled="!canEdit"
-              ></v-checkbox></v-col
-          ></v-row>
-          <v-row dense
-            ><v-col
-              ><v-date-input
-                label="Start Date"
-                prepend-icon=""
-                prepend-inner-icon="$calendar"
-                variant="outlined"
-                :error-messages="start_date.errorMessage.value"
-                v-model="start_date.value.value"
-                density="compact"
-                :disabled="!canEdit"
-                clearable
-                @click:clear="start_date.value.value = null"
-                @update:model-value="updateNextDate"
-              ></v-date-input
-            ></v-col>
-            <v-col
-              ><v-date-input
-                label="Next Date"
-                prepend-icon=""
-                prepend-inner-icon="$calendar"
-                variant="outlined"
-                :error-messages="next_date.errorMessage.value"
-                v-model="next_date.value.value"
-                density="compact"
-                :disabled="true"
-              ></v-date-input></v-col></v-row></v-container
+        <v-expand-transition>
+          <v-container v-if="!props.edit || canEdit"
+            ><v-row dense
+              ><v-col cols="8"
+                ><v-text-field
+                  clearable
+                  label="Name"
+                  variant="outlined"
+                  v-model="name.value.value"
+                  :error-messages="name.errorMessage.value"
+                  :counter="254"
+                  density="compact"
+                  :disabled="!canEdit"
+                ></v-text-field></v-col
+              ><v-col cols="2"
+                ><v-checkbox
+                  label="Active"
+                  v-model="active.value.value"
+                  density="compact"
+                  :disabled="!canEdit"
+                ></v-checkbox></v-col
+              ><v-col cols="2"
+                ><v-checkbox
+                  label="Dashboard"
+                  v-model="widget.value.value"
+                  density="compact"
+                  :disabled="!canEdit"
+                ></v-checkbox></v-col
+            ></v-row>
+            <v-row dense
+              ><v-col cols="2"
+                ><v-text-field
+                  v-model="amount.value.value"
+                  variant="outlined"
+                  label="Amount"
+                  prefix="$"
+                  type="number"
+                  step="1.00"
+                  density="compact"
+                  :disabled="!canEdit"
+                  :error-messages="amount.errorMessage.value"
+                ></v-text-field></v-col
+              ><v-col cols="10"
+                ><v-autocomplete
+                  clearable
+                  chips
+                  multiple
+                  label="Tag(s)"
+                  :items="tag_items"
+                  variant="outlined"
+                  :loading="tags_isLoading"
+                  item-title="tag_name"
+                  item-value="id"
+                  v-model="tag_ids.value.value"
+                  density="compact"
+                  :error-messages="tag_ids.errorMessage.value"
+                  :disabled="!canEdit"
+                >
+                  <template v-slot:item="{ props, item }">
+                    <v-list-item
+                      v-bind="props"
+                      :title="
+                        item.raw.parent
+                          ? item.raw.parent.tag_name
+                          : item.raw.tag_name
+                      "
+                      :subtitle="item.raw.parent ? item.raw.tag_name : null"
+                    >
+                      <template v-slot:prepend>
+                        <v-icon
+                          icon="mdi-tag"
+                          :color="tagColor(item.raw.tag_type.id)"
+                        ></v-icon>
+                      </template>
+                    </v-list-item>
+                  </template> </v-autocomplete></v-col
+            ></v-row>
+            <v-row dense
+              ><v-col
+                ><v-autocomplete
+                  clearable
+                  label="Repeat"
+                  :items="repeats"
+                  variant="outlined"
+                  :loading="repeats_isLoading"
+                  item-title="repeat_name"
+                  v-model="repeat.value.value"
+                  density="compact"
+                  :error-messages="repeat.errorMessage.value"
+                  return-object
+                  :disabled="!canEdit"
+                  @update:model-value="updateNextDate"
+                ></v-autocomplete></v-col
+              ><v-col
+                ><v-checkbox
+                  label="Roll Over"
+                  v-model="roll_over.value.value"
+                  density="compact"
+                  :disabled="!canEdit"
+                ></v-checkbox></v-col
+            ></v-row>
+            <v-row dense
+              ><v-col
+                ><v-date-input
+                  label="Start Date"
+                  prepend-icon=""
+                  prepend-inner-icon="$calendar"
+                  variant="outlined"
+                  :error-messages="start_date.errorMessage.value"
+                  v-model="start_date.value.value"
+                  density="compact"
+                  :disabled="!canEdit"
+                  clearable
+                  @click:clear="start_date.value.value = null"
+                  @update:model-value="updateNextDate"
+                ></v-date-input
+              ></v-col>
+              <v-col
+                ><v-date-input
+                  label="Next Date"
+                  prepend-icon=""
+                  prepend-inner-icon="$calendar"
+                  variant="outlined"
+                  :error-messages="next_date.errorMessage.value"
+                  v-model="next_date.value.value"
+                  density="compact"
+                  :disabled="true"
+                ></v-date-input></v-col></v-row></v-container></v-expand-transition
       ></template>
-      <v-card-actions
+      <v-card-actions v-if="!props.edit || canEdit"
         ><v-spacer></v-spacer
         ><v-btn color="secondary" :disabled="!canEdit" @click="resetForm">{{
           props.edit ? "Cancel" : "Close"
