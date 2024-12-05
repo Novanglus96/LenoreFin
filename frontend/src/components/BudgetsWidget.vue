@@ -20,7 +20,7 @@
         v-model="budget_selected"
         class="pa-4"
         show-arrows
-        selected-class="bg-accent"
+        selected-class="bg-grey-lighten-2"
         center-active
         ><v-slide-group-item :key="-1" v-if="isLoading"
           ><v-skeleton-loader
