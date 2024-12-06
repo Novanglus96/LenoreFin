@@ -260,7 +260,11 @@ def list_budgets(
                 True,
             )
             total = 0
+            unique_transactions = []
             for transaction in transactions:
+                if transaction not in unique_transactions:
+                    unique_transactions.append(transaction)
+            for transaction in unique_transactions:
                 total += transaction.tag_total
             budget_total = budget.amount
             if budget.roll_over:
@@ -271,7 +275,7 @@ def list_budgets(
                 used_percentage = 0
             new_budget_with_total = BudgetWithTotal(
                 budget=budget,
-                transactions=transactions,
+                transactions=unique_transactions,
                 used_total=total,
                 used_percentage=used_percentage,
             )

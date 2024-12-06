@@ -259,10 +259,14 @@ def get_calculator(request, calculation_rule_id: int, timeframe: int):
         transactions, balances = get_complete_transaction_list_with_totals(
             end_date, 1, False, False, start_date, False, [], tags
         )
+        unique_transactions = []
+        for transaction in transactions:
+            if transaction not in unique_transactions:
+                unique_transactions.append(transaction)
         calculator = CalculatorOut(
             rule=calculation_rule,
             transfers=list(transfers),
-            transactions=list(transactions),
+            transactions=list(unique_transactions),
         )
         logToDB(
             f"Calculator retrieved : #{calculation_rule_id}",
