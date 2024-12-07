@@ -22,6 +22,7 @@
         show-arrows
         selected-class="bg-grey-lighten-2"
         center-active
+        mobile-breakpoint="sm"
         ><v-slide-group-item :key="-1" v-if="isLoading"
           ><v-skeleton-loader
             type="card"
