@@ -2,6 +2,50 @@
   <div>
     <v-app-bar color="primary" density="compact">
       <template v-slot:prepend>
+        <v-menu v-if="isMobile">
+          <template v-slot:activator="{ props }">
+            <v-app-bar-nav-icon v-bind="props"></v-app-bar-nav-icon>
+          </template>
+          <v-list>
+            <v-list-item
+              prepend-icon="mdi-view-dashboard-variant"
+              color="accent"
+              @click="setAccount(null, True)"
+              title="Dashboard"
+            ></v-list-item>
+            <v-list-item
+              prepend-icon="mdi-bank"
+              to="/accounts"
+              color="accent"
+              title="Accounts"
+            >
+            </v-list-item>
+            <v-list-item
+              prepend-icon="mdi-chart-bar"
+              to="/forecast"
+              color="accent"
+              title="Forecast"
+            ></v-list-item>
+            <v-list-item
+              prepend-icon="mdi-bell"
+              to="/reminders"
+              color="accent"
+              title="Reminders"
+            ></v-list-item>
+            <v-list-item
+              prepend-icon="mdi-folder"
+              to="/planning"
+              color="accent"
+              title="Planning"
+            ></v-list-item>
+            <v-list-item
+              prepend-icon="mdi-tag"
+              to="/tags"
+              color="accent"
+              title="Tags"
+            ></v-list-item>
+          </v-list>
+        </v-menu>
         <v-img :width="132" aspect-ratio="1/1" cover src="logov2.png"></v-img>
       </template>
       <v-app-bar-title>
@@ -58,38 +102,6 @@
         </v-card>
       </v-menu>
     </v-app-bar>
-    <v-navigation-drawer color="secondary" rail permanent v-if="!mdAndUp">
-      <v-list density="compact" nav>
-        <v-list-item
-          prepend-icon="mdi-view-dashboard-variant"
-          color="accent"
-          @click="setAccount(null, True)"
-        ></v-list-item>
-        <v-list-item prepend-icon="mdi-bank" to="/accounts" color="accent">
-        </v-list-item>
-        <v-list-item
-          prepend-icon="mdi-chart-bar"
-          to="/forecast"
-          color="accent"
-        ></v-list-item>
-        <v-list-item
-          prepend-icon="mdi-bell"
-          to="/reminders"
-          color="accent"
-        ></v-list-item>
-        <v-list-item
-          prepend-icon="mdi-folder"
-          to="/planning"
-          color="accent"
-        ></v-list-item>
-        <v-list-item
-          prepend-icon="mdi-tag"
-          to="/tags"
-          color="accent"
-        ></v-list-item>
-        <v-list-item prepend-icon="mdi-cog" to="" color="accent"></v-list-item>
-      </v-list>
-    </v-navigation-drawer>
     <v-navigation-drawer color="secondary" rail permanent v-if="mdAndUp">
       <v-list density="compact" nav>
         <v-tooltip text="Dashboard">
@@ -189,7 +201,8 @@ const transactions_store = useTransactionsStore();
 const router = useRouter();
 
 const { messages, markRead, deleteAll } = useMessages();
-const { mdAndUp } = useDisplay();
+const { mdAndUp, smAndDown } = useDisplay();
+const isMobile = smAndDown;
 const nav_toggle = ref(true);
 
 const setAccount = (account, forecast) => {
