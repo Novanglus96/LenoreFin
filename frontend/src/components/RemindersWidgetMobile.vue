@@ -8,60 +8,6 @@
     </template>
     <template v-slot:text>
       <div v-if="props.allowEdit">
-        <v-tooltip text="Edit Reminder" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-bell-cog"
-              flat
-              :disabled="
-                (selected && selected.length === 0) || selected.length > 1
-              "
-              variant="plain"
-              @click="reminderEditFormDialog = true"
-              v-bind="props"
-            ></v-btn>
-          </template>
-        </v-tooltip>
-        <ReminderForm
-          v-model="reminderEditFormDialog"
-          :isEdit="true"
-          @update-dialog="updateEditDialog"
-          :passedFormData="editReminder"
-        />
-
-        <v-tooltip text="Remove Reminder(s)" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-bell-remove"
-              flat
-              :disabled="selected && selected.length === 0"
-              variant="plain"
-              color="error"
-              v-bind="props"
-              @click="showDeleteDialog = true"
-            ></v-btn>
-          </template>
-        </v-tooltip>
-        <v-dialog width="500" v-model="showDeleteDialog">
-          <v-card title="Dialog">
-            <v-card-text>
-              Are you sure you want to delete these
-              {{ selected.length }} reminders?
-            </v-card-text>
-
-            <v-card-actions>
-              <v-spacer></v-spacer>
-
-              <v-btn
-                text="Confirm"
-                @click="
-                  clickRemoveReminder(selected);
-                  showDeleteDialog = false;
-                "
-              ></v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
         <v-tooltip text="Add New Reminder" location="top">
           <template v-slot:activator="{ props }">
             <v-btn
@@ -74,75 +20,158 @@
             ></v-btn>
           </template>
         </v-tooltip>
-        <ReminderForm
+        <ReminderFormMobile
           v-model="reminderAddFormDialog"
           :isEdit="false"
           @update-dialog="updateAddDialog"
           :passedFormData="blankForm"
         />
       </div>
-      <vue3-datatable
-        :rows="reminders"
-        :columns="columns"
+      <v-data-iterator
+        :items="reminders"
         :loading="isLoading"
-        :totalRows="reminders ? reminders.length : 0"
-        :isServerMode="false"
-        :pageSize="props.allowEdit ? 20 : 5"
-        :hasCheckbox="props.allowEdit"
-        noDataContent="No reminders"
-        ref="reminders_table"
-        skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="props.allowEdit ? [5, 10, 20] : [5]"
-        :showPageSize="props.allowEdit"
-        paginationInfo="Showing {0} to {1} of {2} reminders"
-        class="alt-pagination"
-        @rowSelect="rowSelected"
-        :sortable="false"
-        sortColumn="next_date"
-        sortDirection="asc"
-        ><!--height="280px"-->
-        <template #next_date="row">
-          <span class="font-weight-bold text-black">{{
-            row.value.next_date
-          }}</span>
+        items-per-page="3"
+      >
+        <template v-slot:default="{ items }">
+          <template v-for="(item, i) in items" :key="i">
+            <v-card class="flex ma-0 pa-0 ga-0"
+              ><v-card-text
+                ><v-container class="flex ma-0 pa-0 ga-0"
+                  ><v-row dense
+                    ><v-col cols="7">
+                      <v-container
+                        ><v-row dense
+                          ><v-col
+                            class="text-truncate text-subtitle-2 font-weight-bold"
+                            >{{ item.raw.description }}</v-col
+                          ></v-row
+                        ><v-row dense
+                          ><v-col class="font-italic">{{
+                            item.raw.next_date
+                          }}</v-col></v-row
+                        ></v-container
+                      ></v-col
+                    ><v-col cols="4" class="d-flex justify-center align-center"
+                      ><span :class="getClassForMoney(item.raw.amount)">{{
+                        formatCurrency(item.raw.amount)
+                      }}</span></v-col
+                    ><v-col cols="1" class="d-flex justify-center align-center"
+                      ><v-btn
+                        :icon="
+                          !showMore[i] ? 'mdi-chevron-down' : 'mdi-chevron-up'
+                        "
+                        variant="plain"
+                        @click="toggleMore(i)"
+                      ></v-btn></v-col></v-row></v-container></v-card-text
+              ><v-card-actions v-if="props.allowEdit"
+                ><v-spacer></v-spacer
+                ><v-btn
+                  color="secondary"
+                  @click="toggleReminderEdit(i, item.raw)"
+                  >edit</v-btn
+                ><ReminderFormMobile
+                  v-model="reminderEditFormDialog[i]"
+                  :isEdit="true"
+                  :key="i"
+                  :passedFormData="editReminder"
+                  @update-dialog="toggleReminderEdit(i)"
+                />
+                <v-btn color="error" @click="toggleDelete(i)">delete</v-btn>
+                <v-dialog width="500" v-model="showDeleteDialog[i]" :key="i">
+                  <v-card>
+                    <v-card-title>{{ item.raw.description }}</v-card-title>
+                    <v-card-text>
+                      Are you sure you want to delete this reminder?
+                    </v-card-text>
+
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+
+                      <v-btn
+                        text="Confirm"
+                        @click="
+                          clickRemoveReminder(item.raw.id);
+                          showDeleteDialog[i] = false;
+                        "
+                      ></v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog> </v-card-actions></v-card
+            ><v-expand-transition
+              ><v-card
+                v-if="showMore[i]"
+                color="grey-lighten-2"
+                class="flex ma-0 pa-0 ga-0"
+                ><v-card-text
+                  ><v-container class="flex ma-0 pa-0 ga-0"
+                    ><v-row dense
+                      ><v-col
+                        ><v-container
+                          ><v-row dense
+                            ><v-col
+                              class="align-right font-weight-bold"
+                              cols="2"
+                              >repeats</v-col
+                            ><v-col>{{ item.raw.repeat.repeat_name }}</v-col
+                            ><v-col
+                              class="align-right font-weight-bold"
+                              cols="2"
+                              >ends</v-col
+                            ><v-col>{{ item.raw.end_date }}</v-col></v-row
+                          ><v-row dense
+                            ><v-col
+                              ><v-icon icon="mdi-tag" color="black"></v-icon>
+                              <span class="font-weight-bold text-black">{{
+                                item.raw.tag.tag_name
+                              }}</span></v-col
+                            ></v-row
+                          ></v-container
+                        ></v-col
+                      ></v-row
+                    ></v-container
+                  ></v-card-text
+                ></v-card
+              ></v-expand-transition
+            >
+
+            <br />
+          </template>
         </template>
-        <template #amount="row">
-          <span :class="getClassForMoney(row.value.amount)">{{
-            formatCurrency(row.value.amount)
-          }}</span>
+        <template v-slot:footer="{ page, pageCount, prevPage, nextPage }">
+          <div class="d-flex align-center justify-center pa-4">
+            <v-btn
+              :disabled="page === 1"
+              density="comfortable"
+              icon="mdi-arrow-left"
+              variant="tonal"
+              rounded
+              @click="prevPage"
+            ></v-btn>
+
+            <div class="mx-2 text-caption">
+              Page {{ page }} of {{ pageCount }}
+            </div>
+
+            <v-btn
+              :disabled="page >= pageCount"
+              density="comfortable"
+              icon="mdi-arrow-right"
+              variant="tonal"
+              rounded
+              @click="nextPage"
+            ></v-btn>
+          </div>
         </template>
-        <template #description="row">
-          <span class="font-weight-bold text-black">{{
-            row.value.description
-          }}</span>
-        </template>
-        <template #tag.tag_name="row">
-          <v-icon icon="mdi-tag" color="black"></v-icon>
-          <span class="font-weight-bold text-black">{{
-            row.value.tag.tag_name
-          }}</span>
-        </template>
-        <template #end_date="row">
-          <span class="font-weight-bold text-black">{{
-            row.value.end_date
-          }}</span>
-        </template>
-        <template #repeat.repeat_name="row">
-          <span class="font-weight-bold text-black">{{
-            row.value.repeat.repeat_name
-          }}</span>
-        </template>
-      </vue3-datatable>
+      </v-data-iterator>
     </template>
   </v-card>
 </template>
 <script setup>
-import Vue3Datatable from "@bhplugin/vue3-datatable";
-import "@bhplugin/vue3-datatable/dist/style.css";
 import { defineProps, ref } from "vue";
 import { useReminders } from "@/composables/remindersComposable";
-import ReminderForm from "@/components/ReminderForm.vue";
+import ReminderFormMobile from "@/components/ReminderFormMobile.vue";
 
+const showMore = ref({});
 const today = new Date();
 const tomorrow = new Date(today);
 tomorrow.setDate(today.getDate() + 1);
@@ -152,9 +181,9 @@ const day = String(tomorrow.getDate()).padStart(2, "0");
 const formattedDate = `${year}-${month}-${day}`;
 const start_date = ref(formattedDate);
 const selected = ref([]);
-const showDeleteDialog = ref(false);
+const showDeleteDialog = ref({});
 const reminderAddFormDialog = ref(false);
-const reminderEditFormDialog = ref(false);
+const reminderEditFormDialog = ref({});
 const { reminders, isLoading, removeReminder } = useReminders();
 const props = defineProps({
   allowEdit: {
@@ -188,13 +217,44 @@ const editReminder = ref({
   auto_add: true,
 });
 
-const rowSelected = () => {
-  selected.value = [];
-  let selectedrows = reminders_table.value.getSelectedRows();
-  for (const selectedrow of selectedrows) {
-    selected.value.push(selectedrow.id);
-    editReminder.value = selectedrow;
+const toggleMore = index => {
+  showMore.value[index] = !showMore.value[index];
+};
+
+const toggleDelete = index => {
+  showDeleteDialog.value[index] = !showDeleteDialog.value[index];
+};
+
+const toggleReminderEdit = (index, reminder) => {
+  if (!reminder) {
+    editReminder.value = {
+      id: reminder ? reminder.id : 0,
+      tag: {
+        id: null,
+      },
+      amount: null,
+      reminder_source_account: {
+        id: null,
+      },
+      reminder_destination_account: {
+        id: null,
+      },
+      description: null,
+      transaction_type: {
+        id: 1,
+      },
+      start_date: start_date.value,
+      next_date: start_date.value,
+      end_date: null,
+      repeat: {
+        id: null,
+      },
+      auto_add: true,
+    };
+  } else {
+    editReminder.value = reminder;
   }
+  reminderEditFormDialog.value[index] = !reminderEditFormDialog.value[index];
 };
 const blankForm = ref({
   id: 0,
@@ -220,15 +280,7 @@ const blankForm = ref({
   },
   auto_add: true,
 });
-const reminders_table = ref(null);
-const columns = ref([
-  { field: "next_date", title: "Next Date", type: "date", width: "120px" },
-  { field: "amount", title: "Amount", type: "number", width: "100px" },
-  { field: "description", title: "Reminder" },
-  { field: "tag.tag_name", title: "Tag", width: "200px" },
-  { field: "end_date", title: "End Date", type: "date", width: "120px" },
-  { field: "repeat.repeat_name", title: "Repeat", width: "120px" },
-]);
+
 const getClassForMoney = amount => {
   let color = "";
   let font = "";
@@ -240,7 +292,7 @@ const getClassForMoney = amount => {
     color = "text-green";
   }
 
-  return color + " " + font;
+  return color + " " + font + " text-h6";
 };
 
 const clickRemoveReminder = async reminders => {
@@ -254,9 +306,6 @@ const updateAddDialog = () => {
   reminderAddFormDialog.value = false;
 };
 
-const updateEditDialog = () => {
-  reminderEditFormDialog.value = false;
-};
 const formatCurrency = value => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -282,5 +331,10 @@ const formatCurrency = value => {
 .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
   background-color: #ff5900;
   border-color: black;
+}
+.text-truncate {
+  white-space: nowrap; /* Prevent text from wrapping to the next line */
+  overflow: hidden; /* Hide overflow content */
+  text-overflow: ellipsis; /* Show "..." for overflow text */
 }
 </style>
