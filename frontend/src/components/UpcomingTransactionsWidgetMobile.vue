@@ -4,119 +4,158 @@
       <span class="text-subtitle-2 text-secondary">Upcoming Transactions</span>
     </template>
     <template v-slot:text>
-      <vue3-datatable
-        :rows="transactions ? transactions.transactions : []"
-        :columns="columns"
+      <v-data-iterator
+        :items="transactions ? transactions.transactions : []"
         :loading="isLoading"
-        :totalRows="transactions ? transactions.transactions.length : 0"
-        :isServerMode="false"
-        pageSize="10"
-        :hasCheckbox="false"
-        noDataContent="No transactions"
-        ref="trans_table"
-        skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="[10]"
-        :showPageSize="false"
-        paginationInfo="Showing {0} to {1} of {2} transactions"
-        class="alt-pagination"
-        ><!--height="280px"-->
-        <template #transaction_date="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-            >{{ row.value.transaction_date }}</span
-          >
+        items-per-page="10"
+      >
+        <template v-slot:default="{ items }">
+          <template v-for="(item, i) in items" :key="i">
+            <v-card class="flex ma-0 pa-0 ga-0"
+              ><v-card-text
+                ><v-container class="flex ma-0 pa-0 ga-0"
+                  ><v-row dense
+                    ><v-col cols="7">
+                      <v-container
+                        ><v-row dense
+                          ><v-col
+                            class="text-truncate text-subtitle-2 font-weight-bold"
+                            >{{ item.raw.description }}</v-col
+                          ></v-row
+                        ><v-row dense
+                          ><v-col>{{
+                            item.raw.status.transaction_status
+                          }}</v-col></v-row
+                        >
+                        <v-row dense
+                          ><v-col class="font-italic">{{
+                            item.raw.transaction_date
+                          }}</v-col></v-row
+                        ></v-container
+                      ></v-col
+                    ><v-col cols="4" class="d-flex justify-center align-center"
+                      ><v-container
+                        ><v-row dense
+                          ><v-col class="d-flex justify-center align-center"
+                            ><span
+                              :class="getClassForMoney(item.raw.pretty_total)"
+                            >
+                              {{ formatCurrency(item.raw.pretty_total) }}
+                            </span></v-col
+                          ></v-row
+                        ><v-row dense v-if="item.raw.checkNumber"
+                          ><v-col class="d-flex justify-center align-center"
+                            ><v-icon icon="mdi-checkbook" color="amber"></v-icon
+                            ><span
+                              :class="
+                                item.raw.status.id == 1
+                                  ? 'font-italic text-grey icon-text'
+                                  : 'font-weight-bold text-black icon-text'
+                              "
+                              >#{{ item.raw.checkNumber }}</span
+                            ></v-col
+                          ></v-row
+                        ><v-row dense v-if="item.raw.paycheck"
+                          ><v-col class="d-flex justify-center align-center"
+                            ><v-icon
+                              icon="mdi-cash-multiple"
+                              color="amber"
+                            ></v-icon></v-col></v-row></v-container></v-col
+                    ><v-col cols="1" class="d-flex justify-center align-center"
+                      ><v-btn
+                        :icon="
+                          !showMore[i] ? 'mdi-chevron-down' : 'mdi-chevron-up'
+                        "
+                        variant="plain"
+                        @click="toggleMore(i)"
+                      ></v-btn></v-col></v-row></v-container></v-card-text></v-card
+            ><v-expand-transition
+              ><v-card
+                v-if="showMore[i]"
+                color="grey-lighten-2"
+                class="flex ma-0 pa-0 ga-0"
+                ><v-card-text
+                  ><v-container class="flex ma-0 pa-0 ga-0"
+                    ><v-row dense
+                      ><v-col
+                        ><v-container
+                          ><v-row dense
+                            ><v-col
+                              ><span
+                                :class="
+                                  item.raw.status.id == 1
+                                    ? 'font-italic text-grey text-body-2'
+                                    : 'font-weight-bold text-black text-body-2'
+                                "
+                                v-for="tag in item.raw.tags"
+                                :key="tag"
+                              >
+                                <v-icon
+                                  icon="mdi-tag"
+                                  size="x-small"
+                                  :color="
+                                    item.raw.status.id == 1 ? 'grey' : 'black'
+                                  "
+                                  v-if="tag"
+                                ></v-icon>
+                                {{ tag }}&nbsp;
+                              </span></v-col
+                            ></v-row
+                          ><v-row dense
+                            ><v-col class="text-secondary">{{
+                              item.raw.pretty_account
+                            }}</v-col></v-row
+                          ></v-container
+                        ></v-col
+                      ></v-row
+                    ></v-container
+                  ></v-card-text
+                ></v-card
+              ></v-expand-transition
+            >
+
+            <br />
+          </template>
         </template>
-        <template #pretty_total="row">
-          <span
-            :class="
-              getClassForMoney(row.value.pretty_total, row.value.status.id)
-            "
-            >{{ formatCurrency(row.value.pretty_total) }}</span
-          >
+        <template v-slot:footer="{ page, pageCount, prevPage, nextPage }">
+          <div class="d-flex align-center justify-center pa-4">
+            <v-btn
+              :disabled="page === 1"
+              density="comfortable"
+              icon="mdi-arrow-left"
+              variant="tonal"
+              rounded
+              @click="prevPage"
+            ></v-btn>
+
+            <div class="mx-2 text-caption">
+              Page {{ page }} of {{ pageCount }}
+            </div>
+
+            <v-btn
+              :disabled="page >= pageCount"
+              density="comfortable"
+              icon="mdi-arrow-right"
+              variant="tonal"
+              rounded
+              @click="nextPage"
+            ></v-btn>
+          </div>
         </template>
-        <template #checkNumber="row">
-          <v-tooltip text="Check" location="top">
-            <template v-slot:activator="{ props }">
-              <div class="icon-with-text" v-if="row.value.checkNumber">
-                <v-icon
-                  icon="mdi-checkbook"
-                  color="amber"
-                  v-bind="props"
-                ></v-icon>
-                <span
-                  :class="
-                    row.value.status.id == 1
-                      ? 'font-italic text-grey icon-text'
-                      : 'font-weight-bold text-black icon-text'
-                  "
-                  >#{{ row.value.checkNumber }}</span
-                >
-              </div>
-            </template>
-          </v-tooltip>
-        </template>
-        <template #description="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-            >{{ row.value.description }}</span
-          >
-        </template>
-        <template #tags="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey text-body-2'
-                : 'font-weight-bold text-black text-body-2'
-            "
-            v-for="tag in row.value.tags"
-            :key="tag"
-          >
-            <v-icon
-              icon="mdi-tag"
-              size="x-small"
-              :color="row.value.status.id == 1 ? 'grey' : 'black'"
-              v-if="tag"
-            ></v-icon>
-            {{ tag }}&nbsp;
-          </span>
-        </template>
-        <template #pretty_account="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-            >{{ row.value.pretty_account }}</span
-          >
-        </template>
-      </vue3-datatable>
+      </v-data-iterator>
     </template>
   </v-card>
 </template>
 <script setup>
 import { useTransactions } from "@/composables/transactionsComposable";
-import Vue3Datatable from "@bhplugin/vue3-datatable";
-import "@bhplugin/vue3-datatable/dist/style.css";
 import { ref } from "vue";
 
+const showMore = ref({});
 const { isLoading, transactions } = useTransactions();
-const columns = ref([
-  { field: "transaction_date", title: "Date", type: "date", width: "120px" },
-  { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
-  { field: "checkNumber", tilte: "Check #", width: "75px" },
-  { field: "description", title: "Description" },
-  { field: "tags", title: "Tag(s)", width: "200px" },
-  { field: "pretty_account", title: "Account" },
-]);
+
+const toggleMore = index => {
+  showMore.value[index] = !showMore.value[index];
+};
 
 const getClassForMoney = (amount, status) => {
   let color = "";
@@ -138,7 +177,7 @@ const getClassForMoney = (amount, status) => {
     }
   }
 
-  return color + " " + font;
+  return color + " " + font + " text-h6";
 };
 const formatCurrency = value => {
   return new Intl.NumberFormat("en-US", {
