@@ -2,7 +2,11 @@
   <div>
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded">
-        <ForecastHeaderWidget @update-account="updateAccount" />
+        <ForecastHeaderWidget
+          @update-account="updateAccount"
+          v-if="!isMobile"
+        />
+        <ForecastHeaderWidgetMobile @update-account="updateAccount" v-if="isMobile" />
       </v-col>
     </v-row>
     <v-row class="pa-1 ga-1" no-gutters>
@@ -51,6 +55,7 @@ import AccountForecastWidgetMobile from "@/components/AccountForecastWidgetMobil
 import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vue";
 import AccountTransactionsWidgetMobile from "@/components/AccountTransactionsWidgetMobile.vue";
 import ForecastHeaderWidget from "@/components/ForecastHeaderWidget.vue";
+import ForecastHeaderWidgetMobile from "@/components/ForecastHeaderWidgetMobile.vue";
 import { ref } from "vue";
 import { useTransactionsStore } from "@/stores/transactions";
 import { useDisplay } from "vuetify";
