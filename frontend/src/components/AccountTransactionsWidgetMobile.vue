@@ -82,6 +82,13 @@
                               {{ formatCurrency(item.raw.pretty_total) }}
                             </span></v-col
                           ></v-row
+                        ><v-row dense
+                          ><v-col class="d-flex justify-center align-center"
+                            ><span
+                              :class="getClassForMoneyBalance(item.raw.balance)"
+                              >({{ formatCurrency(item.raw.balance) }})</span
+                            ></v-col
+                          ></v-row
                         ><v-row
                           dense
                           v-if="
@@ -401,6 +408,28 @@ const getClassForMoney = (amount, status) => {
   }
 
   return color + " " + font + " text-h6";
+};
+const getClassForMoneyBalance = (amount, status) => {
+  let color = "";
+  let font = "";
+
+  if (status == 1) {
+    font = "font-italic";
+    if (amount < 0) {
+      color = "text-red-lighten-1";
+    } else {
+      color = "text-green-lighten-1";
+    }
+  } else {
+    font = "font-weight-bold";
+    if (amount < 0) {
+      color = "text-red";
+    } else {
+      color = "text-green";
+    }
+  }
+
+  return color + " " + font + " text-subtitle-2";
 };
 
 const clickAddTransaction = async () => {
