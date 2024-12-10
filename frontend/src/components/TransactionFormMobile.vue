@@ -75,7 +75,7 @@
                   </v-col>
                 </v-row>
                 <v-row dense>
-                  <v-col cols="3">
+                  <v-col>
                     <v-text-field
                       v-model="amount"
                       variant="outlined"
@@ -93,7 +93,7 @@
                       density="compact"
                     ></v-text-field>
                   </v-col>
-                  <v-col cols="3">
+                  <v-col>
                     <v-text-field
                       v-model="formData.checkNumber"
                       variant="outlined"
@@ -106,9 +106,9 @@
                       "
                       density="compact"
                       v-if="formData.transaction_type_id != 3"
-                    ></v-text-field>
-                  </v-col>
-                  <v-col cols="6">
+                    ></v-text-field> </v-col></v-row
+                ><v-row dense>
+                  <v-col>
                     <v-combobox
                       v-model="formData.description"
                       :items="
@@ -158,7 +158,8 @@
                         </v-list-item>
                       </template>
                     </v-autocomplete>
-                  </v-col>
+                  </v-col> </v-row
+                ><v-row dense>
                   <v-col>
                     <v-autocomplete
                       clearable
@@ -195,7 +196,8 @@
                       :totalAmount="parseFloat(amount)"
                       @tag-table-updated="tagsUpdated"
                     />
-                  </v-col>
+                  </v-col> </v-row
+                ><v-row dense>
                   <v-col>
                     <v-textarea
                       clearable
