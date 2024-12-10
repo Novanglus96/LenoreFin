@@ -1,11 +1,17 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-white">
     <template v-slot:append>
+      <v-btn
+        size="xs"
+        variant="text"
+        :append-icon="!showMore ? 'mdi-chevron-down' : 'mdi-chevron-up'"
+        @click="toggleMore"
+      ></v-btn>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
           <v-btn
             icon="mdi-cog"
-            flat
+            variant="text"
             size="xs"
             v-bind="props"
             :disabled="isActive"
@@ -46,21 +52,25 @@
       >
     </template>
     <template v-slot:text>
-      <v-progress-circular
-        color="secondary"
-        indeterminate
-        :size="300"
-        :width="12"
-        v-if="isActive"
-        >Loading...</v-progress-circular
-      >
-      <Line
-        :data="account_forecast"
-        :options="options"
-        v-if="!isActive"
-        ref="Forecast"
-        aria-label="Account Forecast"
-        >Unable to load forecast</Line
+      <v-expand-transition>
+        <div v-if="showMore">
+          <v-progress-circular
+            color="secondary"
+            indeterminate
+            :size="300"
+            :width="12"
+            v-if="isActive"
+            >Loading...</v-progress-circular
+          >
+          <Line
+            :data="account_forecast"
+            :options="options"
+            v-if="!isActive"
+            ref="Forecast"
+            aria-label="Account Forecast"
+            >Unable to load forecast</Line
+          >
+        </div></v-expand-transition
       >
     </template>
   </v-card>
@@ -84,6 +94,7 @@ import { useAccountForecasts } from "@/composables/forecastsComposable";
 import { useMainStore } from "@/stores/main";
 import { useTransactionsStore } from "@/stores/transactions";
 
+const showMore = ref(false);
 const transactions_store = useTransactionsStore();
 const mainstore = useMainStore();
 const props = defineProps({
@@ -98,6 +109,9 @@ const { isLoading, account_forecast, isFetching } = useAccountForecasts(
   props.start_integer,
   props.end_integer,
 );
+const toggleMore = () => {
+  showMore.value = !showMore.value;
+};
 const isActive = computed(
   () => !(isLoading.value === false && isFetching.value === false),
 );
@@ -116,7 +130,7 @@ ChartJS.register(
 const options = ref({
   responsive: true,
   maintainAspectRatio: true,
-  aspectRatio: "5",
+  aspectRatio: "1",
   plugins: {
     annotation: {
       annotations: {
