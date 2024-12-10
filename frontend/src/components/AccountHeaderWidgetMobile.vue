@@ -9,7 +9,6 @@
       <template v-slot:text>
         <v-container fluid>
           <v-row density="compact" class=""
-            ><v-col cols="2"></v-col
             ><v-col
               class="text-primary text-center text-h6 font-weight-bold pa-0 ma-0 ga-0 align-content-center"
               ><v-card
@@ -33,7 +32,7 @@
                     ></template
                   >
                 </v-tooltip>
-                <EditAccountForm
+                <EditAccountFormMobile
                   v-model="editDialog"
                   :account="account"
                   @update-dialog="updateEditDialog" />
@@ -58,8 +57,7 @@
                 <DeleteAccountForm
                   v-model="deleteDialog"
                   :account="account"
-                  @update-dialog="updateDeleteDialog" /></v-card></v-col
-            ><v-col cols="2"></v-col></v-row
+                  @update-dialog="updateDeleteDialog" /></v-card></v-col></v-row
           ><v-row density="compact"
             ><v-col class="text-center align-content-end"
               ><v-tooltip text="Adjust Balance" location="top">
@@ -84,71 +82,89 @@
                 @update-dialog="updateAdjBalDialog"
               />
               <div class="text-secondary-lighten-2">current balance</div></v-col
-            >
-            <v-col
-              v-if="account.account_type.id == 1"
-              class="text-center align-content-end"
-              ><div class="text-white font-weight-bold text-body">
-                {{
-                  account.next_cycle_date
-                    ? formatDate(account.next_cycle_date)
-                    : "n/a"
-                }}
-              </div>
-              <div class="text-secondary-lighten-2">
-                statement end date
-              </div></v-col
-            ><v-col
-              v-if="account.account_type.id == 1"
-              class="text-center align-content-end"
-              ><div class="text-white font-weight-bold text-body">
-                <NumberFlow
-                  :value="account.last_statement_amount"
-                  :format="{ style: 'currency', currency: 'USD' }"
-                />
-              </div>
-              <div class="text-secondary-lighten-2">
-                last statement balance
-              </div></v-col
-            ><v-col
-              v-if="account.account_type.id == 1"
-              class="text-center align-content-end"
-              ><div class="text-white font-weight-bold text-body">
-                {{ account.due_date ? formatDate(account.due_date) : "n/a" }}
-              </div>
-              <div class="text-secondary-lighten-2">due date</div></v-col
-            ><v-col
-              v-if="account.account_type.id == 1"
-              class="text-center align-content-end"
-              ><div
-                class="text-white font-weight-bold text-body d-inline-block"
-                @click="handleClick"
-                tabindex="0"
-                @keydown.enter="handleClick"
-                role="button"
-                aria-pressed="false"
-              >
-                <NumberFlow
-                  :value="account.rewards_amount"
-                  :format="{ style: 'currency', currency: 'USD' }"
-                />
-              </div>
-              <div class="text-secondary-lighten-2">rewards</div></v-col
-            ><v-col
-              v-if="account.account_type.id == 1"
-              class="text-center align-content-end"
-              ><div class="text-white font-weight-bold text-body">
-                <NumberFlow
-                  :value="account.available_credit"
-                  :format="{ style: 'currency', currency: 'USD' }"
-                />
-              </div>
-              <div class="text-secondary-lighten-2">
-                available credit
-              </div></v-col
             ></v-row
-          >
-        </v-container>
+          ><v-row density="compact"
+            ><v-col class="text-center"
+              ><v-btn
+                size="x-small"
+                variant="text"
+                :append-icon="!showMore ? 'mdi-chevron-down' : 'mdi-chevron-up'"
+                @click="toggleMore"
+                v-if="account.account_type.id == 1"
+                >{{ !showMore ? "more" : "less" }}</v-btn
+              ></v-col
+            ></v-row
+          ></v-container
+        ><v-expand-transition
+          ><v-container fluid v-if="account.account_type.id == 1 && showMore">
+            <v-row density="compact" class="">
+              <v-col
+                v-if="account.account_type.id == 1"
+                class="text-center align-content-end"
+                ><div class="text-white font-weight-bold text-body">
+                  {{
+                    account.next_cycle_date
+                      ? formatDate(account.next_cycle_date)
+                      : "n/a"
+                  }}
+                </div>
+                <div class="text-secondary-lighten-2">
+                  statement end date
+                </div></v-col
+              ><v-col
+                v-if="account.account_type.id == 1"
+                class="text-center align-content-end"
+                ><div class="text-white font-weight-bold text-body">
+                  <NumberFlow
+                    :value="account.last_statement_amount"
+                    :format="{ style: 'currency', currency: 'USD' }"
+                  />
+                </div>
+                <div class="text-secondary-lighten-2">
+                  last statement balance
+                </div></v-col
+              ></v-row
+            ><v-row density="compact"
+              ><v-col
+                v-if="account.account_type.id == 1"
+                class="text-center align-content-end"
+                ><div class="text-white font-weight-bold text-body">
+                  {{ account.due_date ? formatDate(account.due_date) : "n/a" }}
+                </div>
+                <div class="text-secondary-lighten-2">due date</div></v-col
+              ><v-col
+                v-if="account.account_type.id == 1"
+                class="text-center align-content-end"
+                ><div
+                  class="text-white font-weight-bold text-body d-inline-block"
+                  @click="handleClick"
+                  tabindex="0"
+                  @keydown.enter="handleClick"
+                  role="button"
+                  aria-pressed="false"
+                >
+                  <NumberFlow
+                    :value="account.rewards_amount"
+                    :format="{ style: 'currency', currency: 'USD' }"
+                  />
+                </div>
+                <div class="text-secondary-lighten-2">rewards</div></v-col
+              ><v-col
+                v-if="account.account_type.id == 1"
+                class="text-center align-content-end"
+                ><div class="text-white font-weight-bold text-body">
+                  <NumberFlow
+                    :value="account.available_credit"
+                    :format="{ style: 'currency', currency: 'USD' }"
+                  />
+                </div>
+                <div class="text-secondary-lighten-2">
+                  available credit
+                </div></v-col
+              ></v-row
+            >
+          </v-container></v-expand-transition
+        >
       </template>
     </v-card>
     <v-skeleton-loader
@@ -162,7 +178,7 @@
 <script setup>
 import { defineProps, ref } from "vue";
 import { useAccountByID } from "@/composables/accountsComposable";
-import EditAccountForm from "./EditAccountForm.vue";
+import EditAccountFormMobile from "./EditAccountFormMobile.vue";
 import AdjustBalanceForm from "./AdjustBalanceForm.vue";
 import DeleteAccountForm from "./DeleteAccountForm.vue";
 import NumberFlow from "@number-flow/vue";
@@ -170,10 +186,15 @@ import NumberFlow from "@number-flow/vue";
 const adjBalDialog = ref(false);
 const editDialog = ref(false);
 const deleteDialog = ref(false);
+const showMore = ref(false);
 
 const props = defineProps({
   account: Array,
 });
+
+const toggleMore = () => {
+  showMore.value = !showMore.value;
+};
 
 const { account, isLoading } = useAccountByID(props.account);
 
