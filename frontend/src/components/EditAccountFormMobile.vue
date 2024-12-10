@@ -19,7 +19,8 @@
                   label="Account Name*"
                   density="comfortable"
                 ></v-text-field>
-              </v-col>
+              </v-col> </v-row
+            ><v-row dense>
               <v-col>
                 <v-autocomplete
                   clearable
