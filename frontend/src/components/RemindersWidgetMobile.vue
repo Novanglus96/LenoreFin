@@ -34,7 +34,12 @@
       >
         <template v-slot:default="{ items }">
           <template v-for="(item, i) in items" :key="i">
-            <v-card class="flex ma-0 pa-0 ga-0"
+            <v-card
+              class="flex ma-0 pa-0 ga-0"
+              hover
+              ripple
+              role="button"
+              @click="toggleMore(i)"
               ><v-card-text
                 ><v-container class="flex ma-0 pa-0 ga-0"
                   ><v-row dense
@@ -56,13 +61,12 @@
                         formatCurrency(item.raw.amount)
                       }}</span></v-col
                     ><v-col cols="1" class="d-flex justify-center align-center"
-                      ><v-btn
+                      ><v-icon
                         :icon="
                           !showMore[i] ? 'mdi-chevron-down' : 'mdi-chevron-up'
                         "
                         variant="plain"
-                        @click="toggleMore(i)"
-                      ></v-btn></v-col></v-row></v-container></v-card-text
+                      ></v-icon></v-col></v-row></v-container></v-card-text
               ><v-card-actions v-if="props.allowEdit"
                 ><v-spacer></v-spacer
                 ><v-btn
@@ -109,15 +113,26 @@
                         ><v-container
                           ><v-row dense
                             ><v-col
-                              class="align-right font-weight-bold"
-                              cols="2"
-                              >repeats</v-col
-                            ><v-col>{{ item.raw.repeat.repeat_name }}</v-col
+                              ><v-tooltip text="Repeats" location="top">
+                                <template #activator="{ props }"
+                                  ><v-icon
+                                    icon="mdi-repeat"
+                                    v-bind="props"
+                                  ></v-icon></template
+                              ></v-tooltip>
+                              {{ item.raw.repeat.repeat_name }}</v-col
                             ><v-col
-                              class="align-right font-weight-bold"
-                              cols="2"
-                              >ends</v-col
-                            ><v-col>{{ item.raw.end_date }}</v-col></v-row
+                              ><v-tooltip text="End Date" location="top">
+                                <template #activator="{ props }"
+                                  ><v-icon
+                                    icon="mdi-timer-stop"
+                                    v-bind="props"
+                                  ></v-icon></template
+                              ></v-tooltip>
+                              {{
+                                item.raw.end_date ? item.raw.end_date : "none"
+                              }}</v-col
+                            ></v-row
                           ><v-row dense
                             ><v-col
                               ><v-icon icon="mdi-tag" color="black"></v-icon>

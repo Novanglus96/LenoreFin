@@ -11,7 +11,12 @@
       >
         <template v-slot:default="{ items }">
           <template v-for="(item, i) in items" :key="i">
-            <v-card class="flex ma-0 pa-0 ga-0"
+            <v-card
+              class="flex ma-0 pa-0 ga-0"
+              hover
+              ripple
+              role="button"
+              @click="toggleMore(i)"
               ><v-card-text
                 ><v-container class="flex ma-0 pa-0 ga-0"
                   ><v-row dense
@@ -62,13 +67,12 @@
                               color="amber"
                             ></v-icon></v-col></v-row></v-container></v-col
                     ><v-col cols="1" class="d-flex justify-center align-center"
-                      ><v-btn
+                      ><v-icon
                         :icon="
                           !showMore[i] ? 'mdi-chevron-down' : 'mdi-chevron-up'
                         "
                         variant="plain"
-                        @click="toggleMore(i)"
-                      ></v-btn></v-col></v-row></v-container></v-card-text></v-card
+                      ></v-icon></v-col></v-row></v-container></v-card-text></v-card
             ><v-expand-transition
               ><v-card
                 v-if="showMore[i]"
