@@ -152,6 +152,12 @@
             <br />
           </template>
         </template>
+        <template v-slot:loader
+          ><v-skeleton-loader
+            class="border"
+            type="paragraph"
+          ></v-skeleton-loader
+        ></template>
         <template v-slot:footer="{ page, pageCount, prevPage, nextPage }">
           <div class="d-flex align-center justify-center pa-4">
             <v-btn

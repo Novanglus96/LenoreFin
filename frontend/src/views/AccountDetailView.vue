@@ -5,6 +5,12 @@
         <AccountHeaderWidget
           :key="account_id"
           :account="[parseFloat(account_id)]"
+          v-if="!isMobile"
+        />
+        <AccountHeaderWidgetMobile
+          :key="account_id"
+          :account="[parseFloat(account_id)]"
+          v-else
         />
       </v-col>
     </v-row>
@@ -16,6 +22,15 @@
           :end_integer="timeframe"
           :account="[account_id]"
           @change-time="clickChangeTime"
+          v-if="!isMobile"
+        />
+        <AccountForecastWidgetMobile
+          :key="account_id + ':' + timeframe"
+          :start_integer="14"
+          :end_integer="timeframe"
+          :account="[account_id]"
+          @change-time="clickChangeTime"
+          v-else
         />
       </v-col>
     </v-row>
@@ -24,6 +39,12 @@
         <AccountTransactionsWidget
           :key="account_id"
           :account="parseFloat(account_id)"
+          v-if="!isMobile"
+        />
+        <AccountTransactionsWidgetMobile
+          :key="account_id"
+          :account="parseFloat(account_id)"
+          v-else
         />
       </v-col>
     </v-row>
@@ -31,11 +52,18 @@
 </template>
 <script setup>
 import AccountForecastWidget from "@/components/AccountForecastWidget.vue";
+import AccountForecastWidgetMobile from "@/components/AccountForecastWidgetMobile.vue";
 import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vue";
+import AccountTransactionsWidgetMobile from "@/components/AccountTransactionsWidgetMobile.vue";
 import AccountHeaderWidget from "@/components/AccountHeaderWidget.vue";
+import AccountHeaderWidgetMobile from "@/components/AccountHeaderWidgetMobile.vue";
 import { useRoute } from "vue-router";
 import { ref, watch } from "vue";
 import { useTransactionsStore } from "@/stores/transactions";
+import { useDisplay } from "vuetify";
+
+const { smAndDown } = useDisplay();
+const isMobile = smAndDown;
 
 const transactions_store = useTransactionsStore();
 const route = useRoute();
