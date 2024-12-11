@@ -2,7 +2,7 @@
   <div>
     <v-app-bar color="primary" density="compact">
       <template v-slot:prepend>
-        <v-menu v-if="isMobile">
+        <v-menu v-if="isMobile" width="200">
           <template v-slot:activator="{ props }">
             <v-app-bar-nav-icon v-bind="props"></v-app-bar-nav-icon>
           </template>

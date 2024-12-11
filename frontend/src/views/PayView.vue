@@ -21,9 +21,14 @@
                 :data="item"
                 :graphName="item.pretty_name"
                 :key="index"
-                :isLoading="
-                  isLoading
-                " /></v-window-item></v-window></v-col></v-row
+                :isLoading="isLoading"
+                v-if="!isMobile" />
+              <ReportGraphWidgetMobile
+                :data="item"
+                :graphName="item.pretty_name"
+                :key="index"
+                :isLoading="isLoading"
+                v-if="isMobile" /></v-window-item></v-window></v-col></v-row
       ><v-row class="pa-1 ga-1" no-gutters>
         <v-col class="rounded text-center"
           ><ReportTableWidget
@@ -57,8 +62,13 @@
 <script setup>
 import { ref } from "vue";
 import ReportGraphWidget from "@/components/ReportGraphWidget.vue";
+import ReportGraphWidgetMobile from "@/components/ReportGraphWidgetMobile.vue";
 import ReportTableWidget from "@/components/ReportTableWidget.vue";
 import { usePayGraph } from "@/composables/planningGraphComposable";
+import { useDisplay } from "vuetify";
+
+const { smAndDown } = useDisplay();
+const isMobile = smAndDown;
 
 const { pay_graph, isLoading } = usePayGraph();
 
