@@ -62,7 +62,7 @@ from planning.api.routers.retirement import retirement_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
-api.version = "1.0.058"
+api.version = "1.0.059"
 api.description = "API documentation for LenoreFin"
 
 # Add routers to the API
