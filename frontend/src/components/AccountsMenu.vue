@@ -6,7 +6,11 @@
         base-color="secondary"
         :to="add_account_link"
       >
-        <v-list-item-title>Add Account</v-list-item-title>
+        <v-list-item-title
+          ><span :class="isMobile ? 'text-h6' : ''"
+            >Add Account</span
+          ></v-list-item-title
+        >
       </v-list-item>
     </v-list>
     <v-list density="compact" nav>
@@ -18,16 +22,25 @@
       >
         <template v-slot:activator="{ props }">
           <v-list-item color="secondary" base-color="secondary" v-bind="props">
-            <v-list-item-title
-              ><v-icon icon="mdi-checkbook"></v-icon>
-              CHECKING</v-list-item-title
+            <template v-slot:prepend
+              ><v-icon
+                icon="mdi-checkbook"
+                :size="!isMobile ? 'medium' : 'x-large'"
+              ></v-icon
+            ></template>
+            <v-list-item-title>
+              <span :class="isMobile ? 'text-h6' : ''"
+                >CHECKING</span
+              ></v-list-item-title
             ><v-list-item-subtitle
-              >{{ checking_accounts ? checking_accounts.length : 0 }}
-              {{
-                checking_accounts && checking_accounts.length == 1
-                  ? "account"
-                  : "accounts"
-              }}</v-list-item-subtitle
+              ><span :class="isMobile ? 'text-subtitle-1' : ''"
+                >{{ checking_accounts ? checking_accounts.length : 0 }}
+                {{
+                  checking_accounts && checking_accounts.length == 1
+                    ? "account"
+                    : "accounts"
+                }}</span
+              ></v-list-item-subtitle
             ></v-list-item
           ></template
         >
@@ -42,7 +55,12 @@
           @click="setAccount(account.id, False)"
           v-else
         >
-          <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+          <v-list-item-title
+            ><span
+              :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''"
+              >{{ account.account_name }}</span
+            ></v-list-item-title
+          >
           <v-list-item-subtitle
             ><span
               :class="
@@ -66,16 +84,25 @@
       >
         <template v-slot:activator="{ props }">
           <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <template v-slot:prepend
+              ><v-icon
+                icon="mdi-piggy-bank"
+                :size="!isMobile ? 'medium' : 'x-large'"
+              ></v-icon
+            ></template>
             <v-list-item-title
-              ><v-icon icon="mdi-piggy-bank"></v-icon>
-              SAVINGS</v-list-item-title
+              ><span :class="isMobile ? 'text-h6' : ''"
+                >SAVINGS</span
+              ></v-list-item-title
             ><v-list-item-subtitle
-              >{{ savings_accounts ? savings_accounts.length : 0 }}
-              {{
-                savings_accounts && savings_accounts.length == 1
-                  ? "account"
-                  : "accounts"
-              }}</v-list-item-subtitle
+              ><span :class="isMobile ? 'text-subtitle-1' : ''"
+                >{{ savings_accounts ? savings_accounts.length : 0 }}
+                {{
+                  savings_accounts && savings_accounts.length == 1
+                    ? "account"
+                    : "accounts"
+                }}</span
+              ></v-list-item-subtitle
             ></v-list-item
           ></template
         >
@@ -90,7 +117,12 @@
           @click="setAccount(account.id, False)"
           v-else
         >
-          <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+          <v-list-item-title
+            ><span
+              :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''"
+              >{{ account.account_name }}</span
+            ></v-list-item-title
+          >
           <v-list-item-subtitle
             ><span
               :class="
@@ -113,14 +145,25 @@
       >
         <template v-slot:activator="{ props }">
           <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <template v-slot:prepend
+              ><v-icon
+                icon="mdi-credit-card"
+                :size="!isMobile ? 'medium' : 'x-large'"
+              ></v-icon
+            ></template>
             <v-list-item-title
-              ><v-icon icon="mdi-credit-card"></v-icon> CREDIT
-              CARD</v-list-item-title
+              ><span :class="isMobile ? 'text-h6' : ''"
+                >CREDIT CARD</span
+              ></v-list-item-title
             ><v-list-item-subtitle
-              >{{ cc_accounts ? cc_accounts.length : 0 }}
-              {{
-                cc_accounts && cc_accounts.length == 1 ? "account" : "accounts"
-              }}</v-list-item-subtitle
+              ><span :class="isMobile ? 'text-subtitle-1' : ''"
+                >{{ cc_accounts ? cc_accounts.length : 0 }}
+                {{
+                  cc_accounts && cc_accounts.length == 1
+                    ? "account"
+                    : "accounts"
+                }}</span
+              ></v-list-item-subtitle
             ></v-list-item
           ></template
         >
@@ -135,7 +178,12 @@
           @click="setAccount(account.id, False)"
           v-else
         >
-          <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+          <v-list-item-title
+            ><span
+              :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''"
+              >{{ account.account_name }}</span
+            >
+          </v-list-item-title>
           <v-list-item-subtitle
             ><span
               :class="
@@ -158,16 +206,25 @@
       >
         <template v-slot:activator="{ props }">
           <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <template v-slot:prepend
+              ><v-icon
+                icon="mdi-finance"
+                :size="!isMobile ? 'medium' : 'x-large'"
+              ></v-icon
+            ></template>
             <v-list-item-title
-              ><v-icon icon="mdi-finance"></v-icon>
-              INVESTMENT</v-list-item-title
+              ><span :class="isMobile ? 'text-h6' : ''"
+                >INVESTMENT</span
+              ></v-list-item-title
             ><v-list-item-subtitle
-              >{{ investment_accounts ? investment_accounts.length : 0 }}
-              {{
-                investment_accounts && investment_accounts.length == 1
-                  ? "account"
-                  : "accounts"
-              }}</v-list-item-subtitle
+              ><span :class="isMobile ? 'text-subtitle-1' : ''"
+                >{{ investment_accounts ? investment_accounts.length : 0 }}
+                {{
+                  investment_accounts && investment_accounts.length == 1
+                    ? "account"
+                    : "accounts"
+                }}</span
+              ></v-list-item-subtitle
             ></v-list-item
           ></template
         >
@@ -182,7 +239,12 @@
           @click="setAccount(account.id, False)"
           v-else
         >
-          <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+          <v-list-item-title
+            ><span
+              :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''"
+              >{{ account.account_name }}</span
+            >
+          </v-list-item-title>
           <v-list-item-subtitle
             ><span
               :class="
@@ -205,15 +267,25 @@
       >
         <template v-slot:activator="{ props }">
           <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <template v-slot:prepend
+              ><v-icon
+                icon="mdi-car-back"
+                :size="!isMobile ? 'medium' : 'x-large'"
+              ></v-icon
+            ></template>
             <v-list-item-title
-              ><v-icon icon="mdi-car-back"></v-icon> LOAN</v-list-item-title
+              ><span :class="isMobile ? 'text-h6' : ''"
+                >LOAN</span
+              ></v-list-item-title
             ><v-list-item-subtitle
-              >{{ loan_accounts ? loan_accounts.length : 0 }}
-              {{
-                loan_accounts && loan_accounts.length == 1
-                  ? "account"
-                  : "accounts"
-              }}</v-list-item-subtitle
+              ><span :class="isMobile ? 'text-subtitle-1' : ''"
+                >{{ loan_accounts ? loan_accounts.length : 0 }}
+                {{
+                  loan_accounts && loan_accounts.length == 1
+                    ? "account"
+                    : "accounts"
+                }}</span
+              ></v-list-item-subtitle
             ></v-list-item
           ></template
         >
@@ -228,7 +300,12 @@
           @click="setAccount(account.id, False)"
           v-else
         >
-          <v-list-item-title>{{ account.account_name }} </v-list-item-title>
+          <v-list-item-title
+            ><span
+              :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''"
+              >{{ account.account_name }}</span
+            >
+          </v-list-item-title>
           <v-list-item-subtitle
             ><span
               :class="
@@ -251,15 +328,25 @@
       >
         <template v-slot:activator="{ props }">
           <v-list-item color="secondary" base-color="secondary" v-bind="props">
+            <template v-slot:prepend
+              ><v-icon
+                icon="mdi-bank-off"
+                :size="!isMobile ? 'medium' : 'x-large'"
+              ></v-icon
+            ></template>
             <v-list-item-title
-              ><v-icon icon="mdi-bank-off"></v-icon> INACTIVE</v-list-item-title
+              ><span :class="isMobile ? 'text-h6' : ''"
+                >INACTIVE</span
+              ></v-list-item-title
             ><v-list-item-subtitle
-              >{{ inactive_accounts ? inactive_accounts.length : 0 }}
-              {{
-                inactive_accounts && inactive_accounts.length == 1
-                  ? "account"
-                  : "accounts"
-              }}</v-list-item-subtitle
+              ><span :class="isMobile ? 'text-subtitle-1' : ''"
+                >{{ inactive_accounts ? inactive_accounts.length : 0 }}
+                {{
+                  inactive_accounts && inactive_accounts.length == 1
+                    ? "account"
+                    : "accounts"
+                }}</span
+              ></v-list-item-subtitle
             ></v-list-item
           ></template
         >
@@ -275,7 +362,12 @@
           v-else
         >
           <v-list-item-title
-            ><span class="font-italic">{{ account.account_name }}</span>
+            ><span class="font-italic"
+              ><span
+                :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''"
+                >{{ account.account_name }}</span
+              ></span
+            >
           </v-list-item-title>
         </v-list-item>
       </v-list-group>
@@ -288,6 +380,10 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useTransactionsStore } from "@/stores/transactions";
 import NumberFlow from "@number-flow/vue";
+import { useDisplay } from "vuetify";
+
+const { smAndDown } = useDisplay();
+const isMobile = smAndDown;
 
 const transactions_store = useTransactionsStore();
 const router = useRouter();
