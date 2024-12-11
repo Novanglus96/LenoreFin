@@ -89,6 +89,13 @@
                   :graphName="sub_window.pretty_name"
                   :key="sub_index"
                   :isLoading="isLoading"
+                  v-if="!isMobile" />
+                <ReportGraphWidgetMobile
+                  :data="sub_window"
+                  :graphName="sub_window.pretty_name"
+                  :key="sub_index"
+                  :isLoading="isLoading"
+                  v-if="isMobile"
               /></v-window-item>
               <ReportTableWidget
                 :isLoading="isLoading"
@@ -123,11 +130,16 @@
 <script setup>
 import { ref, watch } from "vue";
 import ReportGraphWidget from "@/components/ReportGraphWidget.vue";
+import ReportGraphWidgetMobile from "@/components/ReportGraphWidgetMobile.vue";
 import ReportTableWidget from "@/components/ReportTableWidget.vue";
 import { useExpenseGraph } from "@/composables/planningGraphComposable";
 import { useField, useForm } from "vee-validate";
 import { useOptions } from "@/composables/optionsComposable";
 import { useParentTags } from "@/composables/tagsComposable";
+import { useDisplay } from "vuetify";
+
+const { smAndDown } = useDisplay();
+const isMobile = smAndDown;
 
 const { options: appOptions, editOptions } = useOptions();
 const { expense_graph: expenses, isLoading } = useExpenseGraph();
