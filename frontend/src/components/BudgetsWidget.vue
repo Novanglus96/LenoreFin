@@ -12,7 +12,16 @@
             v-bind="props"
           ></v-btn> </template
       ></v-tooltip>
-      <AddBudgetForm v-model="showAddForm" @update-dialog="closeAddForm" />
+      <AddBudgetForm
+        v-model="showAddForm"
+        @update-dialog="closeAddForm"
+        v-if="!isMobile"
+      />
+      <AddBudgetFormMobile
+        v-model="showAddForm"
+        @update-dialog="closeAddForm"
+        v-if="isMobile"
+      />
     </template>
 
     <template v-slot:text>
@@ -99,6 +108,11 @@
 import { defineProps, ref, defineEmits } from "vue";
 import { useBudgets } from "@/composables/budgetsComposable";
 import AddBudgetForm from "./AddBudgetForm.vue";
+import AddBudgetFormMobile from "./AddBudgetFormMobile.vue";
+import { useDisplay } from "vuetify";
+
+const { smAndDown } = useDisplay();
+const isMobile = smAndDown;
 
 const props = defineProps({
   widget: Boolean,
