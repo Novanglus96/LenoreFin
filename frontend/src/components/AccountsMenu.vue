@@ -25,7 +25,7 @@
             <template v-slot:prepend
               ><v-icon
                 icon="mdi-checkbook"
-                :size="!isMobile ? 'medium' : 'x-large'"
+                :size="!isMobile ? 'large' : 'x-large'"
               ></v-icon
             ></template>
             <v-list-item-title>
@@ -87,7 +87,7 @@
             <template v-slot:prepend
               ><v-icon
                 icon="mdi-piggy-bank"
-                :size="!isMobile ? 'medium' : 'x-large'"
+                :size="!isMobile ? 'large' : 'x-large'"
               ></v-icon
             ></template>
             <v-list-item-title
@@ -148,7 +148,7 @@
             <template v-slot:prepend
               ><v-icon
                 icon="mdi-credit-card"
-                :size="!isMobile ? 'medium' : 'x-large'"
+                :size="!isMobile ? 'large' : 'x-large'"
               ></v-icon
             ></template>
             <v-list-item-title
@@ -209,7 +209,7 @@
             <template v-slot:prepend
               ><v-icon
                 icon="mdi-finance"
-                :size="!isMobile ? 'medium' : 'x-large'"
+                :size="!isMobile ? 'large' : 'x-large'"
               ></v-icon
             ></template>
             <v-list-item-title
@@ -270,7 +270,7 @@
             <template v-slot:prepend
               ><v-icon
                 icon="mdi-car-back"
-                :size="!isMobile ? 'medium' : 'x-large'"
+                :size="!isMobile ? 'large' : 'x-large'"
               ></v-icon
             ></template>
             <v-list-item-title
@@ -331,7 +331,7 @@
             <template v-slot:prepend
               ><v-icon
                 icon="mdi-bank-off"
-                :size="!isMobile ? 'medium' : 'x-large'"
+                :size="!isMobile ? 'large' : 'x-large'"
               ></v-icon
             ></template>
             <v-list-item-title

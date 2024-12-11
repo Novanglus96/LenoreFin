@@ -6,12 +6,21 @@
     <v-list-item
       v-for="(planning_item, i) in filteredPlanningMenu"
       :key="i"
-      :prepend-icon="planning_item.icon"
       :to="planning_item.link"
       @click="setAccount(null, false, planning_item.link)"
-      color="accent"
-    >
-      <v-list-item-title>{{ planning_item.title }}</v-list-item-title>
+      color="secondary"
+      base-color="secondary"
+      ><template v-slot:prepend
+        ><v-icon
+          :icon="planning_item.icon"
+          :size="!isMobile ? 'large' : 'x-large'"
+        ></v-icon
+      ></template>
+      <v-list-item-title
+        ><span :class="isMobile ? 'text-h6' : ''">{{
+          planning_item.title
+        }}</span></v-list-item-title
+      >
     </v-list-item>
   </v-list>
 </template>
@@ -19,6 +28,10 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useTransactionsStore } from "@/stores/transactions";
+import { useDisplay } from "vuetify";
+
+const { smAndDown } = useDisplay();
+const isMobile = smAndDown;
 
 const transactions_store = useTransactionsStore();
 const router = useRouter();
