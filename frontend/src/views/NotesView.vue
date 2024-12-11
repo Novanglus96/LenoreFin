@@ -136,8 +136,8 @@ const columns = ref([
   { field: "id", title: "ID", isUnique: true, hide: true },
   { field: "note_date", title: "Date", width: "150px" },
   { field: "note_text", title: "Note" },
-  { field: "edit", title: "Edit", width: "40px" },
-  { field: "delete", title: "Delete", width: "40px" },
+  { field: "edit", title: "Edit", width: "35px" },
+  { field: "delete", title: "Delete", width: "35px" },
 ]);
 
 const updateAddDialog = () => {
