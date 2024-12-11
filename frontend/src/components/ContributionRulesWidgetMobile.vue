@@ -27,85 +27,121 @@
       >
     </template>
     <template v-slot:text>
-      <vue3-datatable
-        :rows="contributionRules ? contributionRules : []"
-        :columns="columns"
+      <v-data-iterator
+        :items="contributionRules ? contributionRules : []"
         :loading="isLoading"
-        :totalRows="contributionRules ? contributionRules.length : 0"
-        :isServerMode="false"
-        pageSize="3"
-        :hasCheckbox="false"
-        noDataContent="No rules"
-        ref="contrib_rules_table"
-        skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="[3]"
-        :showPageSize="false"
-        paginationInfo="Showing {0} to {1} of {2} rules"
-        class="alt-pagination"
+        items-per-page="10"
       >
-        <template #cap="row">
-          <span :style="clampedStyle" class="text-body-2">{{
-            row.value.cap
-          }}</span>
-        </template>
-        <template #order="row">
-          <span class="font-weight-bold">#{{ row.value.order }}</span>
-        </template>
-        <template #edit="row">
-          <v-btn variant="plain" icon @click="clickEditButton(row.value)"
-            ><v-icon icon="mdi-pencil"></v-icon
-          ></v-btn>
-          <ContributionRuleForm
-            v-model="editContributionRuleDialog"
-            :key="row.value.id"
-            :isEdit="true"
-            @update-dialog="updateEditDialog"
-            :passedFormData="selectedContributionRule"
-            @edit-contribution-rule="clickEditContributionRule"
-          />
-        </template>
-        <template #delete="row">
-          <v-btn variant="plain" icon
-            ><v-icon
-              icon="mdi-delete"
-              @click="clickDeleteButton(row.value)"
-            ></v-icon
-          ></v-btn>
-          <v-dialog
-            v-model="deleteContributionRuleDialog"
-            :key="row.value.id"
-            width="400"
-            ><v-card
-              ><v-card-title>Delete Rule?</v-card-title
+        <template v-slot:default="{ items }">
+          <template v-for="(item, i) in items" :key="i">
+            <v-card class="flex ma-0 pa-0 ga-0"
               ><v-card-text
-                ><span>{{ selectedContributionRule.rule }}</span></v-card-text
-              >
-              <v-card-actions
-                ><v-btn @click="deleteContributionRuleDialog = false"
-                  >Close</v-btn
-                ><v-btn
-                  @click="clickDeleteContributionRule(selectedContributionRule)"
-                  >Delete</v-btn
+                ><v-container class="flex ma-0 pa-0 ga-0"
+                  ><v-row dense
+                    ><v-col
+                      class="d-flex justify-center align-center font-weight-bold"
+                      cols="1"
+                      >{{ item.raw.order }}</v-col
+                    ><v-col
+                      ><v-container
+                        ><v-row dense
+                          ><v-col cols="2" class="font-weight-bold text-right"
+                            >rule</v-col
+                          ><v-col>{{ item.raw.rule }}</v-col></v-row
+                        ><v-row dense
+                          ><v-col cols="2" class="font-weight-bold text-right"
+                            >cap</v-col
+                          ><v-col>{{ item.raw.cap }}</v-col></v-row
+                        ></v-container
+                      ></v-col
+                    ></v-row
+                  ></v-container
+                ></v-card-text
+              ><v-card-actions
+                ><v-spacer></v-spacer
+                ><v-btn @click="clickEditButton(i, item.raw)">Edit</v-btn
+                ><ContributionRuleForm
+                  v-model="editContributionRuleDialog[i]"
+                  :key="item.raw.id"
+                  :isEdit="true"
+                  @update-dialog="clickEditButton(i)"
+                  :passedFormData="selectedContributionRule"
+                  @edit-contribution-rule="clickEditContributionRule"
+                />
+                <v-btn @click="clickDeleteButton(i, item.raw)">Delete</v-btn
+                ><v-dialog
+                  v-model="deleteContributionRuleDialog[i]"
+                  :key="item.raw.id"
+                  width="400"
+                  ><v-card
+                    ><v-card-title>Delete Rule?</v-card-title
+                    ><v-card-text
+                      ><span>{{
+                        selectedContributionRule.rule
+                      }}</span></v-card-text
+                    >
+                    <v-card-actions
+                      ><v-btn @click="clickDeleteButton(i)">Close</v-btn
+                      ><v-btn
+                        @click="
+                          clickDeleteContributionRule(
+                            selectedContributionRule,
+                            i,
+                          )
+                        "
+                        >Delete</v-btn
+                      ></v-card-actions
+                    ></v-card
+                  ></v-dialog
                 ></v-card-actions
               ></v-card
-            ></v-dialog
-          >
+            >
+            <br />
+          </template>
         </template>
-      </vue3-datatable>
+        <template v-slot:loader
+          ><v-skeleton-loader
+            class="border"
+            type="paragraph"
+          ></v-skeleton-loader
+        ></template>
+        <template v-slot:footer="{ page, pageCount, prevPage, nextPage }">
+          <div class="d-flex align-center justify-center pa-4">
+            <v-btn
+              :disabled="page === 1"
+              density="comfortable"
+              icon="mdi-arrow-left"
+              variant="tonal"
+              rounded
+              @click="prevPage"
+            ></v-btn>
+
+            <div class="mx-2 text-caption">
+              Page {{ page }} of {{ pageCount }}
+            </div>
+
+            <v-btn
+              :disabled="page >= pageCount"
+              density="comfortable"
+              icon="mdi-arrow-right"
+              variant="tonal"
+              rounded
+              @click="nextPage"
+            ></v-btn>
+          </div>
+        </template>
+      </v-data-iterator>
     </template>
   </v-card>
 </template>
 <script setup>
-import Vue3Datatable from "@bhplugin/vue3-datatable";
-import "@bhplugin/vue3-datatable/dist/style.css";
 import { ref } from "vue";
 import { useContributionRules } from "@/composables/contributionsComposable";
 import ContributionRuleForm from "@/components/ContributionRuleForm.vue";
 
-const contrib_rules_table = ref(null);
-const editContributionRuleDialog = ref(false);
+const editContributionRuleDialog = ref({});
 const addContributionRuleDialog = ref(false);
-const deleteContributionRuleDialog = ref(false);
+const deleteContributionRuleDialog = ref({});
 const selectedContributionRule = ref(null);
 const newContributionRuleData = ref({
   id: 0,
@@ -122,63 +158,37 @@ const {
   removeContributionRule,
 } = useContributionRules();
 
-const columns = ref([
-  { field: "id", title: "id", isUnique: true, hide: true },
-  { field: "order", title: "Order", width: "20px" },
-  {
-    field: "rule",
-    title: "Rule",
-    type: "string",
-  },
-  {
-    field: "cap",
-    title: "Cap",
-    type: "string",
-  },
-  { field: "edit", title: "Edit", width: "40px", cellClass: "text-center" },
-  { field: "delete", title: "Delete", width: "40px", cellClass: "text-center" },
-]);
-
 const updateAddDialog = () => {
   addContributionRuleDialog.value = false;
 };
 
-const updateEditDialog = () => {
-  editContributionRuleDialog.value = false;
+const clickEditButton = (index, contributionRule) => {
+  if (contributionRule) {
+    selectedContributionRule.value = contributionRule;
+  }
+  editContributionRuleDialog.value[index] =
+    !editContributionRuleDialog.value[index];
 };
 
-const clickEditButton = contributionRule => {
-  selectedContributionRule.value = contributionRule;
-  editContributionRuleDialog.value = true;
-};
-
-const clickDeleteButton = contributionRule => {
-  selectedContributionRule.value = contributionRule;
-  deleteContributionRuleDialog.value = true;
+const clickDeleteButton = (index, contributionRule) => {
+  if (contributionRule) {
+    selectedContributionRule.value = contributionRule;
+  }
+  deleteContributionRuleDialog.value[index] =
+    !deleteContributionRuleDialog.value[index];
 };
 
 const clickEditContributionRule = contributionRule => {
   editContributionRule(contributionRule);
-  editContributionRuleDialog.value = false;
 };
 
 const clickDeleteContributionRule = contributionRule => {
   removeContributionRule(contributionRule);
-  deleteContributionRuleDialog.value = false;
 };
 
 const clickAddContributionRule = contributionRule => {
   addContributionRule(contributionRule);
   addContributionRuleDialog.value = false;
-};
-
-const clampedStyle = {
-  whiteSpace: "pre-line",
-  display: "-webkit-box",
-  WebkitLineClamp: 9, // Limit to 3 lines
-  WebkitBoxOrient: "vertical",
-  overflow: "hidden",
-  textOverflow: "ellipsis", // Add "..." at the end if text is truncated
 };
 </script>
 <style>

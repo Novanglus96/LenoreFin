@@ -70,16 +70,17 @@
               ><v-card-text
                 ><v-container class="flex ma-0 pa-0 ga-0"
                   ><v-row dense
-                    ><v-col class="font-weight-bold">{{
+                    ><v-col class="font-weight-bold" cols="4">{{
                       item.raw.contribution
-                    }}</v-col></v-row
-                  ><v-row dense
+                    }}</v-col
                     ><v-col
                       ><v-tooltip text="Per Paycheck" location="top">
                         <template v-slot:activator="{ props }">
                           <v-icon icon="mdi-checkbook" v-bind="props"></v-icon>
                         </template> </v-tooltip
                       >{{ formatCurrency(item.raw.per_paycheck) }}</v-col
+                    ></v-row
+                  ><v-row dense
                     ><v-col
                       ><v-tooltip text="Emergency Amount" location="top">
                         <template v-slot:activator="{ props }">
