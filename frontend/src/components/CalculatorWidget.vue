@@ -1,29 +1,34 @@
 <template>
-  <v-dialog v-model="dialog" width="400"
-    ><v-card
+  <v-dialog v-model="dialog" width="300"
+    ><v-card color="primary" variant="elevated" border="md" rounded="lg"
       ><v-card-text
         ><v-container>
           <v-row dense
-            ><v-col class="text-center" cols="10"
-              ><v-text-field
-                v-model="displayAmount"
-                :label="memoryText"
-                variant="solo"
-                suffix="$"
-                type="text"
-                :reverse="true"
-                color="grey"
-                bg-color="grey"
-              ></v-text-field></v-col
-            ><v-col cols="2" class="text-right"
-              ><v-btn
-                icon="mdi-check-bold"
-                rounded="xl"
-                color="success"
-                block
-                size="x-small"
-                @click="clickUpdateAmount"
-              ></v-btn></v-col
+            ><v-col
+              class="text-center rounded-md ma-0 pa-0 ga-0"
+              cols="10"
+              style="background-color: grey; padding: 16px; border-radius: 12px"
+              ><span class="text-caption text-grey-lighten-2 font-italic">{{
+                memoryText
+              }}</span
+              ><br /><span class="font-weight-bold text-white text-body-1"
+                >${{ displayAmount }}</span
+              ></v-col
+            ><v-col
+              cols="2"
+              class="d-flex justify-end align-center"
+              style="align-items: center"
+              ><v-tooltip text="Send Amount to Form" location="top">
+                <template v-slot:activator="{ props }"
+                  ><v-btn
+                    icon="mdi-check-bold"
+                    rounded="xl"
+                    color="success"
+                    block
+                    size="x-small"
+                    @click="clickUpdateAmount"
+                    v-bind="props"
+                  ></v-btn></template></v-tooltip></v-col
           ></v-row>
           <v-row dense
             ><v-col class="text-center" cols="9"
@@ -130,12 +135,14 @@
                 rounded="xl"
                 icon="mdi-circle-small"
                 @click="appendPeriod"
+                color="grey"
               ></v-btn></v-col
             ><v-col class="text-right"
               ><v-btn
                 rounded="xl"
                 icon="mdi-backspace"
                 @click="backspace"
+                color="grey"
               ></v-btn></v-col
             ><v-col class="text-right"
               ><v-btn
@@ -241,7 +248,7 @@ const clickOperation = operation => {
     performOperation();
   }
   operand.value = operation;
-  memoryText.value = `${runningTotal.value} ${operation}`;
+  memoryText.value = `$${runningTotal.value} ${operation}`;
   operationInProgress.value = true;
   resetTriggeredByEquals.value = false; // Operation button doesn't trigger '=' behavior
 };
@@ -250,7 +257,9 @@ const performOperation = () => {
   const currentValue = parseFloat(displayAmount.value);
 
   // Build equation string for memory text
-  let equation = `${runningTotal.value} ${operand.value || ""} ${currentValue}`;
+  let equation = `$${runningTotal.value} ${
+    operand.value || ""
+  } $${currentValue}`;
 
   if (!operand.value) {
     runningTotal.value = currentValue;
