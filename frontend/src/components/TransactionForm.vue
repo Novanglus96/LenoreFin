@@ -91,7 +91,23 @@
                         }
                       "
                       density="compact"
-                    ></v-text-field>
+                      ><template v-slot:append-inner
+                        ><v-tooltip text="Calculator" location="top">
+                          <template v-slot:activator="{ props }"
+                            ><v-btn
+                              icon="mdi-calculator-variant"
+                              variant="text"
+                              @click="showCalculator = true"
+                              v-bind="props"
+                            ></v-btn></template></v-tooltip
+                      ></template>
+                    </v-text-field>
+                    <CalculatorWidget
+                      v-model="showCalculator"
+                      :amount="amount"
+                      @update-dialog="updateShowCalculator"
+                      @update-amount="updateAmount"
+                    />
                   </v-col>
                   <v-col cols="3">
                     <v-text-field
@@ -499,6 +515,7 @@ import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import TagTable from "@/components/TagTable.vue";
 import { useDescriptionHistory } from "@/composables/descriptionHistoryComposable";
+import CalculatorWidget from "./CalculatorWidget.vue";
 
 // Define reactive variables...
 const tagToAdd = ref(null); // Tag object to add to tag list
@@ -508,6 +525,7 @@ const isPaycheck = ref(null); // True if this transaction a paycheck
 const paycheckTotalsMatch = ref(false); // True if the paycheck fields total = gross
 const formValid = ref(false);
 const transactionForm = ref(null);
+const showCalculator = ref(false);
 
 // Define emits
 const emit = defineEmits(["updateDialog"]);
@@ -861,6 +879,14 @@ const resetTagField = () => {
  */
 const tagsUpdated = data => {
   formData.value.details = data.tags;
+};
+
+const updateAmount = data => {
+  amount.value = data;
+};
+
+const updateShowCalculator = () => {
+  showCalculator.value = !showCalculator.value;
 };
 
 // Lifecycle hook...
