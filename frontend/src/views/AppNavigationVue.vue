@@ -50,7 +50,7 @@
       </template>
       <v-app-bar-title>
         <span class="text-caption font-weight-bold"
-          >v1.0.062</span
+          >v1.0.063</span
         ></v-app-bar-title
       >
       <v-menu location="start">
