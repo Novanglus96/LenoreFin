@@ -336,7 +336,7 @@
                     ></v-text-field>
                     <CalculatorWidget
                       v-model="showHealthCalculator"
-                      :amount="paycheck.Health"
+                      :amount="paycheck.health"
                       @update-dialog="updateShowHealthCalculator"
                       @update-amount="updateHealth"
                       key="health"
