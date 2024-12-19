@@ -212,7 +212,7 @@ const appendNumber = number => {
     displayAmount.value = String(number);
     operationInProgress.value = false;
   } else {
-    const [integerPart, fractionalPart] = displayAmount.value.split(".");
+    const [, fractionalPart] = displayAmount.value.split(".");
     if (!fractionalPart || fractionalPart.length < 2) {
       displayAmount.value =
         displayAmount.value === "0"
