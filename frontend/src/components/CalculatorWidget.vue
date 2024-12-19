@@ -160,106 +160,136 @@ const props = defineProps({
   },
 });
 
-const displayAmount = ref(0);
+const displayAmount = ref("0");
 const memoryAmount = ref(0);
 const memoryText = ref("");
 const runningTotal = ref(0);
 const operand = ref(null);
 const operationInProgress = ref(false);
 const newEquation = ref(true);
+const resetTriggeredByEquals = ref(false); // New flag
 
 const clickUpdateAmount = () => {
   emit("updateDialog", false);
-  emit("updateAmount", displayAmount.value);
+  emit("updateAmount", parseFloat(displayAmount.value));
 };
+
 const watchPassedAmount = () => {
   watchEffect(() => {
     if (props.amount) {
-      displayAmount.value = Number(props.amount);
-      memoryText.value = "";
-      memoryAmount.value = 0;
-      runningTotal.value = 0;
-      operand.value = null;
-      operationInProgress.value = false;
-      newEquation.value = true;
+      resetCalculator();
+      displayAmount.value = formatMoney(props.amount);
     }
   });
 };
-const appendNumber = number => {
-  if (!operationInProgress.value && !newEquation.value) {
-    const valueString = String(displayAmount.value);
 
-    // Check if there is a period in the value
-    const hasPeriod = valueString.includes(".");
-
-    if (!hasPeriod) {
-      // No period exists, append the number
-      displayAmount.value =
-        displayAmount.value !== 0 ? `${displayAmount.value}${number}` : number;
-    } else {
-      // Check if there is at most one digit after the period
-      const fractionalPart = valueString.split(".")[1];
-      if (!fractionalPart || fractionalPart.length < 2) {
-        // Append the number if there's no or only one digit after the period
-        displayAmount.value = `${displayAmount.value}${number}`;
-      }
-    }
-  } else {
-    operationInProgress.value = false;
-    displayAmount.value = `${number}`;
-    if (newEquation.value) {
-      memoryAmount.value = 0;
-      memoryText.value = "";
-      runningTotal.value = 0;
-      operand.value = null;
-    }
-  }
-};
-const backspace = () => {
-  displayAmount.value = String(displayAmount.value).slice(0, -1);
-  if (!displayAmount.value) {
-    displayAmount.value = 0;
-  }
-};
-function appendPeriod() {
-  if (!String(displayAmount.value).includes(".")) {
-    displayAmount.value = `${displayAmount.value}.`;
-  }
-}
-const clickClear = () => {
+const resetCalculator = () => {
+  displayAmount.value = "0";
   memoryAmount.value = 0;
   memoryText.value = "";
-  displayAmount.value = 0;
   runningTotal.value = 0;
   operand.value = null;
   operationInProgress.value = false;
   newEquation.value = true;
+  resetTriggeredByEquals.value = false; // Reset the flag
 };
+
+const formatMoney = value => {
+  // Format value to ensure two decimal places
+  return parseFloat(value).toFixed(2);
+};
+
+const appendNumber = number => {
+  if (newEquation.value) {
+    if (resetTriggeredByEquals.value) {
+      memoryText.value = ""; // Clear memory text only if '=' was pressed
+    }
+    displayAmount.value = String(number);
+    newEquation.value = false;
+    operationInProgress.value = false;
+    resetTriggeredByEquals.value = false; // Reset the flag after use
+  } else if (operationInProgress.value) {
+    displayAmount.value = String(number);
+    operationInProgress.value = false;
+  } else {
+    const [integerPart, fractionalPart] = displayAmount.value.split(".");
+    if (!fractionalPart || fractionalPart.length < 2) {
+      displayAmount.value =
+        displayAmount.value === "0"
+          ? String(number)
+          : displayAmount.value + number;
+    }
+  }
+};
+
+const backspace = () => {
+  displayAmount.value = displayAmount.value.slice(0, -1) || "0";
+};
+
+const appendPeriod = () => {
+  if (!displayAmount.value.includes(".")) {
+    displayAmount.value += ".";
+  }
+};
+
+const clickClear = () => {
+  resetCalculator();
+};
+
 const clickOperation = operation => {
-  performOperation();
-  newEquation.value = false;
+  if (!operationInProgress.value) {
+    performOperation();
+  }
   operand.value = operation;
-  operationInProgress.value = true;
   memoryText.value = `${runningTotal.value} ${operation}`;
+  operationInProgress.value = true;
+  resetTriggeredByEquals.value = false; // Operation button doesn't trigger '=' behavior
 };
 
 const performOperation = () => {
-  operationInProgress.value = false;
-  let newTotal = 0;
-  if (operand.value == "+") {
-    newTotal = Number(runningTotal.value) + Number(displayAmount.value);
-  }
+  const currentValue = parseFloat(displayAmount.value);
+
+  // Build equation string for memory text
+  let equation = `${runningTotal.value} ${operand.value || ""} ${currentValue}`;
+
   if (!operand.value) {
-    newTotal = Number(displayAmount.value);
+    runningTotal.value = currentValue;
+  } else {
+    switch (operand.value) {
+      case "+":
+        runningTotal.value = runningTotal.value + currentValue;
+        break;
+      case "-":
+        runningTotal.value = runningTotal.value - currentValue;
+        break;
+      case "*":
+        runningTotal.value = runningTotal.value * currentValue;
+        break;
+      case "/":
+        if (currentValue !== 0) {
+          runningTotal.value = runningTotal.value / currentValue;
+        } else {
+          alert("Cannot divide by zero");
+          resetCalculator();
+          return;
+        }
+        break;
+    }
   }
-  memoryText.value = `${runningTotal.value} + ${displayAmount.value} =`;
-  displayAmount.value = `${newTotal}`;
-  newEquation.value = true;
-  runningTotal.value = newTotal;
+
+  // Fix JavaScript precision and format result
+  runningTotal.value = parseFloat(runningTotal.value.toFixed(2));
+
+  // Update display and memory text
+  displayAmount.value = formatMoney(runningTotal.value);
+  memoryText.value = `${equation} =`; // Show full equation
   operand.value = null;
+  operationInProgress.value = false;
+  newEquation.value = true;
+  resetTriggeredByEquals.value = true; // '=' was pressed
 };
+
 onMounted(() => {
-  // Perform actions on mount
   watchPassedAmount();
 });
 </script>
