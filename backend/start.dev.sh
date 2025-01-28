@@ -28,4 +28,5 @@ python manage.py scheduletasks
 python manage.py loaddata administration/fixtures/graph_types
 python manage.py load_options
 
-python manage.py runserver 0.0.0.0:8001
+python manage.py runserver 0.0.0.0:8001 &
+mkdocs serve --dev-addr=0.0.0.0:8002
