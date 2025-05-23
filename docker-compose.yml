@@ -10,8 +10,8 @@ services:
     restart: unless-stopped
     ports:
       - 8081:8080
-    image: money_frontend:development
-    container_name: money_frontend_dev
+    image: lenorefin_frontend:development
+    container_name: lenorefin_frontend_dev
     volumes:
       - ./frontend:/app
     environment:
@@ -39,8 +39,8 @@ services:
       - db
     networks:
       - default
-    image: money_backend:development
-    container_name: money_backend_dev
+    image: lenorefin_backend:development
+    container_name: lenorefin_backend_dev
   worker:
     build:
       context: ./backend
@@ -58,8 +58,8 @@ services:
       - backend
     networks:
       - default
-    image: money_worker:development
-    container_name: money_worker_dev
+    image: lenorefin_worker:development
+    container_name: lenorefin_worker_dev
   db:
     image: postgres:15
     volumes:
@@ -68,7 +68,7 @@ services:
       - ./.env.dev.db
     networks:
       - default
-    container_name: money_db_dev
+    container_name: lenorefin_db_dev
     environment:
       - TZ=UTC
 
