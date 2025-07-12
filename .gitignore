@@ -1,6 +1,4 @@
 *.devdbrc
-ver_change.sh
-publish.sh
 mediafiles
 *.DS_Store
 static
