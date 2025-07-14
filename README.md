@@ -139,19 +139,7 @@ TIMEZONE=America/New_York
 
 Adjust these values according to your environment and application requirements.
 
-### Step 2: Create a `.env.db` File
-
-Create a `.env.db` file in the root directory of the project. This file will store environment variables required to run the application. Below is an example of the variables you need to define:
-
-```env
-POSTGRES_USER=lenorefinuser
-POSTGRES_PASSWORD=somepassword
-POSTGRES_DB=lenorefin
-```
-
-Make sure these match the settings in .env file!
-
-### Step 3: Create a `docker-compose.yml` File
+### Step 2: Create a `docker-compose.yml` File
 
 Create a `docker-compose.yml` file in the root directory of the project. Below is an example configuration:
 
@@ -217,7 +205,7 @@ volumes:
     external: true
 ```
 
-### Step 4: Run the Application
+### Step 3: Run the Application
 
 1. Start the services:
 
