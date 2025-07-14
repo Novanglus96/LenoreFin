@@ -3,9 +3,12 @@
   "version": "1.0.3",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite --host",
+    "serve": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --fix",
+    "format": "prettier --write src/"
   },
   "dependencies": {
     "@bhplugin/vue3-datatable": "^2.0.0",
@@ -23,6 +26,7 @@
     "pinia-plugin-persistedstate": "^4.1.1",
     "roboto-fontface": "^0.10.0",
     "vee-validate": "^4.13.2",
+    "vite-plugin-html": "^3.2.2",
     "vue": "^3.5.11",
     "vue-chartjs": "^5.3.1",
     "vue-doxen": "^0.4.4",
@@ -32,17 +36,15 @@
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.8",
-    "@babel/eslint-parser": "^7.25.8",
     "@mdi/font": "^7.4.47",
-    "@vue/cli-plugin-babel": "~5.0.8",
-    "@vue/cli-plugin-eslint": "~5.0.8",
-    "@vue/cli-plugin-router": "~5.0.8",
-    "@vue/cli-service": "~5.0.8",
+    "@vitejs/plugin-vue": "^6.0.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-vue": "^9.29.0",
-    "postcss": "^8.4.47"
+    "postcss": "^8.4.47",
+    "vite": "^7.0.4",
+    "vite-plugin-eslint": "^1.8.1",
+    "vite-plugin-vue-devtools": "^7.7.7"
   }
 }
