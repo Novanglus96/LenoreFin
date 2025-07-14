@@ -30,5 +30,10 @@ RUN ln -snf /usr/share/zoneinfo/$TIMEZONE /etc/localtime && echo $TIMEZONE >/etc
 # Expose the port
 EXPOSE 80
 
+# Run Entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
