@@ -45,7 +45,8 @@
         paginationInfo="Showing {0} to {1} of {2} transactions"
         @change="pageChanged"
         class="alt-pagination"
-        ><!--height="280px"-->
+      >
+        <!--height="280px"-->
         <template #status.transaction_status="row">
           <v-tooltip text="Pending" location="top">
             <template v-slot:activator="{ props }">
@@ -121,8 +122,9 @@
                       ? 'font-italic text-grey icon-text'
                       : 'font-weight-bold text-black icon-text'
                   "
-                  >#{{ row.value.checkNumber }}</span
                 >
+                  #{{ row.value.checkNumber }}
+                </span>
               </div>
             </template>
           </v-tooltip>
@@ -134,22 +136,25 @@
                 ? 'font-italic text-grey'
                 : 'font-weight-bold text-black'
             "
-            >{{ row.value.transaction_date }}</span
           >
+            {{ row.value.transaction_date }}
+          </span>
         </template>
         <template #pretty_total="row">
           <span
             :class="
               getClassForMoney(row.value.pretty_total, row.value.status.id)
             "
-            >{{ formatCurrency(row.value.pretty_total) }}</span
           >
+            {{ formatCurrency(row.value.pretty_total) }}
+          </span>
         </template>
         <template #balance="row">
           <span
             :class="getClassForMoney(row.value.balance, row.value.status.id)"
-            >{{ formatCurrency(row.value.balance) }}</span
           >
+            {{ formatCurrency(row.value.balance) }}
+          </span>
         </template>
         <template #description="row">
           <span
@@ -158,8 +163,9 @@
                 ? 'font-italic text-grey'
                 : 'font-weight-bold text-black'
             "
-            >{{ row.value.description }}</span
           >
+            {{ row.value.description }}
+          </span>
         </template>
         <template #tags="row">
           <span
@@ -186,8 +192,9 @@
                 ? 'font-italic text-grey'
                 : 'font-weight-bold text-black'
             "
-            >{{ row.value.pretty_account }}</span
           >
+            {{ row.value.pretty_account }}
+          </span>
         </template>
       </vue3-datatable>
       <div class="floating-button-group">
@@ -252,10 +259,11 @@
           <v-card title="Dialog">
             <v-card-text>
               Are you sure you want to delete these
-              {{ selected.length }} transactions? <br /><span
-                class="text-red text-subtitle-2 font-italic"
-                >* Reminder transactions will not be deleted.</span
-              >
+              {{ selected.length }} transactions?
+              <br />
+              <span class="text-red text-subtitle-2 font-italic">
+                * Reminder transactions will not be deleted.
+              </span>
             </v-card-text>
 
             <v-card-actions>
@@ -298,265 +306,265 @@
   </v-card>
 </template>
 <script setup>
-import { ref, defineProps, defineEmits, computed } from "vue";
-import { useTransactions } from "@/composables/transactionsComposable";
-import { useReminders } from "@/composables/remindersComposable";
-import TransactionForm from "@/components/TransactionForm";
-import FileImportForm from "@/components/FileImportForm";
-import Vue3Datatable from "@bhplugin/vue3-datatable";
-import "@bhplugin/vue3-datatable/dist/style.css";
-import { useTransactionsStore } from "@/stores/transactions";
-import MultipleTransactionEditForm from "@/components/MultipleTransactionEditForm";
+  import { ref, defineProps, defineEmits, computed } from "vue";
+  import { useTransactions } from "@/composables/transactionsComposable";
+  import { useReminders } from "@/composables/remindersComposable";
+  import TransactionForm from "@/components/TransactionForm.vue";
+  import FileImportForm from "@/components/FileImportForm.vue";
+  import Vue3Datatable from "@bhplugin/vue3-datatable";
+  import "@bhplugin/vue3-datatable/dist/style.css";
+  import { useTransactionsStore } from "@/stores/transactions";
+  import MultipleTransactionEditForm from "@/components/MultipleTransactionEditForm.vue";
 
-const transactions_store = useTransactionsStore();
-const today = new Date();
-const year = today.getFullYear();
-const month = String(today.getMonth() + 1).padStart(2, "0");
-const day = String(today.getDate()).padStart(2, "0");
-const formattedDate = `${year}-${month}-${day}`;
-const showDeleteDialog = ref(false);
-const showMultipleTransactionEditDialog = ref(false);
-const transactionAddFormDialog = ref(false);
-const importFileDialog = ref(false);
-const transactionEditFormDialog = ref(false);
-const deleteDisable = ref(true);
-const editDisable = ref(true);
-const clearDisable = ref(true);
-const editTransactions = ref([]);
+  const transactions_store = useTransactionsStore();
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  const formattedDate = `${year}-${month}-${day}`;
+  const showDeleteDialog = ref(false);
+  const showMultipleTransactionEditDialog = ref(false);
+  const transactionAddFormDialog = ref(false);
+  const importFileDialog = ref(false);
+  const transactionEditFormDialog = ref(false);
+  const deleteDisable = ref(true);
+  const editDisable = ref(true);
+  const clearDisable = ref(true);
+  const editTransactions = ref([]);
 
-const props = defineProps({
-  account: Number,
-  maxdays: { type: Number, default: 14 },
-  forecast: { type: Boolean, default: false },
-  dateLimit: String,
-});
-const emit = defineEmits([
-  "addTransaction",
-  "removeTransaction",
-  "editTransaction",
-  "clearTransaction",
-]);
-
-const blankForm = ref({
-  id: 0,
-  status: {
-    id: 1,
-  },
-  transaction_type: {
-    id: 1,
-  },
-  transaction_date: formattedDate,
-  memo: "",
-  source_account_id: parseInt(props.account),
-  destination_account_id: null,
-  edit_date: formattedDate,
-  add_date: formattedDate,
-  tag_id: 1,
-  total_amount: 0,
-});
-const editTransaction = ref({
-  id: 0,
-  transaction_date: formattedDate,
-  total_amount: 0,
-  status: {
-    id: 1,
-    transaction_status: "Pending",
-  },
-  memo: "",
-  description: null,
-  edit_date: formattedDate,
-  add_date: formattedDate,
-  transaction_type: {
-    id: 1,
-    transaction_type: "Expense",
-  },
-  reminder: null,
-  paycheck: null,
-  balance: 0,
-  pretty_account: null,
-  tags: [],
-  details: [],
-  pretty_total: 0,
-  source_account_id: 0,
-  destination_account_id: null,
-});
-
-const {
-  isLoading,
-  isFetching,
-  transactions,
-  removeTransaction,
-  clearTransaction,
-} = useTransactions();
-
-const displayEditForm = () => {
-  if (selected.value.length === 1) {
-    transactionEditFormDialog.value = true;
-  } else {
-    editTransactions.value = selected.value;
-    showMultipleTransactionEditDialog.value = true;
-  }
-};
-
-const isActive = computed(
-  () => !(isLoading.value === false && isFetching.value === false),
-);
-const { addReminderTransaction } = useReminders();
-const pageChanged = data => {
-  transactions_store.pageinfo.page = data.current_page;
-};
-
-const selected = ref([]);
-const reminder_selected = ref([]);
-const columns = ref([
-  { field: "id", title: "ID", isUnique: true, hide: true },
-  { field: "status.transaction_status", title: "", width: "115px" },
-  { field: "transaction_date", title: "Date", type: "date", width: "120px" },
-  { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
-  { field: "balance", title: "Balance", width: "100px" },
-  { field: "description", title: "Description" },
-  { field: "tags", title: "Tag(s)", width: "200px" },
-  { field: "pretty_account", title: "Account" },
-  { field: "reminder_id", title: "reminder_id", hide: true },
-]);
-const getClassForMoney = (amount, status) => {
-  let color = "";
-  let font = "";
-
-  if (status == 1) {
-    font = "font-italic";
-    if (amount < 0) {
-      color = "text-red-lighten-1";
-    } else {
-      color = "text-green-lighten-1";
-    }
-  } else {
-    font = "font-weight-bold";
-    if (amount < 0) {
-      color = "text-red";
-    } else {
-      color = "text-green";
-    }
-  }
-
-  return color + " " + font;
-};
-const rowSelected = () => {
-  selected.value = [];
-  reminder_selected.value = [];
-  let selectedrows = trans_table.value.getSelectedRows();
-  for (const selectedrow of selectedrows) {
-    if (selectedrow.id > 0) {
-      selected.value.push(selectedrow.id);
-      editTransaction.value = selectedrow;
-    } else {
-      let reminder_trans_obj = {
-        reminder_id: selectedrow.reminder_id,
-        transaction_date: selectedrow.transaction_date,
-      };
-      reminder_selected.value.push(reminder_trans_obj);
-    }
-  }
-  if (reminder_selected.value.length == 0) {
-    deleteDisable.value = false;
-    editDisable.value = false;
-  } else {
-    deleteDisable.value = true;
-    editDisable.value = true;
-  }
-  if (selected.value.length > 0 || reminder_selected.value.length > 0) {
-    clearDisable.value = false;
-  } else {
-    clearDisable.value = true;
-  }
-};
-const trans_table = ref(null);
-
-const clickAddTransaction = async () => {
-  emit("addTransaction", props.account);
-};
-
-const clickRemoveTransaction = async transactions => {
-  removeTransaction(transactions);
-  trans_table.value.clearSelectedRows();
-};
-
-const clickClearTransaction = async (transactions, reminderTransactions) => {
-  clearTransaction(transactions);
-  trans_table.value.clearSelectedRows();
-  reminderTransactions.forEach(transaction => {
-    addReminderTransaction(transaction);
+  const props = defineProps({
+    account: Number,
+    maxdays: { type: Number, default: 14 },
+    forecast: { type: Boolean, default: false },
+    dateLimit: String,
   });
-  selected.value = [];
-  reminder_selected.value = [];
-};
+  const emit = defineEmits([
+    "addTransaction",
+    "removeTransaction",
+    "editTransaction",
+    "clearTransaction",
+  ]);
 
-const clickEditTransaction = async transaction_id => {
-  emit("editTransaction", transaction_id);
-};
+  const blankForm = ref({
+    id: 0,
+    status: {
+      id: 1,
+    },
+    transaction_type: {
+      id: 1,
+    },
+    transaction_date: formattedDate,
+    memo: "",
+    source_account_id: parseInt(props.account),
+    destination_account_id: null,
+    edit_date: formattedDate,
+    add_date: formattedDate,
+    tag_id: 1,
+    total_amount: 0,
+  });
+  const editTransaction = ref({
+    id: 0,
+    transaction_date: formattedDate,
+    total_amount: 0,
+    status: {
+      id: 1,
+      transaction_status: "Pending",
+    },
+    memo: "",
+    description: null,
+    edit_date: formattedDate,
+    add_date: formattedDate,
+    transaction_type: {
+      id: 1,
+      transaction_type: "Expense",
+    },
+    reminder: null,
+    paycheck: null,
+    balance: 0,
+    pretty_account: null,
+    tags: [],
+    details: [],
+    pretty_total: 0,
+    source_account_id: 0,
+    destination_account_id: null,
+  });
 
-const updateAddDialog = () => {
-  transactionAddFormDialog.value = false;
-};
+  const {
+    isLoading,
+    isFetching,
+    transactions,
+    removeTransaction,
+    clearTransaction,
+  } = useTransactions();
 
-const updateImportFileDialog = () => {
-  importFileDialog.value = false;
-};
+  const displayEditForm = () => {
+    if (selected.value.length === 1) {
+      transactionEditFormDialog.value = true;
+    } else {
+      editTransactions.value = selected.value;
+      showMultipleTransactionEditDialog.value = true;
+    }
+  };
 
-const updateEditDialog = () => {
-  transactionEditFormDialog.value = false;
-};
-const updateMultipleEditDialog = () => {
-  showMultipleTransactionEditDialog.value = false;
-};
-const formatCurrency = value => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
+  const isActive = computed(
+    () => !(isLoading.value === false && isFetching.value === false),
+  );
+  const { addReminderTransaction } = useReminders();
+  const pageChanged = data => {
+    transactions_store.pageinfo.page = data.current_page;
+  };
+
+  const selected = ref([]);
+  const reminder_selected = ref([]);
+  const columns = ref([
+    { field: "id", title: "ID", isUnique: true, hide: true },
+    { field: "status.transaction_status", title: "", width: "115px" },
+    { field: "transaction_date", title: "Date", type: "date", width: "120px" },
+    { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
+    { field: "balance", title: "Balance", width: "100px" },
+    { field: "description", title: "Description" },
+    { field: "tags", title: "Tag(s)", width: "200px" },
+    { field: "pretty_account", title: "Account" },
+    { field: "reminder_id", title: "reminder_id", hide: true },
+  ]);
+  const getClassForMoney = (amount, status) => {
+    let color = "";
+    let font = "";
+
+    if (status == 1) {
+      font = "font-italic";
+      if (amount < 0) {
+        color = "text-red-lighten-1";
+      } else {
+        color = "text-green-lighten-1";
+      }
+    } else {
+      font = "font-weight-bold";
+      if (amount < 0) {
+        color = "text-red";
+      } else {
+        color = "text-green";
+      }
+    }
+
+    return color + " " + font;
+  };
+  const rowSelected = () => {
+    selected.value = [];
+    reminder_selected.value = [];
+    let selectedrows = trans_table.value.getSelectedRows();
+    for (const selectedrow of selectedrows) {
+      if (selectedrow.id > 0) {
+        selected.value.push(selectedrow.id);
+        editTransaction.value = selectedrow;
+      } else {
+        let reminder_trans_obj = {
+          reminder_id: selectedrow.reminder_id,
+          transaction_date: selectedrow.transaction_date,
+        };
+        reminder_selected.value.push(reminder_trans_obj);
+      }
+    }
+    if (reminder_selected.value.length == 0) {
+      deleteDisable.value = false;
+      editDisable.value = false;
+    } else {
+      deleteDisable.value = true;
+      editDisable.value = true;
+    }
+    if (selected.value.length > 0 || reminder_selected.value.length > 0) {
+      clearDisable.value = false;
+    } else {
+      clearDisable.value = true;
+    }
+  };
+  const trans_table = ref(null);
+
+  const clickAddTransaction = async () => {
+    emit("addTransaction", props.account);
+  };
+
+  const clickRemoveTransaction = async transactions => {
+    removeTransaction(transactions);
+    trans_table.value.clearSelectedRows();
+  };
+
+  const clickClearTransaction = async (transactions, reminderTransactions) => {
+    clearTransaction(transactions);
+    trans_table.value.clearSelectedRows();
+    reminderTransactions.forEach(transaction => {
+      addReminderTransaction(transaction);
+    });
+    selected.value = [];
+    reminder_selected.value = [];
+  };
+
+  const clickEditTransaction = async transaction_id => {
+    emit("editTransaction", transaction_id);
+  };
+
+  const updateAddDialog = () => {
+    transactionAddFormDialog.value = false;
+  };
+
+  const updateImportFileDialog = () => {
+    importFileDialog.value = false;
+  };
+
+  const updateEditDialog = () => {
+    transactionEditFormDialog.value = false;
+  };
+  const updateMultipleEditDialog = () => {
+    showMultipleTransactionEditDialog.value = false;
+  };
+  const formatCurrency = value => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
 </script>
 <style>
-/* alt-pagination */
-.alt-pagination .bh-pagination .bh-page-item {
-  width: auto; /* equivalent to w-max */
-  min-width: 32px;
-  border-radius: 0.25rem; /* equivalent to rounded */
-}
-/* Customize the color of the selected page number */
-.alt-pagination .bh-pagination .bh-page-item.bh-active {
-  background-color: #06966a; /* Change this to your desired color */
-  border-color: black;
-  font-weight: bold; /* Optional: Make the text bold */
-}
-.alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-  background-color: #ff5900;
-  border-color: black;
-}
+  /* alt-pagination */
+  .alt-pagination .bh-pagination .bh-page-item {
+    width: auto; /* equivalent to w-max */
+    min-width: 32px;
+    border-radius: 0.25rem; /* equivalent to rounded */
+  }
+  /* Customize the color of the selected page number */
+  .alt-pagination .bh-pagination .bh-page-item.bh-active {
+    background-color: #06966a; /* Change this to your desired color */
+    border-color: black;
+    font-weight: bold; /* Optional: Make the text bold */
+  }
+  .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
+    background-color: #ff5900;
+    border-color: black;
+  }
 
-.icon-with-text {
-  position: relative;
-  display: inline-block;
-}
+  .icon-with-text {
+    position: relative;
+    display: inline-block;
+  }
 
-.icon-text {
-  position: absolute;
-  top: 0;
-  right: 1;
-  color: black;
-  padding: 4px 1px;
-  font-size: 0.7rem;
-}
+  .icon-text {
+    position: absolute;
+    top: 0;
+    right: 1;
+    color: black;
+    padding: 4px 1px;
+    font-size: 0.7rem;
+  }
 
-.floating-button-group {
-  position: fixed;
-  bottom: 82px;
-  right: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  z-index: 1000; /* Ensure it appears above most content */
-}
+  .floating-button-group {
+    position: fixed;
+    bottom: 82px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    z-index: 1000; /* Ensure it appears above most content */
+  }
 </style>
