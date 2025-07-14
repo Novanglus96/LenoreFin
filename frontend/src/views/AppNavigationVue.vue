@@ -18,8 +18,7 @@
               to="/accounts"
               color="accent"
               title="Accounts"
-            >
-            </v-list-item>
+            ></v-list-item>
             <v-list-item
               prepend-icon="mdi-chart-bar"
               to="/forecast"
@@ -49,10 +48,8 @@
         <v-img :width="132" aspect-ratio="1/1" cover src="logov2.png"></v-img>
       </template>
       <v-app-bar-title>
-        <span class="text-caption font-weight-bold"
-          >v1.0.1</span
-        ></v-app-bar-title
-      >
+        <span class="text-caption font-weight-bold">v1.0.1</span>
+      </v-app-bar-title>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
           <v-btn class="text-none" stacked v-bind="props">
@@ -78,16 +75,16 @@
                 v-for="message in messages.messages"
                 :key="message.id"
               >
-                <v-list-item-title
-                  ><span :class="message.unread ? 'font-weight-bold' : ''">{{
-                    message.message
-                  }}</span></v-list-item-title
-                >
-                <v-list-item-subtitle
-                  ><span :class="message.unread ? 'font-weight-bold' : ''">{{
-                    getPrettyDate(message.message_date)
-                  }}</span></v-list-item-subtitle
-                >
+                <v-list-item-title>
+                  <span :class="message.unread ? 'font-weight-bold' : ''">
+                    {{ message.message }}
+                  </span>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <span :class="message.unread ? 'font-weight-bold' : ''">
+                    {{ getPrettyDate(message.message_date) }}
+                  </span>
+                </v-list-item-subtitle>
               </v-list-item>
               <v-list-item v-if="messages.total_count == 0">
                 No messages : You're all caught up!
@@ -96,8 +93,8 @@
           </v-card-text>
           <v-card-actions v-if="messages.total_count > 0">
             <v-spacer></v-spacer>
-            <v-btn color="secondary" @click="markRead"> Mark All Read </v-btn>
-            <v-btn color="secondary" @click="deleteAll"> Delete All </v-btn>
+            <v-btn color="secondary" @click="markRead">Mark All Read</v-btn>
+            <v-btn color="secondary" @click="deleteAll">Delete All</v-btn>
           </v-card-actions>
         </v-card>
       </v-menu>
@@ -189,34 +186,34 @@
   </div>
 </template>
 <script setup>
-import { ref } from "vue";
-import { useDisplay } from "vuetify";
-import AccountsMenu from "@/components/AccountsMenu.vue";
-import PlanningMenu from "@/components/PlanningMenu.vue";
-import { useMessages } from "@/composables/messagesComposable";
-import { useRouter } from "vue-router";
-import { useTransactionsStore } from "@/stores/transactions";
+  import { ref } from "vue";
+  import { useDisplay } from "vuetify";
+  import AccountsMenu from "@/components/AccountsMenu.vue";
+  import PlanningMenu from "@/components/PlanningMenu.vue";
+  import { useMessages } from "@/composables/messagesComposable";
+  import { useRouter } from "vue-router";
+  import { useTransactionsStore } from "@/stores/transactions";
 
-const transactions_store = useTransactionsStore();
-const router = useRouter();
+  const transactions_store = useTransactionsStore();
+  const router = useRouter();
 
-const { messages, markRead, deleteAll } = useMessages();
-const { mdAndUp, smAndDown } = useDisplay();
-const isMobile = smAndDown;
-const nav_toggle = ref(true);
+  const { messages, markRead, deleteAll } = useMessages();
+  const { mdAndUp, smAndDown } = useDisplay();
+  const isMobile = smAndDown;
+  const nav_toggle = ref(true);
 
-const setAccount = (account, forecast) => {
-  transactions_store.pageinfo.account_id = account;
-  transactions_store.pageinfo.forecast = forecast;
-  transactions_store.pageinfo.page = 1;
-  transactions_store.pageinfo.maxdays = 14;
-  transactions_store.pageinfo.view_type = 2;
-  router.push({ name: "dashboard" });
-};
+  const setAccount = (account, forecast) => {
+    transactions_store.pageinfo.account_id = account;
+    transactions_store.pageinfo.forecast = forecast;
+    transactions_store.pageinfo.page = 1;
+    transactions_store.pageinfo.maxdays = 14;
+    transactions_store.pageinfo.view_type = 2;
+    router.push({ name: "dashboard" });
+  };
 
-const getPrettyDate = uglyDate => {
-  const newDate = new Date(uglyDate);
-  const formattedDate = newDate.toLocaleString("en-US");
-  return formattedDate;
-};
+  const getPrettyDate = uglyDate => {
+    const newDate = new Date(uglyDate);
+    const formattedDate = newDate.toLocaleString("en-US");
+    return formattedDate;
+  };
 </script>
