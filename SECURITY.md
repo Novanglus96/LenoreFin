@@ -6,8 +6,8 @@ Only the following versions are currently supported with security updates:
 
 | Version  | Supported                            |
 | -------- | ------------------------------------ |
-| >= 1.0.2 | ✅                                    |
-| < 1.0.1  | ❌ (security flaws exist, do not use) |
+| >= 1.0.7 | ✅                                    |
+| < 1.0.6  | ❌ (security flaws exist, do not use) |
 
 ## Reporting a Vulnerability
 
