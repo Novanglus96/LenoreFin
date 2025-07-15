@@ -34,12 +34,10 @@
     <img src="frontend/public/logov2.png" alt="Logo" height="40">
   </a>
 
-<h3 align="center">LenoreFin</h3>
-
   <p align="center">
-    A simple finance tracker with some big features.
+    An advanced finance tracker.
     <br />
-    <a href="https://github.com/Novanglus96/LenoreFin"><strong>Explore the docs »</strong></a>
+    <a href="https://novanglus96.github.io/LenoreFin"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="https://github.com/Novanglus96/LenoreFin/issues/new?template=bug_report.md">Report Bug</a>
@@ -84,8 +82,9 @@
 Screenshots - COMING SOON
 <!--[![Product Name Screen Shot][product-screenshot]]-->
 
-This app started off as an excel spreadsheet I used to track my family's budget.  I wasn't satisfied and couldn't find a solution that worked
-exactly like I wanted.  So I built LenoreFin.
+LenoreFin began as a simple Excel spreadsheet I used to manage my family's budget. But over time, I realized no existing tools gave me the control, flexibility, and privacy I wanted. So I built LenoreFin—a personal finance tracker that puts you in charge.
+
+Designed for self-hosting, LenoreFin keeps your financial data completely local, with no third-party syncing or hidden services. It includes tools for tracking cash flow, setting up custom budgets, tagging transactions, planning for retirement or big purchases, getting bill reminders, and even forecasting account balances. Whether you're budgeting for groceries or planning a 10-year savings goal, LenoreFin helps you see the full picture—on your terms.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -228,6 +227,7 @@ Enjoy using LenoreFin!
 
 <!-- USAGE EXAMPLES -->
 ## Usage
+See the full <a href="https://novanglus96.github.io/LenoreFin"><strong>documentation</strong></a>.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -236,7 +236,10 @@ Enjoy using LenoreFin!
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Credit Card Bill Calculations
+- [ ] v1.1 Release
+  - [ ] Credit Card Bill Calculations
+  - [ ] Interest Tracking On Loans
+- [ ] Financial Wizard
 
 See the [open issues](https://github.com/Novanglus96/LenoreFin/issues) for a full list of proposed features (and known issues).
 
@@ -298,6 +301,7 @@ A heartfelt thanks to our Patrons for their generous support! Your contributions
 
 ![Red Supporter Badge](https://img.shields.io/badge/Eleanor-E41B17?style=for-the-badge&logo=patreon&logoColor=gray)
 ![Red Supporter Badge](https://img.shields.io/badge/Danielle-E41B17?style=for-the-badge&logo=patreon&logoColor=gray)
+![BuyMeACoffee Supporter Badge](https://img.shields.io/badge/SuperDev-white?style=for-the-badge&logo=buymeacoffee&logoColor=black)
 <!--![Gold Supporter Badge](https://img.shields.io/badge/Eleanor-gold?style=for-the-badge&logo=patreon&logoColor=gray)-->
 <!--![Silver Supporter Badge](https://img.shields.io/badge/Jane_Smith-silver?style=for-the-badge&logo=patreon&logoColor=gray)-->
 <!--![BuyMeACoffee Supporter Badge](https://img.shields.io/badge/Jane_Smith-white?style=for-the-badge&logo=buymeacoffee&logoColor=black)-->
