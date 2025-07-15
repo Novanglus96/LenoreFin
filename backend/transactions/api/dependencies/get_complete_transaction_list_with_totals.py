@@ -77,10 +77,16 @@ def get_complete_transaction_list_with_totals(
     ).values("account_name")[:1]
 
     # Get Opening Balance
-    opening_balance = Account.objects.get(id=account).opening_balance
+    try:
+        opening_balance = Account.objects.get(id=account).opening_balance
+    except Account.DoesNotExist:
+        opening_balance = 0
 
     # Get Archive Balance
-    archive_balance = Account.objects.get(id=account).archive_balance
+    try:
+        archive_balance = Account.objects.get(id=account).archive_balance
+    except Account.DoesNotExist:
+        archive_balance = 0
 
     all_transactions = None
     if not tags:
