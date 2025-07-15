@@ -109,7 +109,7 @@ class Reminder(models.Model):
         Repeat, on_delete=models.SET_NULL, null=True, blank=True
     )
     auto_add = models.BooleanField(default=False)
-    memo = models.CharField(max_length=508, null=True, blank=True, default=None)
+    memo = models.TextField(null=True, blank=True, default=None)
 
     def __str__(self):
         return self.description

@@ -457,7 +457,7 @@ def finish_imports():
                             transaction_date=transDate,
                             total_amount=totalAmount,
                             status_id=statusID,
-                            memo=memo[:508],
+                            memo=memo,
                             description=description[:254],
                             edit_date=editDate,
                             add_date=addDate,
