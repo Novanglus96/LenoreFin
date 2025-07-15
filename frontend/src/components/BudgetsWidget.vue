@@ -146,7 +146,7 @@
       { limit: 70, color: "yellow-darken-1" },
       { limit: 80, color: "yellow-darken-2" },
       { limit: 90, color: "yellow-darken-3" },
-      { limit: 100, color: "yellow-darken-4" },
+      { limit: 99, color: "yellow-darken-4" },
     ];
 
     for (const { limit, color } of thresholds) {
