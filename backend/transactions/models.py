@@ -142,7 +142,7 @@ class Transaction(models.Model):
     status = models.ForeignKey(
         TransactionStatus, on_delete=models.SET_NULL, null=True, blank=True
     )
-    memo = models.CharField(max_length=508, null=True, blank=True, default=None)
+    memo = models.TextField(null=True, blank=True, default=None)
     description = models.CharField(max_length=254)
     edit_date = models.DateField(default=current_date)
     add_date = models.DateField(default=current_date)
