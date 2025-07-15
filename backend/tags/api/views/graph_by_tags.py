@@ -133,7 +133,6 @@ def get_graph(request, widget_id: int):
             result = Transaction.objects.filter(
                 transaction_date__month=target_month,
                 transaction_date__year=target_year,
-                status__id__gt=1,
                 transaction_type_id=1,
             )
         elif type_id == 2:
@@ -145,7 +144,6 @@ def get_graph(request, widget_id: int):
             result = Transaction.objects.filter(
                 transaction_date__month=target_month,
                 transaction_date__year=target_year,
-                status__id__gt=1,
                 transaction_type_id=2,
             )
         elif type_id == 3:
@@ -153,7 +151,6 @@ def get_graph(request, widget_id: int):
             result = Transaction.objects.filter(
                 transaction_date__month=target_month,
                 transaction_date__year=target_year,
-                status__id__gt=1,
             )
         elif type_id == 4:
             tags = Tag.objects.filter(parent__id=tagID).exclude(
@@ -170,7 +167,6 @@ def get_graph(request, widget_id: int):
                         tag__parent=tag.parent,
                         transaction__transaction_date__month=target_month,
                         transaction__transaction_date__year=target_year,
-                        transaction__status__id__gt=1,
                     ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
                     or 0
                 )
@@ -183,7 +179,6 @@ def get_graph(request, widget_id: int):
                         tag=tag,
                         transaction__transaction_date__month=target_month,
                         transaction__transaction_date__year=target_year,
-                        transaction__status__id__gt=1,
                     ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
                     or 0
                 )
