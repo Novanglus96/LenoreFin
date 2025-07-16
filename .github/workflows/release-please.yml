@@ -1,12 +1,19 @@
-name: Release Please (Final)
+name: Release Please
 
 on:
+  pull_request:
+    branches:
+      - main
+      - release/**
+      - patch/**
   push:
     branches:
       - main
+      - release/**
+      - patch/**
 
 jobs:
-  release-please:
+  release:
     runs-on: self-hosted
     permissions:
       contents: write
@@ -21,8 +28,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Run Release Please (final)
+      - name: Run Release Please
         uses: googleapis/release-please-action@v4
         with:
           config-file: .release-please-config.json
-          manifest-file: .release-please-manifest.json
