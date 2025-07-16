@@ -1,0 +1,14 @@
+{
+    "version": "0.0.0",
+    "packages": {
+      "frontend": {
+        "path": "frontend",
+        "version-file": "frontend/package.json"
+      },
+      "backend": {
+        "path": "backend",
+        "version-file": "backend/VERSION"
+      }
+    }
+  }
+  

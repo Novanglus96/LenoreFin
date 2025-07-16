@@ -1,64 +1,59 @@
 name: Post to Reddit
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Release tag (major/minor)"
-        required: true
-        default: "minor"
-    
-  workflow_run:
-    workflows: ["Versioning"]  # Ensure it runs after the Versioning workflow
-    types:
-      - completed
+  release:
+    types: [published]  # Triggers when a release is published (not a draft or prerelease)
 
 jobs:
   reddit:
+    if: github.event.release.prerelease == false  # Only run for final releases
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
-      - name: Determine release tag
-        id: get_tag
+      - name: Extract release type from tag
+        id: tag
         run: |
-          # If manually set, use that
-          if [ -n "${{ github.event.inputs.release_tag }}" ]; then
-            echo "tag=${{ github.event.inputs.release_tag }}" >> "$GITHUB_OUTPUT"
+          TAG="${{ github.event.release.tag_name }}"
+          echo "Full tag: $TAG"
+
+          # Parse tag version (e.g., 1.2.3 or 1.2.3-rc.1)
+          MAJOR=$(echo "$TAG" | cut -d. -f1)
+          MINOR=$(echo "$TAG" | cut -d. -f2)
+          PATCH=$(echo "$TAG" | cut -d. -f3 | cut -d- -f1)
+
+          echo "Parsed Version: MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH"
+
+          # Determine release type
+          if [ "$PATCH" = "0" ]; then
+            echo "type=minor" >> "$GITHUB_OUTPUT"
           else
-            # Otherwise extract from last commit
-            msg="${{ github.event.head_commit.message }}"
-            echo "Commit message: $msg"
-            tag=""
-            if echo "$msg" | grep -iq '\[major\]\|major'; then
-              tag="major"
-            elif echo "$msg" | grep -iq '\[minor\]\|minor'; then
-              tag="minor"
-            fi
-            if [ -z "$tag" ]; then
-              echo "No matching release tag found in commit message."
-              exit 0  # or exit 1 if you want to fail
-            fi
-            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+            echo "type=patch" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Get latest release body
-        id: release
+      - name: Skip non-minor/major releases
+        if: steps.tag.outputs.type != 'minor'
+        run: |
+          echo "Not a minor or major release. Skipping Reddit post."
+          exit 0
+
+      - name: Get release notes
+        id: release_notes
         uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
-            const release = await github.rest.repos.getLatestRelease({
+            const release = await github.rest.repos.getReleaseByTag({
               owner: context.repo.owner,
-              repo: context.repo.repo
+              repo: context.repo.repo,
+              tag: context.payload.release.tag_name
             });
-            return release.data.body || "No changelog available.";
+            return release.data.body || "No changelog found.";
 
       - name: Post to Reddit
-        if: steps.tag.outputs.TAG != ''
         env:
-          COMMIT_TAG: ${{ steps.tag.outputs.TAG }}
-          RELEASE_NOTES: ${{ steps.release.outputs.result }}
+          COMMIT_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_NOTES: ${{ steps.release_notes.outputs.result }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}
