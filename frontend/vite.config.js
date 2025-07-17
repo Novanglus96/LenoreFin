@@ -4,6 +4,7 @@ import { createHtmlPlugin } from "vite-plugin-html";
 import vueDevTools from "vite-plugin-vue-devtools";
 import { fileURLToPath, URL } from "node:url";
 import eslint from "vite-plugin-eslint";
+import pkg from "./package.json";
 
 export default defineConfig({
   plugins: [
@@ -31,6 +32,7 @@ export default defineConfig({
     __VUE_OPTIONS_API__: true,
     __VUE_PROD_DEVTOOLS__: false,
     __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+    "import.meta.env.VITE_APP_VERSION": JSON.stringify(pkg.version),
   },
   resolve: {
     alias: {

@@ -48,7 +48,7 @@
         <v-img :width="132" aspect-ratio="1/1" cover src="logov2.png"></v-img>
       </template>
       <v-app-bar-title>
-        <span class="text-caption font-weight-bold">v1.1.0</span>
+        <span class="text-caption font-weight-bold">v{{ version }}</span>
       </v-app-bar-title>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
@@ -196,6 +196,7 @@
 
   const transactions_store = useTransactionsStore();
   const router = useRouter();
+  const version = import.meta.env.VITE_APP_VERSION;
 
   const { messages, markRead, deleteAll } = useMessages();
   const { mdAndUp, smAndDown } = useDisplay();
