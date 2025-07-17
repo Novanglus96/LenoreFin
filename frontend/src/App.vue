@@ -52,7 +52,10 @@
   const showBanner = ref(false);
 
   const checkVersion = computed(() => {
-    return version.value && version.value.version_number !== "1.1.0";
+    return (
+      version.value &&
+      version.value.version_number !== import.meta.env.VITE_APP_VERSION
+    );
   });
 
   const updateBanner = () => {
