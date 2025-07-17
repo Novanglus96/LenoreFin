@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 from ninja import NinjaAPI
 from administration.api.dependencies.auth import GlobalAuth
+from administration.api.dependencies.version import get_version
 
 # Import routers from apps
 from accounts.api.routers.account_type import account_type_router
@@ -62,7 +63,7 @@ from planning.api.routers.retirement import retirement_router
 
 api = NinjaAPI(auth=GlobalAuth())
 api.title = "LenoreFin API"
-api.version = "1.1.0"
+api.version = get_version()
 api.description = "API documentation for LenoreFin"
 
 # Add routers to the API
