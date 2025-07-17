@@ -13,7 +13,3 @@ jobs:
         uses: dawidd6/action-delete-branch@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branches_ignore: |
-            main
-            release/*
-            patch/*
