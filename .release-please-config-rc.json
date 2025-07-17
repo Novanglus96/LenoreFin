@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "component": "LenoreFin",
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "simple",
+      "include-v-in-tag": true,
+      "version-file": "backend/VERSION",
+      "prerelease": true,
+      "prerelease-type": "rc",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "frontend/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}

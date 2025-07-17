@@ -22,8 +22,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: simple
-          prerelease: true
-          prerelease-type: "rc"
+          config-file: .release-please-config-rc.json
 
   build-and-push:
     needs: release
