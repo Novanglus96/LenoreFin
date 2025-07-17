@@ -6,16 +6,12 @@
       "changelog-path": "CHANGELOG.md",
       "release-type": "simple",
       "include-v-in-tag": true,
-      "version-file": "scripts/version.txt",
+      "version-file": "backend/VERSION",
       "extra-files": [
         {
           "type": "json",
           "path": "frontend/package.json",
           "jsonpath": "$.version"
-        },
-        {
-          "type": "generic",
-          "path": "backend/VERSION"
         }
       ]
     }
