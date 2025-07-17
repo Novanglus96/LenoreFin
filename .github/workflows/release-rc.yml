@@ -22,8 +22,8 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: simple
-          include-v-in-tag: true
           prerelease: true
+          prerelease-type: "rc"
 
   build-and-push:
     needs: release

@@ -22,7 +22,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: simple
-          include-v-in-tag: true
 
   build-and-push:
     needs: release
