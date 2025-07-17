@@ -1,0 +1,36 @@
+{
+    "branches": [
+      { "name": "release/v*", "prerelease": true },
+      "main"
+    ],
+    "tagFormat": "v${version}",
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      [
+        "@semantic-release/changelog",
+        {
+          "changelogFile": "CHANGELOG.md"
+        }
+      ],
+      [
+        "@semantic-release/exec",
+        {
+          "verifyReleaseCmd": "echo ${nextRelease.version} > backend/VERSION && npx json -I -f frontend/package.json -e \"this.version='${nextRelease.version}'\"",
+          "prepareCmd": "echo Prepared release ${nextRelease.version}"
+        }
+      ],
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "CHANGELOG.md",
+            "frontend/package.json",
+            "backend/VERSION"
+          ],
+          "message": "chore(release): ${nextRelease.version} [skip ci]"
+        }
+      ]
+    ]
+  }
+  

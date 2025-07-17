@@ -1,38 +1,49 @@
-name: Release Please Final + Docker Build + Tagging
+name: Semantic Release
 
 on:
   push:
     branches:
       - main
-
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write 
+      - release/v*
 
 jobs:
   release:
+    name: Release
     runs-on: self-hosted
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      version: ${{ steps.release.outputs.version }}
+
     steps:
-      - id: release
-        uses: googleapis/release-please-action@v4.2.0
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: simple
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --save-dev semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/exec
+
+      - name: Run Semantic Release
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          semantic_version: 21.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-and-push:
     needs: release
-    if: needs.release.outputs.release_created == 'true'
+    if: success()
     runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set version from release
-        run: echo "VERSION=${{ needs.release.outputs.version }}" >> $GITHUB_ENV
+      - name: Extract version from backend/VERSION
+        id: version
+        run: |
+          VERSION=$(cat backend/VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Extracted version: $VERSION"
 
       - name: Extract major/minor versions
         id: version_parts
@@ -109,16 +120,20 @@ jobs:
 
   tag-major-minor:
     needs: release
-    if: needs.release.outputs.release_created == 'true'
+    if: success()
     runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Extract version from backend/VERSION
+        id: version
+        run: |
+          VERSION=$(cat backend/VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Extracted version: $VERSION"
+
       - name: Create minor/major tags
-        env:
-          VERSION: ${{ needs.release.outputs.version }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           MAJOR=$(echo $VERSION | cut -d. -f1 | sed 's/v//')
           MINOR=$(echo $VERSION | cut -d. -f2)
@@ -129,14 +144,18 @@ jobs:
 
   reddit:
     needs: release
-    if: needs.release.outputs.release_created == 'true'
+    if: success()
     runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set version from release
-        run: echo "VERSION=${{ needs.release.outputs.version }}" >> $GITHUB_ENV
+      - name: Extract version from backend/VERSION
+        id: version
+        run: |
+          VERSION=$(cat backend/VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Extracted version: $VERSION"
 
       - name: Extract major/minor versions
         id: version_parts
