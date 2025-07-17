@@ -42,8 +42,8 @@ jobs:
         with:
           semantic_version: 21.0.2
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          
   build-and-push:
     needs: release
     if: success()
