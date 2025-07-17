@@ -1,0 +1,204 @@
+name: Semantic Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - release/v*
+      - alpha
+      - beta
+      - rc
+
+jobs:
+  release:
+    name: Release
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --save-dev semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/exec
+
+      - name: Run Semantic Release
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          semantic_version: 21.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-and-push:
+    needs: release
+    if: success()
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from backend/VERSION
+        id: version
+        run: |
+          VERSION=$(cat backend/VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Extracted version: $VERSION"
+
+      - name: Extract major/minor versions
+        id: version_parts
+        run: |
+          MAJOR=$(echo $VERSION | cut -d. -f1 | sed 's/v//')
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+          echo "MAJOR=v$MAJOR" >> $GITHUB_ENV
+          echo "MINOR=v$MAJOR.$MINOR" >> $GITHUB_ENV
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD}}
+
+      - name: Build Docker Images
+        run: |
+          echo "Building Docker images..."
+          docker compose -f docker-compose-prod.yml build
+          echo "Docker images built successfully."
+
+      - name: Publish Docker Images
+        env:
+          BACKEND_NAME: lenorefin_backend
+          FRONTEND_NAME: lenorefin_frontend
+          WORKER_NAME: lenorefin_worker
+          DOCKER_HUB_REPO: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          echo "Publishing Docker images to $DOCKER_HUB_REPO..."
+
+          # Tag new images with the release version
+          docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:${VERSION}
+          docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:${VERSION}
+          docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:${VERSION}
+
+          # Push versioned tags
+          docker push $DOCKER_HUB_REPO/$BACKEND_NAME:${VERSION}
+          docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:${VERSION}
+          docker push $DOCKER_HUB_REPO/$WORKER_NAME:${VERSION}
+
+          # Tag latest tags
+          docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:latest
+          docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:latest
+          docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:latest
+
+          # Push latest tags
+          docker push $DOCKER_HUB_REPO/$BACKEND_NAME:latest
+          docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:latest
+          docker push $DOCKER_HUB_REPO/$WORKER_NAME:latest
+
+          # Tag major tags
+          docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:${MAJOR}
+          docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:${MAJOR}
+          docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:${MAJOR}
+
+          # Push major tags
+          docker push $DOCKER_HUB_REPO/$BACKEND_NAME:${MAJOR}
+          docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:${MAJOR}
+          docker push $DOCKER_HUB_REPO/$WORKER_NAME:${MAJOR}
+
+          # Tag minor tags
+          docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:${MINOR}
+          docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:${MINOR}
+          docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:${MINOR}
+
+          # Push minor tags
+          docker push $DOCKER_HUB_REPO/$BACKEND_NAME:${MINOR}
+          docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:${MINOR}
+          docker push $DOCKER_HUB_REPO/$WORKER_NAME:${MINOR}
+          
+          echo "Published Docker images for version ${VERSION}."
+
+
+  #tag-major-minor:
+  #  needs: release
+  #  if: success()
+  #  runs-on: self-hosted
+  #  steps:
+  #    - name: Checkout code
+  #      uses: actions/checkout@v4
+
+  #    - name: Extract version from backend/VERSION
+  #      id: version
+  #      run: |
+  #        VERSION=$(cat backend/VERSION)
+  #        echo "VERSION=$VERSION" >> $GITHUB_ENV
+  #        echo "Extracted version: $VERSION"
+
+  #    - name: Create minor/major tags
+  #      run: |
+  #        MAJOR=$(echo $VERSION | cut -d. -f1 | sed 's/v//')
+  #        MINOR=$(echo $VERSION | cut -d. -f2)
+  #        git fetch --tags
+  #        git tag -f v$MAJOR
+  #        git tag -f v$MAJOR.$MINOR
+  #        git push --force origin v$MAJOR v$MAJOR.$MINOR
+
+  reddit:
+    needs: release
+    if: success()
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from backend/VERSION
+        id: version
+        run: |
+          VERSION=$(cat backend/VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Extracted version: $VERSION"
+
+      - name: Extract major/minor versions
+        id: version_parts
+        run: |
+          MAJOR=$(echo $VERSION | cut -d. -f1 | sed 's/v//')
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+          # Determine release type
+          if [ "$PATCH" = "0" ]; then
+            echo "type=release" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=patch" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip non-minor/major releases
+        if: steps.version_parts.outputs.type != 'release'
+        run: |
+          echo "Not a minor or major release. Skipping Reddit post."
+          exit 0
+
+      - name: Get release notes
+        id: release_notes
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const release = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            return release.data.body || "No changelog found.";
+
+      - name: Post to Reddit
+        env:
+          COMMIT_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_NOTES: ${{ steps.release_notes.outputs.result }}
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}
+          REDDIT_PASSWORD: ${{ secrets.REDDIT_PASSWORD }}
+          REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+        run: python scripts/post_to_reddit.py
