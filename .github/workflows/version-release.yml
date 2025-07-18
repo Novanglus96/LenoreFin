@@ -68,14 +68,30 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD}}
+      
+      - name: Check if Docker tag exists
+        env:
+          FRONTEND_NAME: lenorefin_frontend
+          DOCKER_HUB_REPO: ${{ secrets.DOCKER_USERNAME }}
+        id: docker_tag_check
+        run: |
+          IMAGE="${DOCKER_HUB_REPO}/${FRONTEND_NAME}"
+
+          if curl --silent -f -lSL "https://hub.docker.com/v2/repositories/${IMAGE}/tags/${VERSION}" > /dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build Docker Images
+        if: steps.docker_tag_check.outputs.exists == 'false'
         run: |
           echo "Building Docker images..."
           docker compose -f docker-compose-prod.yml build
           echo "Docker images built successfully."
 
       - name: Publish Docker Images
+        if: steps.docker_tag_check.outputs.exists == 'false'
         env:
           BACKEND_NAME: lenorefin_backend
           FRONTEND_NAME: lenorefin_frontend
