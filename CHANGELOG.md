@@ -1,3 +1,12 @@
+## [1.1.2](https://github.com/Novanglus96/LenoreFin/compare/v1.1.1...v1.1.2) (2025-07-21)
+
+
+### Bug Fixes
+
+* remove another duplicate entry from changelog ([1c2238c](https://github.com/Novanglus96/LenoreFin/commit/1c2238cb703d1da26c0d13c47ab4913593cc8644))
+* remove duplicate changelog entries ([41ee633](https://github.com/Novanglus96/LenoreFin/commit/41ee633e281e865b6f374bb4fe534146b9d3291f))
+* update version to accept alpha, beta, rc prereleases ([09d81d6](https://github.com/Novanglus96/LenoreFin/commit/09d81d65e272a58fad40e5a601236674ea2cef8c))
+
 ## [1.1.2-rc.2](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2-rc.1...v1.1.2-rc.2) (2025-07-21)
 
 
