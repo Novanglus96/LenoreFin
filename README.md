@@ -236,10 +236,10 @@ See the full <a href="https://novanglus96.github.io/LenoreFin"><strong>documenta
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] v1.3 Release
+- [ ] v1.2 Release
   - [ ] Credit Card Bill Calculations
   - [ ] Loading Screen on app load
-- [ ] Interest Tracking On Loans 
+  - [ ] Interest Tracking On Loans 
 - [ ] Financial Wizard
 
 See the [open issues](https://github.com/Novanglus96/LenoreFin/issues) for a full list of proposed features (and known issues).
