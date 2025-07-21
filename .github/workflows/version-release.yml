@@ -39,6 +39,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
+      - name: Upload version artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: version
+          path: backend/VERSION
+
+
   build-and-push:
     needs: release
     if: success()
@@ -46,6 +53,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Download version artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: version
+          path: ./backend
 
       - name: Extract version from backend/VERSION
         id: version
@@ -202,6 +215,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download version artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: version
+          path: ./backend
 
       - name: Extract version from backend/VERSION
         id: version
