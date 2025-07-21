@@ -64,10 +64,12 @@ jobs:
           echo "MINOR=v$MAJOR.$MINOR" >> $GITHUB_ENV
           
           # Check for pre-release suffix (e.g. -rc.1, -alpha.1, -beta.2, etc.)
-          if [[ "$VERSION" == *-* ]]; then
-            echo "PRERELEASE=true" >> $GITHUB_ENV
+          if [[ "$VERSION" == *"-"* ]]; then
+            PRERELEASE=true
+            PRERELEASE_TAG=$(echo "$VERSION" | grep -oP '(?<=-)(rc|alpha|beta)')
           else
-            echo "PRERELEASE=false" >> $GITHUB_ENV
+            PRERELEASE=false
+            PRERELEASE_TAG=""
           fi
 
       - name: Log in to Docker Hub
@@ -116,6 +118,18 @@ jobs:
           docker push $DOCKER_HUB_REPO/$BACKEND_NAME:${VERSION}
           docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:${VERSION}
           docker push $DOCKER_HUB_REPO/$WORKER_NAME:${VERSION}
+
+          if [[ "$PRERELEASE" == "true" && -n "$PRERELEASE_TAG" ]]; then
+            echo "Tagging prerelease as $PRERELEASE_TAG..."
+
+            docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:$PRERELEASE_TAG
+            docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:$PRERELEASE_TAG
+            docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:$PRERELEASE_TAG
+
+            docker push $DOCKER_HUB_REPO/$BACKEND_NAME:$PRERELEASE_TAG
+            docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:$PRERELEASE_TAG
+            docker push $DOCKER_HUB_REPO/$WORKER_NAME:$PRERELEASE_TAG
+          fi
           
           if [[ "$PRERELEASE" == "false" ]]; then
             echo "Tagging as latest, ${MAJOR}, and ${MINOR} (final release)"
