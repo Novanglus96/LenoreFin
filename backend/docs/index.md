@@ -200,9 +200,10 @@ Enjoy using LenoreFin!
 <!-- USAGE EXAMPLES -->
 ## Roadmap
 
-- [ ] v1.1 Release
+- [ ] v1.3 Release
   - [ ] Credit Card Bill Calculations
-  - [ ] Interest Tracking On Loans
+  - [ ] Loading Screen on app load
+- [ ] Interest Tracking On Loans 
 - [ ] Financial Wizard
 
 See the [open issues](https://github.com/Novanglus96/LenoreFin/issues) for a full list of proposed features (and known issues).
