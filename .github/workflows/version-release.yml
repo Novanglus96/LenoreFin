@@ -80,9 +80,13 @@ jobs:
           if [[ "$VERSION" == *"-"* ]]; then
             PRERELEASE=true
             PRERELEASE_TAG=$(echo "$VERSION" | grep -oP '(?<=-)(rc|alpha|beta)')
+            echo "PRERELEASE=$PRERELEASE" >> $GITHUB_ENV
+            echo "PRERELEASE_TAG=$PRERELEASE_TAG" >> $GITHUB_ENV
           else
             PRERELEASE=false
             PRERELEASE_TAG=""
+            echo "PRERELEASE=$PRERELEASE" >> $GITHUB_ENV
+            echo "PRERELEASE_TAG=$PRERELEASE_TAG" >> $GITHUB_ENV
           fi
 
       - name: Log in to Docker Hub
