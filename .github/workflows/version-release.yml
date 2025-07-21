@@ -62,6 +62,13 @@ jobs:
           PATCH=$(echo $VERSION | cut -d. -f3)
           echo "MAJOR=v$MAJOR" >> $GITHUB_ENV
           echo "MINOR=v$MAJOR.$MINOR" >> $GITHUB_ENV
+          
+          # Check for pre-release suffix (e.g. -rc.1, -alpha.1, -beta.2, etc.)
+          if [[ "$VERSION" == *-* ]]; then
+            echo "PRERELEASE=true" >> $GITHUB_ENV
+          else
+            echo "PRERELEASE=false" >> $GITHUB_ENV
+          fi
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -109,36 +116,43 @@ jobs:
           docker push $DOCKER_HUB_REPO/$BACKEND_NAME:${VERSION}
           docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:${VERSION}
           docker push $DOCKER_HUB_REPO/$WORKER_NAME:${VERSION}
+          
+          if [[ "$PRERELEASE" == "false" ]]; then
+            echo "Tagging as latest, ${MAJOR}, and ${MINOR} (final release)"
 
-          # Tag latest tags
-          docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:latest
-          docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:latest
-          docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:latest
+            # Tag latest tags
+            docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:latest
+            docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:latest
+            docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:latest
 
-          # Push latest tags
-          docker push $DOCKER_HUB_REPO/$BACKEND_NAME:latest
-          docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:latest
-          docker push $DOCKER_HUB_REPO/$WORKER_NAME:latest
+            # Push latest tags
+            docker push $DOCKER_HUB_REPO/$BACKEND_NAME:latest
+            docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:latest
+            docker push $DOCKER_HUB_REPO/$WORKER_NAME:latest
 
-          # Tag major tags
-          docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:${MAJOR}
-          docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:${MAJOR}
-          docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:${MAJOR}
+            # Tag major tags
+            docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:${MAJOR}
+            docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:${MAJOR}
+            docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:${MAJOR}
 
-          # Push major tags
-          docker push $DOCKER_HUB_REPO/$BACKEND_NAME:${MAJOR}
-          docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:${MAJOR}
-          docker push $DOCKER_HUB_REPO/$WORKER_NAME:${MAJOR}
+            # Push major tags
+            docker push $DOCKER_HUB_REPO/$BACKEND_NAME:${MAJOR}
+            docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:${MAJOR}
+            docker push $DOCKER_HUB_REPO/$WORKER_NAME:${MAJOR}
 
-          # Tag minor tags
-          docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:${MINOR}
-          docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:${MINOR}
-          docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:${MINOR}
+            # Tag minor tags
+            docker tag $BACKEND_NAME:production $DOCKER_HUB_REPO/$BACKEND_NAME:${MINOR}
+            docker tag $FRONTEND_NAME:production $DOCKER_HUB_REPO/$FRONTEND_NAME:${MINOR}
+            docker tag $WORKER_NAME:production $DOCKER_HUB_REPO/$WORKER_NAME:${MINOR}
 
-          # Push minor tags
-          docker push $DOCKER_HUB_REPO/$BACKEND_NAME:${MINOR}
-          docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:${MINOR}
-          docker push $DOCKER_HUB_REPO/$WORKER_NAME:${MINOR}
+            # Push minor tags
+            docker push $DOCKER_HUB_REPO/$BACKEND_NAME:${MINOR}
+            docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:${MINOR}
+            docker push $DOCKER_HUB_REPO/$WORKER_NAME:${MINOR}
+          
+          else
+            echo "Skipping tagging as latest/major/minor for prerelease version (${VERSION})"
+          fi
           
           echo "Published Docker images for version ${VERSION}."
 
