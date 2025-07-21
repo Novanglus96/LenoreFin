@@ -1,74 +1,32 @@
-## [1.1.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.0...v1.1.1) (2025-07-18)
+## [1.1.2-rc.2](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2-rc.1...v1.1.2-rc.2) (2025-07-21)
 
 
 ### Bug Fixes
 
-* backend version pulls dynamically from VERSION file ([#20](https://github.com/Novanglus96/LenoreFin/issues/20)) ([e33c57b](https://github.com/Novanglus96/LenoreFin/commit/e33c57bb4584ee91e8d064d6c3813b93915618e4))
-* frontend version loads from package.json ([#22](https://github.com/Novanglus96/LenoreFin/issues/22)) ([5c755da](https://github.com/Novanglus96/LenoreFin/commit/5c755da3db90261f1b3449ed579724197a4e7836))
-* please release version file changed to VERSION file ([#21](https://github.com/Novanglus96/LenoreFin/issues/21)) ([3e0bcec](https://github.com/Novanglus96/LenoreFin/commit/3e0bcec59f8d0d93f58c7522de44b1730939d18d))
+* update version to accept alpha, beta, rc prereleases ([09d81d6](https://github.com/Novanglus96/LenoreFin/commit/09d81d65e272a58fad40e5a601236674ea2cef8c))
 
-## [1.1.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.0...v1.1.1) (2025-07-17)
+## [1.1.2-rc.2](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2-rc.1...v1.1.2-rc.2) (2025-07-21)
 
 
 ### Bug Fixes
 
-* backend version pulls dynamically from VERSION file ([#20](https://github.com/Novanglus96/LenoreFin/issues/20)) ([e33c57b](https://github.com/Novanglus96/LenoreFin/commit/e33c57bb4584ee91e8d064d6c3813b93915618e4))
-* frontend version loads from package.json ([#22](https://github.com/Novanglus96/LenoreFin/issues/22)) ([5c755da](https://github.com/Novanglus96/LenoreFin/commit/5c755da3db90261f1b3449ed579724197a4e7836))
-* please release version file changed to VERSION file ([#21](https://github.com/Novanglus96/LenoreFin/issues/21)) ([3e0bcec](https://github.com/Novanglus96/LenoreFin/commit/3e0bcec59f8d0d93f58c7522de44b1730939d18d))
+* update version to accept alpha, beta, rc prereleases ([09d81d6](https://github.com/Novanglus96/LenoreFin/commit/09d81d65e272a58fad40e5a601236674ea2cef8c))
 
-## [1.1.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.0...v1.1.1) (2025-07-17)
+## [1.1.2-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.1...v1.1.2-rc.1) (2025-07-18)
 
 
 ### Bug Fixes
 
-* backend version pulls dynamically from VERSION file ([#20](https://github.com/Novanglus96/LenoreFin/issues/20)) ([e33c57b](https://github.com/Novanglus96/LenoreFin/commit/e33c57bb4584ee91e8d064d6c3813b93915618e4))
-* frontend version loads from package.json ([#22](https://github.com/Novanglus96/LenoreFin/issues/22)) ([5c755da](https://github.com/Novanglus96/LenoreFin/commit/5c755da3db90261f1b3449ed579724197a4e7836))
-* please release version file changed to VERSION file ([#21](https://github.com/Novanglus96/LenoreFin/issues/21)) ([3e0bcec](https://github.com/Novanglus96/LenoreFin/commit/3e0bcec59f8d0d93f58c7522de44b1730939d18d))
+* remove another duplicate entry from changelog ([1c2238c](https://github.com/Novanglus96/LenoreFin/commit/1c2238cb703d1da26c0d13c47ab4913593cc8644))
+* remove duplicate changelog entries ([41ee633](https://github.com/Novanglus96/LenoreFin/commit/41ee633e281e865b6f374bb4fe534146b9d3291f))
 
-## [1.1.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.0...v1.1.1) (2025-07-17)
-
-
-### Bug Fixes
-
-* backend version pulls dynamically from VERSION file ([#20](https://github.com/Novanglus96/LenoreFin/issues/20)) ([e33c57b](https://github.com/Novanglus96/LenoreFin/commit/e33c57bb4584ee91e8d064d6c3813b93915618e4))
-* frontend version loads from package.json ([#22](https://github.com/Novanglus96/LenoreFin/issues/22)) ([5c755da](https://github.com/Novanglus96/LenoreFin/commit/5c755da3db90261f1b3449ed579724197a4e7836))
-* please release version file changed to VERSION file ([#21](https://github.com/Novanglus96/LenoreFin/issues/21)) ([3e0bcec](https://github.com/Novanglus96/LenoreFin/commit/3e0bcec59f8d0d93f58c7522de44b1730939d18d))
-
-## [1.1.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.0...v1.1.1) (2025-07-17)
+## [1.1.2-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.1...v1.1.2-rc.1) (2025-07-18)
 
 
 ### Bug Fixes
 
-* backend version pulls dynamically from VERSION file ([#20](https://github.com/Novanglus96/LenoreFin/issues/20)) ([e33c57b](https://github.com/Novanglus96/LenoreFin/commit/e33c57bb4584ee91e8d064d6c3813b93915618e4))
-* frontend version loads from package.json ([#22](https://github.com/Novanglus96/LenoreFin/issues/22)) ([5c755da](https://github.com/Novanglus96/LenoreFin/commit/5c755da3db90261f1b3449ed579724197a4e7836))
-* please release version file changed to VERSION file ([#21](https://github.com/Novanglus96/LenoreFin/issues/21)) ([3e0bcec](https://github.com/Novanglus96/LenoreFin/commit/3e0bcec59f8d0d93f58c7522de44b1730939d18d))
-
-## [1.1.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.0...v1.1.1) (2025-07-17)
-
-
-### Bug Fixes
-
-* backend version pulls dynamically from VERSION file ([#20](https://github.com/Novanglus96/LenoreFin/issues/20)) ([e33c57b](https://github.com/Novanglus96/LenoreFin/commit/e33c57bb4584ee91e8d064d6c3813b93915618e4))
-* frontend version loads from package.json ([#22](https://github.com/Novanglus96/LenoreFin/issues/22)) ([5c755da](https://github.com/Novanglus96/LenoreFin/commit/5c755da3db90261f1b3449ed579724197a4e7836))
-* please release version file changed to VERSION file ([#21](https://github.com/Novanglus96/LenoreFin/issues/21)) ([3e0bcec](https://github.com/Novanglus96/LenoreFin/commit/3e0bcec59f8d0d93f58c7522de44b1730939d18d))
-
-## [1.1.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.0...v1.1.1) (2025-07-17)
-
-
-### Bug Fixes
-
-* backend version pulls dynamically from VERSION file ([#20](https://github.com/Novanglus96/LenoreFin/issues/20)) ([e33c57b](https://github.com/Novanglus96/LenoreFin/commit/e33c57bb4584ee91e8d064d6c3813b93915618e4))
-* frontend version loads from package.json ([#22](https://github.com/Novanglus96/LenoreFin/issues/22)) ([5c755da](https://github.com/Novanglus96/LenoreFin/commit/5c755da3db90261f1b3449ed579724197a4e7836))
-* please release version file changed to VERSION file ([#21](https://github.com/Novanglus96/LenoreFin/issues/21)) ([3e0bcec](https://github.com/Novanglus96/LenoreFin/commit/3e0bcec59f8d0d93f58c7522de44b1730939d18d))
-
-## [1.1.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.0...v1.1.1) (2025-07-17)
-
-
-### Bug Fixes
-
-* backend version pulls dynamically from VERSION file ([#20](https://github.com/Novanglus96/LenoreFin/issues/20)) ([e33c57b](https://github.com/Novanglus96/LenoreFin/commit/e33c57bb4584ee91e8d064d6c3813b93915618e4))
-* frontend version loads from package.json ([#22](https://github.com/Novanglus96/LenoreFin/issues/22)) ([5c755da](https://github.com/Novanglus96/LenoreFin/commit/5c755da3db90261f1b3449ed579724197a4e7836))
-* please release version file changed to VERSION file ([#21](https://github.com/Novanglus96/LenoreFin/issues/21)) ([3e0bcec](https://github.com/Novanglus96/LenoreFin/commit/3e0bcec59f8d0d93f58c7522de44b1730939d18d))
+* remove another duplicate entry from changelog ([1c2238c](https://github.com/Novanglus96/LenoreFin/commit/1c2238cb703d1da26c0d13c47ab4913593cc8644))
+* remove duplicate changelog entries ([41ee633](https://github.com/Novanglus96/LenoreFin/commit/41ee633e281e865b6f374bb4fe534146b9d3291f))
 
 ## [1.1.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.0...v1.1.1) (2025-07-17)
 
