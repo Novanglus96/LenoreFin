@@ -379,6 +379,66 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Contributing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-fork-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Fork the Repository
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-branch-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Branch Naming
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-pull-request-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Pull Request Targets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-commit-message-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Commit Message Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-pull-request-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Pull Request Checklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-testing-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Testing Changes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -655,6 +715,66 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Contributing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-fork-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Fork the Repository
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-branch-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Branch Naming
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-pull-request-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Pull Request Targets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-commit-message-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Commit Message Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-pull-request-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Pull Request Checklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-testing-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Testing Changes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -898,9 +1018,10 @@ volumes:
 <!-- USAGE EXAMPLES -->
 <h2 id="roadmap">Roadmap</h2>
 <ul>
-<li>[ ] v1.1 Release</li>
+<li>[ ] v1.3 Release</li>
 <li>[ ] Credit Card Bill Calculations</li>
-<li>[ ] Interest Tracking On Loans</li>
+<li>[ ] Loading Screen on app load</li>
+<li>[ ] Interest Tracking On Loans </li>
 <li>[ ] Financial Wizard</li>
 </ul>
 <p>See the <a href="https://github.com/Novanglus96/LenoreFin/issues">open issues</a> for a full list of proposed features (and known issues).</p>
@@ -908,16 +1029,117 @@ volumes:
 
 <!-- CONTRIBUTING -->
 <h2 id="contributing">Contributing</h2>
-<p>Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are <strong>greatly appreciated</strong>.</p>
-<p>If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!</p>
-<ol>
-<li>Fork the Project</li>
-<li>Create your Feature Branch (<code>git checkout -b feature/AmazingFeature</code>)</li>
-<li>Commit your Changes (<code>git commit -m 'Add some AmazingFeature'</code>)</li>
-<li>Push to the Branch (<code>git push origin feature/AmazingFeature</code>)</li>
-<li>Open a Pull Request</li>
-</ol>
+<p>Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are <strong>greatly appreciated</strong>. Please follow these steps and guidelines to help us maintain a smooth development process.</p>
+<h3 id="1-fork-the-repository">1. Fork the Repository</h3>
+<ul>
+<li>Click the <strong>Fork</strong> button at the top-right of this repository to create your own copy.</li>
+<li>Clone your fork locally.</li>
+</ul>
+<h3 id="2-branch-naming">2. Branch Naming</h3>
+<p>Create branches following this pattern:</p>
+<ul>
+<li><strong>Features</strong>: feature/<strong>branch-name</strong> - <em>For new features or enhancements</em>.</li>
+<li><strong>Fixes</strong>: fix/<strong>branch-name</strong> - <em>For bug fixes or patches</em>.</li>
+</ul>
+<h3 id="3-pull-request-targets">3. Pull Request Targets</h3>
+<p>Submit pull requests to the appropriate branch based on the stability of your changes:</p>
+<table>
+<thead>
+<tr>
+<th>Target Branch</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>main</td>
+<td>Production-ready changes for release.</td>
+</tr>
+<tr>
+<td>rc</td>
+<td>Release candidates for staging releases.</td>
+</tr>
+<tr>
+<td>alpha</td>
+<td>Experimental and unstable changes.</td>
+</tr>
+<tr>
+<td>beta</td>
+<td>More stable than alpha, for broader testing.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PRs to main and rc branches are for finalized changes intended for the next release.
+PRs to alpha and beta are for testing and experimental work.</em></p>
+<h3 id="4-commit-message-format">4. Commit Message Format</h3>
+<p>We use semantic commit messages to automate changelog and versioning.</p>
+<p>Format:</p>
+<pre><code class="language-cpp">&lt;type&gt;(optional scope): &lt;short description&gt;
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Common types</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>feat:</td>
+<td>A new feature</td>
+</tr>
+<tr>
+<td>fix:</td>
+<td>A bug fix</td>
+</tr>
+<tr>
+<td>chore:</td>
+<td>Changes to build process or auxiliary tools</td>
+</tr>
+<tr>
+<td>docs:</td>
+<td>Documentation only</td>
+</tr>
+<tr>
+<td>style:</td>
+<td>Formatting, missing semicolons, etc; no code change</td>
+</tr>
+<tr>
+<td>refactor:</td>
+<td>Code change that neither fixes a bug nor adds a feature</td>
+</tr>
+<tr>
+<td>perf:</td>
+<td>Performance improvements</td>
+</tr>
+<tr>
+<td>test:</td>
+<td>Adding or fixing tests</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Breaking changes</strong>: Add ! after type or scope</p>
+<pre><code class="language-makefile">feat!: drop support for Node 10
+fix(api)!: change endpoint response format
+</code></pre>
+<p>Examples:</p>
+<ul>
+<li>feat: add user profile page</li>
+<li>fix(auth): handle expired tokens gracefully</li>
+<li>chore: update dependencies</li>
+<li>perf: optimize image loading</li>
+</ul>
+<h3 id="5-pull-request-checklist">5. Pull Request Checklist</h3>
+<p>Before submitting your PR, please ensure:</p>
+<ul>
+<li>Your branch is up to date with the target branch.</li>
+<li>Your code passes all tests and linters.</li>
+<li>You have added or updated tests if applicable.</li>
+<li>Relevant documentation has been added or updated.</li>
+<li>Your PR description clearly explains your changes and references related issues.</li>
+</ul>
+<h3 id="6-testing-changes">6. Testing Changes</h3>
+<p>Please test your changes locally or in a staging environment before opening a PR. Use alpha or beta branches for testing experimental changes.</p>
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- LICENSE -->
