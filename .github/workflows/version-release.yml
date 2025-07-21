@@ -132,6 +132,7 @@ jobs:
           docker push $DOCKER_HUB_REPO/$FRONTEND_NAME:${VERSION}
           docker push $DOCKER_HUB_REPO/$WORKER_NAME:${VERSION}
 
+          echo "Prelease = $PRERELEASE : TAG: $PRERELEASE_TAG"
           if [[ "$PRERELEASE" == "true" && -n "$PRERELEASE_TAG" ]]; then
             echo "Tagging prerelease as $PRERELEASE_TAG..."
 
