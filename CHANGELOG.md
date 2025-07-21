@@ -1,3 +1,10 @@
+## [1.1.2-rc.2](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2-rc.1...v1.1.2-rc.2) (2025-07-21)
+
+
+### Bug Fixes
+
+* update version to accept alpha, beta, rc prereleases ([09d81d6](https://github.com/Novanglus96/LenoreFin/commit/09d81d65e272a58fad40e5a601236674ea2cef8c))
+
 ## [1.1.2-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.1...v1.1.2-rc.1) (2025-07-18)
 
 
