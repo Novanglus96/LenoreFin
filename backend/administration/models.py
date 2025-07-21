@@ -261,7 +261,7 @@ class Version(SingletonModel):
     - version_number (CharField): The current version of the app.
     """
 
-    version_number = models.CharField(max_length=10)
+    version_number = models.CharField(max_length=25)
 
     def __str__(self):
         return self.version_number
