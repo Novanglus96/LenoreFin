@@ -15,8 +15,14 @@ const apiClient = axios.create({
   },
 });
 
-function handleApiError(error, message) {
+async function handleApiError(error, message) {
   const mainstore = useMainStore();
+  const backendHealthy = await isBackendHealthy();
+
+  if (!backendHealthy) {
+    console.warn("Backend is not healthy. Suppressing error.");
+    return null; // or return undefined
+  }
   if (error.response) {
     console.error("Response error:", error.response.data);
     console.error("Status code:", error.response.status);
@@ -35,7 +41,7 @@ async function getOptionsFunction() {
     const response = await apiClient.get("/administration/options/get/1");
     return response.data;
   } catch (error) {
-    handleApiError(error, "Options not fetched: ");
+    return await handleApiError(error, "Options not fetched: ");
   }
 }
 
@@ -48,7 +54,7 @@ async function updateOptionsFunction(updatedOptions) {
     );
     return response.data;
   } catch (error) {
-    handleApiError(error, "Options not updated: ");
+    return await handleApiError(error, "Options not updated: ");
   }
 }
 
@@ -94,4 +100,13 @@ export function useOptions() {
     isFetched,
     prefetchOptions,
   };
+}
+
+async function isBackendHealthy() {
+  try {
+    const response = await apiClient.get("/administration/health/");
+    return response?.data?.status === "ok";
+  } catch (e) {
+    return false;
+  }
 }
