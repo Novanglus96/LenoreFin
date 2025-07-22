@@ -5,6 +5,13 @@
 
 * added a loading screen for frontend when backend is loading ([03e640a](https://github.com/Novanglus96/LenoreFin/commit/03e640a1c0eb14abb8cbf223cea7f631eccd143f))
 
+# [1.2.0-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2...v1.2.0-rc.1) (2025-07-22)
+
+
+### Features
+
+* added a loading screen for frontend when backend is loading ([03e640a](https://github.com/Novanglus96/LenoreFin/commit/03e640a1c0eb14abb8cbf223cea7f631eccd143f))
+
 ## [1.1.2](https://github.com/Novanglus96/LenoreFin/compare/v1.1.1...v1.1.2) (2025-07-21)
 
 
