@@ -1,5 +1,23 @@
 <template>
-  <v-app>
+  <LogoLoader
+    logo="/logov2.png"
+    :size="150"
+    :duration="5"
+    :opacity="0.8"
+    direction="alternate"
+    :messages="[
+      'Balancing the budget... with duct tape...',
+      'Cooking the books (legally, we promise)...',
+      'Checking under the mattress for loose change...',
+      'Calculating compound interest... and snacks...',
+      'Auditing your vibes...',
+      'Putting cash in envelopes...',
+      'Aligning the stars...',
+    ]"
+    v-if="!backendReady"
+  />
+
+  <v-app v-else>
     <VueQueryDevtools />
     <AppNavigationVue />
     <v-main>
@@ -42,6 +60,10 @@
   import { useOptions } from "@/composables/optionsComposable";
   import { useVersion } from "@/composables/versionComposable";
   import { VueQueryDevtools } from "@tanstack/vue-query-devtools";
+  import { useBackendReady } from "@/composables/useBackendReady";
+  import LogoLoader from "./components/LogoLoader.vue";
+
+  const { backendReady } = useBackendReady();
 
   const reloadPage = () => {
     window.location.reload();
@@ -90,3 +112,12 @@
     showBanner.value = newValue;
   });
 </script>
+<style>
+  .loading-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-size: 1.5rem;
+  }
+</style>
