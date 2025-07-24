@@ -487,6 +487,16 @@ def update_account(request, account_id: int, payload: AccountUpdate):
             account.last_statement_amount = payload.last_statement_amount
         if payload.funding_account_id is not None:
             account.funding_account_id = payload.funding_account_id
+        if payload.calculate_payments is not None:
+            account.calculate_payments = payload.calculate_payments
+        if payload.calculate_interest is not None:
+            account.calculate_interest = payload.calculate_interest
+        if payload.payment_strategy is not None:
+            account.payment_strategy = payload.payment_strategy
+        if payload.payment_amount is not None:
+            account.payment_amount = payload.payment_amount
+        if payload.minimum_payment_amount is not None:
+            account.minimum_payment_amount = payload.minimum_payment_amount
         account.save()
         logToDB(
             f"Account updated : {account.account_name}",

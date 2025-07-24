@@ -27,6 +27,13 @@ class AccountIn(Schema):
         whole_digits=2, decimal_places=2
     )
     funding_account_id: Optional[int]
+    calculate_payments: Optional[bool]
+    calculate_interest: Optional[bool]
+    payment_strategy: Optional[str]
+    payment_amount: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
+    minimum_payment_amount: Optional[Decimal] = Field(
+        whole_digits=10, decimal_places=2
+    )
 
 
 # The class AccountOut is a schema for representing accounts.
@@ -53,6 +60,13 @@ class AccountOut(Schema):
         whole_digits=2, decimal_places=2
     )
     funding_account: Optional["AccountOut"]
+    calculate_payments: Optional[bool]
+    calculate_interest: Optional[bool]
+    payment_strategy: Optional[str]
+    payment_amount: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
+    minimum_payment_amount: Optional[Decimal] = Field(
+        whole_digits=10, decimal_places=2
+    )
 
 
 # The class AccountUpdate is a schema for updating account information.
@@ -76,3 +90,10 @@ class AccountUpdate(Schema):
     )
     rewards_amount: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
     funding_account_id: Optional[int]
+    calculate_payments: Optional[bool]
+    calculate_interest: Optional[bool]
+    payment_strategy: Optional[str]
+    payment_amount: Optional[Decimal] = Field(whole_digits=10, decimal_places=2)
+    minimum_payment_amount: Optional[Decimal] = Field(
+        whole_digits=10, decimal_places=2
+    )

@@ -78,6 +78,11 @@ class Account(models.Model):
     - bank (ForeignKey): A reference to the Bank model representing the bank associated with the account.
     - last_statement_amount (DecimalField): The amount of the last statement for the account, defaulting to 0.00.
     - funding_account (ForeignKey): A reference to another Account that funds this account, can be null.
+    - calculate_payments (BooleanField): Enable/Disable payment calculations.  Default=False.
+    - calcualte_interest (BooleanField): Enable/Disable interest calculations. Default==False.
+    - payment_strategy (CharField): F=full, M=minimum, O=other. Default=F.
+    - payment_amount (DecimalField): A set payment aomount if payment_strategy is 0. Default = 0.00.
+    - minimum_payment_amount (DecimalField): The credit card monthly minimum payment. Dfeault = 0.00.
     """
 
     account_name = models.CharField(max_length=254, unique=True)
@@ -119,6 +124,21 @@ class Account(models.Model):
         default=None,
         on_delete=models.SET_NULL,
         related_name="funded_accounts",
+    )
+    calculate_payments = models.BooleanField(
+        default=False, null=True, blank=True
+    )
+    calculate_interest = models.BooleanField(
+        default=False, null=True, blank=True
+    )
+    payment_strategy = models.CharField(
+        max_length=1, default="F", null=True, blank=True
+    )
+    payment_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
+    )
+    minimum_payment_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
 
     def clean(self):
