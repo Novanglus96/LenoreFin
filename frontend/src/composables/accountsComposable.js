@@ -85,10 +85,16 @@ async function deleteAccountFunction(deletedAccount) {
 }
 
 async function updateAccountFunction(updatedAccount) {
+  const updated = {
+    ...updatedAccount,
+    open_date: formatDateToYYYYMMDD(updatedAccount.open_date),
+    due_date: formatDateToYYYYMMDD(updatedAccount.due_date),
+    next_cycle_date: formatDateToYYYYMMDD(updatedAccount.next_cycle_date),
+  };
   try {
     const response = await apiClient.patch(
       "/accounts/update/" + updatedAccount.id,
-      updatedAccount,
+      updated,
     );
     return response.data;
   } catch (error) {
@@ -224,4 +230,14 @@ export function useAccountByID(account_id) {
     removeAccount,
     editAccount,
   };
+}
+
+function formatDateToYYYYMMDD(date) {
+  if (date) {
+    return new Intl.DateTimeFormat("en-CA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  } else return null;
 }

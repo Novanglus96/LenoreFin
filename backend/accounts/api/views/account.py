@@ -27,6 +27,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Concat, Coalesce, Abs
 from typing import List, Optional, Dict, Any
+from administration.api.dependencies.apply_patch import apply_patch
 
 
 account_router = Router(tags=["Accounts"])
@@ -454,49 +455,21 @@ def update_account(request, account_id: int, payload: AccountUpdate):
 
     try:
         account = get_object_or_404(Account, id=account_id)
-        if payload.account_name is not None:
-            account.account_name = payload.account_name
-        if payload.account_type_id is not None:
-            account.account_type_id = payload.account_type_id
-        if payload.opening_balance is not None:
-            account.opening_balance = payload.opening_balance
-        if payload.apy is not None:
-            account.apy = payload.apy
-        if payload.due_date is not None:
-            account.due_date = payload.due_date
-        if payload.active is not None:
-            account.active = payload.active
-        if payload.open_date is not None:
-            account.open_date = payload.open_date
-        if payload.next_cycle_date is not None:
-            account.next_cycle_date = payload.next_cycle_date
-        if payload.statement_cycle_length is not None:
-            account.statement_cycle_length = payload.statement_cycle_length
-        if payload.statement_cycle_period is not None:
-            account.statement_cycle_period = payload.statement_cycle_period
-        if payload.rewards_amount is not None:
+
+        apply_patch(account, payload, exclude={"rewards_amount"})
+
+        if "rewards_amount" in payload.__fields_set__:
             Reward.objects.create(
                 reward_amount=payload.rewards_amount,
                 reward_account_id=account_id,
             )
-        if payload.credit_limit is not None:
-            account.credit_limit = payload.credit_limit
-        if payload.bank_id is not None:
-            account.bank_id = payload.bank_id
-        if payload.last_statement_amount is not None:
-            account.last_statement_amount = payload.last_statement_amount
-        if payload.funding_account_id is not None:
-            account.funding_account_id = payload.funding_account_id
-        if payload.calculate_payments is not None:
-            account.calculate_payments = payload.calculate_payments
-        if payload.calculate_interest is not None:
-            account.calculate_interest = payload.calculate_interest
-        if payload.payment_strategy is not None:
-            account.payment_strategy = payload.payment_strategy
-        if payload.payment_amount is not None:
-            account.payment_amount = payload.payment_amount
-        if payload.minimum_payment_amount is not None:
-            account.minimum_payment_amount = payload.minimum_payment_amount
+
+        if payload.calculate_payments is False:
+            account.payment_strategy = "F"
+            account.payment_amount = 0.00
+            account.minimum_payment_amount = 0.00
+            account.funding_account = None
+
         account.save()
         logToDB(
             f"Account updated : {account.account_name}",

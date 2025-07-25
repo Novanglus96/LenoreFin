@@ -80,7 +80,7 @@ class AccountUpdate(Schema):
     due_date: Optional[date]
     active: Optional[bool]
     open_date: Optional[date]
-    next_cycle_date: Optional[date]
+    next_cycle_date: Optional[date] = None
     statement_cycle_length: Optional[int]
     statement_cycle_period: Optional[str]
     credit_limit: Optional[Decimal] = Field(whole_digits=2, decimal_places=2)
