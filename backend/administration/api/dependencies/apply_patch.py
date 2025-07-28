@@ -1,6 +1,6 @@
 def apply_patch(instance, payload, exclude: set[str] = None):
     """
-    Apply only explicitly set fields from the payload to the Django model instance.
+    `apply_patch` applies only explicitly set fields from the payload to the Django model instance.
     Optionally, exclude certain fields from being updated.
     """
     exclude = exclude or set()
