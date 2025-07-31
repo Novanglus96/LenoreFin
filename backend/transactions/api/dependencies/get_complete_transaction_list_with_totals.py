@@ -39,6 +39,7 @@ from transactions.api.dependencies.sort_transaction_list import (
 from transactions.api.dependencies.forecast_transaction import (
     ForecastTransaction,
 )
+from transactions.api.dependencies.calculate_cc_bill import calculate_cc_bill
 
 
 def get_complete_transaction_list_with_totals(
@@ -319,8 +320,19 @@ def get_complete_transaction_list_with_totals(
         pending_transactions_list + reminder_transactions_list
     )
 
+    # Add CC forecast transactions
+    transactions_to_be_sorted_with_cc = calculate_cc_bill(
+        account,
+        transactions_to_be_sorted,
+        cleared_transactions_list,
+        start_date,
+        end_date,
+    )
+
     # Sort the list of transactions
-    sorted_transactions = sort_transaction_list(transactions_to_be_sorted)
+    sorted_transactions = sort_transaction_list(
+        transactions_to_be_sorted_with_cc
+    )
 
     # Add balances to sorted transactions
     sorted_transactions_with_balances = add_balances_to_transaction_list(
