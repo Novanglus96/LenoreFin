@@ -125,6 +125,7 @@ def get_reminder_transaction_list(
                     "balance": Decimal(0.00),
                     "tags": tags,
                     "reminder_id": reminder.id,
+                    "simulated": True,
                 }
                 reminder_transactions_list.append(new_transaction)
                 temp_id -= 1
