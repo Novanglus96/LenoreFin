@@ -1,20 +1,13 @@
-from decimal import Decimal
-from typing import List, Optional, Dict, Any
+from typing import List
 from transactions.api.dependencies.full_transaction import FullTransaction
-from django.db.models.functions import Concat, Coalesce, Abs
 from transactions.models import (
-    Transaction,
-    TransactionDetail,
     TransactionType,
     TransactionStatus,
 )
-from django.db import IntegrityError, connection, transaction
-from administration.api.dependencies.log_to_db import logToDB
 from accounts.models import Account
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
-from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 
 
@@ -63,11 +56,7 @@ def calculate_cc_bill(
         next_cycle_date = account.next_cycle_date
         statement_cycle_length = account.statement_cycle_length
         statement_cycle_period = account.statement_cycle_period
-        last_statement_amount = account.last_statement_amount
         funding_account = account.funding_account
-        payment_strategy = account.payment_strategy
-        payment_amount = account.payment_amount
-        minimum_payment_amount = account.minimum_payment_amount
         status = TransactionStatus.objects.get(id=1)
         transaction_type = TransactionType.objects.get(id=3)
         tags = []
