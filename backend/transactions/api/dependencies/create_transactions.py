@@ -1,9 +1,7 @@
-from decimal import Decimal
-from typing import List, Optional, Dict, Any
+from typing import List
 from transactions.api.dependencies.full_transaction import FullTransaction
-from django.db.models.functions import Concat, Coalesce, Abs
 from transactions.models import Transaction, TransactionDetail
-from django.db import IntegrityError, connection, transaction
+from django.db import transaction
 from administration.api.dependencies.log_to_db import logToDB
 
 
@@ -75,7 +73,7 @@ def create_transactions(transactions: List[FullTransaction]):
                                         tag_id=tag.tag_id,
                                         full_toggle=tag.tag_full_toggle,
                                     )
-                        except Except as e:
+                        except Exception as e:
                             logToDB(
                                 f"Transaction detail creation error: {e}",
                                 None,
@@ -117,16 +115,9 @@ def create_transactions(transactions: List[FullTransaction]):
     else:
         try:
             transactions_to_create = []
-            transfers_to_create = []
-            related_to_create = []
             transaction_details = []
-            transfer_transaction_details = []
-            related_transaction_details = []
             details_to_create = []
             created_transactions = []
-            created_transfers = []
-            created_related = []
-            transactions_to_update = []
             for index, trans in enumerate(transactions):
                 if trans.transaction_type_id == 1:
                     amount = -abs(trans.total_amount)

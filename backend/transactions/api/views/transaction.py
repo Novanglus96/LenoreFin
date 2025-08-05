@@ -1,12 +1,10 @@
 from ninja import Router, Query
-from django.db import IntegrityError
 from ninja.errors import HttpError
 from transactions.models import Transaction, Paycheck, TransactionDetail
 from administration.models import DescriptionHistory
 from accounts.models import Account
 from transactions.api.schemas.transaction import (
     TransactionIn,
-    TransactionClear,
     TransactionList,
     TransactionOut,
     PaginatedTransactions,
@@ -17,23 +15,15 @@ from django.shortcuts import get_object_or_404
 from django.db.models import (
     Case,
     When,
-    Q,
-    IntegerField,
     Value,
     F,
     CharField,
-    Sum,
     Subquery,
     OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
     DecimalField,
-    Func,
-    Count,
 )
 from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+from typing import Optional
 from tags.api.dependencies.custom_tag import CustomTag
 from transactions.api.dependencies.full_transaction import FullTransaction
 from transactions.api.dependencies.create_transactions import (
@@ -44,18 +34,11 @@ from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
 from transactions.api.dependencies.sort_transactions import sort_transactions
-from datetime import date, timedelta, datetime
+from datetime import timedelta
 from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
     get_complete_transaction_list_with_totals,
 )
-from transactions.api.dependencies.add_balances_to_transaction_list import (
-    add_balances_to_transaction_list,
-)
-from transactions.api.dependencies.get_reminder_transaction_list import (
-    get_reminder_transaction_list,
-)
 from django.core.paginator import Paginator
-from django.contrib.postgres.aggregates import ArrayAgg
 
 transaction_router = Router(tags=["Transactions"])
 
@@ -591,7 +574,7 @@ def list_transactions(
                 qs = list(page_obj.object_list)
                 total_pages = paginator.num_pages
             else:
-                qs = past_transactions
+                qs = all_transactions_list
             total_records = len(all_transactions_list)
             paginated_obj = PaginatedTransactions(
                 transactions=qs,
