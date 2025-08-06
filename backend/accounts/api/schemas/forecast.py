@@ -1,7 +1,7 @@
 from ninja import Schema
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from decimal import Decimal
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 
 # The class TargetObject is a schema representing a FillObject Target.

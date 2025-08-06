@@ -1,13 +1,5 @@
 from django.db import models
-from datetime import date
 from django.utils import timezone
-from django.db.models import Case, When, Q, Value, IntegerField
-from decimal import Decimal
-import datetime
-from typing import List
-from django.db import IntegrityError, connection, transaction
-from django.shortcuts import get_object_or_404
-from django.db.models.query import QuerySet
 import pytz
 import os
 from django.core.exceptions import ValidationError

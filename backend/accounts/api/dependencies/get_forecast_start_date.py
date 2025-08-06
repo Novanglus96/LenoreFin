@@ -1,4 +1,4 @@
-from datetime import date, timedelta, datetime
+from datetime import timedelta
 import pytz
 import os
 from django.utils import timezone
