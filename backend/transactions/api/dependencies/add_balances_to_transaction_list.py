@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List, Optional, Dict, Any
+from typing import List, Any
 
 
 def add_balances_to_transaction_list(

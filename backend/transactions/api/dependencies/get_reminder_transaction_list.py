@@ -1,31 +1,13 @@
 from decimal import Decimal
-from typing import List, Optional, Dict, Any
-from datetime import date, timedelta, datetime
-from django.utils import timezone
+from typing import List, Optional
+from datetime import date
 from dateutil.relativedelta import relativedelta
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
 from reminders.models import Reminder, ReminderExclusion, Repeat
 from transactions.models import TransactionStatus
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
+from django.db.models import Q
 
 
 def get_reminder_transaction_list(
