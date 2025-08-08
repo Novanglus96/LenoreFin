@@ -1,6 +1,5 @@
 from ninja import Schema
-from decimal import Decimal
-from pydantic import Field
+from pydantic import ConfigDict, condecimal
 from datetime import date
 from typing import List, Optional
 from tags.api.schemas.tag import TagDetailIn
@@ -9,11 +8,13 @@ from transactions.api.schemas.transaction_status import TransactionStatusOut
 from transactions.api.schemas.transaction_type import TransactionTypeOut
 from tags.api.schemas.tag import TagOut
 
+AmountDecimal = condecimal(max_digits=12, decimal_places=2)
+
 
 # The class TransactionIn is a schema for validating Transaction information.
 class TransactionIn(Schema):
     transaction_date: date
-    total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    total_amount: AmountDecimal
     status_id: int
     memo: Optional[str] = None
     description: str
@@ -44,14 +45,14 @@ class TransactionList(Schema):
 class MultiTranscationDate(Schema):
     transaction_ids: List[int]
     new_date: date
-    edit_date: Optional[date]
+    edit_date: Optional[date] = None
 
 
 # The class TransactionOut is a schema for representing Transactions.
 class TransactionOut(Schema):
     id: int
     transaction_date: date
-    total_amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    total_amount: AmountDecimal
     status: TransactionStatusOut
     memo: Optional[str] = None
     description: str
@@ -59,23 +60,19 @@ class TransactionOut(Schema):
     add_date: date
     transaction_type: TransactionTypeOut
     paycheck: Optional[PaycheckOut] = None
-    balance: Optional[Decimal] = Field(
-        default=None, whole_digits=10, decimal_places=2
-    )
-    pretty_account: Optional[str]
+    balance: Optional[AmountDecimal] = None
+    pretty_account: Optional[str] = None
     tags: Optional[List[Optional[str]]] = []
     details: List["TransactionDetailOut"] = []
-    pretty_total: Optional[Decimal] = Field(
-        default=None, whole_digits=10, decimal_places=2
-    )
+    pretty_total: Optional[AmountDecimal] = None
     source_account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
     checkNumber: Optional[int] = None
     reminder_id: Optional[int] = None
-    tag_total: Optional[Decimal] = Field(
-        default=None, whole_digits=10, decimal_places=2
-    )
+    tag_total: Optional[AmountDecimal] = None
     simulated: Optional[bool] = False
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 from transactions.api.schemas.transaction_detail import (  # noqa: E402
@@ -88,7 +85,7 @@ TransactionOut.update_forward_refs()
 # The class TagTransactionOut is a schema for representing Transactions by Tag.
 class TagTransactionOut(Schema):
     transaction: TransactionOut
-    detail_amt: Decimal = Field(whole_digits=10, decimal_places=2)
+    detail_amt: AmountDecimal
     pretty_account: str
     tag: TagOut
 
@@ -99,3 +96,5 @@ class PaginatedTransactions(Schema):
     current_page: int
     total_pages: int
     total_records: int
+
+    model_config = ConfigDict(from_attributes=True)

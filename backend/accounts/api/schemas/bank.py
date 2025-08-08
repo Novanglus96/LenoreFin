@@ -1,4 +1,5 @@
 from ninja import Schema
+from pydantic import ConfigDict
 
 
 # The class BankIn is a schema for validating banks.
@@ -10,3 +11,5 @@ class BankIn(Schema):
 class BankOut(Schema):
     id: int
     bank_name: str
+
+    model_config = ConfigDict(from_attributes=True)

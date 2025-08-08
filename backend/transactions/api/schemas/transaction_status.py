@@ -1,4 +1,5 @@
 from ninja import Schema
+from pydantic import ConfigDict
 
 
 # The class TransactionStatusIn is a schema for validating transaction status.
@@ -10,3 +11,5 @@ class TransactionStatusIn(Schema):
 class TransactionStatusOut(Schema):
     id: int
     transaction_status: str
+
+    model_config = ConfigDict(from_attributes=True)
