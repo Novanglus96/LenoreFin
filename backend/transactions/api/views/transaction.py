@@ -35,10 +35,10 @@ from administration.api.dependencies.get_todays_date_timezone_adjusted import (
 )
 from transactions.api.dependencies.sort_transactions import sort_transactions
 from datetime import timedelta
-from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
-    get_complete_transaction_list_with_totals,
-)
 from django.core.paginator import Paginator
+from transactions.api.dependencies.get_transactions_by_account import (
+    get_transactions_by_account,
+)
 
 transaction_router = Router(tags=["Transactions"])
 
@@ -302,7 +302,6 @@ def delete_transaction(request, payload: TransactionList):
     """
 
     try:
-        print(f"payload: {payload}")
         # Fetch all relevant transactions at once
         transactions = Transaction.objects.filter(id__in=payload.transactions)
         transactions.delete()
@@ -549,9 +548,7 @@ def list_transactions(
 
             # Get a complete list of transactions, including reminders, sorted with totals
             all_transactions_list, previous_balance = (
-                get_complete_transaction_list_with_totals(
-                    end_date, account, False, forecast
-                )
+                get_transactions_by_account(end_date, account, False, forecast)
             )
 
             # Reverse transactions if not forecast

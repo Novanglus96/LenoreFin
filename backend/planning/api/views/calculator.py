@@ -1,8 +1,6 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
 from planning.models import CalculationRule
-from transactions.models import Transaction, TransactionDetail
 from planning.api.schemas.calculator import (
     CalculationRuleIn,
     CalculationRuleOut,
@@ -11,34 +9,15 @@ from planning.api.schemas.calculator import (
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
-from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
-    get_complete_transaction_list_with_totals,
-)
 from dateutil.relativedelta import relativedelta
 import json
+from transactions.api.dependencies.get_transfers import get_transfers
+from transactions.api.dependencies.get_transactions_by_tag import (
+    get_transactions_by_tag,
+)
 
 calculator_router = Router(tags=["Calculator"])
 
@@ -241,13 +220,10 @@ def get_calculator(request, calculation_rule_id: int, timeframe: int):
         transfer_start = get_todays_date_timezone_adjusted()
         transfer_end = transfer_start + relativedelta(days=45)
         transfers = []
-        transfers, balances = get_complete_transaction_list_with_totals(
+        transfers = get_transfers(
             transfer_end,
             calculation_rule.source_account_id,
-            False,
-            False,
             transfer_start,
-            True,
             [
                 calculation_rule.source_account_id,
                 calculation_rule.destination_account_id,
@@ -256,8 +232,8 @@ def get_calculator(request, calculation_rule_id: int, timeframe: int):
 
         # Add transactions to transfers list
         transactions = []
-        transactions, balances = get_complete_transaction_list_with_totals(
-            end_date, 1, False, False, start_date, False, [], tags
+        transactions = get_transactions_by_tag(
+            end_date, False, start_date, tags, False
         )
         unique_transactions = []
         for transaction in transactions:

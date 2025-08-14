@@ -14,10 +14,10 @@ from accounts.api.dependencies.get_forecast_end_date import (
 from accounts.api.dependencies.get_forecast_start_date import (
     get_forecast_start_date,
 )
-from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
-    get_complete_transaction_list_with_totals,
-)
 from datetime import datetime
+from transactions.api.dependencies.get_transactions_by_account import (
+    get_transactions_by_account,
+)
 
 forecast_router = Router(tags=["Account Forecasts"])
 
@@ -54,10 +54,8 @@ def get_forecast(
         end_date = get_forecast_end_date(end_interval)
 
         # Get list of transactions
-        transactions_list, previous_balance = (
-            get_complete_transaction_list_with_totals(
-                end_date, account_id, True, True, start_date
-            )
+        transactions_list, previous_balance = get_transactions_by_account(
+            end_date, account_id, True, True, start_date, False
         )
 
         # Get the initial balance

@@ -8,6 +8,7 @@ from administration.api.dependencies.get_todays_date_timezone_adjusted import (
 from reminders.models import Reminder, ReminderExclusion, Repeat
 from transactions.models import TransactionStatus
 from django.db.models import Q
+from transactions.api.schemas.transaction import TransactionOut
 
 
 def get_reminder_transaction_list(
@@ -88,27 +89,29 @@ def get_reminder_transaction_list(
                 reminder_id=reminder.id,
                 exclude_date=new_transaction_date,
             ).first():
-                new_transaction = {
-                    "id": temp_id,
-                    "transaction_date": new_transaction_date,
-                    "total_amount": Decimal(reminder.amount),
-                    "status": status,
-                    "memo": reminder.memo,
-                    "description": reminder.description,
-                    "edit_date": today,
-                    "add_date": today,
-                    "transaction_type": reminder.transaction_type,
-                    "paycheck": None,
-                    "checkNumber": None,
-                    "pretty_total": Decimal(pretty_total),
-                    "pretty_account": pretty_account,
-                    "source_account_id": reminder.reminder_source_account.id,
-                    "destination_account_id": destination_account,
-                    "balance": Decimal(0.00),
-                    "tags": tags,
-                    "reminder_id": reminder.id,
-                    "simulated": True,
-                }
+                new_transaction = TransactionOut.model_validate(
+                    {
+                        "id": temp_id,
+                        "transaction_date": new_transaction_date,
+                        "total_amount": Decimal(reminder.amount),
+                        "status": status,
+                        "memo": reminder.memo,
+                        "description": reminder.description,
+                        "edit_date": today,
+                        "add_date": today,
+                        "transaction_type": reminder.transaction_type,
+                        "paycheck": None,
+                        "checkNumber": None,
+                        "pretty_total": Decimal(pretty_total),
+                        "pretty_account": pretty_account,
+                        "source_account_id": reminder.reminder_source_account.id,
+                        "destination_account_id": destination_account,
+                        "balance": Decimal(0.00),
+                        "tags": tags,
+                        "reminder_id": reminder.id,
+                        "simulated": True,
+                    }
+                )
                 reminder_transactions_list.append(new_transaction)
                 temp_id -= 1
             new_transaction_date += relativedelta(days=repeat.days)

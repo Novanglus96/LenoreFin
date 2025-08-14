@@ -1,5 +1,5 @@
 from typing import List
-from transactions.api.dependencies.full_transaction import FullTransaction
+from transactions.api.schemas.transaction import TransactionOut
 from transactions.models import (
     TransactionType,
     TransactionStatus,
@@ -13,11 +13,12 @@ from dateutil.relativedelta import relativedelta
 
 def calculate_cc_bill(
     account_id: int,
-    transactions: List[FullTransaction],
-    cleared_transactions: List[FullTransaction],
+    transactions: List[TransactionOut],
+    cleared_transactions: List[TransactionOut],
     start_date,
     end_date,
-):
+    funding: bool,
+) -> List[TransactionOut]:
     """
     The function `calculate_cc_bill` calculates the payments for cc accounts and adds
     them as forecast transactions.
@@ -46,6 +47,10 @@ def calculate_cc_bill(
     # Setup variables
     today = get_todays_date_timezone_adjusted()
     combined_transactions = transactions + cleared_transactions
+    if funding:
+        multiplier = -1
+    else:
+        multiplier = 1
 
     account = Account.objects.get(id=account_id)
     temp_id = -10001
@@ -74,45 +79,44 @@ def calculate_cc_bill(
             current_due_date = increment_date(current_due_date, "m", 1)
 
             cycle_total = sum(
-                tx.total_amount
+                tx.pretty_total
                 for tx in combined_transactions
                 if current_start <= tx.transaction_date < current_end
             )
-
-            results.append(
+            if cycle_total < 0:
+                results.append(
+                    {
+                        "statement_start": current_start,
+                        "statement_end": current_end,
+                        "total_amount": cycle_total,
+                        "due_date": current_due_date,
+                    }
+                )
+            current_start = current_end
+        for result in results:
+            new_transaction = TransactionOut.model_validate(
                 {
-                    "statement_start": current_start,
-                    "statement_end": current_end,
-                    "total_amount": cycle_total,
-                    "due_date": current_due_date,
+                    "id": temp_id,
+                    "transaction_date": result["due_date"],
+                    "total_amount": abs(result["total_amount"]),
+                    "status": status,
+                    "memo": None,
+                    "description": f"{account.account_name} Payment",
+                    "edit_date": today,
+                    "add_date": today,
+                    "transaction_type": transaction_type,
+                    "paycheck": None,
+                    "checkNumber": None,
+                    "pretty_total": abs(result["total_amount"]) * multiplier,
+                    "pretty_account": f"{funding_account.account_name} => {account.account_name}",
+                    "source_account_id": funding_account.id,
+                    "destination_account_id": account.id,
+                    "balance": 0.00,
+                    "tags": tags,
+                    "reminder_id": None,
+                    "simulated": True,
                 }
             )
-            current_start = current_end
-        print(f"results: {results}")
-        for result in results:
-            new_transaction = {
-                "id": temp_id,
-                "transaction_date": result["due_date"],
-                "total_amount": abs(result["total_amount"]),
-                "status": status,
-                "memo": None,
-                "description": "Credit Card Payment",
-                "edit_date": today,
-                "add_date": today,
-                "transaction_type": transaction_type,
-                "paycheck": None,
-                "checkNumber": None,
-                "pretty_total": abs(result["total_amount"]),
-                "pretty_account": f"{funding_account.account_name} => {account.account_name}",
-                "source_account_id": funding_account.id,
-                "destination_account_id": account.id,
-                "balance": 0.00,
-                "tags": tags,
-                "reminder_id": None,
-                "simulated": True,
-            }
-            print(f"new_transaction: {new_transaction}")
             added_transactions.append(new_transaction)
             temp_id -= 1
-    transactions_with_cc_transactions = transactions + added_transactions
-    return transactions_with_cc_transactions
+    return added_transactions
