@@ -315,8 +315,7 @@ def get_complete_transaction_list_with_totals(
     # Add CC forecast transactions
     transactions_to_be_sorted_with_cc = calculate_cc_bill(
         account,
-        transactions_to_be_sorted,
-        cleared_transactions_list,
+        transactions_to_be_sorted + cleared_transactions_list,
         start_date,
         end_date,
     )

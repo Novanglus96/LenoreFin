@@ -90,8 +90,7 @@ def get_transactions_by_account(
     # Add CC forecast transactions
     cc_transactions_list = calculate_cc_bill(
         account_id,
-        transactions_to_be_sorted,
-        cleared_transactions_list,
+        transactions_to_be_sorted + cleared_transactions_list,
         start_date,
         end_date,
         False,
@@ -139,8 +138,8 @@ def get_transactions_by_account(
             )
             payment_account_list = calculate_cc_bill(
                 payment_account.id,
-                payment_account_transactions_to_be_sorted_list,
-                cleared_payment_account_transactions_list,
+                payment_account_transactions_to_be_sorted_list
+                + cleared_payment_account_transactions_list,
                 start_date,
                 end_date,
                 True,
