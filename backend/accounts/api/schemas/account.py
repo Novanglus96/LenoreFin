@@ -14,7 +14,7 @@ class AccountIn(Schema):
     account_name: str
     account_type_id: int
     opening_balance: Optional[BalanceDecimal] = None
-    apy: Optional[ApyDecimal] = None
+    annual_rate: Optional[ApyDecimal] = None
     due_date: Optional[date] = None
     active: bool
     open_date: Optional[date] = None
@@ -38,7 +38,7 @@ class AccountOut(Schema):
     account_name: str
     account_type: AccountTypeOut
     opening_balance: BalanceDecimal
-    apy: ApyDecimal
+    annual_rate: ApyDecimal
     due_date: Optional[date] = None
     active: bool
     open_date: date
@@ -65,7 +65,7 @@ class AccountUpdate(Schema):
     account_name: Optional[str] = None
     account_type_id: Optional[int] = None
     opening_balance: Optional[BalanceDecimal] = None
-    apy: Optional[ApyDecimal] = None
+    annual_rate: Optional[ApyDecimal] = None
     due_date: Optional[date] = None
     active: Optional[bool] = None
     open_date: Optional[date] = None

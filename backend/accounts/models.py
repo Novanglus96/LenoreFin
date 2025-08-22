@@ -58,7 +58,7 @@ class Account(models.Model):
     - account_name (CharField): The name of the account, limited to 254 characters.
     - account_type (ForeignKey): A reference to the AccountType model, representing the type of the account.
     - opening_balance (DecimalField): The initial balance of the account, defaulting to 0.00.
-    - apy (DecimalField): The annual percentage yield (APY) of the account, defaulting to 0.00.
+    - annual_rate (DecimalField): The annual rate (APR/APY) of the account, defaulting to 0.00.
     - due_date (DateField): The due date for the account, defaulting to today's date.
     - active (BooleanField): Indicates whether the account is active or not, defaulting to True.
     - open_date (DateField): The date when the account was opened, defaulting to today's date.
@@ -84,7 +84,7 @@ class Account(models.Model):
     opening_balance = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00, null=True
     )
-    apy = models.DecimalField(
+    annual_rate = models.DecimalField(
         max_digits=4, decimal_places=2, default=0.00, null=True, blank=True
     )
     due_date = models.DateField(default=current_date, null=True, blank=True)

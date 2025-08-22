@@ -98,12 +98,12 @@
                 </v-col>
                 <v-col>
                   <v-text-field
-                    v-model="apy.value.value"
+                    v-model="annual_rate.value.value"
                     variant="outlined"
-                    label="APY*"
+                    label="Annual Rate(APR/APY)*"
                     suffix="%"
                     density="comfortable"
-                    :error-messages="apy.errorMessage.value"
+                    :error-messages="annual_rate.errorMessage.value"
                   ></v-text-field>
                 </v-col>
               </v-row>
@@ -283,9 +283,9 @@
     account_name: yup.string().required("Must provide an account name."),
     account_type_id: yup.number().required("Must select an account type."),
     opening_balance: yup.number().required("Must provide opening balance."),
-    apy: yup.number().when("account_type_id", {
+    annual_rate: yup.number().when("account_type_id", {
       is: 1,
-      then: schema => schema.required("Must provide APY."),
+      then: schema => schema.required("Must provide annual rate (APR/APY)."),
       otherwise: schema => schema.notRequired(),
     }),
     due_date: yup.string().when(["account_type_id", "calculate_payments"], {
@@ -365,7 +365,7 @@
   const account_name = useField("account_name");
   const account_type_id = useField("account_type_id");
   const opening_balance = useField("opening_balance");
-  const apy = useField("apy");
+  const annual_rate = useField("annual_rate");
   const due_date = useField("due_date");
   const active = useField("active");
   const open_date = useField("open_date");
@@ -442,7 +442,7 @@
     account_name.value.value = props.account.account_name;
     account_type_id.value.value = props.account.account_type.id;
     opening_balance.value.value = props.account.opening_balance;
-    apy.value.value = props.account.apy;
+    annual_rate.value.value = props.account.annual_rate;
     due_date.value.value = parseDateAsLocal(props.account.due_date);
     active.value.value = props.account.active;
     open_date.value.value = parseDateAsLocal(props.account.open_date);

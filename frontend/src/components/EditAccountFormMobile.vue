@@ -19,8 +19,9 @@
                   label="Account Name*"
                   density="comfortable"
                 ></v-text-field>
-              </v-col> </v-row
-            ><v-row dense>
+              </v-col>
+            </v-row>
+            <v-row dense>
               <v-col>
                 <v-autocomplete
                   clearable
@@ -90,9 +91,9 @@
               </v-col>
               <v-col>
                 <v-text-field
-                  v-model="formData.apy"
+                  v-model="formData.annual_rate"
                   variant="outlined"
-                  label="APY*"
+                  label="Annual Rate(APR/APY)*"
                   :rules="required"
                   suffix="%"
                   @update:model-value="checkForm"
@@ -123,8 +124,7 @@
                   v-model="formData.statement_cycle_length"
                   @update:model-value="checkForm"
                   density="comfortable"
-                >
-                </v-select>
+                ></v-select>
               </v-col>
               <v-col>
                 <v-select
@@ -136,8 +136,7 @@
                   item-title="name"
                   @update:model-value="checkForm"
                   density="comfortable"
-                >
-                </v-select>
+                ></v-select>
               </v-col>
             </v-row>
             <v-row dense>
@@ -179,92 +178,94 @@
           </v-container>
         </v-sheet>
       </v-card-text>
-      <v-card-actions
-        ><v-spacer></v-spacer
-        ><v-btn @click="emit('updateDialog', false)" color="secondary"
-          >Close</v-btn
-        ><v-btn
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn @click="emit('updateDialog', false)" color="secondary">
+          Close
+        </v-btn>
+        <v-btn
           @click="clickEditAccount()"
           color="secondary"
           :disabled="editSubmit"
-          >Save</v-btn
-        ></v-card-actions
-      >
+        >
+          Save
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 <script setup>
-import { defineEmits, defineProps, ref, computed } from "vue";
-import { useBanks } from "@/composables/banksComposable";
-import { useAccountByID } from "@/composables/accountsComposable";
-import VueDatePicker from "@vuepic/vue-datepicker";
-import "@vuepic/vue-datepicker/dist/main.css";
-import { useMainStore } from "@/stores/main";
+  import { defineEmits, defineProps, ref, computed } from "vue";
+  import { useBanks } from "@/composables/banksComposable";
+  import { useAccountByID } from "@/composables/accountsComposable";
+  import VueDatePicker from "@vuepic/vue-datepicker";
+  import "@vuepic/vue-datepicker/dist/main.css";
+  import { useMainStore } from "@/stores/main";
 
-const { banks, isLoading } = useBanks();
-const editSubmit = ref(true);
-const mainstore = useMainStore();
-const emit = defineEmits(["updateDialog"]);
-const props = defineProps({
-  account: Object,
-});
-const { editAccount } = useAccountByID(props.account.id);
-const formData = ref({
-  id: props.account.id,
-  account_name: props.account.account_name,
-  account_type_id: props.account.account_type.id,
-  opening_balance: props.account.opening_balance,
-  apy: props.account.apy,
-  due_date: props.account.due_date,
-  active: props.account.active,
-  open_date: props.account.open_date,
-  next_cycle_date: props.account.next_cycle_date,
-  statement_cycle_length: props.account.statement_cycle_length,
-  statement_cycle_period: props.account.statement_cycle_period,
-  rewards_amount: props.account.rewards_amount,
-  credit_limit: props.account.credit_limit,
-  bank_id: props.account.bank.id,
-  last_statement_amount: props.account.last_statement_amount,
-});
+  const { banks, isLoading } = useBanks();
+  const editSubmit = ref(true);
+  const mainstore = useMainStore();
+  const emit = defineEmits(["updateDialog"]);
+  const props = defineProps({
+    account: Object,
+  });
+  const { editAccount } = useAccountByID(props.account.id);
+  const formData = ref({
+    id: props.account.id,
+    account_name: props.account.account_name,
+    account_type_id: props.account.account_type.id,
+    opening_balance: props.account.opening_balance,
+    annual_rate: props.account.annual_rate,
+    due_date: props.account.due_date,
+    active: props.account.active,
+    open_date: props.account.open_date,
+    next_cycle_date: props.account.next_cycle_date,
+    statement_cycle_length: props.account.statement_cycle_length,
+    statement_cycle_period: props.account.statement_cycle_period,
+    rewards_amount: props.account.rewards_amount,
+    credit_limit: props.account.credit_limit,
+    bank_id: props.account.bank.id,
+    last_statement_amount: props.account.last_statement_amount,
+  });
 
-const clickEditAccount = () => {
-  editAccount(formData.value);
-  emit("updateDialog", false);
-};
+  const clickEditAccount = () => {
+    editAccount(formData.value);
+    emit("updateDialog", false);
+  };
 
-const required = [
-  value => {
-    if (value) return true;
+  const required = [
+    value => {
+      if (value) return true;
 
-    return "This field is required.";
-  },
-];
+      return "This field is required.";
+    },
+  ];
 
-const checkForm = async () => {
-  if (
-    formData.value.account_name !== null &&
-    formData.value.account_name !== "" &&
-    formData.value.bank_id !== null &&
-    formData.value.bank_id !== "" &&
-    formData.value.open_date !== null &&
-    formData.value.open_date !== "" &&
-    formData.value.opening_balance !== null &&
-    formData.value.opening_balance !== "" &&
-    formData.value.credit_limit !== null &&
-    formData.value.credit_limit !== "" &&
-    formData.value.apy !== null &&
-    formData.value.apy !== ""
-  ) {
-    editSubmit.value = false;
-  } else {
-    editSubmit.value = true;
-  }
-};
+  const checkForm = async () => {
+    if (
+      formData.value.account_name !== null &&
+      formData.value.account_name !== "" &&
+      formData.value.bank_id !== null &&
+      formData.value.bank_id !== "" &&
+      formData.value.open_date !== null &&
+      formData.value.open_date !== "" &&
+      formData.value.opening_balance !== null &&
+      formData.value.opening_balance !== "" &&
+      formData.value.credit_limit !== null &&
+      formData.value.credit_limit !== "" &&
+      formData.value.annual_rate !== null &&
+      formData.value.annual_rate !== ""
+    ) {
+      editSubmit.value = false;
+    } else {
+      editSubmit.value = true;
+    }
+  };
 
-const units = computed(() => {
-  return mainstore.units;
-});
-const intervals = computed(() => {
-  return mainstore.intervals;
-});
+  const units = computed(() => {
+    return mainstore.units;
+  });
+  const intervals = computed(() => {
+    return mainstore.intervals;
+  });
 </script>
