@@ -1,3 +1,11 @@
+# [1.2.0-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2...v1.2.0-rc.1) (2025-08-25)
+
+
+### Features
+
+* added a loading screen for frontend when backend is loading ([03e640a](https://github.com/Novanglus96/LenoreFin/commit/03e640a1c0eb14abb8cbf223cea7f631eccd143f))
+* calculate credit card bill ([#43](https://github.com/Novanglus96/LenoreFin/issues/43)) ([01cf855](https://github.com/Novanglus96/LenoreFin/commit/01cf85518ca569c38e1073fd280fde5494479e06))
+
 # [1.2.0-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2...v1.2.0-rc.1) (2025-07-22)
 
 
