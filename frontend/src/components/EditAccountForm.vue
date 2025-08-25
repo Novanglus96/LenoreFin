@@ -84,6 +84,13 @@
                     :error-messages="calculate_payments.errorMessage.value"
                   ></v-checkbox>
                 </v-col>
+                <v-col v-if="calculate_payments.value.value">
+                  <v-checkbox
+                    v-model="calculate_interest.value.value"
+                    label="Calculate Interest"
+                    :error-messages="calculate_interest.errorMessage.value"
+                  ></v-checkbox>
+                </v-col>
               </v-row>
               <v-row dense>
                 <v-col>
@@ -228,7 +235,7 @@
                 </v-col>
               </v-row>
               <v-row dense v-if="calculate_payments.value.value">
-                <v-col v-if="payment_strategy.value.value == 'O'">
+                <v-col v-if="payment_strategy.value.value == 'C'">
                   <v-text-field
                     v-model="payment_amount.value.value"
                     variant="outlined"
@@ -410,7 +417,7 @@
   const payment_strategies = [
     { strategy_name: "Pay Full Balance", strategy_code: "F" },
     { strategy_name: "Pay Minimum Due", strategy_code: "M" },
-    { strategy_name: "Custom Payment", strategy_code: "O" },
+    { strategy_name: "Custom Payment", strategy_code: "C" },
   ];
 
   const units = computed(() => {
