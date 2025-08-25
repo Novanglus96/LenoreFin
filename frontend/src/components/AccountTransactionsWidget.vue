@@ -88,11 +88,25 @@
               ></v-icon>
             </template>
           </v-tooltip>
+          <v-tooltip text="Forecast" location="top">
+            <template v-slot:activator="{ props }">
+              <v-icon
+                icon="mdi-chart-box"
+                v-if="row.value.simulated"
+                color="grey"
+                v-bind="props"
+              ></v-icon>
+            </template>
+          </v-tooltip>
           <v-tooltip text="Reminder" location="top">
             <template v-slot:activator="{ props }">
               <v-icon
                 icon="mdi-bell"
-                v-if="row.value.id < 0"
+                v-if="
+                  row.value.simulated &&
+                  row.value.id < 0 &&
+                  row.value.id >= -10000
+                "
                 color="amber"
                 v-bind="props"
               ></v-icon>

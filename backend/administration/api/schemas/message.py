@@ -1,6 +1,7 @@
 from ninja import Schema
-from datetime import date, timedelta, datetime
-from typing import List, Optional, Dict, Any
+from datetime import datetime
+from typing import List
+from pydantic import ConfigDict
 
 
 # The class MessageIn is a schema for validating Messages.
@@ -17,6 +18,8 @@ class MessageOut(Schema):
     message: str
     unread: bool
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 # The class AllMessage is a schema for representing all messages.
 class AllMessage(Schema):
@@ -28,3 +31,5 @@ class MessageList(Schema):
     unread_count: int
     total_count: int
     messages: List[MessageOut]
+
+    model_config = ConfigDict(from_attributes=True)

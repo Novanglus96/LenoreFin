@@ -1,51 +1,23 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
-from accounts.models import Account
 from accounts.api.schemas.forecast import (
     TargetObject,
     FillObject,
     DatasetObject,
-    GraphData,
     ForecastOut,
 )
 from administration.api.dependencies.log_to_db import logToDB
-from django.shortcuts import get_object_or_404
-from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
 from accounts.api.dependencies.get_dates_in_range import get_dates_in_range
-from accounts.api.dependencies.get_unformatted_dates_in_range import (
-    get_unformatted_dates_in_range,
-)
 from accounts.api.dependencies.get_forecast_end_date import (
     get_forecast_end_date,
 )
 from accounts.api.dependencies.get_forecast_start_date import (
     get_forecast_start_date,
 )
-from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
-    get_complete_transaction_list_with_totals,
+from datetime import datetime
+from transactions.api.dependencies.get_transactions_by_account import (
+    get_transactions_by_account,
 )
-from datetime import date, timedelta, datetime
 
 forecast_router = Router(tags=["Account Forecasts"])
 
@@ -74,20 +46,16 @@ def get_forecast(
         # Retrieve the dates in range as labels for forecast
         labels = get_dates_in_range(start_interval, end_interval)
 
-        dates = get_unformatted_dates_in_range(start_interval, end_interval)
         data = []
         datasets = []
-        opening_balance = Account.objects.get(id=account_id).opening_balance
 
         # Retrieve the transactions in the date range for the account
         start_date = get_forecast_start_date(start_interval)
         end_date = get_forecast_end_date(end_interval)
 
         # Get list of transactions
-        transactions_list, previous_balance = (
-            get_complete_transaction_list_with_totals(
-                end_date, account_id, True, True, start_date
-            )
+        transactions_list, previous_balance = get_transactions_by_account(
+            end_date, account_id, True, True, start_date, False
         )
 
         # Get the initial balance

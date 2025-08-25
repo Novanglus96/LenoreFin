@@ -1,8 +1,6 @@
 from decimal import Decimal
-from typing import List, Optional, Dict, Any
-from datetime import date, timedelta, datetime
-from django.utils import timezone
-from dateutil.relativedelta import relativedelta
+from typing import List, Optional
+from datetime import date
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
@@ -18,12 +16,9 @@ from django.db.models import (
     Sum,
     Subquery,
     OuterRef,
-    FloatField,
     Window,
     ExpressionWrapper,
     DecimalField,
-    Func,
-    Count,
 )
 from transactions.models import Transaction, TransactionDetail
 from django.db.models.functions import Concat, Coalesce, Abs
@@ -36,9 +31,7 @@ from transactions.api.dependencies.add_balances_to_transaction_list import (
 from transactions.api.dependencies.sort_transaction_list import (
     sort_transaction_list,
 )
-from transactions.api.dependencies.forecast_transaction import (
-    ForecastTransaction,
-)
+from transactions.api.dependencies.calculate_cc_bill import calculate_cc_bill
 
 
 def get_complete_transaction_list_with_totals(
@@ -319,8 +312,18 @@ def get_complete_transaction_list_with_totals(
         pending_transactions_list + reminder_transactions_list
     )
 
+    # Add CC forecast transactions
+    transactions_to_be_sorted_with_cc = calculate_cc_bill(
+        account,
+        transactions_to_be_sorted + cleared_transactions_list,
+        start_date,
+        end_date,
+    )
+
     # Sort the list of transactions
-    sorted_transactions = sort_transaction_list(transactions_to_be_sorted)
+    sorted_transactions = sort_transaction_list(
+        transactions_to_be_sorted_with_cc
+    )
 
     # Add balances to sorted transactions
     sorted_transactions_with_balances = add_balances_to_transaction_list(

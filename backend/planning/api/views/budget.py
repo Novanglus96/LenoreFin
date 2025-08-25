@@ -6,36 +6,15 @@ from planning.api.schemas.budget import BudgetIn, BudgetOut, BudgetWithTotal
 from reminders.models import Repeat
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
-from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
-from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
-    get_complete_transaction_list_with_totals,
-)
+from typing import List, Optional
 import json
-from datetime import date, timedelta, datetime
-from django.utils import timezone
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
+)
+from transactions.api.dependencies.get_transactions_by_tag import (
+    get_transactions_by_tag,
 )
 
 budget_router = Router(tags=["Budgets"])
@@ -248,16 +227,8 @@ def list_budgets(
             start_date, end_date = calculate_repeat_window(
                 budget.start_day, budget.repeat
             )
-            transactions, balances = get_complete_transaction_list_with_totals(
-                end_date,
-                1,
-                False,
-                False,
-                start_date,
-                False,
-                [],
-                json.loads(budget.tag_ids),
-                True,
+            transactions = get_transactions_by_tag(
+                end_date, False, start_date, json.loads(budget.tag_ids), True
             )
             total = 0
             unique_transactions = []

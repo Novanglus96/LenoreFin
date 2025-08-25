@@ -6,24 +6,19 @@ Author: John Adams <johnmadams96@gmail.com>
 Date: February 15, 2024
 """
 
-from django_q.tasks import async_task, result, schedule
-import arrow
 from transactions.models import (
     Transaction,
-    TransactionDetail,
-    TransactionStatus,
 )
 from tags.api.dependencies.custom_tag import CustomTag
 from transactions.api.dependencies.create_transactions import (
     create_transactions,
 )
 from transactions.api.dependencies.full_transaction import FullTransaction
-from administration.models import Message, Option, LogEntry
+from administration.models import Message, Option
 from imports.models import (
     FileImport,
     TransactionImport,
     TransactionImportTag,
-    TransactionImportError,
     TypeMapping,
     StatusMapping,
     TagMapping,
@@ -31,34 +26,23 @@ from imports.models import (
 )
 from accounts.models import Account
 from reminders.models import Reminder, Repeat, ReminderExclusion
-from django_q.models import Schedule
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
 import csv
 from io import StringIO
-from django.db import IntegrityError, connection, transaction
 from django.db.models import (
     Case,
     When,
-    Q,
-    IntegerField,
     Value,
     F,
-    CharField,
     Sum,
     Subquery,
     OuterRef,
-    FloatField,
-    Window,
     ExpressionWrapper,
     DecimalField,
-    Func,
-    Count,
 )
-from django.db.models.functions import Concat, Coalesce, Abs, RowNumber
-from decimal import Decimal
+from django.db.models.functions import Coalesce, Abs
 import pytz
 import os
 from administration.api.dependencies.log_to_db import logToDB
@@ -66,13 +50,11 @@ from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
 from django.core.management import call_command
-import time
-from pathlib import Path
 from planning.models import Budget
-from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
-    get_complete_transaction_list_with_totals,
-)
 import json
+from transactions.api.dependencies.get_transactions_by_tag import (
+    get_transactions_by_tag,
+)
 
 
 def create_backup(clean=True, keep=0):
@@ -95,7 +77,7 @@ def create_message(message_text):
         message_text (str): The text of the message
     """
 
-    message_obj = Message.objects.create(
+    Message.objects.create(
         message_date=get_todays_date_timezone_adjusted(True),
         message=message_text,
         unread=True,
@@ -234,16 +216,8 @@ def roll_over_budgets():
             start_date, end_date, periods_passed, next_start = (
                 calculate_repeat_window(budget.start_day, budget.repeat)
             )
-            transactions, balances = get_complete_transaction_list_with_totals(
-                end_date,
-                1,
-                False,
-                False,
-                start_date,
-                False,
-                [],
-                json.loads(budget.tag_ids),
-                True,
+            transactions = get_transactions_by_tag(
+                end_date, False, start_date, json.loads(budget.tag_ids), True
             )
             total = 0
             for transaction in transactions:
@@ -298,7 +272,6 @@ def calculate_repeat_window(start_date: datetime, repeat: Repeat) -> tuple:
         periods_passed += 1
 
     window_start = current_period_start
-    window_end = window_start + total_period + relativedelta(days=-1)
     previous_end = current_period_start + relativedelta(days=-1)
     next_start = window_start + total_period
 
@@ -320,7 +293,6 @@ def finish_imports():
     rows = None
     errors = 0
     success = None
-    max_bulk = 1000
 
     def chunk_list(lst, chunk_size):
         for i in range(0, len(lst), chunk_size):
@@ -335,8 +307,6 @@ def finish_imports():
             file_import.processed = True
             file_import.save()
             transactions_to_create = []
-            transaction_details = []
-            details_to_create = []
             try:
                 # Load and parse import file
                 file_content = file_import.import_file.read().decode(
@@ -476,7 +446,7 @@ def finish_imports():
                 if create_transactions(transactions_to_create):
 
                     # Send message to frontend that import was successful
-                    message_obj = Message.objects.create(
+                    Message.objects.create(
                         message_date=get_todays_date_timezone_adjusted(True),
                         message=f"Import # {file_import.id} completed successfully with {errors} errors",
                         unread=True,
@@ -498,7 +468,7 @@ def finish_imports():
                         2,
                     )
                 else:
-                    raise Exception(f"Unable to create transactions: ")
+                    raise Exception("Unable to create transactions: ")
 
             except Exception as e:
                 success = False
@@ -533,7 +503,7 @@ def archive_transactions():
         # Load archive options
         options = Option.objects.get(id=1)
 
-        if options.auto_archive == True:
+        if options.auto_archive:
             # Set variables
             today = get_todays_date_timezone_adjusted(False)
             year_offset = options.archive_length + 1
@@ -683,7 +653,7 @@ def archive_transactions():
                 account.archive_balance = account.balance
                 account.save()
         else:
-            print(f"No auto archive")
+            print("No auto archive")
         logToDB(
             "Transactions successfully archived.",
             None,

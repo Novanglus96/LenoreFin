@@ -1,10 +1,11 @@
 from ninja import Schema
-from datetime import date, timedelta, datetime
-from typing import List, Optional, Dict, Any
+from datetime import datetime
+from typing import Optional
 from accounts.api.schemas.account import AccountOut
 from reminders.api.schemas.reminder import ReminderOut
 from transactions.api.schemas.transaction import TransactionOut
 from administration.api.schemas.error_level import ErrorLevelOut
+from pydantic import ConfigDict
 
 
 # The class LogEntryIn is a schema for validating Log Entries.
@@ -27,3 +28,5 @@ class LogEntryOut(Schema):
     transaction: Optional[TransactionOut] = None
     error_num: Optional[int] = None
     error_level: Optional[ErrorLevelOut] = None
+
+    model_config = ConfigDict(from_attributes=True)

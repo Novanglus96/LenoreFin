@@ -1,16 +1,9 @@
 from django.db import models
-from datetime import date
 from django.utils import timezone
-from django.db.models import Case, When, Q, Value, IntegerField
-from decimal import Decimal
-import datetime
-from typing import List
-from django.db import IntegrityError, connection, transaction
-from django.shortcuts import get_object_or_404
-from django.db.models.query import QuerySet
 from accounts.models import Account
 from reminders.models import Reminder
 from tags.models import Tag
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -205,7 +198,7 @@ class LogEntry(models.Model):
     """
 
     log_date = models.DateTimeField(auto_now_add=True)
-    log_entry = models.CharField(max_length=254)
+    log_entry = models.TextField()
     account = models.ForeignKey(
         Account, on_delete=models.CASCADE, null=True, blank=True, default=None
     )

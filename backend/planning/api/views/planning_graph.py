@@ -1,5 +1,4 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
 from planning.api.schemas.planning_graph import (
     PlanningGraphList,
@@ -12,28 +11,18 @@ from django.db.models import (
     Case,
     When,
     Q,
-    IntegerField,
     Value,
-    F,
     CharField,
     Sum,
-    Subquery,
-    OuterRef,
     FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
 )
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+from django.db.models.functions import Coalesce
 import pytz
 import os
 from django.utils import timezone
 from accounts.api.schemas.forecast import DatasetObject, GraphData
 from administration.models import Option
-from transactions.models import Transaction, TransactionDetail, Paycheck
+from transactions.models import Paycheck
 from tags.models import Tag
 import json
 
@@ -1580,13 +1569,13 @@ def prepare_planning_graph(
         # Prepare the datasets
         datasets = []
         this_year_dataset = DatasetObject(
-            label=this_year,
+            label=f"{this_year}",
             backgroundColor="#046959",
             data=this_year_monthly_data,
         )
         datasets.append(this_year_dataset)
         last_year_dataset = DatasetObject(
-            label=last_year,
+            label=f"{last_year}",
             backgroundColor="#c2fff5",
             data=last_year_monthly_data,
         )

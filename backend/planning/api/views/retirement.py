@@ -1,56 +1,27 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
 from accounts.models import Account
 from administration.models import Option
 from planning.api.schemas.retirement import (
-    TargetObject,
-    FillObject,
     DatasetObject,
-    GraphData,
     ForecastOut,
 )
 from administration.api.dependencies.log_to_db import logToDB
-from django.shortcuts import get_object_or_404
-from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
 from accounts.api.dependencies.get_dates_in_range import get_dates_in_range
-from accounts.api.dependencies.get_unformatted_dates_in_range import (
-    get_unformatted_dates_in_range,
-)
 from accounts.api.dependencies.get_forecast_end_date import (
     get_forecast_end_date,
 )
 from accounts.api.dependencies.get_forecast_start_date import (
     get_forecast_start_date,
 )
-from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
-    get_complete_transaction_list_with_totals,
-)
-from datetime import date, timedelta, datetime
+from datetime import date, datetime
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
 import ast
+from transactions.api.dependencies.get_transactions_by_account import (
+    get_transactions_by_account,
+)
 
 retirement_router = Router(tags=["Retirement"])
 
@@ -105,7 +76,6 @@ def get_forecast(
         # Retrieve the dates in range as labels for forecast
         labels = get_dates_in_range(start_interval, end_interval)
 
-        dates = get_unformatted_dates_in_range(start_interval, end_interval)
         totals = []
         datasets = []
 
@@ -117,13 +87,10 @@ def get_forecast(
         account_info = []
         for account in retirement_array:
             account_obj = Account.objects.get(id=account)
-            opening_balance = Account.objects.get(id=account).opening_balance
 
             # Get list of transactions
-            transactions_list, previous_balance = (
-                get_complete_transaction_list_with_totals(
-                    end_date, account, True, True, start_date
-                )
+            transactions_list, previous_balance = get_transactions_by_account(
+                end_date, account, True, True, start_date
             )
             account_dict = {
                 "id": account,
