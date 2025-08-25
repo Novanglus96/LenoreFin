@@ -45,6 +45,7 @@ class AccountOut(Schema):
     next_cycle_date: Optional[date] = None
     statement_cycle_length: Optional[int] = None
     statement_cycle_period: Optional[str] = None
+    credit_limit: Optional[BalanceDecimal] = None
     rewards_amount: Optional[BalanceDecimal] = None
     available_credit: Optional[BalanceDecimal] = None
     balance: Optional[BalanceDecimal] = None
