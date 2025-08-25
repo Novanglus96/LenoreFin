@@ -93,7 +93,7 @@ def calculate_cc_bill(
                         cycle_interest = calculate_interest(
                             unpaid,
                             annual_rate,
-                            statement_cycles[x - 1]["statement_start"],
+                            statement_cycles[x - 1]["statement_end"],
                             cycle["statement_end"],
                         )
                         total_interest += cycle_interest
