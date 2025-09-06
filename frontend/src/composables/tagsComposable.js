@@ -76,6 +76,17 @@ async function getGraphByTagsFunction(widget_id) {
   }
 }
 
+async function getGraphByTagsNewFunction(widget_id) {
+  try {
+    const response = await apiClient.get(
+      "/tags/graph-by-tags/new?widget_id=" + widget_id,
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Graph by tags not fetched: ");
+  }
+}
+
 async function getTransactionsByTagsFunction(tag_id) {
   try {
     const response = await apiClient.get("/tags/tag-graphs/list?tag=" + tag_id);
@@ -179,6 +190,25 @@ export function useGraphs(widget_id) {
   return {
     isLoading,
     tag_graph,
+  };
+}
+
+export function useGraphsNew(widget_id) {
+  const queryClient = useQueryClient();
+  const { data: tag_graph_items, isLoading } = useQuery({
+    queryKey: ["tag_graph_items", { widgetID: widget_id }],
+    queryFn: () => getGraphByTagsNewFunction(widget_id),
+    select: response =>
+      response.map(item => ({
+        ...item,
+        value: Number(item.value) || 0, // ensure numeric
+      })),
+    client: queryClient,
+  });
+
+  return {
+    isLoading,
+    tag_graph_items,
   };
 }
 
