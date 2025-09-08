@@ -9,7 +9,12 @@
           v-for="transaction in transactions.transactions"
           :key="transaction.id"
         >
-          <v-list-item :key="transaction.id" class="border-thin">
+          <v-list-item
+            :key="transaction.id"
+            class="border-thin"
+            rounded
+            elevation="1"
+          >
             <v-list-item-title class="font-weight-bold text-truncate">
               {{ transaction.description }}
             </v-list-item-title>
