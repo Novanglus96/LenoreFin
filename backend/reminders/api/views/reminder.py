@@ -1,5 +1,4 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
 from reminders.models import Reminder, ReminderExclusion, Repeat
 from transactions.models import Transaction
@@ -11,26 +10,6 @@ from reminders.api.schemas.reminder import (
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
 from dateutil.relativedelta import relativedelta
 from tags.api.dependencies.custom_tag import CustomTag
 from transactions.api.dependencies.full_transaction import FullTransaction
