@@ -1,118 +1,23 @@
 <template>
   <div>
-    <v-card
-      variant="outlined"
-      :elevation="4"
-      class="bg-white"
+    <v-pie
+      :items="props.graph_items"
+      :legend="{
+        position: $vuetify.display.mdAndUp ? 'right' : 'bottom',
+      }"
+      :tooltip="{
+        subtitleFormat: s =>
+          `$${formatNumber(s.value)}(${((100 * s.value) / total).toFixed(1)}%)`,
+      }"
+      animation
+      gap="0"
+      density="compact"
+      reveal
+      size="310"
+      style="max-width: 100%; height: auto"
       v-if="!isLoading"
-    >
-      <template v-slot:append>
-        <v-menu
-          location="start"
-          :close-on-content-click="false"
-          v-model="menu"
-          @update:model-value="onMenuStateChange"
-        >
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-cog"
-              flat
-              size="xs"
-              v-bind="props"
-              :disabled="isLoading"
-            ></v-btn>
-          </template>
-          <v-form v-model="formValid" ref="form">
-            <v-card :width="isMobile ? '400' : '350'">
-              <v-card-title>Widget {{ props.widget }}</v-card-title>
-              <v-card-subtitle>Settings</v-card-subtitle>
-              <v-card-text>
-                <v-container>
-                  <v-row dense>
-                    <v-col>
-                      <v-text-field
-                        v-model="formData.graph_name"
-                        variant="outlined"
-                        label="Graph Name*"
-                        :rules="required"
-                        @update:model-value="checkFormComplete"
-                      ></v-text-field>
-                    </v-col>
-                  </v-row>
-                  <v-row dense>
-                    <v-col>
-                      <v-radio-group
-                        title="Graph Type"
-                        v-model="formData.graph_type"
-                        @update:model-value="checkFormComplete"
-                      >
-                        <v-radio label="All Expenses" :value="1"></v-radio>
-                        <v-radio label="All Income" :value="2"></v-radio>
-                        <v-radio label="Untagged" :value="3"></v-radio>
-                        <v-radio label="Custom" :value="4"></v-radio>
-                      </v-radio-group>
-                    </v-col>
-                  </v-row>
-                  <v-row dense v-if="formData.graph_type == 4">
-                    <v-col>
-                      <v-autocomplete
-                        clearable
-                        label="Choose a main tag"
-                        :items="parent_tags"
-                        item-title="tag_name"
-                        item-value="id"
-                        variant="outlined"
-                        :loading="parent_tags_isLoading"
-                        v-model="formData.tag_id"
-                        :rules="required"
-                        @update:model-value="checkFormComplete"
-                        density="compact"
-                      ></v-autocomplete>
-                    </v-col>
-                  </v-row>
-                  <v-row dense v-if="formData.graph_type != 3">
-                    <v-col>
-                      <v-autocomplete
-                        clearable
-                        chips
-                        multiple
-                        label="Excluded tags"
-                        :items="tags"
-                        item-title="tag_name"
-                        item-value="id"
-                        variant="outlined"
-                        :loading="tags_isLoading"
-                        v-model="formData.exclude"
-                        @update:model-value="checkFormComplete"
-                        density="compact"
-                      ></v-autocomplete>
-                    </v-col>
-                  </v-row>
-                </v-container>
-              </v-card-text>
-              <v-card-actions>
-                <!--<v-btn @click="resetForm">Reset</v-btn>-->
-                <v-btn
-                  :disabled="!formComplete"
-                  @click="submitForm()"
-                  type="submit"
-                >
-                  Save
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-form>
-        </v-menu>
-      </template>
-      <template v-slot:title>
-        <span class="text-subtitle-2 text-secondary">
-          {{ tag_graph ? tag_graph.datasets[0].label : "" }}
-        </span>
-      </template>
-      <template v-slot:text>
-        <Pie :data="tag_graph" :options="options" />
-      </template>
-    </v-card>
+    ></v-pie>
+
     <v-progress-circular
       color="secondary"
       indeterminate
@@ -126,20 +31,21 @@
 </template>
 
 <script setup>
-  import { Pie } from "vue-chartjs";
-  import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-  import { ref, defineProps, watch } from "vue";
-  import { useGraphs } from "@/composables/tagsComposable";
+  import { ref, defineProps, watch, computed } from "vue";
+  import { useGraphsNew } from "@/composables/tagsComposable";
   import { useOptions } from "@/composables/optionsComposable";
-  import { useTags, useParentTags } from "@/composables/tagsComposable";
+  import { VPie } from "vuetify/labs/VPie";
+  //import { useDisplay } from "vuetify";
 
-  const { options: appOptions, editOptions } = useOptions();
-  const { tags, isLoading: tags_isLoading } = useTags();
-  const { parent_tags, isLoading: parent_tags_isLoading } = useParentTags();
+  //const { width } = useDisplay();
+
+  const numberFormatter = new Intl.NumberFormat("en", { useGrouping: true });
+  function formatNumber(v) {
+    return numberFormatter.format(v);
+  }
+  const { options: appOptions } = useOptions();
   const formData = ref(null);
-  const formValid = ref(false);
-  const menu = ref(false);
-  ChartJS.register(ArcElement, Tooltip, Legend);
+
   const props = defineProps({
     widget: {
       type: Number,
@@ -148,6 +54,7 @@
     position: {
       default: "right",
     },
+    graph_items: {},
   });
   if (props.widget == 1) {
     formData.value = {
@@ -183,46 +90,10 @@
     };
   }
 
-  const formComplete = ref(false);
-  const { tag_graph, isLoading } = useGraphs(props.widget);
-
-  const options = ref({
-    responsive: false,
-    position: "relative",
-    maintainAspectRatio: false,
-    height: "200px",
-    width: "400px",
-    plugins: {
-      legend: {
-        position: props.position,
-      },
-      tooltip: {
-        callbacks: {
-          label: function (tooltipItem) {
-            var total = tooltipItem.dataset.data.reduce(function (
-              previousValue,
-              currentValue,
-            ) {
-              var previousNumber = +previousValue;
-              var currentNumber = +currentValue;
-              return previousNumber + currentNumber;
-            });
-            var currentValue = tooltipItem.dataset.data[tooltipItem.dataIndex];
-            var percentage = Math.floor((currentValue / total) * 100 + 0.5);
-            return "$" + currentValue + " (" + percentage + "%)";
-          },
-        },
-      },
-    },
-  });
-
-  const required = [
-    value => {
-      if (value) return true;
-
-      return "This field is required.";
-    },
-  ];
+  const { tag_graph_items, isLoading } = useGraphsNew(props.widget);
+  const total = computed(() =>
+    tag_graph_items.value.reduce((sum, n) => sum + parseFloat(n.value), 0),
+  );
 
   // Populate formData once appOptions are loaded
   watch(
@@ -272,64 +143,4 @@
     },
     { immediate: true },
   );
-
-  const checkFormComplete = async () => {
-    if (
-      formData.value.graph_name !== null &&
-      formData.value.graph_name !== "" &&
-      formData.value.month !== null &&
-      formData.value.month !== "" &&
-      formData.value.graph_type !== "" &&
-      formData.value.graph_type !== null &&
-      (formData.value.graph_type !== 4 ||
-        (formData.value.graph_type == 4 &&
-          formData.value.tag_id !== null &&
-          formData.value.tag_id !== ""))
-    ) {
-      formComplete.value = true;
-    } else {
-      formComplete.value = false;
-    }
-  };
-
-  const submitForm = () => {
-    if (props.widget == 1) {
-      const updatedOptions = {
-        widget1_graph_name: formData.value.graph_name,
-        widget1_month: formData.value.month,
-        widget1_tag_id: formData.value.tag_id,
-        widget1_type_id: formData.value.graph_type,
-        widget1_exclude: JSON.stringify(formData.value.exclude),
-      };
-      editOptions(updatedOptions);
-    } else if (props.widget == 2) {
-      const updatedOptions = {
-        widget2_graph_name: formData.value.graph_name,
-        widget2_month: formData.value.month,
-        widget2_tag_id: formData.value.tag_id,
-        widget2_type_id: formData.value.graph_type,
-        widget2_exclude: JSON.stringify(formData.value.exclude),
-      };
-      editOptions(updatedOptions);
-    } else if (props.widget == 3) {
-      const updatedOptions = {
-        widget3_graph_name: formData.value.graph_name,
-        widget3_month: formData.value.month,
-        widget3_tag_id: formData.value.tag_id,
-        widget3_type_id: formData.value.graph_type,
-        widget3_exclude: JSON.stringify(formData.value.exclude),
-      };
-      editOptions(updatedOptions);
-    }
-    formComplete.value = false;
-    menu.value = false;
-  };
-
-  const onMenuStateChange = isOpen => {
-    if (!isOpen) {
-      resetForm();
-    }
-  };
-
-  const resetForm = () => {};
 </script>
