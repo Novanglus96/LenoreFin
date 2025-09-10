@@ -16,15 +16,6 @@
           :end_integer="timeframe"
           :account="[account_id]"
           @change-time="clickChangeTime"
-          v-if="!isMobile"
-        />
-        <AccountForecastWidgetMobile
-          :key="account_id + ':' + timeframe"
-          :start_integer="14"
-          :end_integer="timeframe"
-          :account="[account_id]"
-          @change-time="clickChangeTime"
-          v-else
         />
       </v-col>
     </v-row>
@@ -46,7 +37,6 @@
 </template>
 <script setup>
   import AccountForecastWidget from "@/components/AccountForecastWidget.vue";
-  import AccountForecastWidgetMobile from "@/components/AccountForecastWidgetMobile.vue";
   import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vue";
   import AccountTransactionsWidgetMobile from "@/components/AccountTransactionsWidgetMobile.vue";
   import AccountHeaderWidget from "@/components/AccountHeaderWidget.vue";
