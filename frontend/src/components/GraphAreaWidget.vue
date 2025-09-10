@@ -16,7 +16,7 @@
         <v-card-text
           class="d-flex justify-center align-center pa-0 ga-0 ma-0 w-100"
         >
-          <PieGraphWidgetNew
+          <PieGraphWidget
             :key="1"
             :graph_items="getGraphData(i)"
             :isLoading="getGraphisLoading(i)"
@@ -41,7 +41,7 @@
         <v-card-text
           class="d-flex justify-center align-center pa-0 ga-0 ma-0 w-100"
         >
-          <PieGraphWidgetNew
+          <PieGraphWidget
             :graph_items="getGraphData(page)"
             :isLoading="getGraphisLoading(page)"
             :key="page"
@@ -53,7 +53,7 @@
   </v-row>
 </template>
 <script setup>
-  import PieGraphWidgetNew from "@/components/PieGraphWidgetNew.vue";
+  import PieGraphWidget from "@/components/PieGraphWidget.vue";
   import { useDisplay } from "vuetify";
   import { useGraphsNew } from "@/composables/tagsComposable";
   import { useOptions } from "@/composables/optionsComposable";
