@@ -6,8 +6,7 @@
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded">
-        <RemindersWidget v-if="!isMobile" />
-        <RemindersWidgetMobile v-if="isMobile" />
+        <RemindersWidget />
       </v-col>
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
@@ -15,12 +14,6 @@
         <UpcomingTransactionsWidget
           key="upcoming"
           view_type="Upcoming Transactions"
-          v-if="!isMobile"
-        />
-        <UpcomingTransactionsWidgetMobile
-          key="upcoming"
-          view_type="Upcoming Transactions"
-          v-if="isMobile"
         />
       </v-col>
     </v-row>
@@ -29,14 +22,8 @@
 <script setup>
   import GraphAreaWidget from "@/components/GraphAreaWidget.vue";
   import RemindersWidget from "@/components/RemindersWidget.vue";
-  import RemindersWidgetMobile from "@/components/RemindersWidgetMobile.vue";
   import UpcomingTransactionsWidget from "@/components/UpcomingTransactionsWidget.vue";
-  import UpcomingTransactionsWidgetMobile from "@/components/UpcomingTransactionsWidgetMobile.vue";
   import BudgetsWidget from "@/components/BudgetsWidget.vue";
-  import { useDisplay } from "vuetify";
-
-  const { smAndDown } = useDisplay();
-  const isMobile = smAndDown;
 </script>
 <style scoped>
   .custom-height {
