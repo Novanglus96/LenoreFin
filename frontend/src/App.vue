@@ -18,7 +18,7 @@
   />
 
   <v-app v-else>
-    <VueQueryDevtools />
+    <VueQueryDevtools button-position="bottom-left" />
     <AppNavigationVue />
     <v-main>
       <v-container class="bg-primary h-100" fluid>
