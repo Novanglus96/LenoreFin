@@ -1,32 +1,21 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
 from accounts.models import Account
 from transactions.models import TransactionDetail
 from tags.api.schemas.tag_graph import TagGraphOut
 from administration.api.dependencies.log_to_db import logToDB
-from django.shortcuts import get_object_or_404
-from typing import List
 from django.db.models import (
     Case,
     When,
     Q,
-    IntegerField,
     Value,
     F,
     CharField,
     Sum,
     Subquery,
     OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
 )
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+from django.db.models.functions import Concat, Coalesce
 import pytz
 import os
 from django.utils import timezone
@@ -172,11 +161,15 @@ def list_transactions_bytag(request, tag: int):
         # Prepare the datasets
         datasets = []
         this_year_dataset = DatasetObject(
-            label=this_year, backgroundColor="#046959", data=this_year_totals
+            label=f"{this_year}",
+            backgroundColor="#046959",
+            data=this_year_totals,
         )
         datasets.append(this_year_dataset)
         last_year_dataset = DatasetObject(
-            label=last_year, backgroundColor="#c2fff5", data=last_year_totals
+            label=f"{last_year}",
+            backgroundColor="#c2fff5",
+            data=last_year_totals,
         )
         datasets.append(last_year_dataset)
 
