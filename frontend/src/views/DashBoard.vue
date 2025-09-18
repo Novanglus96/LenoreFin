@@ -11,10 +11,7 @@
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded">
-        <UpcomingTransactionsWidget
-          key="upcoming"
-          view_type="Upcoming Transactions"
-        />
+        <AccountTransactionsWidget key="upcoming" :upcoming="true" />
       </v-col>
     </v-row>
   </div>
@@ -22,7 +19,7 @@
 <script setup>
   import GraphAreaWidget from "@/components/GraphAreaWidget.vue";
   import RemindersWidget from "@/components/RemindersWidget.vue";
-  import UpcomingTransactionsWidget from "@/components/UpcomingTransactionsWidget.vue";
+  import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vue";
   import BudgetsWidget from "@/components/BudgetsWidget.vue";
 </script>
 <style scoped>

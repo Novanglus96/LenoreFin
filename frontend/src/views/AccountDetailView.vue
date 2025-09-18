@@ -24,12 +24,6 @@
         <AccountTransactionsWidget
           :key="account_id"
           :account="parseFloat(account_id)"
-          v-if="!isMobile"
-        />
-        <AccountTransactionsWidgetMobile
-          :key="account_id"
-          :account="parseFloat(account_id)"
-          v-else
         />
       </v-col>
     </v-row>
@@ -38,15 +32,10 @@
 <script setup>
   import AccountForecastWidget from "@/components/AccountForecastWidget.vue";
   import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vue";
-  import AccountTransactionsWidgetMobile from "@/components/AccountTransactionsWidgetMobile.vue";
   import AccountHeaderWidget from "@/components/AccountHeaderWidget.vue";
   import { useRoute } from "vue-router";
   import { ref, watch } from "vue";
   import { useTransactionsStore } from "@/stores/transactions";
-  import { useDisplay } from "vuetify";
-
-  const { smAndDown } = useDisplay();
-  const isMobile = smAndDown;
 
   const transactions_store = useTransactionsStore();
   const route = useRoute();

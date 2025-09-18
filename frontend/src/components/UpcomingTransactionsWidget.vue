@@ -146,11 +146,22 @@
                       v-if="transaction.paycheck"
                       color="amber"
                     ></v-icon>
-                    <v-icon
-                      icon="mdi-checkbook"
-                      color="amber"
-                      v-if="transaction.checkNumber"
-                    ></v-icon>
+                    <div class="icon-with-text" v-if="transaction.checkNumber">
+                      <v-icon
+                        icon="mdi-checkbook"
+                        color="amber"
+                        v-bind="props"
+                      ></v-icon>
+                      <span
+                        :class="
+                          transaction.status.id == 1
+                            ? 'font-italic text-grey icon-text'
+                            : 'font-weight-bold text-black icon-text'
+                        "
+                      >
+                        #{{ transaction.checkNumber }}
+                      </span>
+                    </div>
                   </v-col>
                   <v-col
                     class="ma-0 pa-0 ga-0 text-right font-weight-bold text-truncate"

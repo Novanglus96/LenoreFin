@@ -31,14 +31,7 @@
           :account="account_id"
           :maxdays="timeframe"
           :forecast="true"
-          v-if="account_id && !isMobile"
-        />
-        <AccountTransactionsWidgetMobile
-          :key="account_id + ':' + timeframe"
-          :account="account_id"
-          :maxdays="timeframe"
-          :forecast="true"
-          v-if="account_id && isMobile"
+          v-if="account_id"
         />
       </v-col>
     </v-row>
@@ -47,7 +40,6 @@
 <script setup>
   import AccountForecastWidget from "@/components/AccountForecastWidget.vue";
   import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vue";
-  import AccountTransactionsWidgetMobile from "@/components/AccountTransactionsWidgetMobile.vue";
   import ForecastHeaderWidget from "@/components/ForecastHeaderWidget.vue";
   import ForecastHeaderWidgetMobile from "@/components/ForecastHeaderWidgetMobile.vue";
   import { ref } from "vue";

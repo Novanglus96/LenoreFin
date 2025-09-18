@@ -1,59 +1,122 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-white">
-    <template v-slot:append>
-      <v-tooltip text="File Import" location="top">
-        <template v-slot:activator="{ props }">
-          <v-btn
-            icon="mdi-file-import"
-            flat
-            variant="plain"
-            v-bind="props"
-            @click="importFileDialog = true"
-            :disabled="isActive"
-          ></v-btn>
-        </template>
-      </v-tooltip>
-      <FileImportForm
-        v-model="importFileDialog"
-        @update-dialog="updateImportFileDialog"
-      />
-    </template>
     <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary">Transactions</span>
+      <span class="text-subtitle-2 text-secondary">
+        {{ props.upcoming ? "Upcoming Transactions" : "Transactions" }}
+        <v-tooltip
+          text="File Import"
+          location="top"
+          v-if="!smAndDown && !props.upcoming"
+        >
+          <template v-slot:activator="{ props }">
+            <v-btn
+              icon="mdi-file-import"
+              flat
+              variant="plain"
+              v-bind="props"
+              @click="importFileDialog = true"
+              :disabled="isActive"
+              color="grey"
+            ></v-btn>
+          </template>
+        </v-tooltip>
+        <FileImportForm
+          v-model="importFileDialog"
+          @update-dialog="updateImportFileDialog"
+          v-if="!smAndDown"
+        />
+      </span>
     </template>
     <template v-slot:text>
-      <vue3-datatable
-        :rows="transactions ? transactions.transactions : []"
-        :columns="columns"
+      <!-- Large Display View -->
+      <v-data-table-server
+        :headers="displayHeaders"
+        :items="transactions ? transactions.transactions : []"
+        :items-length="transactions ? transactions.total_records : 0"
         :loading="isActive"
-        :totalRows="transactions ? transactions.total_records : 0"
-        :isServerMode="true"
-        :pageSize="transactions_store.pageinfo.page_size"
-        :hasCheckbox="true"
-        firstArrow="First"
-        lastArrow="Last"
-        previousArrow="Prev"
-        nextArrow="Next"
-        :showNumbersCount="3"
-        noDataContent="No transactions"
-        search=""
-        @rowSelect="rowSelected"
-        ref="trans_table"
-        skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="[transactions_store.pageinfo.page_size]"
-        :showPageSize="false"
-        paginationInfo="Showing {0} to {1} of {2} transactions"
-        @change="pageChanged"
-        class="alt-pagination"
+        item-value="id"
+        v-model:items-per-page="transactions_store.pageinfo.page_size"
+        :items-per-page-options="[
+          {
+            value: transactions_store.pageinfo.page_size,
+            title: transactions_store.pageinfo.page_size,
+          },
+        ]"
+        items-per-page-text="Transactions per page"
+        no-data-text="No transactions!"
+        loading-text="Loading transactions..."
+        disable-sort
+        :show-select="!props.upcoming"
+        fixed-footer
+        striped="odd"
+        density="compact"
+        expand-on-click
+        :hide-default-header="mdAndUp ? false : true"
+        :hide-default-footer="props.upcoming"
+        width="100%"
+        @update:model-value="rowChanged"
+        return-object
+        v-model="selected_all"
       >
-        <!--height="280px"-->
-        <template #status.transaction_status="row">
+        <template
+          v-slot:header.data-table-select="{
+            allSelected,
+            selectAll,
+            someSelected,
+          }"
+        >
+          <v-checkbox-btn
+            :indeterminate="someSelected && !allSelected"
+            :model-value="allSelected"
+            color="secondary"
+            @update:model-value="selectAll(!allSelected)"
+          ></v-checkbox-btn>
+        </template>
+
+        <template
+          v-slot:item.data-table-select="{
+            internalItem,
+            isSelected,
+            toggleSelect,
+          }"
+        >
+          <v-checkbox-btn
+            :model-value="isSelected(internalItem)"
+            color="secondary"
+            @update:model-value="toggleSelect(internalItem)"
+            :disabled="!isSelectable(internalItem.raw)"
+          ></v-checkbox-btn>
+        </template>
+        <template v-slot:bottom v-if="!props.upcoming">
+          <div class="text-center pt-2">
+            <v-pagination v-model="page" :length="pageCount"></v-pagination>
+          </div>
+        </template>
+        <template v-slot:[`header.transaction_date`] v-if="mdAndUp">
+          <div class="font-weight-bold">Date</div>
+        </template>
+        <template v-slot:[`header.pretty_total`] v-if="mdAndUp">
+          <div class="font-weight-bold">Amount</div>
+        </template>
+        <template v-slot:[`header.balance`] v-if="mdAndUp && !props.upcoming">
+          <div class="font-weight-bold">Balance</div>
+        </template>
+        <template v-slot:[`header.description`] v-if="mdAndUp">
+          <div class="font-weight-bold">Description</div>
+        </template>
+        <template v-slot:[`header.tags`] v-if="mdAndUp">
+          <div class="font-weight-bold">Tag(s)</div>
+        </template>
+        <template v-slot:[`header.pretty_account`] v-if="mdAndUp">
+          <div class="font-weight-bold">Account</div>
+        </template>
+        <template v-slot:[`item.status`]="{ item }" v-if="mdAndUp">
           <v-tooltip text="Pending" location="top">
             <template v-slot:activator="{ props }">
               <v-icon
                 icon="mdi-circle-medium"
                 color="grey"
-                v-if="row.value.status.id == 1"
+                v-if="item.status.id == 1"
                 v-bind="props"
               ></v-icon>
             </template>
@@ -63,7 +126,7 @@
               <v-icon
                 icon="mdi-check-bold"
                 color="green"
-                v-if="row.value.status.id == 2"
+                v-if="item.status.id == 2"
                 v-bind="props"
               ></v-icon>
             </template>
@@ -73,7 +136,7 @@
               <v-icon
                 icon="mdi-alpha-r-circle-outline"
                 color="green"
-                v-if="row.value.status.id == 3"
+                v-if="item.status.id == 3"
                 v-bind="props"
               ></v-icon>
             </template>
@@ -82,7 +145,7 @@
             <template v-slot:activator="{ props }">
               <v-icon
                 icon="mdi-paperclip"
-                v-if="row.value.attachments"
+                v-if="item.attachments"
                 color="grey"
                 v-bind="props"
               ></v-icon>
@@ -92,7 +155,7 @@
             <template v-slot:activator="{ props }">
               <v-icon
                 icon="mdi-chart-box"
-                v-if="row.value.simulated"
+                v-if="item.simulated"
                 color="grey"
                 v-bind="props"
               ></v-icon>
@@ -102,11 +165,7 @@
             <template v-slot:activator="{ props }">
               <v-icon
                 icon="mdi-bell"
-                v-if="
-                  row.value.simulated &&
-                  row.value.id < 0 &&
-                  row.value.id >= -10000
-                "
+                v-if="item.simulated && item.id < 0 && item.id >= -10000"
                 color="amber"
                 v-bind="props"
               ></v-icon>
@@ -116,7 +175,7 @@
             <template v-slot:activator="{ props }">
               <v-icon
                 icon="mdi-cash-multiple"
-                v-if="row.value.paycheck"
+                v-if="item.paycheck"
                 color="amber"
                 v-bind="props"
               ></v-icon>
@@ -124,7 +183,7 @@
           </v-tooltip>
           <v-tooltip text="Check" location="top">
             <template v-slot:activator="{ props }">
-              <div class="icon-with-text" v-if="row.value.checkNumber">
+              <div class="icon-with-text" v-if="item.checkNumber">
                 <v-icon
                   icon="mdi-checkbook"
                   color="amber"
@@ -132,190 +191,374 @@
                 ></v-icon>
                 <span
                   :class="
-                    row.value.status.id == 1
+                    item.status.id == 1
                       ? 'font-italic text-grey icon-text'
                       : 'font-weight-bold text-black icon-text'
                   "
                 >
-                  #{{ row.value.checkNumber }}
+                  #{{ item.checkNumber }}
                 </span>
               </div>
             </template>
           </v-tooltip>
         </template>
-        <template #transaction_date="row">
+        <template v-slot:[`item.transaction_date`]="{ item }" v-if="mdAndUp">
           <span
             :class="
-              row.value.status.id == 1
+              item.status.id == 1
                 ? 'font-italic text-grey'
                 : 'font-weight-bold text-black'
             "
           >
-            {{ row.value.transaction_date }}
+            {{ item.transaction_date }}
           </span>
         </template>
-        <template #pretty_total="row">
+        <template v-slot:[`item.pretty_total`]="{ item }" v-if="mdAndUp">
+          <span :class="getClassForMoney(item.pretty_total, item.status.id)">
+            {{ formatCurrency(item.pretty_total) }}
+          </span>
+        </template>
+        <template
+          v-slot:[`item.balance`]="{ item }"
+          v-if="mdAndUp && !props.upcoming"
+        >
+          <span :class="getClassForMoney(item.balance, item.status.id)">
+            {{ formatCurrency(item.balance) }}
+          </span>
+        </template>
+        <template v-slot:[`item.description`]="{ item }" v-if="mdAndUp">
           <span
             :class="
-              getClassForMoney(row.value.pretty_total, row.value.status.id)
-            "
-          >
-            {{ formatCurrency(row.value.pretty_total) }}
-          </span>
-        </template>
-        <template #balance="row">
-          <span
-            :class="getClassForMoney(row.value.balance, row.value.status.id)"
-          >
-            {{ formatCurrency(row.value.balance) }}
-          </span>
-        </template>
-        <template #description="row">
-          <span
-            :class="
-              row.value.status.id == 1
+              item.status.id == 1
                 ? 'font-italic text-grey'
                 : 'font-weight-bold text-black'
             "
           >
-            {{ row.value.description }}
+            {{ item.description }}
           </span>
         </template>
-        <template #tags="row">
+        <template v-slot:[`item.tags`]="{ item }" v-if="mdAndUp">
           <span
             :class="
-              row.value.status.id == 1
+              item.status.id == 1
                 ? 'font-italic text-grey text-body-2'
                 : 'font-weight-bold text-black text-body-2'
             "
-            v-for="tag in row.value.tags"
+            v-for="tag in item.tags"
             :key="tag"
           >
             <v-icon
               icon="mdi-tag"
               size="x-small"
-              :color="row.value.status.id == 1 ? 'grey' : 'black'"
+              :color="item.status.id == 1 ? 'grey' : 'black'"
             ></v-icon>
             {{ tag }}&nbsp;
           </span>
         </template>
-        <template #pretty_account="row">
+        <template v-slot:[`item.pretty_account`]="{ item }" v-if="mdAndUp">
           <span
             :class="
-              row.value.status.id == 1
+              item.status.id == 1
                 ? 'font-italic text-grey'
                 : 'font-weight-bold text-black'
             "
           >
-            {{ row.value.pretty_account }}
+            {{ item.pretty_account }}
           </span>
         </template>
-      </vue3-datatable>
-      <div class="floating-button-group">
-        <v-tooltip text="Clear / Add Transaction(s)" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-invoice-text-clock"
-              flat
-              :disabled="clearDisable"
-              variant="plain"
-              @click="clickClearTransaction(selected, reminder_selected)"
-              v-bind="props"
-              v-if="!clearDisable"
-            ></v-btn>
-          </template>
-        </v-tooltip>
-        <v-tooltip text="Edit Transaction(s)" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              :icon="
-                selected.length > 1
-                  ? 'mdi-calendar-edit'
-                  : 'mdi-invoice-text-edit'
-              "
-              flat
-              :disabled="(selected && selected.length === 0) || editDisable"
-              variant="plain"
-              @click="displayEditForm"
-              v-bind="props"
-              v-if="!((selected && selected.length === 0) || editDisable)"
-            ></v-btn>
-          </template>
-        </v-tooltip>
-        <TransactionForm
-          v-model="transactionEditFormDialog"
-          @add-transaction="clickAddTransaction"
-          @edit-transaction="clickEditTransaction"
-          :isEdit="true"
-          @update-dialog="updateEditDialog"
-          :passedFormData="editTransaction"
-        />
-        <MultipleTransactionEditForm
-          v-model="showMultipleTransactionEditDialog"
-          @update-dialog="updateMultipleEditDialog"
-          :transactionIds="editTransactions"
-        />
-        <v-tooltip text="Remove Transaction(s)" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-invoice-remove"
-              flat
-              :disabled="(selected && selected.length === 0) || deleteDisable"
-              variant="plain"
-              color="error"
-              v-bind="props"
-              @click="showDeleteDialog = true"
-              v-if="!((selected && selected.length === 0) || deleteDisable)"
-            ></v-btn>
-          </template>
-        </v-tooltip>
-        <v-dialog width="500" v-model="showDeleteDialog">
-          <v-card title="Dialog">
-            <v-card-text>
-              Are you sure you want to delete these
-              {{ selected.length }} transactions?
-              <br />
-              <span class="text-red text-subtitle-2 font-italic">
-                * Reminder transactions will not be deleted.
-              </span>
-            </v-card-text>
+        <!-- Mobile View -->
+        <template v-slot:[`item.mobile`]="{ item }">
+          <v-container class="ma-0 pa-0 ga-0">
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0 font-weight-bold" cols="1">
+                <v-icon
+                  icon="mdi-circle-medium"
+                  color="grey"
+                  v-if="item.status.id == 1"
+                ></v-icon>
+                <v-icon
+                  icon="mdi-check-bold"
+                  color="green"
+                  v-if="item.status.id == 2"
+                  v-bind="props"
+                ></v-icon>
+                <v-icon
+                  icon="mdi-alpha-r-circle-outline"
+                  color="green"
+                  v-if="item.status.id == 3"
+                  v-bind="props"
+                ></v-icon>
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0" cols="3">
+                <span
+                  :class="
+                    item.status.id == 1
+                      ? 'font-italic text-grey text-body-2'
+                      : 'font-weight-bold text-black text-body-2'
+                  "
+                >
+                  {{ formatDate(item.transaction_date, true) }}
+                </span>
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0 text-right">
+                <span
+                  :class="getClassForMoney(item.pretty_total, item.status.id)"
+                >
+                  {{ formatCurrency(item.pretty_total) }}
+                </span>
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0 text-right" v-if="!props.upcoming">
+                <span :class="getClassForMoney(item.balance, item.status.id)">
+                  {{ formatCurrency(item.balance) }}
+                </span>
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0 font-weight-bold text-truncate">
+                <span
+                  :class="
+                    item.status.id == 1
+                      ? 'font-italic text-grey text-body-2'
+                      : 'font-weight-bold text-black text-body-2'
+                  "
+                >
+                  {{ item.description }}
+                </span>
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col
+                class="ma-0 pa-0 ga-0 text-secondary text-left font-weight-italic text-truncate"
+              >
+                <span
+                  :class="
+                    item.status.id == 1
+                      ? 'font-italic text-secondary-lighten-2 text-body-2'
+                      : 'font-weight-bold text-secondary text-body-2'
+                  "
+                >
+                  {{ item.pretty_account }}
+                </span>
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.attachments">
+                <v-icon
+                  icon="mdi-paperclip"
+                  color="grey"
+                  v-bind="props"
+                ></v-icon>
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.simulated">
+                <v-icon
+                  icon="mdi-chart-box"
+                  color="grey"
+                  v-bind="props"
+                ></v-icon>
+              </v-col>
+              <v-col
+                class="ma-0 pa-0 ga-0"
+                cols="1"
+                v-if="item.simulated && item.id < 0 && item.id >= -10000"
+              >
+                <v-icon icon="mdi-bell" color="amber" v-bind="props"></v-icon>
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.paycheck">
+                <v-icon icon="mdi-cash-multiple" color="amber"></v-icon>
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.checkNumber">
+                <v-icon
+                  icon="mdi-checkbook"
+                  color="amber"
+                  v-bind="props"
+                ></v-icon>
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
+                <span
+                  :class="
+                    item.status.id == 1
+                      ? 'font-italic text-grey text-body-2'
+                      : 'font-weight-bold text-black text-body-2'
+                  "
+                  v-for="tag in item.tags"
+                  :key="tag"
+                >
+                  <v-icon
+                    icon="mdi-tag"
+                    size="x-small"
+                    :color="item.status.id == 1 ? 'grey' : 'black'"
+                    v-if="tag"
+                  ></v-icon>
+                  <v-icon
+                    icon="mdi-tag-hidden"
+                    size="x-small"
+                    :color="item.status.id == 1 ? 'grey' : 'black'"
+                    v-else
+                  ></v-icon>
+                  {{ tag }}&nbsp;
+                </span>
+                <span
+                  :class="
+                    item.status.id == 1
+                      ? 'font-italic text-grey text-body-2'
+                      : 'font-weight-bold text-black text-body-2'
+                  "
+                  v-if="item.tags.length === 0"
+                >
+                  <v-icon
+                    icon="mdi-tag-hidden"
+                    size="x-small"
+                    :color="item.status.id == 1 ? 'grey' : 'black'"
+                  ></v-icon>
+                </span>
+              </v-col>
+            </v-row>
+          </v-container>
+        </template>
+        <template v-slot:top v-if="!props.upcoming">
+          <v-fab
+            key="fab"
+            :app="true"
+            color="success"
+            location="right bottom"
+            size="small"
+            icon
+            @click="transactionAddFormDialog = true"
+            v-bind="props"
+          >
+            <v-icon icon="mdi-invoice-plus"></v-icon>
+          </v-fab>
+          <TransactionForm
+            v-model="transactionAddFormDialog"
+            @add-transaction="clickAddTransaction"
+            @edit-transaction="clickEditTransaction"
+            :isEdit="false"
+            @update-dialog="updateAddDialog"
+            :account_id="props.account"
+            :passedFormData="blankForm"
+          />
+          <v-fab
+            key="fab"
+            :app="true"
+            :color="open ? '' : 'primary'"
+            location="right bottom"
+            size="small"
+            icon
+            :disabled="true"
+            variant="plain"
+          >
+            <v-icon></v-icon>
+            <v-speed-dial
+              v-model="open"
+              :location="menuLocation"
+              :transition="transition"
+              activator="parent"
+              persistent
+              :close-on-content-click="false"
+            >
+              <v-tooltip text="Uncheck All" location="left">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    icon="mdi-checkbox-multiple-marked-outline"
+                    key="1"
+                    color="warning"
+                    @click="uncheck_all"
+                    v-bind="props"
+                  ></v-btn>
+                </template>
+              </v-tooltip>
+              <v-tooltip text="Remove Transaction(s)" location="left">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    icon="mdi-invoice-remove"
+                    :disabled="
+                      (selected_transactions &&
+                        selected_transactions.length === 0) ||
+                      deleteDisable
+                    "
+                    color="error"
+                    v-bind="props"
+                    @click="showDeleteDialog = true"
+                    key="2"
+                  ></v-btn>
+                </template>
+              </v-tooltip>
+              <v-dialog width="500" v-model="showDeleteDialog">
+                <v-card title="Dialog">
+                  <v-card-text>
+                    Are you sure you want to delete these
+                    {{ selected_transactions.length }} transactions?
+                    <br />
+                    <span class="text-red text-subtitle-2 font-italic">
+                      * Reminder transactions will not be deleted.
+                    </span>
+                  </v-card-text>
 
-            <v-card-actions>
-              <v-spacer></v-spacer>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
 
-              <v-btn
-                text="Confirm"
-                @click="
-                  clickRemoveTransaction(selected);
-                  showDeleteDialog = false;
-                "
-              ></v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-        <v-tooltip text="Add New Transaction" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-invoice-plus"
-              flat
-              variant="plain"
-              color="success"
-              @click="transactionAddFormDialog = true"
-              v-bind="props"
-              v-if="!isActive"
-            ></v-btn>
-          </template>
-        </v-tooltip>
-        <TransactionForm
-          v-model="transactionAddFormDialog"
-          @add-transaction="clickAddTransaction"
-          @edit-transaction="clickEditTransaction"
-          :isEdit="false"
-          @update-dialog="updateAddDialog"
-          :account_id="props.account"
-          :passedFormData="blankForm"
-        />
-      </div>
+                    <v-btn
+                      text="Confirm"
+                      @click="
+                        clickRemoveTransaction(selected_transactions);
+                        showDeleteDialog = false;
+                      "
+                    ></v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+              <v-tooltip text="Edit Transaction(s)" location="left">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    :icon="
+                      selected_transactions.length > 1
+                        ? 'mdi-calendar-edit'
+                        : 'mdi-invoice-text-edit'
+                    "
+                    :disabled="
+                      (selected_transactions &&
+                        selected_transactions.length === 0) ||
+                      editDisable
+                    "
+                    @click="displayEditForm"
+                    v-bind="props"
+                    key="3"
+                  ></v-btn>
+                </template>
+              </v-tooltip>
+              <TransactionForm
+                v-model="transactionEditFormDialog"
+                @add-transaction="clickAddTransaction"
+                @edit-transaction="clickEditTransaction"
+                :isEdit="true"
+                @update-dialog="updateEditDialog"
+                :passedFormData="editTransaction"
+              />
+              <MultipleTransactionEditForm
+                v-model="showMultipleTransactionEditDialog"
+                @update-dialog="updateMultipleEditDialog"
+                :transactionIds="editTransactions"
+              />
+              <v-tooltip text="Clear / Add Transaction(s)" location="left">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    icon="mdi-invoice-text-clock"
+                    :disabled="clearDisable"
+                    @click="
+                      clickClearTransaction(
+                        selected_transactions,
+                        selected_reminders,
+                      )
+                    "
+                    v-bind="props"
+                    key="4"
+                  ></v-btn>
+                </template>
+              </v-tooltip>
+            </v-speed-dial>
+          </v-fab>
+        </template>
+      </v-data-table-server>
     </template>
   </v-card>
 </template>
@@ -325,11 +568,11 @@
   import { useReminders } from "@/composables/remindersComposable";
   import TransactionForm from "@/components/TransactionForm.vue";
   import FileImportForm from "@/components/FileImportForm.vue";
-  import Vue3Datatable from "@bhplugin/vue3-datatable";
-  import "@bhplugin/vue3-datatable/dist/style.css";
   import { useTransactionsStore } from "@/stores/transactions";
   import MultipleTransactionEditForm from "@/components/MultipleTransactionEditForm.vue";
+  import { useDisplay } from "vuetify";
 
+  const { smAndDown, mdAndUp } = useDisplay();
   const transactions_store = useTransactionsStore();
   const today = new Date();
   const year = today.getFullYear();
@@ -345,12 +588,14 @@
   const editDisable = ref(true);
   const clearDisable = ref(true);
   const editTransactions = ref([]);
+  const open = ref(false);
 
   const props = defineProps({
     account: Number,
     maxdays: { type: Number, default: 14 },
     forecast: { type: Boolean, default: false },
     dateLimit: String,
+    upcoming: { type: Boolean, default: false },
   });
   const emit = defineEmits([
     "addTransaction",
@@ -412,10 +657,10 @@
   } = useTransactions();
 
   const displayEditForm = () => {
-    if (selected.value.length === 1) {
+    if (selected_transactions.value.length === 1) {
       transactionEditFormDialog.value = true;
     } else {
-      editTransactions.value = selected.value;
+      editTransactions.value = selected_transactions.value;
       showMultipleTransactionEditDialog.value = true;
     }
   };
@@ -424,23 +669,33 @@
     () => !(isLoading.value === false && isFetching.value === false),
   );
   const { addReminderTransaction } = useReminders();
-  const pageChanged = data => {
-    transactions_store.pageinfo.page = data.current_page;
-  };
 
-  const selected = ref([]);
-  const reminder_selected = ref([]);
-  const columns = ref([
-    { field: "id", title: "ID", isUnique: true, hide: true },
-    { field: "status.transaction_status", title: "", width: "115px" },
-    { field: "transaction_date", title: "Date", type: "date", width: "120px" },
-    { field: "pretty_total", title: "Amount", type: "number", width: "100px" },
-    { field: "balance", title: "Balance", width: "100px" },
-    { field: "description", title: "Description" },
-    { field: "tags", title: "Tag(s)", width: "200px" },
-    { field: "pretty_account", title: "Account" },
-    { field: "reminder_id", title: "reminder_id", hide: true },
+  const selected_transactions = ref([]);
+  const selected_reminders = ref([]);
+  const selected_all = ref([]);
+  const isSelectable = item => item.id > -10000;
+
+  const headers = ref([
+    { title: "", key: "status", width: "115px" },
+    { title: "Date", key: "transaction_date", width: "120px" },
+    { title: "Amount", key: "pretty_total", width: "100px" },
+    { title: "Balance", key: "balance", width: "100px" },
+    { title: "Description", key: "description" },
+    { title: "Tag(s)", key: "tags", width: "200px" },
+    { title: "Account", key: "pretty_account" },
   ]);
+  const displayHeaders = computed(() => {
+    if (mdAndUp.value) {
+      // If upcoming, filter out the "balance" header
+      if (props.upcoming) {
+        return headers.value.filter(h => h.key !== "balance");
+      }
+      // Otherwise, return all headers
+      return headers.value;
+    }
+    // For small screens, use your single mobile column
+    return [{ title: "", key: "mobile" }];
+  });
   const getClassForMoney = (amount, status) => {
     let color = "";
     let font = "";
@@ -463,36 +718,45 @@
 
     return color + " " + font;
   };
-  const rowSelected = () => {
-    selected.value = [];
-    reminder_selected.value = [];
-    let selectedrows = trans_table.value.getSelectedRows();
-    for (const selectedrow of selectedrows) {
+  const uncheck_all = () => {
+    selected_transactions.value = [];
+    selected_reminders.value = [];
+    selected_all.value = [];
+    open.value = false;
+  };
+  const rowChanged = newSelection => {
+    selected_transactions.value = [];
+    selected_reminders.value = [];
+    for (const selectedrow of newSelection) {
       if (selectedrow.id > 0) {
-        selected.value.push(selectedrow.id);
+        selected_transactions.value.push(selectedrow.id);
         editTransaction.value = selectedrow;
       } else {
         let reminder_trans_obj = {
           reminder_id: selectedrow.reminder_id,
           transaction_date: selectedrow.transaction_date,
         };
-        reminder_selected.value.push(reminder_trans_obj);
+        selected_reminders.value.push(reminder_trans_obj);
       }
     }
-    if (reminder_selected.value.length == 0) {
+    if (selected_reminders.value.length == 0) {
       deleteDisable.value = false;
       editDisable.value = false;
     } else {
       deleteDisable.value = true;
       editDisable.value = true;
     }
-    if (selected.value.length > 0 || reminder_selected.value.length > 0) {
+    if (
+      selected_transactions.value.length > 0 ||
+      selected_reminders.value.length > 0
+    ) {
       clearDisable.value = false;
+      open.value = true;
     } else {
       clearDisable.value = true;
+      open.value = false;
     }
   };
-  const trans_table = ref(null);
 
   const clickAddTransaction = async () => {
     emit("addTransaction", props.account);
@@ -500,17 +764,19 @@
 
   const clickRemoveTransaction = async transactions => {
     removeTransaction(transactions);
-    trans_table.value.clearSelectedRows();
+    selected_all.value = [];
   };
 
   const clickClearTransaction = async (transactions, reminderTransactions) => {
     clearTransaction(transactions);
-    trans_table.value.clearSelectedRows();
+    open.value = false;
+    selected_all.value = [];
     reminderTransactions.forEach(transaction => {
       addReminderTransaction(transaction);
     });
-    selected.value = [];
-    reminder_selected.value = [];
+    selected_transactions.value = [];
+    selected_reminders.value = [];
+    clearDisable.value = true;
   };
 
   const clickEditTransaction = async transaction_id => {
@@ -539,25 +805,22 @@
       maximumFractionDigits: 2,
     }).format(value);
   };
-</script>
-<style>
-  /* alt-pagination */
-  .alt-pagination .bh-pagination .bh-page-item {
-    width: auto; /* equivalent to w-max */
-    min-width: 32px;
-    border-radius: 0.25rem; /* equivalent to rounded */
-  }
-  /* Customize the color of the selected page number */
-  .alt-pagination .bh-pagination .bh-page-item.bh-active {
-    background-color: #06966a; /* Change this to your desired color */
-    border-color: black;
-    font-weight: bold; /* Optional: Make the text bold */
-  }
-  .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-    background-color: #ff5900;
-    border-color: black;
-  }
+  const formatDate = (input, padDay = false) => {
+    // Normalize input to a Date object
+    const date = input instanceof Date ? input : new Date(input);
 
+    if (isNaN(date)) {
+      console.warn("Invalid date:", input);
+      return "";
+    }
+
+    const month = date.toLocaleString("en-US", { month: "short" }); // 'Sep'
+    const day = date.getDate(); // 16
+
+    return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
+  };
+</script>
+<style scoped>
   .icon-with-text {
     position: relative;
     display: inline-block;
@@ -581,4 +844,6 @@
     gap: 1px;
     z-index: 1000; /* Ensure it appears above most content */
   }
+  /* Change selected row background */
+  /* reach into child component DOM with :deep */
 </style>
