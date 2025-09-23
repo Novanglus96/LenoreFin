@@ -16,6 +16,7 @@
           variant="upcoming"
           :data="transactions"
           :loading="isLoading"
+          :fetching="isFetching"
         />
       </v-col>
     </v-row>
@@ -28,7 +29,7 @@
   import BudgetsWidget from "@/components/BudgetsWidget.vue";
   import { useTransactions } from "@/composables/transactionsComposable";
 
-  const { isLoading, transactions } = useTransactions();
+  const { isLoading, transactions, isFetching } = useTransactions();
 </script>
 <style scoped>
   .custom-height {

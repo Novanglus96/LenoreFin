@@ -31,6 +31,7 @@
           variant="account"
           :data="transactions"
           :loading="isLoading"
+          :fetching="isFetching"
         />
       </v-col>
     </v-row>
@@ -46,7 +47,7 @@
   import { useDisplay } from "vuetify";
   import { useTransactions } from "@/composables/transactionsComposable";
 
-  const { isLoading, transactions } = useTransactions();
+  const { isLoading, transactions, isFetching } = useTransactions();
   const { smAndDown } = useDisplay();
   const isMobile = smAndDown;
 

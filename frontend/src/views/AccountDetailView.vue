@@ -26,6 +26,7 @@
           variant="account"
           :data="transactions"
           :loading="isLoading"
+          :fetching="isFetching"
         />
       </v-col>
     </v-row>
@@ -44,7 +45,7 @@
   const route = useRoute();
   const account_id = ref(route.params.accountID);
   const timeframe = ref(90);
-  const { isLoading, transactions } = useTransactions();
+  const { isLoading, transactions, isFetching } = useTransactions();
 
   watch(
     () => route.params.accountID,

@@ -45,6 +45,7 @@
           variant="tag"
           :data="tag_transactions"
           :loading="isLoading"
+          :fetching="isFetching"
         />
       </v-col>
     </v-row>
@@ -82,7 +83,9 @@
     },
   });
 
-  const { tag_transactions, isLoading } = useGraphTransactions(props.tagID);
+  const { tag_transactions, isLoading, isFetching } = useGraphTransactions(
+    props.tagID,
+  );
   const this_year_avg = computed(() =>
     tag_transactions.value.year1_avg ? tag_transactions.value.year1_avg : 0,
   );

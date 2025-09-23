@@ -185,7 +185,11 @@ export function useMainTags() {
 
 export function useGraphs(widget_id) {
   const queryClient = useQueryClient();
-  const { data: tag_graph, isLoading } = useQuery({
+  const {
+    data: tag_graph,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["tag_graph", { widgetID: widget_id }],
     queryFn: () => getGraphByTagsFunction(widget_id),
     select: response => response,
@@ -195,6 +199,7 @@ export function useGraphs(widget_id) {
   return {
     isLoading,
     tag_graph,
+    isFetching,
   };
 }
 

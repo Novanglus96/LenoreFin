@@ -33,9 +33,10 @@
         :headers="displayHeaders"
         :items="localTransactions"
         :items-length="localTransactions.total_records"
-        :loading="localLoading"
+        :loading="isActive"
         item-value="id"
         v-model:items-per-page="transactions_store.pageinfo.page_size"
+        v-model:page="localPage"
         :items-per-page-options="[
           {
             value: transactions_store.pageinfo.page_size,
@@ -55,8 +56,10 @@
         :hide-default-footer="props.variant === 'upcoming'"
         width="100%"
         @update:model-value="rowChanged"
+        @update:options="pageTurned"
         return-object
         v-model="selected_all"
+        :page="localPage"
       >
         <template
           v-slot:header.data-table-select="{
@@ -89,7 +92,10 @@
         </template>
         <template v-slot:bottom v-if="props.variant != 'upcoming'">
           <div class="text-center pt-2">
-            <v-pagination v-model="page" :length="pageCount"></v-pagination>
+            <v-pagination
+              v-model="localPage"
+              :length="localPageTotal"
+            ></v-pagination>
           </div>
         </template>
         <template v-slot:[`header.transaction_date`] v-if="mdAndUp">
@@ -627,6 +633,8 @@
   const localTransactions = ref(props.data ? props.data.transactions : []);
   const localLoading = ref(props.loading);
   const localFetching = ref(props.fetching);
+  const localPage = ref(props.data ? props.data.current_page : 1);
+  const localPageTotal = ref(props.data ? props.data.total_pages : 1);
 
   const title = computed(() => {
     return {
@@ -640,6 +648,8 @@
     () => props.data,
     val => {
       localTransactions.value = val.transactions;
+      localPage.value = val.current_page;
+      localPageTotal.value = val.total_pages;
     },
   );
 
@@ -860,6 +870,10 @@
 
     return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
   };
+
+  function pageTurned({ page }) {
+    transactions_store.pageinfo.page = page;
+  }
 </script>
 <style scoped>
   .icon-with-text {
