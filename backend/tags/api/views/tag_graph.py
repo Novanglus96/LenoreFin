@@ -1,25 +1,16 @@
 from ninja import Router
 from ninja.errors import HttpError
-from accounts.models import Account
 from transactions.models import TransactionDetail
 from tags.api.schemas.tag_graph import TagGraphOut
 from administration.api.dependencies.log_to_db import logToDB
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-)
-from django.db.models.functions import Concat, Coalesce
 import pytz
 import os
 from django.utils import timezone
 from accounts.api.schemas.forecast import DatasetObject, GraphData
+from transactions.api.dependencies.get_transactions_by_tag import (
+    get_transactions_by_tag,
+)
+from datetime import date
 
 tag_graph_router = Router(tags=["Tag Graphs"])
 
@@ -49,127 +40,61 @@ def list_transactions_bytag(request, tag: int):
         this_month = today_tz.month
         this_year = today_tz.year
         last_year = today_tz.year - 1
-        source_account_name = Account.objects.filter(
-            id=OuterRef("transaction__source_account_id")
-        ).values("account_name")[:1]
-        destination_account_name = Account.objects.filter(
-            id=OuterRef("transaction__destination_account_id")
-        ).values("account_name")[:1]
+        first_day_last_year = date(last_year, 1, 1)
 
-        # Retrieve all transactions for tag
-        alltrans = TransactionDetail.objects.filter(
-            Q(tag__id=tag) & Q(transaction__status__id__gt=1)
-        ).order_by("-transaction__transaction_date")
-
-        # Annotate source account names
-        alltrans = alltrans.annotate(
-            source_name=Coalesce(
-                Subquery(source_account_name), Value("Unknown Account")
-            )
+        # Get transactions
+        tags = [tag]
+        tag_transactions = get_transactions_by_tag(
+            today_tz, False, first_day_last_year, tags, True
         )
 
-        # Annotate destination account names
-        alltrans = alltrans.annotate(
-            destination_name=Coalesce(
-                Subquery(destination_account_name), Value("Unknown Account")
+        # Loop through transactions
+        current_year_total = 0
+        previous_year_total = 0
+        last_year_monthly_totals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        this_year_monthly_totals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        for transaction in tag_transactions:
+            transaction_detail = TransactionDetail.objects.get(
+                transaction__id=transaction.id, tag__id=tag
             )
-        )
-
-        # Annotate pretty account
-        alltrans = alltrans.annotate(
-            pretty_account=Case(
-                When(
-                    transaction__transaction_type_id=3,
-                    then=Concat(
-                        F("source_name"),
-                        Value(" => "),
-                        F("destination_name"),
-                    ),
-                ),
-                default=F("source_name"),
-                output_field=CharField(),  # Correctly specify the output field
-            )
-        )
-
-        # Filter transactions for current year
-        thisyear_trans = alltrans.filter(
-            transaction__transaction_date__year=this_year
-        ).order_by("-transaction__transaction_date")
-
-        # Filter transactions for last year
-        lastyear_trans = alltrans.filter(
-            transaction__transaction_date__year=last_year
-        ).order_by("-transaction__transaction_date")
-
-        # Calculate the YTD total
-        this_year_total = 0
-        this_year_total = thisyear_trans.aggregate(
-            total_amount=Sum("detail_amt")
-        )["total_amount"]
-        if this_year_total is not None:
-            this_year_total = abs(this_year_total)
-        else:
-            this_year_total = 0
-
-        # Calculate last years total
-        last_year_total = 0
-        last_year_total = lastyear_trans.aggregate(
-            total_amount=Sum("detail_amt")
-        )["total_amount"]
-        if last_year_total is not None:
-            last_year_total = abs(last_year_total)
-        else:
-            last_year_total = 0
+            if transaction.transaction_date.year == this_year:
+                current_year_total += abs(transaction_detail.detail_amt)
+                this_year_monthly_totals[
+                    transaction.transaction_date.month - 1
+                ] += abs(transaction_detail.detail_amt)
+            elif transaction.transaction_date.year == last_year:
+                previous_year_total += abs(transaction_detail.detail_amt)
+                last_year_monthly_totals[
+                    transaction.transaction_date.month - 1
+                ] += abs(transaction_detail.detail_amt)
+            transaction.balance = transaction_detail.detail_amt
 
         # Calculate YTD Monthly average
-        if this_year_total is not None:
-            this_year_avg = this_year_total / this_month
+        if current_year_total is not None:
+            this_year_avg = current_year_total / this_month
         else:
             this_year_avg = 0
         this_year_avg = round(this_year_avg, 2)
+
         # Calculate Last Year Monthly average
-        if last_year_total is not None:
-            last_year_avg = last_year_total / 12
+        if previous_year_total is not None:
+            last_year_avg = previous_year_total / 12
         else:
             last_year_avg = 0
         last_year_avg = round(last_year_avg, 2)
-
-        # Calculate this year monthly totals
-        this_year_totals = []
-        for month in range(1, this_month + 1):
-            monthly_total = 0
-            monthly_total = thisyear_trans.filter(
-                transaction__transaction_date__month=month
-            ).aggregate(monthly_total=Sum("detail_amt"))["monthly_total"]
-            if monthly_total is not None:
-                this_year_totals.append(abs(monthly_total))
-            else:
-                this_year_totals.append(0)
-
-        # Calculate last year monthly totals
-        last_year_totals = []
-        for month in range(1, 13):
-            monthly_total = 0
-            monthly_total = lastyear_trans.filter(
-                transaction__transaction_date__month=month
-            ).aggregate(monthly_total=Sum("detail_amt"))["monthly_total"]
-            if monthly_total is not None:
-                last_year_totals.append(abs(monthly_total))
-            else:
-                last_year_totals.append(0)
 
         # Prepare the datasets
         datasets = []
         this_year_dataset = DatasetObject(
             label=f"{this_year}",
             backgroundColor="#046959",
-            data=this_year_totals,
+            data=this_year_monthly_totals,
         )
         datasets.append(this_year_dataset)
         last_year_dataset = DatasetObject(
             label=f"{last_year}",
             backgroundColor="#c2fff5",
-            data=last_year_totals,
+            data=last_year_monthly_totals,
         )
         datasets.append(last_year_dataset)
 
@@ -199,7 +124,7 @@ def list_transactions_bytag(request, tag: int):
             year2=last_year,
             year1_avg=this_year_avg,
             year2_avg=last_year_avg,
-            transactions=list(alltrans),
+            transactions=tag_transactions,
         )
         logToDB(
             f"Tag details retrieved : {tag}",
