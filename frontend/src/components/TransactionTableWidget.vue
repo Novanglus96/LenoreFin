@@ -2,11 +2,11 @@
   <v-card variant="outlined" :elevation="4" class="bg-white">
     <template v-slot:title>
       <span class="text-subtitle-2 text-secondary">
-        {{ props.upcoming ? "Upcoming Transactions" : "Transactions" }}
+        {{ title[props.variant] }}
         <v-tooltip
           text="File Import"
           location="top"
-          v-if="!smAndDown && !props.upcoming"
+          v-if="!smAndDown && props.variant === 'account'"
         >
           <template v-slot:activator="{ props }">
             <v-btn
@@ -31,9 +31,9 @@
       <!-- Large Display View -->
       <v-data-table-server
         :headers="displayHeaders"
-        :items="transactions ? transactions.transactions : []"
-        :items-length="transactions ? transactions.total_records : 0"
-        :loading="isActive"
+        :items="localTransactions"
+        :items-length="localTransactions.total_records"
+        :loading="localLoading"
         item-value="id"
         v-model:items-per-page="transactions_store.pageinfo.page_size"
         :items-per-page-options="[
@@ -46,13 +46,13 @@
         no-data-text="No transactions!"
         loading-text="Loading transactions..."
         disable-sort
-        :show-select="!props.upcoming"
+        :show-select="props.variant === 'account'"
         fixed-footer
         striped="odd"
         density="compact"
         expand-on-click
         :hide-default-header="mdAndUp ? false : true"
-        :hide-default-footer="props.upcoming"
+        :hide-default-footer="props.variant === 'upcoming'"
         width="100%"
         @update:model-value="rowChanged"
         return-object
@@ -87,7 +87,7 @@
             :disabled="!isSelectable(internalItem.raw)"
           ></v-checkbox-btn>
         </template>
-        <template v-slot:bottom v-if="!props.upcoming">
+        <template v-slot:bottom v-if="props.variant != 'upcoming'">
           <div class="text-center pt-2">
             <v-pagination v-model="page" :length="pageCount"></v-pagination>
           </div>
@@ -96,15 +96,25 @@
           <div class="font-weight-bold">Date</div>
         </template>
         <template v-slot:[`header.pretty_total`] v-if="mdAndUp">
-          <div class="font-weight-bold">Amount</div>
+          <div class="font-weight-bold">
+            {{ props.variant === "tag" ? "Total Amt" : "Amount" }}
+          </div>
         </template>
-        <template v-slot:[`header.balance`] v-if="mdAndUp && !props.upcoming">
-          <div class="font-weight-bold">Balance</div>
+        <template
+          v-slot:[`header.balance`]
+          v-if="mdAndUp && props.variant != 'upcoming'"
+        >
+          <div class="font-weight-bold">
+            {{ props.variant === "tag" ? "Tag Amt" : "Balance" }}
+          </div>
         </template>
         <template v-slot:[`header.description`] v-if="mdAndUp">
           <div class="font-weight-bold">Description</div>
         </template>
-        <template v-slot:[`header.tags`] v-if="mdAndUp">
+        <template
+          v-slot:[`header.tags`]
+          v-if="mdAndUp && props.variant != 'tags'"
+        >
           <div class="font-weight-bold">Tag(s)</div>
         </template>
         <template v-slot:[`header.pretty_account`] v-if="mdAndUp">
@@ -220,7 +230,7 @@
         </template>
         <template
           v-slot:[`item.balance`]="{ item }"
-          v-if="mdAndUp && !props.upcoming"
+          v-if="mdAndUp && props.variant != 'upcoming'"
         >
           <span :class="getClassForMoney(item.balance, item.status.id)">
             {{ formatCurrency(item.balance) }}
@@ -237,7 +247,10 @@
             {{ item.description }}
           </span>
         </template>
-        <template v-slot:[`item.tags`]="{ item }" v-if="mdAndUp">
+        <template
+          v-slot:[`item.tags`]="{ item }"
+          v-if="mdAndUp && props.variant != 'tag'"
+        >
           <span
             :class="
               item.status.id == 1
@@ -306,11 +319,26 @@
                 >
                   {{ formatCurrency(item.pretty_total) }}
                 </span>
+                <v-icon
+                  icon="mdi-wallet-bifold"
+                  size="x-small"
+                  :color="item.status.id == 1 ? 'grey' : 'black'"
+                  v-if="props.variant === 'tag'"
+                ></v-icon>
               </v-col>
-              <v-col class="ma-0 pa-0 ga-0 text-right" v-if="!props.upcoming">
+              <v-col
+                class="ma-0 pa-0 ga-0 text-right"
+                v-if="props.variant != 'upcoming'"
+              >
                 <span :class="getClassForMoney(item.balance, item.status.id)">
                   {{ formatCurrency(item.balance) }}
                 </span>
+                <v-icon
+                  icon="mdi-tag-hidden"
+                  size="x-small"
+                  :color="item.status.id == 1 ? 'grey' : 'black'"
+                  v-if="props.variant === 'tag'"
+                ></v-icon>
               </v-col>
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
@@ -372,7 +400,7 @@
                 ></v-icon>
               </v-col>
             </v-row>
-            <v-row dense class="ma-0 pa-0 ga-0">
+            <v-row dense class="ma-0 pa-0 ga-0" v-if="props.variant != 'tag'">
               <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
                 <span
                   :class="
@@ -415,30 +443,29 @@
             </v-row>
           </v-container>
         </template>
-        <template v-slot:top v-if="!props.upcoming">
+        <template v-slot:top v-if="props.variant != 'upcoming'">
           <v-fab
-            key="fab"
+            key="fab1"
             :app="true"
             color="success"
             location="right bottom"
             size="small"
             icon
             @click="transactionAddFormDialog = true"
-            v-bind="props"
+            variant="elevated"
+            v-if="selected_all.length === 0 && props.variant === 'account'"
           >
             <v-icon icon="mdi-invoice-plus"></v-icon>
           </v-fab>
           <TransactionForm
             v-model="transactionAddFormDialog"
-            @add-transaction="clickAddTransaction"
-            @edit-transaction="clickEditTransaction"
             :isEdit="false"
             @update-dialog="updateAddDialog"
             :account_id="props.account"
             :passedFormData="blankForm"
           />
           <v-fab
-            key="fab"
+            key="fab2"
             :app="true"
             :color="open ? '' : 'primary'"
             location="right bottom"
@@ -528,8 +555,6 @@
               </v-tooltip>
               <TransactionForm
                 v-model="transactionEditFormDialog"
-                @add-transaction="clickAddTransaction"
-                @edit-transaction="clickEditTransaction"
                 :isEdit="true"
                 @update-dialog="updateEditDialog"
                 :passedFormData="editTransaction"
@@ -563,15 +588,17 @@
   </v-card>
 </template>
 <script setup>
-  import { ref, defineProps, defineEmits, computed } from "vue";
-  import { useTransactions } from "@/composables/transactionsComposable";
-  import { useReminders } from "@/composables/remindersComposable";
+  import { ref, defineProps, computed, watch } from "vue";
   import TransactionForm from "@/components/TransactionForm.vue";
   import FileImportForm from "@/components/FileImportForm.vue";
   import { useTransactionsStore } from "@/stores/transactions";
   import MultipleTransactionEditForm from "@/components/MultipleTransactionEditForm.vue";
   import { useDisplay } from "vuetify";
+  import { useTransactions } from "@/composables/transactionsComposable";
+  import { useReminders } from "@/composables/remindersComposable";
 
+  const { removeTransaction, clearTransaction } = useTransactions();
+  const { addReminderTransaction } = useReminders();
   const { smAndDown, mdAndUp } = useDisplay();
   const transactions_store = useTransactionsStore();
   const today = new Date();
@@ -591,18 +618,44 @@
   const open = ref(false);
 
   const props = defineProps({
-    account: Number,
-    maxdays: { type: Number, default: 14 },
-    forecast: { type: Boolean, default: false },
-    dateLimit: String,
-    upcoming: { type: Boolean, default: false },
+    variant: { type: String, default: "account" },
+    data: { type: Object },
+    loading: { type: Boolean, default: true },
+    fetching: { type: Boolean, default: true },
   });
-  const emit = defineEmits([
-    "addTransaction",
-    "removeTransaction",
-    "editTransaction",
-    "clearTransaction",
-  ]);
+
+  const localTransactions = ref(props.data ? props.data.transactions : []);
+  const localLoading = ref(props.loading);
+  const localFetching = ref(props.fetching);
+
+  const title = computed(() => {
+    return {
+      account: "Transactions",
+      tag: "Tag Transactions",
+      upcoming: "Upcoming Transactions",
+    };
+  });
+
+  watch(
+    () => props.data,
+    val => {
+      localTransactions.value = val.transactions;
+    },
+  );
+
+  watch(
+    () => props.loading,
+    val => {
+      localLoading.value = val;
+    },
+  );
+
+  watch(
+    () => props.fetching,
+    val => {
+      localFetching.value = val;
+    },
+  );
 
   const blankForm = ref({
     id: 0,
@@ -648,14 +701,6 @@
     destination_account_id: null,
   });
 
-  const {
-    isLoading,
-    isFetching,
-    transactions,
-    removeTransaction,
-    clearTransaction,
-  } = useTransactions();
-
   const displayEditForm = () => {
     if (selected_transactions.value.length === 1) {
       transactionEditFormDialog.value = true;
@@ -666,9 +711,8 @@
   };
 
   const isActive = computed(
-    () => !(isLoading.value === false && isFetching.value === false),
+    () => !(localLoading.value === false && localFetching.value === false),
   );
-  const { addReminderTransaction } = useReminders();
 
   const selected_transactions = ref([]);
   const selected_reminders = ref([]);
@@ -687,8 +731,11 @@
   const displayHeaders = computed(() => {
     if (mdAndUp.value) {
       // If upcoming, filter out the "balance" header
-      if (props.upcoming) {
+      if (props.variant === "upcoming") {
         return headers.value.filter(h => h.key !== "balance");
+      }
+      if (props.variant === "tag") {
+        return headers.value.filter(h => h.key !== "tags");
       }
       // Otherwise, return all headers
       return headers.value;
@@ -758,10 +805,6 @@
     }
   };
 
-  const clickAddTransaction = async () => {
-    emit("addTransaction", props.account);
-  };
-
   const clickRemoveTransaction = async transactions => {
     removeTransaction(transactions);
     selected_all.value = [];
@@ -769,18 +812,16 @@
 
   const clickClearTransaction = async (transactions, reminderTransactions) => {
     clearTransaction(transactions);
+    console.log("emitting clear transaction", transactions);
     open.value = false;
     selected_all.value = [];
     reminderTransactions.forEach(transaction => {
       addReminderTransaction(transaction);
+      console.log("emitting add reminder transaction", transaction);
     });
     selected_transactions.value = [];
     selected_reminders.value = [];
     clearDisable.value = true;
-  };
-
-  const clickEditTransaction = async transaction_id => {
-    emit("editTransaction", transaction_id);
   };
 
   const updateAddDialog = () => {

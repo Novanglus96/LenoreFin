@@ -21,9 +21,11 @@
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded">
-        <AccountTransactionsWidget
+        <TransactionTableWidget
           :key="account_id"
-          :account="parseFloat(account_id)"
+          variant="account"
+          :data="transactions"
+          :loading="isLoading"
         />
       </v-col>
     </v-row>
@@ -31,16 +33,18 @@
 </template>
 <script setup>
   import AccountForecastWidget from "@/components/AccountForecastWidget.vue";
-  import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vue";
+  import TransactionTableWidget from "@/components/TransactionTableWidget.vue";
   import AccountHeaderWidget from "@/components/AccountHeaderWidget.vue";
   import { useRoute } from "vue-router";
   import { ref, watch } from "vue";
   import { useTransactionsStore } from "@/stores/transactions";
+  import { useTransactions } from "@/composables/transactionsComposable";
 
   const transactions_store = useTransactionsStore();
   const route = useRoute();
   const account_id = ref(route.params.accountID);
   const timeframe = ref(90);
+  const { isLoading, transactions } = useTransactions();
 
   watch(
     () => route.params.accountID,

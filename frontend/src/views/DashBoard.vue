@@ -11,7 +11,12 @@
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded">
-        <AccountTransactionsWidget key="upcoming" :upcoming="true" />
+        <TransactionTableWidget
+          :key="1"
+          variant="upcoming"
+          :data="transactions"
+          :loading="isLoading"
+        />
       </v-col>
     </v-row>
   </div>
@@ -19,8 +24,11 @@
 <script setup>
   import GraphAreaWidget from "@/components/GraphAreaWidget.vue";
   import RemindersWidget from "@/components/RemindersWidget.vue";
-  import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vue";
+  import TransactionTableWidget from "@/components/TransactionTableWidget.vue";
   import BudgetsWidget from "@/components/BudgetsWidget.vue";
+  import { useTransactions } from "@/composables/transactionsComposable";
+
+  const { isLoading, transactions } = useTransactions();
 </script>
 <style scoped>
   .custom-height {

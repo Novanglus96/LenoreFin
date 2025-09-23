@@ -18,32 +18,32 @@
 </template>
 
 <script setup>
-import { computed, ref, defineOptions } from "vue";
-import { DoxenSidebar, VueDoxen } from "vue-doxen";
+  import { computed, ref, defineOptions } from "vue";
+  import { DoxenSidebar, VueDoxen } from "vue-doxen";
 
-// OPTIONAL: CSS file for minor layout/affordance improvements
-import "vue-doxen/vue-doxen.css";
+  // OPTIONAL: CSS file for minor layout/affordance improvements
+  import "vue-doxen/vue-doxen.css";
 
-// Components you want to document/demo
-import AccountForecastWidget from "../components/AccountForecastWidget.vue";
-import AccountTransactionsWidget from "../components/AccountTransactionsWidget.vue";
+  // Components you want to document/demo
+  import AccountForecastWidget from "../components/AccountForecastWidget.vue";
+  import TransactionTableWidget from "../components/TransactionTableWidget.vue";
 
-defineOptions({
-  name: "DocumentationPage",
-});
+  defineOptions({
+    name: "DocumentationPage",
+  });
 
-const selectedDemo = ref("AccountForecastWidget");
+  const selectedDemo = ref("AccountForecastWidget");
 
-const demos = computed(() => {
-  return {
-    // Pass the component in directly
-    AccountForecastWidget,
-    // or wrap it in a "demo" object to add
-    // documentation specific properties
-    ComponentB: {
-      component: AccountTransactionsWidget,
-      description: "Details about your component",
-    },
-  };
-});
+  const demos = computed(() => {
+    return {
+      // Pass the component in directly
+      AccountForecastWidget,
+      // or wrap it in a "demo" object to add
+      // documentation specific properties
+      ComponentB: {
+        component: TransactionTableWidget,
+        description: "Details about your component",
+      },
+    };
+  });
 </script>

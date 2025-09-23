@@ -122,7 +122,11 @@ async function createTagFunction(newTag) {
 
 export function useTags(tag_type) {
   const queryClient = useQueryClient();
-  const { data: tags, isLoading } = useQuery({
+  const {
+    data: tags,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["tags"],
     queryFn: () => getTagsFunction(tag_type),
     select: response => response,
@@ -145,6 +149,7 @@ export function useTags(tag_type) {
     isLoading,
     tags,
     addTag,
+    isFetching,
   };
 }
 

@@ -26,12 +26,11 @@
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded">
-        <AccountTransactionsWidget
+        <TransactionTableWidget
           :key="account_id + ':' + timeframe"
-          :account="account_id"
-          :maxdays="timeframe"
-          :forecast="true"
-          v-if="account_id"
+          variant="account"
+          :data="transactions"
+          :loading="isLoading"
         />
       </v-col>
     </v-row>
@@ -39,13 +38,15 @@
 </template>
 <script setup>
   import AccountForecastWidget from "@/components/AccountForecastWidget.vue";
-  import AccountTransactionsWidget from "@/components/AccountTransactionsWidget.vue";
+  import TransactionTableWidget from "@/components/TransactionTableWidget.vue";
   import ForecastHeaderWidget from "@/components/ForecastHeaderWidget.vue";
   import ForecastHeaderWidgetMobile from "@/components/ForecastHeaderWidgetMobile.vue";
   import { ref } from "vue";
   import { useTransactionsStore } from "@/stores/transactions";
   import { useDisplay } from "vuetify";
+  import { useTransactions } from "@/composables/transactionsComposable";
 
+  const { isLoading, transactions } = useTransactions();
   const { smAndDown } = useDisplay();
   const isMobile = smAndDown;
 
