@@ -6,7 +6,7 @@
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded">
-        <RemindersWidget />
+        <RemindersWidget variant="upcoming" />
       </v-col>
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>

@@ -1,7 +1,10 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-white">
     <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary" v-if="!props.allowEdit">
+      <span
+        class="text-subtitle-2 text-secondary"
+        v-if="props.variant === 'upcoming'"
+      >
         Upcoming Reminders
       </span>
       <span class="text-subtitle-2 text-secondary" v-else>Reminders</span>
@@ -13,9 +16,7 @@
             <v-btn
               icon="mdi-bell-cog"
               flat
-              :disabled="
-                (selected && selected.length === 0) || selected.length > 1
-              "
+              :disabled="selected_reminder.length === 0"
               variant="plain"
               @click="reminderEditFormDialog = true"
               v-bind="props"
@@ -34,7 +35,7 @@
             <v-btn
               icon="mdi-bell-remove"
               flat
-              :disabled="selected && selected.length === 0"
+              :disabled="selected_reminder.length === 0"
               variant="plain"
               color="error"
               v-bind="props"
@@ -45,8 +46,7 @@
         <v-dialog width="500" v-model="showDeleteDialog">
           <v-card title="Dialog">
             <v-card-text>
-              Are you sure you want to delete these
-              {{ selected.length }} reminders?
+              Are you sure you want to delete this reminder?
             </v-card-text>
 
             <v-card-actions>
@@ -55,7 +55,7 @@
               <v-btn
                 text="Confirm"
                 @click="
-                  clickRemoveReminder(selected);
+                  clickRemoveReminder();
                   showDeleteDialog = false;
                 "
               ></v-btn>
@@ -81,172 +81,185 @@
           :passedFormData="blankForm"
         />
       </div>
-      <!-- Large Display View -->
-      <vue3-datatable
-        :rows="reminders"
-        :columns="columns"
+      <v-data-table
+        :headers="displayHeaders"
+        :items="reminders ? reminders : []"
+        :items-length="reminders ? reminders.total_records : 0"
         :loading="isLoading"
-        :totalRows="reminders ? reminders.length : 0"
-        :isServerMode="false"
-        :pageSize="props.allowEdit ? 20 : 5"
-        :hasCheckbox="props.allowEdit"
-        noDataContent="No reminders"
-        ref="reminders_table"
-        skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="props.allowEdit ? [5, 10, 20] : [5]"
-        :showPageSize="props.allowEdit"
-        paginationInfo="Showing {0} to {1} of {2} reminders"
-        class="alt-pagination"
-        @rowSelect="rowSelected"
-        :sortable="false"
-        sortColumn="next_date"
-        sortDirection="asc"
-        v-if="!smAndDown"
+        item-value="id"
+        v-model:items-per-page="itemsPerPage"
+        :items-per-page-options="[
+          {
+            value: 5,
+            title: 5,
+          },
+        ]"
+        items-per-page-text="Reminders per page"
+        no-data-text="No reminders!"
+        loading-text="Loading reminders..."
+        disable-sort
+        :show-select="props.variant === 'full'"
+        fixed-footer
+        striped="odd"
+        density="compact"
+        :hide-default-header="mdAndUp ? false : true"
+        :hide-default-footer="props.variant === 'upcoming'"
+        width="100%"
+        return-object
+        v-model="selected_reminder"
+        select-strategy="single"
+        v-model:page="page"
       >
-        <!--height="280px"-->
-        <template #next_date="row">
-          <span class="font-weight-bold text-black">
-            {{ row.value.next_date }}
+        <template v-slot:bottom v-if="props.variant != 'upcoming'">
+          <div class="text-center pt-2">
+            <v-pagination v-model="page" :length="pageCount"></v-pagination>
+          </div>
+        </template>
+        <template v-slot:[`header.next_date`] v-if="mdAndUp">
+          <div class="font-weight-bold">Next Date</div>
+        </template>
+        <template v-slot:[`header.amount`] v-if="mdAndUp">
+          <div class="font-weight-bold">Amount</div>
+        </template>
+        <template v-slot:[`header.decription`] v-if="mdAndUp">
+          <div class="font-weight-bold">Reminder</div>
+        </template>
+        <template v-slot:[`header.tag.tag_name`] v-if="mdAndUp">
+          <div class="font-weight-bold">Tag</div>
+        </template>
+        <template v-slot:[`header.end_date`] v-if="mdAndUp">
+          <div class="font-weight-bold">End Date</div>
+        </template>
+        <template v-slot:[`header.repeat.repeat_name`] v-if="mdAndUp">
+          <div class="font-weight-bold">Repeat</div>
+        </template>
+        <template v-slot:[`item.next_date`]="{ item }" v-if="mdAndUp">
+          <span>
+            {{ item.next_date }}
           </span>
         </template>
-        <template #amount="row">
-          <span :class="getClassForMoney(row.value.amount)">
-            {{ formatCurrency(row.value.amount) }}
+        <template v-slot:[`item.amount`]="{ item }" v-if="mdAndUp">
+          <span :class="getClassForMoney(item.amount)">
+            {{ formatCurrency(item.amount) }}
           </span>
         </template>
-        <template #description="row">
-          <span class="font-weight-bold text-black">
-            {{ row.value.description }}
+        <template v-slot:[`item.description`]="{ item }" v-if="mdAndUp">
+          <span>{{ item.description }}</span>
+        </template>
+        <template v-slot:[`item.tag.tag_name`]="{ item }" v-if="mdAndUp">
+          <span>
+            <v-icon icon="mdi-tag" color="black" size="x-small"></v-icon>
+            {{ item.tag.tag_name }}
           </span>
         </template>
-        <template #tag.tag_name="row">
-          <v-icon icon="mdi-tag" color="black"></v-icon>
-          <span class="font-weight-bold text-black">
-            {{ row.value.tag.tag_name }}
+        <template v-slot:[`item.end_date`]="{ item }" v-if="mdAndUp">
+          <span>
+            <v-icon
+              icon="mdi-infinity"
+              color="black"
+              size="small"
+              v-if="!item.end_date"
+            ></v-icon>
+            {{ item.end_date }}
           </span>
         </template>
-        <template #end_date="row">
-          <span class="font-weight-bold text-black">
-            {{ row.value.end_date }}
-          </span>
+        <template v-slot:[`item.repeat.repeat_name`]="{ item }" v-if="mdAndUp">
+          <span>{{ item.repeat.repeat_name }}</span>
         </template>
-        <template #repeat.repeat_name="row">
-          <span class="font-weight-bold text-black">
-            {{ row.value.repeat.repeat_name }}
-          </span>
+        <!-- Mobile View -->
+        <template v-slot:[`item.mobile`]="{ item }">
+          <v-container class="ma-0 pa-0 ga-0">
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0" cols="4">
+                <span class="font-weight-bold">
+                  <v-icon
+                    icon="mdi-skip-next-circle"
+                    size="small"
+                    color="success"
+                  ></v-icon>
+                  {{ formatDate(item.next_date, true) }}
+                </span>
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0" cols="4">
+                <span v-if="item.end_date" class="font-weight-bold">
+                  <v-icon
+                    icon="mdi-stop-circle"
+                    size="small"
+                    color="error"
+                  ></v-icon>
+                  {{ formatDate(item.end_date, true) }}
+                </span>
+                <span v-else>
+                  <v-icon
+                    icon="mdi-stop-circle"
+                    size="small"
+                    color="error"
+                  ></v-icon>
+                  &nbsp;
+                  <v-icon
+                    icon="mdi-infinity"
+                    size="small"
+                    color="black"
+                  ></v-icon>
+                </span>
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0 text-right">
+                <span :class="getClassForMoney(item.amount)">
+                  {{ formatCurrency(item.amount) }}
+                </span>
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0 font-weight-bold text-truncate">
+                <span>
+                  {{ item.description }}
+                </span>
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col
+                class="ma-0 pa-0 ga-0 text-secondary text-left font-weight-italic text-truncate"
+              >
+                <span>
+                  <v-icon
+                    icon="mdi-repeat"
+                    size="x-small"
+                    color="black"
+                  ></v-icon>
+                  {{ item.repeat.repeat_name }}
+                </span>
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
+                <span>
+                  <v-icon icon="mdi-tag" size="x-small" color="black"></v-icon>
+                  {{ item.tag.tag_name }}
+                </span>
+              </v-col>
+            </v-row>
+          </v-container>
         </template>
-      </vue3-datatable>
-      <!-- Small Display View -->
-      <v-list v-if="!isLoading && smAndDown" density="compact">
-        <v-data-iterator
-          :items="reminders"
-          :loading="isLoading"
-          items-per-page="5"
-        >
-          <template v-slot:default="{ items }">
-            <template v-for="(item, i) in items" :key="i">
-              <v-list-item class="border-thin" rounded elevation="1">
-                <v-list-item-title class="font-weight-bold text-truncate">
-                  {{ item.raw.description }}
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <v-container class="ma-0 pa-0 ga-0">
-                    <v-row dense class="ma-0 pa-0 ga-0">
-                      <v-col class="ma-0 pa-0 ga-0">
-                        {{ item.raw.next_date }}
-                      </v-col>
-                      <v-col class="ma-0 pa-0 ga-0 text-right">
-                        <span :class="getClassForMoney(item.raw.amount)">
-                          {{ formatCurrency(item.raw.amount) }}
-                        </span>
-                      </v-col>
-                    </v-row>
-                    <v-row dense class="ma-0 pa-0 ga-0">
-                      <v-col class="ma-0 pa-0 ga-0">
-                        <v-tooltip text="Repeats" location="top">
-                          <template #activator="{ props }">
-                            <v-icon icon="mdi-repeat" v-bind="props"></v-icon>
-                          </template>
-                        </v-tooltip>
-                        {{ item.raw.repeat.repeat_name }}
-                      </v-col>
-                      <v-col class="ma-0 pa-0 ga-0 text-right">
-                        <v-tooltip text="End Date" location="top">
-                          <template #activator="{ props }">
-                            <v-icon
-                              icon="mdi-timer-stop"
-                              v-bind="props"
-                            ></v-icon>
-                          </template>
-                        </v-tooltip>
-                        {{ item.raw.end_date ? item.raw.end_date : "none" }}
-                      </v-col>
-                    </v-row>
-                    <v-row dense class="ma-0 pa-0 ga-0">
-                      <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
-                        <v-icon
-                          icon="mdi-tag"
-                          color="black"
-                          size="x-small"
-                        ></v-icon>
-                        <span class="font-weight-bold text-black">
-                          {{ item.raw.tag.tag_name }}
-                        </span>
-                      </v-col>
-                    </v-row>
-                  </v-container>
-                </v-list-item-subtitle>
-              </v-list-item>
-            </template>
-          </template>
-          <template v-slot:loader>
-            <v-skeleton-loader
-              class="border"
-              type="paragraph"
-            ></v-skeleton-loader>
-          </template>
-          <template
-            v-slot:footer="{ page, pageCount, prevPage, nextPage }"
-            v-if="props.allowEdit"
-          >
-            <div class="d-flex align-center justify-center pa-4">
-              <v-btn
-                :disabled="page === 1"
-                density="comfortable"
-                icon="mdi-arrow-left"
-                variant="tonal"
-                rounded
-                @click="prevPage"
-              ></v-btn>
-
-              <div class="mx-2 text-caption">
-                Page {{ page }} of {{ pageCount }}
-              </div>
-
-              <v-btn
-                :disabled="page >= pageCount"
-                density="comfortable"
-                icon="mdi-arrow-right"
-                variant="tonal"
-                rounded
-                @click="nextPage"
-              ></v-btn>
-            </div>
-          </template>
-        </v-data-iterator>
-      </v-list>
+      </v-data-table>
     </template>
   </v-card>
 </template>
 <script setup>
-  import Vue3Datatable from "@bhplugin/vue3-datatable";
-  import "@bhplugin/vue3-datatable/dist/style.css";
-  import { defineProps, ref } from "vue";
+  import { defineProps, ref, computed, watch } from "vue";
   import { useReminders } from "@/composables/remindersComposable";
   import ReminderForm from "@/components/ReminderForm.vue";
   import { useDisplay } from "vuetify";
 
-  const { smAndDown } = useDisplay();
+  const page = ref(1);
+  const pageCount = computed(() => {
+    if (reminders) {
+      return Math.ceil(reminders.length / itemsPerPage.value);
+    } else {
+      return 1;
+    }
+  });
+  const selected_reminder = ref([]);
+  const { mdAndUp } = useDisplay();
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
@@ -255,7 +268,6 @@
   const day = String(tomorrow.getDate()).padStart(2, "0");
   const formattedDate = `${year}-${month}-${day}`;
   const start_date = ref(formattedDate);
-  const selected = ref([]);
   const showDeleteDialog = ref(false);
   const reminderAddFormDialog = ref(false);
   const reminderEditFormDialog = ref(false);
@@ -265,8 +277,15 @@
       type: Boolean,
       default: false,
     },
+    variant: { type: String, default: "full" },
   });
 
+  const itemsPerPage = computed(() => {
+    if (props.variant === "full") {
+      return 20;
+    }
+    return 5;
+  });
   const editReminder = ref({
     id: 0,
     tag: {
@@ -292,14 +311,6 @@
     auto_add: true,
   });
 
-  const rowSelected = () => {
-    selected.value = [];
-    let selectedrows = reminders_table.value.getSelectedRows();
-    for (const selectedrow of selectedrows) {
-      selected.value.push(selectedrow.id);
-      editReminder.value = selectedrow;
-    }
-  };
   const blankForm = ref({
     id: 0,
     tag: {
@@ -324,15 +335,22 @@
     },
     auto_add: true,
   });
-  const reminders_table = ref(null);
-  const columns = ref([
-    { field: "next_date", title: "Next Date", type: "date", width: "120px" },
-    { field: "amount", title: "Amount", type: "number", width: "100px" },
-    { field: "description", title: "Reminder" },
-    { field: "tag.tag_name", title: "Tag", width: "200px" },
-    { field: "end_date", title: "End Date", type: "date", width: "120px" },
-    { field: "repeat.repeat_name", title: "Repeat", width: "120px" },
+
+  const headers = ref([
+    { title: "Next Date", key: "next_date", width: "120px" },
+    { title: "Amount", key: "amount", width: "100px" },
+    { title: "Reminder", key: "description" },
+    { title: "Tag", key: "tag.tag_name", width: "200px" },
+    { title: "End Date", key: "end_date", width: "120px" },
+    { title: "Repeat", key: "repeat.repeat_name", width: "120px" },
   ]);
+  const displayHeaders = computed(() => {
+    if (mdAndUp.value) {
+      return headers.value;
+    }
+    // For small screens, use your single mobile column
+    return [{ title: "", key: "mobile" }];
+  });
   const getClassForMoney = amount => {
     let color = "";
     let font = "";
@@ -347,11 +365,9 @@
     return color + " " + font;
   };
 
-  const clickRemoveReminder = async reminders => {
-    reminders.forEach(reminder => {
-      removeReminder(reminder);
-      selected.value = [];
-    });
+  const clickRemoveReminder = () => {
+    removeReminder(selected_reminder.value[0].id);
+    selected_reminder.value = [];
   };
 
   const updateAddDialog = () => {
@@ -369,22 +385,28 @@
       maximumFractionDigits: 2,
     }).format(value);
   };
+
+  watch(
+    () => selected_reminder.value,
+    val => {
+      if (val) {
+        editReminder.value = val[0];
+      }
+    },
+  );
+
+  const formatDate = (input, padDay = false) => {
+    // Normalize input to a Date object
+    const date = input instanceof Date ? input : new Date(input);
+
+    if (isNaN(date)) {
+      console.warn("Invalid date:", input);
+      return "";
+    }
+
+    const month = date.toLocaleString("en-US", { month: "short" }); // 'Sep'
+    const day = date.getDate(); // 16
+
+    return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
+  };
 </script>
-<style>
-  /* alt-pagination */
-  .alt-pagination .bh-pagination .bh-page-item {
-    width: auto; /* equivalent to w-max */
-    min-width: 32px;
-    border-radius: 0.25rem; /* equivalent to rounded */
-  }
-  /* Customize the color of the selected page number */
-  .alt-pagination .bh-pagination .bh-page-item.bh-active {
-    background-color: #06966a; /* Change this to your desired color */
-    border-color: black;
-    font-weight: bold; /* Optional: Make the text bold */
-  }
-  .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-    background-color: #ff5900;
-    border-color: black;
-  }
-</style>
