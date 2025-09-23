@@ -84,7 +84,7 @@
       <v-data-table
         :headers="displayHeaders"
         :items="reminders ? reminders : []"
-        :items-length="reminders ? reminders.total_records : 0"
+        :items-length="reminders ? reminders.length : 0"
         :loading="isLoading"
         item-value="id"
         v-model:items-per-page="itemsPerPage"
@@ -250,14 +250,6 @@
   import ReminderForm from "@/components/ReminderForm.vue";
   import { useDisplay } from "vuetify";
 
-  const page = ref(1);
-  const pageCount = computed(() => {
-    if (reminders) {
-      return Math.ceil(reminders.length / itemsPerPage.value);
-    } else {
-      return 1;
-    }
-  });
   const selected_reminder = ref([]);
   const { mdAndUp } = useDisplay();
   const today = new Date();
@@ -272,6 +264,18 @@
   const reminderAddFormDialog = ref(false);
   const reminderEditFormDialog = ref(false);
   const { reminders, isLoading, removeReminder } = useReminders();
+  const page = ref(1);
+  const itemsPerPage = computed(() => {
+    if (props.variant === "full") {
+      return 20;
+    }
+    return 5;
+  });
+  const pageCount = computed(() =>
+    reminders.value && itemsPerPage.value
+      ? Math.ceil(reminders.value.length / itemsPerPage.value)
+      : 1,
+  );
   const props = defineProps({
     allowEdit: {
       type: Boolean,
@@ -280,12 +284,6 @@
     variant: { type: String, default: "full" },
   });
 
-  const itemsPerPage = computed(() => {
-    if (props.variant === "full") {
-      return 20;
-    }
-    return 5;
-  });
   const editReminder = ref({
     id: 0,
     tag: {
