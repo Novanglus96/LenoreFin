@@ -1,6 +1,6 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-white">
-    <template v-slot:title>
+    <v-card-title>
       <span class="text-subtitle-2 text-secondary">
         {{ title[props.variant] }}
         <v-tooltip
@@ -26,8 +26,8 @@
           v-if="!smAndDown"
         />
       </span>
-    </template>
-    <template v-slot:text>
+    </v-card-title>
+    <v-card-text class="ma-0 pa-0 ga-0">
       <!-- Large Display View -->
       <v-data-table-server
         :headers="displayHeaders"
@@ -590,7 +590,7 @@
           </v-fab>
         </template>
       </v-data-table-server>
-    </template>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>

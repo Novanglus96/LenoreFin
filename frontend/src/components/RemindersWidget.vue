@@ -1,6 +1,6 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-white">
-    <template v-slot:title>
+    <v-card-title>
       <span
         class="text-subtitle-2 text-secondary"
         v-if="props.variant === 'upcoming'"
@@ -8,8 +8,8 @@
         Upcoming Reminders
       </span>
       <span class="text-subtitle-2 text-secondary" v-else>Reminders</span>
-    </template>
-    <template v-slot:text>
+    </v-card-title>
+    <v-card-text class="ma-0 pa-0 ga-0">
       <div v-if="props.allowEdit">
         <v-tooltip text="Edit Reminder" location="top">
           <template v-slot:activator="{ props }">
@@ -241,7 +241,7 @@
           </v-container>
         </template>
       </v-data-table>
-    </template>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>

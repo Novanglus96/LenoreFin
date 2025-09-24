@@ -1,6 +1,6 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-white ma-0 pa-0 ga-0">
-    <template v-slot:title>
+    <v-card-title>
       <span class="text-subtitle-2 text-secondary">Budgets</span>
       <v-tooltip text="Add Budget" v-if="!props.widget">
         <template v-slot:activator="{ props }">
@@ -23,9 +23,9 @@
         @update-dialog="closeAddForm"
         v-if="isMobile"
       />
-    </template>
+    </v-card-title>
 
-    <template v-slot:text v-if="lgAndUp">
+    <v-card-text v-if="lgAndUp" class="ma-0 pa-0 ga-0">
       <v-slide-group
         v-model="budget_selected"
         class="pa-4"
@@ -116,8 +116,8 @@
           </v-card>
         </v-slide-group-item>
       </v-slide-group>
-    </template>
-    <template v-slot:text v-else>
+    </v-card-text>
+    <v-card-text v-else class="ma-0 pa-0 ga-0">
       <v-list
         density="compact"
         activatable
@@ -160,7 +160,7 @@
           </v-progress-linear>
         </v-list-item>
       </v-list>
-    </template>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>
