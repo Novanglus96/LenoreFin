@@ -2,14 +2,7 @@
   <div>
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded">
-        <ForecastHeaderWidget
-          @update-account="updateAccount"
-          v-if="!isMobile"
-        />
-        <ForecastHeaderWidgetMobile
-          @update-account="updateAccount"
-          v-if="isMobile"
-        />
+        <ForecastHeaderWidget @update-account="updateAccount" />
       </v-col>
     </v-row>
     <v-row class="pa-1 ga-1" no-gutters>
@@ -32,7 +25,15 @@
           :data="transactions"
           :loading="isLoading"
           :fetching="isFetching"
+          v-if="account_id"
         />
+        <v-card variant="outlined" :elevation="4" class="bg-white" v-else>
+          <v-card-text class="text-center">
+            <span class="text-subtitle-2 text-error">
+              Please select an account...
+            </span>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
   </div>
@@ -41,15 +42,11 @@
   import AccountForecastWidget from "@/components/AccountForecastWidget.vue";
   import TransactionTableWidget from "@/components/TransactionTableWidget.vue";
   import ForecastHeaderWidget from "@/components/ForecastHeaderWidget.vue";
-  import ForecastHeaderWidgetMobile from "@/components/ForecastHeaderWidgetMobile.vue";
   import { ref } from "vue";
   import { useTransactionsStore } from "@/stores/transactions";
-  import { useDisplay } from "vuetify";
   import { useTransactions } from "@/composables/transactionsComposable";
 
   const { isLoading, transactions, isFetching } = useTransactions();
-  const { smAndDown } = useDisplay();
-  const isMobile = smAndDown;
 
   const transactions_store = useTransactionsStore();
   const account_id = ref(null);

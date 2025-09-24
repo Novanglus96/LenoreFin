@@ -224,7 +224,11 @@ export function useGraphsNew(widget_id) {
 
 export function useGraphTransactions(tag_id) {
   const queryClient = useQueryClient();
-  const { data: tag_transactions, isLoading } = useQuery({
+  const {
+    data: tag_transactions,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["tag_transactions", { tagID: tag_id }],
     queryFn: () => getTransactionsByTagsFunction(tag_id),
     select: response => response,
@@ -234,5 +238,6 @@ export function useGraphTransactions(tag_id) {
   return {
     isLoading,
     tag_transactions,
+    isFetching,
   };
 }
