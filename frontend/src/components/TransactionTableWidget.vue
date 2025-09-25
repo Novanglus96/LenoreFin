@@ -32,7 +32,7 @@
       <v-data-table-server
         :headers="displayHeaders"
         :items="localTransactions"
-        :items-length="localTransactions.total_records"
+        :items-length="localTransactions.length"
         :loading="isActive"
         item-value="id"
         v-model:items-per-page="transactions_store.pageinfo.page_size"
@@ -104,7 +104,11 @@
         </template>
         <template v-slot:[`header.pretty_total`] v-if="mdAndUp">
           <div class="font-weight-bold">
-            {{ props.variant === "tag" ? "Total Amt" : "Amount" }}
+            {{
+              props.variant === "tag" || props.variant === "budget"
+                ? "Total Amt"
+                : "Amount"
+            }}
           </div>
         </template>
         <template
@@ -112,7 +116,11 @@
           v-if="mdAndUp && props.variant != 'upcoming'"
         >
           <div class="font-weight-bold">
-            {{ props.variant === "tag" ? "Tag Amt" : "Balance" }}
+            {{
+              props.variant === "tag" || props.variant === "budget"
+                ? "Tag Amt"
+                : "Balance"
+            }}
           </div>
         </template>
         <template v-slot:[`header.description`] v-if="mdAndUp">
@@ -120,7 +128,7 @@
         </template>
         <template
           v-slot:[`header.tags`]
-          v-if="mdAndUp && props.variant != 'tags'"
+          v-if="mdAndUp && props.variant != 'tags' && props.variant != 'budget'"
         >
           <div class="font-weight-bold">Tag(s)</div>
         </template>
@@ -239,8 +247,17 @@
           v-slot:[`item.balance`]="{ item }"
           v-if="mdAndUp && props.variant != 'upcoming'"
         >
-          <span :class="getClassForMoney(item.balance, item.status.id)">
+          <span
+            :class="getClassForMoney(item.balance, item.status.id)"
+            v-if="props.variant != 'budget'"
+          >
             {{ formatCurrency(item.balance) }}
+          </span>
+          <span
+            :class="getClassForMoney(item.tag_total, item.status.id)"
+            v-else
+          >
+            {{ formatCurrency(item.tag_total) }}
           </span>
         </template>
         <template v-slot:[`item.description`]="{ item }" v-if="mdAndUp">
@@ -330,21 +347,30 @@
                   icon="mdi-wallet-bifold"
                   size="x-small"
                   :color="item.status.id == 1 ? 'grey' : 'black'"
-                  v-if="props.variant === 'tag'"
+                  v-if="props.variant === 'tag' || props.variant === 'budget'"
                 ></v-icon>
               </v-col>
               <v-col
                 class="ma-0 pa-0 ga-0 text-right"
                 v-if="props.variant != 'upcoming'"
               >
-                <span :class="getClassForMoney(item.balance, item.status.id)">
+                <span
+                  :class="getClassForMoney(item.balance, item.status.id)"
+                  v-if="props.variant != 'budget'"
+                >
                   {{ formatCurrency(item.balance) }}
+                </span>
+                <span
+                  :class="getClassForMoney(item.tag_total, item.status.id)"
+                  v-else
+                >
+                  {{ formatCurrency(item.tag_total) }}
                 </span>
                 <v-icon
                   icon="mdi-tag-hidden"
                   size="x-small"
                   :color="item.status.id == 1 ? 'grey' : 'black'"
-                  v-if="props.variant === 'tag'"
+                  v-if="props.variant === 'tag' || props.variant === 'budget'"
                 ></v-icon>
               </v-col>
             </v-row>
@@ -407,7 +433,11 @@
                 ></v-icon>
               </v-col>
             </v-row>
-            <v-row dense class="ma-0 pa-0 ga-0" v-if="props.variant != 'tag'">
+            <v-row
+              dense
+              class="ma-0 pa-0 ga-0"
+              v-if="props.variant != 'tag' && props.variant != 'budget'"
+            >
               <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
                 <span
                   :class="
@@ -745,7 +775,7 @@
       if (props.variant === "upcoming") {
         return headers.value.filter(h => h.key !== "balance");
       }
-      if (props.variant === "tag") {
+      if (props.variant === "tag" || props.variant === "budget") {
         return headers.value.filter(h => h.key !== "tags");
       }
       // Otherwise, return all headers
