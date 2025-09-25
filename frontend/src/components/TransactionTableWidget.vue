@@ -60,6 +60,7 @@
         return-object
         v-model="selected_all"
         :page="localPage"
+        :row-props="getRowProps"
       >
         <template
           v-slot:header.data-table-select="{
@@ -873,6 +874,15 @@
 
   function pageTurned({ page }) {
     transactions_store.pageinfo.page = page;
+  }
+
+  function getRowProps({ item }) {
+    return {
+      class:
+        item.status.id == 1 && props.variant === "account"
+          ? "bg-grey-lighten-4"
+          : "",
+    };
   }
 </script>
 <style scoped>
