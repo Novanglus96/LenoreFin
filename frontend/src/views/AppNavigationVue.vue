@@ -50,6 +50,11 @@
       <v-app-bar-title>
         <span class="text-caption font-weight-bold">v{{ version }}</span>
       </v-app-bar-title>
+      <v-btn
+        icon="mdi-theme-light-dark"
+        @click="handleToggle"
+        :color="isDark ? 'white' : 'purple'"
+      ></v-btn>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
           <v-btn class="text-none" stacked v-bind="props">
@@ -186,13 +191,26 @@
   </div>
 </template>
 <script setup>
-  import { ref } from "vue";
-  import { useDisplay } from "vuetify";
+  import { ref, watch, computed } from "vue";
+  import { useDisplay, useTheme } from "vuetify";
   import AccountsMenu from "@/components/AccountsMenu.vue";
   import PlanningMenu from "@/components/PlanningMenu.vue";
   import { useMessages } from "@/composables/messagesComposable";
   import { useRouter } from "vue-router";
   import { useTransactionsStore } from "@/stores/transactions";
+  import { useThemeStore } from "@/stores/themeStore";
+
+  const theme = useTheme();
+  const themeStore = useThemeStore();
+
+  theme.global.name.value = themeStore.currentTheme;
+
+  const isDark = computed({
+    get: () => themeStore.currentTheme === "myCustomDarkTheme",
+    set: value => {
+      themeStore.setTheme(value ? "myCustomDarkTheme" : "myCustomLightTheme");
+    },
+  });
 
   const transactions_store = useTransactionsStore();
   const router = useRouter();
@@ -217,4 +235,15 @@
     const formattedDate = newDate.toLocaleString("en-US");
     return formattedDate;
   };
+
+  watch(
+    () => themeStore.currentTheme,
+    newTheme => {
+      theme.global.name.value = newTheme;
+    },
+  );
+
+  function handleToggle() {
+    themeStore.toggleTheme();
+  }
 </script>

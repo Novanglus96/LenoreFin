@@ -17,6 +17,22 @@ const myCustomLightTheme = {
     info: "#795548",
     success: "#4caf50",
     selected: "#7fb17f",
+    surface: "#ffffff",
+  },
+};
+
+const myCustomDarkTheme = {
+  dark: true,
+  colors: {
+    primary: "#0D1B1E", // very dark teal-gray (contrast with your light primary)
+    secondary: "#4ADEB3", // brighter teal-green, keeps relation to light #06966A
+    accent: "#FF784E", // warm accent, keeps energy of #FF5900 but better on dark
+    error: "#FF6659", // softer red than #FF3407 for dark bg
+    warning: "#FFD54F", // vivid amber for visibility
+    info: "#BCAAA4", // muted brown-tan, complements dark surfaces
+    success: "#81C784", // softer green for readability
+    selected: "#A5D6A7", // lighter green tint for selected state
+    surface: "#657383",
   },
 };
 
@@ -30,6 +46,7 @@ export default createVuetify({
     },
     themes: {
       myCustomLightTheme,
+      myCustomDarkTheme,
     },
   },
   icons: {
