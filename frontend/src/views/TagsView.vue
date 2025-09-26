@@ -13,7 +13,7 @@
     <div v-else>
       <v-row class="pa-1 ga-1 rounded" no-gutters>
         <v-col class="rounded">
-          <v-card variant="outlined" :elevation="4" class="bg-white">
+          <v-card variant="outlined" :elevation="4" class="bg-surface">
             <v-card-text class="text-center">
               <span class="text-subtitle-2 text-error">
                 Please select a tag...

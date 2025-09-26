@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white">
+  <v-card variant="outlined" :elevation="4" class="bg-surface">
     <template v-slot:append>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
@@ -9,8 +9,7 @@
             size="xs"
             v-bind="props"
             :disabled="isLoading"
-          >
-          </v-btn>
+          ></v-btn>
         </template>
         <v-card width="100">
           <v-card-text>Test</v-card-text>
@@ -27,40 +26,41 @@
         :size="300"
         :width="12"
         v-if="isLoading"
-        >Loading...</v-progress-circular
       >
+        Loading...
+      </v-progress-circular>
       <Pie :data="data" :options="options" v-else />
     </template>
   </v-card>
 </template>
 
 <script setup>
-import { Pie } from "vue-chartjs";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-import { ref } from "vue";
-import { useMainStore } from "@/stores/main";
+  import { Pie } from "vue-chartjs";
+  import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+  import { ref } from "vue";
+  import { useMainStore } from "@/stores/main";
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+  ChartJS.register(ArcElement, Tooltip, Legend);
 
-const mainstore = useMainStore();
-const data = ref({
-  labels: mainstore.kids_expenses_widget.labels, // Data point for labels
-  datasets: [
-    {
-      label: "Kids Expenses",
-      data: mainstore.kids_expenses_widget.data, // Data point for data
-      backgroundColor: mainstore.graphColors,
-      hoverOffset: 4,
+  const mainstore = useMainStore();
+  const data = ref({
+    labels: mainstore.kids_expenses_widget.labels, // Data point for labels
+    datasets: [
+      {
+        label: "Kids Expenses",
+        data: mainstore.kids_expenses_widget.data, // Data point for data
+        backgroundColor: mainstore.graphColors,
+        hoverOffset: 4,
+      },
+    ],
+  });
+  const options = ref({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "right",
+      },
     },
-  ],
-});
-const options = ref({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: "right",
-    },
-  },
-});
+  });
 </script>

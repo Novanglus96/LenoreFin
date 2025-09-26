@@ -26,7 +26,7 @@
       :key="2"
       base-color="black"
       variant="outlined"
-      class="bg-white"
+      class="bg-surface"
     ></v-btn>
     <v-btn
       icon="mdi-invoice-text-clock"
@@ -34,7 +34,7 @@
       base-color="black"
       :key="3"
       variant="outlined"
-      class="bg-white"
+      class="bg-surface"
     ></v-btn>
   </v-speed-dial>
 </template>

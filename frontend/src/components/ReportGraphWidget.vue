@@ -5,7 +5,7 @@
         <v-card
           variant="outlined"
           :elevation="4"
-          class="bg-white"
+          class="bg-surface"
           v-if="!props.isLoading"
         >
           <v-card-text>

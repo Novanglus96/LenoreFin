@@ -1,7 +1,7 @@
 <template>
   <v-row class="pa-1 ga-1" no-gutters>
     <v-col class="rounded">
-      <v-card variant="outlined" :elevation="4" class="bg-white">
+      <v-card variant="outlined" :elevation="4" class="bg-surface">
         <template v-slot:append>
           <v-tooltip text="Add Note" location="top">
             <template v-slot:activator="{ props }">

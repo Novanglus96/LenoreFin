@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white">
+  <v-card variant="outlined" :elevation="4" class="bg-surface">
     <v-card-title>
       <span class="text-subtitle-2 text-secondary">
         {{ title[props.variant] }}

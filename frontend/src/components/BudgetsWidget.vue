@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white ma-0 pa-0 ga-0">
+  <v-card variant="outlined" :elevation="4" class="bg-surface ma-0 pa-0 ga-0">
     <v-card-title>
       <span class="text-subtitle-2 text-secondary">Budgets</span>
       <v-tooltip text="Add Budget" v-if="!props.widget">

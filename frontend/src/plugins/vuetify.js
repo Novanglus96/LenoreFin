@@ -32,7 +32,7 @@ const myCustomDarkTheme = {
     info: "#BCAAA4", // muted brown-tan, complements dark surfaces
     success: "#81C784", // softer green for readability
     selected: "#A5D6A7", // lighter green tint for selected state
-    surface: "#657383",
+    surface: "#000000",
   },
 };
 

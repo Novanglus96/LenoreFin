@@ -1,9 +1,9 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white">
+  <v-card variant="outlined" :elevation="4" class="bg-surface">
     <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary"
-        >{{ calculator ? calculator.rule.name : null }} Transactions</span
-      >
+      <span class="text-subtitle-2 text-secondary">
+        {{ calculator ? calculator.rule.name : null }} Transactions
+      </span>
     </template>
     <template v-slot:text>
       <vue3-datatable
@@ -22,7 +22,8 @@
         paginationInfo="Showing {0} to {1} of {2} transactions"
         class="alt-pagination"
         @rowSelect="rowSelected"
-        ><!--height="280px"-->
+      >
+        <!--height="280px"-->
         <template #transaction_date="row">
           <span
             :class="
@@ -30,16 +31,18 @@
                 ? 'font-italic text-grey'
                 : 'font-weight-bold text-black'
             "
-            >{{ row.value.transaction_date }}</span
           >
+            {{ row.value.transaction_date }}
+          </span>
         </template>
         <template #pretty_total="row">
           <span
             :class="
               getClassForMoney(row.value.pretty_total, row.value.status.id)
             "
-            >{{ formatCurrency(row.value.pretty_total) }}</span
           >
+            {{ formatCurrency(row.value.pretty_total) }}
+          </span>
         </template>
         <template #details="row">
           <span
@@ -60,8 +63,10 @@
             {{ detail.tag.tag_name }} :
             <span
               :class="getClassForMoney(detail.detail_amt, row.value.status.id)"
-              >{{ formatCurrency(detail.detail_amt) }}</span
-            >&nbsp;
+            >
+              {{ formatCurrency(detail.detail_amt) }}
+            </span>
+            &nbsp;
           </span>
         </template>
         <template #description="row">
@@ -71,8 +76,9 @@
                 ? 'font-italic text-grey'
                 : 'font-weight-bold text-black'
             "
-            >{{ row.value.description }}</span
           >
+            {{ row.value.description }}
+          </span>
         </template>
         <template #pretty_account="row">
           <span
@@ -81,119 +87,120 @@
                 ? 'font-italic text-grey'
                 : 'font-weight-bold text-black'
             "
-            >{{ row.value.pretty_account }}</span
           >
+            {{ row.value.pretty_account }}
+          </span>
         </template>
       </vue3-datatable>
     </template>
   </v-card>
 </template>
 <script setup>
-import Vue3Datatable from "@bhplugin/vue3-datatable";
-import "@bhplugin/vue3-datatable/dist/style.css";
-import { ref, defineProps, watch } from "vue";
-import { useCalculator } from "@/composables/calculatorComposable";
-import { usePlanningStore } from "@/stores/planning";
+  import Vue3Datatable from "@bhplugin/vue3-datatable";
+  import "@bhplugin/vue3-datatable/dist/style.css";
+  import { ref, defineProps, watch } from "vue";
+  import { useCalculator } from "@/composables/calculatorComposable";
+  import { usePlanningStore } from "@/stores/planning";
 
-const planningstore = usePlanningStore();
-const props = defineProps({
-  ruleID: {
-    type: Number,
-  },
-  timeframe: {
-    type: Number,
-  },
-});
+  const planningstore = usePlanningStore();
+  const props = defineProps({
+    ruleID: {
+      type: Number,
+    },
+    timeframe: {
+      type: Number,
+    },
+  });
 
-const local_rule_id = ref(props.ruleID);
-const local_timeframe = ref(props.timeframe);
-const selected = ref([]);
-const trans_table = ref(null);
+  const local_rule_id = ref(props.ruleID);
+  const local_timeframe = ref(props.timeframe);
+  const selected = ref([]);
+  const trans_table = ref(null);
 
-const { calculator, isLoading: calculator_isLoading } = useCalculator(
-  local_rule_id.value,
-  local_timeframe.value,
-);
+  const { calculator, isLoading: calculator_isLoading } = useCalculator(
+    local_rule_id.value,
+    local_timeframe.value,
+  );
 
-const columns = ref([
-  { field: "transaction_date", title: "Date", type: "date", width: "120px" },
-  { field: "pretty_total", title: "Total", type: "number", width: "100px" },
-  { field: "details", title: "Tag Amounts", type: "number", width: "120px" },
-  { field: "description", title: "Description" },
-  { field: "pretty_account", title: "Account" },
-]);
+  const columns = ref([
+    { field: "transaction_date", title: "Date", type: "date", width: "120px" },
+    { field: "pretty_total", title: "Total", type: "number", width: "100px" },
+    { field: "details", title: "Tag Amounts", type: "number", width: "120px" },
+    { field: "description", title: "Description" },
+    { field: "pretty_account", title: "Account" },
+  ]);
 
-const rowSelected = () => {
-  selected.value = trans_table.value.getSelectedRows();
-  planningstore.calculator.selected_transactions = selected.value;
-};
+  const rowSelected = () => {
+    selected.value = trans_table.value.getSelectedRows();
+    planningstore.calculator.selected_transactions = selected.value;
+  };
 
-const getClassForMoney = (amount, status) => {
-  let color = "";
-  let font = "";
+  const getClassForMoney = (amount, status) => {
+    let color = "";
+    let font = "";
 
-  if (status == 1) {
-    font = "font-italic";
-    if (amount < 0) {
-      color = "text-red-lighten-1";
+    if (status == 1) {
+      font = "font-italic";
+      if (amount < 0) {
+        color = "text-red-lighten-1";
+      } else {
+        color = "text-green-lighten-1";
+      }
     } else {
-      color = "text-green-lighten-1";
+      font = "font-weight-bold";
+      if (amount < 0) {
+        color = "text-red";
+      } else {
+        color = "text-green";
+      }
     }
-  } else {
-    font = "font-weight-bold";
-    if (amount < 0) {
-      color = "text-red";
-    } else {
-      color = "text-green";
-    }
-  }
 
-  return color + " " + font;
-};
-watch(props.ruleID, newValue => {
-  local_rule_id.value = newValue;
-});
-watch(props.timeframe, newValue => {
-  local_timeframe.value = newValue;
-});
-const formatCurrency = value => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
+    return color + " " + font;
+  };
+  watch(props.ruleID, newValue => {
+    local_rule_id.value = newValue;
+  });
+  watch(props.timeframe, newValue => {
+    local_timeframe.value = newValue;
+  });
+  const formatCurrency = value => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
 </script>
 <style>
-/* alt-pagination */
-.alt-pagination .bh-pagination .bh-page-item {
-  width: auto; /* equivalent to w-max */
-  min-width: 32px;
-  border-radius: 0.25rem; /* equivalent to rounded */
-}
-/* Customize the color of the selected page number */
-.alt-pagination .bh-pagination .bh-page-item.bh-active {
-  background-color: #06966a; /* Change this to your desired color */
-  border-color: black;
-  font-weight: bold; /* Optional: Make the text bold */
-}
-.alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-  background-color: #ff5900;
-  border-color: black;
-}
+  /* alt-pagination */
+  .alt-pagination .bh-pagination .bh-page-item {
+    width: auto; /* equivalent to w-max */
+    min-width: 32px;
+    border-radius: 0.25rem; /* equivalent to rounded */
+  }
+  /* Customize the color of the selected page number */
+  .alt-pagination .bh-pagination .bh-page-item.bh-active {
+    background-color: #06966a; /* Change this to your desired color */
+    border-color: black;
+    font-weight: bold; /* Optional: Make the text bold */
+  }
+  .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
+    background-color: #ff5900;
+    border-color: black;
+  }
 
-.icon-with-text {
-  position: relative;
-  display: inline-block;
-}
+  .icon-with-text {
+    position: relative;
+    display: inline-block;
+  }
 
-.icon-text {
-  position: absolute;
-  top: 0;
-  right: 1;
-  color: black;
-  padding: 4px 1px;
-  font-size: 0.7rem;
-}
+  .icon-text {
+    position: absolute;
+    top: 0;
+    right: 1;
+    color: black;
+    padding: 4px 1px;
+    font-size: 0.7rem;
+  }
 </style>

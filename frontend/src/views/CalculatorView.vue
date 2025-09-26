@@ -9,7 +9,7 @@
         />
       </v-col>
       <v-col class="rounded text-center">
-        <v-card variant="outlined" :elevation="4" class="bg-white">
+        <v-card variant="outlined" :elevation="4" class="bg-surface">
           <v-card-title></v-card-title>
           <v-card-text>
             <v-autocomplete
@@ -52,7 +52,7 @@
     </v-row>
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded text-center">
-        <v-card variant="outlined" :elevation="4" class="bg-white">
+        <v-card variant="outlined" :elevation="4" class="bg-surface">
           <v-card-title></v-card-title>
           <v-card-text>
             <v-autocomplete

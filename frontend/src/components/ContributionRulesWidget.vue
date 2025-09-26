@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white">
+  <v-card variant="outlined" :elevation="4" class="bg-surface">
     <template v-slot:append>
       <v-tooltip text="Add Overage Rule" location="top">
         <template v-slot:activator="{ props }">
@@ -22,9 +22,9 @@
       :passedFormData="newContributionRuleData"
     />
     <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary"
-        >Per Paycheck Overage Rules</span
-      >
+      <span class="text-subtitle-2 text-secondary">
+        Per Paycheck Overage Rules
+      </span>
     </template>
     <template v-slot:text>
       <vue3-datatable
@@ -44,17 +44,17 @@
         class="alt-pagination"
       >
         <template #cap="row">
-          <span :style="clampedStyle" class="text-body-2">{{
-            row.value.cap
-          }}</span>
+          <span :style="clampedStyle" class="text-body-2">
+            {{ row.value.cap }}
+          </span>
         </template>
         <template #order="row">
           <span class="font-weight-bold">#{{ row.value.order }}</span>
         </template>
         <template #edit="row">
-          <v-btn variant="plain" icon @click="clickEditButton(row.value)"
-            ><v-icon icon="mdi-pencil"></v-icon
-          ></v-btn>
+          <v-btn variant="plain" icon @click="clickEditButton(row.value)">
+            <v-icon icon="mdi-pencil"></v-icon>
+          </v-btn>
           <ContributionRuleForm
             v-model="editContributionRuleDialog"
             :key="row.value.id"
@@ -65,151 +65,159 @@
           />
         </template>
         <template #delete="row">
-          <v-btn variant="plain" icon
-            ><v-icon
+          <v-btn variant="plain" icon>
+            <v-icon
               icon="mdi-delete"
               @click="clickDeleteButton(row.value)"
-            ></v-icon
-          ></v-btn>
+            ></v-icon>
+          </v-btn>
           <v-dialog
             v-model="deleteContributionRuleDialog"
             :key="row.value.id"
             width="400"
-            ><v-card
-              ><v-card-title>Delete Rule?</v-card-title
-              ><v-card-text
-                ><span>{{ selectedContributionRule.rule }}</span></v-card-text
-              >
-              <v-card-actions
-                ><v-btn @click="deleteContributionRuleDialog = false"
-                  >Close</v-btn
-                ><v-btn
-                  @click="clickDeleteContributionRule(selectedContributionRule)"
-                  >Delete</v-btn
-                ></v-card-actions
-              ></v-card
-            ></v-dialog
           >
+            <v-card>
+              <v-card-title>Delete Rule?</v-card-title>
+              <v-card-text>
+                <span>{{ selectedContributionRule.rule }}</span>
+              </v-card-text>
+              <v-card-actions>
+                <v-btn @click="deleteContributionRuleDialog = false">
+                  Close
+                </v-btn>
+                <v-btn
+                  @click="clickDeleteContributionRule(selectedContributionRule)"
+                >
+                  Delete
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
         </template>
       </vue3-datatable>
     </template>
   </v-card>
 </template>
 <script setup>
-import Vue3Datatable from "@bhplugin/vue3-datatable";
-import "@bhplugin/vue3-datatable/dist/style.css";
-import { ref } from "vue";
-import { useContributionRules } from "@/composables/contributionsComposable";
-import ContributionRuleForm from "@/components/ContributionRuleForm.vue";
+  import Vue3Datatable from "@bhplugin/vue3-datatable";
+  import "@bhplugin/vue3-datatable/dist/style.css";
+  import { ref } from "vue";
+  import { useContributionRules } from "@/composables/contributionsComposable";
+  import ContributionRuleForm from "@/components/ContributionRuleForm.vue";
 
-const contrib_rules_table = ref(null);
-const editContributionRuleDialog = ref(false);
-const addContributionRuleDialog = ref(false);
-const deleteContributionRuleDialog = ref(false);
-const selectedContributionRule = ref(null);
-const newContributionRuleData = ref({
-  id: 0,
-  rule: null,
-  order: 1,
-  cap: null,
-});
+  const contrib_rules_table = ref(null);
+  const editContributionRuleDialog = ref(false);
+  const addContributionRuleDialog = ref(false);
+  const deleteContributionRuleDialog = ref(false);
+  const selectedContributionRule = ref(null);
+  const newContributionRuleData = ref({
+    id: 0,
+    rule: null,
+    order: 1,
+    cap: null,
+  });
 
-const {
-  contributionRules,
-  isLoading,
-  addContributionRule,
-  editContributionRule,
-  removeContributionRule,
-} = useContributionRules();
+  const {
+    contributionRules,
+    isLoading,
+    addContributionRule,
+    editContributionRule,
+    removeContributionRule,
+  } = useContributionRules();
 
-const columns = ref([
-  { field: "id", title: "id", isUnique: true, hide: true },
-  { field: "order", title: "Order", width: "20px" },
-  {
-    field: "rule",
-    title: "Rule",
-    type: "string",
-  },
-  {
-    field: "cap",
-    title: "Cap",
-    type: "string",
-  },
-  { field: "edit", title: "Edit", width: "40px", cellClass: "text-center" },
-  { field: "delete", title: "Delete", width: "40px", cellClass: "text-center" },
-]);
+  const columns = ref([
+    { field: "id", title: "id", isUnique: true, hide: true },
+    { field: "order", title: "Order", width: "20px" },
+    {
+      field: "rule",
+      title: "Rule",
+      type: "string",
+    },
+    {
+      field: "cap",
+      title: "Cap",
+      type: "string",
+    },
+    { field: "edit", title: "Edit", width: "40px", cellClass: "text-center" },
+    {
+      field: "delete",
+      title: "Delete",
+      width: "40px",
+      cellClass: "text-center",
+    },
+  ]);
 
-const updateAddDialog = () => {
-  addContributionRuleDialog.value = false;
-};
+  const updateAddDialog = () => {
+    addContributionRuleDialog.value = false;
+  };
 
-const updateEditDialog = () => {
-  editContributionRuleDialog.value = false;
-};
+  const updateEditDialog = () => {
+    editContributionRuleDialog.value = false;
+  };
 
-const clickEditButton = contributionRule => {
-  selectedContributionRule.value = contributionRule;
-  editContributionRuleDialog.value = true;
-};
+  const clickEditButton = contributionRule => {
+    selectedContributionRule.value = contributionRule;
+    editContributionRuleDialog.value = true;
+  };
 
-const clickDeleteButton = contributionRule => {
-  selectedContributionRule.value = contributionRule;
-  deleteContributionRuleDialog.value = true;
-};
+  const clickDeleteButton = contributionRule => {
+    selectedContributionRule.value = contributionRule;
+    deleteContributionRuleDialog.value = true;
+  };
 
-const clickEditContributionRule = contributionRule => {
-  editContributionRule(contributionRule);
-  editContributionRuleDialog.value = false;
-};
+  const clickEditContributionRule = contributionRule => {
+    editContributionRule(contributionRule);
+    editContributionRuleDialog.value = false;
+  };
 
-const clickDeleteContributionRule = contributionRule => {
-  removeContributionRule(contributionRule);
-  deleteContributionRuleDialog.value = false;
-};
+  const clickDeleteContributionRule = contributionRule => {
+    removeContributionRule(contributionRule);
+    deleteContributionRuleDialog.value = false;
+  };
 
-const clickAddContributionRule = contributionRule => {
-  addContributionRule(contributionRule);
-  addContributionRuleDialog.value = false;
-};
+  const clickAddContributionRule = contributionRule => {
+    addContributionRule(contributionRule);
+    addContributionRuleDialog.value = false;
+  };
 
-const clampedStyle = {
-  whiteSpace: "pre-line",
-  display: "-webkit-box",
-  WebkitLineClamp: 9, // Limit to 3 lines
-  WebkitBoxOrient: "vertical",
-  overflow: "hidden",
-  textOverflow: "ellipsis", // Add "..." at the end if text is truncated
-};
+  const clampedStyle = {
+    whiteSpace: "pre-line",
+    display: "-webkit-box",
+    WebkitLineClamp: 9, // Limit to 3 lines
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    textOverflow: "ellipsis", // Add "..." at the end if text is truncated
+  };
 </script>
 <style>
-/* alt-pagination */
-.alt-pagination .bh-pagination .bh-page-item {
-  width: auto; /* equivalent to w-max */
-  min-width: 32px;
-  border-radius: 0.25rem; /* equivalent to rounded */
-}
-/* Customize the color of the selected page number */
-.alt-pagination .bh-pagination .bh-page-item.bh-active {
-  background-color: #06966a; /* Change this to your desired color */
-  border-color: black;
-  font-weight: bold; /* Optional: Make the text bold */
-}
-.alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-  background-color: #ff5900;
-  border-color: black;
-}
+  /* alt-pagination */
+  .alt-pagination .bh-pagination .bh-page-item {
+    width: auto; /* equivalent to w-max */
+    min-width: 32px;
+    border-radius: 0.25rem; /* equivalent to rounded */
+  }
+  /* Customize the color of the selected page number */
+  .alt-pagination .bh-pagination .bh-page-item.bh-active {
+    background-color: #06966a; /* Change this to your desired color */
+    border-color: black;
+    font-weight: bold; /* Optional: Make the text bold */
+  }
+  .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
+    background-color: #ff5900;
+    border-color: black;
+  }
 
-.icon-with-text {
-  position: relative;
-  display: inline-block;
-}
+  .icon-with-text {
+    position: relative;
+    display: inline-block;
+  }
 
-.icon-text {
-  position: absolute;
-  top: 0;
-  right: 1;
-  color: black;
-  padding: 4px 1px;
-  font-size: 0.7rem;
-}
+  .icon-text {
+    position: absolute;
+    top: 0;
+    right: 1;
+    color: black;
+    padding: 4px 1px;
+    font-size: 0.7rem;
+  }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white">
+  <v-card variant="outlined" :elevation="4" class="bg-surface">
     <template v-slot:append>
       <v-tooltip text="Add Rule" location="top">
         <template v-slot:activator="{ props }">
@@ -42,12 +42,10 @@
             <v-dialog v-model="showDeleteDialog" width="400">
               <v-card>
                 <v-card-title>Delete this rule?</v-card-title>
-                <v-card-actions
-                  ><v-btn @click="showDeleteDialog = false">Close</v-btn
-                  ><v-btn @click="confirmDeleteRule"
-                    >Delete</v-btn
-                  ></v-card-actions
-                >
+                <v-card-actions>
+                  <v-btn @click="showDeleteDialog = false">Close</v-btn>
+                  <v-btn @click="confirmDeleteRule">Delete</v-btn>
+                </v-card-actions>
               </v-card>
             </v-dialog>
           </template>
@@ -64,62 +62,62 @@
   </v-card>
 </template>
 <script setup>
-import { ref, defineProps, defineEmits } from "vue";
-import CalculatorRuleForm from "./CalculatorRuleForm.vue";
-import { useCalculationRule } from "@/composables/calculatorComposable";
-import { usePlanningStore } from "@/stores/planning";
+  import { ref, defineProps, defineEmits } from "vue";
+  import CalculatorRuleForm from "./CalculatorRuleForm.vue";
+  import { useCalculationRule } from "@/composables/calculatorComposable";
+  import { usePlanningStore } from "@/stores/planning";
 
-const planningstore = usePlanningStore();
+  const planningstore = usePlanningStore();
 
-const emit = defineEmits(["ruleSelected"]);
-const { removeCalculationRule } = useCalculationRule();
-const rule_selected = ref(null);
-const calcAddRuleFormDialog = ref(false);
-const calcEditRuleFormDialog = ref(false);
-const passedFormData = ref(null);
-const showDeleteDialog = ref(false);
-const ruleToDelete = ref(null);
+  const emit = defineEmits(["ruleSelected"]);
+  const { removeCalculationRule } = useCalculationRule();
+  const rule_selected = ref(null);
+  const calcAddRuleFormDialog = ref(false);
+  const calcEditRuleFormDialog = ref(false);
+  const passedFormData = ref(null);
+  const showDeleteDialog = ref(false);
+  const ruleToDelete = ref(null);
 
-const props = defineProps({
-  rules: Object,
-  isLoading: Boolean,
-});
+  const props = defineProps({
+    rules: Object,
+    isLoading: Boolean,
+  });
 
-const selectRule = value => {
-  planningstore.calculator.selected_transactions = [];
-  emit("ruleSelected", value);
-};
-const clickEditRule = item => {
-  passedFormData.value = item;
-  calcEditRuleFormDialog.value = true;
-};
-const clickDeleteRule = id => {
-  ruleToDelete.value = id;
-  showDeleteDialog.value = true;
-};
-const confirmDeleteRule = () => {
-  removeCalculationRule(ruleToDelete.value);
-  showDeleteDialog.value = false;
-};
-const updateAddDialog = value => {
-  calcAddRuleFormDialog.value = value;
-};
-const updateEditDialog = value => {
-  calcEditRuleFormDialog.value = value;
-};
+  const selectRule = value => {
+    planningstore.calculator.selected_transactions = [];
+    emit("ruleSelected", value);
+  };
+  const clickEditRule = item => {
+    passedFormData.value = item;
+    calcEditRuleFormDialog.value = true;
+  };
+  const clickDeleteRule = id => {
+    ruleToDelete.value = id;
+    showDeleteDialog.value = true;
+  };
+  const confirmDeleteRule = () => {
+    removeCalculationRule(ruleToDelete.value);
+    showDeleteDialog.value = false;
+  };
+  const updateAddDialog = value => {
+    calcAddRuleFormDialog.value = value;
+  };
+  const updateEditDialog = value => {
+    calcEditRuleFormDialog.value = value;
+  };
 </script>
 <style>
-.icon-with-text {
-  position: relative;
-  display: inline-block;
-}
+  .icon-with-text {
+    position: relative;
+    display: inline-block;
+  }
 
-.icon-text {
-  position: absolute;
-  top: 0;
-  right: 1;
-  color: black;
-  padding: 4px 1px;
-  font-size: 0.7rem;
-}
+  .icon-text {
+    position: absolute;
+    top: 0;
+    right: 1;
+    color: black;
+    padding: 4px 1px;
+    font-size: 0.7rem;
+  }
 </style>

@@ -30,7 +30,7 @@
       <v-card
         variant="outlined"
         :elevation="4"
-        class="bg-white d-flex flex-column h-100"
+        class="bg-surface d-flex flex-column h-100"
       >
         <v-card-title class="d-flex align-center">
           <span class="text-subtitle-2 text-secondary">

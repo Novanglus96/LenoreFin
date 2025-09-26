@@ -27,7 +27,7 @@
           :fetching="isFetching"
           v-if="account_id"
         />
-        <v-card variant="outlined" :elevation="4" class="bg-white" v-else>
+        <v-card variant="outlined" :elevation="4" class="bg-surface" v-else>
           <v-card-text class="text-center">
             <span class="text-subtitle-2 text-error">
               Please select an account...

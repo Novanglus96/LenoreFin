@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white">
+  <v-card variant="outlined" :elevation="4" class="bg-surface">
     <template v-slot:append>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
