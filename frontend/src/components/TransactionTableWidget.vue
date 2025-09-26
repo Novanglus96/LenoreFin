@@ -61,6 +61,7 @@
         v-model="selected_all"
         :page="localPage"
         :row-props="getRowProps"
+        :header-props="{ class: 'font-weight-bold' }"
       >
         <template
           v-slot:header.data-table-select="{
@@ -99,9 +100,6 @@
             ></v-pagination>
           </div>
         </template>
-        <template v-slot:[`header.transaction_date`] v-if="mdAndUp">
-          <div class="font-weight-bold">Date</div>
-        </template>
         <template v-slot:[`header.pretty_total`] v-if="mdAndUp">
           <div class="font-weight-bold">
             {{
@@ -122,18 +120,6 @@
                 : "Balance"
             }}
           </div>
-        </template>
-        <template v-slot:[`header.description`] v-if="mdAndUp">
-          <div class="font-weight-bold">Description</div>
-        </template>
-        <template
-          v-slot:[`header.tags`]
-          v-if="mdAndUp && props.variant != 'tags' && props.variant != 'budget'"
-        >
-          <div class="font-weight-bold">Tag(s)</div>
-        </template>
-        <template v-slot:[`header.pretty_account`] v-if="mdAndUp">
-          <div class="font-weight-bold">Account</div>
         </template>
         <template v-slot:[`item.status`]="{ item }" v-if="mdAndUp">
           <v-tooltip text="Pending" location="top">
@@ -227,17 +213,6 @@
             </template>
           </v-tooltip>
         </template>
-        <template v-slot:[`item.transaction_date`]="{ item }" v-if="mdAndUp">
-          <span
-            :class="
-              item.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-          >
-            {{ item.transaction_date }}
-          </span>
-        </template>
         <template v-slot:[`item.pretty_total`]="{ item }" v-if="mdAndUp">
           <span :class="getClassForMoney(item.pretty_total, item.status.id)">
             {{ formatCurrency(item.pretty_total) }}
@@ -260,47 +235,17 @@
             {{ formatCurrency(item.tag_total) }}
           </span>
         </template>
-        <template v-slot:[`item.description`]="{ item }" v-if="mdAndUp">
-          <span
-            :class="
-              item.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-          >
-            {{ item.description }}
-          </span>
-        </template>
         <template
           v-slot:[`item.tags`]="{ item }"
           v-if="mdAndUp && props.variant != 'tag'"
         >
-          <span
-            :class="
-              item.status.id == 1
-                ? 'font-italic text-grey text-body-2'
-                : 'font-weight-bold text-black text-body-2'
-            "
-            v-for="tag in item.tags"
-            :key="tag"
-          >
+          <span v-for="tag in item.tags" :key="tag">
             <v-icon
               icon="mdi-tag"
               size="x-small"
               :color="item.status.id == 1 ? 'grey' : 'black'"
             ></v-icon>
             {{ tag }}&nbsp;
-          </span>
-        </template>
-        <template v-slot:[`item.pretty_account`]="{ item }" v-if="mdAndUp">
-          <span
-            :class="
-              item.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-          >
-            {{ item.pretty_account }}
           </span>
         </template>
         <!-- Mobile View -->
@@ -327,15 +272,7 @@
                 ></v-icon>
               </v-col>
               <v-col class="ma-0 pa-0 ga-0" cols="3">
-                <span
-                  :class="
-                    item.status.id == 1
-                      ? 'font-italic text-grey text-body-2'
-                      : 'font-weight-bold text-black text-body-2'
-                  "
-                >
-                  {{ formatDate(item.transaction_date, true) }}
-                </span>
+                {{ formatDate(item.transaction_date, true) }}
               </v-col>
               <v-col class="ma-0 pa-0 ga-0 text-right">
                 <span
@@ -376,15 +313,7 @@
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
               <v-col class="ma-0 pa-0 ga-0 font-weight-bold text-truncate">
-                <span
-                  :class="
-                    item.status.id == 1
-                      ? 'font-italic text-grey text-body-2'
-                      : 'font-weight-bold text-black text-body-2'
-                  "
-                >
-                  {{ item.description }}
-                </span>
+                {{ item.description }}
               </v-col>
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
@@ -394,8 +323,8 @@
                 <span
                   :class="
                     item.status.id == 1
-                      ? 'font-italic text-secondary-lighten-2 text-body-2'
-                      : 'font-weight-bold text-secondary text-body-2'
+                      ? 'text-secondary-lighten-2'
+                      : 'text-secondary'
                   "
                 >
                   {{ item.pretty_account }}
@@ -439,15 +368,7 @@
               v-if="props.variant != 'tag' && props.variant != 'budget'"
             >
               <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
-                <span
-                  :class="
-                    item.status.id == 1
-                      ? 'font-italic text-grey text-body-2'
-                      : 'font-weight-bold text-black text-body-2'
-                  "
-                  v-for="tag in item.tags"
-                  :key="tag"
-                >
+                <span v-for="tag in item.tags" :key="tag">
                   <v-icon
                     icon="mdi-tag"
                     size="x-small"
@@ -462,14 +383,7 @@
                   ></v-icon>
                   {{ tag }}&nbsp;
                 </span>
-                <span
-                  :class="
-                    item.status.id == 1
-                      ? 'font-italic text-grey text-body-2'
-                      : 'font-weight-bold text-black text-body-2'
-                  "
-                  v-if="item.tags.length === 0"
-                >
+                <span v-if="item.tags.length === 0">
                   <v-icon
                     icon="mdi-tag-hidden"
                     size="x-small"
@@ -786,17 +700,14 @@
   });
   const getClassForMoney = (amount, status) => {
     let color = "";
-    let font = "";
 
     if (status == 1) {
-      font = "font-italic";
       if (amount < 0) {
         color = "text-red-lighten-1";
       } else {
         color = "text-green-lighten-1";
       }
     } else {
-      font = "font-weight-bold";
       if (amount < 0) {
         color = "text-red";
       } else {
@@ -804,7 +715,7 @@
       }
     }
 
-    return color + " " + font;
+    return color;
   };
   const uncheck_all = () => {
     selected_transactions.value = [];
@@ -905,13 +816,20 @@
   function pageTurned({ page }) {
     transactions_store.pageinfo.page = page;
   }
-
+  function getStatusFormat(status) {
+    if (status == 1) {
+      return "font-italic text-grey text-body-2";
+    } else {
+      return "font-weight-bold text-black text-body-2";
+    }
+  }
   function getRowProps({ item }) {
+    let rowformat = getStatusFormat(item.status.id);
+    if (item.status.id == 1 && props.variant === "account") {
+      rowformat += " bg-grey-lighten-4";
+    }
     return {
-      class:
-        item.status.id == 1 && props.variant === "account"
-          ? "bg-grey-lighten-4"
-          : "",
+      class: rowformat,
     };
   }
 </script>

@@ -109,42 +109,18 @@
         v-model="selected_reminder"
         select-strategy="single"
         v-model:page="page"
+        :header-props="{ class: 'font-weight-bold' }"
+        :row-props="{ class: 'text-body-2' }"
       >
         <template v-slot:bottom v-if="props.variant != 'upcoming'">
           <div class="text-center pt-2">
             <v-pagination v-model="page" :length="pageCount"></v-pagination>
           </div>
         </template>
-        <template v-slot:[`header.next_date`] v-if="mdAndUp">
-          <div class="font-weight-bold">Next Date</div>
-        </template>
-        <template v-slot:[`header.amount`] v-if="mdAndUp">
-          <div class="font-weight-bold">Amount</div>
-        </template>
-        <template v-slot:[`header.decription`] v-if="mdAndUp">
-          <div class="font-weight-bold">Reminder</div>
-        </template>
-        <template v-slot:[`header.tag.tag_name`] v-if="mdAndUp">
-          <div class="font-weight-bold">Tag</div>
-        </template>
-        <template v-slot:[`header.end_date`] v-if="mdAndUp">
-          <div class="font-weight-bold">End Date</div>
-        </template>
-        <template v-slot:[`header.repeat.repeat_name`] v-if="mdAndUp">
-          <div class="font-weight-bold">Repeat</div>
-        </template>
-        <template v-slot:[`item.next_date`]="{ item }" v-if="mdAndUp">
-          <span>
-            {{ item.next_date }}
-          </span>
-        </template>
         <template v-slot:[`item.amount`]="{ item }" v-if="mdAndUp">
           <span :class="getClassForMoney(item.amount)">
             {{ formatCurrency(item.amount) }}
           </span>
-        </template>
-        <template v-slot:[`item.description`]="{ item }" v-if="mdAndUp">
-          <span>{{ item.description }}</span>
         </template>
         <template v-slot:[`item.tag.tag_name`]="{ item }" v-if="mdAndUp">
           <span>
@@ -162,9 +138,6 @@
             ></v-icon>
             {{ item.end_date }}
           </span>
-        </template>
-        <template v-slot:[`item.repeat.repeat_name`]="{ item }" v-if="mdAndUp">
-          <span>{{ item.repeat.repeat_name }}</span>
         </template>
         <!-- Mobile View -->
         <template v-slot:[`item.mobile`]="{ item }">
@@ -203,7 +176,7 @@
                   ></v-icon>
                 </span>
               </v-col>
-              <v-col class="ma-0 pa-0 ga-0 text-right">
+              <v-col class="ma-0 pa-0 ga-0 text-right font-weight-bold">
                 <span :class="getClassForMoney(item.amount)">
                   {{ formatCurrency(item.amount) }}
                 </span>
@@ -340,7 +313,7 @@
     { title: "Reminder", key: "description" },
     { title: "Tag", key: "tag.tag_name", width: "200px" },
     { title: "End Date", key: "end_date", width: "120px" },
-    { title: "Repeat", key: "repeat.repeat_name", width: "120px" },
+    { title: "Repeat", key: "repeat.repeat_name", width: "150px" },
   ]);
   const displayHeaders = computed(() => {
     if (mdAndUp.value) {
@@ -351,16 +324,14 @@
   });
   const getClassForMoney = amount => {
     let color = "";
-    let font = "";
 
-    font = "font-weight-bold";
     if (amount < 0) {
       color = "text-red";
     } else {
       color = "text-green";
     }
 
-    return color + " " + font;
+    return color;
   };
 
   const clickRemoveReminder = () => {
