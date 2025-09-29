@@ -8,6 +8,7 @@
             :key="index"
             :value="item.key_name"
             color="accent"
+            class="text-secondary"
           >
             {{ item.pretty_name }}
           </v-tab>

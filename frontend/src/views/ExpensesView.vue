@@ -4,9 +4,11 @@
       <v-btn
         icon="mdi-cog"
         flat
-        size="xs"
+        size="small"
         :disabled="isActive"
         @click="showOptions = true"
+        variant="plain"
+        color="grey"
       ></v-btn>
       <v-dialog width="300" v-model="showOptions">
         <v-card>
@@ -56,6 +58,7 @@
           v-for="(main, index) in expenses"
           :key="index"
           :value="main.title"
+          class="text-secondary"
         >
           {{ main.title }}
         </v-tab>
@@ -68,7 +71,7 @@
         >
           <v-tabs
             v-model="tab[main_index]"
-            color="accent"
+            color="accent-lighten-2"
             show-arrows
             center-active
           >
@@ -76,6 +79,7 @@
               v-for="(sub_window, sub_index) in main_window.data"
               :key="sub_index"
               :value="sub_window.key_name"
+              class="text-secondary-lighten-2"
             >
               {{ sub_window.pretty_name }}
             </v-tab>
