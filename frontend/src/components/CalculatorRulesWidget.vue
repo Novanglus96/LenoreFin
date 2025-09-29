@@ -1,6 +1,7 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
-    <template v-slot:append>
+    <v-card-title class="text-left">
+      <span class="text-subtitle-2 text-secondary">Rules</span>
       <v-tooltip text="Add Rule" location="top">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -9,20 +10,19 @@
             variant="plain"
             v-bind="props"
             @click="calcAddRuleFormDialog = true"
+            size="small"
+            color="grey"
           ></v-btn>
         </template>
       </v-tooltip>
-    </template>
-    <CalculatorRuleForm
-      v-model="calcAddRuleFormDialog"
-      @update-dialog="updateAddDialog"
-      :key="0"
-      :isEdit="false"
-    />
-    <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary">Rules</span>
-    </template>
-    <template v-slot:text>
+      <CalculatorRuleForm
+        v-model="calcAddRuleFormDialog"
+        @update-dialog="updateAddDialog"
+        :key="0"
+        :isEdit="false"
+      />
+    </v-card-title>
+    <v-card-text>
       <v-list :selected="rule_selected" nav>
         <v-list-item
           v-for="(item, i) in props.rules"
@@ -58,7 +58,7 @@
         :isEdit="true"
         :passedFormData="passedFormData"
       />
-    </template>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>

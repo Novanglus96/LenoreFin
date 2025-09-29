@@ -1,6 +1,9 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
-    <template v-slot:append>
+    <v-card-title class="text-left">
+      <span class="text-subtitle-2 text-secondary">
+        Per Paycheck Contribution Rules
+      </span>
       <v-tooltip text="Add Contribution" location="top">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -9,24 +12,22 @@
             variant="plain"
             v-bind="props"
             @click="addContributionDialog = true"
+            size="small"
+            color="grey"
           ></v-btn>
         </template>
       </v-tooltip>
-    </template>
-    <ContributionForm
-      v-model="addContributionDialog"
-      key="0"
-      :isEdit="false"
-      @update-dialog="updateAddDialog"
-      @add-contribution="clickAddContribution"
-      :passedFormData="newContributionData"
-    />
-    <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary">
-        Per Paycheck Contribution Rules
-      </span>
-    </template>
-    <template v-slot:text>
+
+      <ContributionForm
+        v-model="addContributionDialog"
+        key="0"
+        :isEdit="false"
+        @update-dialog="updateAddDialog"
+        @add-contribution="clickAddContribution"
+        :passedFormData="newContributionData"
+      />
+    </v-card-title>
+    <v-card-text>
       <v-container>
         <v-row dense>
           <v-col class="text-right text-subtitle-2 font-weight-bold" cols="3">
@@ -148,7 +149,7 @@
           </v-dialog>
         </template>
       </vue3-datatable>
-    </template>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>

@@ -1,14 +1,25 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
-    <template v-slot:append>
-      <v-menu location="start">
+    <v-card-title class="text-left">
+      <span
+        class="text-subtitle-2 text-secondary"
+        v-if="props.start_integer == 0"
+      >
+        Forecast ({{ timeFrame.title }})
+      </span>
+      <span class="text-subtitle-2 text-secondary" v-else>
+        Cash Flow (Last 14 Days + {{ timeFrame.title }})
+      </span>
+      <v-menu location="right">
         <template v-slot:activator="{ props }">
           <v-btn
             icon="mdi-cog"
             flat
-            size="xs"
+            size="small"
             v-bind="props"
             :disabled="isActive"
+            color="grey"
+            variant="plain"
           ></v-btn>
         </template>
         <v-card width="300">
@@ -33,19 +44,8 @@
           </v-card-text>
         </v-card>
       </v-menu>
-    </template>
-    <template v-slot:title>
-      <span
-        class="text-subtitle-2 text-secondary"
-        v-if="props.start_integer == 0"
-      >
-        Forecast ({{ timeFrame.title }})
-      </span>
-      <span class="text-subtitle-2 text-secondary" v-else>
-        Cash Flow (Last 14 Days + {{ timeFrame.title }})
-      </span>
-    </template>
-    <template v-slot:text>
+    </v-card-title>
+    <v-card-text>
       <v-progress-circular
         color="secondary"
         indeterminate
@@ -64,7 +64,7 @@
       >
         Unable to load forecast
       </Line>
-    </template>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>

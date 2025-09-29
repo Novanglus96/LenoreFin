@@ -2,7 +2,8 @@
   <v-row class="pa-1 ga-1" no-gutters>
     <v-col class="rounded">
       <v-card variant="outlined" :elevation="4" class="bg-surface">
-        <template v-slot:append>
+        <v-card-title class="text-left">
+          <span class="text-subtitle-2 text-secondary">Notes</span>
           <v-tooltip text="Add Note" location="top">
             <template v-slot:activator="{ props }">
               <v-btn
@@ -11,22 +12,21 @@
                 variant="plain"
                 v-bind="props"
                 @click="addNoteDialog = true"
+                size="small"
+                color="grey"
               ></v-btn>
             </template>
           </v-tooltip>
-        </template>
-        <NoteForm
-          v-model="addNoteDialog"
-          key="0"
-          :isEdit="false"
-          @update-dialog="updateAddDialog"
-          @add-note="clickAddNote"
-          :passedFormData="newNoteData"
-        />
-        <template v-slot:title>
-          <span class="text-subtitle-2 text-secondary">Notes</span>
-        </template>
-        <template v-slot:text>
+          <NoteForm
+            v-model="addNoteDialog"
+            key="0"
+            :isEdit="false"
+            @update-dialog="updateAddDialog"
+            @add-note="clickAddNote"
+            :passedFormData="newNoteData"
+          />
+        </v-card-title>
+        <v-card-text>
           <vue3-datatable
             :rows="notes ? notes : []"
             :columns="columns"
@@ -99,7 +99,7 @@
               </v-dialog>
             </template>
           </vue3-datatable>
-        </template>
+        </v-card-text>
       </v-card>
     </v-col>
   </v-row>

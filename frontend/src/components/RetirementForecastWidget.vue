@@ -1,12 +1,17 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
-    <template v-slot:append>
+    <v-card-title class="text-left">
+      <span class="text-subtitle-2 text-secondary text-left">
+        Retirement Forecast
+      </span>
       <v-btn
         icon="mdi-cog"
         flat
-        size="xs"
+        size="small"
         :disabled="isActive"
         @click="showOptions = true"
+        variant="plain"
+        color="grey"
       ></v-btn>
       <v-dialog width="300" v-model="showOptions">
         <v-card>
@@ -51,11 +56,8 @@
           </form>
         </v-card>
       </v-dialog>
-    </template>
-    <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary">Retirement Forecast</span>
-    </template>
-    <template v-slot:text>
+    </v-card-title>
+    <v-card-text>
       <v-progress-circular
         color="secondary"
         indeterminate
@@ -74,7 +76,7 @@
       >
         Unable to load forecast
       </Line>
-    </template>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>

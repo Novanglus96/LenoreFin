@@ -1,11 +1,11 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
-    <template v-slot:title>
+    <v-card-title class="text-left">
       <span class="text-subtitle-2 text-secondary">
         {{ calculator ? calculator.rule.name : null }} Transactions
       </span>
-    </template>
-    <template v-slot:text>
+    </v-card-title>
+    <v-card-text>
       <vue3-datatable
         :rows="calculator ? calculator.transactions : []"
         :columns="columns"
@@ -92,7 +92,7 @@
           </span>
         </template>
       </vue3-datatable>
-    </template>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>

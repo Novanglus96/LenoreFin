@@ -1,6 +1,9 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
-    <template v-slot:append>
+    <v-card-title>
+      <span class="text-subtitle-2 text-secondary">
+        Per Paycheck Overage Rules
+      </span>
       <v-tooltip text="Add Overage Rule" location="top">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -9,24 +12,21 @@
             variant="plain"
             v-bind="props"
             @click="addContributionRuleDialog = true"
+            size="small"
+            color="grey"
           ></v-btn>
         </template>
       </v-tooltip>
-    </template>
-    <ContributionRuleForm
-      v-model="addContributionRuleDialog"
-      key="0"
-      :isEdit="false"
-      @update-dialog="updateAddDialog"
-      @add-contribution-rule="clickAddContributionRule"
-      :passedFormData="newContributionRuleData"
-    />
-    <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary">
-        Per Paycheck Overage Rules
-      </span>
-    </template>
-    <template v-slot:text>
+      <ContributionRuleForm
+        v-model="addContributionRuleDialog"
+        key="0"
+        :isEdit="false"
+        @update-dialog="updateAddDialog"
+        @add-contribution-rule="clickAddContributionRule"
+        :passedFormData="newContributionRuleData"
+      />
+    </v-card-title>
+    <v-card-text>
       <vue3-datatable
         :rows="contributionRules ? contributionRules : []"
         :columns="columns"
@@ -95,7 +95,7 @@
           </v-dialog>
         </template>
       </vue3-datatable>
-    </template>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>

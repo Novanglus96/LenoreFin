@@ -3,7 +3,7 @@
     <v-row class="pa-1 ga-1 ma-0 rounded" no-gutters>
       <v-col class="rounded pa-0 ga-0 ma-0">
         <v-card variant="outlined" :elevation="4" class="bg-surface w-100">
-          <v-card-title>
+          <v-card-title class="text-left">
             <span class="text-subtitle-2 text-secondary">
               {{ props.data[0].year1 }}
             </span>

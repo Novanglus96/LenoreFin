@@ -1,6 +1,9 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
-    <template v-slot:append>
+    <v-card-title class="text-left">
+      <span class="text-subtitle-2 text-secondary">
+        {{ calculator ? calculator.rule.name : null }} Transfers
+      </span>
       <v-tooltip text="Add Transfer" location="top">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -14,6 +17,8 @@
                 ? true
                 : false
             "
+            size="small"
+            color="grey"
           ></v-btn>
         </template>
       </v-tooltip>
@@ -25,13 +30,8 @@
         :key="0"
         :passedFormData="newTransferData"
       />
-    </template>
-    <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary">
-        {{ calculator ? calculator.rule.name : null }} Transfers
-      </span>
-    </template>
-    <template v-slot:text>
+    </v-card-title>
+    <v-card-text>
       <vue3-datatable
         :rows="calculator ? calculator.transfers : []"
         :columns="columns"
@@ -90,7 +90,7 @@
         :newTotal="newTotal"
         :newMemo="newMemo"
       />
-    </template>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>
