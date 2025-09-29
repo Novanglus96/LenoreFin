@@ -29,7 +29,7 @@
         />
         <v-card variant="outlined" :elevation="4" class="bg-surface" v-else>
           <v-card-text class="text-center">
-            <span class="text-subtitle-2 text-error">
+            <span class="text-subtitle-2 text-accent">
               Please select an account...
             </span>
           </v-card-text>

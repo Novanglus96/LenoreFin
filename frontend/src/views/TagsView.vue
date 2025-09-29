@@ -15,7 +15,7 @@
         <v-col class="rounded">
           <v-card variant="outlined" :elevation="4" class="bg-surface">
             <v-card-text class="text-center">
-              <span class="text-subtitle-2 text-error">
+              <span class="text-subtitle-2 text-accent">
                 Please select a tag...
               </span>
             </v-card-text>
