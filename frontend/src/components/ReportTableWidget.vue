@@ -24,6 +24,7 @@
               :hide-default-footer="true"
               width="100%"
               class="ma-0 pa-0 ga-0"
+              :header-props="{ class: 'font-weight-bold bg-primary' }"
             >
               <template v-slot:[`header.item`] v-if="mdAndUp">
                 <div class="font-weight-bold"></div>

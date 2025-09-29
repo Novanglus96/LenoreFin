@@ -61,7 +61,7 @@
         v-model="selected_all"
         :page="localPage"
         :row-props="getRowProps"
-        :header-props="{ class: 'font-weight-bold' }"
+        :header-props="{ class: 'font-weight-bold bg-primary' }"
       >
         <template
           v-slot:header.data-table-select="{

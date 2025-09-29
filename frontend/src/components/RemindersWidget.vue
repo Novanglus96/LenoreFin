@@ -109,7 +109,7 @@
         v-model="selected_reminder"
         select-strategy="single"
         v-model:page="page"
-        :header-props="{ class: 'font-weight-bold' }"
+        :header-props="{ class: 'font-weight-bold bg-primary' }"
         :row-props="{ class: 'text-body-2' }"
       >
         <template v-slot:bottom v-if="props.variant != 'upcoming'">
