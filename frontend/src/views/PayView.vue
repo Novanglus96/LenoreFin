@@ -26,12 +26,8 @@
               :isLoading="isLoading"
             />
           </v-window-item>
+          <ReportTableWidget :isLoading="isLoading" :data="pay_graph[0].data" />
         </v-window>
-      </v-col>
-    </v-row>
-    <v-row class="pa-1 ga-1" no-gutters>
-      <v-col class="rounded text-center">
-        <ReportTableWidget :isLoading="isLoading" :data="pay_graph[0].data" />
       </v-col>
     </v-row>
   </div>
