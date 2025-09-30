@@ -110,6 +110,22 @@
                 <v-pagination v-model="page" :length="pageCount"></v-pagination>
               </div>
             </template>
+            <!-- Mobile View -->
+            <template v-slot:[`item.mobile`]="{ item }">
+              <v-container class="ma-0 pa-0 ga-0">
+                <v-row dense class="ma-0 pa-0 ga-0">
+                  <v-col
+                    class="ma-0 pa-0 ga-0 font-weight-bold text-center"
+                    cols="3"
+                  >
+                    {{ formatDate(item.note_date, true) }}
+                  </v-col>
+                  <v-col class="ma-0 pa-0 ga-0" cols="9">
+                    {{ item.note_text }}
+                  </v-col>
+                </v-row>
+              </v-container>
+            </template>
           </v-data-table>
         </v-card-text>
       </v-card>
@@ -203,4 +219,19 @@
       }
     },
   );
+
+  const formatDate = (input, padDay = false) => {
+    // Normalize input to a Date object
+    const date = input instanceof Date ? input : new Date(input);
+
+    if (isNaN(date)) {
+      console.warn("Invalid date:", input);
+      return "";
+    }
+
+    const month = date.toLocaleString("en-US", { month: "short" }); // 'Sep'
+    const day = date.getDate(); // 16
+
+    return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
+  };
 </script>
