@@ -39,8 +39,8 @@
         v-model:page="localPage"
         :items-per-page-options="[
           {
-            value: transactions_store.pageinfo.page_size,
-            title: transactions_store.pageinfo.page_size,
+            value: 5,
+            title: 5,
           },
         ]"
         items-per-page-text="Transactions per page"
