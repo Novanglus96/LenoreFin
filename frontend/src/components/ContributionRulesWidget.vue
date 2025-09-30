@@ -45,14 +45,68 @@
         no-data-text="No rules!"
         loading-text="Loading rules..."
         disable-sort
-        :show-select="false"
+        :show-select="true"
         fixed-footer
         striped="odd"
         density="compact"
         :hide-default-header="mdAndUp ? false : true"
         width="100%"
         :header-props="{ class: 'font-weight-bold bg-primary' }"
+        v-model="selectedContributionRule"
+        select-strategy="single"
+        return-object
       >
+        <template v-slot:top>
+          <div class="d-flex align-center">
+            <v-btn
+              variant="plain"
+              icon
+              @click="editContributionRuleDialog = true"
+              :disabled="selectedContributionRule.length === 0"
+            >
+              <v-icon icon="mdi-pencil"></v-icon>
+            </v-btn>
+            <ContributionRuleForm
+              v-model="editContributionRuleDialog"
+              :key="editRule ? editRule.id : 0"
+              :isEdit="true"
+              @update-dialog="updateEditDialog"
+              :passedFormData="editRule"
+              @edit-contribution-rule="clickEditContributionRule"
+            />
+            <v-btn
+              variant="plain"
+              icon
+              :disabled="selectedContributionRule.length == 0"
+            >
+              <v-icon
+                icon="mdi-delete"
+                @click="deleteContributionRuleDialog = true"
+                color="error"
+              ></v-icon>
+            </v-btn>
+            <v-dialog
+              v-model="deleteContributionRuleDialog"
+              :key="editRule ? editRule.id : 0"
+              width="400"
+            >
+              <v-card>
+                <v-card-title>Delete Rule?</v-card-title>
+                <v-card-text>
+                  <span>{{ editRule.rule }}</span>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn @click="deleteContributionRuleDialog = false">
+                    Close
+                  </v-btn>
+                  <v-btn @click="clickDeleteContributionRule(editRule)">
+                    Delete
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </div>
+        </template>
         <template v-slot:bottom>
           <div class="text-center pt-2">
             <v-pagination v-model="page" :length="pageCount"></v-pagination>
@@ -60,12 +114,6 @@
         </template>
         <template v-slot:[`header.order`] v-if="mdAndUp">
           <div class="text-center">Order</div>
-        </template>
-        <template v-slot:[`header.edit`] v-if="mdAndUp">
-          <div class="text-center">Edit</div>
-        </template>
-        <template v-slot:[`header.delete`] v-if="mdAndUp">
-          <div class="text-center">Delete</div>
         </template>
         <template v-slot:[`item.order`]="{ item }" v-if="mdAndUp">
           <div class="text-center">
@@ -80,52 +128,6 @@
         <template v-slot:[`item.cap`]="{ item }" v-if="mdAndUp">
           <div>
             <span>{{ item.cap }}</span>
-          </div>
-        </template>
-        <template v-slot:[`item.edit`]="{ item }" v-if="mdAndUp">
-          <div class="text-center">
-            <v-btn variant="plain" icon @click="clickEditButton(item.id)">
-              <v-icon icon="mdi-pencil"></v-icon>
-            </v-btn>
-            <ContributionRuleForm
-              v-model="editContributionRuleDialog"
-              :key="item.id"
-              :isEdit="true"
-              @update-dialog="updateEditDialog"
-              :passedFormData="item"
-              @edit-contribution-rule="clickEditContributionRule"
-            />
-          </div>
-        </template>
-        <template v-slot:[`item.delete`]="{ item }" v-if="mdAndUp">
-          <div class="text-center">
-            <v-btn variant="plain" icon>
-              <v-icon
-                icon="mdi-delete"
-                @click="clickDeleteButton(item.id)"
-                color="error"
-              ></v-icon>
-            </v-btn>
-            <v-dialog
-              v-model="deleteContributionRuleDialog"
-              :key="item.id"
-              width="400"
-            >
-              <v-card>
-                <v-card-title>Delete Rule?</v-card-title>
-                <v-card-text>
-                  <span>{{ item.rule }}</span>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn @click="deleteContributionRuleDialog = false">
-                    Close
-                  </v-btn>
-                  <v-btn @click="clickDeleteContributionRule(item)">
-                    Delete
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
           </div>
         </template>
         <!-- Mobile View -->
@@ -160,48 +162,6 @@
                 {{ item.cap }}
               </v-col>
             </v-row>
-            <v-row dense class="ma-0 pa-0 ga-0">
-              <v-col class="ma-0 pa-0 ga-0 text-right" cols="12">
-                <v-btn variant="plain" icon @click="clickEditButton(item.id)">
-                  <v-icon icon="mdi-pencil"></v-icon>
-                </v-btn>
-                <ContributionRuleForm
-                  v-model="editContributionRuleDialog"
-                  :key="item.id"
-                  :isEdit="true"
-                  @update-dialog="updateEditDialog"
-                  :passedFormData="item"
-                  @edit-contribution-rule="clickEditContributionRule"
-                />
-                <v-btn variant="plain" icon>
-                  <v-icon
-                    icon="mdi-delete"
-                    @click="clickDeleteButton(item.id)"
-                    color="error"
-                  ></v-icon>
-                </v-btn>
-                <v-dialog
-                  v-model="deleteContributionRuleDialog"
-                  :key="item.id"
-                  width="400"
-                >
-                  <v-card>
-                    <v-card-title>Delete Rule?</v-card-title>
-                    <v-card-text>
-                      <span>{{ item.rule }}</span>
-                    </v-card-text>
-                    <v-card-actions>
-                      <v-btn @click="deleteContributionRuleDialog = false">
-                        Close
-                      </v-btn>
-                      <v-btn @click="clickDeleteContributionRule(item)">
-                        Delete
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
-              </v-col>
-            </v-row>
           </v-container>
         </template>
       </v-data-table>
@@ -209,7 +169,7 @@
   </v-card>
 </template>
 <script setup>
-  import { ref, computed } from "vue";
+  import { ref, computed, watch } from "vue";
   import { useContributionRules } from "@/composables/contributionsComposable";
   import ContributionRuleForm from "@/components/ContributionRuleForm.vue";
   import { useDisplay } from "vuetify";
@@ -217,11 +177,11 @@
   const page = ref(1);
   const itemsPerPage = ref(3);
   const { mdAndUp } = useDisplay();
-
+  const editRule = ref({ id: 0 });
   const editContributionRuleDialog = ref(false);
   const addContributionRuleDialog = ref(false);
   const deleteContributionRuleDialog = ref(false);
-  const selectedContributionRule = ref(null);
+  const selectedContributionRule = ref([]);
   const newContributionRuleData = ref({
     id: 0,
     rule: null,
@@ -241,8 +201,6 @@
     { title: "Order", key: "order", width: "20px" },
     { title: "Rule", key: "rule" },
     { title: "Cap", key: "cap" },
-    { title: "Edit", key: "edit", width: "40px" },
-    { title: "Delete", key: "delete", width: "40px" },
   ]);
   const displayHeaders = computed(() => {
     if (mdAndUp.value) {
@@ -260,24 +218,16 @@
     editContributionRuleDialog.value = false;
   };
 
-  const clickEditButton = contributionRule => {
-    selectedContributionRule.value = contributionRule;
-    editContributionRuleDialog.value = true;
-  };
-
-  const clickDeleteButton = contributionRule => {
-    selectedContributionRule.value = contributionRule;
-    deleteContributionRuleDialog.value = true;
-  };
-
   const clickEditContributionRule = contributionRule => {
     editContributionRule(contributionRule);
     editContributionRuleDialog.value = false;
+    selectedContributionRule.value = [];
   };
 
   const clickDeleteContributionRule = contributionRule => {
     removeContributionRule(contributionRule);
     deleteContributionRuleDialog.value = false;
+    selectedContributionRule.value = [];
   };
 
   const clickAddContributionRule = contributionRule => {
@@ -289,5 +239,14 @@
     contributionRules.value && itemsPerPage.value
       ? Math.ceil(contributionRules.value.length / itemsPerPage.value)
       : 1,
+  );
+
+  watch(
+    () => selectedContributionRule.value,
+    val => {
+      if (val) {
+        editRule.value = val[0];
+      }
+    },
   );
 </script>

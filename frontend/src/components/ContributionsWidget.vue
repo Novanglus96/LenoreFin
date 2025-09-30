@@ -135,17 +135,69 @@
         no-data-text="No contributions!"
         loading-text="Loading contributions..."
         disable-sort
-        :show-select="false"
+        :show-select="true"
         fixed-footer
         striped="odd"
         density="compact"
         :hide-default-header="mdAndUp ? false : true"
         width="100%"
         :header-props="{ class: 'font-weight-bold bg-primary' }"
+        v-model="selectedContribution"
+        select-strategy="single"
+        return-object
       >
         <template v-slot:bottom>
           <div class="text-center pt-2">
             <v-pagination v-model="page" :length="pageCount"></v-pagination>
+          </div>
+        </template>
+        <template v-slot:top>
+          <div class="d-flex align-center">
+            <v-btn
+              variant="plain"
+              icon
+              @click="editContributionDialog = true"
+              :disabled="selectedContribution.length === 0"
+            >
+              <v-icon icon="mdi-pencil"></v-icon>
+            </v-btn>
+            <ContributionForm
+              v-model="editContributionDialog"
+              :key="editContrib ? editContrib.id : 0"
+              :isEdit="true"
+              @update-dialog="updateEditDialog"
+              :passedFormData="editContrib"
+              @edit-contribution="clickEditContribution"
+            />
+            <v-btn
+              variant="plain"
+              icon
+              :disabled="selectedContribution.length === 0"
+            >
+              <v-icon
+                icon="mdi-delete"
+                @click="deleteContributionDialog = true"
+                color="error"
+              ></v-icon>
+            </v-btn>
+            <v-dialog
+              v-model="deleteContributionDialog"
+              :key="editContrib ? editContrib.id : 0"
+              width="400"
+            >
+              <v-card>
+                <v-card-title>Delete Contribution?</v-card-title>
+                <v-card-text>
+                  <span>{{ editContrib.contribution }}</span>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn @click="deleteContributionDialog = false">Close</v-btn>
+                  <v-btn @click="clickDeleteContribution(editContrib)">
+                    Delete
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
           </div>
         </template>
         <template v-slot:[`header.per_paycheck`] v-if="mdAndUp">
@@ -159,12 +211,6 @@
         </template>
         <template v-slot:[`header.cap`] v-if="mdAndUp">
           <div class="text-center">Cap Amount</div>
-        </template>
-        <template v-slot:[`header.edit`] v-if="mdAndUp">
-          <div class="text-center">Edit</div>
-        </template>
-        <template v-slot:[`header.delete`] v-if="mdAndUp">
-          <div class="text-center">Delete</div>
         </template>
         <template v-slot:[`item.contribution`]="{ item }" v-if="mdAndUp">
           <div class="text-right">
@@ -231,48 +277,6 @@
             </span>
           </div>
         </template>
-        <template v-slot:[`item.edit`]="{ item }" v-if="mdAndUp">
-          <div class="text-center">
-            <v-btn variant="plain" icon @click="clickEditButton(item.id)">
-              <v-icon icon="mdi-pencil"></v-icon>
-            </v-btn>
-            <ContributionForm
-              v-model="editContributionDialog"
-              :key="item.id"
-              :isEdit="true"
-              @update-dialog="updateEditDialog"
-              :passedFormData="item"
-              @edit-contribution="clickEditContribution"
-            />
-          </div>
-        </template>
-        <template v-slot:[`item.delete`]="{ item }" v-if="mdAndUp">
-          <div class="text-center">
-            <v-btn variant="plain" icon>
-              <v-icon
-                icon="mdi-delete"
-                @click="clickDeleteButton(item.id)"
-                color="error"
-              ></v-icon>
-            </v-btn>
-            <v-dialog
-              v-model="deleteContributionDialog"
-              :key="item.id"
-              width="400"
-            >
-              <v-card>
-                <v-card-title>Delete Contribution?</v-card-title>
-                <v-card-text>
-                  <span>{{ item.contribution }}</span>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn @click="deleteContributionDialog = false">Close</v-btn>
-                  <v-btn @click="clickDeleteContribution(item)">Delete</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
-          </div>
-        </template>
         <!-- Mobile View -->
         <template v-slot:[`item.mobile`]="{ item }">
           <v-container class="ma-0 pa-0 ga-0">
@@ -312,48 +316,6 @@
                 {{ formatCurrency(item.cap) }}
               </v-col>
             </v-row>
-            <v-row dense class="ma-0 pa-0 ga-0">
-              <v-col class="pa-0 ga-0 ma-0 text-right">
-                <v-btn variant="plain" icon @click="clickEditButton(item.id)">
-                  <v-icon icon="mdi-pencil"></v-icon>
-                </v-btn>
-                <ContributionForm
-                  v-model="editContributionDialog"
-                  :key="item.id"
-                  :isEdit="true"
-                  @update-dialog="updateEditDialog"
-                  :passedFormData="item"
-                  @edit-contribution="clickEditContribution"
-                />
-                <v-btn variant="plain" icon>
-                  <v-icon
-                    icon="mdi-delete"
-                    @click="clickDeleteButton(item.id)"
-                    color="error"
-                  ></v-icon>
-                </v-btn>
-                <v-dialog
-                  v-model="deleteContributionDialog"
-                  :key="item.id"
-                  width="400"
-                >
-                  <v-card>
-                    <v-card-title>Delete Contribution?</v-card-title>
-                    <v-card-text>
-                      <span>{{ item.contribution }}</span>
-                    </v-card-text>
-                    <v-card-actions>
-                      <v-btn @click="deleteContributionDialog = false">
-                        Close
-                      </v-btn>
-                      <v-btn @click="clickDeleteContribution(item)">
-                        Delete
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
-              </v-col>
-            </v-row>
           </v-container>
         </template>
       </v-data-table>
@@ -361,7 +323,7 @@
   </v-card>
 </template>
 <script setup>
-  import { ref, computed } from "vue";
+  import { ref, computed, watch } from "vue";
   import { useContributions } from "@/composables/contributionsComposable";
   import ContributionForm from "@/components/ContributionForm.vue";
   import NumberFlow from "@number-flow/vue";
@@ -373,7 +335,8 @@
   const editContributionDialog = ref(false);
   const addContributionDialog = ref(false);
   const deleteContributionDialog = ref(false);
-  const selectedContribution = ref(null);
+  const selectedContribution = ref([]);
+  const editContrib = ref({ id: 0 });
   const newContributionData = ref({
     id: 0,
     contribution: null,
@@ -398,8 +361,6 @@
     { title: "Emergency Amt", key: "emergency_amt", width: "140px" },
     { title: "Difference", key: "emergency_diff", width: "140px" },
     { title: "Cap Amount", key: "cap", width: "140px" },
-    { title: "Edit", key: "edit", width: "40px" },
-    { title: "Delete", key: "delete", width: "40px" },
   ]);
   const displayHeaders = computed(() => {
     if (mdAndUp.value) {
@@ -417,24 +378,16 @@
     editContributionDialog.value = false;
   };
 
-  const clickEditButton = contribution => {
-    selectedContribution.value = contribution;
-    editContributionDialog.value = true;
-  };
-
-  const clickDeleteButton = contribution => {
-    selectedContribution.value = contribution;
-    deleteContributionDialog.value = true;
-  };
-
   const clickEditContribution = contribution => {
     editContribution(contribution);
     editContributionDialog.value = false;
+    selectedContribution.value = [];
   };
 
   const clickDeleteContribution = contribution => {
     removeContribution(contribution);
     deleteContributionDialog.value = false;
+    selectedContribution.value = [];
   };
 
   const clickAddContribution = contribution => {
@@ -453,5 +406,13 @@
     contributions.value && itemsPerPage.value
       ? Math.ceil(contributions.value.contributions.length / itemsPerPage.value)
       : 1,
+  );
+  watch(
+    () => selectedContribution.value,
+    val => {
+      if (val) {
+        editContrib.value = val[0];
+      }
+    },
   );
 </script>
