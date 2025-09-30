@@ -17,14 +17,22 @@
               </v-row>
               <v-row>
                 <v-col class="text-right">
-                  <span class="text-subtitle-2">
-                    {{ props.data.year1 }} Avg:
+                  <span class="text-subtitle-2 font-weight-regular">
+                    <span
+                      class="text-subtitle-1 text-secondary font-weight-bold"
+                    >
+                      {{ props.data.year1 }} Avg:
+                    </span>
                     {{ formatCurrency(props.data.year1_avg) }}
                   </span>
                 </v-col>
                 <v-col class="text-left">
-                  <span class="text-subtitle-2">
-                    {{ props.data.year2 }} Avg:
+                  <span class="text-subtitle-2 font-weight-regular">
+                    <span
+                      class="text-subtitle-1 text-secondary font-weight-bold"
+                    >
+                      {{ props.data.year2 }} Avg:
+                    </span>
                     {{ formatCurrency(props.data.year2_avg) }}
                   </span>
                 </v-col>
