@@ -26,90 +26,106 @@
             :passedFormData="newNoteData"
           />
         </v-card-title>
-        <v-card-text>
-          <vue3-datatable
-            :rows="notes ? notes : []"
-            :columns="columns"
+        <v-card-text class="ma-0 pa-0 ga-0">
+          <v-data-table
+            :headers="displayHeaders"
+            :items="notes ? notes : []"
+            :items-length="notes ? notes.length : 0"
             :loading="isLoading"
-            :totalRows="notes ? notes.length : 0"
-            :isServerMode="false"
-            pageSize="10"
-            :hasCheckbox="false"
-            firstArrow="First"
-            lastArrow="Last"
-            previousArrow="Prev"
-            nextArrow="Next"
-            :showNumbersCount="3"
-            noDataContent="No notes"
-            search=""
-            ref="notes_table"
-            :pageSizeOptions="[60]"
-            :showPageSize="false"
-            paginationInfo="Showing {0} to {1} of {2} notes"
-            @change="pageChanged"
-            class="alt-pagination"
-            rowClass="cursor-pointer"
-            @rowClick="rowClick"
-            :sortable="false"
-            sortColumn="note_date"
-            sortDirection="desc"
+            item-value="id"
+            v-model:items-per-page="itemsPerPage"
+            v-model:page="page"
+            :items-per-page-options="[
+              {
+                value: 10,
+                title: 10,
+              },
+            ]"
+            items-per-page-text="Notes per page"
+            no-data-text="No notes!"
+            loading-text="Loading notes..."
+            disable-sort
+            :show-select="true"
+            fixed-footer
+            striped="odd"
+            density="compact"
+            :hide-default-header="mdAndUp ? false : true"
+            width="100%"
+            :header-props="{ class: 'font-weight-bold bg-primary' }"
+            v-model="selectedNote"
+            select-strategy="single"
+            return-object
           >
-            <template #note_text="row">
-              <span :style="clampedStyle" class="text-body-2">
-                {{ row.value.note_text }}
-              </span>
+            <template v-slot:top>
+              <div class="d-flex align-center">
+                <v-btn
+                  variant="plain"
+                  icon
+                  @click="editNoteDialog = true"
+                  :disabled="selectedNote.length === 0"
+                >
+                  <v-icon icon="mdi-pencil"></v-icon>
+                </v-btn>
+                <NoteForm
+                  v-model="editNoteDialog"
+                  :key="editedNote ? editedNote.id : 0"
+                  :isEdit="true"
+                  @update-dialog="updateEditDialog"
+                  :passedFormData="editedNote"
+                  @edit-note="clickEditNote"
+                />
+                <v-btn
+                  variant="plain"
+                  icon
+                  :disabled="selectedNote.length === 0"
+                >
+                  <v-icon
+                    icon="mdi-delete"
+                    @click="deleteNoteDialog = true"
+                    color="error"
+                  ></v-icon>
+                </v-btn>
+                <v-dialog
+                  v-model="deleteNoteDialog"
+                  :key="editedNote ? editedNote.id : 0"
+                  width="400"
+                >
+                  <v-card>
+                    <v-card-title>Delete Note?</v-card-title>
+                    <v-card-text>
+                      <span :style="clampedStyle" class="text-body-2">
+                        {{ editedNote.note_text }}
+                      </span>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn @click="deleteNoteDialog = false">Close</v-btn>
+                      <v-btn @click="clickDeleteNote(editedNote)">Delete</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </div>
             </template>
-            <template #edit="row">
-              <v-btn variant="plain" icon @click="clickEditButton(row.value)">
-                <v-icon icon="mdi-pencil"></v-icon>
-              </v-btn>
-              <NoteForm
-                v-model="editNoteDialog"
-                :key="row.value.id"
-                :isEdit="true"
-                @update-dialog="updateEditDialog"
-                :passedFormData="selectedNote"
-                @edit-note="clickEditNote"
-              />
+            <template v-slot:bottom>
+              <div class="text-center pt-2">
+                <v-pagination v-model="page" :length="pageCount"></v-pagination>
+              </div>
             </template>
-            <template #delete="row">
-              <v-btn variant="plain" icon>
-                <v-icon
-                  icon="mdi-delete"
-                  @click="clickDeleteButton(row.value)"
-                ></v-icon>
-              </v-btn>
-              <v-dialog
-                v-model="deleteNoteDialog"
-                :key="row.value.id"
-                width="400"
-              >
-                <v-card>
-                  <v-card-title>Delete Note?</v-card-title>
-                  <v-card-text>
-                    <span :style="clampedStyle" class="text-body-2">
-                      {{ selectedNote.note_text }}
-                    </span>
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn @click="deleteNoteDialog = false">Close</v-btn>
-                    <v-btn @click="clickDeleteNote(selectedNote)">Delete</v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
-            </template>
-          </vue3-datatable>
+          </v-data-table>
         </v-card-text>
       </v-card>
     </v-col>
   </v-row>
 </template>
 <script setup>
-  import { ref } from "vue";
-  import Vue3Datatable from "@bhplugin/vue3-datatable";
-  import "@bhplugin/vue3-datatable/dist/style.css";
+  import { ref, computed, watch } from "vue";
   import { useNotes } from "@/composables/notesComposable";
   import NoteForm from "@/components/NoteForm.vue";
+  import { useDisplay } from "vuetify";
+
+  const page = ref(1);
+  const itemsPerPage = ref(10);
+  const { mdAndUp } = useDisplay();
+  const editedNote = ref({ id: 0 });
 
   const { notes, addNote, removeNote, editNote, isLoading } = useNotes();
   const addNoteDialog = ref(false);
@@ -136,15 +152,19 @@
     note_date: formattedDate,
     note_text: null,
   });
-  const selectedNote = ref(null);
+  const selectedNote = ref([]);
 
-  const columns = ref([
-    { field: "id", title: "ID", isUnique: true, hide: true },
-    { field: "note_date", title: "Date", width: "150px" },
-    { field: "note_text", title: "Note" },
-    { field: "edit", title: "Edit", width: "30px" },
-    { field: "delete", title: "Delete", width: "30px" },
+  const headers = ref([
+    { title: "Date", key: "note_date", width: "150px" },
+    { title: "Note", key: "note_text" },
   ]);
+  const displayHeaders = computed(() => {
+    if (mdAndUp.value) {
+      return headers.value;
+    }
+    // For small screens, use your single mobile column
+    return [{ title: "", key: "mobile" }];
+  });
 
   const updateAddDialog = () => {
     addNoteDialog.value = false;
@@ -158,20 +178,29 @@
     addNote(note);
   };
 
-  const clickEditNote = note => {
-    editNote(note);
+  const clickEditNote = () => {
+    editNote(editedNote.value);
+    selectedNote.value = [];
   };
 
-  const clickEditButton = note => {
-    selectedNote.value = note;
-    editNoteDialog.value = true;
-  };
-  const clickDeleteButton = note => {
-    selectedNote.value = note;
-    deleteNoteDialog.value = true;
-  };
   const clickDeleteNote = note => {
     removeNote(note);
     deleteNoteDialog.value = false;
+    selectedNote.value = [];
   };
+
+  const pageCount = computed(() =>
+    notes.value && itemsPerPage.value
+      ? Math.ceil(notes.value.length / itemsPerPage.value)
+      : 1,
+  );
+
+  watch(
+    () => selectedNote.value,
+    val => {
+      if (val) {
+        editedNote.value = val[0];
+      }
+    },
+  );
 </script>
