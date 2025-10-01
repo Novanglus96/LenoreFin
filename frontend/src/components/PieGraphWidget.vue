@@ -15,17 +15,24 @@
       reveal
       size="310"
       style="max-width: 100%; height: auto"
-      v-if="!isLoading"
+      v-if="!isLoading && props.graph_items[0].value != 0"
     ></v-pie>
-
     <v-progress-circular
       color="secondary"
       indeterminate
       :size="300"
       :width="12"
-      v-else
+      v-if="isLoading"
     >
       Loading...
+    </v-progress-circular>
+    <v-progress-circular
+      color="accent"
+      :size="300"
+      :width="12"
+      v-if="!isLoading && props.graph_items[0].value == 0"
+    >
+      None
     </v-progress-circular>
   </div>
 </template>
