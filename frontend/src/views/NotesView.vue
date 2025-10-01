@@ -49,7 +49,6 @@
             fixed-footer
             striped="odd"
             density="compact"
-            :hide-default-header="mdAndUp ? false : true"
             width="100%"
             :header-props="{ class: 'font-weight-bold bg-primary' }"
             v-model="selectedNote"
