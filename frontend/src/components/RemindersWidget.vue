@@ -102,7 +102,6 @@
         fixed-footer
         striped="odd"
         density="compact"
-        :hide-default-header="mdAndUp ? false : true"
         :hide-default-footer="props.variant === 'upcoming'"
         width="100%"
         return-object

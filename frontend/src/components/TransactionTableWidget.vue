@@ -52,7 +52,6 @@
         striped="odd"
         density="compact"
         expand-on-click
-        :hide-default-header="mdAndUp ? false : true"
         :hide-default-footer="props.variant === 'upcoming'"
         width="100%"
         @update:model-value="rowChanged"

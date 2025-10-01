@@ -20,7 +20,6 @@
               :show-select="false"
               striped="odd"
               density="compact"
-              :hide-default-header="mdAndUp ? false : true"
               :hide-default-footer="true"
               width="100%"
               class="ma-0 pa-0 ga-0"

@@ -73,7 +73,6 @@
         fixed-footer
         striped="odd"
         density="compact"
-        :hide-default-header="mdAndUp ? false : true"
         width="100%"
         return-object
         v-model="selectedTransfer"
