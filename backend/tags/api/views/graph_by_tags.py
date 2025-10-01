@@ -185,12 +185,36 @@ def get_graph_new(request, widget_id: int):
         if not labels:
             labels.append("None")
 
+        # Zip values
+        paired = list(zip(values, labels))
+
+        # Sort values
+        paired.sort(key=lambda x: abs(x[0]), reverse=True)
+
+        # Unzip back into separate lists
+        sorted_values, sorted_labels = zip(*paired)
+
+        # Convert to lists
+        sorted_values = list(sorted_values)
+        sorted_labels = list(sorted_labels)
+
+        # Get # of tags
+        number_of_tags = len(sorted_values)
+
+        # Keep only 9 tags
+        if number_of_tags > 9:
+            remaining_values = sum(sorted_values[8:])
+            sorted_values = sorted_values[:9]
+            sorted_labels = sorted_labels[:9]
+            sorted_values.append(remaining_values)
+            sorted_labels.append("The Rest")
+
         # Prepare the graph data object
         graph_items = []
         x = 0
-        for value in values:
+        for value in sorted_values:
             graph_item = PieGraphItem(
-                key=x, title=labels[x], value=abs(value), color=colors[x]
+                key=x, title=sorted_labels[x], value=abs(value), color=colors[x]
             )
             graph_items.append(graph_item)
             x += 1
