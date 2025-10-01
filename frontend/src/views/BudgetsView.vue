@@ -1,36 +1,38 @@
 <template>
-  <v-row class="pa-1 ga-1" no-gutters>
-    <v-col class="rounded text-center">
-      <BudgetsWidget :widget="false" @budget-selected="budgetSelected" />
-    </v-col>
-  </v-row>
-  <v-row class="pa-1 ga-1" no-gutters>
-    <v-col class="rounded text-center">
-      <BudgetForm
-        :budget="localBudget ? localBudget.budget : null"
-        :edit="true"
-        :key="localBudget ? localBudget.budget.id : -1"
-        v-if="!isMobile"
-      />
-      <BudgetFormMobile
-        :budget="localBudget ? localBudget.budget : null"
-        :edit="true"
-        :key="localBudget ? localBudget.budget.id : -1"
-        v-if="isMobile"
-      />
-    </v-col>
-  </v-row>
-  <v-row class="pa-1 ga-1" no-gutters>
-    <v-col class="rounded">
-      <TransactionTableWidget
-        :key="localBudget ? localBudget.budget.id : -1"
-        variant="budget"
-        :data="localBudget ? localBudget : null"
-        :loading="false"
-        :fetching="false"
-      />
-    </v-col>
-  </v-row>
+  <div>
+    <v-row class="pa-1 ga-1" no-gutters>
+      <v-col class="rounded text-center">
+        <BudgetsWidget :widget="false" @budget-selected="budgetSelected" />
+      </v-col>
+    </v-row>
+    <v-row class="pa-1 ga-1" no-gutters>
+      <v-col class="rounded text-center">
+        <BudgetForm
+          :budget="localBudget ? localBudget.budget : null"
+          :edit="true"
+          :key="localBudget ? localBudget.budget.id : -1"
+          v-if="!isMobile"
+        />
+        <BudgetFormMobile
+          :budget="localBudget ? localBudget.budget : null"
+          :edit="true"
+          :key="localBudget ? localBudget.budget.id : -1"
+          v-if="isMobile"
+        />
+      </v-col>
+    </v-row>
+    <v-row class="pa-1 ga-1" no-gutters>
+      <v-col class="rounded">
+        <TransactionTableWidget
+          :key="localBudget ? localBudget.budget.id : -1"
+          variant="budget"
+          :data="localBudget ? localBudget : null"
+          :loading="false"
+          :fetching="false"
+        />
+      </v-col>
+    </v-row>
+  </div>
 </template>
 <script setup>
   import { ref } from "vue";

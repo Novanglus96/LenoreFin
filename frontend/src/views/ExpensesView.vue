@@ -1,133 +1,135 @@
 <template>
-  <v-row class="pa-1 ga-1" no-gutters v-if="!isLoading">
-    <v-col class="rounded text-center">
-      <v-btn
-        icon="mdi-cog"
-        flat
-        size="small"
-        :disabled="isActive"
-        @click="showOptions = true"
-        variant="plain"
-        color="grey"
-      ></v-btn>
-      <v-dialog width="300" v-model="showOptions">
-        <v-card>
-          <form @submit.prevent="submit">
-            <v-card-title>
-              <span class="text-secondary text-h6">Choose Expenses</span>
-            </v-card-title>
-            <v-card-text>
-              <v-autocomplete
-                clearable
-                chips
-                multiple
-                label="Main Report Tags"
-                :items="parent_tags"
-                variant="outlined"
-                :loading="parent_tags_isLoading"
-                item-title="tag_name"
-                item-value="id"
-                v-model="main_report_tags.value.value"
-                density="compact"
-                :error-messages="main_report_tags.errorMessage.value"
-              ></v-autocomplete>
-              <v-autocomplete
-                clearable
-                chips
-                multiple
-                label="Individual Report Tags"
-                :items="parent_tags"
-                variant="outlined"
-                :loading="parent_tags_isLoading"
-                item-title="tag_name"
-                item-value="id"
-                v-model="individual_report_tags.value.value"
-                density="compact"
-                :error-messages="individual_report_tags.errorMessage.value"
-              ></v-autocomplete>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="secondary" type="submit">Save Changes</v-btn>
-            </v-card-actions>
-          </form>
-        </v-card>
-      </v-dialog>
-      <v-tabs v-model="main_tab" color="accent" show-arrows center-active>
-        <v-tab
-          v-for="(main, index) in expenses"
-          :key="index"
-          :value="main.title"
-          class="text-secondary"
-        >
-          {{ main.title }}
-        </v-tab>
-      </v-tabs>
-      <v-window v-model="main_tab">
-        <v-window-item
-          v-for="(main_window, main_index) in expenses"
-          :key="main_index"
-          :value="main_window.title"
-        >
-          <v-tabs
-            v-model="tab[main_index]"
-            color="accent-lighten-2"
-            show-arrows
-            center-active
+  <div>
+    <v-row class="pa-1 ga-1" no-gutters v-if="!isLoading">
+      <v-col class="rounded text-center">
+        <v-btn
+          icon="mdi-cog"
+          flat
+          size="small"
+          :disabled="isActive"
+          @click="showOptions = true"
+          variant="plain"
+          color="grey"
+        ></v-btn>
+        <v-dialog width="300" v-model="showOptions">
+          <v-card>
+            <form @submit.prevent="submit">
+              <v-card-title>
+                <span class="text-secondary text-h6">Choose Expenses</span>
+              </v-card-title>
+              <v-card-text>
+                <v-autocomplete
+                  clearable
+                  chips
+                  multiple
+                  label="Main Report Tags"
+                  :items="parent_tags"
+                  variant="outlined"
+                  :loading="parent_tags_isLoading"
+                  item-title="tag_name"
+                  item-value="id"
+                  v-model="main_report_tags.value.value"
+                  density="compact"
+                  :error-messages="main_report_tags.errorMessage.value"
+                ></v-autocomplete>
+                <v-autocomplete
+                  clearable
+                  chips
+                  multiple
+                  label="Individual Report Tags"
+                  :items="parent_tags"
+                  variant="outlined"
+                  :loading="parent_tags_isLoading"
+                  item-title="tag_name"
+                  item-value="id"
+                  v-model="individual_report_tags.value.value"
+                  density="compact"
+                  :error-messages="individual_report_tags.errorMessage.value"
+                ></v-autocomplete>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="secondary" type="submit">Save Changes</v-btn>
+              </v-card-actions>
+            </form>
+          </v-card>
+        </v-dialog>
+        <v-tabs v-model="main_tab" color="accent" show-arrows center-active>
+          <v-tab
+            v-for="(main, index) in expenses"
+            :key="index"
+            :value="main.title"
+            class="text-secondary"
           >
-            <v-tab
-              v-for="(sub_window, sub_index) in main_window.data"
-              :key="sub_index"
-              :value="sub_window.key_name"
-              class="text-secondary-lighten-2"
+            {{ main.title }}
+          </v-tab>
+        </v-tabs>
+        <v-window v-model="main_tab">
+          <v-window-item
+            v-for="(main_window, main_index) in expenses"
+            :key="main_index"
+            :value="main_window.title"
+          >
+            <v-tabs
+              v-model="tab[main_index]"
+              color="accent-lighten-2"
+              show-arrows
+              center-active
             >
-              {{ sub_window.pretty_name }}
-            </v-tab>
-          </v-tabs>
-          <v-window v-model="tab[main_index]">
-            <v-window-item
-              v-for="(sub_window, sub_index) in main_window.data"
-              :key="sub_index"
-              :value="sub_window.key_name"
-            >
-              <ReportGraphWidget
-                :data="sub_window"
-                :graphName="sub_window.pretty_name"
+              <v-tab
+                v-for="(sub_window, sub_index) in main_window.data"
                 :key="sub_index"
+                :value="sub_window.key_name"
+                class="text-secondary-lighten-2"
+              >
+                {{ sub_window.pretty_name }}
+              </v-tab>
+            </v-tabs>
+            <v-window v-model="tab[main_index]">
+              <v-window-item
+                v-for="(sub_window, sub_index) in main_window.data"
+                :key="sub_index"
+                :value="sub_window.key_name"
+              >
+                <ReportGraphWidget
+                  :data="sub_window"
+                  :graphName="sub_window.pretty_name"
+                  :key="sub_index"
+                  :isLoading="isLoading"
+                />
+              </v-window-item>
+              <ReportTableWidget
                 :isLoading="isLoading"
+                :data="main_window.data"
               />
-            </v-window-item>
-            <ReportTableWidget
-              :isLoading="isLoading"
-              :data="main_window.data"
-            />
-          </v-window>
-        </v-window-item>
-      </v-window>
-    </v-col>
-  </v-row>
-  <div v-else>
-    <v-row>
-      <v-col cols="3"></v-col>
-      <v-col
-        class="text-subtitle-2 text-uppercase text-center font-italic text-accent"
-      >
-        Loading Data...
+            </v-window>
+          </v-window-item>
+        </v-window>
       </v-col>
-      <v-col cols="3"></v-col>
     </v-row>
-    <v-row>
-      <v-col cols="3"></v-col>
-      <v-col>
-        <v-progress-linear
-          color="accent"
-          height="6"
-          indeterminate
-          rounded
-        ></v-progress-linear>
-      </v-col>
-      <v-col cols="3"></v-col>
-    </v-row>
+    <div v-else>
+      <v-row>
+        <v-col cols="3"></v-col>
+        <v-col
+          class="text-subtitle-2 text-uppercase text-center font-italic text-accent"
+        >
+          Loading Data...
+        </v-col>
+        <v-col cols="3"></v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="3"></v-col>
+        <v-col>
+          <v-progress-linear
+            color="accent"
+            height="6"
+            indeterminate
+            rounded
+          ></v-progress-linear>
+        </v-col>
+        <v-col cols="3"></v-col>
+      </v-row>
+    </div>
   </div>
 </template>
 <script setup>
