@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-surface">
+  <v-card variant="outlined" :elevation="4" class="bg-surface h-100">
     <v-card-title class="text-left">
       <span class="text-subtitle-2 text-secondary">Rules</span>
       <v-tooltip text="Add Rule" location="top">
@@ -22,8 +22,8 @@
         :isEdit="false"
       />
     </v-card-title>
-    <v-card-text>
-      <v-list :selected="rule_selected" nav>
+    <v-card-text class="ma-0 pa-0 ga-0">
+      <v-list :selected="rule_selected" nav class="ma-0 pa-0 ga-0">
         <v-list-item
           v-for="(item, i) in props.rules"
           :key="i"

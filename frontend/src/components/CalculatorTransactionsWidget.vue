@@ -5,102 +5,159 @@
         {{ calculator ? calculator.rule.name : null }} Transactions
       </span>
     </v-card-title>
-    <v-card-text>
-      <vue3-datatable
-        :rows="calculator ? calculator.transactions : []"
-        :columns="columns"
+    <v-card-text class="ma-0 pa-0 ga-0">
+      <v-data-table
+        :headers="displayHeaders"
+        :items="calculator ? calculator.transactions : []"
+        :items-length="calculator ? calculator.transactions.length : 0"
         :loading="calculator_isLoading"
-        :totalRows="calculator ? calculator.transactions.length : 0"
-        :isServerMode="false"
-        pageSize="10"
-        :hasCheckbox="true"
-        noDataContent="No transactions"
-        ref="trans_table"
-        skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="[10]"
-        :showPageSize="false"
-        paginationInfo="Showing {0} to {1} of {2} transactions"
-        class="alt-pagination"
-        @rowSelect="rowSelected"
+        item-value="id"
+        v-model:items-per-page="itemsPerPage"
+        :items-per-page-options="[
+          {
+            value: 10,
+            title: 10,
+          },
+        ]"
+        items-per-page-text="Transactions per page"
+        no-data-text="No transactions!"
+        loading-text="Loading transactions..."
+        disable-sort
+        :show-select="true"
+        fixed-footer
+        striped="odd"
+        density="compact"
+        width="100%"
+        return-object
+        v-model="selected"
+        select-strategy="all"
+        v-model:page="page"
+        :header-props="{ class: 'font-weight-bold bg-primary' }"
+        :row-props="{ class: 'text-body-2' }"
+        v-if="props.ruleID"
       >
-        <!--height="280px"-->
-        <template #transaction_date="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-          >
-            {{ row.value.transaction_date }}
-          </span>
+        <template
+          v-slot:item.data-table-select="{
+            internalItem,
+            isSelected,
+            toggleSelect,
+          }"
+        >
+          <v-checkbox-btn
+            :model-value="isSelected(internalItem)"
+            color="secondary"
+            @update:model-value="toggleSelect(internalItem)"
+            :disabled="!isSelectable(internalItem.raw)"
+          ></v-checkbox-btn>
         </template>
-        <template #pretty_total="row">
-          <span
-            :class="
-              getClassForMoney(row.value.pretty_total, row.value.status.id)
-            "
-          >
-            {{ formatCurrency(row.value.pretty_total) }}
-          </span>
+        <template v-slot:bottom>
+          <div class="text-center pt-2">
+            <v-pagination v-model="page" :length="pageCount"></v-pagination>
+          </div>
         </template>
-        <template #details="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey text-body-2'
-                : 'font-weight-bold text-black text-body-2'
-            "
-            v-for="detail in row.value.details"
-            :key="detail"
-          >
-            <v-icon
-              icon="mdi-tag"
-              size="x-small"
-              :color="row.value.status.id == 1 ? 'grey' : 'black'"
-              v-if="detail"
-            ></v-icon>
-            {{ detail.tag.tag_name }} :
-            <span
-              :class="getClassForMoney(detail.detail_amt, row.value.status.id)"
-            >
-              {{ formatCurrency(detail.detail_amt) }}
+        <template v-slot:[`header.transaction_date`] v-if="mdAndUp">
+          <div class="text-center">Date</div>
+        </template>
+        <template v-slot:[`header.pretty_total`] v-if="mdAndUp">
+          <div class="text-center">Total</div>
+        </template>
+        <template v-slot:[`header.details`] v-if="mdAndUp">
+          <div class="text-center">Tag Amounts</div>
+        </template>
+        <template v-slot:[`item.transaction_date`]="{ item }" v-if="mdAndUp">
+          <div class="text-center">
+            {{ formatDate(item.transaction_date, true) }}
+          </div>
+        </template>
+        <template v-slot:[`item.pretty_total`]="{ item }" v-if="mdAndUp">
+          <div class="text-center">
+            <span :class="getClassForMoney(item.pretty_total)">
+              {{ formatCurrency(item.pretty_total) }}
             </span>
-            &nbsp;
-          </span>
+          </div>
         </template>
-        <template #description="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-          >
-            {{ row.value.description }}
-          </span>
+        <template v-slot:[`item.details`]="{ item }" v-if="mdAndUp">
+          <div class="text-center text-subtitle-2">
+            <span v-for="detail in item.details" :key="detail">
+              <v-icon
+                icon="mdi-tag"
+                size="x-small"
+                :color="item.status.id == 1 ? 'grey' : 'black'"
+                v-if="detail"
+              ></v-icon>
+              {{ detail.tag.tag_name }} :
+              <span
+                :class="getClassForMoney(detail.detail_amt, item.status.id)"
+              >
+                {{ formatCurrency(detail.detail_amt) }}
+              </span>
+              <br />
+            </span>
+          </div>
         </template>
-        <template #pretty_account="row">
-          <span
-            :class="
-              row.value.status.id == 1
-                ? 'font-italic text-grey'
-                : 'font-weight-bold text-black'
-            "
-          >
-            {{ row.value.pretty_account }}
-          </span>
+        <!-- Mobile View -->
+        <template v-slot:[`item.mobile`]="{ item }">
+          <v-container class="ma-0 pa-0 ga-0">
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0 text-left">
+                {{ formatDate(item.transaction_date, true) }}
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0 text-right">
+                <span :class="getClassForMoney(item.pretty_total)">
+                  {{ formatCurrency(item.pretty_total) }}
+                </span>
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0 font-weight-bold">
+                {{ item.description }}
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col
+                class="ma-0 pa-0 ga-0 text-secondary text-left text-truncate"
+              >
+                <span>
+                  {{ item.pretty_account }}
+                </span>
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0">
+                <div class="text-center text-subtitle-2">
+                  <span v-for="detail in item.details" :key="detail">
+                    <v-icon
+                      icon="mdi-tag"
+                      size="x-small"
+                      :color="item.status.id == 1 ? 'grey' : 'black'"
+                      v-if="detail"
+                    ></v-icon>
+                    {{ detail.tag.tag_name }} :
+                    <span
+                      :class="
+                        getClassForMoney(detail.detail_amt, item.status.id)
+                      "
+                    >
+                      {{ formatCurrency(detail.detail_amt) }}
+                    </span>
+                    &nbsp;
+                  </span>
+                </div>
+              </v-col>
+            </v-row>
+          </v-container>
         </template>
-      </vue3-datatable>
+      </v-data-table>
     </v-card-text>
   </v-card>
 </template>
 <script setup>
-  import Vue3Datatable from "@bhplugin/vue3-datatable";
-  import "@bhplugin/vue3-datatable/dist/style.css";
-  import { ref, defineProps, watch } from "vue";
+  import { ref, defineProps, watch, computed } from "vue";
   import { useCalculator } from "@/composables/calculatorComposable";
   import { usePlanningStore } from "@/stores/planning";
+  import { useDisplay } from "vuetify";
+
+  const { mdAndUp } = useDisplay();
 
   const planningstore = usePlanningStore();
   const props = defineProps({
@@ -115,39 +172,55 @@
   const local_rule_id = ref(props.ruleID);
   const local_timeframe = ref(props.timeframe);
   const selected = ref([]);
-  const trans_table = ref(null);
 
   const { calculator, isLoading: calculator_isLoading } = useCalculator(
     local_rule_id.value,
     local_timeframe.value,
   );
+  const page = ref(1);
+  const itemsPerPage = ref(10);
+  const pageCount = computed(() =>
+    calculator.value && itemsPerPage.value
+      ? Math.ceil(calculator.value.transactions.length / itemsPerPage.value)
+      : 1,
+  );
 
-  const columns = ref([
-    { field: "transaction_date", title: "Date", type: "date", width: "120px" },
-    { field: "pretty_total", title: "Total", type: "number", width: "100px" },
-    { field: "details", title: "Tag Amounts", type: "number", width: "120px" },
-    { field: "description", title: "Description" },
-    { field: "pretty_account", title: "Account" },
+  const headers = ref([
+    { title: "Date", key: "transaction_date", width: "80px" },
+    { title: "Total", key: "pretty_total", width: "100px" },
+    { title: "Tag Amounts", key: "details", width: "160px" },
+    { title: "Description", key: "description" },
+    { title: "Account", key: "pretty_account" },
   ]);
+  const displayHeaders = computed(() => {
+    if (mdAndUp.value) {
+      return headers.value;
+    }
+    // For small screens, use your single mobile column
+    return [{ title: "", key: "mobile" }];
+  });
 
-  const rowSelected = () => {
-    selected.value = trans_table.value.getSelectedRows();
-    planningstore.calculator.selected_transactions = selected.value;
-  };
+  watch(
+    () => selected.value,
+    val => {
+      if (val) {
+        planningstore.calculator.selected_transactions = val;
+      } else {
+        planningstore.calculator.selected_transactions = [];
+      }
+    },
+  );
 
   const getClassForMoney = (amount, status) => {
     let color = "";
-    let font = "";
 
     if (status == 1) {
-      font = "font-italic";
       if (amount < 0) {
         color = "text-red-lighten-1";
       } else {
         color = "text-green-lighten-1";
       }
     } else {
-      font = "font-weight-bold";
       if (amount < 0) {
         color = "text-red";
       } else {
@@ -155,7 +228,7 @@
       }
     }
 
-    return color + " " + font;
+    return color;
   };
   watch(props.ruleID, newValue => {
     local_rule_id.value = newValue;
@@ -171,36 +244,20 @@
       maximumFractionDigits: 2,
     }).format(value);
   };
+  const isSelectable = item => item;
+
+  const formatDate = (input, padDay = false) => {
+    // Normalize input to a Date object
+    const date = input instanceof Date ? input : new Date(input);
+
+    if (isNaN(date)) {
+      console.warn("Invalid date:", input);
+      return "";
+    }
+
+    const month = date.toLocaleString("en-US", { month: "short" }); // 'Sep'
+    const day = date.getDate(); // 16
+
+    return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
+  };
 </script>
-<style>
-  /* alt-pagination */
-  .alt-pagination .bh-pagination .bh-page-item {
-    width: auto; /* equivalent to w-max */
-    min-width: 32px;
-    border-radius: 0.25rem; /* equivalent to rounded */
-  }
-  /* Customize the color of the selected page number */
-  .alt-pagination .bh-pagination .bh-page-item.bh-active {
-    background-color: #06966a; /* Change this to your desired color */
-    border-color: black;
-    font-weight: bold; /* Optional: Make the text bold */
-  }
-  .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-    background-color: #ff5900;
-    border-color: black;
-  }
-
-  .icon-with-text {
-    position: relative;
-    display: inline-block;
-  }
-
-  .icon-text {
-    position: absolute;
-    top: 0;
-    right: 1;
-    color: black;
-    padding: 4px 1px;
-    font-size: 0.7rem;
-  }
-</style>

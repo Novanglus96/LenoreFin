@@ -13,12 +13,32 @@
             v-bind="props"
             @click="addTransfer"
             :disabled="
-              planningstore.calculator.selected_transactions.length == 0
+              planningstore.calculator.selected_transactions.length == 0 ||
+              selectedTransfer.length != 0
                 ? true
                 : false
             "
             size="small"
-            color="grey"
+            color="success"
+          ></v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip text="Edit Transfer" location="top">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            icon="mdi-cash-edit"
+            flat
+            variant="plain"
+            v-bind="props"
+            @click="editTransfer"
+            :disabled="
+              planningstore.calculator.selected_transactions.length > 0 &&
+              selectedTransfer.length > 0
+                ? false
+                : true
+            "
+            size="small"
+            color="warning"
           ></v-btn>
         </template>
       </v-tooltip>
@@ -31,62 +51,111 @@
         :passedFormData="newTransferData"
       />
     </v-card-title>
-    <v-card-text>
-      <vue3-datatable
-        :rows="calculator ? calculator.transfers : []"
-        :columns="columns"
+    <v-card-text class="ma-0 pa-0 ga-0">
+      <v-data-table
+        :headers="displayHeaders"
+        :items="calculator ? calculator.transfers : []"
+        :items-length="calculator ? calculator.transfers.length : 0"
         :loading="calculator_isLoading"
-        :totalRows="calculator ? calculator.transfers.length : 0"
-        :isServerMode="false"
-        pageSize="3"
-        :hasCheckbox="false"
-        firstArrow="First"
-        lastArrow="Last"
-        previousArrow="Prev"
-        nextArrow="Next"
-        :showNumbersCount="3"
-        noDataContent="No transfers"
-        search=""
-        ref="transfers_table"
-        skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="[3]"
-        :showPageSize="false"
-        paginationInfo="Showing {0} to {1} of {2} transfers"
-        class="alt-pagination"
+        item-value="id"
+        v-model:items-per-page="itemsPerPage"
+        :items-per-page-options="[
+          {
+            value: 3,
+            title: 3,
+          },
+        ]"
+        items-per-page-text="Transfers per page"
+        no-data-text="No transfers!"
+        loading-text="Loading transfers..."
+        disable-sort
+        :show-select="true"
+        fixed-footer
+        striped="odd"
+        density="compact"
+        :hide-default-header="mdAndUp ? false : true"
+        width="100%"
+        return-object
+        v-model="selectedTransfer"
+        select-strategy="single"
+        v-model:page="page"
+        :header-props="{ class: 'font-weight-bold bg-primary' }"
+        :row-props="{ class: 'text-body-2' }"
+        v-if="props.ruleID"
       >
-        <template #pretty_total="row">
-          <span :class="getClassForMoney(row.value.pretty_total)">
-            {{ formatCurrency(row.value.pretty_total) }}
-          </span>
+        <template
+          v-slot:item.data-table-select="{
+            internalItem,
+            isSelected,
+            toggleSelect,
+          }"
+        >
+          <v-checkbox-btn
+            :model-value="isSelected(internalItem)"
+            color="secondary"
+            @update:model-value="toggleSelect(internalItem)"
+            :disabled="!isSelectable(internalItem.raw)"
+          ></v-checkbox-btn>
         </template>
-        <template #memo="row">
-          <span :style="{ whiteSpace: 'pre-line' }" class="text-body-2">
-            {{ row.value.memo }}
-          </span>
-        </template>
-        <template #actions="data">
-          <div>
-            <v-btn
-              icon="mdi-pencil"
-              flat
-              variant="plain"
-              @click="editTransfer(data.value)"
-              :disabled="
-                planningstore.calculator.selected_transactions.length == 0 ||
-                data.value.id < 0
-                  ? true
-                  : false
-              "
-            ></v-btn>
+        <template v-slot:bottom>
+          <div class="text-center pt-2">
+            <v-pagination v-model="page" :length="pageCount"></v-pagination>
           </div>
         </template>
-      </vue3-datatable>
+        <template v-slot:[`header.transaction_date`] v-if="mdAndUp">
+          <div class="text-center">Date</div>
+        </template>
+        <template v-slot:[`header.pretty_total`] v-if="mdAndUp">
+          <div class="text-center">Amount</div>
+        </template>
+        <template v-slot:[`item.transaction_date`]="{ item }" v-if="mdAndUp">
+          <div class="text-center">
+            {{ formatDate(item.transaction_date, true) }}
+          </div>
+        </template>
+        <template v-slot:[`item.pretty_total`]="{ item }" v-if="mdAndUp">
+          <div class="text-center">
+            <span :class="getClassForMoney(item.pretty_total)">
+              {{ formatCurrency(item.pretty_total) }}
+            </span>
+          </div>
+        </template>
+        <template v-slot:[`item.memo`]="{ item }" v-if="mdAndUp">
+          <span class="text-caption text-pre-wrap">{{ item.memo }}</span>
+        </template>
+        <!-- Mobile View -->
+        <template v-slot:[`item.mobile`]="{ item }">
+          <v-container class="ma-0 pa-0 ga-0">
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0 text-center" cols="4">
+                {{ formatDate(item.transaction_date, true) }}
+              </v-col>
+              <v-col
+                class="ma-0 pa-0 ga-0 text-truncatte font-weight-bold"
+                cols="8"
+              >
+                {{ item.description }}
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0 text-center" cols="4">
+                <span :class="getClassForMoney(item.pretty_total)">
+                  {{ formatCurrency(item.pretty_total) }}
+                </span>
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0" cols="8">
+                <span class="text-caption text-pre-wrap">{{ item.memo }}</span>
+              </v-col>
+            </v-row>
+          </v-container>
+        </template>
+      </v-data-table>
       <CalculatorTransactionForm
         v-model="calculatorEditTransactionDialog"
         @update-dialog="updateCalculatorEditTransactionDialog"
         :isEdit="true"
         :key="1"
-        :passedFormData="selectedTransaction"
+        :passedFormData="selectedTransfer[0]"
         :newTotal="newTotal"
         :newMemo="newMemo"
       />
@@ -94,12 +163,14 @@
   </v-card>
 </template>
 <script setup>
-  import { ref, defineProps, watch } from "vue";
-  import Vue3Datatable from "@bhplugin/vue3-datatable";
-  import "@bhplugin/vue3-datatable/dist/style.css";
+  import { ref, defineProps, watch, computed } from "vue";
   import { useCalculator } from "@/composables/calculatorComposable";
   import { usePlanningStore } from "@/stores/planning";
   import CalculatorTransactionForm from "./CalculatorTransactionForm.vue";
+  import { useDisplay } from "vuetify";
+
+  const selectedTransfer = ref([]);
+  const { mdAndUp } = useDisplay();
 
   const planningstore = usePlanningStore();
 
@@ -116,7 +187,6 @@
   const local_timeframe = ref(props.timeframe);
   const calculatorAddTransactionDialog = ref(false);
   const calculatorEditTransactionDialog = ref(false);
-  const selectedTransaction = ref(null);
   const newMemo = ref(null);
   const newTotal = ref(null);
 
@@ -124,21 +194,29 @@
     local_rule_id.value,
     local_timeframe.value,
   );
+  const page = ref(1);
+  const itemsPerPage = ref(3);
+  const pageCount = computed(() =>
+    calculator.value && itemsPerPage.value
+      ? Math.ceil(calculator.value.transfers.length / itemsPerPage.value)
+      : 1,
+  );
 
   const newTransferData = ref(null);
-  const columns = ref([
-    { field: "id", title: "ID", isUnique: true, hide: true },
-    { field: "transaction_date", title: "Date", type: "date", width: "120px" },
-    {
-      field: "pretty_total",
-      title: "Amount",
-      type: "number",
-      width: "100px",
-    },
-    { field: "description", title: "Description" },
-    { field: "memo", title: "Memo" },
-    { field: "actions", title: "Actions" },
+
+  const headers = ref([
+    { title: "Date", key: "transaction_date", width: "80px" },
+    { title: "Amount", key: "pretty_total", width: "100px" },
+    { title: "Description", key: "description" },
+    { title: "Memo", key: "memo" },
   ]);
+  const displayHeaders = computed(() => {
+    if (mdAndUp.value) {
+      return headers.value;
+    }
+    // For small screens, use your single mobile column
+    return [{ title: "", key: "mobile" }];
+  });
 
   watch(props.ruleID, newValue => {
     local_rule_id.value = newValue;
@@ -148,16 +226,14 @@
   });
   const getClassForMoney = amount => {
     let color = "";
-    let font = "";
 
-    font = "font-weight-bold";
     if (amount < 0) {
       color = "text-red";
     } else {
       color = "text-green";
     }
 
-    return color + " " + font;
+    return color;
   };
 
   const updateCalculatorAddTransactionDialog = value => {
@@ -228,8 +304,7 @@
       destination_account_id: calculator.value.rule.destination_account_id,
     };
   };
-  const editTransfer = trans => {
-    selectedTransaction.value = trans;
+  const editTransfer = () => {
     let memo = "";
     let totalAmount = 0;
     for (const transaction of planningstore.calculator.selected_transactions) {
@@ -239,9 +314,16 @@
         parseFloat(transaction.total_amount)
       ) {
         memo +=
-          transaction.tag_total + " " + transaction.description + " (Split)\n";
+          formatCurrency(transaction.tag_total) +
+          " " +
+          transaction.description +
+          " (Split)\n";
       } else {
-        memo += transaction.tag_total + " " + transaction.description + "\n";
+        memo +=
+          formatCurrency(transaction.tag_total) +
+          " " +
+          transaction.description +
+          "\n";
       }
     }
     memo = memo.trimEnd();
@@ -262,36 +344,21 @@
     const factor = Math.pow(10, precision);
     return Math.round((num1 + num2) * factor) / factor;
   }
+  const isSelectable = item =>
+    item && planningstore.calculator.selected_transactions.length != 0;
+
+  const formatDate = (input, padDay = false) => {
+    // Normalize input to a Date object
+    const date = input instanceof Date ? input : new Date(input);
+
+    if (isNaN(date)) {
+      console.warn("Invalid date:", input);
+      return "";
+    }
+
+    const month = date.toLocaleString("en-US", { month: "short" }); // 'Sep'
+    const day = date.getDate(); // 16
+
+    return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
+  };
 </script>
-<style>
-  /* alt-pagination */
-  .alt-pagination .bh-pagination .bh-page-item {
-    width: auto; /* equivalent to w-max */
-    min-width: 32px;
-    border-radius: 0.25rem; /* equivalent to rounded */
-  }
-  /* Customize the color of the selected page number */
-  .alt-pagination .bh-pagination .bh-page-item.bh-active {
-    background-color: #06966a; /* Change this to your desired color */
-    border-color: black;
-    font-weight: bold; /* Optional: Make the text bold */
-  }
-  .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-    background-color: #ff5900;
-    border-color: black;
-  }
-
-  .icon-with-text {
-    position: relative;
-    display: inline-block;
-  }
-
-  .icon-text {
-    position: absolute;
-    top: 0;
-    right: 1;
-    color: black;
-    padding: 4px 1px;
-    font-size: 0.7rem;
-  }
-</style>
