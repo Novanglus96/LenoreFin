@@ -124,7 +124,7 @@
         </template>
         <template v-slot:[`item.tag.tag_name`]="{ item }" v-if="mdAndUp">
           <span>
-            <v-icon icon="mdi-tag" color="black" size="x-small"></v-icon>
+            <v-icon icon="mdi-tag" color="grey" size="x-small"></v-icon>
             {{ item.tag.tag_name }}
           </span>
         </template>
@@ -144,7 +144,7 @@
           <v-container class="ma-0 pa-0 ga-0">
             <v-row dense class="ma-0 pa-0 ga-0">
               <v-col class="ma-0 pa-0 ga-0" cols="4">
-                <span class="font-weight-bold">
+                <span>
                   <v-icon
                     icon="mdi-skip-next-circle"
                     size="small"
@@ -154,7 +154,7 @@
                 </span>
               </v-col>
               <v-col class="ma-0 pa-0 ga-0" cols="4">
-                <span v-if="item.end_date" class="font-weight-bold">
+                <span v-if="item.end_date">
                   <v-icon
                     icon="mdi-stop-circle"
                     size="small"
@@ -176,14 +176,14 @@
                   ></v-icon>
                 </span>
               </v-col>
-              <v-col class="ma-0 pa-0 ga-0 text-right font-weight-bold">
+              <v-col class="ma-0 pa-0 ga-0 text-right">
                 <span :class="getClassForMoney(item.amount)">
                   {{ formatCurrency(item.amount) }}
                 </span>
               </v-col>
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
-              <v-col class="ma-0 pa-0 ga-0 font-weight-bold text-truncate">
+              <v-col class="ma-0 pa-0 ga-0 text-truncate font-weight-bold">
                 <span>
                   {{ item.description }}
                 </span>
@@ -206,7 +206,7 @@
             <v-row dense class="ma-0 pa-0 ga-0">
               <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
                 <span>
-                  <v-icon icon="mdi-tag" size="x-small" color="black"></v-icon>
+                  <v-icon icon="mdi-tag" size="x-small" color="grey"></v-icon>
                   {{ item.tag.tag_name }}
                 </span>
               </v-col>
