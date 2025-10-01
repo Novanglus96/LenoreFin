@@ -202,12 +202,12 @@ def get_graph_new(request, widget_id: int):
         number_of_tags = len(sorted_values)
 
         # Keep only 9 tags
-        if number_of_tags > 9:
+        if number_of_tags > 10:
             remaining_values = sum(sorted_values[8:])
             sorted_values = sorted_values[:9]
             sorted_labels = sorted_labels[:9]
             sorted_values.append(remaining_values)
-            sorted_labels.append("The Rest")
+            sorted_labels.append("* The Rest")
 
         # Prepare the graph data object
         graph_items = []
