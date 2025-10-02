@@ -203,7 +203,7 @@
   const theme = useTheme();
   const themeStore = useThemeStore();
 
-  theme.global.name.value = themeStore.currentTheme;
+  theme.change(themeStore.currentTheme);
 
   const isDark = computed({
     get: () => themeStore.currentTheme === "myCustomDarkTheme",
@@ -239,7 +239,7 @@
   watch(
     () => themeStore.currentTheme,
     newTheme => {
-      theme.global.name.value = newTheme;
+      theme.change(newTheme);
     },
   );
 
