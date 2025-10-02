@@ -213,7 +213,7 @@
           <div class="text-center">Cap Amount</div>
         </template>
         <template v-slot:[`item.contribution`]="{ item }" v-if="mdAndUp">
-          <div class="text-right">
+          <div>
             <span
               :class="
                 item.active
