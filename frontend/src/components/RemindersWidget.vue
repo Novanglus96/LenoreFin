@@ -122,8 +122,7 @@
           </span>
         </template>
         <template v-slot:[`item.tag.tag_name`]="{ item }" v-if="mdAndUp">
-          <span>
-            <v-icon icon="mdi-tag" color="grey" size="x-small"></v-icon>
+          <span class="text-secondary">
             {{ item.tag.tag_name }}
           </span>
         </template>
@@ -204,7 +203,7 @@
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
               <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
-                <span>
+                <span class="text-secondary">
                   <v-icon icon="mdi-tag" size="x-small" color="grey"></v-icon>
                   {{ item.tag.tag_name }}
                 </span>

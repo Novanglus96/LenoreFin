@@ -171,234 +171,286 @@
             }}
           </div>
         </template>
-        <template v-slot:[`item.status`]="{ item }" v-if="mdAndUp">
-          <v-tooltip text="Image(s)" location="top">
-            <template v-slot:activator="{ props }">
-              <v-icon
-                icon="mdi-paperclip"
-                v-if="item.attachments"
-                color="grey"
-                v-bind="props"
-              ></v-icon>
-            </template>
-          </v-tooltip>
-          <v-tooltip text="Forecast" location="top">
-            <template v-slot:activator="{ props }">
-              <v-icon
-                icon="mdi-chart-box"
-                v-if="item.simulated"
-                color="grey"
-                v-bind="props"
-              ></v-icon>
-            </template>
-          </v-tooltip>
-          <v-tooltip text="Reminder" location="top">
-            <template v-slot:activator="{ props }">
-              <v-icon
-                icon="mdi-bell"
-                v-if="item.simulated && item.id < 0 && item.id >= -10000"
-                color="amber"
-                v-bind="props"
-              ></v-icon>
-            </template>
-          </v-tooltip>
-          <v-tooltip text="Paycheck" location="top">
-            <template v-slot:activator="{ props }">
-              <v-icon
-                icon="mdi-cash-multiple"
-                v-if="item.paycheck"
-                color="amber"
-                v-bind="props"
-              ></v-icon>
-            </template>
-          </v-tooltip>
-          <v-tooltip text="Check" location="top">
-            <template v-slot:activator="{ props }">
-              <div class="icon-with-text" v-if="item.checkNumber">
+        <template
+          v-slot:[`item.status`]="{ item, internalItem, toggleSelect }"
+          v-if="mdAndUp"
+        >
+          <div
+            class="w-100 h-100 d-flex align-center"
+            style="cursor: pointer"
+            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+          >
+            <v-tooltip text="Image(s)" location="top">
+              <template v-slot:activator="{ props }">
                 <v-icon
-                  icon="mdi-checkbook"
+                  icon="mdi-paperclip"
+                  v-if="item.attachments"
+                  color="grey"
+                  v-bind="props"
+                ></v-icon>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Forecast" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon
+                  icon="mdi-chart-box"
+                  v-if="item.simulated"
+                  color="grey"
+                  v-bind="props"
+                ></v-icon>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Reminder" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon
+                  icon="mdi-bell"
+                  v-if="item.simulated && item.id < 0 && item.id >= -10000"
                   color="amber"
                   v-bind="props"
                 ></v-icon>
-                <span
-                  :class="
-                    item.status.id == 1
-                      ? 'font-italic text-grey icon-text'
-                      : 'font-weight-bold text-black icon-text'
-                  "
-                >
-                  #{{ item.checkNumber }}
-                </span>
-              </div>
-            </template>
-          </v-tooltip>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Paycheck" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon
+                  icon="mdi-cash-multiple"
+                  v-if="item.paycheck"
+                  color="amber"
+                  v-bind="props"
+                ></v-icon>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Check" location="top">
+              <template v-slot:activator="{ props }">
+                <div class="icon-with-text" v-if="item.checkNumber">
+                  <v-icon
+                    icon="mdi-checkbook"
+                    color="amber"
+                    v-bind="props"
+                  ></v-icon>
+                  <span
+                    :class="
+                      item.status.id == 1
+                        ? 'font-italic text-grey icon-text'
+                        : 'font-weight-bold text-black icon-text'
+                    "
+                  >
+                    #{{ item.checkNumber }}
+                  </span>
+                </div>
+              </template>
+            </v-tooltip>
+          </div>
         </template>
-        <template v-slot:[`item.transaction_date`]="{ item }" v-if="mdAndUp">
-          <div>
+        <template
+          v-slot:[`item.transaction_date`]="{
+            item,
+            internalItem,
+            toggleSelect,
+          }"
+          v-if="mdAndUp"
+        >
+          <div
+            class="w-100 h-100 d-flex align-center"
+            style="cursor: pointer"
+            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+          >
             {{ formatDate(item.transaction_date, true) }}
           </div>
         </template>
-        <template v-slot:[`item.pretty_total`]="{ item }" v-if="mdAndUp">
-          <span :class="getClassForMoney(item.pretty_total, item.status.id)">
-            {{ formatCurrency(item.pretty_total) }}
-          </span>
+        <template
+          v-slot:[`item.pretty_total`]="{ item, toggleSelect, internalItem }"
+          v-if="mdAndUp"
+        >
+          <div
+            class="w-100 h-100 d-flex align-center"
+            style="cursor: pointer"
+            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+          >
+            <span :class="getClassForMoney(item.pretty_total, item.status.id)">
+              {{ formatCurrency(item.pretty_total) }}
+            </span>
+          </div>
         </template>
         <template
-          v-slot:[`item.balance`]="{ item }"
+          v-slot:[`item.balance`]="{ item, internalItem, toggleSelect }"
           v-if="mdAndUp && props.variant != 'upcoming'"
         >
-          <span
-            :class="getClassForMoney(item.balance, item.status.id)"
-            v-if="props.variant != 'budget'"
+          <div
+            class="w-100 h-100 d-flex align-center"
+            style="cursor: pointer"
+            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
           >
-            {{ formatCurrency(item.balance) }}
-          </span>
-          <span
-            :class="getClassForMoney(item.tag_total, item.status.id)"
-            v-else
-          >
-            {{ formatCurrency(item.tag_total) }}
-          </span>
+            <span
+              :class="getClassForMoney(item.balance, item.status.id)"
+              v-if="props.variant != 'budget'"
+            >
+              {{ formatCurrency(item.balance) }}
+            </span>
+            <span
+              :class="getClassForMoney(item.tag_total, item.status.id)"
+              v-else
+            >
+              {{ formatCurrency(item.tag_total) }}
+            </span>
+          </div>
         </template>
         <template
-          v-slot:[`item.tags`]="{ item }"
+          v-slot:[`item.description`]="{ item, toggleSelect, internalItem }"
+          v-if="mdAndUp"
+        >
+          <div
+            class="w-100 h-100 d-flex align-center"
+            style="cursor: pointer"
+            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+          >
+            <span>{{ item.description }}</span>
+          </div>
+        </template>
+        <template
+          v-slot:[`item.tags`]="{ item, internalItem, toggleSelect }"
           v-if="mdAndUp && props.variant != 'tag'"
         >
-          <span v-for="tag in item.tags" :key="tag">
-            <v-icon
-              icon="mdi-tag"
-              size="x-small"
-              :color="item.status.id == 1 ? 'grey' : 'black'"
-            ></v-icon>
-            {{ tag }}&nbsp;
-          </span>
+          <div
+            class="w-100 h-100 d-flex align-center text-secondary text-subtitle-2"
+            style="cursor: pointer"
+            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+          >
+            {{ processTags(item.tags) }}
+          </div>
+        </template>
+        <template
+          v-slot:[`item.pretty_account`]="{ item, toggleSelect, internalItem }"
+          v-if="mdAndUp"
+        >
+          <div
+            class="w-100 h-100 d-flex align-center"
+            style="cursor: pointer"
+            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+          >
+            <span>{{ item.pretty_account }}</span>
+          </div>
         </template>
         <!-- Mobile View -->
-        <template v-slot:[`item.mobile`]="{ item }">
-          <v-container class="ma-0 pa-0 ga-0">
-            <v-row dense class="ma-0 pa-0 ga-0">
-              <v-col class="ma-0 pa-0 ga-0" cols="3">
-                {{ formatDate(item.transaction_date, true) }}
-              </v-col>
-              <v-col class="ma-0 pa-0 ga-0 text-right">
-                <span
-                  :class="getClassForMoney(item.pretty_total, item.status.id)"
-                >
-                  {{ formatCurrency(item.pretty_total) }}
-                </span>
-                <v-icon
-                  icon="mdi-wallet-bifold"
-                  size="x-small"
-                  :color="item.status.id == 1 ? 'grey' : 'black'"
-                  v-if="props.variant === 'tag' || props.variant === 'budget'"
-                ></v-icon>
-              </v-col>
-              <v-col
-                class="ma-0 pa-0 ga-0 text-right"
-                v-if="props.variant != 'upcoming'"
-              >
-                <span
-                  :class="getClassForMoney(item.balance, item.status.id)"
-                  v-if="props.variant != 'budget'"
-                >
-                  {{ formatCurrency(item.balance) }}
-                </span>
-                <span
-                  :class="getClassForMoney(item.tag_total, item.status.id)"
-                  v-else
-                >
-                  {{ formatCurrency(item.tag_total) }}
-                </span>
-                <v-icon
-                  icon="mdi-tag-hidden"
-                  size="x-small"
-                  :color="item.status.id == 1 ? 'grey' : 'black'"
-                  v-if="props.variant === 'tag' || props.variant === 'budget'"
-                ></v-icon>
-              </v-col>
-            </v-row>
-            <v-row dense class="ma-0 pa-0 ga-0">
-              <v-col class="ma-0 pa-0 ga-0 font-weight-bold text-truncate">
-                {{ item.description }}
-              </v-col>
-            </v-row>
-            <v-row dense class="ma-0 pa-0 ga-0">
-              <v-col
-                class="ma-0 pa-0 ga-0 text-secondary text-left font-weight-italic text-truncate"
-              >
-                <span
-                  :class="
-                    item.status.id == 1
-                      ? 'text-secondary-lighten-2'
-                      : 'text-secondary'
-                  "
-                >
-                  {{ item.pretty_account }}
-                </span>
-              </v-col>
-              <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.attachments">
-                <v-icon
-                  icon="mdi-paperclip"
-                  color="grey"
-                  v-bind="props"
-                ></v-icon>
-              </v-col>
-              <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.simulated">
-                <v-icon
-                  icon="mdi-chart-box"
-                  color="grey"
-                  v-bind="props"
-                ></v-icon>
-              </v-col>
-              <v-col
-                class="ma-0 pa-0 ga-0"
-                cols="1"
-                v-if="item.simulated && item.id < 0 && item.id >= -10000"
-              >
-                <v-icon icon="mdi-bell" color="amber" v-bind="props"></v-icon>
-              </v-col>
-              <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.paycheck">
-                <v-icon icon="mdi-cash-multiple" color="amber"></v-icon>
-              </v-col>
-              <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.checkNumber">
-                <v-icon
-                  icon="mdi-checkbook"
-                  color="amber"
-                  v-bind="props"
-                ></v-icon>
-              </v-col>
-            </v-row>
-            <v-row
-              dense
-              class="ma-0 pa-0 ga-0"
-              v-if="props.variant != 'tag' && props.variant != 'budget'"
-            >
-              <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
-                <span v-for="tag in item.tags" :key="tag">
+        <template v-slot:[`item.mobile`]="{ item, internalItem, toggleSelect }">
+          <div @click="item.id > -10000 ? toggleSelect(internalItem) : null">
+            <v-container class="ma-0 pa-0 ga-0">
+              <v-row dense class="ma-0 pa-0 ga-0">
+                <v-col class="ma-0 pa-0 ga-0" cols="3">
+                  {{ formatDate(item.transaction_date, true) }}
+                </v-col>
+                <v-col class="ma-0 pa-0 ga-0 text-right">
+                  <span
+                    :class="getClassForMoney(item.pretty_total, item.status.id)"
+                  >
+                    {{ formatCurrency(item.pretty_total) }}
+                  </span>
                   <v-icon
-                    icon="mdi-tag"
+                    icon="mdi-wallet-bifold"
                     size="x-small"
                     :color="item.status.id == 1 ? 'grey' : 'black'"
-                    v-if="tag"
+                    v-if="props.variant === 'tag' || props.variant === 'budget'"
                   ></v-icon>
-                  <v-icon
-                    icon="mdi-tag-hidden"
-                    size="x-small"
-                    :color="item.status.id == 1 ? 'grey' : 'black'"
+                </v-col>
+                <v-col
+                  class="ma-0 pa-0 ga-0 text-right"
+                  v-if="props.variant != 'upcoming'"
+                >
+                  <span
+                    :class="getClassForMoney(item.balance, item.status.id)"
+                    v-if="props.variant != 'budget'"
+                  >
+                    {{ formatCurrency(item.balance) }}
+                  </span>
+                  <span
+                    :class="getClassForMoney(item.tag_total, item.status.id)"
                     v-else
-                  ></v-icon>
-                  {{ tag }}&nbsp;
-                </span>
-                <span v-if="item.tags.length === 0">
+                  >
+                    {{ formatCurrency(item.tag_total) }}
+                  </span>
                   <v-icon
                     icon="mdi-tag-hidden"
                     size="x-small"
                     :color="item.status.id == 1 ? 'grey' : 'black'"
+                    v-if="props.variant === 'tag' || props.variant === 'budget'"
                   ></v-icon>
-                </span>
-              </v-col>
-            </v-row>
-          </v-container>
+                </v-col>
+              </v-row>
+              <v-row dense class="ma-0 pa-0 ga-0">
+                <v-col class="ma-0 pa-0 ga-0 font-weight-bold text-truncate">
+                  {{ item.description }}
+                </v-col>
+              </v-row>
+              <v-row dense class="ma-0 pa-0 ga-0">
+                <v-col
+                  class="ma-0 pa-0 ga-0 text-secondary text-left font-weight-italic text-truncate"
+                >
+                  <span
+                    :class="
+                      item.status.id == 1
+                        ? 'text-secondary-lighten-2'
+                        : 'text-secondary'
+                    "
+                  >
+                    {{ item.pretty_account }}
+                  </span>
+                </v-col>
+                <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.attachments">
+                  <v-icon
+                    icon="mdi-paperclip"
+                    color="grey"
+                    v-bind="props"
+                  ></v-icon>
+                </v-col>
+                <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.simulated">
+                  <v-icon
+                    icon="mdi-chart-box"
+                    color="grey"
+                    v-bind="props"
+                  ></v-icon>
+                </v-col>
+                <v-col
+                  class="ma-0 pa-0 ga-0"
+                  cols="1"
+                  v-if="item.simulated && item.id < 0 && item.id >= -10000"
+                >
+                  <v-icon icon="mdi-bell" color="amber" v-bind="props"></v-icon>
+                </v-col>
+                <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.paycheck">
+                  <v-icon icon="mdi-cash-multiple" color="amber"></v-icon>
+                </v-col>
+                <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.checkNumber">
+                  <v-icon
+                    icon="mdi-checkbook"
+                    color="amber"
+                    v-bind="props"
+                  ></v-icon>
+                </v-col>
+              </v-row>
+              <v-row
+                dense
+                class="ma-0 pa-0 ga-0"
+                v-if="props.variant != 'tag' && props.variant != 'budget'"
+              >
+                <v-col
+                  class="ma-0 pa-0 ga-0 text-center"
+                  style="max-width: 100%"
+                >
+                  <span class="text-secondary">
+                    <v-icon
+                      :icon="
+                        item.tags.length === 0 ? 'mdi-tag-hidden' : 'mdi-tag'
+                      "
+                      size="x-small"
+                      :color="item.status.id == 1 ? 'grey' : 'black'"
+                    ></v-icon>
+
+                    {{ processTags(item.tags) }}
+                  </span>
+                </v-col>
+              </v-row>
+            </v-container>
+          </div>
         </template>
         <template v-slot:top v-if="props.variant != 'upcoming'">
           <v-fab
@@ -683,7 +735,7 @@
 
   const headers = ref([
     { title: "", key: "status", width: "72px" },
-    { title: "Date", key: "transaction_date", width: "80px" },
+    { title: "Date", key: "transaction_date", width: "84px" },
     { title: "Amount", key: "pretty_total", width: "100px" },
     { title: "Balance", key: "balance", width: "100px" },
     { title: "Description", key: "description" },
@@ -838,6 +890,17 @@
     return {
       class: rowformat,
     };
+  }
+  function processTags(tags) {
+    let combined_tags = tags.map(tag => tag).join(", ");
+    if (!mdAndUp.value) {
+      combined_tags = truncate(combined_tags, 33);
+    }
+
+    return combined_tags;
+  }
+  function truncate(str, maxLength) {
+    return str.length > maxLength ? str.slice(0, maxLength) + "..." : str;
   }
 </script>
 <style scoped>
