@@ -6,7 +6,7 @@
           icon="mdi-cog"
           flat
           size="small"
-          :disabled="isActive"
+          :disabled="isLoading"
           @click="showOptions = true"
           variant="plain"
           color="grey"
