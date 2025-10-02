@@ -486,110 +486,122 @@
             <v-icon></v-icon>
             <v-speed-dial
               v-model="open"
-              :location="menuLocation"
-              :transition="transition"
+              location="top center"
+              transition="scale-transition"
               activator="parent"
               persistent
               :close-on-content-click="false"
             >
-              <v-tooltip text="Uncheck All" location="left">
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    icon="mdi-checkbox-multiple-marked-outline"
-                    key="1"
-                    color="warning"
-                    @click="uncheck_all"
-                    v-bind="props"
-                  ></v-btn>
-                </template>
-              </v-tooltip>
-              <v-tooltip text="Remove Transaction(s)" location="left">
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    icon="mdi-invoice-remove"
-                    :disabled="
-                      (selected_transactions &&
-                        selected_transactions.length === 0) ||
-                      deleteDisable
-                    "
-                    color="error"
-                    v-bind="props"
-                    @click="showDeleteDialog = true"
-                    key="2"
-                  ></v-btn>
-                </template>
-              </v-tooltip>
-              <v-dialog width="500" v-model="showDeleteDialog">
-                <v-card title="Dialog">
-                  <v-card-text>
-                    Are you sure you want to delete these
-                    {{ selected_transactions.length }} transactions?
-                    <br />
-                    <span class="text-red text-subtitle-2 font-italic">
-                      * Reminder transactions will not be deleted.
-                    </span>
-                  </v-card-text>
-
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-
+              <div key="1">
+                <v-tooltip text="Uncheck All" location="left" key="1">
+                  <template v-slot:activator="{ props }">
                     <v-btn
-                      text="Confirm"
-                      @click="
-                        clickRemoveTransaction(selected_transactions);
-                        showDeleteDialog = false;
-                      "
+                      icon="mdi-checkbox-multiple-marked-outline"
+                      key="1"
+                      color="warning"
+                      @click="uncheck_all"
+                      v-bind="props"
                     ></v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
-              <v-tooltip text="Edit Transaction(s)" location="left">
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    :icon="
-                      selected_transactions.length > 1
-                        ? 'mdi-calendar-edit'
-                        : 'mdi-invoice-text-edit'
-                    "
-                    :disabled="
-                      (selected_transactions &&
-                        selected_transactions.length === 0) ||
-                      editDisable
-                    "
-                    @click="displayEditForm"
-                    v-bind="props"
-                    key="3"
-                  ></v-btn>
-                </template>
-              </v-tooltip>
-              <TransactionForm
-                v-model="transactionEditFormDialog"
-                :isEdit="true"
-                @update-dialog="updateEditDialog"
-                :passedFormData="editTransaction"
-              />
-              <MultipleTransactionEditForm
-                v-model="showMultipleTransactionEditDialog"
-                @update-dialog="updateMultipleEditDialog"
-                :transactionIds="editTransactions"
-              />
-              <v-tooltip text="Clear / Add Transaction(s)" location="left">
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    icon="mdi-invoice-text-clock"
-                    :disabled="clearDisable"
-                    @click="
-                      clickClearTransaction(
-                        selected_transactions,
-                        selected_reminders,
-                      )
-                    "
-                    v-bind="props"
-                    key="4"
-                  ></v-btn>
-                </template>
-              </v-tooltip>
+                  </template>
+                </v-tooltip>
+              </div>
+              <div key="2">
+                <v-tooltip text="Remove Transaction(s)" location="left" key="2">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      icon="mdi-invoice-remove"
+                      :disabled="
+                        (selected_transactions &&
+                          selected_transactions.length === 0) ||
+                        deleteDisable
+                      "
+                      color="error"
+                      v-bind="props"
+                      @click="showDeleteDialog = true"
+                      key="2"
+                    ></v-btn>
+                  </template>
+                </v-tooltip>
+                <v-dialog width="500" v-model="showDeleteDialog">
+                  <v-card title="Dialog">
+                    <v-card-text>
+                      Are you sure you want to delete these
+                      {{ selected_transactions.length }} transactions?
+                      <br />
+                      <span class="text-red text-subtitle-2 font-italic">
+                        * Reminder transactions will not be deleted.
+                      </span>
+                    </v-card-text>
+
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+
+                      <v-btn
+                        text="Confirm"
+                        @click="
+                          clickRemoveTransaction(selected_transactions);
+                          showDeleteDialog = false;
+                        "
+                      ></v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </div>
+              <div key="3">
+                <v-tooltip text="Edit Transaction(s)" location="left" key="3">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      :icon="
+                        selected_transactions.length > 1
+                          ? 'mdi-calendar-edit'
+                          : 'mdi-invoice-text-edit'
+                      "
+                      :disabled="
+                        (selected_transactions &&
+                          selected_transactions.length === 0) ||
+                        editDisable
+                      "
+                      @click="displayEditForm"
+                      v-bind="props"
+                      key="3"
+                    ></v-btn>
+                  </template>
+                </v-tooltip>
+              </div>
+              <div key="4">
+                <v-tooltip
+                  text="Clear / Add Transaction(s)"
+                  location="left"
+                  key="4"
+                >
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      icon="mdi-invoice-text-clock"
+                      :disabled="clearDisable"
+                      @click="
+                        clickClearTransaction(
+                          selected_transactions,
+                          selected_reminders,
+                        )
+                      "
+                      v-bind="props"
+                      key="4"
+                    ></v-btn>
+                  </template>
+                </v-tooltip>
+              </div>
             </v-speed-dial>
+            <TransactionForm
+              v-model="transactionEditFormDialog"
+              :isEdit="true"
+              @update-dialog="updateEditDialog"
+              :passedFormData="editTransaction"
+            />
+            <MultipleTransactionEditForm
+              v-model="showMultipleTransactionEditDialog"
+              @update-dialog="updateMultipleEditDialog"
+              :transactionIds="editTransactions"
+            />
           </v-fab>
         </template>
       </v-data-table-server>
