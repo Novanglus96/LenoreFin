@@ -857,6 +857,7 @@
 
   const updateEditDialog = () => {
     transactionEditFormDialog.value = false;
+    uncheck_all();
   };
   const updateMultipleEditDialog = () => {
     showMultipleTransactionEditDialog.value = false;
