@@ -62,20 +62,7 @@
         :row-props="getRowProps"
         :header-props="{ class: 'font-weight-bold bg-primary' }"
       >
-        <template
-          v-slot:header.data-table-select="{
-            allSelected,
-            selectAll,
-            someSelected,
-          }"
-        >
-          <v-checkbox-btn
-            :indeterminate="someSelected && !allSelected"
-            :model-value="allSelected"
-            color="secondary"
-            @update:model-value="selectAll(!allSelected)"
-          ></v-checkbox-btn>
-        </template>
+        <template v-slot:header.data-table-select="{}"></template>
 
         <template
           v-slot:item.data-table-select="{
@@ -84,12 +71,76 @@
             toggleSelect,
           }"
         >
-          <v-checkbox-btn
-            :model-value="isSelected(internalItem)"
-            color="secondary"
-            @update:model-value="toggleSelect(internalItem)"
-            :disabled="!isSelectable(internalItem.raw)"
-          ></v-checkbox-btn>
+          <div class="text-center">
+            <v-btn
+              @click="toggleSelect(internalItem)"
+              color="black"
+              variant="plain"
+              icon
+              block
+              :disabled="!isSelectable(internalItem.raw)"
+              v-if="!isSelectable(internalItem.raw)"
+            >
+              <v-icon
+                icon="mdi-alpha-p-circle"
+                color="grey"
+                size="x-large"
+                v-if="internalItem.raw.status.id === 1"
+              ></v-icon>
+              <v-icon
+                icon="mdi-alpha-c-circle"
+                color="green"
+                v-if="internalItem.raw.status.id === 2"
+                size="large"
+              ></v-icon>
+              <v-icon
+                icon="mdi-alpha-r-circle"
+                color="error"
+                v-if="internalItem.raw.status.id === 3"
+                size="large"
+              ></v-icon>
+            </v-btn>
+            <v-badge
+              color="grey-lighten-3"
+              :icon="
+                isSelected(internalItem)
+                  ? 'mdi-check-bold'
+                  : 'mdi-circle-outline'
+              "
+              location="right top"
+              :offset-x="6"
+              :offset-y="10"
+              v-if="isSelectable(internalItem.raw)"
+            >
+              <v-btn
+                @click="toggleSelect(internalItem)"
+                color="black"
+                variant="plain"
+                icon
+                block
+                :disabled="!isSelectable(internalItem.raw)"
+              >
+                <v-icon
+                  icon="mdi-alpha-p-circle"
+                  color="grey"
+                  size="x-large"
+                  v-if="internalItem.raw.status.id === 1"
+                ></v-icon>
+                <v-icon
+                  icon="mdi-alpha-c-circle"
+                  color="green"
+                  v-if="internalItem.raw.status.id === 2"
+                  size="large"
+                ></v-icon>
+                <v-icon
+                  icon="mdi-alpha-r-circle"
+                  color="error"
+                  v-if="internalItem.raw.status.id === 3"
+                  size="large"
+                ></v-icon>
+              </v-btn>
+            </v-badge>
+          </div>
         </template>
         <template v-slot:bottom v-if="props.variant != 'upcoming'">
           <div class="text-center pt-2">
@@ -121,36 +172,6 @@
           </div>
         </template>
         <template v-slot:[`item.status`]="{ item }" v-if="mdAndUp">
-          <v-tooltip text="Pending" location="top">
-            <template v-slot:activator="{ props }">
-              <v-icon
-                icon="mdi-circle-medium"
-                color="grey"
-                v-if="item.status.id == 1"
-                v-bind="props"
-              ></v-icon>
-            </template>
-          </v-tooltip>
-          <v-tooltip text="Cleared" location="top">
-            <template v-slot:activator="{ props }">
-              <v-icon
-                icon="mdi-check-bold"
-                color="green"
-                v-if="item.status.id == 2"
-                v-bind="props"
-              ></v-icon>
-            </template>
-          </v-tooltip>
-          <v-tooltip text="Reconciled" location="top">
-            <template v-slot:activator="{ props }">
-              <v-icon
-                icon="mdi-alpha-r-circle-outline"
-                color="green"
-                v-if="item.status.id == 3"
-                v-bind="props"
-              ></v-icon>
-            </template>
-          </v-tooltip>
           <v-tooltip text="Image(s)" location="top">
             <template v-slot:activator="{ props }">
               <v-icon
@@ -212,6 +233,11 @@
             </template>
           </v-tooltip>
         </template>
+        <template v-slot:[`item.transaction_date`]="{ item }" v-if="mdAndUp">
+          <div>
+            {{ formatDate(item.transaction_date, true) }}
+          </div>
+        </template>
         <template v-slot:[`item.pretty_total`]="{ item }" v-if="mdAndUp">
           <span :class="getClassForMoney(item.pretty_total, item.status.id)">
             {{ formatCurrency(item.pretty_total) }}
@@ -251,25 +277,6 @@
         <template v-slot:[`item.mobile`]="{ item }">
           <v-container class="ma-0 pa-0 ga-0">
             <v-row dense class="ma-0 pa-0 ga-0">
-              <v-col class="ma-0 pa-0 ga-0 font-weight-bold" cols="1">
-                <v-icon
-                  icon="mdi-circle-medium"
-                  color="grey"
-                  v-if="item.status.id == 1"
-                ></v-icon>
-                <v-icon
-                  icon="mdi-check-bold"
-                  color="green"
-                  v-if="item.status.id == 2"
-                  v-bind="props"
-                ></v-icon>
-                <v-icon
-                  icon="mdi-alpha-r-circle-outline"
-                  color="green"
-                  v-if="item.status.id == 3"
-                  v-bind="props"
-                ></v-icon>
-              </v-col>
               <v-col class="ma-0 pa-0 ga-0" cols="3">
                 {{ formatDate(item.transaction_date, true) }}
               </v-col>
@@ -662,6 +669,7 @@
       editTransactions.value = selected_transactions.value;
       showMultipleTransactionEditDialog.value = true;
     }
+    selected_all.value = [];
   };
 
   const isActive = computed(
@@ -674,8 +682,8 @@
   const isSelectable = item => item.id > -10000;
 
   const headers = ref([
-    { title: "", key: "status", width: "115px" },
-    { title: "Date", key: "transaction_date", width: "120px" },
+    { title: "", key: "status", width: "72px" },
+    { title: "Date", key: "transaction_date", width: "80px" },
     { title: "Amount", key: "pretty_total", width: "100px" },
     { title: "Balance", key: "balance", width: "100px" },
     { title: "Description", key: "description" },
@@ -729,7 +737,7 @@
       if (selectedrow.id > 0) {
         selected_transactions.value.push(selectedrow.id);
         editTransaction.value = selectedrow;
-      } else {
+      } else if (selectedrow.id < 0 && selectedrow.id > -10000) {
         let reminder_trans_obj = {
           reminder_id: selectedrow.reminder_id,
           transaction_date: selectedrow.transaction_date,
