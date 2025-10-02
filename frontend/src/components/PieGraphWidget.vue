@@ -29,7 +29,7 @@
     <v-progress-circular
       color="accent"
       :size="300"
-      :width="12"
+      :width="36"
       v-if="!isLoading && props.graph_items[0].value == 0"
     >
       None
