@@ -901,7 +901,7 @@
     if (item.status.id == 1 && props.variant === "account") {
       rowformat += " bg-grey-lighten-4";
     }
-    if (isSelected) {
+    if (isSelected && props.variant != "upcoming") {
       rowformat += " bg-primary";
     }
     return {
