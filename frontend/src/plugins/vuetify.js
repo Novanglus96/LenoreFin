@@ -9,30 +9,36 @@ import { VDateInput } from "vuetify/labs/VDateInput"; // Import the lab componen
 const myCustomLightTheme = {
   dark: false,
   colors: {
-    primary: "#ECFDF5",
-    secondary: "#06966A",
+    primary: "#06966A",
+    secondary: "#ECFDF5",
     accent: "#FF5900",
     error: "#FF3407",
     warning: "#ffc107",
     info: "#795548",
     success: "#4caf50",
     selected: "#7fb17f",
-    surface: "#ffffff",
+    surface: "#06966A",
+    background: "#F5F5F5",
+    "on-background": "#ffffff",
+    "on-surface": "#ffffff",
   },
 };
 
 const myCustomDarkTheme = {
   dark: true,
   colors: {
-    primary: "#0D1B1E", // very dark teal-gray (contrast with your light primary)
-    secondary: "#4ADEB3", // brighter teal-green, keeps relation to light #06966A
-    accent: "#FF784E", // warm accent, keeps energy of #FF5900 but better on dark
-    error: "#FF6659", // softer red than #FF3407 for dark bg
-    warning: "#FFD54F", // vivid amber for visibility
-    info: "#BCAAA4", // muted brown-tan, complements dark surfaces
-    success: "#81C784", // softer green for readability
-    selected: "#A5D6A7", // lighter green tint for selected state
-    surface: "#000000",
+    primary: "#0D1B1E",
+    secondary: "#4ADEB3",
+    accent: "#FF784E",
+    error: "#CF6679",
+    warning: "#FB8C00",
+    info: "#2196F3",
+    success: "#4CAF50",
+    selected: "#A5D6A7",
+    surface: "#212121",
+    background: "#121212",
+    "on-background": "#ffffff",
+    "on-surface": "#ffffff",
   },
 };
 
