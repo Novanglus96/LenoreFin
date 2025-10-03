@@ -116,6 +116,9 @@
             <v-pagination v-model="page" :length="pageCount"></v-pagination>
           </div>
         </template>
+        <template v-slot:[`item.next_date`]="{ item }" v-if="mdAndUp">
+          <span>{{ formatDate(item.next_date, true) }}</span>
+        </template>
         <template v-slot:[`item.amount`]="{ item }" v-if="mdAndUp">
           <span :class="getClassForMoney(item.amount)">
             {{ formatCurrency(item.amount) }}
@@ -134,7 +137,7 @@
               size="small"
               v-if="!item.end_date"
             ></v-icon>
-            {{ item.end_date }}
+            {{ item.end_date ? formatDate(item.end_date) : "" }}
           </span>
         </template>
         <!-- Mobile View -->
@@ -373,8 +376,20 @@
 
     const month = date.toLocaleString("en-US", { month: "short" }); // 'Sep'
     const day = date.getDate(); // 16
+    const year = date.getFullYear();
+    const today = new Date();
+    const thisyear = today.getFullYear();
 
-    return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
+    let returndate = null;
+    if (thisyear != year) {
+      returndate = `${month}-${
+        padDay ? String(day).padStart(2, "0") : day
+      } ${year}`;
+    } else {
+      returndate = `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
+    }
+
+    return returndate;
   };
 
   function getRowProps({ item }) {
