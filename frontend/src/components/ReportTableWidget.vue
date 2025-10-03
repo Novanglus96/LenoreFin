@@ -4,7 +4,7 @@
       <v-col class="rounded pa-0 ga-0 ma-0">
         <v-card variant="outlined" :elevation="4" class="bg-surface w-100">
           <v-card-title class="text-left">
-            <span class="text-subtitle-2 text-secondary">
+            <span class="text-subtitle-2 text-primary">
               {{ props.data[0].year1 }}
             </span>
           </v-card-title>
@@ -23,7 +23,7 @@
               :hide-default-footer="true"
               width="100%"
               class="ma-0 pa-0 ga-0"
-              :header-props="{ class: 'font-weight-bold bg-primary' }"
+              :header-props="{ class: 'font-weight-bold bg-secondary' }"
             >
               <template v-slot:[`header.item`] v-if="mdAndUp">
                 <div class="font-weight-bold"></div>
@@ -72,7 +72,7 @@
               </template>
               <template v-slot:[`item.item`]="{ item }" v-if="mdAndUp">
                 <div
-                  class="text-right text-caption font-weight-bold text-secondary"
+                  class="text-right text-caption font-weight-bold text-primary"
                 >
                   {{ item.item }}
                 </div>
@@ -155,9 +155,7 @@
               <template v-slot:[`item.mobile`]="{ item }">
                 <v-container class="ma-0 pa-0 ga-0">
                   <v-row dense class="ma-0 pa-0 ga-0">
-                    <v-col
-                      class="ma-0 pa-0 ga-0 font-weight-bold text-secondary"
-                    >
+                    <v-col class="ma-0 pa-0 ga-0 font-weight-bold text-primary">
                       {{ item.item }}
                     </v-col>
                   </v-row>

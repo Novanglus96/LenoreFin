@@ -18,7 +18,7 @@
       v-if="!isLoading && props.graph_items[0].value != 0"
     ></v-pie>
     <v-progress-circular
-      color="secondary"
+      color="primary"
       indeterminate
       :size="300"
       :width="12"

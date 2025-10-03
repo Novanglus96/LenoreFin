@@ -1,7 +1,7 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
     <v-card-title class="text-left">
-      <span class="text-subtitle-2 text-secondary">
+      <span class="text-subtitle-2 text-primary">
         Per Paycheck Overage Rules
       </span>
       <v-tooltip text="Add Overage Rule" location="top">
@@ -51,7 +51,7 @@
         density="compact"
         :hide-default-header="mdAndUp ? false : true"
         width="100%"
-        :header-props="{ class: 'font-weight-bold bg-primary' }"
+        :header-props="{ class: 'font-weight-bold bg-secondary' }"
         v-model="selectedContributionRule"
         select-strategy="single"
         return-object
@@ -256,7 +256,7 @@
       sel => sel.id === item.id,
     );
     if (isSelected) {
-      rowformat += "bg-secondary-lighten-3";
+      rowformat += "bg-primary-lighten-3";
     }
     return {
       class: rowformat,

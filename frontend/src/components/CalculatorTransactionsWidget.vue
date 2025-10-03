@@ -1,7 +1,7 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
     <v-card-title class="text-left">
-      <span class="text-subtitle-2 text-secondary">
+      <span class="text-subtitle-2 text-primary">
         {{ calculator ? calculator.rule.name : null }} Transactions
       </span>
     </v-card-title>
@@ -32,7 +32,7 @@
         v-model="selected"
         select-strategy="all"
         v-model:page="page"
-        :header-props="{ class: 'font-weight-bold bg-primary' }"
+        :header-props="{ class: 'font-weight-bold bg-secondary' }"
         :row-props="getRowProps"
         v-if="props.ruleID"
       >
@@ -114,7 +114,7 @@
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
               <v-col
-                class="ma-0 pa-0 ga-0 text-secondary text-left text-truncate"
+                class="ma-0 pa-0 ga-0 text-primary text-left text-truncate"
               >
                 <span>
                   {{ item.pretty_account }}
@@ -263,7 +263,7 @@
     let rowformat = "text-body-2";
     const isSelected = selected.value.some(sel => sel.id === item.id);
     if (isSelected) {
-      rowformat += " bg-secondary-lighten-3";
+      rowformat += " bg-primary-lighten-3";
     }
     return {
       class: rowformat,

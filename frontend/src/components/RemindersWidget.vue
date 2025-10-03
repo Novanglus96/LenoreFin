@@ -2,12 +2,12 @@
   <v-card variant="outlined" :elevation="4" class="bg-surface">
     <v-card-title>
       <span
-        class="text-subtitle-2 text-secondary"
+        class="text-subtitle-2 text-primary"
         v-if="props.variant === 'upcoming'"
       >
         Upcoming Reminders
       </span>
-      <span class="text-subtitle-2 text-secondary" v-else>Reminders</span>
+      <span class="text-subtitle-2 text-primary" v-else>Reminders</span>
     </v-card-title>
     <v-card-text class="ma-0 pa-0 ga-0">
       <div v-if="props.allowEdit">
@@ -108,7 +108,7 @@
         v-model="selected_reminder"
         select-strategy="single"
         v-model:page="page"
-        :header-props="{ class: 'font-weight-bold bg-primary' }"
+        :header-props="{ class: 'font-weight-bold bg-secondary' }"
         :row-props="getRowProps"
       >
         <template v-slot:bottom v-if="props.variant != 'upcoming'">
@@ -125,7 +125,7 @@
           </span>
         </template>
         <template v-slot:[`item.tag.tag_name`]="{ item }" v-if="mdAndUp">
-          <span class="text-secondary">
+          <span class="text-primary">
             {{ item.tag.tag_name }}
           </span>
         </template>
@@ -192,7 +192,7 @@
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
               <v-col
-                class="ma-0 pa-0 ga-0 text-secondary text-left font-weight-italic text-truncate"
+                class="ma-0 pa-0 ga-0 text-primary text-left font-weight-italic text-truncate"
               >
                 <span>
                   <v-icon
@@ -206,7 +206,7 @@
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
               <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
-                <span class="text-secondary">
+                <span class="text-primary">
                   <v-icon icon="mdi-tag" size="x-small" color="grey"></v-icon>
                   {{ item.tag.tag_name }}
                 </span>
@@ -396,7 +396,7 @@
     let rowformat = "text-body-2";
     const isSelected = selected_reminder.value.some(sel => sel.id === item.id);
     if (isSelected) {
-      rowformat += " bg-secondary-lighten-3";
+      rowformat += " bg-primary-lighten-3";
     }
     return {
       class: rowformat,

@@ -1,7 +1,7 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
     <v-card-title class="text-left">
-      <span class="text-subtitle-2 text-secondary">
+      <span class="text-subtitle-2 text-primary">
         Per Paycheck Contribution Rules
       </span>
       <v-tooltip text="Add Contribution" location="top">
@@ -141,7 +141,7 @@
         density="compact"
         :hide-default-header="mdAndUp ? false : true"
         width="100%"
-        :header-props="{ class: 'font-weight-bold bg-primary' }"
+        :header-props="{ class: 'font-weight-bold bg-secondary' }"
         v-model="selectedContribution"
         select-strategy="single"
         return-object
@@ -283,7 +283,7 @@
           <v-container class="ma-0 pa-0 ga-0">
             <v-row dense class="ma-0 pa-0 ga-0">
               <v-col
-                class="ma-0 pa-0 ga-0 font-weight-bold text-secondary"
+                class="ma-0 pa-0 ga-0 font-weight-bold text-primary"
                 cols="12"
               >
                 {{ item.contribution }}
@@ -422,7 +422,7 @@
       sel => sel.id === item.id,
     );
     if (isSelected) {
-      rowformat += "bg-secondary-lighten-3";
+      rowformat += "bg-primary-lighten-3";
     }
     return {
       class: rowformat,

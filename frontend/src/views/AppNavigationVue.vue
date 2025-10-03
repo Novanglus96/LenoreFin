@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-app-bar color="primary" density="compact">
+    <v-app-bar color="secondary" density="compact">
       <template v-slot:prepend>
         <v-menu v-if="isMobile" width="200">
           <template v-slot:activator="{ props }">
@@ -98,13 +98,13 @@
           </v-card-text>
           <v-card-actions v-if="messages.total_count > 0">
             <v-spacer></v-spacer>
-            <v-btn color="secondary" @click="markRead">Mark All Read</v-btn>
-            <v-btn color="secondary" @click="deleteAll">Delete All</v-btn>
+            <v-btn color="primary" @click="markRead">Mark All Read</v-btn>
+            <v-btn color="primary" @click="deleteAll">Delete All</v-btn>
           </v-card-actions>
         </v-card>
       </v-menu>
     </v-app-bar>
-    <v-navigation-drawer color="secondary" rail permanent v-if="mdAndUp">
+    <v-navigation-drawer color="primary" rail permanent v-if="mdAndUp">
       <v-list density="compact" nav>
         <v-tooltip text="Dashboard">
           <template v-slot:activator="{ props }">
@@ -184,7 +184,7 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-navigation-drawer permanent widht="250" color="primary" v-if="mdAndUp">
+    <v-navigation-drawer permanent widht="250" color="secondary" v-if="mdAndUp">
       <AccountsMenu v-if="nav_toggle" />
       <PlanningMenu v-if="!nav_toggle" />
     </v-navigation-drawer>

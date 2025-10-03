@@ -3,7 +3,7 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      class="bg-secondary"
+      class="bg-primary"
       v-if="!isLoading"
     >
       <template v-slot:text>
@@ -39,7 +39,7 @@
                 :value="tag.id"
               >
                 <v-card
-                  color="primary"
+                  color="secondary"
                   :class="['ma-4', selectedClass]"
                   height="75"
                   width="250"
@@ -57,7 +57,7 @@
                     </span>
                   </template>
                   <template v-slot:subtitle>
-                    <span :class="!tag.child ? 'text-primary' : 'text-black'">
+                    <span :class="!tag.child ? 'text-secondary' : 'text-black'">
                       {{ !tag.child ? "..." : tag.child.tag_name }}
                     </span>
                   </template>
@@ -73,9 +73,9 @@
               v-model="tag_selected"
               density="compact"
               @update:model-value="clickSelectTag"
-              bg-color="primary"
+              bg-color="secondary"
               menu
-              color="secondary"
+              color="primary"
               v-else
             >
               <template v-slot:item="{ props, item }">

@@ -3,7 +3,7 @@
     <v-row class="ma-1 pa-0 ga-0">
       <!-- Left column, spans full height -->
       <v-col cols="12" class="d-flex flex-column ma-0 pa-0 ga-0" md="4">
-        <div class="bg-primary flex-grow-1">
+        <div class="bg-secondary flex-grow-1">
           <CalculatorRulesWidget
             :rules="calculation_rules"
             :isLoading="calculation_rules_isLoading"

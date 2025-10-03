@@ -15,7 +15,7 @@
           <v-card>
             <form @submit.prevent="submit">
               <v-card-title>
-                <span class="text-secondary text-h6">Choose Expenses</span>
+                <span class="text-primary text-h6">Choose Expenses</span>
               </v-card-title>
               <v-card-text>
                 <v-autocomplete
@@ -49,7 +49,7 @@
               </v-card-text>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="secondary" type="submit">Save Changes</v-btn>
+                <v-btn color="primary" type="submit">Save Changes</v-btn>
               </v-card-actions>
             </form>
           </v-card>
@@ -59,7 +59,7 @@
             v-for="(main, index) in expenses"
             :key="index"
             :value="main.title"
-            class="text-secondary"
+            class="text-primary"
           >
             {{ main.title }}
           </v-tab>
@@ -80,7 +80,7 @@
                 v-for="(sub_window, sub_index) in main_window.data"
                 :key="sub_index"
                 :value="sub_window.key_name"
-                class="text-secondary-lighten-2"
+                class="text-primary-lighten-2"
               >
                 {{ sub_window.pretty_name }}
               </v-tab>

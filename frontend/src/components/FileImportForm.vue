@@ -6,7 +6,7 @@
       </v-card-title>
 
       <v-card-text>
-        <v-stepper v-model="step" color="secondary" alt-labels>
+        <v-stepper v-model="step" color="primary" alt-labels>
           <v-stepper-header>
             <v-stepper-item
               value="1"
@@ -713,9 +713,9 @@
             <v-stepper-window-item value="7">
               <v-banner><v-banner-text>Summary</v-banner-text></v-banner>
               <v-timeline side="end">
-                <v-timeline-item size="small" dot-color="secondary">
+                <v-timeline-item size="small" dot-color="primary">
                   <v-alert
-                    color="secondary"
+                    color="primary"
                     icon="mdi-information"
                     :value="true"
                     title="Transaction Status Mappings"
@@ -747,9 +747,9 @@
                     </v-container>
                   </v-alert>
                 </v-timeline-item>
-                <v-timeline-item size="small" dot-color="secondary">
+                <v-timeline-item size="small" dot-color="primary">
                   <v-alert
-                    color="secondary"
+                    color="primary"
                     icon="mdi-information"
                     :value="true"
                     title="Transaction Type Mappings"
@@ -781,9 +781,9 @@
                     </v-container>
                   </v-alert>
                 </v-timeline-item>
-                <v-timeline-item size="small" dot-color="secondary">
+                <v-timeline-item size="small" dot-color="primary">
                   <v-alert
-                    color="secondary"
+                    color="primary"
                     icon="mdi-information"
                     :value="true"
                     title="Tag Mappings"
@@ -809,9 +809,9 @@
                     </v-container>
                   </v-alert>
                 </v-timeline-item>
-                <v-timeline-item size="small" dot-color="secondary">
+                <v-timeline-item size="small" dot-color="primary">
                   <v-alert
-                    color="secondary"
+                    color="primary"
                     icon="mdi-information"
                     :value="true"
                     title="Account Mappings"
@@ -843,9 +843,9 @@
                     </v-container>
                   </v-alert>
                 </v-timeline-item>
-                <v-timeline-item size="small" dot-color="secondary">
+                <v-timeline-item size="small" dot-color="primary">
                   <v-alert
-                    color="secondary"
+                    color="primary"
                     icon="mdi-information"
                     :value="true"
                     title="Fixed Transaction Errors"
@@ -904,11 +904,9 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="secondary" variant="text" @click="closeDialog">
-          Close
-        </v-btn>
+        <v-btn color="primary" variant="text" @click="closeDialog">Close</v-btn>
         <v-btn
-          color="secondary"
+          color="primary"
           variant="text"
           @click="submitForm"
           :disabled="!allStepsComplete"

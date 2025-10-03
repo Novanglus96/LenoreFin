@@ -2,12 +2,12 @@
   <v-card variant="outlined" :elevation="4" class="bg-surface">
     <v-card-title class="text-left">
       <span
-        class="text-subtitle-2 text-secondary"
+        class="text-subtitle-2 text-primary"
         v-if="props.start_integer == 0"
       >
         Forecast ({{ timeFrame.title }})
       </span>
-      <span class="text-subtitle-2 text-secondary" v-else>
+      <span class="text-subtitle-2 text-primary" v-else>
         Cash Flow (Last 14 Days + {{ timeFrame.title }})
       </span>
       <v-menu location="right">
@@ -47,7 +47,7 @@
     </v-card-title>
     <v-card-text>
       <v-progress-circular
-        color="secondary"
+        color="primary"
         indeterminate
         :size="300"
         :width="12"

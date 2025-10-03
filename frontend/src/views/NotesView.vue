@@ -3,7 +3,7 @@
     <v-col class="rounded">
       <v-card variant="outlined" :elevation="4" class="bg-surface">
         <v-card-title class="text-left">
-          <span class="text-subtitle-2 text-secondary">Notes</span>
+          <span class="text-subtitle-2 text-primary">Notes</span>
           <v-tooltip text="Add Note" location="top">
             <template v-slot:activator="{ props }">
               <v-btn
@@ -50,7 +50,7 @@
             striped="odd"
             density="compact"
             width="100%"
-            :header-props="{ class: 'font-weight-bold bg-primary' }"
+            :header-props="{ class: 'font-weight-bold bg-secondary' }"
             v-model="selectedNote"
             select-strategy="single"
             return-object
@@ -238,7 +238,7 @@
     let rowformat = "";
     const isSelected = selectedNote.value.some(sel => sel.id === item.id);
     if (isSelected) {
-      rowformat += "bg-secondary-lighten-3";
+      rowformat += "bg-primary-lighten-3";
     }
     return {
       class: rowformat,

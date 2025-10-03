@@ -9,7 +9,7 @@
           v-if="!isLoading"
         >
           <v-card-title>
-            <span class="text-subtitle-2 text-secondary">Tag Totals</span>
+            <span class="text-subtitle-2 text-primary">Tag Totals</span>
           </v-card-title>
           <v-card-text>
             <v-container>

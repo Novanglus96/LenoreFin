@@ -49,11 +49,9 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="secondary" variant="text" @click="closeDialog">
-          Close
-        </v-btn>
+        <v-btn color="primary" variant="text" @click="closeDialog">Close</v-btn>
         <v-btn
-          color="secondary"
+          color="primary"
           variant="text"
           @click="submitForm"
           :disabled="!formComplete"
@@ -65,48 +63,48 @@
   </v-dialog>
 </template>
 <script setup>
-import { ref, defineEmits } from "vue";
-import { useTags } from "@/composables/tagsComposable";
-import { useParentTags } from "@/composables/tagsComposable";
-import { useTagTypes } from "@/composables/tagtypesComposable";
+  import { ref, defineEmits } from "vue";
+  import { useTags } from "@/composables/tagsComposable";
+  import { useParentTags } from "@/composables/tagsComposable";
+  import { useTagTypes } from "@/composables/tagtypesComposable";
 
-const { tag_types, isLoading: tag_types_isLoading } = useTagTypes();
-const { addTag } = useTags();
-const { parent_tags, isLoading: parent_tags_isLoading } = useParentTags();
-const formComplete = ref(false);
-const formData = ref({
-  tag_name: "",
-  parent_id: null,
-  tag_type_id: 1,
-});
+  const { tag_types, isLoading: tag_types_isLoading } = useTagTypes();
+  const { addTag } = useTags();
+  const { parent_tags, isLoading: parent_tags_isLoading } = useParentTags();
+  const formComplete = ref(false);
+  const formData = ref({
+    tag_name: "",
+    parent_id: null,
+    tag_type_id: 1,
+  });
 
-const required = [
-  value => {
-    if (value) return true;
+  const required = [
+    value => {
+      if (value) return true;
 
-    return "This field is required.";
-  },
-];
-const emit = defineEmits(["updateDialog"]);
-const checkFormComplete = async () => {
-  if (
-    formData.value.tag_name !== null &&
-    formData.value.tag_name !== "" &&
-    formData.value.tag_type_id !== null &&
-    formData.value.tag_type_id !== ""
-  ) {
-    formComplete.value = true;
-  } else {
-    formComplete.value = false;
-  }
-};
+      return "This field is required.";
+    },
+  ];
+  const emit = defineEmits(["updateDialog"]);
+  const checkFormComplete = async () => {
+    if (
+      formData.value.tag_name !== null &&
+      formData.value.tag_name !== "" &&
+      formData.value.tag_type_id !== null &&
+      formData.value.tag_type_id !== ""
+    ) {
+      formComplete.value = true;
+    } else {
+      formComplete.value = false;
+    }
+  };
 
-const submitForm = async () => {
-  addTag(formData.value);
-  closeDialog();
-};
+  const submitForm = async () => {
+    addTag(formData.value);
+    closeDialog();
+  };
 
-const closeDialog = () => {
-  emit("updateDialog", false);
-};
+  const closeDialog = () => {
+    emit("updateDialog", false);
+  };
 </script>

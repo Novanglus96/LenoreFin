@@ -6,7 +6,7 @@
           class="d-flex align-center justify-space-between"
           v-if="props.edit"
         >
-          <span class="text-secondary text-h6" v-if="!canEdit">
+          <span class="text-primary text-h6" v-if="!canEdit">
             {{ props.budget ? props.budget.name : "" }}
           </span>
           <v-spacer></v-spacer>
@@ -34,15 +34,15 @@
                 )?
               </v-card-text>
               <v-card-actions>
-                <v-btn color="secondary" @click="showConfirmDelete = false">
+                <v-btn color="primary" @click="showConfirmDelete = false">
                   Cancel
                 </v-btn>
-                <v-btn color="secondary" @click="deleteClicked">Delete</v-btn>
+                <v-btn color="primary" @click="deleteClicked">Delete</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
           <v-btn
-            color="secondary"
+            color="primary"
             prepend-icon="mdi-pencil"
             :disabled="canEdit || !props.budget"
             @click="canEdit = true"
@@ -203,10 +203,10 @@
       </template>
       <v-card-actions v-if="!props.edit || canEdit">
         <v-spacer></v-spacer>
-        <v-btn color="secondary" :disabled="!canEdit" @click="resetForm">
+        <v-btn color="primary" :disabled="!canEdit" @click="resetForm">
           {{ props.edit ? "Cancel" : "Close" }}
         </v-btn>
-        <v-btn color="secondary" type="submit" :disabled="!canEdit">
+        <v-btn color="primary" type="submit" :disabled="!canEdit">
           {{ props.edit ? "Save Changes" : "Add Budget" }}
         </v-btn>
       </v-card-actions>

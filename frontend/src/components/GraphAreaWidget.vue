@@ -8,7 +8,7 @@
           class="bg-surface d-flex flex-column h-100"
         >
           <v-card-title class="d-flex align-center">
-            <span class="text-subtitle-2 text-secondary">
+            <span class="text-subtitle-2 text-primary">
               {{ getGraphTitle(i) }}
             </span>
 
@@ -34,7 +34,7 @@
           class="bg-surface d-flex flex-column h-100"
         >
           <v-card-title class="d-flex align-center">
-            <span class="text-subtitle-2 text-secondary">
+            <span class="text-subtitle-2 text-primary">
               {{ getGraphTitle(page) }}
             </span>
             <v-btn icon="mdi-cog" variant="text" size="small" class="ms-auto" />

@@ -17,10 +17,10 @@ const myCustomLightTheme = {
     info: "#795548",
     success: "#4caf50",
     selected: "#7fb17f",
-    surface: "#06966A",
+    surface: "#FFFFFF",
     background: "#F5F5F5",
-    "on-background": "#ffffff",
-    "on-surface": "#ffffff",
+    "on-background": "#212121",
+    "on-surface": "#212121",
   },
 };
 

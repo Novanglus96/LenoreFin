@@ -18,9 +18,7 @@
               <v-row>
                 <v-col class="text-right">
                   <span class="text-subtitle-2 font-weight-regular">
-                    <span
-                      class="text-subtitle-1 text-secondary font-weight-bold"
-                    >
+                    <span class="text-subtitle-1 text-primary font-weight-bold">
                       {{ props.data.year1 }} Avg:
                     </span>
                     {{ formatCurrency(props.data.year1_avg) }}
@@ -28,9 +26,7 @@
                 </v-col>
                 <v-col class="text-left">
                   <span class="text-subtitle-2 font-weight-regular">
-                    <span
-                      class="text-subtitle-1 text-secondary font-weight-bold"
-                    >
+                    <span class="text-subtitle-1 text-primary font-weight-bold">
                       {{ props.data.year2 }} Avg:
                     </span>
                     {{ formatCurrency(props.data.year2_avg) }}

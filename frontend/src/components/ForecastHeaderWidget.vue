@@ -3,7 +3,7 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      class="bg-secondary"
+      class="bg-primary"
       v-if="!accounts_isLoading && accounts && accounts.length > 0"
     >
       <v-card-title v-if="smAndDown">
@@ -27,7 +27,7 @@
                 @group:selected="clickAccountUpdate"
               >
                 <v-card
-                  color="primary"
+                  color="secondary"
                   :class="['ma-4', selectedClass]"
                   height="75"
                   width="350"
@@ -59,9 +59,9 @@
             v-model="account_selected"
             density="compact"
             @update:model-value="clickAccountUpdate"
-            bg-color="primary"
+            bg-color="secondary"
             menu
-            color="secondary"
+            color="primary"
           >
             <template v-slot:item="{ props, item }">
               <v-list-item
@@ -85,7 +85,7 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      class="bg-secondary"
+      class="bg-primary"
       v-if="accounts && accounts.length === 0"
       title="No Accounts"
     ></v-card>

@@ -1,7 +1,7 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface h-100">
     <v-card-title class="text-left">
-      <span class="text-subtitle-2 text-secondary">Rules</span>
+      <span class="text-subtitle-2 text-primary">Rules</span>
       <v-tooltip text="Add Rule" location="top">
         <template v-slot:activator="{ props }">
           <v-btn

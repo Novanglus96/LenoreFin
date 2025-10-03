@@ -2,14 +2,15 @@
   <v-dialog v-model="dialog" persistent width="300">
     <template v-slot:activator="{ props }">
       <v-btn
-        color="secondary"
+        color="primary"
         v-bind="props"
         @click="
           bankForm.bank_name = '';
           bankSubmit = true;
         "
-        >Don't see your bank?</v-btn
       >
+        Don't see your bank?
+      </v-btn>
     </template>
     <v-card>
       <v-card-title>
@@ -34,11 +35,11 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="secondary" variant="text" @click="dialog = false">
+        <v-btn color="primary" variant="text" @click="dialog = false">
           Close
         </v-btn>
         <v-btn
-          color="secondary"
+          color="primary"
           variant="text"
           @click="submitForm"
           :disabled="bankSubmit"
@@ -50,24 +51,24 @@
   </v-dialog>
 </template>
 <script setup>
-import { ref } from "vue";
-import { useBanks } from "@/composables/banksComposable";
+  import { ref } from "vue";
+  import { useBanks } from "@/composables/banksComposable";
 
-const { addBank } = useBanks();
-const bankSubmit = ref(true);
-const dialog = ref(false);
-const bankForm = ref({
-  bank_name: null,
-});
-const checkBank = async () => {
-  if (bankForm.value.bank_name !== "" && bankForm.value.bank_name !== null) {
-    bankSubmit.value = false;
-  } else {
-    bankSubmit.value = true;
-  }
-};
-const submitForm = async () => {
-  addBank(bankForm.value);
-  dialog.value = false;
-};
+  const { addBank } = useBanks();
+  const bankSubmit = ref(true);
+  const dialog = ref(false);
+  const bankForm = ref({
+    bank_name: null,
+  });
+  const checkBank = async () => {
+    if (bankForm.value.bank_name !== "" && bankForm.value.bank_name !== null) {
+      bankSubmit.value = false;
+    } else {
+      bankSubmit.value = true;
+    }
+  };
+  const submitForm = async () => {
+    addBank(bankForm.value);
+    dialog.value = false;
+  };
 </script>

@@ -1,7 +1,7 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
     <v-card-title>
-      <span class="text-subtitle-2 text-secondary">
+      <span class="text-subtitle-2 text-primary">
         {{ title[props.variant] }}
         <v-tooltip
           text="File Import"
@@ -60,7 +60,7 @@
         v-model="selected_all"
         :page="localPage"
         :row-props="getRowProps"
-        :header-props="{ class: 'font-weight-bold bg-primary' }"
+        :header-props="{ class: 'font-weight-bold bg-secondary' }"
       >
         <template v-slot:header.data-table-select="{}"></template>
 
@@ -312,7 +312,7 @@
           v-if="mdAndUp && props.variant != 'tag'"
         >
           <div
-            class="w-100 h-100 d-flex align-center text-secondary text-subtitle-2"
+            class="w-100 h-100 d-flex align-center text-primary text-subtitle-2"
             style="cursor: pointer"
             @click="item.id > -10000 ? toggleSelect(internalItem) : null"
           >
@@ -383,7 +383,7 @@
               </v-row>
               <v-row dense class="ma-0 pa-0 ga-0">
                 <v-col
-                  class="ma-0 pa-0 ga-0 text-secondary text-left font-weight-italic text-truncate"
+                  class="ma-0 pa-0 ga-0 text-primary text-left font-weight-italic text-truncate"
                 >
                   <span
                     :class="
@@ -436,7 +436,7 @@
                   class="ma-0 pa-0 ga-0 text-center"
                   style="max-width: 100%"
                 >
-                  <span class="text-secondary">
+                  <span class="text-primary">
                     <v-icon
                       :icon="
                         item.tags.length === 0 ? 'mdi-tag-hidden' : 'mdi-tag'
@@ -476,7 +476,7 @@
           <v-fab
             key="fab2"
             :app="true"
-            :color="open ? '' : 'primary'"
+            :color="open ? '' : 'secondary'"
             location="right bottom"
             size="small"
             icon
@@ -902,7 +902,7 @@
       rowformat += " bg-grey-lighten-4";
     }
     if (isSelected && props.variant != "upcoming") {
-      rowformat += " bg-secondary-lighten-3";
+      rowformat += " bg-primary-lighten-3";
     }
     return {
       class: rowformat,

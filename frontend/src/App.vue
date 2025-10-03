@@ -21,7 +21,7 @@
     <VueQueryDevtools button-position="bottom-left" />
     <AppNavigationVue />
     <v-main>
-      <v-container class="bg-primary h-100" fluid>
+      <v-container class="bg-secondary h-100" fluid>
         <router-view />
       </v-container>
       <v-snackbar
@@ -34,7 +34,7 @@
       </v-snackbar>
       <v-snackbar
         v-model="showBanner"
-        color="secondary"
+        color="primary"
         location="top"
         timeout="-1"
         :multi-line="true"
@@ -42,10 +42,10 @@
         There's been an update to the application. Click refresh to get the new
         changes!
         <template v-slot:actions>
-          <v-btn color="primary" variant="text" @click="showBanner = false">
+          <v-btn color="secondary" variant="text" @click="showBanner = false">
             Close
           </v-btn>
-          <v-btn color="primary" variant="text" @click="reloadPage">
+          <v-btn color="secondary" variant="text" @click="reloadPage">
             Refresh
           </v-btn>
         </template>

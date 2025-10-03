@@ -1,7 +1,7 @@
 <template>
   <v-card variant="outlined" :elevation="4" class="bg-surface">
     <v-card-title class="text-left">
-      <span class="text-subtitle-2 text-secondary">
+      <span class="text-subtitle-2 text-primary">
         {{ calculator ? calculator.rule.name : null }} Transfers
       </span>
       <v-tooltip text="Add Transfer" location="top">
@@ -78,7 +78,7 @@
         v-model="selectedTransfer"
         select-strategy="single"
         v-model:page="page"
-        :header-props="{ class: 'font-weight-bold bg-primary' }"
+        :header-props="{ class: 'font-weight-bold bg-secondary' }"
         :row-props="getRowProps"
         v-if="props.ruleID"
       >
@@ -363,7 +363,7 @@
     let rowformat = "text-body-2";
     const isSelected = selectedTransfer.value.some(sel => sel.id === item.id);
     if (isSelected) {
-      rowformat += " bg-secondary-lighten-3";
+      rowformat += " bg-primary-lighten-3";
     }
     return {
       class: rowformat,

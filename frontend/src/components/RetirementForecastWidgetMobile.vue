@@ -12,7 +12,7 @@
         <v-card>
           <form @submit.prevent="submit">
             <v-card-title>
-              <span class="text-secondary text-h6">
+              <span class="text-primary text-h6">
                 Choose Retirement Accounts
               </span>
             </v-card-title>
@@ -46,18 +46,18 @@
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="secondary" type="submit">Save Changes</v-btn>
+              <v-btn color="primary" type="submit">Save Changes</v-btn>
             </v-card-actions>
           </form>
         </v-card>
       </v-dialog>
     </template>
     <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary">Retirement Forecast</span>
+      <span class="text-subtitle-2 text-primary">Retirement Forecast</span>
     </template>
     <template v-slot:text>
       <v-progress-circular
-        color="secondary"
+        color="primary"
         indeterminate
         :size="300"
         :width="12"
