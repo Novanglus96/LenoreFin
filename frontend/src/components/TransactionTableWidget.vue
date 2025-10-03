@@ -902,7 +902,7 @@
       rowformat += " bg-grey-lighten-4";
     }
     if (isSelected && props.variant != "upcoming") {
-      rowformat += " bg-primary";
+      rowformat += " bg-secondary-lighten-3";
     }
     return {
       class: rowformat,

@@ -79,7 +79,7 @@
         select-strategy="single"
         v-model:page="page"
         :header-props="{ class: 'font-weight-bold bg-primary' }"
-        :row-props="{ class: 'text-body-2' }"
+        :row-props="getRowProps"
         v-if="props.ruleID"
       >
         <template
@@ -91,7 +91,6 @@
         >
           <v-checkbox-btn
             :model-value="isSelected(internalItem)"
-            color="secondary"
             @update:model-value="toggleSelect(internalItem)"
             :disabled="!isSelectable(internalItem.raw)"
           ></v-checkbox-btn>
@@ -360,4 +359,14 @@
 
     return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
   };
+  function getRowProps({ item }) {
+    let rowformat = "text-body-2";
+    const isSelected = selectedTransfer.value.some(sel => sel.id === item.id);
+    if (isSelected) {
+      rowformat += " bg-secondary-lighten-3";
+    }
+    return {
+      class: rowformat,
+    };
+  }
 </script>

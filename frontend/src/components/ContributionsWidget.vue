@@ -145,6 +145,7 @@
         v-model="selectedContribution"
         select-strategy="single"
         return-object
+        :row-props="getRowProps"
       >
         <template v-slot:bottom>
           <div class="text-center pt-2">
@@ -415,4 +416,16 @@
       }
     },
   );
+  function getRowProps({ item }) {
+    let rowformat = "";
+    const isSelected = selectedContribution.value.some(
+      sel => sel.id === item.id,
+    );
+    if (isSelected) {
+      rowformat += "bg-secondary-lighten-3";
+    }
+    return {
+      class: rowformat,
+    };
+  }
 </script>

@@ -54,6 +54,7 @@
             v-model="selectedNote"
             select-strategy="single"
             return-object
+            :row-props="getRowProps"
           >
             <template v-slot:top>
               <div class="d-flex align-center">
@@ -233,4 +234,14 @@
 
     return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
   };
+  function getRowProps({ item }) {
+    let rowformat = "";
+    const isSelected = selectedNote.value.some(sel => sel.id === item.id);
+    if (isSelected) {
+      rowformat += "bg-secondary-lighten-3";
+    }
+    return {
+      class: rowformat,
+    };
+  }
 </script>

@@ -55,6 +55,7 @@
         v-model="selectedContributionRule"
         select-strategy="single"
         return-object
+        :row-props="getRowProps"
       >
         <template v-slot:top>
           <div class="d-flex align-center">
@@ -249,4 +250,16 @@
       }
     },
   );
+  function getRowProps({ item }) {
+    let rowformat = "";
+    const isSelected = selectedContributionRule.value.some(
+      sel => sel.id === item.id,
+    );
+    if (isSelected) {
+      rowformat += "bg-secondary-lighten-3";
+    }
+    return {
+      class: rowformat,
+    };
+  }
 </script>
