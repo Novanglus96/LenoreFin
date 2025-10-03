@@ -388,8 +388,8 @@
                   <span
                     :class="
                       item.status.id == 1
-                        ? 'text-secondary-lighten-2'
-                        : 'text-secondary'
+                        ? 'text-accent-lighten-2'
+                        : 'text-accent'
                     "
                   >
                     {{ item.pretty_account }}
@@ -896,9 +896,13 @@
     }
   }
   function getRowProps({ item }) {
+    const isSelected = selected_all.value.some(sel => sel.id === item.id);
     let rowformat = getStatusFormat(item.status.id);
     if (item.status.id == 1 && props.variant === "account") {
       rowformat += " bg-grey-lighten-4";
+    }
+    if (isSelected) {
+      rowformat += " bg-primary";
     }
     return {
       class: rowformat,
