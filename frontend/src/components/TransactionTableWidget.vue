@@ -16,7 +16,7 @@
               v-bind="props"
               @click="importFileDialog = true"
               :disabled="isActive"
-              color="grey"
+              color="textPending"
             ></v-btn>
           </template>
         </v-tooltip>
@@ -61,6 +61,7 @@
         :page="localPage"
         :row-props="getRowProps"
         :header-props="{ class: 'font-weight-bold bg-secondary' }"
+        class="bg-background"
       >
         <template v-slot:header.data-table-select="{}"></template>
 
@@ -83,7 +84,7 @@
             >
               <v-icon
                 icon="mdi-alpha-p-circle"
-                color="grey"
+                color="textPending"
                 size="x-large"
                 v-if="internalItem.raw.status.id === 1"
               ></v-icon>
@@ -101,7 +102,7 @@
               ></v-icon>
             </v-btn>
             <v-badge
-              color="grey-lighten-3"
+              color="textPending-lighten-3"
               :icon="
                 isSelected(internalItem)
                   ? 'mdi-check-bold'
@@ -122,7 +123,7 @@
               >
                 <v-icon
                   icon="mdi-alpha-p-circle"
-                  color="grey"
+                  color="textPending"
                   size="x-large"
                   v-if="internalItem.raw.status.id === 1"
                 ></v-icon>
@@ -185,7 +186,7 @@
                 <v-icon
                   icon="mdi-paperclip"
                   v-if="item.attachments"
-                  color="grey"
+                  color="textPending"
                   v-bind="props"
                 ></v-icon>
               </template>
@@ -195,7 +196,7 @@
                 <v-icon
                   icon="mdi-chart-box"
                   v-if="item.simulated"
-                  color="grey"
+                  color="textPending"
                   v-bind="props"
                 ></v-icon>
               </template>
@@ -205,7 +206,7 @@
                 <v-icon
                   icon="mdi-bell"
                   v-if="item.simulated && item.id < 0 && item.id >= -10000"
-                  color="amber"
+                  color="warning"
                   v-bind="props"
                 ></v-icon>
               </template>
@@ -215,7 +216,7 @@
                 <v-icon
                   icon="mdi-cash-multiple"
                   v-if="item.paycheck"
-                  color="amber"
+                  color="warning"
                   v-bind="props"
                 ></v-icon>
               </template>
@@ -225,14 +226,14 @@
                 <div class="icon-with-text" v-if="item.checkNumber">
                   <v-icon
                     icon="mdi-checkbook"
-                    color="amber"
+                    color="warning"
                     v-bind="props"
                   ></v-icon>
                   <span
                     :class="
-                      item.status.id == 1
-                        ? 'font-italic text-grey icon-text'
-                        : 'font-weight-bold text-black icon-text'
+                      item.status.id == 1 && props.variant != 'upcoming'
+                        ? 'font-italic text-textPending icon-text'
+                        : 'font-weight-bold text-textCleared icon-text'
                     "
                   >
                     #{{ item.checkNumber }}
@@ -324,7 +325,7 @@
           v-if="mdAndUp"
         >
           <div
-            class="w-100 h-100 d-flex align-center"
+            class="w-100 h-100 d-flex align-center text-altAccent"
             style="cursor: pointer"
             @click="item.id > -10000 ? toggleSelect(internalItem) : null"
           >
@@ -348,7 +349,7 @@
                   <v-icon
                     icon="mdi-wallet-bifold"
                     size="x-small"
-                    :color="item.status.id == 1 ? 'grey' : 'black'"
+                    :color="item.status.id == 1 ? 'textPending' : 'black'"
                     v-if="props.variant === 'tag' || props.variant === 'budget'"
                   ></v-icon>
                 </v-col>
@@ -371,7 +372,7 @@
                   <v-icon
                     icon="mdi-tag-hidden"
                     size="x-small"
-                    :color="item.status.id == 1 ? 'grey' : 'black'"
+                    :color="item.status.id == 1 ? 'textPending' : 'black'"
                     v-if="props.variant === 'tag' || props.variant === 'budget'"
                   ></v-icon>
                 </v-col>
@@ -387,9 +388,7 @@
                 >
                   <span
                     :class="
-                      item.status.id == 1
-                        ? 'text-accent-lighten-2'
-                        : 'text-accent'
+                      item.status.id == 1 ? 'text-altAccent' : 'text-altAccent'
                     "
                   >
                     {{ item.pretty_account }}
@@ -398,14 +397,14 @@
                 <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.attachments">
                   <v-icon
                     icon="mdi-paperclip"
-                    color="grey"
+                    color="textPending"
                     v-bind="props"
                   ></v-icon>
                 </v-col>
                 <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.simulated">
                   <v-icon
                     icon="mdi-chart-box"
-                    color="grey"
+                    color="textPending"
                     v-bind="props"
                   ></v-icon>
                 </v-col>
@@ -414,15 +413,19 @@
                   cols="1"
                   v-if="item.simulated && item.id < 0 && item.id >= -10000"
                 >
-                  <v-icon icon="mdi-bell" color="amber" v-bind="props"></v-icon>
+                  <v-icon
+                    icon="mdi-bell"
+                    color="warning"
+                    v-bind="props"
+                  ></v-icon>
                 </v-col>
                 <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.paycheck">
-                  <v-icon icon="mdi-cash-multiple" color="amber"></v-icon>
+                  <v-icon icon="mdi-cash-multiple" color="warning"></v-icon>
                 </v-col>
                 <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.checkNumber">
                   <v-icon
                     icon="mdi-checkbook"
-                    color="amber"
+                    color="warning"
                     v-bind="props"
                   ></v-icon>
                 </v-col>
@@ -442,7 +445,7 @@
                         item.tags.length === 0 ? 'mdi-tag-hidden' : 'mdi-tag'
                       "
                       size="x-small"
-                      :color="item.status.id == 1 ? 'grey' : 'black'"
+                      :color="item.status.id == 1 ? 'secondary' : 'secondary'"
                     ></v-icon>
 
                     {{ processTags(item.tags) }}
@@ -528,7 +531,7 @@
                       Are you sure you want to delete these
                       {{ selected_transactions.length }} transactions?
                       <br />
-                      <span class="text-red text-subtitle-2 font-italic">
+                      <span class="text-error text-subtitle-2 font-italic">
                         * Reminder transactions will not be deleted.
                       </span>
                     </v-card-text>
@@ -752,7 +755,7 @@
     { title: "Balance", key: "balance", width: "100px" },
     { title: "Description", key: "description" },
     { title: "Tag(s)", key: "tags", width: "200px" },
-    { title: "Account", key: "pretty_account" },
+    { title: "Account", key: "pretty_account", width: "270px" },
   ]);
   const displayHeaders = computed(() => {
     if (mdAndUp.value) {
@@ -774,15 +777,15 @@
 
     if (status == 1) {
       if (amount < 0) {
-        color = "text-red-lighten-1";
+        color = "text-error";
       } else {
-        color = "text-green-lighten-1";
+        color = "text-success";
       }
     } else {
       if (amount < 0) {
-        color = "text-red";
+        color = "text-error";
       } else {
-        color = "text-green";
+        color = "text-success";
       }
     }
 
@@ -889,20 +892,23 @@
     transactions_store.pageinfo.page = page;
   }
   function getStatusFormat(status) {
-    if (status == 1) {
-      return "font-italic text-grey text-body-2";
+    if (status == 1 && props.variant != "upcoming") {
+      return "font-weight-regular font-italic text-textPending text-body-2";
     } else {
-      return "font-weight-bold text-black text-body-2";
+      if (props.variant == "upcoming") {
+        return "font-weight-regular text-textCleared text-body-2";
+      } else {
+        return "font-weight-bold text-textCleared text-body-2";
+      }
     }
   }
   function getRowProps({ item }) {
     const isSelected = selected_all.value.some(sel => sel.id === item.id);
     let rowformat = getStatusFormat(item.status.id);
-    if (item.status.id == 1 && props.variant === "account") {
-      rowformat += " bg-grey-lighten-4";
-    }
-    if (isSelected && props.variant != "upcoming") {
-      rowformat += " bg-primary-lighten-3";
+    if (item.status.id == 1 && props.variant === "account" && !isSelected) {
+      rowformat += " bg-bgPending text-textCleared";
+    } else if (isSelected && props.variant != "upcoming") {
+      rowformat += " bg-selected";
     }
     return {
       class: rowformat,

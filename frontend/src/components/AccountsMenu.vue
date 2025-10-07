@@ -1,6 +1,10 @@
 <template>
   <div>
-    <v-list density="compact" nav>
+    <v-list
+      density="compact"
+      nav
+      :bg-color="smAndDown ? 'background' : 'surface'"
+    >
       <v-list-item
         prepend-icon="mdi-plus-circle"
         base-color="primary"
@@ -11,7 +15,11 @@
         </v-list-item-title>
       </v-list-item>
     </v-list>
-    <v-list density="compact" nav>
+    <v-list
+      density="compact"
+      nav
+      :bg-color="smAndDown ? 'background' : 'surface'"
+    >
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"

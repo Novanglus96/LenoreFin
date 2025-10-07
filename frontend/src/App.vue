@@ -21,7 +21,7 @@
     <VueQueryDevtools button-position="bottom-left" />
     <AppNavigationVue />
     <v-main>
-      <v-container class="bg-secondary h-100" fluid>
+      <v-container class="bg-background h-100" fluid>
         <router-view />
       </v-container>
       <v-snackbar

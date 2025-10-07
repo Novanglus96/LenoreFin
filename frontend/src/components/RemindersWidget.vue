@@ -110,6 +110,7 @@
         v-model:page="page"
         :header-props="{ class: 'font-weight-bold bg-secondary' }"
         :row-props="getRowProps"
+        class="bg-background"
       >
         <template v-slot:bottom v-if="props.variant != 'upcoming'">
           <div class="text-center pt-2">
@@ -140,11 +141,16 @@
             {{ item.end_date ? formatDate(item.end_date) : "" }}
           </span>
         </template>
+        <template v-slot:[`item.repeat.repeat_name`]="{ item }" v-if="mdAndUp">
+          <span class="text-altAccent">
+            {{ item.repeat.repeat_name }}
+          </span>
+        </template>
         <!-- Mobile View -->
         <template v-slot:[`item.mobile`]="{ item }">
           <v-container class="ma-0 pa-0 ga-0">
             <v-row dense class="ma-0 pa-0 ga-0">
-              <v-col class="ma-0 pa-0 ga-0" cols="4">
+              <v-col class="ma-0 pa-0 ga-0" cols="3">
                 <span>
                   <v-icon
                     icon="mdi-skip-next-circle"
@@ -154,7 +160,7 @@
                   {{ formatDate(item.next_date, true) }}
                 </span>
               </v-col>
-              <v-col class="ma-0 pa-0 ga-0" cols="4">
+              <v-col class="ma-0 pa-0 ga-0" cols="5">
                 <span v-if="item.end_date">
                   <v-icon
                     icon="mdi-stop-circle"
@@ -194,11 +200,11 @@
               <v-col
                 class="ma-0 pa-0 ga-0 text-primary text-left font-weight-italic text-truncate"
               >
-                <span>
+                <span class="text-altAccent">
                   <v-icon
                     icon="mdi-repeat"
                     size="x-small"
-                    color="black"
+                    color="secondary"
                   ></v-icon>
                   {{ item.repeat.repeat_name }}
                 </span>
@@ -207,7 +213,11 @@
             <v-row dense class="ma-0 pa-0 ga-0">
               <v-col class="ma-0 pa-0 ga-0 text-center text-truncate">
                 <span class="text-primary">
-                  <v-icon icon="mdi-tag" size="x-small" color="grey"></v-icon>
+                  <v-icon
+                    icon="mdi-tag"
+                    size="x-small"
+                    color="secondary"
+                  ></v-icon>
                   {{ item.tag.tag_name }}
                 </span>
               </v-col>
@@ -309,7 +319,8 @@
   });
 
   const headers = ref([
-    { title: "Next Date", key: "next_date", width: "120px" },
+    { title: "", key: "status", width: "72px" },
+    { title: "Next", key: "next_date", width: "84px" },
     { title: "Amount", key: "amount", width: "100px" },
     { title: "Reminder", key: "description" },
     { title: "Tag", key: "tag.tag_name", width: "200px" },
@@ -327,9 +338,9 @@
     let color = "";
 
     if (amount < 0) {
-      color = "text-red";
+      color = "text-error";
     } else {
-      color = "text-green";
+      color = "text-success";
     }
 
     return color;

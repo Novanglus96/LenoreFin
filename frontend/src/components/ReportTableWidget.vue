@@ -22,7 +22,7 @@
               density="compact"
               :hide-default-footer="true"
               width="100%"
-              class="ma-0 pa-0 ga-0"
+              class="ma-0 pa-0 ga-0 bg-background"
               :header-props="{ class: 'font-weight-bold bg-secondary' }"
             >
               <template v-slot:[`header.item`] v-if="mdAndUp">

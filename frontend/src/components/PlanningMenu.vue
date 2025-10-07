@@ -1,5 +1,9 @@
 <template>
-  <v-list density="compact" nav>
+  <v-list
+    density="compact"
+    nav
+    :bg-color="smAndDown ? 'background' : 'surface'"
+  >
     <v-list-subheader color="primary">
       <v-icon icon="mdi-folder"></v-icon>
       PLANNING

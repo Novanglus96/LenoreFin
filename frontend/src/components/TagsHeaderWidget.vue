@@ -26,7 +26,7 @@
             <v-slide-group
               v-model="tag_selected"
               class="pa-4"
-              selected-class="bg-accent"
+              selected-class="bg-selected"
               show-arrows
               center-active
               v-if="!smAndDown"
@@ -39,7 +39,7 @@
                 :value="tag.id"
               >
                 <v-card
-                  color="secondary"
+                  color="surface"
                   :class="['ma-4', selectedClass]"
                   height="75"
                   width="250"

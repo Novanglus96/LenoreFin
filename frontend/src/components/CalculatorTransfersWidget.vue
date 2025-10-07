@@ -81,6 +81,7 @@
         :header-props="{ class: 'font-weight-bold bg-secondary' }"
         :row-props="getRowProps"
         v-if="props.ruleID"
+        class="bg-background"
       >
         <template
           v-slot:item.data-table-select="{

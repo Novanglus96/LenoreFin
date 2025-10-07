@@ -3,7 +3,7 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      :class="account.active ? 'bg-primary' : 'bg-grey'"
+      :class="account.active ? 'bg-primary' : 'bg-primary-darken-2'"
       v-if="!isLoading"
     >
       <template v-slot:text>
@@ -74,7 +74,7 @@
               <v-tooltip text="Adjust Balance" location="top">
                 <template v-slot:activator="{ props }">
                   <div
-                    class="text-accent-lighten-1 font-weight-bold text-h4 d-inline-block"
+                    class="text-accent font-weight-bold text-h4 d-inline-block"
                     @click="adjBalDialog = true"
                     tabindex="0"
                     @keydown.enter="adjBalDialog = true"

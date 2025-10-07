@@ -146,6 +146,7 @@
         select-strategy="single"
         return-object
         :row-props="getRowProps"
+        class="bg-background"
       >
         <template v-slot:bottom>
           <div class="text-center pt-2">

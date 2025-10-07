@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-app-bar color="secondary" density="compact">
+    <v-app-bar color="surface" density="compact">
       <template v-slot:prepend>
         <v-menu v-if="isMobile" width="200">
           <template v-slot:activator="{ props }">
@@ -9,38 +9,38 @@
           <v-list>
             <v-list-item
               prepend-icon="mdi-view-dashboard-variant"
-              color="accent"
+              color="selected"
               @click="setAccount(null, True)"
               title="Dashboard"
             ></v-list-item>
             <v-list-item
               prepend-icon="mdi-bank"
               to="/accounts"
-              color="accent"
+              color="selected"
               title="Accounts"
             ></v-list-item>
             <v-list-item
               prepend-icon="mdi-chart-bar"
               to="/forecast"
-              color="accent"
+              color="selected"
               title="Forecast"
             ></v-list-item>
             <v-list-item
               prepend-icon="mdi-bell"
               to="/reminders"
-              color="accent"
+              color="selected"
               title="Reminders"
             ></v-list-item>
             <v-list-item
               prepend-icon="mdi-folder"
               to="/planning"
-              color="accent"
+              color="selected"
               title="Planning"
             ></v-list-item>
             <v-list-item
               prepend-icon="mdi-tag"
               to="/tags"
-              color="accent"
+              color="selected"
               title="Tags"
             ></v-list-item>
           </v-list>
@@ -53,7 +53,8 @@
       <v-btn
         icon="mdi-theme-light-dark"
         @click="handleToggle"
-        :color="isDark ? 'white' : 'purple'"
+        :color="isDark ? '#F5F5F5' : '#121212'"
+        size="small"
       ></v-btn>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
@@ -111,7 +112,7 @@
             <v-list-item
               prepend-icon="mdi-view-dashboard-variant"
               v-bind="props"
-              color="accent"
+              color="selected"
               @click="setAccount(null, True)"
             ></v-list-item>
           </template>
@@ -124,7 +125,7 @@
               prepend-icon="mdi-bank"
               @click="nav_toggle = true"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -134,7 +135,7 @@
               prepend-icon="mdi-chart-bar"
               to="/forecast"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -144,7 +145,7 @@
               prepend-icon="mdi-bell"
               to="/reminders"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -156,7 +157,7 @@
               prepend-icon="mdi-folder"
               @click="nav_toggle = false"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -166,7 +167,7 @@
               prepend-icon="mdi-tag"
               to="/tags"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -177,14 +178,14 @@
               as="a"
               href="/admin"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
       </v-list>
     </v-navigation-drawer>
 
-    <v-navigation-drawer permanent widht="250" color="secondary" v-if="mdAndUp">
+    <v-navigation-drawer permanent width="250" color="surface" v-if="mdAndUp">
       <AccountsMenu v-if="nav_toggle" />
       <PlanningMenu v-if="!nav_toggle" />
     </v-navigation-drawer>

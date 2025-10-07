@@ -51,7 +51,7 @@
           :disabled="props.widget"
         >
           <v-card
-            :class="['ma-4 text-center', selectedClass]"
+            :class="['ma-4 text-center bg-background', selectedClass]"
             height="200"
             @click="toggle"
           >

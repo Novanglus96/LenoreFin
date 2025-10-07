@@ -56,6 +56,7 @@
         select-strategy="single"
         return-object
         :row-props="getRowProps"
+        class="bg-background"
       >
         <template v-slot:top>
           <div class="d-flex align-center">
