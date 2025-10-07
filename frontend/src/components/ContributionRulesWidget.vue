@@ -13,7 +13,6 @@
             v-bind="props"
             @click="addContributionRuleDialog = true"
             size="small"
-            color="grey"
           ></v-btn>
         </template>
       </v-tooltip>

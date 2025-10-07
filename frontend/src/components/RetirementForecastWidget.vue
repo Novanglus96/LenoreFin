@@ -11,7 +11,6 @@
         :disabled="isActive"
         @click="showOptions = true"
         variant="plain"
-        color="grey"
       ></v-btn>
       <v-dialog width="300" v-model="showOptions">
         <v-card>

@@ -227,9 +227,9 @@
     let color = "";
 
     if (amount < 0) {
-      color = "text-red";
+      color = "text-error";
     } else {
-      color = "text-green";
+      color = "text-success";
     }
 
     return color;

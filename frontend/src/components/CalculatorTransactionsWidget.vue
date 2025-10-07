@@ -82,7 +82,7 @@
               <v-icon
                 icon="mdi-tag"
                 size="x-small"
-                :color="item.status.id == 1 ? 'grey' : 'black'"
+                :color="item.status.id == 1 ? 'textPending' : 'textCleared'"
                 v-if="detail"
               ></v-icon>
               {{ detail.tag.tag_name }} :
@@ -129,7 +129,9 @@
                     <v-icon
                       icon="mdi-tag"
                       size="x-small"
-                      :color="item.status.id == 1 ? 'grey' : 'black'"
+                      :color="
+                        item.status.id == 1 ? 'textPending' : 'textCleared'
+                      "
                       v-if="detail"
                     ></v-icon>
                     {{ detail.tag.tag_name }} :
@@ -216,15 +218,15 @@
 
     if (status == 1) {
       if (amount < 0) {
-        color = "text-red-lighten-1";
+        color = "text-error-lighten-1";
       } else {
-        color = "text-green-lighten-1";
+        color = "text-success-lighten-1";
       }
     } else {
       if (amount < 0) {
-        color = "text-red";
+        color = "text-error";
       } else {
-        color = "text-green";
+        color = "text-success";
       }
     }
 

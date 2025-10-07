@@ -30,7 +30,7 @@
         v-model="budget_selected"
         class="pa-4"
         show-arrows
-        selected-class="bg-grey-lighten-2"
+        selected-class="bg-selected"
         center-active
         mobile-breakpoint="sm"
       >
@@ -93,7 +93,9 @@
                 }}
                 <span
                   :class="
-                    budget.budget.roll_over_amt < 0 ? 'text-red' : 'text-green'
+                    budget.budget.roll_over_amt < 0
+                      ? 'text-error'
+                      : 'text-success'
                   "
                   v-if="budget.budget.roll_over"
                 >

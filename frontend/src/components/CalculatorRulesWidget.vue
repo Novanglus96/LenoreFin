@@ -11,7 +11,6 @@
             v-bind="props"
             @click="calcAddRuleFormDialog = true"
             size="small"
-            color="grey"
           ></v-btn>
         </template>
       </v-tooltip>

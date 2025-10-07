@@ -50,7 +50,9 @@
               variant="outlined"
               label="Name Your Account*"
             ></v-text-field>
-            <span class="text-red text-subtitle-2 font-italic">* required</span>
+            <span class="text-error text-subtitle-2 font-italic">
+              * required
+            </span>
           </v-col>
         </v-row>
       </v-card-text>
@@ -162,7 +164,7 @@
             ></v-select>
           </v-col>
         </v-row>
-        <span class="text-red text-subtitle-2 font-italic">* required</span>
+        <span class="text-error text-subtitle-2 font-italic">* required</span>
       </v-card-text>
       <v-card-actions>
         <v-btn @click="goBack">Back</v-btn>

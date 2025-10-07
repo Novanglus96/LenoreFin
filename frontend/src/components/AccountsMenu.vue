@@ -69,8 +69,8 @@
             <span
               :class="
                 account.balance >= 0
-                  ? 'text-green font-weight-bold'
-                  : 'text-red font-weight-bold'
+                  ? 'text-success font-weight-bold'
+                  : 'text-error font-weight-bold'
               "
             >
               <NumberFlow
@@ -131,8 +131,8 @@
             <span
               :class="
                 account.balance >= 0
-                  ? 'text-green font-weight-bold'
-                  : 'text-red font-weight-bold'
+                  ? 'text-success font-weight-bold'
+                  : 'text-error font-weight-bold'
               "
             >
               <NumberFlow
@@ -193,8 +193,8 @@
             <span
               :class="
                 account.balance >= 0
-                  ? 'text-green font-weight-bold'
-                  : 'text-red font-weight-bold'
+                  ? 'text-success font-weight-bold'
+                  : 'text-error font-weight-bold'
               "
             >
               <NumberFlow
@@ -255,8 +255,8 @@
             <span
               :class="
                 account.balance >= 0
-                  ? 'text-green font-weight-bold'
-                  : 'text-red font-weight-bold'
+                  ? 'text-success font-weight-bold'
+                  : 'text-error font-weight-bold'
               "
             >
               <NumberFlow
@@ -317,8 +317,8 @@
             <span
               :class="
                 account.balance >= 0
-                  ? 'text-green font-weight-bold'
-                  : 'text-red font-weight-bold'
+                  ? 'text-success font-weight-bold'
+                  : 'text-error font-weight-bold'
               "
             >
               <NumberFlow

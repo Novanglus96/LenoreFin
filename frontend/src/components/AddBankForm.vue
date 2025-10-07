@@ -31,7 +31,7 @@
             </v-col>
           </v-row>
         </v-container>
-        <span class="text-red text-subtitle-2 font-italic">* required</span>
+        <span class="text-error text-subtitle-2 font-italic">* required</span>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>

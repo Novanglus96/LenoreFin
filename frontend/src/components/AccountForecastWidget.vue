@@ -18,7 +18,6 @@
             size="small"
             v-bind="props"
             :disabled="isActive"
-            color="grey"
             variant="plain"
           ></v-btn>
         </template>

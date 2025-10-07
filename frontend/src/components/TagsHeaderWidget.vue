@@ -57,7 +57,13 @@
                     </span>
                   </template>
                   <template v-slot:subtitle>
-                    <span :class="!tag.child ? 'text-secondary' : 'text-black'">
+                    <span
+                      :class="
+                        !tag.child
+                          ? 'text-secondary'
+                          : 'text-secondary-lighten-2'
+                      "
+                    >
                       {{ !tag.child ? "..." : tag.child.tag_name }}
                     </span>
                   </template>
@@ -125,11 +131,11 @@
 
   const tagColor = typeID => {
     if (typeID == 1) {
-      return "red";
+      return "error";
     } else if (typeID == 2) {
-      return "green";
+      return "success";
     } else if (typeID == 3) {
-      return "grey";
+      return "info";
     }
   };
 </script>

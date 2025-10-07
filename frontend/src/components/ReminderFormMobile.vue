@@ -399,11 +399,11 @@
 
   const tagColor = typeID => {
     if (typeID == 1) {
-      return "red";
+      return "error";
     } else if (typeID == 2) {
-      return "green";
+      return "success";
     } else if (typeID == 3) {
-      return "grey";
+      return "info";
     }
   };
 

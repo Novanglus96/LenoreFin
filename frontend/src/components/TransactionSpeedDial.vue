@@ -15,8 +15,6 @@
     </template>
     <v-btn
       icon="mdi-invoice-remove"
-      color="black"
-      base-color="black"
       :key="1"
       variant="outlined"
       class="bg-error"
@@ -24,14 +22,11 @@
     <v-btn
       icon="mdi-invoice-text-edit"
       :key="2"
-      base-color="black"
       variant="outlined"
       class="bg-surface"
     ></v-btn>
     <v-btn
       icon="mdi-invoice-text-clock"
-      color="black"
-      base-color="black"
       :key="3"
       variant="outlined"
       class="bg-surface"

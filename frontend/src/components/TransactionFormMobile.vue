@@ -38,7 +38,7 @@
                   <v-col>
                     <span
                       v-if="!formData.transaction_date"
-                      class="text-red text-caption"
+                      class="text-error text-caption"
                     >
                       This field is required.
                     </span>

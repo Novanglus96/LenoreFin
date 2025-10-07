@@ -63,7 +63,6 @@
           <span>
             <v-icon
               icon="mdi-infinity"
-              color="black"
               size="small"
               v-if="!item.end_date"
             ></v-icon>
@@ -105,11 +104,7 @@
                     color="error"
                   ></v-icon>
                   &nbsp;
-                  <v-icon
-                    icon="mdi-infinity"
-                    size="small"
-                    color="black"
-                  ></v-icon>
+                  <v-icon icon="mdi-infinity" size="small"></v-icon>
                 </span>
               </v-col>
               <v-col class="ma-0 pa-0 ga-0 text-right">

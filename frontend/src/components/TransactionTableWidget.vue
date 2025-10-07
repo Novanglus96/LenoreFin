@@ -75,7 +75,6 @@
           <div class="text-center">
             <v-btn
               @click="toggleSelect(internalItem)"
-              color="black"
               variant="plain"
               icon
               block
@@ -90,7 +89,7 @@
               ></v-icon>
               <v-icon
                 icon="mdi-alpha-c-circle"
-                color="green"
+                color="success"
                 v-if="internalItem.raw.status.id === 2"
                 size="large"
               ></v-icon>
@@ -115,7 +114,6 @@
             >
               <v-btn
                 @click="toggleSelect(internalItem)"
-                color="black"
                 variant="plain"
                 icon
                 block
@@ -129,7 +127,7 @@
                 ></v-icon>
                 <v-icon
                   icon="mdi-alpha-c-circle"
-                  color="green"
+                  color="success"
                   v-if="internalItem.raw.status.id === 2"
                   size="large"
                 ></v-icon>
@@ -349,7 +347,7 @@
                   <v-icon
                     icon="mdi-wallet-bifold"
                     size="x-small"
-                    :color="item.status.id == 1 ? 'textPending' : 'black'"
+                    :color="item.status.id == 1 ? 'textPending' : 'textCleared'"
                     v-if="props.variant === 'tag' || props.variant === 'budget'"
                   ></v-icon>
                 </v-col>
@@ -372,7 +370,7 @@
                   <v-icon
                     icon="mdi-tag-hidden"
                     size="x-small"
-                    :color="item.status.id == 1 ? 'textPending' : 'black'"
+                    :color="item.status.id == 1 ? 'textPending' : 'textCleared'"
                     v-if="props.variant === 'tag' || props.variant === 'budget'"
                   ></v-icon>
                 </v-col>

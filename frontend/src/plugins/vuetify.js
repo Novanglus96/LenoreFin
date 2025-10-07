@@ -14,7 +14,7 @@ const myCustomLightTheme = {
     accent: "#DEB887",
     error: "#FF3407",
     warning: "#ffc107",
-    info: "#6A0696",
+    info: "#2687D7",
     success: "#4caf50",
     selected: "#00C783",
     surface: "#ECFDF5",
