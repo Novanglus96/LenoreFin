@@ -10,77 +10,6 @@
       <span class="text-subtitle-2 text-primary" v-else>Reminders</span>
     </v-card-title>
     <v-card-text class="ma-0 pa-0 ga-0">
-      <div v-if="props.allowEdit">
-        <v-tooltip text="Edit Reminder" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-bell-cog"
-              flat
-              :disabled="selected_reminder.length === 0"
-              variant="plain"
-              @click="reminderEditFormDialog = true"
-              v-bind="props"
-            ></v-btn>
-          </template>
-        </v-tooltip>
-        <ReminderForm
-          v-model="reminderEditFormDialog"
-          :isEdit="true"
-          @update-dialog="updateEditDialog"
-          :passedFormData="editReminder"
-        />
-
-        <v-tooltip text="Remove Reminder(s)" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-bell-remove"
-              flat
-              :disabled="selected_reminder.length === 0"
-              variant="plain"
-              color="error"
-              v-bind="props"
-              @click="showDeleteDialog = true"
-            ></v-btn>
-          </template>
-        </v-tooltip>
-        <v-dialog width="500" v-model="showDeleteDialog">
-          <v-card title="Dialog">
-            <v-card-text>
-              Are you sure you want to delete this reminder?
-            </v-card-text>
-
-            <v-card-actions>
-              <v-spacer></v-spacer>
-
-              <v-btn
-                text="Confirm"
-                @click="
-                  clickRemoveReminder();
-                  showDeleteDialog = false;
-                "
-              ></v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-        <v-tooltip text="Add New Reminder" location="top">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-bell-plus"
-              flat
-              variant="plain"
-              color="success"
-              @click="reminderAddFormDialog = true"
-              v-bind="props"
-            ></v-btn>
-          </template>
-        </v-tooltip>
-        <ReminderForm
-          v-model="reminderAddFormDialog"
-          :isEdit="false"
-          @update-dialog="updateAddDialog"
-          :passedFormData="blankForm"
-        />
-      </div>
       <v-data-table
         :headers="displayHeaders"
         :items="reminders ? reminders : []"
@@ -224,6 +153,111 @@
             </v-row>
           </v-container>
         </template>
+        <template v-slot:top v-if="props.allowEdit">
+          <v-fab
+            key="fab1"
+            :app="true"
+            color="success"
+            location="right bottom"
+            size="small"
+            icon
+            @click="reminderAddFormDialog = true"
+            variant="elevated"
+            v-if="selected_reminder.length === 0"
+          >
+            <v-icon icon="mdi-bell-plus"></v-icon>
+          </v-fab>
+          <ReminderForm
+            v-model="reminderAddFormDialog"
+            :isEdit="false"
+            @update-dialog="updateAddDialog"
+            :passedFormData="blankForm"
+          />
+          <v-fab
+            key="fab2"
+            :app="true"
+            :color="open ? '' : 'secondary'"
+            location="right bottom"
+            size="small"
+            icon
+            :disabled="true"
+            variant="plain"
+          >
+            <v-icon></v-icon>
+            <v-speed-dial
+              v-model="open"
+              location="top center"
+              transition="scale-transition"
+              activator="parent"
+              persistent
+              :close-on-content-click="false"
+            >
+              <div key="1">
+                <v-tooltip text="Uncheck All" location="left" key="1">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      icon="mdi-checkbox-multiple-marked-outline"
+                      key="1"
+                      color="warning"
+                      @click="uncheck_all"
+                      v-bind="props"
+                    ></v-btn>
+                  </template>
+                </v-tooltip>
+              </div>
+              <div key="2">
+                <v-tooltip text="Remove Reminder(s)" location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      icon="mdi-bell-remove"
+                      :disabled="selected_reminder.length === 0"
+                      color="error"
+                      v-bind="props"
+                      @click="showDeleteDialog = true"
+                    ></v-btn>
+                  </template>
+                </v-tooltip>
+                <v-dialog width="500" v-model="showDeleteDialog">
+                  <v-card title="Dialog">
+                    <v-card-text>
+                      Are you sure you want to delete this reminder?
+                    </v-card-text>
+
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+
+                      <v-btn
+                        text="Confirm"
+                        @click="
+                          clickRemoveReminder();
+                          showDeleteDialog = false;
+                        "
+                      ></v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </div>
+              <div key="3">
+                <v-tooltip text="Edit Reminder" location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      icon="mdi-bell-cog"
+                      :disabled="selected_reminder.length === 0"
+                      @click="reminderEditFormDialog = true"
+                      v-bind="props"
+                    ></v-btn>
+                  </template>
+                </v-tooltip>
+              </div>
+            </v-speed-dial>
+          </v-fab>
+          <ReminderForm
+            v-model="reminderEditFormDialog"
+            :isEdit="true"
+            @update-dialog="updateEditDialog"
+            :passedFormData="editReminder"
+          />
+        </template>
       </v-data-table>
     </v-card-text>
   </v-card>
@@ -237,6 +271,7 @@
   const selected_reminder = ref([]);
   const { mdAndUp } = useDisplay();
   const today = new Date();
+  const open = ref(false);
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
   const year = tomorrow.getFullYear();
@@ -372,6 +407,7 @@
     val => {
       if (val) {
         editReminder.value = val[0];
+        open.value = val.length != 0 ? true : false;
       }
     },
   );
@@ -401,6 +437,10 @@
     }
 
     return returndate;
+  };
+  const uncheck_all = () => {
+    selected_reminder.value = [];
+    open.value = false;
   };
 
   function getRowProps({ item }) {
