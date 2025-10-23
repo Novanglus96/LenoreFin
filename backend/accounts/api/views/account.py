@@ -3,7 +3,12 @@ from django.db import IntegrityError
 from ninja.errors import HttpError
 from accounts.models import Account, Reward
 from transactions.models import Transaction
-from accounts.api.schemas.account import AccountIn, AccountOut, AccountUpdate
+from accounts.api.schemas.account import (
+    AccountIn,
+    AccountOut,
+    AccountUpdate,
+    AccountQuery,
+)
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
@@ -19,7 +24,6 @@ from django.db.models import (
     DecimalField,
 )
 from django.db.models.functions import Coalesce, Abs
-from typing import Optional
 from administration.api.dependencies.apply_patch import apply_patch
 
 
@@ -264,11 +268,7 @@ def get_account(request, account_id: int):
 
 
 @account_router.get("/list", response=List[AccountOut])
-def list_accounts(
-    request,
-    account_type: Optional[int] = Query(None),
-    inactive: Optional[bool] = Query(None),
-):
+def list_accounts(request, query: AccountQuery = Query(...)):
     """
     The function `list_accounts` retrieves a list of accounts,
     optionally filtered by inactive or account type.
@@ -287,14 +287,14 @@ def list_accounts(
         qs = Account.objects.all()
 
         # If inactive argument is provided, filter by active/inactive
-        if not inactive:
+        if not query.inactive:
             qs = qs.filter(active=True)
 
         # If account type argument is provided, filter by account type
-        if account_type is not None and account_type != 0:
-            qs = qs.filter(account_type__id=account_type)
+        if query.account_type is not None and query.account_type != 0:
+            qs = qs.filter(account_type__id=query.account_type)
 
-        if account_type is not None and account_type == 0:
+        if query.account_type is not None and query.account_type == 0:
             qs = qs.filter(active=False)
 
         # Order accounts by account type id ascending, bank name ascending, and account

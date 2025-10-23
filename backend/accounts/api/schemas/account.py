@@ -83,3 +83,8 @@ class AccountUpdate(Schema):
     payment_strategy: Optional[str] = None
     payment_amount: Optional[BalanceDecimal] = None
     minimum_payment_amount: Optional[BalanceDecimal] = None
+
+
+class AccountQuery(Schema):
+    account_type: Optional[int] = None
+    inactive: Optional[bool] = None

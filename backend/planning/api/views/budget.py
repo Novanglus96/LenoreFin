@@ -2,11 +2,16 @@ from ninja import Router, Query
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from planning.models import Budget
-from planning.api.schemas.budget import BudgetIn, BudgetOut, BudgetWithTotal
+from planning.api.schemas.budget import (
+    BudgetIn,
+    BudgetOut,
+    BudgetWithTotal,
+    BudgetQuery,
+)
 from reminders.models import Repeat
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
-from typing import List, Optional
+from typing import List
 import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -199,7 +204,7 @@ def get_budget(request, budget_id: int):
 @budget_router.get("/list", response=List[BudgetWithTotal])
 def list_budgets(
     request,
-    widget: Optional[bool] = Query(True),
+    query: BudgetQuery = Query(...),
 ):
     """
     The function `list_budgets` retrieves a list of budgets,
@@ -217,7 +222,7 @@ def list_budgets(
         budgets = (
             Budget.objects.all().filter(active=True).order_by("name", "id")
         )
-        if widget:
+        if query.widget:
             budgets = budgets.filter(widget=True)
 
         for budget in budgets:

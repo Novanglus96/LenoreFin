@@ -1,31 +1,10 @@
 from ninja import Router, Query
-from django.db import IntegrityError
 from ninja.errors import HttpError
 from tags.models import SubTag
-from tags.api.schemas.sub_tag import SubTagIn, SubTagOut
+from tags.api.schemas.sub_tag import SubTagOut, SubTagQuery
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
 
 sub_tag_router = Router(tags=["Sub Tags"])
 
@@ -71,11 +50,7 @@ def get_subtag(request, subtag_id: int):
 
 
 @sub_tag_router.get("/list", response=List[SubTagOut])
-def list_subtags(
-    request,
-    tag_type: Optional[int] = Query(None),
-    parent: Optional[int] = Query(None),
-):
+def list_subtags(request, query: SubTagQuery = Query(...)):
     """
     The function `list_subtags` retrieves a list of subtags,
     optionally filtered by tag type or parent.
@@ -93,12 +68,12 @@ def list_subtags(
         qs = SubTag.objects.all()
 
         # Filter sub tags by tag type if a tag type is specified
-        if tag_type is not None:
-            qs = qs.filter(tag_type__id=tag_type)
+        if query.tag_type is not None:
+            qs = qs.filter(tag_type__id=query.tag_type)
 
         # Filter sub tags by parent if a parent id is specified
-        if parent is not None:
-            qs = qs.filter(parent__id=parent).exclude(tag_type__id=3)
+        if query.Configparent is not None:
+            qs = qs.filter(parent__id=query.parent).exclude(tag_type__id=3)
 
         # Order tags tag_name
         qs = qs.order_by("tag_name")

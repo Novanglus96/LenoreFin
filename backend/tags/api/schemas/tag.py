@@ -34,3 +34,10 @@ class TagDetailIn(Schema):
     tag_pretty_name: str
     tag_id: int
     tag_full_toggle: bool
+
+
+class TagQuery(Schema):
+    tag_type: Optional[int] = None
+    parent: Optional[int] = None
+    child: Optional[int] = None
+    main_only: Optional[bool] = False

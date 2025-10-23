@@ -98,3 +98,13 @@ class PaginatedTransactions(Schema):
     total_records: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionQuery(Schema):
+    view_type: Optional[int] = 2
+    account: Optional[int] = None
+    maxdays: Optional[int] = 14
+    forecast: Optional[bool] = False
+    page: Optional[int] = 1
+    page_size: Optional[int] = 60
+    rule_id: Optional[int] = None

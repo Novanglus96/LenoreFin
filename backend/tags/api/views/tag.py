@@ -2,30 +2,18 @@ from ninja import Router, Query
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from tags.models import Tag, SubTag, MainTag
-from tags.api.schemas.tag import TagIn, TagOut
+from tags.api.schemas.tag import TagIn, TagOut, TagQuery
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
-from typing import List
 from django.db.models import (
     Case,
     When,
-    Q,
-    IntegerField,
     Value,
     F,
     CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
 )
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+from django.db.models.functions import Concat
+from typing import List
 
 tag_router = Router(tags=["Tags"])
 
@@ -55,7 +43,7 @@ def create_tag(request, payload: TagIn):
                 # Check if the integrity error is due to a duplicate
                 if "unique constraint" in str(integrity_error).lower():
                     logToDB(
-                        f"Tag not created : tag exists",
+                        "Tag not created : tag exists",
                         None,
                         None,
                         None,
@@ -103,7 +91,7 @@ def create_tag(request, payload: TagIn):
                 # Check if the integrity error is due to a duplicate
                 if "unique constraint" in str(integrity_error).lower():
                     logToDB(
-                        f"Tag not created : tag exists",
+                        "Tag not created : tag exists",
                         None,
                         None,
                         None,
@@ -154,7 +142,7 @@ def create_tag(request, payload: TagIn):
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
             logToDB(
-                f"Tag not created : tag exists",
+                "Tag not created : tag exists",
                 None,
                 None,
                 None,
@@ -205,8 +193,6 @@ def update_tag(request, tag_id: int, payload: TagIn):
 
     try:
         tag = get_object_or_404(Tag, id=tag_id)
-        maintag = None
-        subtag = None
         if payload.parent_name:
             try:
                 parent = MainTag.objects.create(
@@ -218,7 +204,7 @@ def update_tag(request, tag_id: int, payload: TagIn):
                 # Check if the integrity error is due to a duplicate
                 if "unique constraint" in str(integrity_error).lower():
                     logToDB(
-                        f"Tag not created : tag exists",
+                        "Tag not created : tag exists",
                         None,
                         None,
                         None,
@@ -259,7 +245,7 @@ def update_tag(request, tag_id: int, payload: TagIn):
                 # Check if the integrity error is due to a duplicate
                 if "unique constraint" in str(integrity_error).lower():
                     logToDB(
-                        f"Tag not created : tag exists",
+                        "Tag not created : tag exists",
                         None,
                         None,
                         None,
@@ -379,13 +365,7 @@ def get_tag(request, tag_id: int):
 
 
 @tag_router.get("/list", response=List[TagOut])
-def list_tags(
-    request,
-    tag_type: Optional[int] = Query(None),
-    parent: Optional[int] = Query(None),
-    child: Optional[int] = Query(None),
-    main_only: Optional[bool] = Query(False),
-):
+def list_tags(request, query: TagQuery = Query(...)):
     """
     The function `list_tags` retrieves a list of tags,
     optionally filtered by tag type, parent, or child.
@@ -405,19 +385,19 @@ def list_tags(
         qs = Tag.objects.all()
 
         # Filter tags by tag type if a tag type is specified
-        if tag_type is not None:
-            qs = qs.filter(tag_type__id=tag_type)
+        if query.tag_type is not None:
+            qs = qs.filter(tag_type__id=query.tag_type)
 
         # Filter tags by parent if a parent id is specified
-        if parent is not None:
-            qs = qs.filter(parent__id=parent).exclude(tag_type__id=3)
+        if query.parent is not None:
+            qs = qs.filter(parent__id=query.parent).exclude(tag_type__id=3)
 
         # Filter tags by child if a child id is specified
-        if child is not None:
-            qs = qs.filter(child__id=child).exclude(tag_type__id=3)
+        if query.child is not None:
+            qs = qs.filter(child__id=query.child).exclude(tag_type__id=3)
 
         # Filter tags for only Main tags if main_only is true
-        if main_only:
+        if query.main_only:
             qs = qs.filter(child__isnull=True)
 
         qs = qs.annotate(
