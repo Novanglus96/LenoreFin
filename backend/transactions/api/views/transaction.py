@@ -9,6 +9,7 @@ from transactions.api.schemas.transaction import (
     TransactionOut,
     PaginatedTransactions,
     MultiTranscationDate,
+    TransactionQuery,
 )
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
@@ -23,7 +24,6 @@ from django.db.models import (
     DecimalField,
 )
 from django.db.models.functions import Concat, Coalesce, Abs
-from typing import Optional
 from tags.api.dependencies.custom_tag import CustomTag
 from transactions.api.dependencies.full_transaction import FullTransaction
 from transactions.api.dependencies.create_transactions import (
@@ -505,16 +505,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
 
 
 @transaction_router.get("/list", response=PaginatedTransactions)
-def list_transactions(
-    request,
-    view_type: Optional[int] = Query(2),
-    account: Optional[int] = Query(None),
-    maxdays: Optional[int] = Query(14),
-    forecast: Optional[bool] = Query(False),
-    page: Optional[int] = Query(1),
-    page_size: Optional[int] = Query(60),
-    rule_id: Optional[int] = Query(None),
-):
+def list_transactions(request, query: TransactionQuery = Query(...)):
     """
     The function `list_transactions` retrieves a list of transactions,
     ordered by status, transaction date ascending, custom transaction type,
@@ -540,34 +531,38 @@ def list_transactions(
 
         # If view_type is 1, filter transactions for maximum days and transaction
         # details that match account
-        if view_type == 1:
+        if query.view_type == 1:
             # Set end_date
             end_date = get_todays_date_timezone_adjusted() + timedelta(
-                days=maxdays
+                days=query.maxdays
             )
 
             # Get a complete list of transactions, including reminders, sorted with totals
             all_transactions_list, previous_balance = (
-                get_transactions_by_account(end_date, account, False, forecast)
+                get_transactions_by_account(
+                    end_date, query.account, False, query.forecast
+                )
             )
 
             # Reverse transactions if not forecast
-            if not forecast:
+            if not query.forecast:
                 reversed_all_transactions_list = list(
                     reversed(all_transactions_list)
                 )
 
             # Paginate transactions
             total_pages = 0
-            if page_size is not None and page is not None:
+            if query.page_size is not None and query.page is not None:
                 paginator = None
-                if not forecast:
+                if not query.forecast:
                     paginator = Paginator(
-                        reversed_all_transactions_list, page_size
+                        reversed_all_transactions_list, query.page_size
                     )
                 else:
-                    paginator = Paginator(all_transactions_list, page_size)
-                page_obj = paginator.page(page)
+                    paginator = Paginator(
+                        all_transactions_list, query.page_size
+                    )
+                page_obj = paginator.page(query.page)
                 qs = list(page_obj.object_list)
                 total_pages = paginator.num_pages
             else:
@@ -575,7 +570,7 @@ def list_transactions(
             total_records = len(all_transactions_list)
             paginated_obj = PaginatedTransactions(
                 transactions=qs,
-                current_page=page,
+                current_page=query.page,
                 total_pages=total_pages,
                 total_records=total_records,
             )
@@ -597,14 +592,14 @@ def list_transactions(
 
             # If this is upcoming transaction
             # Filter transactions for pending status
-            if view_type == 2:
+            if query.view_type == 2:
                 qs = Transaction.objects.filter(status_id=1)
             # If this is rule transactions
             # Filter by tag and maxdays
-            elif view_type == 3:
+            elif query.view_type == 3:
                 end_date = get_todays_date_timezone_adjusted()
                 start_date = get_todays_date_timezone_adjusted() - timedelta(
-                    days=maxdays
+                    days=query.maxdays
                 )
                 qs = Transaction.objects.filter(
                     add_date__range=(start_date, end_date)
@@ -613,7 +608,7 @@ def list_transactions(
             # Set order of transactions
             qs = sort_transactions(qs)
             # Return only 10 records for upcoming transactions
-            if view_type == 2:
+            if query.view_type == 2:
                 qs = qs[:10]
             qs = qs.annotate(
                 source_name=Coalesce(

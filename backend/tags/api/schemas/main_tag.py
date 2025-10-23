@@ -1,6 +1,7 @@
 from ninja import Schema
 from tags.api.schemas.tag_type import TagTypeOut
 from pydantic import ConfigDict
+from typing import Optional
 
 
 # The class MainTagIn is a schema for validating main tags.
@@ -16,3 +17,7 @@ class MainTagOut(Schema):
     tag_type: TagTypeOut
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MainTagQuery(Schema):
+    tag_type: Optional[int] = None

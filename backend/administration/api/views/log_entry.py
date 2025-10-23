@@ -1,31 +1,14 @@
 from ninja import Router, Query
-from django.db import IntegrityError
 from ninja.errors import HttpError
 from administration.models import LogEntry, Option
-from administration.api.schemas.log_entry import LogEntryIn, LogEntryOut
+from administration.api.schemas.log_entry import (
+    LogEntryIn,
+    LogEntryOut,
+    LogQuery,
+)
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
 
 log_entry_router = Router(tags=["Log Entries"])
 
@@ -141,7 +124,7 @@ def get_log_entry(request, logentry_id: int):
 
 
 @log_entry_router.get("/list", response=List[LogEntryOut])
-def list_log_entries(request, log_level: Optional[int] = Query(0)):
+def list_log_entries(request, query: LogQuery = Query(...)):
     """
     The function `list_log_entries` retrieves a list of log entries,
     ordered by id ascending and filtered by log level id.
@@ -155,9 +138,9 @@ def list_log_entries(request, log_level: Optional[int] = Query(0)):
     """
 
     try:
-        qs = LogEntry.objects.filter(error_level__id__gte=log_level).order_by(
-            "-id"
-        )
+        qs = LogEntry.objects.filter(
+            error_level__id__gte=query.log_level
+        ).order_by("-id")
         logToDB(
             "Log entry list retrieved",
             None,

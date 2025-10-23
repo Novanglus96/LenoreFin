@@ -1,31 +1,10 @@
 from ninja import Router, Query
-from django.db import IntegrityError
 from ninja.errors import HttpError
 from tags.models import MainTag
-from tags.api.schemas.main_tag import MainTagIn, MainTagOut
+from tags.api.schemas.main_tag import MainTagOut, MainTagQuery
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
 
 main_tag_router = Router(tags=["Main Tags"])
 
@@ -73,7 +52,7 @@ def get_maintag(request, maintag_id: int):
 @main_tag_router.get("/list", response=List[MainTagOut])
 def list_maintags(
     request,
-    tag_type: Optional[int] = Query(None),
+    query: MainTagQuery = Query(...),
 ):
     """
     The function `list_maintags` retrieves a list of main tags,
@@ -91,8 +70,8 @@ def list_maintags(
         qs = MainTag.objects.all()
 
         # Filter main tags by tag type if a tag type is specified
-        if tag_type is not None:
-            qs = qs.filter(tag_type__id=tag_type)
+        if query.tag_type is not None:
+            qs = qs.filter(tag_type__id=query.tag_type)
 
         # Order tags by tag_name
         qs = qs.order_by("tag_name")

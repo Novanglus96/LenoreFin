@@ -48,3 +48,7 @@ class BudgetWithTotal(Schema):
     remaining_percentage: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BudgetQuery(Schema):
+    widget: Optional[bool] = True

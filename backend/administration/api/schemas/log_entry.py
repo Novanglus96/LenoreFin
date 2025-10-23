@@ -30,3 +30,7 @@ class LogEntryOut(Schema):
     error_level: Optional[ErrorLevelOut] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LogQuery(Schema):
+    log_level: Optional[int] = 0
