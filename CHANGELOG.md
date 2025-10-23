@@ -1,3 +1,10 @@
+# [1.2.0-rc.2](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.1...v1.2.0-rc.2) (2025-10-23)
+
+
+### Features
+
+* improve mobile design ([#48](https://github.com/Novanglus96/LenoreFin/issues/48)) ([27a1b5e](https://github.com/Novanglus96/LenoreFin/commit/27a1b5e6510aaf990f4a83afff5ea3585dfb547a))
+
 # [1.2.0-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2...v1.2.0-rc.1) (2025-08-25)
 
 
