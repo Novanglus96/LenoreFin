@@ -1,3 +1,10 @@
+# [1.2.0-rc.3](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.2...v1.2.0-rc.3) (2025-10-23)
+
+
+### Bug Fixes
+
+* query issues in prod with move to pydantic 2 ([#49](https://github.com/Novanglus96/LenoreFin/issues/49)) ([bccf97a](https://github.com/Novanglus96/LenoreFin/commit/bccf97a46914e576613af8eeec5b424935133c5d))
+
 # [1.2.0-rc.2](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.1...v1.2.0-rc.2) (2025-10-23)
 
 
