@@ -19,3 +19,11 @@ class GraphOut(Schema):
     datasets: List[GraphDataset]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# The class PieGraphOut is a schema for representing Pie Graphs
+class PieGraphItem(Schema):
+    key: int
+    title: str
+    value: DataDecimal
+    color: str

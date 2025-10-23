@@ -1,6 +1,6 @@
 <template>
   <div class="notfound">
-    <header class="bg-white shadow">
+    <header class="bg-surface shadow">
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-bold tracking-tight text-gray-900">
           404 Page Not Found
@@ -16,13 +16,13 @@
 </template>
 
 <script>
-// @ is an alias to /src
-import NotFound from "@/components/NotFound.vue";
+  // @ is an alias to /src
+  import NotFound from "@/components/NotFound.vue";
 
-export default {
-  name: "ListView",
-  components: {
-    NotFound,
-  },
-};
+  export default {
+    name: "ListView",
+    components: {
+      NotFound,
+    },
+  };
 </script>

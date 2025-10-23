@@ -3,7 +3,7 @@ from ninja.errors import HttpError
 from administration.models import Option
 from tags.models import Tag
 from transactions.models import Transaction, TransactionDetail
-from tags.api.schemas.graph_by_tags import GraphDataset, GraphOut
+from tags.api.schemas.graph_by_tags import GraphDataset, GraphOut, PieGraphItem
 from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from django.db.models import (
@@ -17,8 +17,228 @@ import pytz
 import os
 from dateutil.relativedelta import relativedelta
 import random
+from typing import List
 
 graph_by_tags_router = Router(tags=["Graph By Tags"])
+
+
+@graph_by_tags_router.get("/new", response=List[PieGraphItem])
+def get_graph_new(request, widget_id: int):
+    """
+    The function `get_graph_new` retrieves graph data for tags for widget id.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        widget_id (int): The widget for graph data
+
+    Returns:
+        GraphOut: the graph data object
+    """
+
+    try:
+        # Initialize variables
+        exclude = "[0]"
+        tagID = None
+        month = 0
+        type_id = 0
+        tags = None
+        result = None
+
+        # Load the options for the specified widget ID
+        options = get_object_or_404(Option, id=1)
+
+        # Set graph options based on widget options
+        if widget_id == 1:
+            exclude = options.widget1_exclude
+            tagID = options.widget1_tag_id
+            month = options.widget1_month
+            type_id = options.widget1_type_id
+        if widget_id == 2:
+            exclude = options.widget2_exclude
+            tagID = options.widget2_tag_id
+            month = options.widget2_month
+            type_id = options.widget2_type_id
+        if widget_id == 3:
+            exclude = options.widget3_exclude
+            tagID = options.widget3_tag_id
+            month = options.widget3_month
+            type_id = options.widget3_type_id
+        exclude_list = json.loads(exclude)
+        today = timezone.now()
+        tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+        today_tz = today.astimezone(tz_timezone).date()
+        target_date = today_tz - relativedelta(months=month)
+        target_month = target_date.month
+        target_year = target_date.year
+        labels = []
+        values = []
+        colors = [
+            "#7fb1b1",
+            "#597c7c",
+            "#7f8cb1",
+            "#7fb17f",
+            "#597c59",
+            "#b17fa5",
+            "#7c5973",
+            "#b1a77f",
+            "#edffff",
+            "#dbffff",
+            "#7c6759",
+            "#b1937f",
+            "#8686b1",
+            "#5e5e7c",
+            "#757c59",
+            "#52573e",
+            "#ffedff",
+            "#573e57",
+            "#fff8db",
+            "#ffe9db",
+            "#e0e0ff",
+            "#9d9db3",
+        ]
+
+        # Sort colors randomly, seeded to stay the same for this month
+        random.seed(today_tz.month * widget_id)
+        random.shuffle(colors)
+
+        # If a tag is specified in options, filter by that tag
+        # Otherwise, filter on expense tags or income tags
+        if type_id == 1:
+            tags = (
+                Tag.objects.filter(tag_type__id=1)
+                .exclude(id__in=exclude_list)
+                .exclude(child__isnull=False)
+            )
+            result = Transaction.objects.filter(
+                transaction_date__month=target_month,
+                transaction_date__year=target_year,
+                transaction_type_id=1,
+            )
+        elif type_id == 2:
+            tags = (
+                Tag.objects.filter(tag_type__id=2)
+                .exclude(id__in=exclude_list)
+                .exclude(child__isnull=False)
+            )
+            result = Transaction.objects.filter(
+                transaction_date__month=target_month,
+                transaction_date__year=target_year,
+                transaction_type_id=2,
+            )
+        elif type_id == 3:
+            tags = []
+            result = Transaction.objects.filter(
+                transaction_date__month=target_month,
+                transaction_date__year=target_year,
+            )
+        elif type_id == 4:
+            tags = Tag.objects.filter(parent__id=tagID).exclude(
+                id__in=exclude_list
+            )
+
+        # Calculate month totals for each tag
+        # Use the tag name as the label and the total as the value
+        for tag in tags:
+            tag_amount = 0
+            if type_id != 4:
+                tag_amount = (
+                    TransactionDetail.objects.filter(
+                        tag__parent=tag.parent,
+                        transaction__transaction_date__month=target_month,
+                        transaction__transaction_date__year=target_year,
+                    ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
+                    or 0
+                )
+                if tag_amount != 0:
+                    labels.append(tag.tag_name)
+                    values.append(tag_amount)
+            else:
+                tag_amount = (
+                    TransactionDetail.objects.filter(
+                        tag=tag,
+                        transaction__transaction_date__month=target_month,
+                        transaction__transaction_date__year=target_year,
+                    ).aggregate(Sum("detail_amt"))["detail_amt__sum"]
+                    or 0
+                )
+                if tag_amount != 0:
+                    if tag.child:
+                        labels.append(tag.child.tag_name)
+                    else:
+                        labels.append(tag.parent.tag_name)
+                    values.append(tag_amount)
+
+        if result:
+            result = result.annotate(tag_count=Count("transactiondetail__id"))
+            result = result.filter(tag_count=0)
+
+            result = result.aggregate(total=Sum(F("total_amount")))
+
+            untagged_total = result["total"] or 0
+            if untagged_total != 0:
+                values.append(untagged_total)
+                labels.append("Untagged")
+
+        # If there are no tags or totals, return None as label and 0 as value
+        if not values:
+            values.append(0)
+        if not labels:
+            labels.append("None")
+
+        # Zip values
+        paired = list(zip(values, labels))
+
+        # Sort values
+        paired.sort(key=lambda x: abs(x[0]), reverse=True)
+
+        # Unzip back into separate lists
+        sorted_values, sorted_labels = zip(*paired)
+
+        # Convert to lists
+        sorted_values = list(sorted_values)
+        sorted_labels = list(sorted_labels)
+
+        # Get # of tags
+        number_of_tags = len(sorted_values)
+
+        # Keep only 9 tags
+        if number_of_tags > 10:
+            remaining_values = sum(sorted_values[8:])
+            sorted_values = sorted_values[:9]
+            sorted_labels = sorted_labels[:9]
+            sorted_values.append(remaining_values)
+            sorted_labels.append("* The Rest")
+
+        # Prepare the graph data object
+        graph_items = []
+        x = 0
+        for value in sorted_values:
+            graph_item = PieGraphItem(
+                key=x, title=sorted_labels[x], value=abs(value), color=colors[x]
+            )
+            graph_items.append(graph_item)
+            x += 1
+
+        logToDB(
+            f"Graph data retrieved : {widget_id}",
+            None,
+            None,
+            None,
+            3002003,
+            1,
+        )
+        return graph_items
+    except Exception as e:
+        # Log other types of exceptions
+        logToDB(
+            f"Graph data not retrieved : {str(e)}",
+            None,
+            None,
+            None,
+            3002903,
+            2,
+        )
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
 @graph_by_tags_router.get("/get", response=GraphOut)

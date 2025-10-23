@@ -1,15 +1,22 @@
 from typing import List
 from datetime import date
 from transactions.api.schemas.transaction import TransactionOut
-from transactions.models import Transaction
+from transactions.models import Transaction, TransactionDetail
 from transactions.api.dependencies.transaction_utilities import (
     annotate_transaction_display_info,
     annotate_transaction_total,
-    add_tags_to_transactions,
     sort_transactions,
     sort_transaction_list,
     add_tag_totals,
 )
+from django.db.models import (
+    Case,
+    When,
+    Value,
+    F,
+    CharField,
+)
+from django.db.models.functions import Concat
 
 
 def get_transactions_by_tag(
@@ -49,10 +56,6 @@ def get_transactions_by_tag(
     # Annotate transaction pretty total
     transactions = annotate_transaction_total(transactions)
 
-    # Add tags to transactions
-    if not totals_only:
-        transactions = add_tags_to_transactions(transactions)
-
     # Filter for cleared transactions
     cleared_transactions = transactions.exclude(status_id__in=[1, 4])
 
@@ -85,6 +88,31 @@ def get_transactions_by_tag(
     sorted_transactions_list = (
         cleared_transactions_list + pending_transactions_list
     )
+
+    # Add tags to transactions
+    if not totals_only:
+        for transaction in sorted_transactions_list:
+            transaction_details = TransactionDetail.objects.filter(
+                transaction_id=transaction.id
+            )
+            details = list(transaction_details)
+            tag_list = list(
+                transaction_details.annotate(
+                    parent_tag=F("tag__parent__tag_name"),
+                    child_tag=F("tag__child__tag_name"),
+                    tag_name_combined=Case(
+                        When(child_tag__isnull=True, then=F("parent_tag")),
+                        default=Concat(
+                            F("parent_tag"), Value(" / "), F("child_tag")
+                        ),
+                        output_field=CharField(),
+                    ),
+                )
+                .exclude(tag_name_combined__isnull=True)
+                .values_list("tag_name_combined", flat=True)
+            )
+            transaction.tags = tag_list
+            transaction.details = details
 
     if cleared_only:
         return cleared_transactions_list

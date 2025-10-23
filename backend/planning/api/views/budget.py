@@ -241,7 +241,9 @@ def list_budgets(
             if budget.roll_over:
                 budget_total += budget.roll_over_amt
             if total:
-                used_percentage = round(abs(total) / (abs(budget_total)) * 100)
+                used_percentage = min(
+                    100, round(abs(total) / abs(budget_total) * 100)
+                )
             else:
                 used_percentage = 0
             new_budget_with_total = BudgetWithTotal(
@@ -249,6 +251,7 @@ def list_budgets(
                 transactions=unique_transactions,
                 used_total=total,
                 used_percentage=used_percentage,
+                remaining_percentage=100 - used_percentage,
             )
             budgets_with_totals.append(new_budget_with_total)
         logToDB(

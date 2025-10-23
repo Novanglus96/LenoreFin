@@ -1,6 +1,9 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white">
-    <template v-slot:append>
+  <v-card variant="outlined" :elevation="4" class="bg-surface">
+    <v-card-title class="text-left">
+      <span class="text-subtitle-2 text-primary">
+        Per Paycheck Contribution Rules
+      </span>
       <v-tooltip text="Add Contribution" location="top">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -9,287 +12,420 @@
             variant="plain"
             v-bind="props"
             @click="addContributionDialog = true"
+            size="small"
           ></v-btn>
         </template>
       </v-tooltip>
-    </template>
-    <ContributionForm
-      v-model="addContributionDialog"
-      key="0"
-      :isEdit="false"
-      @update-dialog="updateAddDialog"
-      @add-contribution="clickAddContribution"
-      :passedFormData="newContributionData"
-    />
-    <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary"
-        >Per Paycheck Contribution Rules</span
-      >
-    </template>
-    <template v-slot:text>
-      <v-container
-        ><v-row dense
-          ><v-col class="text-right text-subtitle-2 font-weight-bold" cols="3"
-            >Paycheck Total(non Emergency)</v-col
-          ><v-col class="text-left text-body-2" cols="1">
+
+      <ContributionForm
+        v-model="addContributionDialog"
+        key="0"
+        :isEdit="false"
+        @update-dialog="updateAddDialog"
+        @add-contribution="clickAddContribution"
+        :passedFormData="newContributionData"
+      />
+    </v-card-title>
+    <v-card-text class="ma-0 pa-0 ga-0">
+      <v-container>
+        <v-row dense>
+          <!-- Label -->
+          <v-col
+            :class="
+              smAndDown
+                ? 'text-center text-subtitle-2 font-weight-bold'
+                : 'text-right text-subtitle-2 font-weight-bold'
+            "
+            cols="12"
+            sm="6"
+            md="3"
+          >
+            Paycheck Total (non Emergency)
+          </v-col>
+          <!-- Value -->
+          <v-col
+            :class="
+              smAndDown ? 'text-center text-body-2' : 'text-left text-body-2'
+            "
+            cols="12"
+            sm="6"
+            md="1"
+          >
             <NumberFlow
               :value="contributions ? contributions.per_paycheck_total : 0"
-              :format="{ style: 'currency', currency: 'USD' }" /></v-col
-          ><v-col cols="3" class="text-right text-subtitle-2 font-weight-bold"
-            >Paycheck Total(Emergency)</v-col
-          ><v-col class="text-left text-body-2" cols="1"
-            ><NumberFlow
+              :format="{ style: 'currency', currency: 'USD' }"
+            />
+          </v-col>
+
+          <!-- Label -->
+          <v-col
+            :class="
+              smAndDown
+                ? 'text-center text-subtitle-2 font-weight-bold'
+                : 'text-right text-subtitle-2 font-weight-bold'
+            "
+            cols="12"
+            sm="6"
+            md="3"
+          >
+            Paycheck Total (Emergency)
+          </v-col>
+          <!-- Value -->
+          <v-col
+            :class="
+              smAndDown ? 'text-center text-body-2' : 'text-left text-body-2'
+            "
+            cols="12"
+            sm="6"
+            md="1"
+          >
+            <NumberFlow
               :value="
                 contributions ? contributions.emergency_paycheck_total : 0
               "
-              :format="{ style: 'currency', currency: 'USD' }" /></v-col
-          ><v-col class="text-right text-subtitle-2 font-weight-bold" cols="3"
-            >Emergency Total</v-col
-          ><v-col class="text-left text-body-2" cols="1"
-            ><NumberFlow
-              :value="contributions ? contributions.total_emergency : 0"
-              :format="{ style: 'currency', currency: 'USD' }" /></v-col
-        ></v-row>
-      </v-container>
-      <vue3-datatable
-        :rows="contributions ? contributions.contributions : []"
-        :columns="columns"
-        :loading="isLoading"
-        :totalRows="contributions ? contributions.contributions.length : 0"
-        :isServerMode="false"
-        pageSize="5"
-        :hasCheckbox="false"
-        noDataContent="No contributions"
-        ref="contrib_table"
-        skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="[5]"
-        :showPageSize="false"
-        paginationInfo="Showing {0} to {1} of {2} contributions"
-        class="alt-pagination"
-      >
-        <template #contribution="row">
-          <span
+              :format="{ style: 'currency', currency: 'USD' }"
+            />
+          </v-col>
+
+          <!-- Label -->
+          <v-col
             :class="
-              row.value.active
-                ? 'font-weight-bold'
-                : 'font-italic font-weight-bold'
+              smAndDown
+                ? 'text-center text-subtitle-2 font-weight-bold'
+                : 'text-right text-subtitle-2 font-weight-bold'
             "
-            >{{ row.value.contribution
-            }}{{ row.value.active ? "" : " (not active)" }}</span
+            cols="12"
+            sm="6"
+            md="3"
           >
+            Emergency Total
+          </v-col>
+          <!-- Value -->
+          <v-col
+            :class="
+              smAndDown ? 'text-center text-body-2' : 'text-left text-body-2'
+            "
+            cols="12"
+            sm="6"
+            md="1"
+          >
+            <NumberFlow
+              :value="contributions ? contributions.total_emergency : 0"
+              :format="{ style: 'currency', currency: 'USD' }"
+            />
+          </v-col>
+        </v-row>
+      </v-container>
+      <v-data-table
+        :headers="displayHeaders"
+        :items="contributions ? contributions.contributions : []"
+        :items-length="contributions ? contributions.contributions.length : 0"
+        :loading="isLoading"
+        item-value="id"
+        v-model:items-per-page="itemsPerPage"
+        v-model:page="page"
+        :items-per-page-options="[
+          {
+            value: 5,
+            title: 5,
+          },
+        ]"
+        items-per-page-text="Contributions per page"
+        no-data-text="No contributions!"
+        loading-text="Loading contributions..."
+        disable-sort
+        :show-select="true"
+        fixed-footer
+        striped="odd"
+        density="compact"
+        :hide-default-header="mdAndUp ? false : true"
+        width="100%"
+        :header-props="{ class: 'font-weight-bold bg-secondary' }"
+        v-model="selectedContribution"
+        select-strategy="single"
+        return-object
+        :row-props="getRowProps"
+        class="bg-background"
+      >
+        <template v-slot:bottom>
+          <div class="text-center pt-2">
+            <v-pagination v-model="page" :length="pageCount"></v-pagination>
+          </div>
         </template>
-        <template #per_paycheck="row">
-          <span :class="row.value.active ? '' : 'font-italic'">{{
-            formatCurrency(row.value.per_paycheck)
-          }}</span>
+        <template v-slot:top>
+          <div class="d-flex align-center">
+            <v-btn
+              variant="plain"
+              icon
+              @click="editContributionDialog = true"
+              :disabled="selectedContribution.length === 0"
+            >
+              <v-icon icon="mdi-pencil"></v-icon>
+            </v-btn>
+            <ContributionForm
+              v-model="editContributionDialog"
+              :key="editContrib ? editContrib.id : 0"
+              :isEdit="true"
+              @update-dialog="updateEditDialog"
+              :passedFormData="editContrib"
+              @edit-contribution="clickEditContribution"
+            />
+            <v-btn
+              variant="plain"
+              icon
+              :disabled="selectedContribution.length === 0"
+            >
+              <v-icon
+                icon="mdi-delete"
+                @click="deleteContributionDialog = true"
+                color="error"
+              ></v-icon>
+            </v-btn>
+            <v-dialog
+              v-model="deleteContributionDialog"
+              :key="editContrib ? editContrib.id : 0"
+              width="400"
+            >
+              <v-card>
+                <v-card-title>Delete Contribution?</v-card-title>
+                <v-card-text>
+                  <span>{{ editContrib.contribution }}</span>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn @click="deleteContributionDialog = false">Close</v-btn>
+                  <v-btn @click="clickDeleteContribution(editContrib)">
+                    Delete
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </div>
         </template>
-        <template #emergency_amt="row">
-          <span :class="row.value.active ? '' : 'font-italic'">{{
-            formatCurrency(row.value.emergency_amt)
-          }}</span>
+        <template v-slot:[`header.per_paycheck`] v-if="mdAndUp">
+          <div class="text-center">Paycheck(per)</div>
         </template>
-        <template #emergency_diff="row">
-          <span :class="row.value.active ? '' : 'font-italic'">{{
-            formatCurrency(row.value.emergency_diff)
-          }}</span>
+        <template v-slot:[`header.emergency_amt`] v-if="mdAndUp">
+          <div class="text-center">Emergenct Amt</div>
         </template>
-        <template #cap="row">
-          <span :class="row.value.active ? '' : 'font-italic'">{{
-            formatCurrency(row.value.cap)
-          }}</span>
+        <template v-slot:[`header.emergency_diff`] v-if="mdAndUp">
+          <div class="text-center">Difference</div>
         </template>
-        <template #edit="row">
-          <v-btn variant="plain" icon @click="clickEditButton(row.value)"
-            ><v-icon icon="mdi-pencil"></v-icon
-          ></v-btn>
-          <ContributionForm
-            v-model="editContributionDialog"
-            :key="row.value.id"
-            :isEdit="true"
-            @update-dialog="updateEditDialog"
-            :passedFormData="selectedContribution"
-            @edit-contribution="clickEditContribution"
-          />
+        <template v-slot:[`header.cap`] v-if="mdAndUp">
+          <div class="text-center">Cap Amount</div>
         </template>
-        <template #delete="row">
-          <v-btn variant="plain" icon
-            ><v-icon
-              icon="mdi-delete"
-              @click="clickDeleteButton(row.value)"
-            ></v-icon
-          ></v-btn>
-          <v-dialog
-            v-model="deleteContributionDialog"
-            :key="row.value.id"
-            width="400"
-            ><v-card
-              ><v-card-title>Delete Contribution?</v-card-title
-              ><v-card-text
-                ><span>{{
-                  selectedContribution.contribution
-                }}</span></v-card-text
+        <template v-slot:[`item.contribution`]="{ item }" v-if="mdAndUp">
+          <div>
+            <span
+              :class="
+                item.active
+                  ? 'font-weight-bold'
+                  : 'font-italic text-warning text-decoration-line-through'
+              "
+            >
+              {{ item.contribution }}
+            </span>
+          </div>
+        </template>
+        <template v-slot:[`item.per_paycheck`]="{ item }" v-if="mdAndUp">
+          <div class="text-center">
+            <span
+              :class="
+                item.active
+                  ? ''
+                  : 'font-italic text-warning text-decoration-line-through'
+              "
+            >
+              {{ formatCurrency(item.per_paycheck) }}
+            </span>
+          </div>
+        </template>
+        <template v-slot:[`item.emergency_amt`]="{ item }" v-if="mdAndUp">
+          <div class="text-center">
+            <span
+              :class="
+                item.active
+                  ? ''
+                  : 'font-italic text-warning text-decoration-line-through'
+              "
+            >
+              {{ formatCurrency(item.emergency_amt) }}
+            </span>
+          </div>
+        </template>
+        <template v-slot:[`item.emergency_diff`]="{ item }" v-if="mdAndUp">
+          <div class="text-center">
+            <span
+              :class="
+                item.active
+                  ? ''
+                  : 'font-italic text-warning text-decoration-line-through'
+              "
+            >
+              {{ formatCurrency(item.emergency_diff) }}
+            </span>
+          </div>
+        </template>
+        <template v-slot:[`item.cap`]="{ item }" v-if="mdAndUp">
+          <div class="text-center">
+            <span
+              :class="
+                item.active
+                  ? ''
+                  : 'font-italic text-warning text-decoration-line-through'
+              "
+            >
+              {{ formatCurrency(item.cap) }}
+            </span>
+          </div>
+        </template>
+        <!-- Mobile View -->
+        <template v-slot:[`item.mobile`]="{ item }">
+          <v-container class="ma-0 pa-0 ga-0">
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col
+                class="ma-0 pa-0 ga-0 font-weight-bold text-primary"
+                cols="12"
               >
-              <v-card-actions
-                ><v-btn @click="deleteContributionDialog = false">Close</v-btn
-                ><v-btn @click="clickDeleteContribution(selectedContribution)"
-                  >Delete</v-btn
-                ></v-card-actions
-              ></v-card
-            ></v-dialog
-          >
+                {{ item.contribution }}
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="pa-0 ga-0 ma-0 text-center font-weight-bold">
+                Per
+              </v-col>
+              <v-col class="pa-0 ga-0 ma-0 text-center font-weight-bold">
+                Emer
+              </v-col>
+              <v-col class="pa-0 ga-0 ma-0 text-center font-weight-bold">
+                Diff
+              </v-col>
+              <v-col class="pa-0 ga-0 ma-0 text-center font-weight-bold">
+                Cap
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="pa-0 ga-0 ma-0 text-center">
+                {{ formatCurrency(item.per_paycheck) }}
+              </v-col>
+              <v-col class="pa-0 ga-0 ma-0 text-center">
+                {{ formatCurrency(item.emergency_amt) }}
+              </v-col>
+              <v-col class="pa-0 ga-0 ma-0 text-center">
+                {{ formatCurrency(item.emergency_diff) }}
+              </v-col>
+              <v-col class="pa-0 ga-0 ma-0 text-center">
+                {{ formatCurrency(item.cap) }}
+              </v-col>
+            </v-row>
+          </v-container>
         </template>
-      </vue3-datatable>
-    </template>
+      </v-data-table>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>
-import Vue3Datatable from "@bhplugin/vue3-datatable";
-import "@bhplugin/vue3-datatable/dist/style.css";
-import { ref } from "vue";
-import { useContributions } from "@/composables/contributionsComposable";
-import ContributionForm from "@/components/ContributionForm.vue";
-import NumberFlow from "@number-flow/vue";
+  import { ref, computed, watch } from "vue";
+  import { useContributions } from "@/composables/contributionsComposable";
+  import ContributionForm from "@/components/ContributionForm.vue";
+  import NumberFlow from "@number-flow/vue";
+  import { useDisplay } from "vuetify";
 
-const contrib_table = ref(null);
-const editContributionDialog = ref(false);
-const addContributionDialog = ref(false);
-const deleteContributionDialog = ref(false);
-const selectedContribution = ref(null);
-const newContributionData = ref({
-  id: 0,
-  contribution: null,
-  per_paycheck: "0",
-  emergency_diff: "0",
-  emergency_amt: "0",
-  cap: "0",
-  active: true,
-});
+  const page = ref(1);
+  const itemsPerPage = ref(5);
+  const { smAndDown, mdAndUp } = useDisplay();
+  const editContributionDialog = ref(false);
+  const addContributionDialog = ref(false);
+  const deleteContributionDialog = ref(false);
+  const selectedContribution = ref([]);
+  const editContrib = ref({ id: 0 });
+  const newContributionData = ref({
+    id: 0,
+    contribution: null,
+    per_paycheck: "0",
+    emergency_diff: "0",
+    emergency_amt: "0",
+    cap: "0",
+    active: true,
+  });
 
-const {
-  contributions,
-  isLoading,
-  addContribution,
-  editContribution,
-  removeContribution,
-} = useContributions();
+  const {
+    contributions,
+    isLoading,
+    addContribution,
+    editContribution,
+    removeContribution,
+  } = useContributions();
 
-const columns = ref([
-  { field: "id", title: "id", isUnique: true, hide: true },
-  {
-    field: "contribution",
-    title: "Contribution",
-    type: "string",
-    cellClass: "text-right",
-    headerClass: "text-right",
-  },
-  {
-    field: "per_paycheck",
-    title: "Paycheck(per)",
-    type: "number",
-    width: "140px",
-    cellClass: "text-center",
-  },
-  {
-    field: "emergency_amt",
-    title: "Emergency Amt",
-    type: "number",
-    width: "140px",
-    cellClass: "text-center",
-  },
-  {
-    field: "emergency_diff",
-    title: "Difference",
-    type: "number",
-    width: "140px",
-    cellClass: "text-center",
-  },
-  {
-    field: "cap",
-    title: "Cap Amount",
-    type: "number",
-    width: "140px",
-    cellClass: "text-center",
-  },
-  {
-    field: "active",
-    title: "Active",
-    type: "bool",
-    hide: true,
-  },
-  { field: "edit", title: "Edit", width: "40px", cellClass: "text-center" },
-  { field: "delete", title: "Delete", width: "40px", cellClass: "text-center" },
-]);
+  const headers = ref([
+    { title: "Contribution", key: "contribution" },
+    { title: "Paycheck(per)", key: "per_paycheck", width: "140px" },
+    { title: "Emergency Amt", key: "emergency_amt", width: "140px" },
+    { title: "Difference", key: "emergency_diff", width: "140px" },
+    { title: "Cap Amount", key: "cap", width: "140px" },
+  ]);
+  const displayHeaders = computed(() => {
+    if (mdAndUp.value) {
+      return headers.value;
+    }
+    // For small screens, use your single mobile column
+    return [{ title: "", key: "mobile" }];
+  });
 
-const updateAddDialog = () => {
-  addContributionDialog.value = false;
-};
+  const updateAddDialog = () => {
+    addContributionDialog.value = false;
+  };
 
-const updateEditDialog = () => {
-  editContributionDialog.value = false;
-};
+  const updateEditDialog = () => {
+    editContributionDialog.value = false;
+  };
 
-const clickEditButton = contribution => {
-  selectedContribution.value = contribution;
-  editContributionDialog.value = true;
-};
+  const clickEditContribution = contribution => {
+    editContribution(contribution);
+    editContributionDialog.value = false;
+    selectedContribution.value = [];
+  };
 
-const clickDeleteButton = contribution => {
-  selectedContribution.value = contribution;
-  deleteContributionDialog.value = true;
-};
+  const clickDeleteContribution = contribution => {
+    removeContribution(contribution);
+    deleteContributionDialog.value = false;
+    selectedContribution.value = [];
+  };
 
-const clickEditContribution = contribution => {
-  editContribution(contribution);
-  editContributionDialog.value = false;
-};
-
-const clickDeleteContribution = contribution => {
-  removeContribution(contribution);
-  deleteContributionDialog.value = false;
-};
-
-const clickAddContribution = contribution => {
-  addContribution(contribution);
-  addContributionDialog.value = false;
-};
-const formatCurrency = value => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
+  const clickAddContribution = contribution => {
+    addContribution(contribution);
+    addContributionDialog.value = false;
+  };
+  const formatCurrency = value => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+  const pageCount = computed(() =>
+    contributions.value && itemsPerPage.value
+      ? Math.ceil(contributions.value.contributions.length / itemsPerPage.value)
+      : 1,
+  );
+  watch(
+    () => selectedContribution.value,
+    val => {
+      if (val) {
+        editContrib.value = val[0];
+      }
+    },
+  );
+  function getRowProps({ item }) {
+    let rowformat = "";
+    const isSelected = selectedContribution.value.some(
+      sel => sel.id === item.id,
+    );
+    if (isSelected) {
+      rowformat += "bg-primary-lighten-3";
+    }
+    return {
+      class: rowformat,
+    };
+  }
 </script>
-<style>
-/* alt-pagination */
-.alt-pagination .bh-pagination .bh-page-item {
-  width: auto; /* equivalent to w-max */
-  min-width: 32px;
-  border-radius: 0.25rem; /* equivalent to rounded */
-}
-/* Customize the color of the selected page number */
-.alt-pagination .bh-pagination .bh-page-item.bh-active {
-  background-color: #06966a; /* Change this to your desired color */
-  border-color: black;
-  font-weight: bold; /* Optional: Make the text bold */
-}
-.alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-  background-color: #ff5900;
-  border-color: black;
-}
-
-.icon-with-text {
-  position: relative;
-  display: inline-block;
-}
-
-.icon-text {
-  position: absolute;
-  top: 0;
-  right: 1;
-  color: black;
-  padding: 4px 1px;
-  font-size: 0.7rem;
-}
-</style>

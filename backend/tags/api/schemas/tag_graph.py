@@ -1,6 +1,6 @@
 from ninja import Schema
 from pydantic import ConfigDict, condecimal
-from transactions.api.schemas.transaction import TagTransactionOut
+from transactions.api.schemas.transaction import TransactionOut
 from accounts.api.schemas.forecast import GraphData
 from typing import List
 
@@ -14,6 +14,6 @@ class TagGraphOut(Schema):
     year2: int
     year1_avg: AverageDecimal
     year2_avg: AverageDecimal
-    transactions: List[TagTransactionOut]
+    transactions: List[TransactionOut]
 
     model_config = ConfigDict(from_attributes=True)

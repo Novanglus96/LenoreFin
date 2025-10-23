@@ -263,8 +263,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="closeForm()" color="secondary">Close</v-btn>
-          <v-btn color="secondary" type="submit">Save</v-btn>
+          <v-btn @click="closeForm()" color="primary">Close</v-btn>
+          <v-btn color="primary" type="submit">Save</v-btn>
         </v-card-actions>
       </v-card>
     </form>

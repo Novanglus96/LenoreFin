@@ -1,25 +1,18 @@
 <template>
-  <v-container>
+  <div>
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded">
-        <ContributionsWidget v-if="!isMobile" /><ContributionsWidgetMobile
-          v-if="isMobile" /></v-col
-    ></v-row>
-    <v-row class="pa-1 ga-1" no-gutters
-      ><v-col class="rounded"
-        ><ContributionRulesWidget
-          v-if="!isMobile" /><ContributionRulesWidgetMobile
-          v-if="isMobile" /></v-col
-    ></v-row>
-  </v-container>
+        <ContributionsWidget />
+      </v-col>
+    </v-row>
+    <v-row class="pa-1 ga-1" no-gutters>
+      <v-col class="rounded">
+        <ContributionRulesWidget />
+      </v-col>
+    </v-row>
+  </div>
 </template>
 <script setup>
-import ContributionsWidget from "@/components/ContributionsWidget.vue";
-import ContributionsWidgetMobile from "@/components/ContributionsWidgetMobile.vue";
-import ContributionRulesWidget from "@/components/ContributionRulesWidget.vue";
-import ContributionRulesWidgetMobile from "@/components/ContributionRulesWidgetMobile.vue";
-import { useDisplay } from "vuetify";
-
-const { smAndDown } = useDisplay();
-const isMobile = smAndDown;
+  import ContributionsWidget from "@/components/ContributionsWidget.vue";
+  import ContributionRulesWidget from "@/components/ContributionRulesWidget.vue";
 </script>

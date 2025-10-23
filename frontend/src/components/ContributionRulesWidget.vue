@@ -1,6 +1,9 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white">
-    <template v-slot:append>
+  <v-card variant="outlined" :elevation="4" class="bg-surface">
+    <v-card-title class="text-left">
+      <span class="text-subtitle-2 text-primary">
+        Per Paycheck Overage Rules
+      </span>
       <v-tooltip text="Add Overage Rule" location="top">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -9,207 +12,254 @@
             variant="plain"
             v-bind="props"
             @click="addContributionRuleDialog = true"
+            size="small"
           ></v-btn>
         </template>
       </v-tooltip>
-    </template>
-    <ContributionRuleForm
-      v-model="addContributionRuleDialog"
-      key="0"
-      :isEdit="false"
-      @update-dialog="updateAddDialog"
-      @add-contribution-rule="clickAddContributionRule"
-      :passedFormData="newContributionRuleData"
-    />
-    <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary"
-        >Per Paycheck Overage Rules</span
-      >
-    </template>
-    <template v-slot:text>
-      <vue3-datatable
-        :rows="contributionRules ? contributionRules : []"
-        :columns="columns"
+      <ContributionRuleForm
+        v-model="addContributionRuleDialog"
+        key="0"
+        :isEdit="false"
+        @update-dialog="updateAddDialog"
+        @add-contribution-rule="clickAddContributionRule"
+        :passedFormData="newContributionRuleData"
+      />
+    </v-card-title>
+    <v-card-text class="ma-0 pa-0 ga-0">
+      <v-data-table
+        :headers="displayHeaders"
+        :items="contributionRules ? contributionRules : []"
+        :items-length="contributionRules ? contributionRules.length : 0"
         :loading="isLoading"
-        :totalRows="contributionRules ? contributionRules.length : 0"
-        :isServerMode="false"
-        pageSize="3"
-        :hasCheckbox="false"
-        noDataContent="No rules"
-        ref="contrib_rules_table"
-        skin="bh-table-striped bh-table-compact"
-        :pageSizeOptions="[3]"
-        :showPageSize="false"
-        paginationInfo="Showing {0} to {1} of {2} rules"
-        class="alt-pagination"
+        item-value="id"
+        v-model:items-per-page="itemsPerPage"
+        v-model:page="page"
+        :items-per-page-options="[
+          {
+            value: 3,
+            title: 3,
+          },
+        ]"
+        items-per-page-text="Rules per page"
+        no-data-text="No rules!"
+        loading-text="Loading rules..."
+        disable-sort
+        :show-select="true"
+        fixed-footer
+        striped="odd"
+        density="compact"
+        :hide-default-header="mdAndUp ? false : true"
+        width="100%"
+        :header-props="{ class: 'font-weight-bold bg-secondary' }"
+        v-model="selectedContributionRule"
+        select-strategy="single"
+        return-object
+        :row-props="getRowProps"
+        class="bg-background"
       >
-        <template #cap="row">
-          <span :style="clampedStyle" class="text-body-2">{{
-            row.value.cap
-          }}</span>
+        <template v-slot:top>
+          <div class="d-flex align-center">
+            <v-btn
+              variant="plain"
+              icon
+              @click="editContributionRuleDialog = true"
+              :disabled="selectedContributionRule.length === 0"
+            >
+              <v-icon icon="mdi-pencil"></v-icon>
+            </v-btn>
+            <ContributionRuleForm
+              v-model="editContributionRuleDialog"
+              :key="editRule ? editRule.id : 0"
+              :isEdit="true"
+              @update-dialog="updateEditDialog"
+              :passedFormData="editRule"
+              @edit-contribution-rule="clickEditContributionRule"
+            />
+            <v-btn
+              variant="plain"
+              icon
+              :disabled="selectedContributionRule.length == 0"
+            >
+              <v-icon
+                icon="mdi-delete"
+                @click="deleteContributionRuleDialog = true"
+                color="error"
+              ></v-icon>
+            </v-btn>
+            <v-dialog
+              v-model="deleteContributionRuleDialog"
+              :key="editRule ? editRule.id : 0"
+              width="400"
+            >
+              <v-card>
+                <v-card-title>Delete Rule?</v-card-title>
+                <v-card-text>
+                  <span>{{ editRule.rule }}</span>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn @click="deleteContributionRuleDialog = false">
+                    Close
+                  </v-btn>
+                  <v-btn @click="clickDeleteContributionRule(editRule)">
+                    Delete
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </div>
         </template>
-        <template #order="row">
-          <span class="font-weight-bold">#{{ row.value.order }}</span>
+        <template v-slot:bottom>
+          <div class="text-center pt-2">
+            <v-pagination v-model="page" :length="pageCount"></v-pagination>
+          </div>
         </template>
-        <template #edit="row">
-          <v-btn variant="plain" icon @click="clickEditButton(row.value)"
-            ><v-icon icon="mdi-pencil"></v-icon
-          ></v-btn>
-          <ContributionRuleForm
-            v-model="editContributionRuleDialog"
-            :key="row.value.id"
-            :isEdit="true"
-            @update-dialog="updateEditDialog"
-            :passedFormData="selectedContributionRule"
-            @edit-contribution-rule="clickEditContributionRule"
-          />
+        <template v-slot:[`header.order`] v-if="mdAndUp">
+          <div class="text-center">Order</div>
         </template>
-        <template #delete="row">
-          <v-btn variant="plain" icon
-            ><v-icon
-              icon="mdi-delete"
-              @click="clickDeleteButton(row.value)"
-            ></v-icon
-          ></v-btn>
-          <v-dialog
-            v-model="deleteContributionRuleDialog"
-            :key="row.value.id"
-            width="400"
-            ><v-card
-              ><v-card-title>Delete Rule?</v-card-title
-              ><v-card-text
-                ><span>{{ selectedContributionRule.rule }}</span></v-card-text
+        <template v-slot:[`item.order`]="{ item }" v-if="mdAndUp">
+          <div class="text-center">
+            <span class="font-weight-bold">#{{ item.order }}</span>
+          </div>
+        </template>
+        <template v-slot:[`item.rule`]="{ item }" v-if="mdAndUp">
+          <div>
+            <span>{{ item.rule }}</span>
+          </div>
+        </template>
+        <template v-slot:[`item.cap`]="{ item }" v-if="mdAndUp">
+          <div>
+            <span>{{ item.cap }}</span>
+          </div>
+        </template>
+        <!-- Mobile View -->
+        <template v-slot:[`item.mobile`]="{ item }">
+          <v-container class="ma-0 pa-0 ga-0">
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col
+                class="ma-0 pa-0 ga-0 font-weight-bold text-center"
+                cols="1"
               >
-              <v-card-actions
-                ><v-btn @click="deleteContributionRuleDialog = false"
-                  >Close</v-btn
-                ><v-btn
-                  @click="clickDeleteContributionRule(selectedContributionRule)"
-                  >Delete</v-btn
-                ></v-card-actions
-              ></v-card
-            ></v-dialog
-          >
+                #{{ item.order }}
+              </v-col>
+              <v-col
+                class="ma-0 pa-0 ga-0 font-weight-bold text-right"
+                cols="2"
+              >
+                Rule &bull;
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0" cols="9">
+                {{ item.rule }}
+              </v-col>
+            </v-row>
+            <v-row dense class="ma-0 pa-0 ga-0">
+              <v-col class="ma-0 pa-0 ga-0 font-weight-bold" cols="1"></v-col>
+              <v-col
+                class="ma-0 pa-0 ga-0 font-weight-bold text-right"
+                cols="2"
+              >
+                Cap &bull;
+              </v-col>
+              <v-col class="ma-0 pa-0 ga-0" cols="9">
+                {{ item.cap }}
+              </v-col>
+            </v-row>
+          </v-container>
         </template>
-      </vue3-datatable>
-    </template>
+      </v-data-table>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>
-import Vue3Datatable from "@bhplugin/vue3-datatable";
-import "@bhplugin/vue3-datatable/dist/style.css";
-import { ref } from "vue";
-import { useContributionRules } from "@/composables/contributionsComposable";
-import ContributionRuleForm from "@/components/ContributionRuleForm.vue";
+  import { ref, computed, watch } from "vue";
+  import { useContributionRules } from "@/composables/contributionsComposable";
+  import ContributionRuleForm from "@/components/ContributionRuleForm.vue";
+  import { useDisplay } from "vuetify";
 
-const contrib_rules_table = ref(null);
-const editContributionRuleDialog = ref(false);
-const addContributionRuleDialog = ref(false);
-const deleteContributionRuleDialog = ref(false);
-const selectedContributionRule = ref(null);
-const newContributionRuleData = ref({
-  id: 0,
-  rule: null,
-  order: 1,
-  cap: null,
-});
+  const page = ref(1);
+  const itemsPerPage = ref(3);
+  const { mdAndUp } = useDisplay();
+  const editRule = ref({ id: 0 });
+  const editContributionRuleDialog = ref(false);
+  const addContributionRuleDialog = ref(false);
+  const deleteContributionRuleDialog = ref(false);
+  const selectedContributionRule = ref([]);
+  const newContributionRuleData = ref({
+    id: 0,
+    rule: null,
+    order: 1,
+    cap: null,
+  });
 
-const {
-  contributionRules,
-  isLoading,
-  addContributionRule,
-  editContributionRule,
-  removeContributionRule,
-} = useContributionRules();
+  const {
+    contributionRules,
+    isLoading,
+    addContributionRule,
+    editContributionRule,
+    removeContributionRule,
+  } = useContributionRules();
 
-const columns = ref([
-  { field: "id", title: "id", isUnique: true, hide: true },
-  { field: "order", title: "Order", width: "20px" },
-  {
-    field: "rule",
-    title: "Rule",
-    type: "string",
-  },
-  {
-    field: "cap",
-    title: "Cap",
-    type: "string",
-  },
-  { field: "edit", title: "Edit", width: "40px", cellClass: "text-center" },
-  { field: "delete", title: "Delete", width: "40px", cellClass: "text-center" },
-]);
+  const headers = ref([
+    { title: "Order", key: "order", width: "20px" },
+    { title: "Rule", key: "rule" },
+    { title: "Cap", key: "cap" },
+  ]);
+  const displayHeaders = computed(() => {
+    if (mdAndUp.value) {
+      return headers.value;
+    }
+    // For small screens, use your single mobile column
+    return [{ title: "", key: "mobile" }];
+  });
 
-const updateAddDialog = () => {
-  addContributionRuleDialog.value = false;
-};
+  const updateAddDialog = () => {
+    addContributionRuleDialog.value = false;
+  };
 
-const updateEditDialog = () => {
-  editContributionRuleDialog.value = false;
-};
+  const updateEditDialog = () => {
+    editContributionRuleDialog.value = false;
+  };
 
-const clickEditButton = contributionRule => {
-  selectedContributionRule.value = contributionRule;
-  editContributionRuleDialog.value = true;
-};
+  const clickEditContributionRule = contributionRule => {
+    editContributionRule(contributionRule);
+    editContributionRuleDialog.value = false;
+    selectedContributionRule.value = [];
+  };
 
-const clickDeleteButton = contributionRule => {
-  selectedContributionRule.value = contributionRule;
-  deleteContributionRuleDialog.value = true;
-};
+  const clickDeleteContributionRule = contributionRule => {
+    removeContributionRule(contributionRule);
+    deleteContributionRuleDialog.value = false;
+    selectedContributionRule.value = [];
+  };
 
-const clickEditContributionRule = contributionRule => {
-  editContributionRule(contributionRule);
-  editContributionRuleDialog.value = false;
-};
+  const clickAddContributionRule = contributionRule => {
+    addContributionRule(contributionRule);
+    addContributionRuleDialog.value = false;
+  };
 
-const clickDeleteContributionRule = contributionRule => {
-  removeContributionRule(contributionRule);
-  deleteContributionRuleDialog.value = false;
-};
+  const pageCount = computed(() =>
+    contributionRules.value && itemsPerPage.value
+      ? Math.ceil(contributionRules.value.length / itemsPerPage.value)
+      : 1,
+  );
 
-const clickAddContributionRule = contributionRule => {
-  addContributionRule(contributionRule);
-  addContributionRuleDialog.value = false;
-};
-
-const clampedStyle = {
-  whiteSpace: "pre-line",
-  display: "-webkit-box",
-  WebkitLineClamp: 9, // Limit to 3 lines
-  WebkitBoxOrient: "vertical",
-  overflow: "hidden",
-  textOverflow: "ellipsis", // Add "..." at the end if text is truncated
-};
+  watch(
+    () => selectedContributionRule.value,
+    val => {
+      if (val) {
+        editRule.value = val[0];
+      }
+    },
+  );
+  function getRowProps({ item }) {
+    let rowformat = "";
+    const isSelected = selectedContributionRule.value.some(
+      sel => sel.id === item.id,
+    );
+    if (isSelected) {
+      rowformat += "bg-primary-lighten-3";
+    }
+    return {
+      class: rowformat,
+    };
+  }
 </script>
-<style>
-/* alt-pagination */
-.alt-pagination .bh-pagination .bh-page-item {
-  width: auto; /* equivalent to w-max */
-  min-width: 32px;
-  border-radius: 0.25rem; /* equivalent to rounded */
-}
-/* Customize the color of the selected page number */
-.alt-pagination .bh-pagination .bh-page-item.bh-active {
-  background-color: #06966a; /* Change this to your desired color */
-  border-color: black;
-  font-weight: bold; /* Optional: Make the text bold */
-}
-.alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-  background-color: #ff5900;
-  border-color: black;
-}
-
-.icon-with-text {
-  position: relative;
-  display: inline-block;
-}
-
-.icon-text {
-  position: absolute;
-  top: 0;
-  right: 1;
-  color: black;
-  padding: 4px 1px;
-  font-size: 0.7rem;
-}
-</style>

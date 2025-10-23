@@ -180,12 +180,12 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn @click="emit('updateDialog', false)" color="secondary">
+        <v-btn @click="emit('updateDialog', false)" color="primary">
           Close
         </v-btn>
         <v-btn
           @click="clickEditAccount()"
-          color="secondary"
+          color="primary"
           :disabled="editSubmit"
         >
           Save

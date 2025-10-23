@@ -45,5 +45,6 @@ class BudgetWithTotal(Schema):
     transactions: List[TransactionOut]
     used_total: BalanceDecimal
     used_percentage: int
+    remaining_percentage: int
 
     model_config = ConfigDict(from_attributes=True)

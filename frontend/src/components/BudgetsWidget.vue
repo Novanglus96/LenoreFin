@@ -1,7 +1,7 @@
 <template>
-  <v-card variant="outlined" :elevation="4" class="bg-white ma-0 pa-0 ga-0">
-    <template v-slot:title>
-      <span class="text-subtitle-2 text-secondary">Budgets</span>
+  <v-card variant="outlined" :elevation="4" class="bg-surface ma-0 pa-0 ga-0">
+    <v-card-title class="text-left">
+      <span class="text-subtitle-2 text-primary">Budgets</span>
       <v-tooltip text="Add Budget" v-if="!props.widget">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -23,14 +23,14 @@
         @update-dialog="closeAddForm"
         v-if="isMobile"
       />
-    </template>
+    </v-card-title>
 
-    <template v-slot:text>
+    <v-card-text v-if="lgAndUp" class="ma-0 pa-0 ga-0">
       <v-slide-group
         v-model="budget_selected"
         class="pa-4"
         show-arrows
-        selected-class="bg-grey-lighten-2"
+        selected-class="bg-selected"
         center-active
         mobile-breakpoint="sm"
       >
@@ -51,7 +51,7 @@
           :disabled="props.widget"
         >
           <v-card
-            :class="['ma-4 text-center', selectedClass]"
+            :class="['ma-4 text-center bg-background', selectedClass]"
             height="200"
             @click="toggle"
           >
@@ -60,10 +60,11 @@
                 {{ budget.budget.name }}
               </div>
               <v-progress-circular
-                :model-value="budget.used_percentage"
+                :model-value="budget.remaining_percentage"
                 :size="100"
                 :width="12"
                 :color="graphColor(budget.used_percentage)"
+                :bg-color="graphBGColor(budget.used_percentage)"
               >
                 {{
                   formatCurrency(
@@ -71,6 +72,15 @@
                       parseFloat(budget.budget.roll_over_amt) -
                       parseFloat(Math.abs(budget.used_total)),
                   )
+                }}
+                <br />
+                {{
+                  parseFloat(budget.budget.amount) +
+                    parseFloat(budget.budget.roll_over_amt) -
+                    parseFloat(Math.abs(budget.used_total)) <
+                  0
+                    ? "over"
+                    : "left"
                 }}
               </v-progress-circular>
               <div class="text-subtitle-2 text-center">
@@ -83,7 +93,9 @@
                 }}
                 <span
                   :class="
-                    budget.budget.roll_over_amt < 0 ? 'text-red' : 'text-green'
+                    budget.budget.roll_over_amt < 0
+                      ? 'text-error'
+                      : 'text-success'
                   "
                   v-if="budget.budget.roll_over"
                 >
@@ -106,7 +118,51 @@
           </v-card>
         </v-slide-group-item>
       </v-slide-group>
-    </template>
+    </v-card-text>
+    <v-card-text v-else class="ma-0 pa-0 ga-0">
+      <v-list
+        density="compact"
+        activatable
+        @update:activated="clickSelectBudgetList"
+        v-model:activated="budget_selected"
+        :return-object="true"
+      >
+        <v-list-item
+          v-for="budget in budgets"
+          :key="budget.budget.id"
+          :value="budget"
+          :disabled="props.widget"
+        >
+          <v-progress-linear
+            v-model="budget.remaining_percentage"
+            :color="graphColor(budget.used_percentage)"
+            height="25"
+            :key="budget.budget.id"
+            striped
+            reverse
+          >
+            <template v-slot:default="{}">
+              <strong>{{ budget.budget.name }}</strong>
+              ({{
+                formatCurrency(
+                  parseFloat(budget.budget.amount) +
+                    parseFloat(budget.budget.roll_over_amt) -
+                    parseFloat(Math.abs(budget.used_total)),
+                )
+              }}
+              {{
+                parseFloat(budget.budget.amount) +
+                  parseFloat(budget.budget.roll_over_amt) -
+                  parseFloat(Math.abs(budget.used_total)) <
+                0
+                  ? "over"
+                  : "left"
+              }})
+            </template>
+          </v-progress-linear>
+        </v-list-item>
+      </v-list>
+    </v-card-text>
   </v-card>
 </template>
 <script setup>
@@ -116,7 +172,7 @@
   import AddBudgetFormMobile from "./AddBudgetFormMobile.vue";
   import { useDisplay } from "vuetify";
 
-  const { smAndDown } = useDisplay();
+  const { smAndDown, lgAndUp } = useDisplay();
   const isMobile = smAndDown;
 
   const props = defineProps({
@@ -156,29 +212,38 @@
     return "error";
   };
 
+  const graphBGColor = value => {
+    const thresholds = [
+      { limit: 10, color: "green-lighten-3" },
+      { limit: 20, color: "green-lighten-3" },
+      { limit: 30, color: "green-lighten-3" },
+      { limit: 40, color: "green-lighten-3" },
+      { limit: 50, color: "green-lighten-3" },
+      { limit: 60, color: "yellow" },
+      { limit: 70, color: "yellow-lighten-3" },
+      { limit: 80, color: "yellow-lighten-3" },
+      { limit: 90, color: "yellow-lighten-3" },
+      { limit: 99, color: "yellow-lighten-3" },
+    ];
+
+    for (const { limit, color } of thresholds) {
+      if (value <= limit) return color;
+    }
+
+    return "red-lighten-4";
+  };
+
   const clickSelectBudget = () => {
     emit("budgetSelected", budget_selected.value);
+  };
+
+  const clickSelectBudgetList = val => {
+    let result = val;
+    result = result.length > 0 ? result[0] : null;
+    emit("budgetSelected", result);
   };
 
   const closeAddForm = () => {
     showAddForm.value = false;
   };
 </script>
-<style>
-  /* alt-pagination */
-  .alt-pagination .bh-pagination .bh-page-item {
-    width: auto; /* equivalent to w-max */
-    min-width: 32px;
-    border-radius: 0.25rem; /* equivalent to rounded */
-  }
-  /* Customize the color of the selected page number */
-  .alt-pagination .bh-pagination .bh-page-item.bh-active {
-    background-color: #06966a; /* Change this to your desired color */
-    border-color: black;
-    font-weight: bold; /* Optional: Make the text bold */
-  }
-  .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-    background-color: #ff5900;
-    border-color: black;
-  }
-</style>

@@ -2,11 +2,11 @@
   <v-dialog fullscreen persistent>
     <v-card>
       <v-card-title>
-        <span class="text-h5" v-if="props.isEdit == false"
-          >Add Transaction</span
-        >
-        <span class="text-h5" v-else>Edit Transaction</span
-        ><v-icon
+        <span class="text-h5" v-if="props.isEdit == false">
+          Add Transaction
+        </span>
+        <span class="text-h5" v-else>Edit Transaction</span>
+        <v-icon
           v-if="props.passedFormData.reminder"
           icon="mdi-bell"
           color="amber"
@@ -38,9 +38,10 @@
                   <v-col>
                     <span
                       v-if="!formData.transaction_date"
-                      class="text-red text-caption"
-                      >This field is required.</span
+                      class="text-error text-caption"
                     >
+                      This field is required.
+                    </span>
                   </v-col>
                 </v-row>
                 <v-row dense>
@@ -91,16 +92,20 @@
                         }
                       "
                       density="compact"
-                      ><template v-slot:append-inner
-                        ><v-tooltip text="Calculator" location="top">
-                          <template v-slot:activator="{ props }"
-                            ><v-btn
+                    >
+                      <template v-slot:append-inner>
+                        <v-tooltip text="Calculator" location="top">
+                          <template v-slot:activator="{ props }">
+                            <v-btn
                               icon="mdi-calculator-variant"
                               variant="text"
                               @click="showAmountCalculator = true"
                               v-bind="props"
-                            ></v-btn></template></v-tooltip></template
-                    ></v-text-field>
+                            ></v-btn>
+                          </template>
+                        </v-tooltip>
+                      </template>
+                    </v-text-field>
                     <CalculatorWidget
                       v-model="showAmountCalculator"
                       :amount="amount"
@@ -122,8 +127,10 @@
                       "
                       density="compact"
                       v-if="formData.transaction_type_id != 3"
-                    ></v-text-field> </v-col></v-row
-                ><v-row dense>
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+                <v-row dense>
                   <v-col>
                     <v-combobox
                       v-model="formData.description"
@@ -174,8 +181,9 @@
                         </v-list-item>
                       </template>
                     </v-autocomplete>
-                  </v-col> </v-row
-                ><v-row dense>
+                  </v-col>
+                </v-row>
+                <v-row dense>
                   <v-col>
                     <v-autocomplete
                       clearable
@@ -212,8 +220,9 @@
                       :totalAmount="parseFloat(amount)"
                       @tag-table-updated="tagsUpdated"
                     />
-                  </v-col> </v-row
-                ><v-row dense>
+                  </v-col>
+                </v-row>
+                <v-row dense>
                   <v-col>
                     <v-textarea
                       clearable
@@ -240,7 +249,7 @@
                       "
                     ></v-checkbox>
                   </v-col>
-                  <v-col> </v-col>
+                  <v-col></v-col>
                 </v-row>
                 <v-row dense>
                   <v-col>
@@ -325,16 +334,20 @@
                       "
                       density="compact"
                       :disabled="!isPaycheck"
-                      ><template v-slot:append-inner
-                        ><v-tooltip text="Calculator" location="top">
-                          <template v-slot:activator="{ props }"
-                            ><v-btn
+                    >
+                      <template v-slot:append-inner>
+                        <v-tooltip text="Calculator" location="top">
+                          <template v-slot:activator="{ props }">
+                            <v-btn
                               icon="mdi-calculator-variant"
                               variant="text"
                               @click="showHealthCalculator = true"
                               v-bind="props"
-                            ></v-btn></template></v-tooltip></template
-                    ></v-text-field>
+                            ></v-btn>
+                          </template>
+                        </v-tooltip>
+                      </template>
+                    </v-text-field>
                     <CalculatorWidget
                       v-model="showHealthCalculator"
                       :amount="paycheck.health"
@@ -491,11 +504,9 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="secondary" variant="text" @click="closeDialog">
-          Close
-        </v-btn>
+        <v-btn color="primary" variant="text" @click="closeDialog">Close</v-btn>
         <v-btn
-          color="secondary"
+          color="primary"
           variant="text"
           @click="submitForm"
           :disabled="!formValid"
@@ -508,443 +519,444 @@
   </v-dialog>
 </template>
 <script setup>
-/**
- * Vue script setup for transaction creation/editing
- * @fileoverview
- * @author John Adams
- * @version 1.0.0
- */
+  /**
+   * Vue script setup for transaction creation/editing
+   * @fileoverview
+   * @author John Adams
+   * @version 1.0.0
+   */
 
-// Import Vue composition functions and components...
-import {
-  ref,
-  defineEmits,
-  defineProps,
-  onMounted,
-  watchEffect,
-  computed,
-} from "vue";
-import { useTransactionTypes } from "@/composables/transactionTypesComposable";
-import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
-import { useAccounts } from "@/composables/accountsComposable";
-import { useTransactions } from "@/composables/transactionsComposable";
-import { usePayees } from "@/composables/payeesComposable";
-import VueDatePicker from "@vuepic/vue-datepicker";
-import "@vuepic/vue-datepicker/dist/main.css";
-import TagTable from "@/components/TagTable.vue";
-import { useDescriptionHistory } from "@/composables/descriptionHistoryComposable";
-import CalculatorWidget from "@/components/CalculatorWidget.vue";
+  // Import Vue composition functions and components...
+  import {
+    ref,
+    defineEmits,
+    defineProps,
+    onMounted,
+    watchEffect,
+    computed,
+  } from "vue";
+  import { useTransactionTypes } from "@/composables/transactionTypesComposable";
+  import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
+  import { useAccounts } from "@/composables/accountsComposable";
+  import { useTransactions } from "@/composables/transactionsComposable";
+  import { usePayees } from "@/composables/payeesComposable";
+  import VueDatePicker from "@vuepic/vue-datepicker";
+  import "@vuepic/vue-datepicker/dist/main.css";
+  import TagTable from "@/components/TagTable.vue";
+  import { useDescriptionHistory } from "@/composables/descriptionHistoryComposable";
+  import CalculatorWidget from "@/components/CalculatorWidget.vue";
 
-// Define reactive variables...
-const tagToAdd = ref(null); // Tag object to add to tag list
-const tagAmount = ref(null); // Tag amount to add to tag list
-const tab = ref(0); // Tab model
-const isPaycheck = ref(null); // True if this transaction a paycheck
-const paycheckTotalsMatch = ref(false); // True if the paycheck fields total = gross
-const formValid = ref(false);
-const transactionForm = ref(null);
-const showAmountCalculator = ref(false);
-const showHealthCalculator = ref(false);
+  // Define reactive variables...
+  const tagToAdd = ref(null); // Tag object to add to tag list
+  const tagAmount = ref(null); // Tag amount to add to tag list
+  const tab = ref(0); // Tab model
+  const isPaycheck = ref(null); // True if this transaction a paycheck
+  const paycheckTotalsMatch = ref(false); // True if the paycheck fields total = gross
+  const formValid = ref(false);
+  const transactionForm = ref(null);
+  const showAmountCalculator = ref(false);
+  const showHealthCalculator = ref(false);
 
-// Define emits
-const emit = defineEmits(["updateDialog"]);
+  // Define emits
+  const emit = defineEmits(["updateDialog"]);
 
-// Define validation rules
-// General required validation rule
-const required = [
-  value => {
-    if (value !== null && value !== undefined && value !== "") return true;
-    return "This field is required.";
-  },
-];
+  // Define validation rules
+  // General required validation rule
+  const required = [
+    value => {
+      if (value !== null && value !== undefined && value !== "") return true;
+      return "This field is required.";
+    },
+  ];
 
-// Computed property for conditional validation based on `isPaycheck`
-const requiredPaycheck = computed(() => {
-  return isPaycheck.value
-    ? [
-        value => {
-          if (value !== null && value !== undefined && value !== "")
-            return true;
-          return "This field is required for paycheck.";
-        },
-      ]
-    : [];
-});
-
-// Computed property for conditional validation based on `isPaycheck`
-const grossTotal = computed(() => {
-  return isPaycheck.value
-    ? [
-        () => {
-          if (
-            roundToTwoDecimals(
-              parseFloat(paycheck.value.dca) +
-                parseFloat(paycheck.value.four_fifty_seven_b) +
-                parseFloat(paycheck.value.fsa) +
-                parseFloat(paycheck.value.health) +
-                parseFloat(paycheck.value.pension) +
-                parseFloat(paycheck.value.taxes) +
-                parseFloat(paycheck.value.union_dues) +
-                parseFloat(amount.value),
-            ) === roundToTwoDecimals(parseFloat(paycheck.value.gross))
-          )
-            return true;
-          return "All fields must total gross.";
-        },
-      ]
-    : [];
-});
-
-function roundToTwoDecimals(value) {
-  return Math.round(value * 100) / 100; // Round to 2 decimal places
-}
-
-// Date variables...
-const today = new Date();
-const year = today.getFullYear();
-const month = String(today.getMonth() + 1).padStart(2, "0");
-const day = String(today.getDate()).padStart(2, "0");
-const formattedDate = `${year}-${month}-${day}`;
-
-// API calls and data retrieval...
-const { accounts, isLoading: accounts_isLoading } = useAccounts();
-const { transaction_types, isLoading: transaction_types_isLoading } =
-  useTransactionTypes();
-const { transaction_statuses, isLoading: transaction_statuses_isLoading } =
-  useTransactionStatuses();
-const { addTransaction, editTransaction } = useTransactions();
-const { payees, isLoading: payees_isLoading } = usePayees();
-const { descriptionHistory, isLoading: description_history_isLoading } =
-  useDescriptionHistory();
-// Define props...
-const props = defineProps({
-  itemFormDialog: {
-    type: Boolean,
-    default: false,
-  },
-  isEdit: {
-    type: Boolean,
-    default: false,
-  },
-  passedFormData: Object,
-  account_id: {
-    type: Number,
-    default: 1,
-  },
-});
-
-// Initialze Form Data...
-const formData = ref({
-  id: props.passedFormData ? props.passedFormData.id : 0,
-  status_id: props.passedFormData.status.id || 1,
-  transaction_type_id: props.passedFormData.transaction_type.id || 1,
-  transaction_date: props.passedFormData.transaction_date || formattedDate,
-  memo: props.passedFormData.memo || "",
-  source_account_id:
-    props.passedFormData.source_account_id || props.passedFormData.account_id,
-  destination_account_id: props.passedFormData.destination_account_id || null,
-  edit_date: formattedDate,
-  add_date: props.passedFormData.add_date || formattedDate,
-  total_amount: props.passedFormData.total_amount || 0,
-  checkNumber: props.passedFormData.checkNumber || null,
-  description: props.passedFormData.description || null,
-  details: [],
-  paycheck: null,
-  reminder: null,
-});
-
-const paycheck = ref({
-  id: 0,
-  gross: null,
-  net: null,
-  taxes: null,
-  health: null,
-  pension: null,
-  fsa: null,
-  dca: null,
-  union_dues: null,
-  four_fifty_seven_b: null,
-  payee_id: null,
-});
-
-// Initialize amount with absolute value...
-const amount = ref(
-  props.passedFormData.total_amount
-    ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
-    : null,
-);
-
-// Define functions...
-
-/**
- * `watchpassedFormData` Watches for changes to passedFormData prop and updates
- * local variable formData as appropiate.
- */
-const watchPassedFormData = () => {
-  watchEffect(() => {
-    if (props.passedFormData) {
-      formData.value = {
-        id: props.passedFormData.id,
-        status_id: props.passedFormData.status.id,
-        transaction_type_id: props.passedFormData.transaction_type.id,
-        transaction_date: props.passedFormData.transaction_date,
-        memo: props.passedFormData.memo,
-        source_account_id:
-          props.passedFormData.source_account_id ||
-          props.passedFormData.account_id,
-        destination_account_id: props.passedFormData.destination_account_id,
-        edit_date: formattedDate,
-        add_date: props.passedFormData.add_date,
-        tag_id: props.passedFormData.tag_id,
-        total_amount: props.passedFormData.total_amount,
-        checkNumber: props.passedFormData.checkNumber,
-        description: props.passedFormData.description,
-        details: fillTagTable(props.passedFormData.details),
-        reminder: props.passedFormData.reminder,
-      };
-      paycheck.value = {
-        id: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.id
-          : 0,
-        gross: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.gross
-          : null,
-        net: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.net
-          : null,
-        taxes: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.taxes
-          : null,
-        health: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.health
-          : null,
-        pension: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.pension
-          : null,
-        fsa: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.fsa
-          : null,
-        dca: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.dca
-          : null,
-        union_dues: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.union_dues
-          : null,
-        four_fifty_seven_b: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.four_fifty_seven_b
-          : null,
-        payee_id: props.passedFormData.paycheck
-          ? props.passedFormData.paycheck.payee.id
-          : null,
-      };
-      amount.value = props.passedFormData.total_amount
-        ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
-        : null;
-      if (props.passedFormData.paycheck) {
-        isPaycheck.value = true;
-        paycheckTotalsMatch.value = true;
-      } else {
-        isPaycheck.value = false;
-        paycheckTotalsMatch.value = false;
-      }
-    }
+  // Computed property for conditional validation based on `isPaycheck`
+  const requiredPaycheck = computed(() => {
+    return isPaycheck.value
+      ? [
+          value => {
+            if (value !== null && value !== undefined && value !== "")
+              return true;
+            return "This field is required for paycheck.";
+          },
+        ]
+      : [];
   });
-};
 
-/**
- * `fillTagTable` Formats tag details for display in tag table.
- * @param {list} details - The list of tag details.
- * @returns {table} - A list of formatted tags for display in the table.
- */
-const fillTagTable = details => {
-  let table = [];
-  let pretty_name = "";
-  let tag_full_toggle = null;
-  if (details) {
-    for (const detail of details) {
-      if (detail.full_toggle) {
-        tag_full_toggle = detail.full_toggle;
-      } else {
-        tag_full_toggle = false;
-      }
-      pretty_name = detail.tag.tag_name;
-      let tag_row = {
-        tag_id: detail.tag.id,
-        tag_amt: parseFloat(Math.abs(detail.detail_amt)).toFixed(2),
-        tag_pretty_name: pretty_name,
-        tag_full_toggle: tag_full_toggle,
-      };
-      table.push(tag_row);
-    }
+  // Computed property for conditional validation based on `isPaycheck`
+  const grossTotal = computed(() => {
+    return isPaycheck.value
+      ? [
+          () => {
+            if (
+              roundToTwoDecimals(
+                parseFloat(paycheck.value.dca) +
+                  parseFloat(paycheck.value.four_fifty_seven_b) +
+                  parseFloat(paycheck.value.fsa) +
+                  parseFloat(paycheck.value.health) +
+                  parseFloat(paycheck.value.pension) +
+                  parseFloat(paycheck.value.taxes) +
+                  parseFloat(paycheck.value.union_dues) +
+                  parseFloat(amount.value),
+              ) === roundToTwoDecimals(parseFloat(paycheck.value.gross))
+            )
+              return true;
+            return "All fields must total gross.";
+          },
+        ]
+      : [];
+  });
+
+  function roundToTwoDecimals(value) {
+    return Math.round(value * 100) / 100; // Round to 2 decimal places
   }
 
-  return table;
-};
+  // Date variables...
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  const formattedDate = `${year}-${month}-${day}`;
 
-/**
- * `submitForm` Submits the formData and creates/edits transaction.
- */
-const submitForm = async () => {
-  if (formData.value.transaction_type_id == 2) {
-    formData.value.total_amount = Math.abs(amount.value);
-  } else {
-    formData.value.total_amount = -Math.abs(amount.value);
-  }
-  if (isPaycheck.value) {
-    paycheck.value.net = amount.value;
-    formData.value.paycheck = paycheck.value;
-  }
-  if (props.isEdit == false) {
-    await addTransaction(formData.value);
-  } else {
-    await editTransaction(formData.value);
-  }
+  // API calls and data retrieval...
+  const { accounts, isLoading: accounts_isLoading } = useAccounts();
+  const { transaction_types, isLoading: transaction_types_isLoading } =
+    useTransactionTypes();
+  const { transaction_statuses, isLoading: transaction_statuses_isLoading } =
+    useTransactionStatuses();
+  const { addTransaction, editTransaction } = useTransactions();
+  const { payees, isLoading: payees_isLoading } = usePayees();
+  const { descriptionHistory, isLoading: description_history_isLoading } =
+    useDescriptionHistory();
+  // Define props...
+  const props = defineProps({
+    itemFormDialog: {
+      type: Boolean,
+      default: false,
+    },
+    isEdit: {
+      type: Boolean,
+      default: false,
+    },
+    passedFormData: Object,
+    account_id: {
+      type: Number,
+      default: 1,
+    },
+  });
 
-  closeDialog();
-};
-
-/**
- * `closeDialog` Emits updateDialog to close form.
- */
-const closeDialog = () => {
-  formData.value = {
+  // Initialze Form Data...
+  const formData = ref({
     id: props.passedFormData ? props.passedFormData.id : 0,
     status_id: props.passedFormData.status.id || 1,
     transaction_type_id: props.passedFormData.transaction_type.id || 1,
     transaction_date: props.passedFormData.transaction_date || formattedDate,
     memo: props.passedFormData.memo || "",
-    source_account_id: props.passedFormData.source_account_id || null,
+    source_account_id:
+      props.passedFormData.source_account_id || props.passedFormData.account_id,
     destination_account_id: props.passedFormData.destination_account_id || null,
     edit_date: formattedDate,
     add_date: props.passedFormData.add_date || formattedDate,
     total_amount: props.passedFormData.total_amount || 0,
     checkNumber: props.passedFormData.checkNumber || null,
     description: props.passedFormData.description || null,
-    details: fillTagTable(props.passedFormData.details),
+    details: [],
     paycheck: null,
+    reminder: null,
+  });
+
+  const paycheck = ref({
+    id: 0,
+    gross: null,
+    net: null,
+    taxes: null,
+    health: null,
+    pension: null,
+    fsa: null,
+    dca: null,
+    union_dues: null,
+    four_fifty_seven_b: null,
+    payee_id: null,
+  });
+
+  // Initialize amount with absolute value...
+  const amount = ref(
+    props.passedFormData.total_amount
+      ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
+      : null,
+  );
+
+  // Define functions...
+
+  /**
+   * `watchpassedFormData` Watches for changes to passedFormData prop and updates
+   * local variable formData as appropiate.
+   */
+  const watchPassedFormData = () => {
+    watchEffect(() => {
+      if (props.passedFormData) {
+        formData.value = {
+          id: props.passedFormData.id,
+          status_id: props.passedFormData.status.id,
+          transaction_type_id: props.passedFormData.transaction_type.id,
+          transaction_date: props.passedFormData.transaction_date,
+          memo: props.passedFormData.memo,
+          source_account_id:
+            props.passedFormData.source_account_id ||
+            props.passedFormData.account_id,
+          destination_account_id: props.passedFormData.destination_account_id,
+          edit_date: formattedDate,
+          add_date: props.passedFormData.add_date,
+          tag_id: props.passedFormData.tag_id,
+          total_amount: props.passedFormData.total_amount,
+          checkNumber: props.passedFormData.checkNumber,
+          description: props.passedFormData.description,
+          details: fillTagTable(props.passedFormData.details),
+          reminder: props.passedFormData.reminder,
+        };
+        paycheck.value = {
+          id: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.id
+            : 0,
+          gross: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.gross
+            : null,
+          net: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.net
+            : null,
+          taxes: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.taxes
+            : null,
+          health: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.health
+            : null,
+          pension: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.pension
+            : null,
+          fsa: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.fsa
+            : null,
+          dca: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.dca
+            : null,
+          union_dues: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.union_dues
+            : null,
+          four_fifty_seven_b: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.four_fifty_seven_b
+            : null,
+          payee_id: props.passedFormData.paycheck
+            ? props.passedFormData.paycheck.payee.id
+            : null,
+        };
+        amount.value = props.passedFormData.total_amount
+          ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
+          : null;
+        if (props.passedFormData.paycheck) {
+          isPaycheck.value = true;
+          paycheckTotalsMatch.value = true;
+        } else {
+          isPaycheck.value = false;
+          paycheckTotalsMatch.value = false;
+        }
+      }
+    });
   };
-  amount.value = props.passedFormData.total_amount
-    ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
-    : null;
-  paycheck.value = {
-    id: props.passedFormData.paycheck ? props.passedFormData.paycheck.id : 0,
-    gross: props.passedFormData.paycheck
-      ? props.passedFormData.paycheck.gross
-      : null,
-    net: props.passedFormData.paycheck
-      ? props.passedFormData.paycheck.net
-      : null,
-    taxes: props.passedFormData.paycheck
-      ? props.passedFormData.paycheck.taxes
-      : null,
-    health: props.passedFormData.paycheck
-      ? props.passedFormData.paycheck.health
-      : null,
-    pension: props.passedFormData.paycheck
-      ? props.passedFormData.paycheck.pension
-      : null,
-    fsa: props.passedFormData.paycheck
-      ? props.passedFormData.paycheck.fsa
-      : null,
-    dca: props.passedFormData.paycheck
-      ? props.passedFormData.paycheck.dca
-      : null,
-    union_dues: props.passedFormData.paycheck
-      ? props.passedFormData.paycheck.union_dues
-      : null,
-    four_fifty_seven_b: props.passedFormData.paycheck
-      ? props.passedFormData.paycheck.four_fifty_seven_b
-      : null,
-    payee_id: props.passedFormData.paycheck
-      ? props.passedFormData.paycheck.payee.id
-      : null,
+
+  /**
+   * `fillTagTable` Formats tag details for display in tag table.
+   * @param {list} details - The list of tag details.
+   * @returns {table} - A list of formatted tags for display in the table.
+   */
+  const fillTagTable = details => {
+    let table = [];
+    let pretty_name = "";
+    let tag_full_toggle = null;
+    if (details) {
+      for (const detail of details) {
+        if (detail.full_toggle) {
+          tag_full_toggle = detail.full_toggle;
+        } else {
+          tag_full_toggle = false;
+        }
+        pretty_name = detail.tag.tag_name;
+        let tag_row = {
+          tag_id: detail.tag.id,
+          tag_amt: parseFloat(Math.abs(detail.detail_amt)).toFixed(2),
+          tag_pretty_name: pretty_name,
+          tag_full_toggle: tag_full_toggle,
+        };
+        table.push(tag_row);
+      }
+    }
+
+    return table;
   };
-  tagToAdd.value = null;
-  tagAmount.value = null;
-  if (props.passedFormData.paycheck) {
-    isPaycheck.value = true;
-  } else {
-    isPaycheck.value = false;
-  }
-  tab.value = 0;
-  emit("updateDialog", false);
-};
 
-/**
- * `selectPaycheckChange` Handles when switching between paycheck or not.
- */
-const selectPaycheckChange = () => {
-  paycheck.value.dca = null;
-  paycheck.value.four_fifty_seven_b = null;
-  paycheck.value.fsa = null;
-  paycheck.value.gross = null;
-  paycheck.value.health = null;
-  paycheck.value.payee_id = null;
-  paycheck.value.pension = null;
-  paycheck.value.taxes = null;
-  paycheck.value.union_dues = null;
-  transactionForm.value.validate();
-};
+  /**
+   * `submitForm` Submits the formData and creates/edits transaction.
+   */
+  const submitForm = async () => {
+    if (formData.value.transaction_type_id == 2) {
+      formData.value.total_amount = Math.abs(amount.value);
+    } else {
+      formData.value.total_amount = -Math.abs(amount.value);
+    }
+    if (isPaycheck.value) {
+      paycheck.value.net = amount.value;
+      formData.value.paycheck = paycheck.value;
+    }
+    if (props.isEdit == false) {
+      await addTransaction(formData.value);
+    } else {
+      await editTransaction(formData.value);
+    }
 
-/**
- * `resetTagField` Convenience function adds total and Untagged as default option for tags.
- */
-const resetTagField = () => {
-  tagAmount.value = amount.value;
-};
+    closeDialog();
+  };
 
-/**
- * `clickTagAdd` Adds a tag to the tag table.
- */
-const tagsUpdated = data => {
-  formData.value.details = data.tags;
-};
+  /**
+   * `closeDialog` Emits updateDialog to close form.
+   */
+  const closeDialog = () => {
+    formData.value = {
+      id: props.passedFormData ? props.passedFormData.id : 0,
+      status_id: props.passedFormData.status.id || 1,
+      transaction_type_id: props.passedFormData.transaction_type.id || 1,
+      transaction_date: props.passedFormData.transaction_date || formattedDate,
+      memo: props.passedFormData.memo || "",
+      source_account_id: props.passedFormData.source_account_id || null,
+      destination_account_id:
+        props.passedFormData.destination_account_id || null,
+      edit_date: formattedDate,
+      add_date: props.passedFormData.add_date || formattedDate,
+      total_amount: props.passedFormData.total_amount || 0,
+      checkNumber: props.passedFormData.checkNumber || null,
+      description: props.passedFormData.description || null,
+      details: fillTagTable(props.passedFormData.details),
+      paycheck: null,
+    };
+    amount.value = props.passedFormData.total_amount
+      ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
+      : null;
+    paycheck.value = {
+      id: props.passedFormData.paycheck ? props.passedFormData.paycheck.id : 0,
+      gross: props.passedFormData.paycheck
+        ? props.passedFormData.paycheck.gross
+        : null,
+      net: props.passedFormData.paycheck
+        ? props.passedFormData.paycheck.net
+        : null,
+      taxes: props.passedFormData.paycheck
+        ? props.passedFormData.paycheck.taxes
+        : null,
+      health: props.passedFormData.paycheck
+        ? props.passedFormData.paycheck.health
+        : null,
+      pension: props.passedFormData.paycheck
+        ? props.passedFormData.paycheck.pension
+        : null,
+      fsa: props.passedFormData.paycheck
+        ? props.passedFormData.paycheck.fsa
+        : null,
+      dca: props.passedFormData.paycheck
+        ? props.passedFormData.paycheck.dca
+        : null,
+      union_dues: props.passedFormData.paycheck
+        ? props.passedFormData.paycheck.union_dues
+        : null,
+      four_fifty_seven_b: props.passedFormData.paycheck
+        ? props.passedFormData.paycheck.four_fifty_seven_b
+        : null,
+      payee_id: props.passedFormData.paycheck
+        ? props.passedFormData.paycheck.payee.id
+        : null,
+    };
+    tagToAdd.value = null;
+    tagAmount.value = null;
+    if (props.passedFormData.paycheck) {
+      isPaycheck.value = true;
+    } else {
+      isPaycheck.value = false;
+    }
+    tab.value = 0;
+    emit("updateDialog", false);
+  };
 
-const updateAmount = data => {
-  amount.value = data;
-};
+  /**
+   * `selectPaycheckChange` Handles when switching between paycheck or not.
+   */
+  const selectPaycheckChange = () => {
+    paycheck.value.dca = null;
+    paycheck.value.four_fifty_seven_b = null;
+    paycheck.value.fsa = null;
+    paycheck.value.gross = null;
+    paycheck.value.health = null;
+    paycheck.value.payee_id = null;
+    paycheck.value.pension = null;
+    paycheck.value.taxes = null;
+    paycheck.value.union_dues = null;
+    transactionForm.value.validate();
+  };
 
-const updateShowAmountCalculator = () => {
-  showAmountCalculator.value = !showAmountCalculator.value;
-};
+  /**
+   * `resetTagField` Convenience function adds total and Untagged as default option for tags.
+   */
+  const resetTagField = () => {
+    tagAmount.value = amount.value;
+  };
 
-const updateHealth = data => {
-  paycheck.value.health = data;
-};
+  /**
+   * `clickTagAdd` Adds a tag to the tag table.
+   */
+  const tagsUpdated = data => {
+    formData.value.details = data.tags;
+  };
 
-const updateShowHealthCalculator = () => {
-  showHealthCalculator.value = !showHealthCalculator.value;
-};
-// Lifecycle hook...
+  const updateAmount = data => {
+    amount.value = data;
+  };
 
-onMounted(() => {
-  // Perform actions on mount
-  watchPassedFormData();
-});
-const formatCurrencyNoSymbol = value => {
-  return new Intl.NumberFormat("en-US", {
-    style: "decimal",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    useGrouping: false,
-  }).format(value);
-};
+  const updateShowAmountCalculator = () => {
+    showAmountCalculator.value = !showAmountCalculator.value;
+  };
+
+  const updateHealth = data => {
+    paycheck.value.health = data;
+  };
+
+  const updateShowHealthCalculator = () => {
+    showHealthCalculator.value = !showHealthCalculator.value;
+  };
+  // Lifecycle hook...
+
+  onMounted(() => {
+    // Perform actions on mount
+    watchPassedFormData();
+  });
+  const formatCurrencyNoSymbol = value => {
+    return new Intl.NumberFormat("en-US", {
+      style: "decimal",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: false,
+    }).format(value);
+  };
 </script>
 <style>
-/* alt-pagination */
-.alt-pagination .bh-pagination .bh-page-item {
-  width: auto; /* equivalent to w-max */
-  min-width: 32px;
-  border-radius: 0.25rem; /* equivalent to rounded */
-}
-/* Customize the color of the selected page number */
-.alt-pagination .bh-pagination .bh-page-item.bh-active {
-  background-color: #06966a; /* Change this to your desired color */
-  border-color: black;
-  font-weight: bold; /* Optional: Make the text bold */
-}
-.alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-  background-color: #ff5900;
-  border-color: black;
-}
+  /* alt-pagination */
+  .alt-pagination .bh-pagination .bh-page-item {
+    width: auto; /* equivalent to w-max */
+    min-width: 32px;
+    border-radius: 0.25rem; /* equivalent to rounded */
+  }
+  /* Customize the color of the selected page number */
+  .alt-pagination .bh-pagination .bh-page-item.bh-active {
+    background-color: #06966a; /* Change this to your desired color */
+    border-color: black;
+    font-weight: bold; /* Optional: Make the text bold */
+  }
+  .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
+    background-color: #ff5900;
+    border-color: black;
+  }
 </style>

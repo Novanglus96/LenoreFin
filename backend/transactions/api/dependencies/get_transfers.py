@@ -9,7 +9,6 @@ from transactions.api.dependencies.transaction_utilities import (
     annotate_transaction_display_info,
     annotate_transaction_total,
     sort_transaction_list,
-    add_tags_to_transactions,
 )
 
 
@@ -50,9 +49,6 @@ def get_transfers(
 
     # Annotate transfers with pretty totals
     transfers = annotate_transaction_total(transfers, account_id)
-
-    # Add tags to transfers
-    transfers = add_tags_to_transactions(transfers)
 
     # Create list of TransactionOut objects
     transfers_list = [TransactionOut.from_orm(obj) for obj in transfers]
