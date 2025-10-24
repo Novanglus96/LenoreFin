@@ -79,6 +79,12 @@ services:
     container_name: lenorefin_proxy
     environment:
       - TZ=${TIMEZONE}
+  redis:
+    image: redis:7
+    container_name: lenorefin_redis
+    restart: always
+    ports:
+      - "6379:6379"
 
 volumes:
   postgres_data:

@@ -74,6 +74,12 @@ services:
       - POSTGRES_USER=${SQL_USER}
       - POSTGRES_PASSWORD=${SQL_PASSWORD}
       - POSTGRES_DB=${SQL_DATABASE}
+  redis:
+    image: redis:7
+    container_name: lenorefin_redis_dev
+    restart: always
+    ports:
+      - "6379:6379"
 
 volumes:
   postgres_data:
