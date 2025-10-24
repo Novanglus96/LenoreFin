@@ -79,7 +79,7 @@ def get_transactions_by_account(
     # Get reminder transactions
     if not cleared_only:
         reminder_transactions_list = get_reminder_transaction_list(
-            end_date, account, forecast
+            end_date, account_id, forecast
         )
 
     # Combine pending and reminder transactions

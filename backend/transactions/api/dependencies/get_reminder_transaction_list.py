@@ -72,6 +72,9 @@ def get_reminder_transaction_list(
             pretty_account = (
                 source_account_name + " => " + destination_account_name
             )
+            print(
+                f"reminder_account_id:{reminder.reminder_source_account.id} | account:{account}"
+            )
             if reminder.reminder_source_account.id == account:
                 pretty_total = -abs(reminder.amount)
             else:
