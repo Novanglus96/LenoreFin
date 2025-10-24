@@ -1,3 +1,10 @@
+# [1.2.0-rc.4](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.3...v1.2.0-rc.4) (2025-10-24)
+
+
+### Bug Fixes
+
+* forecasted reminder transfers had reverse pretty_total logic ([#50](https://github.com/Novanglus96/LenoreFin/issues/50)) ([82793c2](https://github.com/Novanglus96/LenoreFin/commit/82793c2038507065e1a51e9ab271990ce0534dad))
+
 # [1.2.0-rc.3](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.2...v1.2.0-rc.3) (2025-10-23)
 
 
