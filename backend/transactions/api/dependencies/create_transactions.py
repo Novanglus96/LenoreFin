@@ -291,9 +291,6 @@ def create_transactions(
                 detail_amt = trans_detail["detail_amt"]
                 tag_id = trans_detail["tag_id"]
                 full_toggle = trans_detail["full_toggle"]
-                print(
-                    f"index: {transaction_index}, amt: {detail_amt}, tag_id:{tag_id}"
-                )
                 detail = None
                 if transaction_type == "transactions":
                     detail = TransactionDetail(
