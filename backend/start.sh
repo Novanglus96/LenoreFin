@@ -27,5 +27,6 @@ python manage.py scheduletasks
 python manage.py load_version_fixture
 python manage.py loaddata administration/fixtures/graph_types
 python manage.py load_options
+python manage.py load_caches
 
 gunicorn backend.wsgi:application --bind 0.0.0.0:8000
