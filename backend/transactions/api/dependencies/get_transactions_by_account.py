@@ -2,19 +2,25 @@ from datetime import date
 from typing import List, Optional, Tuple
 from transactions.api.schemas.transaction import TransactionOut
 from accounts.models import Account
+from transactions.models import (
+    Transaction,
+    ReminderCacheTransaction,
+    ForecastCacheTransaction,
+)
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
 from transactions.api.dependencies.transaction_utilities import (
     sort_transaction_list,
     add_balances_to_transaction_list,
-    get_transactions_list,
+    annotate_transaction_display_info,
+    annotate_transaction_total,
+    add_tags_to_transactions,
+    sort_transactions,
+    annotate_transaction_balance,
 )
-from transactions.api.dependencies.get_reminder_transaction_list import (
-    get_reminder_transaction_list,
-)
-from transactions.api.dependencies.calculate_cc_bill import calculate_cc_bill
 from decimal import Decimal
+from django.db.models import Q
 
 
 def get_transactions_by_account(
@@ -39,11 +45,9 @@ def get_transactions_by_account(
     """
     # Setup variables
     today = get_todays_date_timezone_adjusted()
+    reminder_transactions_list = []
     cleared_transactions_list = []
     pending_transactions_list = []
-    reminder_transactions_list = []
-    cc_transactions_list = []
-    cc_payment_accounts_transactions_list = []
 
     # Check if account exists.  Return an empty list if not.
     try:
@@ -54,103 +58,97 @@ def get_transactions_by_account(
     # Get Account Info
     opening_balance = account.opening_balance
     archive_balance = account.archive_balance
-    cc_payment_accounts = Account.objects.filter(funding_account_id=account_id)
 
-    # Get cleared transactions and cleared balance
-    cleared_transactions_list, cleared_balance = get_transactions_list(
-        account_id,
-        end_date,
-        totals_only,
-        opening_balance,
-        archive_balance,
-        True,
-    )
+    # Get All transacitons
+    all_transactions = Transaction.objects.filter(
+        Q(source_account_id=account_id) | Q(destination_account_id=account_id),
+        transaction_date__lt=end_date,
+    ).exclude(status_id=4)
 
-    # Get pending transactions
-    pending_transactions_list, pending_balance = get_transactions_list(
-        account_id,
-        end_date,
-        totals_only,
-        opening_balance,
-        archive_balance,
-        False,
-    )
+    # Get Reminder transactions
+    reminder_transactions = ReminderCacheTransaction.objects.filter(
+        Q(source_account_id=account_id) | Q(destination_account_id=account_id),
+        transaction_date__lt=end_date,
+    ).exclude(status_id=4)
 
-    # Get reminder transactions
-    if not cleared_only:
-        reminder_transactions_list = get_reminder_transaction_list(
-            end_date, account_id, forecast
+    # Get Forecast transactions
+    forecast_transactions = ForecastCacheTransaction.objects.filter(
+        Q(source_account_id=account_id) | Q(destination_account_id=account_id),
+        transaction_date__lt=end_date,
+    ).exclude(status_id=4)
+
+    # If not totals only, annotate transactions with pretty information
+    if not totals_only:
+        all_transactions = annotate_transaction_display_info(all_transactions)
+        reminder_transactions = annotate_transaction_display_info(
+            reminder_transactions
+        )
+        forecast_transactions = annotate_transaction_display_info(
+            forecast_transactions
         )
 
-    # Combine pending and reminder transactions
-    transactions_to_be_sorted = (
-        pending_transactions_list + reminder_transactions_list
+    # Annotate pretty totals
+    all_transactions = annotate_transaction_total(all_transactions, account_id)
+    reminder_transactions = annotate_transaction_total(
+        reminder_transactions, account_id
+    )
+    forecast_transactions = annotate_transaction_total(
+        forecast_transactions, account_id
     )
 
-    # Add CC forecast transactions
-    cc_transactions_list = calculate_cc_bill(
-        account_id,
-        transactions_to_be_sorted + cleared_transactions_list,
-        start_date,
-        end_date,
-        False,
+    # Add tags to cleared transactions if not totals_only
+    if not totals_only:
+        all_transactions = add_tags_to_transactions(all_transactions)
+        reminder_transactions = add_tags_to_transactions(reminder_transactions)
+        forecast_transactions = add_tags_to_transactions(forecast_transactions)
+
+    # Sort and get balances for cleared transactions
+    cleared_transactions = all_transactions.exclude(status_id=1)
+    cleared_transactions = sort_transactions(cleared_transactions, True)
+    cleared_transactions = annotate_transaction_balance(
+        cleared_transactions, opening_balance, archive_balance
     )
+    cleared_balance = opening_balance + archive_balance
+    if cleared_transactions:
+        cleared_balance = (
+            cleared_transactions.order_by(
+                "custom_order", "transaction_date", "-pretty_total", "-id"
+            )
+            .last()
+            .balance
+        )
 
-    # Add CC funding transactions
-    if cc_payment_accounts:
-        for payment_account in cc_payment_accounts:
-            # Get cleared transactions and cleared balance
-            (
-                cleared_payment_account_transactions_list,
-                cleared_payment_account_balance,
-            ) = get_transactions_list(
-                payment_account.id,
-                end_date,
-                totals_only,
-                payment_account.opening_balance,
-                payment_account.archive_balance,
-                True,
-            )
-            # Get pending transactions
-            (
-                pending_payment_account_transactions_list,
-                pending_payment_account_balance,
-            ) = get_transactions_list(
-                payment_account.id,
-                end_date,
-                totals_only,
-                payment_account.opening_balance,
-                payment_account.archive_balance,
-                False,
-            )
-            # Get reminder transactions
-            if not cleared_only:
-                payment_account_reminder_transactions_list = (
-                    get_reminder_transaction_list(
-                        end_date, payment_account.id, forecast
-                    )
-                )
+    # Get pending transactions
+    pending_transactions = all_transactions.filter(status_id=1)
 
-            # Combine pending and reminder transactions
-            payment_account_transactions_to_be_sorted_list = (
-                pending_payment_account_transactions_list
-                + payment_account_reminder_transactions_list
-            )
-            payment_account_list = calculate_cc_bill(
-                payment_account.id,
-                payment_account_transactions_to_be_sorted_list
-                + cleared_payment_account_transactions_list,
-                start_date,
-                end_date,
-                True,
-            )
-            cc_payment_accounts_transactions_list += payment_account_list
+    # Create lists ot TransactionOut objects
+    cleared_transactions_list = [
+        TransactionOut.from_orm(obj) for obj in cleared_transactions
+    ]
+    pending_transactions_list = [
+        TransactionOut.from_orm(obj) for obj in pending_transactions
+    ]
+    reminder_transactions_list = [
+        TransactionOut.from_orm(obj).model_copy(
+            update={"id": -obj.id, "simulated": True}
+        )
+        for obj in reminder_transactions
+    ]
+    forecast_transactions_list = [
+        TransactionOut.from_orm(obj) for obj in forecast_transactions
+    ]
+    forecast_transactions_list = [
+        TransactionOut.from_orm(obj).model_copy(
+            update={"id": -obj.id - 10000, "simulated": True}
+        )
+        for obj in forecast_transactions
+    ]
 
-    # Add cc transactions to transactions to be sorted
+    # Combine lists to be sorted
     transactions_to_be_sorted = (
-        transactions_to_be_sorted
-        + cc_transactions_list
-        + cc_payment_accounts_transactions_list
+        pending_transactions_list
+        + reminder_transactions_list
+        + forecast_transactions_list
     )
 
     # Sort transactions
@@ -161,7 +159,7 @@ def get_transactions_by_account(
         sorted_transactions, cleared_balance
     )
 
-    # Combine cleared transactions with sorted transactions with balances
+    # Add cleared and pending
     transactions = cleared_transactions_list + sorted_transactions_with_balances
 
     # Filter transactions for status and greater than start date, record previous balance

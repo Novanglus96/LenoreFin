@@ -13,15 +13,13 @@ from django.db.models import (
     Window,
     Sum,
     ExpressionWrapper,
-    Q,
 )
 from django.db.models.functions import Concat, Coalesce
 from accounts.models import Account
 from django.db.models.functions import Abs
 from decimal import Decimal
-from typing import List, Tuple, Optional
+from typing import List, Optional
 from transactions.api.schemas.transaction import TransactionOut
-from datetime import date
 
 
 def annotate_transaction_display_info(
@@ -345,75 +343,6 @@ def add_balances_to_transaction_list(
             transaction.balance = running_total
 
     return transactions
-
-
-def get_transactions_list(
-    account_id: int,
-    end_date: date,
-    totals_only: bool,
-    opening_balance: Decimal,
-    archive_balance: Decimal,
-    cleared: bool,
-) -> Tuple[List[TransactionOut], Decimal]:
-    """
-    The function `add_balances_to_transaction_list` adds balances
-    to a list of transactions and returns the list
-
-    Args:
-        transactions (List): A list of transactions to update.
-        start_balance (Decimal): The starting balance.
-
-    Returns:
-        transactions: List of transactions with balances
-    """
-    # Set Status IDs
-    if cleared:  # Exclude archived and pending
-        status_ids = [1, 4]
-    else:  # Exclude Archived, Cleared, and Reconciled
-        status_ids = [2, 3, 4]
-    # Get transactions less then end date
-    transactions = Transaction.objects.filter(
-        Q(source_account_id=account_id) | Q(destination_account_id=account_id),
-        transaction_date__lt=end_date,
-    ).exclude(status_id__in=status_ids)
-
-    # If not totals only, annotate transactions with pretty information
-    if not totals_only:
-        transactions = annotate_transaction_display_info(transactions)
-
-    # Annotate pretty totals
-    transactions = annotate_transaction_total(transactions, account_id)
-
-    if cleared:
-        # Add custom sorting to Transactions
-        transactions = sort_transactions(transactions, True)
-
-        # Annotate Transactions with balance
-        transactions = annotate_transaction_balance(
-            transactions, opening_balance, archive_balance
-        )
-
-        # Calculate cumulative balance
-        balance = opening_balance + archive_balance
-        if transactions:
-            balance = (
-                transactions.order_by(
-                    "custom_order", "transaction_date", "-pretty_total", "-id"
-                )
-                .last()
-                .balance
-            )
-    else:
-        balance = 0
-
-    # Add tags to cleared transactions if not totals_only
-    if not totals_only:
-        transactions = add_tags_to_transactions(transactions)
-
-    # Create list of cleared TransactionOut objects
-    transactions_list = [TransactionOut.from_orm(obj) for obj in transactions]
-
-    return transactions_list, balance
 
 
 def add_tag_totals(
