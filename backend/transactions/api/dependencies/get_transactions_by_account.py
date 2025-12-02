@@ -21,6 +21,7 @@ from transactions.api.dependencies.transaction_utilities import (
 )
 from decimal import Decimal
 from django.db.models import Q
+from django.core.cache import cache
 
 
 def get_transactions_by_account(
@@ -43,6 +44,13 @@ def get_transactions_by_account(
     Returns:
         transactions: List of transaction objects
     """
+    # Check Cache
+    key = f"account_transactions_{account_id}_{end_date}_{totals_only}_{forecast}_{start_date}_{cleared_only}"
+
+    data = cache.get(key)
+    if data:
+        return data
+
     # Setup variables
     today = get_todays_date_timezone_adjusted()
     reminder_transactions_list = []
@@ -200,6 +208,10 @@ def get_transactions_by_account(
                 previous_balance = previous_transactions[-1]["balance"]
             else:
                 previous_balance = previous_transactions[-1].balance
-        return filtered_transactions, previous_balance
+        my_tuple = (filtered_transactions, previous_balance)
+        cache.set(key, my_tuple, timeout=60 * 60)
+        return my_tuple
     else:
-        return transactions, Decimal(0.00)
+        my_tuple = (transactions, Decimal(0.00))
+        cache.set(key, my_tuple, timeout=60 * 60)
+        return my_tuple

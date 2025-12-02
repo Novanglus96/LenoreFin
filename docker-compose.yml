@@ -37,6 +37,7 @@ services:
       - 8002:8002
     depends_on:
       - db
+      - redis
     networks:
       - default
     image: lenorefin_backend:development
@@ -56,6 +57,7 @@ services:
     depends_on:
       - db
       - backend
+      - redis
     networks:
       - default
     image: lenorefin_worker:development
@@ -74,6 +76,12 @@ services:
       - POSTGRES_USER=${SQL_USER}
       - POSTGRES_PASSWORD=${SQL_PASSWORD}
       - POSTGRES_DB=${SQL_DATABASE}
+  redis:
+    image: redis:7-alpine
+    container_name: lenorefin_redis_dev
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
 
 volumes:
   postgres_data:

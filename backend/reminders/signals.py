@@ -5,6 +5,7 @@ from transactions.models import (
     ReminderCacheTransaction,
 )
 from django_q.tasks import async_task
+from backend.utils.cache import delete_pattern
 
 
 @receiver(post_save, sender=Reminder)
@@ -21,3 +22,21 @@ def update_reminder_cache_on_delete(sender, instance, **kwargs):
     Remove entries from the reminder scratch table when a Reminder is deleted.
     """
     ReminderCacheTransaction.objects.filter(reminder=instance).delete()
+
+
+@receiver(post_save, sender=Reminder)
+def invalidate_cache_on_save(sender, instance, **kwargs):
+    """
+    Update the reminder scratch/cache table when a Reminder is created or updated.
+    """
+    pattern = f"*account_transactions_{instance.account_id}*"
+    delete_pattern(pattern)
+
+
+@receiver(post_delete, sender=Reminder)
+def invalidate_cache_on_delete(sender, instance, **kwargs):
+    """
+    Remove entries from the reminder scratch table when a Reminder is deleted.
+    """
+    pattern = f"*account_transactions_{instance.account_id}*"
+    delete_pattern(pattern)

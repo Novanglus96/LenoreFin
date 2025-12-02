@@ -808,14 +808,18 @@ def update_cc_forecast_cache(account_id):
 
     """
     try:
+        # Get the account object
+        account = Account.objects.get(id=account_id)
+
+        # Exit if not cc account
+        if account.account_type.id != 1:
+            return
+
         # Delete any existing cache entries for this reminder
         ForecastCacheTransaction.objects.filter(
             Q(source_account_id=account_id)
             | Q(destination_account_id=account_id)
         ).delete()
-
-        # Get the account object
-        account = Account.objects.get(id=account_id)
 
         # Exit if this is not CC or cc calculations are turned off
         if not account.calculate_payments:

@@ -27,6 +27,7 @@ services:
       - 8000
     depends_on:
       - db
+      - redis
     networks:
       - default
     env_file:
@@ -44,6 +45,7 @@ services:
     depends_on:
       - db
       - backend
+      - redis
     networks:
       - default
     env_file:
@@ -79,6 +81,12 @@ services:
     container_name: lenorefin_proxy
     environment:
       - TZ=${TIMEZONE}
+  redis:
+    image: redis:7-alpine
+    container_name: lenorefin_redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
 
 volumes:
   postgres_data:
