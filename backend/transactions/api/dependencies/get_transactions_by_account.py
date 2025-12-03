@@ -106,9 +106,13 @@ def get_transactions_by_account(
 
     # Add tags to cleared transactions if not totals_only
     if not totals_only:
-        all_transactions = add_tags_to_transactions(all_transactions)
-        reminder_transactions = add_tags_to_transactions(reminder_transactions)
-        forecast_transactions = add_tags_to_transactions(forecast_transactions)
+        all_transactions = add_tags_to_transactions(all_transactions, "t")
+        reminder_transactions = add_tags_to_transactions(
+            reminder_transactions, "r"
+        )
+        forecast_transactions = add_tags_to_transactions(
+            forecast_transactions, "f"
+        )
 
     # Sort and get balances for cleared transactions
     cleared_transactions = all_transactions.exclude(status_id=1)

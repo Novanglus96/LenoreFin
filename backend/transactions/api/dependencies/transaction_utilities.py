@@ -1,4 +1,9 @@
-from transactions.models import Transaction, TransactionDetail
+from transactions.models import (
+    Transaction,
+    TransactionDetail,
+    ReminderCacheTransactionDetail,
+    ForecastCacheTransactionDetail,
+)
 from django.db.models.query import QuerySet
 from django.db.models import (
     Case,
@@ -141,12 +146,7 @@ def sort_transactions(
                 default=Value(1),
                 output_field=IntegerField(),
             )
-        ).order_by(
-            "custom_order",
-            "transaction_date",
-            "-total_amount",
-            "id",
-        )
+        ).order_by("custom_order", "transaction_date", "-pretty_total", "-id")
     else:
         transactions = transactions.annotate(
             custom_order=Case(
@@ -159,8 +159,8 @@ def sort_transactions(
         ).order_by(
             "-custom_order",
             "-transaction_date",
-            "total_amount",
-            "-id",
+            "pretty_total",
+            "id",
         )
 
     return transactions
@@ -206,8 +206,8 @@ def annotate_transaction_balance(
 
 
 def add_tags_to_transactions(
-    transactions: QuerySet[Transaction],
-) -> QuerySet[Transaction]:
+    transactions: QuerySet, type: str = "t"
+) -> QuerySet:
     """
     add_tags_to_transactions _summary_
 
@@ -215,9 +215,19 @@ def add_tags_to_transactions(
     """
     # Add tags to transactions
     for transaction in transactions:
-        transaction_details = TransactionDetail.objects.filter(
-            transaction_id=transaction.id
-        )
+        transaction_details = None
+        if type == "t":
+            transaction_details = TransactionDetail.objects.filter(
+                transaction_id=transaction.id
+            )
+        if type == "r":
+            transaction_details = ReminderCacheTransactionDetail.objects.filter(
+                transaction_id=transaction.id
+            )
+        if type == "f":
+            transaction_details = ForecastCacheTransactionDetail.objects.filter(
+                transaction_id=transaction.id
+            )
         details = list(transaction_details)
         tag_list = list(
             transaction_details.annotate(
