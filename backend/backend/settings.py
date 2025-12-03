@@ -210,6 +210,14 @@ LOGGING = {
             "formatter": "detailed",
             "level": "DEBUG",
         },
+        "task_file_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOG_DIR / "error.log"),
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 5,
+            "formatter": "standard",
+            "level": "INFO",
+        },
     },
     # ---------- LOGGERS ----------
     "loggers": {
@@ -228,6 +236,11 @@ LOGGING = {
         "error": {
             "handlers": ["error_file_handler"],
             "level": "DEBUG",
+            "propagate": False,
+        },
+        "task": {
+            "handlers": ["task_file_handler", "stdout_handler"],
+            "level": "INFO",
             "propagate": False,
         },
     },

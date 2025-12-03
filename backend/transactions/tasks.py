@@ -66,6 +66,12 @@ from transactions.api.dependencies.get_transactions_by_tag import (
 from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP
 from backend.utils.cache import delete_pattern
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 
 def create_backup(clean=True, keep=0):
@@ -452,7 +458,10 @@ def finish_imports():
                         transactions_to_create.append(trans)
                     except Exception as f:
                         errors += 1
-                        print(f"#{step} - Error adding row to bulk : {f}")
+                        task_logger.warning(
+                            f"#{step} - Error adding row to bulk"
+                        )
+                        error_logger.warning(f"{f}")
 
                 if create_transactions(transactions_to_create):
 
@@ -467,30 +476,17 @@ def finish_imports():
                     success = True
 
                     # Log success
-                    print(
+                    task_logger.info(
                         f"Import # {file_import.id} succeeded with {errors} errors"
-                    )
-                    logToDB(
-                        f"Import # {file_import.id} succeeded with {errors} errors",
-                        None,
-                        None,
-                        None,
-                        3002001,
-                        2,
                     )
                 else:
                     raise Exception("Unable to create transactions: ")
 
             except Exception as e:
                 success = False
-                print(f"Import # {file_import.id} failed : {str(e)}")
-                logToDB(
-                    f"Import # {file_import.id} failed : {str(e)}",
-                    None,
-                    None,
-                    None,
-                    3002901,
-                    3,
+                task_logger.warning(f"Import # {file_import.id} failed")
+                error_logger.warning(
+                    f"Import # {file_import.id} failed : {str(e)}"
                 )
             file_import.successful = success
             file_import.errors = errors
@@ -663,7 +659,7 @@ def archive_transactions():
                 account.archive_balance = account.balance
                 account.save()
         else:
-            print("No auto archive")
+            task_logger.info("No auto archive")
         logToDB(
             "Transactions successfully archived.",
             None,
@@ -674,14 +670,14 @@ def archive_transactions():
         )
     except Exception as e:
         logToDB(
-            f"Transactions not archived: {e}",
+            f"Transactions not archived: {str(e)}",
             None,
             None,
             None,
             3001902,
             2,
         )
-        return f"Error archiving transactions: {e}"
+        return f"Error archiving transactions: {str(e)}"
 
 
 def update_reminder_cache(reminder_id):
@@ -801,7 +797,8 @@ def update_reminder_cache(reminder_id):
             pattern = f"*account_transactions_{reminder.reminder_destination_account.id}*"
             delete_pattern(pattern)
     except Exception as e:
-        print(f"There was an error creating cache: {e}")
+        task_logger.warning("There was an error creating cache")
+        error_logger.warning(f"{str(e)}")
 
 
 def update_cc_forecast_cache(account_id):
@@ -1000,7 +997,8 @@ def update_cc_forecast_cache(account_id):
         pattern = f"*account_transactions_{account_id}*"
         delete_pattern(pattern)
     except Exception as e:
-        print(f"There was an error creating cache: {e}")
+        api_logger.warning("There was an error creating cache")
+        error_logger.warning(f"{str(e)}")
 
 
 def generate_statement_cycles(

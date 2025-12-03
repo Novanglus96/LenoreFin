@@ -10,6 +10,12 @@ from transactions.models import (
 )
 from django.db import transaction
 from administration.api.dependencies.log_to_db import logToDB
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 
 def create_transactions(
@@ -132,7 +138,7 @@ def create_transactions(
                                         )
                         except Exception as e:
                             logToDB(
-                                f"Transaction detail creation error: {e}",
+                                f"Transaction detail creation error: {str(e)}",
                                 None,
                                 None,
                                 None,
@@ -141,33 +147,19 @@ def create_transactions(
                             )
                     except Exception as e:
                         logToDB(
-                            f"Transaction creation error: {e}",
+                            f"Transaction creation error: {str(e)}",
                             None,
                             None,
                             None,
                             3001901,
                             2,
                         )
-                logToDB(
-                    "Transaction(s) created successfully",
-                    None,
-                    None,
-                    None,
-                    3001001,
-                    1,
-                )
+                api_logger.info("Transaction(s) created successfully")
                 return True
             except Exception as e:
-                print(f"Unable to create transaction(s): {e}")
                 transaction.rollback()
-                logToDB(
-                    f"Transaction(s) not created: {e}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
+                api_logger.warning("Transaction(s) not created")
+                error_logger.warning(f"{str(e)}")
                 return False
     else:
         try:
@@ -278,7 +270,7 @@ def create_transactions(
                 )
             except Exception as e:
                 logToDB(
-                    f"Transaction chunks not created: {e}",
+                    f"Transaction chunks not created: {str(e)}",
                     None,
                     None,
                     None,
@@ -345,7 +337,7 @@ def create_transactions(
                 )
             except Exception as e:
                 logToDB(
-                    f"Transaction detail chunks not created: {e}",
+                    f"Transaction detail chunks not created: {str(e)}",
                     None,
                     None,
                     None,
@@ -364,7 +356,7 @@ def create_transactions(
             return True
         except Exception as e:
             logToDB(
-                f"Transaction(s) not created: {e}",
+                f"Transaction(s) not created: {str(e)}",
                 None,
                 None,
                 None,
