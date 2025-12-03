@@ -191,7 +191,7 @@ LOGGING = {
             "maxBytes": 1024 * 1024 * 5,  # 5MB
             "backupCount": 5,
             "formatter": "standard",
-            "level": "INFO",
+            "level": "DEBUG",
         },
         # Writes INFO+ API activity to file
         "api_file_handler": {
@@ -200,7 +200,7 @@ LOGGING = {
             "maxBytes": 1024 * 1024 * 5,
             "backupCount": 5,
             "formatter": "standard",
-            "level": "INFO",
+            "level": "DEBUG",
         },
         "error_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -212,11 +212,11 @@ LOGGING = {
         },
         "task_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": str(LOG_DIR / "error.log"),
+            "filename": str(LOG_DIR / "task.log"),
             "maxBytes": 1024 * 1024 * 5,
             "backupCount": 5,
             "formatter": "standard",
-            "level": "INFO",
+            "level": "DEBUG",
         },
     },
     # ---------- LOGGERS ----------
@@ -224,13 +224,13 @@ LOGGING = {
         # Database operations logger
         "db": {
             "handlers": ["db_file_handler", "stdout_handler"],
-            "level": "INFO",
+            "level": "DEBUG",
             "propagate": False,
         },
         # API activity logger
         "api": {
             "handlers": ["api_file_handler", "stdout_handler"],
-            "level": "INFO",
+            "level": "DEBUG",
             "propagate": False,
         },
         "error": {
@@ -240,7 +240,7 @@ LOGGING = {
         },
         "task": {
             "handlers": ["task_file_handler", "stdout_handler"],
-            "level": "INFO",
+            "level": "DEBUG",
             "propagate": False,
         },
     },

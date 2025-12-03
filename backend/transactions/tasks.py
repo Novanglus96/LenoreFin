@@ -659,7 +659,7 @@ def archive_transactions():
                 account.archive_balance = account.balance
                 account.save()
         else:
-            task_logger.info("No auto archive")
+            task_logger.debug("No auto archive")
         logToDB(
             "Transactions successfully archived.",
             None,

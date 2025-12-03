@@ -154,7 +154,7 @@ def create_transactions(
                             3001901,
                             2,
                         )
-                api_logger.info("Transaction(s) created successfully")
+                api_logger.debug("Transaction(s) created successfully")
                 return True
             except Exception as e:
                 transaction.rollback()
