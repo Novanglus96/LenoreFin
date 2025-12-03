@@ -106,7 +106,6 @@ def get_transactions_by_account(
 
     # Add tags to cleared transactions if not totals_only
     if not totals_only:
-        all_transactions = add_tags_to_transactions(all_transactions, "t")
         reminder_transactions = add_tags_to_transactions(
             reminder_transactions, "r"
         )
@@ -129,9 +128,17 @@ def get_transactions_by_account(
             .last()
             .balance
         )
+    if not totals_only:
+        cleared_transactions = add_tags_to_transactions(
+            cleared_transactions, "t"
+        )
 
     # Get pending transactions
     pending_transactions = all_transactions.filter(status_id=1)
+    if not totals_only:
+        pending_transactions = add_tags_to_transactions(
+            pending_transactions, "t"
+        )
 
     # Create lists ot TransactionOut objects
     cleared_transactions_list = [
