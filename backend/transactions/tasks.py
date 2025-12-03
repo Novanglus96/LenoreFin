@@ -65,6 +65,7 @@ from transactions.api.dependencies.get_transactions_by_tag import (
 )
 from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP
+from backend.utils.cache import delete_pattern
 
 
 def create_backup(clean=True, keep=0):
@@ -793,6 +794,13 @@ def update_reminder_cache(reminder_id):
                     )
 
         create_transactions(transactions_to_create, "reminder")
+        pattern = (
+            f"*account_transactions_{reminder.reminder_source_account.id}*"
+        )
+        delete_pattern(pattern)
+        if reminder.reminder_destination_account is not None:
+            pattern = f"*account_transactions_{reminder.reminder_destination_account.id}*"
+            delete_pattern(pattern)
     except Exception as e:
         print(f"There was an error creating cache: {e}")
 
@@ -826,8 +834,6 @@ def update_cc_forecast_cache(account_id):
             return
 
         # Define account variables
-        due_date = account.due_date
-        next_cycle_date = account.next_cycle_date
         statement_cycle_length = account.statement_cycle_length
         statement_cycle_period = account.statement_cycle_period
         funding_account = account.funding_account
@@ -841,55 +847,22 @@ def update_cc_forecast_cache(account_id):
         status = TransactionStatus.objects.get(id=1)
         interest_calculations = account.calculate_interest
         transactions_to_create = []
+        statement_day = account.statement_day
+        due_day = account.due_day
+        pay_day = account.pay_day
+        non_trans_bal = account.archive_balance + account.opening_balance
 
         # Get real transactions for this account
-        transactions_qs = (
-            Transaction.objects.filter(
-                Q(source_account_id=account_id)
-                | Q(destination_account_id=account_id)
-            )
-            .exclude(status_id=4)
-            .values(
-                "id",
-                "transaction_date",
-                "total_amount",
-                "status",
-                "memo",
-                "description",
-                "edit_date",
-                "add_date",
-                "transaction_type",
-                "paycheck",
-                "checkNumber",
-                "source_account",
-                "destination_account",
-            )
-        )
+        transactions_qs = Transaction.objects.filter(
+            Q(source_account_id=account_id)
+            | Q(destination_account_id=account_id)
+        ).exclude(status_id=4)
 
         # Get Reminder transactions for this account
-        reminder_cache_qs = (
-            ReminderCacheTransaction.objects.filter(
-                Q(source_account_id=account_id)
-                | Q(destination_account_id=account_id)
-            )
-            .exclude(status_id=4)
-            .values(
-                "id",
-                "transaction_date",
-                "transaction_date",
-                "total_amount",
-                "status",
-                "memo",
-                "description",
-                "edit_date",
-                "add_date",
-                "transaction_type",
-                "paycheck",
-                "checkNumber",
-                "source_account",
-                "destination_account",
-            )
-        )
+        reminder_cache_qs = ReminderCacheTransaction.objects.filter(
+            Q(source_account_id=account_id)
+            | Q(destination_account_id=account_id)
+        ).exclude(status_id=4)
 
         # Annotate pretty totals
         transactions_qs = annotate_transaction_total(
@@ -901,14 +874,16 @@ def update_cc_forecast_cache(account_id):
 
         # Calculate statement cycles
         statement_cycles = generate_statement_cycles(
-            next_cycle_date,
-            due_date,
+            statement_day,
+            due_day,
+            pay_day,
             end_date,
             statement_cycle_length,
             statement_cycle_period,
             transactions_qs,
             reminder_cache_qs,
             account_id,
+            non_trans_bal,
         )
 
         # Calculate statement transactions
@@ -922,12 +897,27 @@ def update_cc_forecast_cache(account_id):
             total_debits += cycle["statement_debits"]
             cycle_balance = Decimal(0.00)
             cycle_interest = Decimal(0.00)
+            previous_balance = cycle["previous_balance"]
             cycle_balance = (
-                total_credits + total_debits + total_interest + total_payments
+                total_credits
+                + total_debits
+                + total_interest
+                + total_payments
+                + previous_balance
             )
+            print(f"cycle_start: {cycle['statement_start']}")
+            print(f"cycle_end: {cycle['statement_end']}")
+            print(f"cycle_due: {cycle['statement_due']}")
+            print(f"cycle_pay: {cycle['statement_pay_day']}")
+            print(f"cycle_balance: {cycle_balance}")
+            print(f"prev_bal: {previous_balance}")
+            print(f"total_credits: {total_credits}")
+            print(f"total_debits: {total_debits}")
+            print(f"total_interest: {total_interest}")
+            print(f"total_payments: {total_payments}")
             cycle_payment = Decimal(0.00)
             # Calculate Interest
-            if x > 0 and interest_calculations:
+            if interest_calculations:
                 # If we are past due date, calculate interest
                 if statement_cycles[0]["statement_due"] < today:
                     if cycle_balance != cycle["statement_debits"]:
@@ -970,72 +960,71 @@ def update_cc_forecast_cache(account_id):
                             transactions_to_create.append(transaction)
                             temp_id -= 1
             # Calculate Payment
-            if x > 0:
-                if cycle_balance < 0:
-                    if payment_strategy == "F":
+            if cycle_balance < 0:
+                if payment_strategy == "F":
+                    cycle_payment = abs(cycle_balance) + abs(cycle_interest)
+                elif payment_strategy == "M":
+                    if (
+                        abs(cycle_balance) + abs(cycle_interest)
+                        >= minimum_payment_amount
+                    ):
+                        cycle_payment = minimum_payment_amount
+                    else:
                         cycle_payment = abs(cycle_balance) + abs(cycle_interest)
-                    elif payment_strategy == "M":
-                        if (
-                            abs(cycle_balance) + abs(cycle_interest)
-                            >= minimum_payment_amount
-                        ):
-                            cycle_payment = minimum_payment_amount
-                        else:
-                            cycle_payment = abs(cycle_balance) + abs(
-                                cycle_interest
-                            )
-                    elif payment_strategy == "C":
-                        if (
-                            abs(cycle_balance) + abs(cycle_interest)
-                            >= payment_amount
-                        ):
-                            cycle_payment = payment_amount
-                        else:
-                            cycle_payment = abs(cycle_balance) + abs(
-                                cycle_interest
-                            )
-                    if cycle["statement_due"] > today:
-                        tags = []
-                        tag_obj = CustomTag(
-                            tag_name="Credit Card",
-                            tag_amount=abs(cycle_payment),
-                            tag_id=9,
-                            tag_full_toggle=True,
-                        )
-                        tags.append(tag_obj)
-                        transaction = FullTransaction(
-                            transaction_date=cycle["statement_due"],
-                            total_amount=abs(cycle_payment),
-                            status_id=status.id,
-                            memo=None,
-                            description=f"({account.account_name} Estimated Payment)",
-                            edit_date=today,
-                            add_date=today,
-                            transaction_type_id=3,
-                            paycheck_id=None,
-                            source_account_id=funding_account.id,
-                            destination_account_id=account_id,
-                            tags=tags,
-                            checkNumber=None,
-                        )
-                        transactions_to_create.append(transaction)
-                        total_payments += cycle_payment
-                        temp_id -= 1
+                elif payment_strategy == "C":
+                    if (
+                        abs(cycle_balance) + abs(cycle_interest)
+                        >= payment_amount
+                    ):
+                        cycle_payment = payment_amount
+                    else:
+                        cycle_payment = abs(cycle_balance) + abs(cycle_interest)
+                if cycle["statement_due"] > today:
+                    tags = []
+                    tag_obj = CustomTag(
+                        tag_name="Credit Card",
+                        tag_amount=abs(cycle_payment),
+                        tag_id=9,
+                        tag_full_toggle=True,
+                    )
+                    tags.append(tag_obj)
+                    transaction = FullTransaction(
+                        transaction_date=cycle["statement_pay_day"],
+                        total_amount=abs(cycle_payment),
+                        status_id=status.id,
+                        memo=None,
+                        description=f"({account.account_name} Estimated Payment)",
+                        edit_date=today,
+                        add_date=today,
+                        transaction_type_id=3,
+                        paycheck_id=None,
+                        source_account_id=funding_account.id,
+                        destination_account_id=account_id,
+                        tags=tags,
+                        checkNumber=None,
+                    )
+                    transactions_to_create.append(transaction)
+                    total_payments += cycle_payment
+                    temp_id -= 1
             x += 1
         create_transactions(transactions_to_create, "forecast")
+        pattern = f"*account_transactions_{account_id}*"
+        delete_pattern(pattern)
     except Exception as e:
         print(f"There was an error creating cache: {e}")
 
 
 def generate_statement_cycles(
-    last_statement_end_date: date,
-    last_statment_due_date: date,
+    statement_day: int,
+    due_day: int,
+    pay_day: int,
     forecast_end_date: date,
     statement_cycle_length: int,
     statement_cycle_period: str,
     transactions: QuerySet,
     reminder_transactions: QuerySet,
     account_id: int,
+    non_trans_bal: Decimal,
 ):
     """
     The function `generate_statement_cycle` generates a list of dictionaries of statement
@@ -1054,18 +1043,36 @@ def generate_statement_cycles(
         (List[dict]): A list of dictionaries of statement information
     """
     statement_cycles = []
-    statement_start = increment_date(
-        last_statement_end_date,
-        statement_cycle_period,
-        -(statement_cycle_length),
-    )
-    statement_due = increment_date(last_statment_due_date, "m", -1)
+    today = get_todays_date_timezone_adjusted()
+    one_month_prior = today - relativedelta(months=1)
+    statement_start = today
+    statement_due = today
+    statement_pay_day = today
+
+    if today.day > statement_day:
+        statement_start = today.replace(day=statement_day)
+    else:
+        statement_start = one_month_prior.replace(day=statement_day)
+    statement_due = statement_start + relativedelta(months=1)
+    statement_due = statement_due.replace(day=due_day)
+    statement_pay_day = statement_start + relativedelta(months=1)
+    statement_pay_day = statement_pay_day.replace(day=pay_day)
+
+    previous_balance = (
+        transactions.filter(
+            transaction_date__lte=statement_start,
+        ).aggregate(
+            sum=Sum("pretty_total")
+        )["sum"]
+        or 0
+    ) + non_trans_bal
     while statement_start <= forecast_end_date:
         statement_end = increment_date(
             statement_start, statement_cycle_period, statement_cycle_length
         )
 
         statement_due = increment_date(statement_due, "m", 1)
+        statement_pay_day = increment_date(statement_pay_day, "m", 1)
         statement_transaction_credits = (
             transactions.filter(
                 transaction_date__gt=statement_start,
@@ -1112,12 +1119,13 @@ def generate_statement_cycles(
                 "statement_start": statement_start,
                 "statement_end": statement_end,
                 "statement_due": statement_due,
+                "statement_pay_day": statement_pay_day,
                 "statement_credits": statement_credits,
                 "statement_debits": statement_debits,
+                "previous_balance": previous_balance,
             }
         )
         statement_start = statement_end
-
     return statement_cycles
 
 

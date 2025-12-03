@@ -14,7 +14,7 @@ def update_forecast_cache_on_save(sender, instance, **kwargs):
         "transactions.tasks.update_cc_forecast_cache",
         instance.source_account.id,
     )
-    if instance.destination_account:
+    if instance.destination_account is not None:
         async_task(
             "transactions.tasks.update_cc_forecast_cache",
             instance.destination_account.id,
@@ -30,7 +30,7 @@ def update_forecast_cache_on_delete(sender, instance, **kwargs):
         "transactions.tasks.update_cc_forecast_cache",
         instance.source_account.id,
     )
-    if instance.destination_account:
+    if instance.destination_account is not None:
         async_task(
             "transactions.tasks.update_cc_forecast_cache",
             instance.destination_account.id,
@@ -44,7 +44,7 @@ def invalidate_cache_on_save(sender, instance, **kwargs):
     """
     pattern = f"*account_transactions_{instance.source_account.id}*"
     delete_pattern(pattern)
-    if instance.destination_account:
+    if instance.destination_account is not None:
         pattern = f"*account_transactions_{instance.destination_account.id}*"
         delete_pattern(pattern)
 
@@ -56,6 +56,6 @@ def invalidate_cache_on_delete(sender, instance, **kwargs):
     """
     pattern = f"*account_transactions_{instance.source_account.id}*"
     delete_pattern(pattern)
-    if instance.destination_account:
+    if instance.destination_account is not None:
         pattern = f"*account_transactions_{instance.destination_account.id}*"
         delete_pattern(pattern)
