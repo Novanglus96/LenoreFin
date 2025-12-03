@@ -872,16 +872,26 @@
     }).format(value);
   };
   const formatDate = (input, padDay = false) => {
-    // Normalize input to a Date object
-    const date = input instanceof Date ? input : new Date(input);
+    let date;
+
+    // If input is already a Date object, trust it
+    if (input instanceof Date) {
+      date = input;
+    } else if (typeof input === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
+      // Manual parse YYYY-MM-DD to LOCAL date (no timezone shift)
+      const [y, m, d] = input.split("-").map(Number);
+      date = new Date(y, m - 1, d);
+    } else {
+      date = new Date(input); // fallback for timestamps
+    }
 
     if (isNaN(date)) {
       console.warn("Invalid date:", input);
       return "";
     }
 
-    const month = date.toLocaleString("en-US", { month: "short" }); // 'Sep'
-    const day = date.getDate(); // 16
+    const month = date.toLocaleString("en-US", { month: "short" });
+    const day = date.getDate();
 
     return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
   };
