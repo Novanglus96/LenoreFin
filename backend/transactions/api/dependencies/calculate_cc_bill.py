@@ -232,7 +232,6 @@ def generate_statement_cycles(
     Returns:
         (List[dict]): A list of dictionaries of statement information
     """
-    print(f"{transactions}")
     statement_cycles = []
     statement_start = increment_date(
         last_statement_end_date,

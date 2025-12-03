@@ -521,7 +521,6 @@ def archive_transactions():
             past_date = today - relativedelta(years=year_offset)
             cutoff_year = past_date.year
             cutoff_date = date(cutoff_year, 12, 31)
-            print(f"Cutoff date: {cutoff_date}")
 
             # Set matching transactions status to archive
             transactions = Transaction.objects.filter(
@@ -905,16 +904,6 @@ def update_cc_forecast_cache(account_id):
                 + total_payments
                 + previous_balance
             )
-            print(f"cycle_start: {cycle['statement_start']}")
-            print(f"cycle_end: {cycle['statement_end']}")
-            print(f"cycle_due: {cycle['statement_due']}")
-            print(f"cycle_pay: {cycle['statement_pay_day']}")
-            print(f"cycle_balance: {cycle_balance}")
-            print(f"prev_bal: {previous_balance}")
-            print(f"total_credits: {total_credits}")
-            print(f"total_debits: {total_debits}")
-            print(f"total_interest: {total_interest}")
-            print(f"total_payments: {total_payments}")
             cycle_payment = Decimal(0.00)
             # Calculate Interest
             if interest_calculations:
