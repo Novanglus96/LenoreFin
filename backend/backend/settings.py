@@ -169,6 +169,11 @@ LOGGING = {
         "standard": {
             "format": "[%(asctime)s] %(levelname)s:%(name)s: %(message)s",
         },
+        "detailed": {
+            "format": "[%(asctime)s] %(levelname)s %(name)s "
+            "%(filename)s:%(lineno)d %(funcName)s(): %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
     },
     # ---------- HANDLERS ----------
     "handlers": {
@@ -197,19 +202,32 @@ LOGGING = {
             "formatter": "standard",
             "level": "INFO",
         },
+        "error_file_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOG_DIR / "error.log"),
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 5,
+            "formatter": "detailed",
+            "level": "DEBUG",
+        },
     },
     # ---------- LOGGERS ----------
     "loggers": {
         # Database operations logger
-        "lenorefin.db": {
+        "db": {
             "handlers": ["db_file_handler", "stdout_handler"],
             "level": "INFO",
             "propagate": False,
         },
         # API activity logger
-        "lenorefin.api": {
+        "api": {
             "handlers": ["api_file_handler", "stdout_handler"],
             "level": "INFO",
+            "propagate": False,
+        },
+        "error": {
+            "handlers": ["error_file_handler"],
+            "level": "DEBUG",
             "propagate": False,
         },
     },
