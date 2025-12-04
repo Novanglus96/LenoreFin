@@ -1,3 +1,10 @@
+# [1.2.0-rc.5](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.4...v1.2.0-rc.5) (2025-12-04)
+
+
+### Features
+
+* caching tables ([#51](https://github.com/Novanglus96/LenoreFin/issues/51)) ([cc9c651](https://github.com/Novanglus96/LenoreFin/commit/cc9c651b2fcdf5a53178068ccbbd6d406452fea0))
+
 # [1.2.0-rc.4](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.3...v1.2.0-rc.4) (2025-10-24)
 
 
