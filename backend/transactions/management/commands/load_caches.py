@@ -11,6 +11,12 @@ from transactions.models import (
 from django.db import connection
 from django.core.management import call_command
 from io import StringIO
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 
 class Command(BaseCommand):
@@ -30,19 +36,15 @@ class Command(BaseCommand):
         reset_ids_for_model("transactions", "forecastcachetransactiondetail")
 
         # Recreate Reminder Cache for all reminders
+        task_logger.info("Recreating reminder cache for all reminders")
         for reminder in Reminder.objects.all():
-            self.stdout.write(
-                self.style.NOTICE(
-                    f"Loading cache for Reminder ID#{reminder.id}..."
-                )
-            )
+            task_logger.debug(f"Loading cache for Reminder ID#{reminder.id}")
             update_reminder_cache(reminder.id)
 
         # Recreate Forecast Cache for all CC Accounts
+        task_logger.info("Recreating forecast cache for all CC accounts")
         for account in Account.objects.filter(account_type_id=1):
-            self.stdout.write(
-                self.style.NOTICE(f"Loading cache for account #{account.id}...")
-            )
+            task_logger.debug(f"Loading cache for account #{account.id}")
             update_cc_forecast_cache(account.id)
 
 
