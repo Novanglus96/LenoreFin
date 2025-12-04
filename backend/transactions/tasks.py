@@ -8,12 +8,18 @@ Date: February 15, 2024
 
 from transactions.models import (
     Transaction,
+    ReminderCacheTransaction,
+    ForecastCacheTransaction,
+    TransactionStatus,
 )
 from tags.api.dependencies.custom_tag import CustomTag
 from transactions.api.dependencies.create_transactions import (
     create_transactions,
 )
 from transactions.api.dependencies.full_transaction import FullTransaction
+from transactions.api.dependencies.full_reminder_transaction import (
+    FullReminderTransaction,
+)
 from administration.models import Message, Option
 from imports.models import (
     FileImport,
@@ -41,6 +47,8 @@ from django.db.models import (
     OuterRef,
     ExpressionWrapper,
     DecimalField,
+    Q,
+    QuerySet,
 )
 from django.db.models.functions import Coalesce, Abs
 import pytz
@@ -55,6 +63,15 @@ import json
 from transactions.api.dependencies.get_transactions_by_tag import (
     get_transactions_by_tag,
 )
+from typing import Optional
+from decimal import Decimal, ROUND_HALF_UP
+from backend.utils.cache import delete_pattern
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 
 def create_backup(clean=True, keep=0):
@@ -441,7 +458,10 @@ def finish_imports():
                         transactions_to_create.append(trans)
                     except Exception as f:
                         errors += 1
-                        print(f"#{step} - Error adding row to bulk : {f}")
+                        task_logger.warning(
+                            f"#{step} - Error adding row to bulk"
+                        )
+                        error_logger.warning(f"{f}")
 
                 if create_transactions(transactions_to_create):
 
@@ -456,30 +476,17 @@ def finish_imports():
                     success = True
 
                     # Log success
-                    print(
+                    task_logger.info(
                         f"Import # {file_import.id} succeeded with {errors} errors"
-                    )
-                    logToDB(
-                        f"Import # {file_import.id} succeeded with {errors} errors",
-                        None,
-                        None,
-                        None,
-                        3002001,
-                        2,
                     )
                 else:
                     raise Exception("Unable to create transactions: ")
 
             except Exception as e:
                 success = False
-                print(f"Import # {file_import.id} failed : {str(e)}")
-                logToDB(
-                    f"Import # {file_import.id} failed : {str(e)}",
-                    None,
-                    None,
-                    None,
-                    3002901,
-                    3,
+                task_logger.warning(f"Import # {file_import.id} failed")
+                error_logger.warning(
+                    f"Import # {file_import.id} failed : {str(e)}"
                 )
             file_import.successful = success
             file_import.errors = errors
@@ -510,7 +517,6 @@ def archive_transactions():
             past_date = today - relativedelta(years=year_offset)
             cutoff_year = past_date.year
             cutoff_date = date(cutoff_year, 12, 31)
-            print(f"Cutoff date: {cutoff_date}")
 
             # Set matching transactions status to archive
             transactions = Transaction.objects.filter(
@@ -653,7 +659,7 @@ def archive_transactions():
                 account.archive_balance = account.balance
                 account.save()
         else:
-            print("No auto archive")
+            task_logger.debug("No auto archive")
         logToDB(
             "Transactions successfully archived.",
             None,
@@ -664,14 +670,543 @@ def archive_transactions():
         )
     except Exception as e:
         logToDB(
-            f"Transactions not archived: {e}",
+            f"Transactions not archived: {str(e)}",
             None,
             None,
             None,
             3001902,
             2,
         )
-        return f"Error archiving transactions: {e}"
+        return f"Error archiving transactions: {str(e)}"
+
+
+def update_reminder_cache(reminder_id):
+    """
+    The function `archive_transactions` archives older transactions based on the
+    options set.
+
+    Args:
+
+    Returns:
+
+    """
+    try:
+        # Set up variables
+        today = get_todays_date_timezone_adjusted()
+        max_end_date = today + relativedelta(years=1)
+        calculated_end_date = max_end_date
+        transactions_to_create = []
+
+        # Delete any existing cache entries for this reminder
+        ReminderCacheTransaction.objects.filter(
+            reminder_id=reminder_id
+        ).delete()
+
+        # Get Reminder object
+        reminder = Reminder.objects.get(id=reminder_id)
+
+        # Calculate Max End date
+        if reminder.end_date is not None and reminder.end_date <= max_end_date:
+            calculated_end_date = reminder.end_date
+
+        # Loop through and create cache transactions
+        working_date = reminder.next_date
+        delta = relativedelta(
+            days=reminder.repeat.days,
+            weeks=reminder.repeat.weeks,
+            months=reminder.repeat.months,
+            years=reminder.repeat.years,
+        )
+
+        # For no repeat, just enter next transaction
+        if delta == relativedelta():
+            tags = []
+            tag_obj = CustomTag(
+                tag_name=reminder.tag.tag_name,
+                tag_amount=reminder.amount,
+                tag_id=reminder.tag.id,
+                tag_full_toggle=True,
+            )
+            tags.append(tag_obj)
+            destination_account = None
+            if reminder.reminder_destination_account:
+                destination_account = reminder.reminder_destination_account.id
+            transaction = FullReminderTransaction(
+                transaction_date=working_date,
+                total_amount=reminder.amount,
+                status_id=1,
+                memo=reminder.memo,
+                description=reminder.description,
+                edit_date=today,
+                add_date=today,
+                transaction_type_id=reminder.transaction_type.id,
+                paycheck_id=None,
+                source_account_id=reminder.reminder_source_account.id,
+                destination_account_id=destination_account,
+                tags=tags,
+                checkNumber=None,
+                reminder_id=reminder.id,
+            )
+            transactions_to_create.append(transaction)
+        else:
+            while working_date <= calculated_end_date:
+                tags = []
+                tag_obj = CustomTag(
+                    tag_name=reminder.tag.tag_name,
+                    tag_amount=reminder.amount,
+                    tag_id=reminder.tag.id,
+                    tag_full_toggle=True,
+                )
+                tags.append(tag_obj)
+                destination_account = None
+                if reminder.reminder_destination_account:
+                    destination_account = (
+                        reminder.reminder_destination_account.id
+                    )
+                transaction = FullReminderTransaction(
+                    transaction_date=working_date,
+                    total_amount=reminder.amount,
+                    status_id=1,
+                    memo=reminder.memo,
+                    description=reminder.description,
+                    edit_date=today,
+                    add_date=today,
+                    transaction_type_id=reminder.transaction_type.id,
+                    paycheck_id=None,
+                    source_account_id=reminder.reminder_source_account.id,
+                    destination_account_id=destination_account,
+                    tags=tags,
+                    checkNumber=None,
+                    reminder_id=reminder.id,
+                )
+                transactions_to_create.append(transaction)
+                prev = working_date
+                working_date += delta
+
+                if working_date == prev:
+                    raise RuntimeError(
+                        "working_date did not advance — infinite loop detected"
+                    )
+
+        create_transactions(transactions_to_create, "reminder")
+        pattern = (
+            f"*account_transactions_{reminder.reminder_source_account.id}*"
+        )
+        delete_pattern(pattern)
+        if reminder.reminder_destination_account is not None:
+            pattern = f"*account_transactions_{reminder.reminder_destination_account.id}*"
+            delete_pattern(pattern)
+    except Exception as e:
+        task_logger.warning("There was an error creating cache")
+        error_logger.warning(f"{str(e)}")
+
+
+def update_cc_forecast_cache(account_id):
+    """
+    The function `archive_transactions` archives older transactions based on the
+    options set.
+
+    Args:
+
+    Returns:
+
+    """
+    try:
+        # Get the account object
+        account = Account.objects.get(id=account_id)
+
+        # Exit if not cc account
+        if account.account_type.id != 1:
+            return
+
+        # Delete any existing cache entries for this reminder
+        ForecastCacheTransaction.objects.filter(
+            Q(source_account_id=account_id)
+            | Q(destination_account_id=account_id)
+        ).delete()
+
+        # Exit if this is not CC or cc calculations are turned off
+        if not account.calculate_payments:
+            return
+
+        # Define account variables
+        statement_cycle_length = account.statement_cycle_length
+        statement_cycle_period = account.statement_cycle_period
+        funding_account = account.funding_account
+        annual_rate = account.annual_rate
+        payment_strategy = account.payment_strategy
+        payment_amount = account.payment_amount
+        minimum_payment_amount = account.minimum_payment_amount
+        today = get_todays_date_timezone_adjusted()
+        end_date = today + relativedelta(years=1)
+        temp_id = -10001
+        status = TransactionStatus.objects.get(id=1)
+        interest_calculations = account.calculate_interest
+        transactions_to_create = []
+        statement_day = account.statement_day
+        due_day = account.due_day
+        pay_day = account.pay_day
+        non_trans_bal = account.archive_balance + account.opening_balance
+
+        # Get real transactions for this account
+        transactions_qs = Transaction.objects.filter(
+            Q(source_account_id=account_id)
+            | Q(destination_account_id=account_id)
+        ).exclude(status_id=4)
+
+        # Get Reminder transactions for this account
+        reminder_cache_qs = ReminderCacheTransaction.objects.filter(
+            Q(source_account_id=account_id)
+            | Q(destination_account_id=account_id)
+        ).exclude(status_id=4)
+
+        # Annotate pretty totals
+        transactions_qs = annotate_transaction_total(
+            transactions_qs, account_id
+        )
+        reminder_cache_qs = annotate_transaction_total(
+            reminder_cache_qs, account_id
+        )
+
+        # Calculate statement cycles
+        statement_cycles = generate_statement_cycles(
+            statement_day,
+            due_day,
+            pay_day,
+            end_date,
+            statement_cycle_length,
+            statement_cycle_period,
+            transactions_qs,
+            reminder_cache_qs,
+            account_id,
+            non_trans_bal,
+        )
+
+        # Calculate statement transactions
+        total_credits = Decimal(0.00)
+        total_debits = Decimal(0.00)
+        total_payments = Decimal(0.00)
+        total_interest = Decimal(0.00)
+        x = 0
+        for cycle in statement_cycles:
+            total_credits += cycle["statement_credits"]
+            total_debits += cycle["statement_debits"]
+            cycle_balance = Decimal(0.00)
+            cycle_interest = Decimal(0.00)
+            previous_balance = cycle["previous_balance"]
+            cycle_balance = (
+                total_credits
+                + total_debits
+                + total_interest
+                + total_payments
+                + previous_balance
+            )
+            cycle_payment = Decimal(0.00)
+            # Calculate Interest
+            if interest_calculations:
+                # If we are past due date, calculate interest
+                if statement_cycles[0]["statement_due"] < today:
+                    if cycle_balance != cycle["statement_debits"]:
+                        unpaid = cycle_balance - cycle["statement_debits"]
+                        cycle_interest = calculate_interest(
+                            unpaid,
+                            annual_rate,
+                            statement_cycles[x - 1]["statement_end"],
+                            cycle["statement_end"],
+                        )
+                        total_interest += cycle_interest
+                        # Create Inteterest Transaction
+                        if (
+                            cycle["statement_end"] > today
+                            and cycle_interest < 0
+                        ):
+                            tags = []
+                            tag_obj = CustomTag(
+                                tag_name="Interest Charged",
+                                tag_amount=cycle_interest,
+                                tag_id=18,
+                                tag_full_toggle=True,
+                            )
+                            tags.append(tag_obj)
+                            transaction = FullTransaction(
+                                transaction_date=cycle["statement_end"],
+                                total_amount=cycle_interest,
+                                status_id=status.id,
+                                memo="Interest Charge",
+                                description=f"({account.account_name} Estimated Interest)",
+                                edit_date=today,
+                                add_date=today,
+                                transaction_type_id=1,
+                                paycheck_id=None,
+                                source_account_id=account_id,
+                                destination_account_id=None,
+                                tags=tags,
+                                checkNumber=None,
+                            )
+                            transactions_to_create.append(transaction)
+                            temp_id -= 1
+            # Calculate Payment
+            if cycle_balance < 0:
+                if payment_strategy == "F":
+                    cycle_payment = abs(cycle_balance) + abs(cycle_interest)
+                elif payment_strategy == "M":
+                    if (
+                        abs(cycle_balance) + abs(cycle_interest)
+                        >= minimum_payment_amount
+                    ):
+                        cycle_payment = minimum_payment_amount
+                    else:
+                        cycle_payment = abs(cycle_balance) + abs(cycle_interest)
+                elif payment_strategy == "C":
+                    if (
+                        abs(cycle_balance) + abs(cycle_interest)
+                        >= payment_amount
+                    ):
+                        cycle_payment = payment_amount
+                    else:
+                        cycle_payment = abs(cycle_balance) + abs(cycle_interest)
+                if cycle["statement_due"] > today:
+                    tags = []
+                    tag_obj = CustomTag(
+                        tag_name="Credit Card",
+                        tag_amount=abs(cycle_payment),
+                        tag_id=9,
+                        tag_full_toggle=True,
+                    )
+                    tags.append(tag_obj)
+                    transaction = FullTransaction(
+                        transaction_date=cycle["statement_pay_day"],
+                        total_amount=abs(cycle_payment),
+                        status_id=status.id,
+                        memo=None,
+                        description=f"({account.account_name} Estimated Payment)",
+                        edit_date=today,
+                        add_date=today,
+                        transaction_type_id=3,
+                        paycheck_id=None,
+                        source_account_id=funding_account.id,
+                        destination_account_id=account_id,
+                        tags=tags,
+                        checkNumber=None,
+                    )
+                    transactions_to_create.append(transaction)
+                    total_payments += cycle_payment
+                    temp_id -= 1
+            x += 1
+        create_transactions(transactions_to_create, "forecast")
+        pattern = f"*account_transactions_{account_id}*"
+        delete_pattern(pattern)
+    except Exception as e:
+        api_logger.warning("There was an error creating cache")
+        error_logger.warning(f"{str(e)}")
+
+
+def generate_statement_cycles(
+    statement_day: int,
+    due_day: int,
+    pay_day: int,
+    forecast_end_date: date,
+    statement_cycle_length: int,
+    statement_cycle_period: str,
+    transactions: QuerySet,
+    reminder_transactions: QuerySet,
+    account_id: int,
+    non_trans_bal: Decimal,
+):
+    """
+    The function `generate_statement_cycle` generates a list of dictionaries of statement
+    information.
+
+    Args:
+        last_statement_end_date (date): Last statement end date.
+        last_statment_due_date (date): Last statement due date.
+        forecast_end_date (date): Forecast end date.
+        statement_cycle_length (int): Statement cycle length.
+        statement_cycle_period (str): Statement cycle period.
+        transactions (List[TransactionOut]): Transactions for the account for the forecast
+        period.
+
+    Returns:
+        (List[dict]): A list of dictionaries of statement information
+    """
+    statement_cycles = []
+    today = get_todays_date_timezone_adjusted()
+    one_month_prior = today - relativedelta(months=1)
+    statement_start = today
+    statement_due = today
+    statement_pay_day = today
+
+    if today.day > statement_day:
+        statement_start = today.replace(day=statement_day)
+    else:
+        statement_start = one_month_prior.replace(day=statement_day)
+    statement_due = statement_start + relativedelta(months=1)
+    statement_due = statement_due.replace(day=due_day)
+    statement_pay_day = statement_start + relativedelta(months=1)
+    statement_pay_day = statement_pay_day.replace(day=pay_day)
+
+    previous_balance = (
+        transactions.filter(
+            transaction_date__lte=statement_start,
+        ).aggregate(
+            sum=Sum("pretty_total")
+        )["sum"]
+        or 0
+    ) + non_trans_bal
+    while statement_start <= forecast_end_date:
+        statement_end = increment_date(
+            statement_start, statement_cycle_period, statement_cycle_length
+        )
+
+        statement_due = increment_date(statement_due, "m", 1)
+        statement_pay_day = increment_date(statement_pay_day, "m", 1)
+        statement_transaction_credits = (
+            transactions.filter(
+                transaction_date__gt=statement_start,
+                transaction_date__lte=statement_end,
+                pretty_total__gt=0,
+            ).aggregate(sum=Sum("pretty_total"))["sum"]
+            or 0
+        )
+
+        statement_transaction_debits = (
+            transactions.filter(
+                transaction_date__gt=statement_start,
+                transaction_date__lte=statement_end,
+                pretty_total__lt=0,
+            ).aggregate(sum=Sum("pretty_total"))["sum"]
+            or 0
+        )
+
+        statement_reminder_credits = (
+            reminder_transactions.filter(
+                transaction_date__gt=statement_start,
+                transaction_date__lte=statement_end,
+                pretty_total__gt=0,
+            ).aggregate(sum=Sum("pretty_total"))["sum"]
+            or 0
+        )
+
+        statement_reminder_debits = (
+            reminder_transactions.filter(
+                transaction_date__gt=statement_start,
+                transaction_date__lte=statement_end,
+                pretty_total__lt=0,
+            ).aggregate(sum=Sum("pretty_total"))["sum"]
+            or 0
+        )
+        statement_credits = (
+            statement_transaction_credits + statement_reminder_credits
+        )
+        statement_debits = (
+            statement_transaction_debits + statement_reminder_debits
+        )
+        statement_cycles.append(
+            {
+                "statement_start": statement_start,
+                "statement_end": statement_end,
+                "statement_due": statement_due,
+                "statement_pay_day": statement_pay_day,
+                "statement_credits": statement_credits,
+                "statement_debits": statement_debits,
+                "previous_balance": previous_balance,
+            }
+        )
+        statement_start = statement_end
+    return statement_cycles
+
+
+def increment_date(incr_date: date, period: str, length: int):
+    """
+    The function `increment_date` increments a given date by the provided length
+    and period.
+
+    Args:
+        incr_date (date): The date to increment.
+        period (str): d = week, w = week, m = month, y = year.
+        length (int): Length of the period.
+
+    Returns:
+        (date): Returns the new date
+    """
+    if period == "d":
+        return incr_date + relativedelta(days=length)
+    elif period == "w":
+        return incr_date + relativedelta(weeks=length)
+    elif period == "m":
+        return incr_date + relativedelta(months=length)
+    elif period == "y":
+        return incr_date + relativedelta(years=length)
+    else:
+        raise ValueError(f"Unsupported period: {period}")
+
+
+def annotate_transaction_total(
+    transactions: QuerySet[Transaction], account_id: Optional[int] = 0
+) -> QuerySet[Transaction]:
+    """
+    annotate_transaction_total
+
+    _extended_summary_
+    """
+    # Check we received a QuerySet
+    if not isinstance(transactions, QuerySet):
+        raise TypeError("Expected a QuerySet")
+
+    # Annotate pretty total
+    all_transactions = transactions.annotate(
+        pretty_total=Case(
+            When(
+                transaction_type_id=2,
+                then=Abs(F("total_amount")),
+            ),
+            When(
+                transaction_type_id=1,
+                then=-Abs(F("total_amount")),
+            ),
+            When(
+                transaction_type_id=3,
+                then=Case(
+                    When(
+                        source_account_id=account_id,
+                        then=-Abs(F("total_amount")),
+                    ),
+                    default=Abs(F("total_amount")),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+            ),
+            default=Value(
+                0,
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            ),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+    )
+    return all_transactions
+
+
+def calculate_interest(
+    amount: Decimal, annual_rate: Decimal, start_date: date, end_date: date
+):
+    """
+    The function `calculate_interest` generates the amount of interest for an amount, given
+    an annual_rate and a start and end date.
+
+    Args:
+        amount (Decimal): The amount to generate interest for.
+        annual_rate (Decimal): The APR for the account.
+        start_date (date): The start date to generate interest.
+        end_date (date): The end date to generate interest.
+
+    Returns:
+        (List[dict]): A list of dictionaries of statement information
+    """
+    interest = Decimal(0.00)
+    delta = end_date - start_date
+    days = delta.days
+    daily_rate = annual_rate / 365 / 100
+    interest = amount * daily_rate * days
+    return interest.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 # TODO: Task to look for negative dips

@@ -132,6 +132,9 @@ class Account(models.Model):
     minimum_payment_amount = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
+    statement_day = models.IntegerField(default=15)
+    due_day = models.IntegerField(default=15)
+    pay_day = models.IntegerField(default=15)
 
     def clean(self):
         # Ensure an account cannot fund itself

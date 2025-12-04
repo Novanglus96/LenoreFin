@@ -6,8 +6,11 @@ from .models import (
     TransactionDetail,
     Paycheck,
     TransactionImage,
+    ReminderCacheTransaction,
+    ForecastCacheTransaction,
+    ReminderCacheTransactionDetail,
+    ForecastCacheTransactionDetail,
 )
-from django.http import HttpResponse
 from import_export.admin import ImportExportModelAdmin
 
 
@@ -21,7 +24,45 @@ class TransactionImageInLine(admin.TabularInline):
     extra = 1
 
 
+class ReminderCacheTransactionDetailInline(admin.TabularInline):
+    model = ReminderCacheTransactionDetail
+    extra = 1
+
+
+class ForecastCacheTransactionDetailInline(admin.TabularInline):
+    model = ForecastCacheTransactionDetail
+    extra = 1
+
+
 class TransactionDetailAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "transaction", "tag", "detail_amt"]
+
+    list_display_links = ["id"]
+
+    ordering = ["-transaction__transaction_date"]
+
+    search_fields = ["detail_amt"]
+
+    list_filter = ["tag"]
+
+
+class ReminderCacheTransactionDetailAdmin(
+    ImportExportModelAdmin, admin.ModelAdmin
+):
+    list_display = ["id", "transaction", "tag", "detail_amt"]
+
+    list_display_links = ["id"]
+
+    ordering = ["-transaction__transaction_date"]
+
+    search_fields = ["detail_amt"]
+
+    list_filter = ["tag"]
+
+
+class ForecastCacheTransactionDetailAdmin(
+    ImportExportModelAdmin, admin.ModelAdmin
+):
     list_display = ["id", "transaction", "tag", "detail_amt"]
 
     list_display_links = ["id"]
@@ -75,6 +116,63 @@ class TransactionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     inlines = [TransactionDetailInline, TransactionImageInLine]
 
 
+class ReminderCacheTransactionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = [
+        "id",
+        "transaction_date",
+        "status",
+        "checkNumber",
+        "total_amount",
+        "description",
+        "transaction_type",
+        "edit_date",
+        "add_date",
+        "memo",
+        "paycheck",
+        "source_account",
+        "destination_account",
+        "reminder",
+    ]
+
+    search_fields = ["id"]
+
+    list_filter = ["source_account", "destination_account"]
+
+    ordering = []
+
+    inlines = [
+        ReminderCacheTransactionDetailInline,
+    ]
+
+
+class ForecastCacheTransactionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = [
+        "id",
+        "transaction_date",
+        "status",
+        "checkNumber",
+        "total_amount",
+        "description",
+        "transaction_type",
+        "edit_date",
+        "add_date",
+        "memo",
+        "paycheck",
+        "source_account",
+        "destination_account",
+    ]
+
+    search_fields = ["id"]
+
+    list_filter = ["source_account", "destination_account"]
+
+    ordering = []
+
+    inlines = [
+        ForecastCacheTransactionDetailInline,
+    ]
+
+
 class PaycheckAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     list_display = [
         "id",
@@ -106,3 +204,13 @@ admin.site.register(TransactionStatus, TransactionStatusAdmin)
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Paycheck, PaycheckAdmin)
 admin.site.register(TransactionDetail, TransactionDetailAdmin)
+admin.site.register(ReminderCacheTransaction, ReminderCacheTransactionAdmin)
+admin.site.register(ForecastCacheTransaction, ForecastCacheTransactionAdmin)
+admin.site.register(
+    ForecastCacheTransactionDetail,
+    ForecastCacheTransactionDetailAdmin,
+)
+admin.site.register(
+    ReminderCacheTransactionDetail,
+    ReminderCacheTransactionDetailAdmin,
+)

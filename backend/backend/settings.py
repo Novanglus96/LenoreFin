@@ -157,24 +157,96 @@ DBBACKUP_STORAGE_OPTIONS = {"location": "/backups/"}
 DBBACKUP_CLEANUP_KEEP = 2
 DBBACKUP_CLEANUP_KEEP_MEDIA = 2
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    # ---------- FORMATTERS ----------
     "formatters": {
-        "verbose": {
-            "format": "%(levelname)s %(name)-12s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"
-        }
+        "standard": {
+            "format": "[%(asctime)s] %(levelname)s %(message)s",
+        },
+        "detailed": {
+            "format": "[%(asctime)s] %(levelname)s "
+            "%(filename)s:%(lineno)d %(funcName)s(): %(message)s",
+        },
     },
+    # ---------- HANDLERS ----------
     "handlers": {
-        "console": {
-            "level": "DEBUG",
+        # Writes WARNING+ to Docker stdout
+        "stdout_handler": {
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        }
+            "stream": "ext://sys.stdout",
+            "formatter": "standard",
+            "level": "WARNING",
+        },
+        # Writes INFO+ DB activity to file
+        "db_file_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOG_DIR / "db.log"),
+            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "backupCount": 5,
+            "formatter": "standard",
+            "level": "DEBUG",
+        },
+        # Writes INFO+ API activity to file
+        "api_file_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOG_DIR / "api.log"),
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 5,
+            "formatter": "standard",
+            "level": "DEBUG",
+        },
+        "error_file_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOG_DIR / "error.log"),
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 5,
+            "formatter": "detailed",
+            "level": "DEBUG",
+        },
+        "task_file_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOG_DIR / "task.log"),
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 5,
+            "formatter": "standard",
+            "level": "DEBUG",
+        },
     },
+    # ---------- LOGGERS ----------
+    "loggers": {
+        # Database operations logger
+        "db": {
+            "handlers": ["db_file_handler", "stdout_handler"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        # API activity logger
+        "api": {
+            "handlers": ["api_file_handler", "stdout_handler"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "error": {
+            "handlers": ["error_file_handler"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "task": {
+            "handlers": ["task_file_handler", "stdout_handler"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+    # (Optional) fallback root logger
     "root": {
-        "level": "INFO",
-        "handlers": ["console"],
+        "handlers": ["stdout_handler"],
+        "level": "WARNING",
     },
 }
 
@@ -327,3 +399,16 @@ JAZZMIN_UI_TWEAKS = {
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
+
+CACHE_TTL = 60 * 60  # 1 hour default

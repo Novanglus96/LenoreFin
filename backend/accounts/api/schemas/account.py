@@ -30,6 +30,9 @@ class AccountIn(Schema):
     payment_strategy: Optional[str] = None
     payment_amount: Optional[BalanceDecimal] = None
     minimum_payment_amount: Optional[BalanceDecimal] = None
+    statement_day: Optional[int] = 15
+    due_day: Optional[int] = 15
+    pay_day: Optional[int] = 15
 
 
 # The class AccountOut is a schema for representing accounts.
@@ -57,6 +60,9 @@ class AccountOut(Schema):
     payment_strategy: Optional[str] = None
     payment_amount: Optional[BalanceDecimal] = None
     minimum_payment_amount: Optional[BalanceDecimal] = None
+    statement_day: Optional[int] = 15
+    due_day: Optional[int] = 15
+    pay_day: Optional[int] = 15
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -83,6 +89,9 @@ class AccountUpdate(Schema):
     payment_strategy: Optional[str] = None
     payment_amount: Optional[BalanceDecimal] = None
     minimum_payment_amount: Optional[BalanceDecimal] = None
+    statement_day: Optional[int] = 15
+    due_day: Optional[int] = 15
+    pay_day: Optional[int] = 15
 
 
 class AccountQuery(Schema):
