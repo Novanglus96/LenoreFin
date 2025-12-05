@@ -4,7 +4,6 @@ from administration.models import Option
 from tags.models import Tag
 from transactions.models import Transaction, TransactionDetail
 from tags.api.schemas.graph_by_tags import GraphDataset, GraphOut, PieGraphItem
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from django.db.models import (
     F,
@@ -18,6 +17,12 @@ import os
 from dateutil.relativedelta import relativedelta
 import random
 from typing import List
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 graph_by_tags_router = Router(tags=["Graph By Tags"])
 
@@ -219,25 +224,12 @@ def get_graph_new(request, widget_id: int):
             graph_items.append(graph_item)
             x += 1
 
-        logToDB(
-            f"Graph data retrieved : {widget_id}",
-            None,
-            None,
-            None,
-            3002003,
-            1,
-        )
+        api_logger.debug(f"Graph data retrieved : {widget_id}")
         return graph_items
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Graph data not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3002903,
-            2,
-        )
+        api_logger.error("Graph data not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -415,23 +407,10 @@ def get_graph(request, widget_id: int):
         )
         datasets.append(dataset)
         graph_object = GraphOut(labels=labels, datasets=datasets)
-        logToDB(
-            f"Graph data retrieved : {widget_id}",
-            None,
-            None,
-            None,
-            3002003,
-            1,
-        )
+        api_logger.debug(f"Graph data retrieved : {widget_id}")
         return graph_object
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Graph data not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3002903,
-            2,
-        )
+        api_logger.error("Graph data not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

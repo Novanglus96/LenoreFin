@@ -6,7 +6,6 @@ from planning.api.schemas.calculator import (
     CalculationRuleOut,
     CalculatorOut,
 )
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
@@ -18,6 +17,12 @@ from transactions.api.dependencies.get_transfers import get_transfers
 from transactions.api.dependencies.get_transactions_by_tag import (
     get_transactions_by_tag,
 )
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 calculator_router = Router(tags=["Calculator"])
 
@@ -38,25 +43,12 @@ def create_calculation_rule(request, payload: CalculationRuleIn):
 
     try:
         calculation_rule = CalculationRule.objects.create(**payload.dict())
-        logToDB(
-            f"Calculation rule created : {calculation_rule.name}",
-            None,
-            None,
-            None,
-            3001005,
-            2,
-        )
+        api_logger.info(f"Calculation rule created : {calculation_rule.name}")
         return {"id": calculation_rule.id}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Calculation rule not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Calculation rule not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -88,25 +80,12 @@ def update_calculation_rule(
         calculation_rule.source_account_id = payload.source_account_id
         calculation_rule.destination_account_id = payload.destination_account_id
         calculation_rule.save()
-        logToDB(
-            f"Calculation rule updated : #{calculation_rule_id}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Calculation rule updated : #{calculation_rule_id}")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Calculation rule not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Calculation rule not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -127,25 +106,12 @@ def list_calculation_rules(request):
 
     try:
         qs = CalculationRule.objects.all().order_by("name")
-        logToDB(
-            "Calculation rule list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Calculation rule list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Calculation rule list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Calculation rule list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -171,25 +137,12 @@ def delete_calculation_rule(request, calculation_rule_id: int):
         )
         rule_name = calculation_rule.name
         calculation_rule.delete()
-        logToDB(
-            f"Calculation rule deleted: {rule_name}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info(f"Calculation rule deleted: {rule_name}")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Calculation rule not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Calculation rule not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -244,23 +197,10 @@ def get_calculator(request, calculation_rule_id: int, timeframe: int):
             transfers=list(transfers),
             transactions=list(unique_transactions),
         )
-        logToDB(
-            f"Calculator retrieved : #{calculation_rule_id}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Calculator retrieved : #{calculation_rule_id}")
         return calculator
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Calculator not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Calculator not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

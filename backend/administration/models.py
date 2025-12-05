@@ -1,7 +1,5 @@
 from django.db import models
 from django.utils import timezone
-from accounts.models import Account
-from reminders.models import Reminder
 from tags.models import Tag
 from django.core.exceptions import ValidationError
 
@@ -19,21 +17,6 @@ class SingletonModel(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValidationError("You cannot delete this object")
-
-
-class ErrorLevel(models.Model):
-    """
-    Model representing an error level for logging.
-
-    Fields:
-    - error_level (CharField): The name of the error level, limited to 25 characters,
-    and must be unique.
-    """
-
-    error_level = models.CharField(max_length=25, unique=True)
-
-    def __str__(self):
-        return self.error_level
 
 
 class GraphType(models.Model):
@@ -97,9 +80,6 @@ class Option(SingletonModel):
     - enable_cc_bill_calculation (BooleanField): enable Credit Card bill forecast, default is True
     """
 
-    log_level = models.ForeignKey(
-        ErrorLevel, on_delete=models.SET_NULL, null=True, blank=True
-    )
     alert_balance = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00
     )
@@ -177,55 +157,6 @@ class Payee(models.Model):
 
     def __str__(self):
         return self.payee_name
-
-
-class LogEntry(models.Model):
-    """
-    Model representing a log entry.
-
-    Fields:
-    - log_date (DateField): The date of the log entry, default is today.
-    - log_entry (CharField): The log entry, limited to 254 characters.
-    - account (ForeignKey): A reference to the Account model, representing
-    the associated account with this log entry. Optional.
-    - reminder (ForeignKey): A reference to the Reminder model, representing
-    the associated reminder with this log entry. Optional.
-    - transaction (ForeignKey): A reference to the Transaction model, representing
-    the associated transaction with this log entry. Optional.
-    - error_num (IntegerField): An error number associated with this log entry.
-    - error_level (ForeignKey): A reference to the ErrorLevel model, representing
-    the error level of this log entry.
-    """
-
-    log_date = models.DateTimeField(auto_now_add=True)
-    log_entry = models.TextField()
-    account = models.ForeignKey(
-        Account, on_delete=models.CASCADE, null=True, blank=True, default=None
-    )
-    reminder = models.ForeignKey(
-        Reminder,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        default=None,
-    )
-    transaction = models.ForeignKey(
-        "transactions.Transaction",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        default=None,
-    )
-    error_num = models.IntegerField(default=None, null=True, blank=True)
-    error_level = models.ForeignKey(
-        ErrorLevel, on_delete=models.SET_NULL, null=True, blank=True
-    )
-
-    class Meta:
-        verbose_name_plural = "Log entries"
-
-    def __str__(self):
-        return self.log_entry
 
 
 class Message(models.Model):

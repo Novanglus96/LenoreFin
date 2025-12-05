@@ -9,7 +9,6 @@ from transactions.models import (
     ForecastCacheTransactionDetail,
 )
 from django.db import transaction
-from administration.api.dependencies.log_to_db import logToDB
 import logging
 
 api_logger = logging.getLogger("api")
@@ -137,23 +136,13 @@ def create_transactions(
                                             full_toggle=tag.tag_full_toggle,
                                         )
                         except Exception as e:
-                            logToDB(
-                                f"Transaction detail creation error: {str(e)}",
-                                None,
-                                None,
-                                None,
-                                3001901,
-                                2,
+                            api_logger.error(
+                                "Transaction detail creation error"
                             )
+                            error_logger.error(f"{str(e)}")
                     except Exception as e:
-                        logToDB(
-                            f"Transaction creation error: {str(e)}",
-                            None,
-                            None,
-                            None,
-                            3001901,
-                            2,
-                        )
+                        api_logger.error("Transaction creation error")
+                        error_logger.error(f"{str(e)}")
                 api_logger.debug("Transaction(s) created successfully")
                 return True
             except Exception as e:
@@ -260,23 +249,10 @@ def create_transactions(
                         created_transactions.extend(
                             ForecastCacheTransaction.objects.bulk_create(chunk)
                         )
-                logToDB(
-                    "Transaction chunks created successfully",
-                    None,
-                    None,
-                    None,
-                    3001001,
-                    1,
-                )
+                api_logger.info("Transaction chunks created successfully")
             except Exception as e:
-                logToDB(
-                    f"Transaction chunks not created: {str(e)}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
+                api_logger.error("Transaction chunks not created")
+                error_logger.error(f"{str(e)}")
             # Create transaction details
             for trans_detail in transaction_details:
                 transaction_index = trans_detail["transaction_index"]
@@ -327,40 +303,16 @@ def create_transactions(
                         ForecastCacheTransactionDetail.objects.bulk_create(
                             chunk
                         )
-                logToDB(
-                    "Transaction detail chunks created successfully",
-                    None,
-                    None,
-                    None,
-                    3001001,
-                    1,
+                api_logger.info(
+                    "Transaction detail chunks created successfully"
                 )
             except Exception as e:
-                logToDB(
-                    f"Transaction detail chunks not created: {str(e)}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
-            logToDB(
-                "Transaction(s) created successfully",
-                None,
-                None,
-                None,
-                3001001,
-                1,
-            )
+                api_logger.error("Transaction detail chunks not created")
+                error_logger.error(f"{str(e)}")
+            api_logger.info("Transaction(s) created successfully")
             # update_running_totals()
             return True
         except Exception as e:
-            logToDB(
-                f"Transaction(s) not created: {str(e)}",
-                None,
-                None,
-                None,
-                3001901,
-                2,
-            )
+            api_logger.error("Transaction(s) not created")
+            error_logger.error(f"{str(e)}")
             return False

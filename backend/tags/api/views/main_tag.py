@@ -2,9 +2,14 @@ from ninja import Router, Query
 from ninja.errors import HttpError
 from tags.models import MainTag
 from tags.api.schemas.main_tag import MainTagOut, MainTagQuery
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 main_tag_router = Router(tags=["Main Tags"])
 
@@ -27,25 +32,12 @@ def get_maintag(request, maintag_id: int):
 
     try:
         maintag = get_object_or_404(MainTag, id=maintag_id)
-        logToDB(
-            f"Main Tag retrieved : {maintag.tag_name}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Main Tag retrieved : {maintag.tag_name}")
         return maintag
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Main Tag not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Main Tag not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -75,23 +67,10 @@ def list_maintags(
 
         # Order tags by tag_name
         qs = qs.order_by("tag_name")
-        logToDB(
-            "Main Tag list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Main Tag list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Main Tag list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Main Tag list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

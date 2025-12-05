@@ -4,7 +4,6 @@ from planning.api.schemas.planning_graph import (
     PlanningGraphList,
     PlanningGraphOut,
 )
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
 from django.db.models import (
@@ -25,6 +24,12 @@ from administration.models import Option
 from transactions.models import Paycheck
 from tags.models import Tag
 import json
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 planning_graph_router = Router(tags=["Planning Graphs"])
 
@@ -1047,24 +1052,11 @@ def list_graph_totals(request, graph_type: str):
                         title=title, data=sub_graph_data
                     )
                     all_reports.append(graph_object)
-                logToDB(
-                    f"{graph_type} graph details retrieved",
-                    None,
-                    None,
-                    None,
-                    3002004,
-                    0,
-                )
+                api_logger.debug(f"{graph_type} graph details retrieved")
             except Exception as e:
                 # Log other types of exceptions
-                logToDB(
-                    f"{graph_type} graph details not retrieved : {str(e)}",
-                    None,
-                    None,
-                    None,
-                    3002904,
-                    2,
-                )
+                api_logger.error(f"{graph_type} graph details not retrieved")
+                error_logger.error(f"{str(e)}")
                 raise HttpError(
                     500, f"{graph_type} graph details retrieval error: {str(e)}"
                 )
@@ -1491,47 +1483,23 @@ def list_graph_totals(request, graph_type: str):
                     title="Pay", data=sub_graph_data
                 )
                 all_reports.append(graph_object)
-                logToDB(
-                    f"{graph_type} graph details retrieved",
-                    None,
-                    None,
-                    None,
-                    3002004,
-                    0,
-                )
+                api_logger.debug(f"{graph_type} graph details retrieved")
             except Exception as e:
                 # Log other types of exceptions
-                logToDB(
-                    f"{graph_type} graph details not retrieved(Pay) : {str(e)}",
-                    None,
-                    None,
-                    None,
-                    3002904,
-                    2,
+                api_logger.error(
+                    f"{graph_type} graph details not retrieved(Pay)"
                 )
+                error_logger.error(f"{str(e)}")
                 raise HttpError(
                     500,
                     f"{graph_type} graph details retrieval error(Pay): {str(e)}",
                 )
-        logToDB(
-            f"{graph_type} planning graph retrieved",
-            None,
-            None,
-            None,
-            3002004,
-            0,
-        )
+        api_logger.debug(f"{graph_type} planning graph retrieved")
         return all_reports
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"{graph_type} planning graph not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3002904,
-            2,
-        )
+        api_logger.error(f"{graph_type} planning graph not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(
             500, f"{graph_type} planning graph retrieval error: {str(e)}"
         )
@@ -1610,23 +1578,10 @@ def prepare_planning_graph(
             pretty_name=pretty_name,
             key_name=key_name,
         )
-        logToDB(
-            f"Planning graph prepared({pretty_name})",
-            None,
-            None,
-            None,
-            3002004,
-            0,
-        )
+        api_logger.info(f"Planning graph prepared({pretty_name})")
         return planning_graph_out
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Planning graph not prepared({pretty_name}) : {str(e)}",
-            None,
-            None,
-            None,
-            3002904,
-            2,
-        )
+        api_logger.error(f"Planning graph not prepared({pretty_name})")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Planning graph preperation error: {str(e)}")

@@ -1,6 +1,5 @@
 from ninja import Schema
 from typing import Optional
-from administration.api.schemas.error_level import ErrorLevelOut
 from administration.api.schemas.graph_type import GraphTypeOut
 from pydantic import ConfigDict, condecimal
 
@@ -9,7 +8,6 @@ BalanceDecimal = condecimal(max_digits=12, decimal_places=2)
 
 # The class OptionIn is a schema for validating Options.
 class OptionIn(Schema):
-    log_level_id: Optional[int] = None
     alert_balance: Optional[BalanceDecimal] = None
     alert_period: Optional[int] = None
     widget1_graph_name: Optional[str] = None
@@ -38,7 +36,6 @@ class OptionIn(Schema):
 # The class OptionOut is a schema for representing Options.
 class OptionOut(Schema):
     id: int
-    log_level: ErrorLevelOut
     alert_balance: BalanceDecimal = None
     alert_period: int
     widget1_graph_name: str

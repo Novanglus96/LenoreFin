@@ -1,31 +1,16 @@
-from ninja import Router, Query
+from ninja import Router
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from administration.models import Payee
 from administration.api.schemas.payee import PayeeIn, PayeeOut
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 payee_router = Router(tags=["Payees"])
 
@@ -45,48 +30,27 @@ def create_payee(request, payload: PayeeIn):
 
     try:
         payee = Payee.objects.create(**payload.dict())
-        logToDB(
-            f"Payee created : {payee.payee_name}",
-            None,
-            None,
-            None,
-            3001001,
-            1,
-        )
+        api_logger.info(f"Payee created : {payee.payee_name}")
         return {"id": payee.id}
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Payee not created : payee exists ({payload.payee_name})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
+            api_logger.error(
+                f"Payee not created : payee exists ({payload.payee_name})"
+            )
+            error_logger.error(
+                f"Payee not created : payee exists ({payload.payee_name})"
             )
             raise HttpError(400, "Payee already exists")
         else:
             # Log other types of integry errors
-            logToDB(
-                "Payee not created : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
+            api_logger.error("Payee not created : db integrity error")
+            error_logger.error("Payee not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Payee not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Payee not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -111,48 +75,27 @@ def update_payee(request, payee_id: int, payload: PayeeIn):
         payee = get_object_or_404(Payee, id=payee_id)
         payee.payee_name = payload.payee_name
         payee.save()
-        logToDB(
-            f"Payee updated : {payee.payee_name}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Payee updated : {payee.payee_name}")
         return {"success": True}
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Payee not updated : payee exists ({payload.payee_name})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
+            api_logger.error(
+                f"Payee not updated : payee exists ({payload.payee_name})"
+            )
+            error_logger.error(
+                f"Payee not updated : payee exists ({payload.payee_name})"
             )
             raise HttpError(400, "Payee already exists")
         else:
             # Log other types of integry errors
-            logToDB(
-                "Payee not updated : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
+            api_logger.error("Payee not updated : db integrity error")
+            error_logger.error("Payee not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Payee not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Payee not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -174,25 +117,12 @@ def get_payee(request, payee_id: int):
 
     try:
         payee = get_object_or_404(Payee, id=payee_id)
-        logToDB(
-            f"Payee retrieved : {payee.payee_name}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Payee retrieved : {payee.payee_name}")
         return payee
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Payee not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Payee not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -211,25 +141,12 @@ def list_payees(request):
 
     try:
         qs = Payee.objects.all().order_by("payee_name")
-        logToDB(
-            "Payee list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Payee list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Payee list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Payee list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -253,23 +170,10 @@ def delete_payee(request, payee_id: int):
         payee = get_object_or_404(Payee, id=payee_id)
         payee_name = payee.payee_name
         payee.delete()
-        logToDB(
-            f"Payee deleted : {payee_name}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info(f"Payee deleted : {payee_name}")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Payee not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Payee not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+import logging
+
+DEBUG_ENV = os.getenv("DEBUG", "0")  # default to 0 if missing
+DB_LOG_LEVEL = logging.DEBUG if DEBUG_ENV == "1" else logging.INFO
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -176,30 +180,27 @@ LOGGING = {
     },
     # ---------- HANDLERS ----------
     "handlers": {
-        # Writes WARNING+ to Docker stdout
         "stdout_handler": {
             "class": "logging.StreamHandler",
             "stream": "ext://sys.stdout",
             "formatter": "standard",
             "level": "WARNING",
         },
-        # Writes INFO+ DB activity to file
         "db_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": str(LOG_DIR / "db.log"),
             "maxBytes": 1024 * 1024 * 5,  # 5MB
             "backupCount": 5,
             "formatter": "standard",
-            "level": "DEBUG",
+            "level": DB_LOG_LEVEL,
         },
-        # Writes INFO+ API activity to file
         "api_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": str(LOG_DIR / "api.log"),
             "maxBytes": 1024 * 1024 * 5,
             "backupCount": 5,
             "formatter": "standard",
-            "level": "DEBUG",
+            "level": DB_LOG_LEVEL,
         },
         "error_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -207,7 +208,7 @@ LOGGING = {
             "maxBytes": 1024 * 1024 * 5,
             "backupCount": 5,
             "formatter": "detailed",
-            "level": "DEBUG",
+            "level": DB_LOG_LEVEL,
         },
         "task_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -215,7 +216,7 @@ LOGGING = {
             "maxBytes": 1024 * 1024 * 5,
             "backupCount": 5,
             "formatter": "standard",
-            "level": "DEBUG",
+            "level": DB_LOG_LEVEL,
         },
     },
     # ---------- LOGGERS ----------
@@ -223,23 +224,23 @@ LOGGING = {
         # Database operations logger
         "db": {
             "handlers": ["db_file_handler", "stdout_handler"],
-            "level": "DEBUG",
+            "level": DB_LOG_LEVEL,
             "propagate": False,
         },
         # API activity logger
         "api": {
             "handlers": ["api_file_handler", "stdout_handler"],
-            "level": "DEBUG",
+            "level": DB_LOG_LEVEL,
             "propagate": False,
         },
         "error": {
             "handlers": ["error_file_handler"],
-            "level": "DEBUG",
+            "level": DB_LOG_LEVEL,
             "propagate": False,
         },
         "task": {
             "handlers": ["task_file_handler", "stdout_handler"],
-            "level": "DEBUG",
+            "level": DB_LOG_LEVEL,
             "propagate": False,
         },
     },

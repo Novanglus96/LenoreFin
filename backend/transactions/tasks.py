@@ -53,7 +53,6 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, Abs
 import pytz
 import os
-from administration.api.dependencies.log_to_db import logToDB
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
@@ -156,14 +155,7 @@ def convert_reminder():
                     )
                     transactions_to_create.append(transaction)
                     create_transactions(transactions_to_create)
-                    logToDB(
-                        "Reminder transaction auto-added",
-                        None,
-                        reminder.id,
-                        None,
-                        3001002,
-                        1,
-                    )
+                    task_logger.info("Reminder transaction auto-added")
 
             # Modify the next due and start date of the reminder
             repeat = Repeat.objects.get(id=reminder.repeat.id)
@@ -188,24 +180,10 @@ def convert_reminder():
                 reminder.next_date = nextDate
                 reminder.start_date = nextDate
                 reminder.save()
-                logToDB(
-                    "Reminder dates reset",
-                    None,
-                    reminder.id,
-                    None,
-                    3001002,
-                    1,
-                )
+                task_logger.info("Reminder dates reset")
             else:
                 reminder.delete()
-                logToDB(
-                    "Reminder deleted: no more transactions",
-                    None,
-                    None,
-                    None,
-                    3001003,
-                    1,
-                )
+                task_logger.info("Reminder deleted: no more transactions")
 
 
 def roll_over_budgets():
@@ -248,14 +226,8 @@ def roll_over_budgets():
         return f"Processed {num_of_budgets}"
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Budget roll overs not calculated : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        task_logger.error("Budget roll overs not calculated")
+        error_logger.error(f"{str(e)}")
 
 
 def calculate_repeat_window(start_date: datetime, repeat: Repeat) -> tuple:
@@ -660,23 +632,10 @@ def archive_transactions():
                 account.save()
         else:
             task_logger.debug("No auto archive")
-        logToDB(
-            "Transactions successfully archived.",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
+        task_logger.info("Transactions successfully archived.")
     except Exception as e:
-        logToDB(
-            f"Transactions not archived: {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        task_logger.error("Transactions not archived")
+        error_logger.error(f"{str(e)}")
         return f"Error archiving transactions: {str(e)}"
 
 

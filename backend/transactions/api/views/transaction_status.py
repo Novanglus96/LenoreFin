@@ -1,4 +1,4 @@
-from ninja import Router, Query
+from ninja import Router
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from transactions.models import TransactionStatus
@@ -6,29 +6,14 @@ from transactions.api.schemas.transaction_status import (
     TransactionStatusIn,
     TransactionStatusOut,
 )
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 transaction_status_router = Router(tags=["Transaction Statuses"])
 
@@ -58,48 +43,33 @@ def update_transaction_status(
         )
         transaction_status.transaction_status = payload.transaction_status
         transaction_status.save()
-        logToDB(
-            f"Transaction status updated : {transaction_status.transaction_status}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
+        api_logger.info(
+            f"Transaction status updated : {transaction_status.transaction_status}"
         )
         return {"success": True}
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Transaction status not updated : transaction status exists ({payload.transaction_status})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
+            api_logger.error(
+                f"Transaction status not updated : transaction status exists ({payload.transaction_status})"
+            )
+            error_logger.error(
+                f"Transaction status not updated : transaction status exists ({payload.transaction_status})"
             )
             raise HttpError(400, "Transaction status already exists")
         else:
             # Log other types of integry errors
-            logToDB(
-                "Transaction status not updated : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
+            api_logger.error(
+                "Transaction status not updated : db integrity error"
+            )
+            error_logger.error(
+                "Transaction status not updated : db integrity error"
             )
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction status not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Transaction status not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -126,25 +96,14 @@ def get_transaction_status(request, transactionstatus_id: int):
         transaction_status = get_object_or_404(
             TransactionStatus, id=transactionstatus_id
         )
-        logToDB(
-            f"Transaction status retrieved : {transaction_status.transaction_status}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
+        api_logger.debug(
+            f"Transaction status retrieved : {transaction_status.transaction_status}"
         )
         return transaction_status
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction status not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Transaction status not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -163,25 +122,12 @@ def list_transaction_statuses(request):
 
     try:
         qs = TransactionStatus.objects.all().order_by("id")
-        logToDB(
-            "Transaction status list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Transaction status list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction status list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Transaction status list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -207,23 +153,12 @@ def delete_transaction_status(request, transactionstatus_id: int):
         )
         transaction_status_name = transaction_status.transaction_status
         transaction_status.delete()
-        logToDB(
-            f"Transaction status deleted : {transaction_status_name}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
+        api_logger.info(
+            f"Transaction status deleted : {transaction_status_name}"
         )
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction status not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Transaction status not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
