@@ -6,7 +6,6 @@ from accounts.api.schemas.forecast import (
     DatasetObject,
     ForecastOut,
 )
-from administration.api.dependencies.log_to_db import logToDB
 from accounts.api.dependencies.get_dates_in_range import get_dates_in_range
 from accounts.api.dependencies.get_forecast_end_date import (
     get_forecast_end_date,
@@ -18,6 +17,12 @@ from datetime import datetime
 from transactions.api.dependencies.get_transactions_by_account import (
     get_transactions_by_account,
 )
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 forecast_router = Router(tags=["Account Forecasts"])
 
@@ -108,23 +113,10 @@ def get_forecast(
         )
         datasets.append(datasets_out)
         forecast_out = ForecastOut(labels=labels, datasets=datasets)
-        logToDB(
-            "Forecast retrieved",
-            account_id,
-            None,
-            None,
-            3002002,
-            1,
-        )
+        api_logger.debug("Forecast retrieved")
         return forecast_out
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Forecast not retrieved : {str(e)}",
-            account_id,
-            None,
-            None,
-            3002902,
-            2,
-        )
+        api_logger.error("Forecast not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error : {str(e)}")

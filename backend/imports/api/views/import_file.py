@@ -1,6 +1,5 @@
-from ninja import Router, Query, File
+from ninja import Router, File
 from ninja.files import UploadedFile
-from django.db import IntegrityError
 from ninja.errors import HttpError
 from administration.models import Message
 from imports.models import (
@@ -14,45 +13,17 @@ from imports.models import (
     TagMapping,
 )
 from imports.api.schemas.import_file import (
-    AccountMappingSchema,
-    TypeMappingSchema,
-    StatusMappingSchema,
-    TagMappingSchema,
-    TransactionImportErrorSchema,
-    TransactionImportSchema,
-    TransactionImportTagSchema,
     MappingDefinition,
 )
-from administration.api.dependencies.log_to_db import logToDB
-from django.shortcuts import get_object_or_404
-from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
-import pytz
-import os
-from django.utils import timezone
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
+import logging
 
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 import_file_router = Router(tags=["File Imports"])
 
 
@@ -130,23 +101,10 @@ def import_file(
             message=f"File import ID #{importedFile.id} started",
             unread=True,
         )
-        logToDB(
-            f"File import ID #{importedFile.id} started",
-            None,
-            None,
-            None,
-            3002001,
-            2,
-        )
+        task_logger.info(f"File import ID #{importedFile.id} started")
         return {"id": importedFile.id}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"File import failed : {str(e)}",
-            None,
-            None,
-            None,
-            3002901,
-            3,
-        )
+        task_logger.error("File import failed")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "File import error")

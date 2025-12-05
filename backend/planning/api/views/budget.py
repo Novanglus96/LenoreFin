@@ -9,7 +9,6 @@ from planning.api.schemas.budget import (
     BudgetQuery,
 )
 from reminders.models import Repeat
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
 import json
@@ -21,6 +20,12 @@ from administration.api.dependencies.get_todays_date_timezone_adjusted import (
 from transactions.api.dependencies.get_transactions_by_tag import (
     get_transactions_by_tag,
 )
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 budget_router = Router(tags=["Budgets"])
 
@@ -40,48 +45,25 @@ def create_budget(request, payload: BudgetIn):
 
     try:
         budget = Budget.objects.create(**payload.dict())
-        logToDB(
-            f"Budget created : {payload.name}",
-            None,
-            None,
-            None,
-            3001001,
-            1,
-        )
+        api_logger.info(f"Budget created : {payload.name}")
         return {"id": budget.id}
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Budget not created : budget exists ({payload.name})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
+            api_logger.error(
+                f"Budget not created : budget exists ({payload.name})"
             )
+            error_logger(f"Budget not created : budget exists ({payload.name})")
             raise HttpError(400, "Budget already exists")
         else:
             # Log other types of integry errors
-            logToDB(
-                "Budget not created : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
+            api_logger.error("Budget not created : db integrity error")
+            error_logger.error("Budget not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Budget not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Budget not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -116,48 +98,27 @@ def update_budget(request, budget_id: int, payload: BudgetIn):
         budget.widget = payload.widget
         budget.next_start = payload.next_start
         budget.save()
-        logToDB(
-            f"Budget updated : {budget.name}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Budget updated : {budget.name}")
         return {"success": True}
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Budget not updated : budget exists ({payload.budget})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
+            api_logger.error(
+                f"Budget not updated : budget exists ({payload.budget})"
+            )
+            error_logger.error(
+                f"Budget not updated : budget exists ({payload.budget})"
             )
             raise HttpError(400, "Budget already exists")
         else:
             # Log other types of integry errors
-            logToDB(
-                "Budget not updated : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
+            api_logger.error("Budget not updated : db integrity error")
+            error_logger.error("Budget not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Budget not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Budget not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -179,25 +140,12 @@ def get_budget(request, budget_id: int):
 
     try:
         budget = get_object_or_404(Budget, id=budget_id)
-        logToDB(
-            f"Budget retrieved : {budget.name}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Budget retrieved : {budget.name}")
         return budget
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Budget not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Budget not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -259,25 +207,12 @@ def list_budgets(
                 remaining_percentage=100 - used_percentage,
             )
             budgets_with_totals.append(new_budget_with_total)
-        logToDB(
-            "Budget list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Budget list retrieved")
         return budgets_with_totals
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Budget list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Budget list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -301,25 +236,12 @@ def delete_budget(request, budget_id: int):
         budget = get_object_or_404(Budget, id=budget_id)
         budget_name = budget.name
         budget.delete()
-        logToDB(
-            f"Budget deleted : {budget_name}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info(f"Budget deleted : {budget_name}")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Budget not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Budget not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 

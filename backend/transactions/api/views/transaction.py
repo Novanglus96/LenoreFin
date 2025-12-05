@@ -11,7 +11,6 @@ from transactions.api.schemas.transaction import (
     MultiTranscationDate,
     TransactionQuery,
 )
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from django.db.models import (
     Case,
@@ -39,6 +38,12 @@ from django.core.paginator import Paginator
 from transactions.api.dependencies.get_transactions_by_account import (
     get_transactions_by_account,
 )
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 transaction_router = Router(tags=["Transactions"])
 
@@ -122,28 +127,15 @@ def create_transaction(request, payload: TransactionIn):
         )
         transactions_to_create.append(transaction)
         if create_transactions(transactions_to_create):
-            logToDB(
-                "Transaction created",
-                None,
-                None,
-                None,
-                3001005,
-                1,
-            )
+            api_logger.info("Transaction created")
 
             return {"id": None}
         else:
             raise Exception("Error creating transaction")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Transaction not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record creation error : {str(e)}")
         traceback.print_exc()
 
@@ -176,18 +168,15 @@ def multiedit_transactions(request, payload: MultiTranscationDate):
             transaction_date=payload.new_date, edit_date=edit_date
         )
 
-        logToDB(
-            f"Transaction dates updated: #{payload.transaction_ids}",
-            None,
-            None,
-            None,
-            3002005,
-            1,
+        api_logger.info(
+            f"Transaction dates updated: #{payload.transaction_ids}"
         )
 
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
+        api_logger.error("Tranasction dates not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Transaction dates error: {str(e)}")
 
 
@@ -224,14 +213,7 @@ def clear_transaction(request, payload: TransactionList):
             transactions_to_update.append(transaction)
 
             # Log the transaction
-            logToDB(
-                f"Transaction cleared: #{transaction.id}",
-                None,
-                None,
-                transaction.id,
-                3002005,
-                1,
-            )
+            api_logger.info(f"Transaction cleared: #{transaction.id}")
 
         # Perform a bulk update on the modified transactions
         if transactions_to_update:
@@ -242,6 +224,8 @@ def clear_transaction(request, payload: TransactionList):
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
+        api_logger.error("Transaction clear error")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Transaction clear error: {str(e)}")
 
 
@@ -263,25 +247,12 @@ def get_transaction(request, transaction_id: int):
 
     try:
         transaction = get_object_or_404(Transaction, id=transaction_id)
-        logToDB(
-            f"Transaction retrieved : #{transaction.id}",
-            None,
-            None,
-            transaction.id,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Transaction retrieved : #{transaction.id}")
         return transaction
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Transaction not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -306,25 +277,12 @@ def delete_transaction(request, payload: TransactionList):
         transactions = Transaction.objects.filter(id__in=payload.transactions)
         transactions.delete()
         for transaction in payload.transactions:
-            logToDB(
-                f"Transaction deleted : #{transaction}",
-                None,
-                None,
-                None,
-                3001003,
-                1,
-            )
+            api_logger.info(f"Transaction deleted : #{transaction}")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Transaction not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -396,14 +354,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
                 tag_id=detail.tag_id,
                 full_toggle=detail.tag_full_toggle,
             )
-            logToDB(
-                "Transaction detail created",
-                None,
-                None,
-                transaction_id,
-                3001001,
-                1,
-            )
+            api_logger.info("Transaction detail created")
 
         # Get existing paycheck if it exists
         if transaction.paycheck_id is not None:
@@ -422,14 +373,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
             paycheck.four_fifty_seven_b = payload.paycheck.four_fifty_seven_b
             paycheck.payee_id = payload.paycheck.payee_id
             paycheck.save()
-            logToDB(
-                "Paycheck updated",
-                None,
-                None,
-                transaction_id,
-                3001002,
-                1,
-            )
+            api_logger.info("Paycheck updated")
 
         # Create new paycheck
         if payload.paycheck is not None and paycheck is None:
@@ -445,26 +389,12 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
                 four_fifty_seven_b=payload.paycheck.four_fifty_seven_b,
                 payee_id=payload.paycheck.payee_id,
             )
-            logToDB(
-                "Paycheck created",
-                None,
-                None,
-                transaction_id,
-                3001001,
-                1,
-            )
+            api_logger.info("Paycheck created")
 
         # Delete existing paycheck if no paycheck info passed
         if payload.paycheck is None and paycheck is not None:
             paycheck.delete()
-        logToDB(
-            "Paycheck deleted",
-            None,
-            None,
-            transaction_id,
-            3001003,
-            1,
-        )
+        api_logger.info("Paycheck deleted")
 
         # Update the transaction
         transaction.transaction_date = payload.transaction_date
@@ -481,26 +411,13 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         else:
             transaction.paycheck_id = None
         transaction.save()
-        logToDB(
-            f"Transaction updated : {transaction_id}",
-            None,
-            None,
-            transaction_id,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Transaction updated : {transaction_id}")
 
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction not updated : {str(e)}",
-            None,
-            None,
-            transaction_id,
-            3001902,
-            2,
-        )
+        api_logger.error("Transaction not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
@@ -691,22 +608,9 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
                 total_records=len(query),
             )
             return paginated_obj
-        logToDB(
-            "Transaction list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Transaction list retrieved")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Transaction list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

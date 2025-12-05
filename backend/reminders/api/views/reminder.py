@@ -7,7 +7,6 @@ from reminders.api.schemas.reminder import (
     ReminderOut,
     ReminderTransIn,
 )
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
 from dateutil.relativedelta import relativedelta
@@ -19,6 +18,12 @@ from transactions.api.dependencies.create_transactions import (
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 reminder_router = Router(tags=["Reminders"])
 
@@ -38,25 +43,12 @@ def create_reminder(request, payload: ReminderIn):
 
     try:
         reminder = Reminder.objects.create(**payload.dict())
-        logToDB(
-            f"Reminder created : {reminder.description}",
-            None,
-            reminder.id,
-            None,
-            3001001,
-            1,
-        )
+        api_logger.info(f"Reminder created : {reminder.description}")
         return {"id": reminder.id}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Reminder not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Reminder not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -95,25 +87,12 @@ def update_reminder(request, reminder_id: int, payload: ReminderIn):
         reminder.auto_add = payload.auto_add
         reminder.memo = payload.memo
         reminder.save()
-        logToDB(
-            f"Reminder updated : #{reminder_id}",
-            None,
-            reminder_id,
-            None,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Reminder updated : #{reminder_id}")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Reminder not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Reminder not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -135,25 +114,12 @@ def get_reminder(request, reminder_id: int):
 
     try:
         reminder = get_object_or_404(Reminder, id=reminder_id)
-        logToDB(
-            f"Reminder retrieved : {reminder.description}",
-            None,
-            reminder.id,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Reminder retrieved : {reminder.description}")
         return reminder
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Reminder not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Reminder not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -172,25 +138,12 @@ def list_reminders(request):
 
     try:
         qs = Reminder.objects.all().order_by("next_date", "id")
-        logToDB(
-            "Reminder list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Reminder list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Reminder list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Reminder list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -214,25 +167,12 @@ def delete_reminder(request, reminder_id: int):
         reminder = get_object_or_404(Reminder, id=reminder_id)
         reminder_description = reminder.description
         reminder.delete()
-        logToDB(
-            f"Reminder deleted : #{reminder_description}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info(f"Reminder deleted : #{reminder_description}")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Reminder not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Reminder not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -301,14 +241,7 @@ def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
             )
             transactions_to_create.append(transaction)
             if create_transactions(transactions_to_create):
-                logToDB(
-                    "Transaction created",
-                    None,
-                    None,
-                    None,
-                    3001005,
-                    1,
-                )
+                api_logger.info("Transaction created")
 
         # Verify the exclusion doesn't exist
         existing_exclusion = ReminderExclusion.objects.filter(
@@ -337,23 +270,10 @@ def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
         reminder.next_date = nextDate
         reminder.save()
 
-        logToDB(
-            f"Reminder transaction added : #{reminder_id}",
-            None,
-            reminder_id,
-            None,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Reminder transaction added : #{reminder_id}")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Reminder transaction not added: {str(e)}",
-            None,
-            reminder_id,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Reminder transaction not added")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record update error : {str(e)}")

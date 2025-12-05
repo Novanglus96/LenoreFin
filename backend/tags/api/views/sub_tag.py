@@ -2,9 +2,14 @@ from ninja import Router, Query
 from ninja.errors import HttpError
 from tags.models import SubTag
 from tags.api.schemas.sub_tag import SubTagOut, SubTagQuery
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 sub_tag_router = Router(tags=["Sub Tags"])
 
@@ -27,25 +32,12 @@ def get_subtag(request, subtag_id: int):
 
     try:
         subtag = get_object_or_404(SubTag, id=subtag_id)
-        logToDB(
-            f"Sub Tag retrieved : {subtag.tag_name}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Sub Tag retrieved : {subtag.tag_name}")
         return subtag
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Sub Tag not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Sub Tag not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -77,23 +69,10 @@ def list_subtags(request, query: SubTagQuery = Query(...)):
 
         # Order tags tag_name
         qs = qs.order_by("tag_name")
-        logToDB(
-            "Sub Tag list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Sub Tag list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Sub Tag list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Sub Tag list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

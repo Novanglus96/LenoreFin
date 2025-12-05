@@ -2,7 +2,6 @@ from ninja import Router
 from ninja.errors import HttpError
 from transactions.models import TransactionDetail
 from tags.api.schemas.tag_graph import TagGraphOut
-from administration.api.dependencies.log_to_db import logToDB
 import pytz
 import os
 from django.utils import timezone
@@ -11,6 +10,12 @@ from transactions.api.dependencies.get_transactions_by_tag import (
     get_transactions_by_tag,
 )
 from datetime import date
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 tag_graph_router = Router(tags=["Tag Graphs"])
 
@@ -126,23 +131,10 @@ def list_transactions_bytag(request, tag: int):
             year2_avg=last_year_avg,
             transactions=tag_transactions,
         )
-        logToDB(
-            f"Tag details retrieved : {tag}",
-            None,
-            None,
-            None,
-            3002004,
-            1,
-        )
+        api_logger.debug(f"Tag details retrieved : {tag}")
         return tag_graph_out
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Tag details not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3002904,
-            2,
-        )
+        api_logger.error("Tag details not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

@@ -9,7 +9,6 @@ from accounts.api.schemas.account import (
     AccountUpdate,
     AccountQuery,
 )
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
 from typing import List
 from django.db.models import (
@@ -25,6 +24,12 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce, Abs
 from administration.api.dependencies.apply_patch import apply_patch
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 
 account_router = Router(tags=["Accounts"])
@@ -45,48 +50,27 @@ def create_account(request, payload: AccountIn):
 
     try:
         account = Account.objects.create(**payload.dict())
-        logToDB(
-            f"Account created : {account.account_name}",
-            account.id,
-            None,
-            None,
-            3001001,
-            1,
-        )
+        api_logger.info(f"Account created : {account.account_name}")
         return {"id": account.id}
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Account not created : name exists ({payload.account_name})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
+            api_logger.error(
+                f"Account not created : name exists ({payload.account_name})"
+            )
+            error_logger.error(
+                f"Account not created : name exists ({payload.account_name})"
             )
             raise HttpError(400, "Account name already exists")
         else:
             # Log other types of integry errors
-            logToDB(
-                "Account not created : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
+            api_logger.error("Account not created : db integrity error")
+            error_logger.error("Account not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Account not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Account not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record creation error: {str(e)}")
 
 
@@ -245,25 +229,12 @@ def get_account(request, account_id: int):
             )
         )
         account = qs.first()
-        logToDB(
-            f"Account retrieved : {account.account_name}",
-            account_id,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Account retrieved : {account.account_name}")
         return account
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Account not retrieved : {str(e)}",
-            account_id,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Account not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -406,25 +377,12 @@ def list_accounts(request, query: AccountQuery = Query(...)):
                 output_field=DecimalField(max_digits=12, decimal_places=2),
             )
         )
-        logToDB(
-            "Account list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Account list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Account list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Account list retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error : {str(e)}")
 
 
@@ -464,48 +422,27 @@ def update_account(request, account_id: int, payload: AccountUpdate):
             account.funding_account = None
 
         account.save()
-        logToDB(
-            f"Account updated : {account.account_name}",
-            account_id,
-            None,
-            None,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Account updated : {account.account_name}")
         return {"success": True}
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Account not updated : account exists ({payload.account_name})",
-                account_id,
-                None,
-                None,
-                3001004,
-                2,
+            api_logger.error(
+                f"Account not updated : account exists ({payload.account_name})"
+            )
+            error_logger.error(
+                f"Account not updated : account exists ({payload.account_name})"
             )
             raise HttpError(400, "Account already exists")
         else:
             # Log other types of integry errors
-            logToDB(
-                "Account not updated : db integrity error",
-                account_id,
-                None,
-                None,
-                3001005,
-                2,
-            )
+            api_logger.error("Account not updated : db integrity error")
+            error_logger.error("Account not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Account not updated : {str(e)}",
-            account_id,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Account not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
@@ -540,23 +477,12 @@ def delete_account(request, account_id: int):
         # Delete account
         account.delete()
 
-        logToDB(
-            f"Account deleted (and related transactions/details) : {account_name}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
+        api_logger.info(
+            f"Account deleted (and related transactions/details) : {account_name}"
         )
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Account not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Account not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
