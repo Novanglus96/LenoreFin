@@ -1,3 +1,10 @@
+# [1.2.0-rc.6](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.5...v1.2.0-rc.6) (2025-12-05)
+
+
+### Features
+
+* logging ([#52](https://github.com/Novanglus96/LenoreFin/issues/52)) ([2544d61](https://github.com/Novanglus96/LenoreFin/commit/2544d61a741cb02d979146f8222be2ed04eadb88))
+
 # [1.2.0-rc.5](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.4...v1.2.0-rc.5) (2025-12-04)
 
 
