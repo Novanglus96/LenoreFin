@@ -7,7 +7,9 @@
       }"
       :tooltip="{
         subtitleFormat: s =>
-          `$${formatNumber(s.value)}(${((100 * s.value) / total).toFixed(1)}%)`,
+          `$${formatNumber(s.value)}(${((100 * s.value) / widget_total).toFixed(
+            1,
+          )}%)`,
       }"
       animation
       gap="0"
@@ -39,7 +41,6 @@
 
 <script setup>
   import { ref, defineProps, watch, computed } from "vue";
-  import { useGraphsNew } from "@/composables/tagsComposable";
   import { useOptions } from "@/composables/optionsComposable";
   import { VPie } from "vuetify/labs/VPie";
   //import { useDisplay } from "vuetify";
@@ -97,9 +98,8 @@
     };
   }
 
-  const { tag_graph_items, isLoading } = useGraphsNew(props.widget);
-  const total = computed(() =>
-    tag_graph_items.value.reduce((sum, n) => sum + parseFloat(n.value), 0),
+  const widget_total = computed(
+    () => props.graph_items?.reduce((s, n) => s + Number(n.value), 0) ?? 0,
   );
 
   // Populate formData once appOptions are loaded
