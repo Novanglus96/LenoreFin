@@ -27,3 +27,4 @@ class PieGraphItem(Schema):
     title: str
     value: DataDecimal
     color: str
+    total: DataDecimal = 0
