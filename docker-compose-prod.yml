@@ -87,6 +87,8 @@ services:
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - default
 
 volumes:
   postgres_data:
