@@ -1,3 +1,11 @@
+# [1.2.0-rc.8](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.7...v1.2.0-rc.8) (2025-12-08)
+
+
+### Bug Fixes
+
+* logs missing from production ([492cd33](https://github.com/Novanglus96/LenoreFin/commit/492cd3337ec59975ef4483cf1a66b1caa726c0ee))
+* pie graph failed when initializing ([df6053b](https://github.com/Novanglus96/LenoreFin/commit/df6053bee5e5427e8913679dc8639e0eff5ef889))
+
 # [1.2.0-rc.7](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.6...v1.2.0-rc.7) (2025-12-08)
 
 
