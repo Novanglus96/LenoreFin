@@ -1,3 +1,10 @@
+# [1.2.0-rc.7](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.6...v1.2.0-rc.7) (2025-12-08)
+
+
+### Bug Fixes
+
+* pie graph percentages wrong ([#53](https://github.com/Novanglus96/LenoreFin/issues/53)) ([b5fb46e](https://github.com/Novanglus96/LenoreFin/commit/b5fb46e128ad346c8748900e1143f9199e042e59))
+
 # [1.2.0-rc.6](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.5...v1.2.0-rc.6) (2025-12-05)
 
 
