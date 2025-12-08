@@ -51,6 +51,7 @@ ENV APP_HOME=/home/app/web
 RUN mkdir $APP_HOME
 RUN mkdir $APP_HOME/staticfiles
 RUN mkdir $APP_HOME/mediafiles
+RUN mkdir $APP_HOME/logs
 WORKDIR $APP_HOME
 
 # copy logo files
