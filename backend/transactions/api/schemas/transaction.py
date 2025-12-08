@@ -7,6 +7,15 @@ from transactions.api.schemas.paycheck import PaycheckIn, PaycheckOut
 from transactions.api.schemas.transaction_status import TransactionStatusOut
 from transactions.api.schemas.transaction_type import TransactionTypeOut
 from tags.api.schemas.tag import TagOut
+from decimal import Decimal
+from pydantic import field_serializer
+from moneyed import Money
+
+
+class MoneyOut(Schema):
+    amount: Decimal
+    currency: str
+
 
 AmountDecimal = condecimal(max_digits=12, decimal_places=2)
 
@@ -52,7 +61,7 @@ class MultiTranscationDate(Schema):
 class TransactionOut(Schema):
     id: int
     transaction_date: date
-    total_amount: AmountDecimal
+    total_amount: MoneyOut
     status: TransactionStatusOut
     memo: Optional[str] = None
     description: str
@@ -71,6 +80,13 @@ class TransactionOut(Schema):
     reminder_id: Optional[int] = None
     tag_total: Optional[AmountDecimal] = None
     simulated: Optional[bool] = False
+
+    @field_serializer("total_amount")
+    def serialize_money(self, money: Money, _info):
+        return {
+            "amount": money.amount,
+            "currency": money.currency.code,
+        }
 
     model_config = ConfigDict(from_attributes=True)
 
