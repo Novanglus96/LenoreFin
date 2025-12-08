@@ -13,6 +13,7 @@ from tags.models import Tag
 import pytz
 import os
 from reminders.models import Reminder
+from djmoney.models.fields import MoneyField
 
 
 def transaction_image_name(instance, filename):
@@ -126,8 +127,8 @@ class Transaction(models.Model):
     """
 
     transaction_date = models.DateField(default=current_date)
-    total_amount = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00
+    total_amount = MoneyField(
+        max_digits=14, decimal_places=2, default_currency="USD"
     )
     status = models.ForeignKey(
         TransactionStatus, on_delete=models.SET_NULL, null=True, blank=True

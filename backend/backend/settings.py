@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "dbbackup",
     "ninja",
     "django_q",
+    "djmoney",
 ]
 
 MIDDLEWARE = [
