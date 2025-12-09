@@ -21,9 +21,13 @@ from django.db.models import (
     OuterRef,
     ExpressionWrapper,
     DecimalField,
+    Q,
 )
 from django.db.models.functions import Coalesce, Abs
 from administration.api.dependencies.apply_patch import apply_patch
+from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+    get_todays_date_timezone_adjusted,
+)
 import logging
 
 api_logger = logging.getLogger("api")
@@ -91,6 +95,7 @@ def get_account(request, account_id: int):
     """
 
     try:
+        today = get_todays_date_timezone_adjusted()
         # Retrieve the account object from the database
         qs = Account.objects.filter(id=account_id)
 
@@ -215,11 +220,49 @@ def get_account(request, account_id: int):
                 output_field=DecimalField(max_digits=12, decimal_places=2),
             )
         )
-
+        pending_balance = (
+            Transaction.objects.filter(
+                Q(source_account_id=account_id)
+                | Q(destination_account_id=account_id),
+                transaction_date__lte=today,
+                status_id=1,
+            )
+            .annotate(
+                pretty_total=Case(
+                    When(transaction_type_id=2, then=Abs(F("total_amount"))),
+                    When(transaction_type_id=1, then=-Abs(F("total_amount"))),
+                    When(
+                        transaction_type_id=3,
+                        then=Case(
+                            When(
+                                destination_account_id=OuterRef("pk"),
+                                then=Abs(F("total_amount")),
+                            ),
+                            default=Abs(F("total_amount")),
+                            output_field=DecimalField(
+                                max_digits=12, decimal_places=2
+                            ),
+                        ),
+                    ),
+                    default=Value(
+                        0,
+                        output_field=DecimalField(
+                            max_digits=12, decimal_places=2
+                        ),
+                    ),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            )
+            .values("destination_account_id")
+            .annotate(balance=Sum("pretty_total"))
+            .values("balance")[:1]
+        )
         qs = qs.annotate(
             available_credit=Coalesce(
                 ExpressionWrapper(
-                    F("credit_limit") - Abs(F("balance")),
+                    F("credit_limit")
+                    - Abs(F("balance"))
+                    - Abs(pending_balance),
                     output_field=DecimalField(max_digits=12, decimal_places=2),
                 ),
                 Value(
