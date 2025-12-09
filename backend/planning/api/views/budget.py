@@ -181,7 +181,7 @@ def list_budgets(
                 budget.start_day, budget.repeat
             )
             transactions = get_transactions_by_tag(
-                end_date, False, start_date, json.loads(budget.tag_ids), True
+                end_date, False, start_date, json.loads(budget.tag_ids), False
             )
             total = 0
             unique_transactions = []
