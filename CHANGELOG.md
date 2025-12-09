@@ -1,3 +1,11 @@
+# [1.2.0-rc.9](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.8...v1.2.0-rc.9) (2025-12-09)
+
+
+### Bug Fixes
+
+* account available balance now includes pending ([39b5254](https://github.com/Novanglus96/LenoreFin/commit/39b5254f548d9ef190c742430140890325c9ad35))
+* budgets include pending transactions ([2bec572](https://github.com/Novanglus96/LenoreFin/commit/2bec57281206e75b721809984d9e8ba5f4bb2873))
+
 # [1.2.0-rc.8](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.7...v1.2.0-rc.8) (2025-12-08)
 
 
