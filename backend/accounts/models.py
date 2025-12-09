@@ -87,12 +87,8 @@ class Account(models.Model):
     annual_rate = models.DecimalField(
         max_digits=4, decimal_places=2, default=0.00, null=True, blank=True
     )
-    due_date = models.DateField(default=current_date, null=True, blank=True)
     active = models.BooleanField(default=True)
     open_date = models.DateField(default=current_date, null=True)
-    next_cycle_date = models.DateField(
-        default=current_date, null=True, blank=True
-    )
     statement_cycle_length = models.IntegerField(
         default=0, null=True, blank=True
     )

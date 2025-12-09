@@ -28,6 +28,7 @@ from administration.api.dependencies.apply_patch import apply_patch
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
+from dateutil.relativedelta import relativedelta
 import logging
 
 api_logger = logging.getLogger("api")
@@ -95,9 +96,33 @@ def get_account(request, account_id: int):
     """
 
     try:
-        today = get_todays_date_timezone_adjusted()
+
         # Retrieve the account object from the database
         qs = Account.objects.filter(id=account_id)
+
+        # Set variables
+        today = get_todays_date_timezone_adjusted()
+        due_day = qs.first().due_day
+        statement_day = qs.first().statement_day
+        statement_date = today
+        due_date = today
+
+        # Calculate Next Statement Date / Due Date
+        if due_day > today.day:
+            due_date = today.replace(day=1) + relativedelta(day=due_day)
+        else:
+            due_date = today.replace(day=1) + relativedelta(
+                months=1, day=due_day
+            )
+
+        if statement_day > today.day:
+            statement_date = today.replace(day=1) + relativedelta(
+                day=statement_day
+            )
+        else:
+            statement_date = today.replace(day=1) + relativedelta(
+                months=1, day=statement_day
+            )
 
         # Subquery to get the latest rewards amount
         rewards_total_amount = 0
@@ -271,9 +296,14 @@ def get_account(request, account_id: int):
                 ),
             )
         )
+
         account = qs.first()
         api_logger.debug(f"Account retrieved : {account.account_name}")
-        return account
+        acc_out = AccountOut.from_orm(account)
+        acc_out.due_date = due_date
+        acc_out.statement_date = statement_date
+
+        return acc_out
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account not retrieved")
