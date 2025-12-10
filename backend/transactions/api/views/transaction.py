@@ -38,6 +38,7 @@ from django.core.paginator import Paginator
 from transactions.api.dependencies.get_transactions_by_account import (
     get_transactions_by_account,
 )
+from backend.utils.cache import delete_pattern
 import logging
 
 api_logger = logging.getLogger("api")
@@ -202,8 +203,12 @@ def clear_transaction(request, payload: TransactionList):
 
         # Prepare a list to hold transactions that need to be updated
         transactions_to_update = []
+        accounts_effected = []
 
         for transaction in transactions:
+            accounts_effected.append(transaction.source_account.id)
+            if transaction.destination_account:
+                accounts_effected.append(transaction.destination_account.id)
             if transaction.status_id == 2:
                 transaction.status_id = 1
             elif transaction.status_id == 1:
@@ -220,7 +225,10 @@ def clear_transaction(request, payload: TransactionList):
             Transaction.objects.bulk_update(
                 transactions_to_update, ["status_id", "edit_date"]
             )
-
+        unique_accounts = list(set(accounts_effected))
+        for account in unique_accounts:
+            pattern = f"*account_transactions_{account}*"
+            delete_pattern(pattern)
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
