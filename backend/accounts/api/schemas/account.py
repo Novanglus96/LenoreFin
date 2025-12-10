@@ -15,10 +15,8 @@ class AccountIn(Schema):
     account_type_id: int
     opening_balance: Optional[BalanceDecimal] = None
     annual_rate: Optional[ApyDecimal] = None
-    due_date: Optional[date] = None
     active: bool
     open_date: Optional[date] = None
-    next_cycle_date: Optional[date]
     statement_cycle_length: Optional[int] = None
     statement_cycle_period: Optional[str] = None
     credit_limit: Optional[BalanceDecimal] = None
@@ -45,7 +43,7 @@ class AccountOut(Schema):
     due_date: Optional[date] = None
     active: bool
     open_date: date
-    next_cycle_date: Optional[date] = None
+    statement_date: Optional[date] = None
     statement_cycle_length: Optional[int] = None
     statement_cycle_period: Optional[str] = None
     credit_limit: Optional[BalanceDecimal] = None
@@ -73,10 +71,8 @@ class AccountUpdate(Schema):
     account_type_id: Optional[int] = None
     opening_balance: Optional[BalanceDecimal] = None
     annual_rate: Optional[ApyDecimal] = None
-    due_date: Optional[date] = None
     active: Optional[bool] = None
     open_date: Optional[date] = None
-    next_cycle_date: Optional[date] = None
     statement_cycle_length: Optional[int] = None
     statement_cycle_period: Optional[str] = None
     credit_limit: Optional[BalanceDecimal] = None

@@ -103,8 +103,8 @@
             >
               <div class="text-white font-weight-bold text-body">
                 {{
-                  account.next_cycle_date
-                    ? formatDate(account.next_cycle_date)
+                  account.statement_date
+                    ? formatDate(account.statement_date)
                     : "n/a"
                 }}
               </div>
@@ -216,8 +216,8 @@
               >
                 <div class="text-white font-weight-bold text-body">
                   {{
-                    account.next_cycle_date
-                      ? formatDate(account.next_cycle_date)
+                    account.statement_date
+                      ? formatDate(account.statement_date)
                       : "n/a"
                   }}
                 </div>

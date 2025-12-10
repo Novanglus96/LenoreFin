@@ -951,7 +951,11 @@ def update_cc_forecast_cache(account_id):
                     transactions_to_create.append(transaction)
                     total_payments += cycle_payment
                     temp_id -= 1
+            if x == 0:
+                account.last_statement_amount = cycle_payment
+                account.save()
             x += 1
+
         create_transactions(transactions_to_create, "forecast")
         pattern = f"*account_transactions_{account_id}*"
         delete_pattern(pattern)

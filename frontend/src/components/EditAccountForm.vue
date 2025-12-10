@@ -116,17 +116,34 @@
               </v-row>
               <v-row dense>
                 <v-col>
-                  <v-date-input
-                    label="Next Statement Date"
-                    prepend-icon=""
-                    prepend-inner-icon="$calendar"
-                    variant="outlined"
-                    :error-messages="next_cycle_date.errorMessage.value"
-                    v-model="next_cycle_date.value.value"
-                    density="compact"
+                  <v-select
+                    label="Statement End Day"
+                    :items="intervals"
+                    v-model="statement_day.value.value"
+                    density="comfortable"
                     clearable
-                    @click:clear="next_cycle_date.value.value = null"
-                  ></v-date-input>
+                    :error-messages="statement_day.errorMessage.value"
+                  ></v-select>
+                </v-col>
+                <v-col>
+                  <v-select
+                    label="Statement Due Day"
+                    :items="intervals"
+                    v-model="due_day.value.value"
+                    density="comfortable"
+                    clearable
+                    :error-messages="due_day.errorMessage.value"
+                  ></v-select>
+                </v-col>
+                <v-col>
+                  <v-select
+                    label="Statement Pay Day"
+                    :items="intervals"
+                    v-model="pay_day.value.value"
+                    density="comfortable"
+                    clearable
+                    :error-messages="pay_day.errorMessage.value"
+                  ></v-select>
                 </v-col>
               </v-row>
               <v-row dense>
@@ -151,21 +168,6 @@
                     clearable
                     :error-messages="statement_cycle_period.errorMessage.value"
                   ></v-select>
-                </v-col>
-              </v-row>
-              <v-row dense>
-                <v-col>
-                  <v-date-input
-                    label="Due Date"
-                    prepend-icon=""
-                    prepend-inner-icon="$calendar"
-                    variant="outlined"
-                    :error-messages="due_date.errorMessage.value"
-                    v-model="due_date.value.value"
-                    density="compact"
-                    clearable
-                    @click:clear="due_date.value.value = null"
-                  ></v-date-input>
                 </v-col>
               </v-row>
               <v-row dense>
@@ -295,20 +297,8 @@
       then: schema => schema.required("Must provide annual rate (APR/APY)."),
       otherwise: schema => schema.notRequired(),
     }),
-    due_date: yup.string().when(["account_type_id", "calculate_payments"], {
-      is: (type, calc) => type === 1 && calc === true,
-      then: schema => schema.required("Must enter a due date."),
-      otherwise: schema => schema.notRequired(),
-    }),
     active: yup.boolean().required("Must mark active/inactive."),
     open_date: yup.string().required("Must provide opening date."),
-    next_cycle_date: yup
-      .string()
-      .when(["account_type_id", "calculate_payments"], {
-        is: (type, calc) => type === 1 && calc === true,
-        then: schema => schema.required("Must enter a statement date."),
-        otherwise: schema => schema.notRequired(),
-      }),
     statement_cycle_length: yup
       .number()
       .when(["account_type_id", "calculate_payments"], {
@@ -319,6 +309,32 @@
             .positive("Must be greater than 0"),
         otherwise: schema => schema.notRequired(),
       }),
+    statement_day: yup
+      .number()
+      .when(["account_type_id", "calculate_payments"], {
+        is: (type, calc) => type === 1 && calc === true,
+        then: schema =>
+          schema
+            .required("Must enter a statement day.")
+            .positive("Must be greater than 0"),
+        otherwise: schema => schema.notRequired(),
+      }),
+    due_day: yup.number().when(["account_type_id", "calculate_payments"], {
+      is: (type, calc) => type === 1 && calc === true,
+      then: schema =>
+        schema
+          .required("Must enter a due day.")
+          .positive("Must be greater than 0"),
+      otherwise: schema => schema.notRequired(),
+    }),
+    pay_day: yup.number().when(["account_type_id", "calculate_payments"], {
+      is: (type, calc) => type === 1 && calc === true,
+      then: schema =>
+        schema
+          .required("Must enter a pay day.")
+          .positive("Must be greater than 0"),
+      otherwise: schema => schema.notRequired(),
+    }),
     statement_cycle_period: yup
       .string()
       .when(["account_type_id", "calculate_payments"], {
@@ -373,10 +389,8 @@
   const account_type_id = useField("account_type_id");
   const opening_balance = useField("opening_balance");
   const annual_rate = useField("annual_rate");
-  const due_date = useField("due_date");
   const active = useField("active");
   const open_date = useField("open_date");
-  const next_cycle_date = useField("next_cycle_date");
   const statement_cycle_length = useField("statement_cycle_length");
   const statement_cycle_period = useField("statement_cycle_period");
   const rewards_amount = useField("rewards_amount");
@@ -389,6 +403,9 @@
   const payment_strategy = useField("payment_strategy");
   const payment_amount = useField("payment_amount");
   const minimum_payment_amount = useField("minimum_payment_amount");
+  const statement_day = useField("statement_day");
+  const due_day = useField("due_day");
+  const pay_day = useField("payday");
 
   const { accounts, isLoading: accounts_isLoading } = useAccounts();
   const { banks, isLoading } = useBanks();
@@ -450,12 +467,8 @@
     account_type_id.value.value = props.account.account_type.id;
     opening_balance.value.value = props.account.opening_balance;
     annual_rate.value.value = props.account.annual_rate;
-    due_date.value.value = parseDateAsLocal(props.account.due_date);
     active.value.value = props.account.active;
     open_date.value.value = parseDateAsLocal(props.account.open_date);
-    next_cycle_date.value.value = parseDateAsLocal(
-      props.account.next_cycle_date,
-    );
     statement_cycle_length.value.value = props.account.statement_cycle_length;
     statement_cycle_period.value.value = props.account.statement_cycle_period;
     rewards_amount.value.value = props.account.rewards_amount;
@@ -470,6 +483,9 @@
     payment_strategy.value.value = props.account.payment_strategy;
     payment_amount.value.value = props.account.payment_amount;
     minimum_payment_amount.value.value = props.account.minimum_payment_amount;
+    statement_day.value.value = props.account.statement_day;
+    due_day.value.value = props.account.due_day;
+    pay_day.value.value = props.account.pay_day;
   };
 
   function parseDateAsLocal(dateString) {
