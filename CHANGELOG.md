@@ -1,3 +1,11 @@
+# [1.2.0-rc.13](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.12...v1.2.0-rc.13) (2025-12-11)
+
+
+### Bug Fixes
+
+* edit account form, typo on pay_day ([26b6455](https://github.com/Novanglus96/LenoreFin/commit/26b64559a3a71fa87f40e193bec694f2b9b5cf5f))
+* loop on forecast calc for cc ([5041529](https://github.com/Novanglus96/LenoreFin/commit/50415299d2ed071716b2ad9795fa852c8942e559))
+
 # [1.2.0-rc.12](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.11...v1.2.0-rc.12) (2025-12-11)
 
 
