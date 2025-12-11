@@ -1,3 +1,17 @@
+# [1.2.0-rc.11](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.10...v1.2.0-rc.11) (2025-12-11)
+
+
+### Features
+
+* added reqrds graph ([c8a5a1b](https://github.com/Novanglus96/LenoreFin/commit/c8a5a1bb2d76ed6bf99871768ef4e2fe8a8fca68))
+
+# [1.2.0-rc.10](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.9...v1.2.0-rc.10) (2025-12-10)
+
+
+### Bug Fixes
+
+* clearing transactions now reloads cache ([#57](https://github.com/Novanglus96/LenoreFin/issues/57)) ([2712402](https://github.com/Novanglus96/LenoreFin/commit/271240228fd5cea770cee2f0a09b3025257d0406))
+
 # [1.2.0-rc.9](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.8...v1.2.0-rc.9) (2025-12-09)
 
 
