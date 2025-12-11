@@ -148,7 +148,20 @@
                   :format="{ style: 'currency', currency: 'USD' }"
                 />
               </div>
-              <div class="text-primary-lighten-2">rewards</div>
+              <div class="text-primary-lighten-2">
+                rewards
+                <v-icon
+                  size="small"
+                  icon="mdi-chart-line"
+                  color="accent"
+                ></v-icon>
+              </div>
+              <RewardsGraphs
+                v-model="showRewardGraph"
+                @update-dialog="updateRewardGraphDialog"
+                :current-amounts="account.current_yr_rewards"
+                :last-amounts="account.last_yr_rewards"
+              />
             </v-col>
             <v-col
               v-if="account.account_type.id == 1"
@@ -217,11 +230,11 @@
                 <div class="text-white font-weight-bold text-body">
                   {{
                     account.statement_date
-                      ? formatDate(account.statement_date)
+                      ? formatDateShort(account.statement_date)
                       : "n/a"
                   }}
                 </div>
-                <div class="text-primary-lighten-2">statement end date</div>
+                <div class="text-primary-lighten-2">statement end</div>
               </v-col>
               <v-col
                 v-if="account.account_type.id == 1"
@@ -233,7 +246,7 @@
                     :format="{ style: 'currency', currency: 'USD' }"
                   />
                 </div>
-                <div class="text-primary-lighten-2">last statement balance</div>
+                <div class="text-primary-lighten-2">last statement</div>
               </v-col>
             </v-row>
             <v-row density="compact">
@@ -242,7 +255,9 @@
                 class="text-center align-content-end"
               >
                 <div class="text-white font-weight-bold text-body">
-                  {{ account.due_date ? formatDate(account.due_date) : "n/a" }}
+                  {{
+                    account.due_date ? formatDateShort(account.due_date) : "n/a"
+                  }}
                 </div>
                 <div class="text-primary-lighten-2">due date</div>
               </v-col>
@@ -263,7 +278,20 @@
                     :format="{ style: 'currency', currency: 'USD' }"
                   />
                 </div>
-                <div class="text-primary-lighten-2">rewards</div>
+                <div class="text-primary-lighten-2">
+                  rewards
+                  <v-icon
+                    size="small"
+                    icon="mdi-chart-line"
+                    color="accent"
+                  ></v-icon>
+                </div>
+                <RewardsGraphs
+                  v-model="showRewardGraph"
+                  @update-dialog="updateRewardGraphDialog"
+                  :current-amounts="account.current_yr_rewards"
+                  :last-amounts="account.last_yr_rewards"
+                />
               </v-col>
               <v-col
                 v-if="account.account_type.id == 1"
@@ -275,7 +303,7 @@
                     :format="{ style: 'currency', currency: 'USD' }"
                   />
                 </div>
-                <div class="text-primary-lighten-2">available credit</div>
+                <div class="text-primary-lighten-2">available</div>
               </v-col>
             </v-row>
           </v-container>
@@ -298,12 +326,14 @@
   import DeleteAccountForm from "./DeleteAccountForm.vue";
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
+  import RewardsGraphs from "./RewardsGraphs.vue";
 
   const { smAndDown } = useDisplay();
   const adjBalDialog = ref(false);
   const editDialog = ref(false);
   const deleteDialog = ref(false);
   const showMore = ref(false);
+  const showRewardGraph = ref(false);
 
   const props = defineProps({
     account: Array,
@@ -320,6 +350,9 @@
   const updateDeleteDialog = value => {
     deleteDialog.value = value;
   };
+  const updateRewardGraphDialog = value => {
+    showRewardGraph.value = value;
+  };
   const formatDate = dateString => {
     const date = new Date(dateString + "T00:00:00Z");
     return new Intl.DateTimeFormat("en-US", {
@@ -329,7 +362,37 @@
       timeZone: "UTC",
     }).format(date);
   };
+
+  const formatDateShort = (input, padDay = false) => {
+    let date;
+
+    // If input is already a Date object, trust it
+    if (input instanceof Date) {
+      date = input;
+    } else if (typeof input === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
+      // Manual parse YYYY-MM-DD to LOCAL date (no timezone shift)
+      const [y, m, d] = input.split("-").map(Number);
+      date = new Date(y, m - 1, d);
+    } else {
+      date = new Date(input); // fallback for timestamps
+    }
+
+    if (isNaN(date)) {
+      console.warn("Invalid date:", input);
+      return "";
+    }
+
+    const month = date.toLocaleString("en-US", { month: "short" });
+    const day = date.getDate();
+
+    return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
+  };
+
   const toggleMore = () => {
     showMore.value = !showMore.value;
+  };
+
+  const handleClick = () => {
+    showRewardGraph.value = true;
   };
 </script>

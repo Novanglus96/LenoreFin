@@ -22,13 +22,15 @@ from django.db.models import (
     ExpressionWrapper,
     DecimalField,
     Q,
+    Max,
 )
-from django.db.models.functions import Coalesce, Abs
+from django.db.models.functions import Coalesce, Abs, TruncMonth
 from administration.api.dependencies.apply_patch import apply_patch
 from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
 from dateutil.relativedelta import relativedelta
+from datetime import timedelta
 import logging
 
 api_logger = logging.getLogger("api")
@@ -302,6 +304,8 @@ def get_account(request, account_id: int):
         acc_out = AccountOut.from_orm(account)
         acc_out.due_date = due_date
         acc_out.statement_date = statement_date
+        acc_out.current_yr_rewards = last_six_month_reward_amounts(account_id)
+        acc_out.last_yr_rewards = last_year_six_month_reward_amounts(account_id)
 
         return acc_out
     except Exception as e:
@@ -559,3 +563,78 @@ def delete_account(request, account_id: int):
         api_logger.error("Account not deleted")
         error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
+
+
+def last_six_month_reward_amounts(account_id: int):
+    today = get_todays_date_timezone_adjusted()
+    first_of_current_month = today.replace(day=1)
+
+    # --- Build the last 6 months (newest first) ---
+    months = []
+    current = first_of_current_month
+    for _ in range(5):
+        months.append(current)
+        prev = (current - timedelta(days=1)).replace(day=1)
+        current = prev
+
+    # --- Build queryset for last reward per month ---
+    base = Reward.objects.filter(reward_account__id=account_id).annotate(
+        month=TruncMonth("reward_date")
+    )
+
+    sub = (
+        base.values("month")
+        .annotate(last_date=Max("reward_date"))
+        .filter(month=OuterRef("month"))
+    )
+
+    latest = base.filter(reward_date=Subquery(sub.values("last_date")))
+
+    # Convert queryset to lookup dictionary {month: amount}
+    latest_lookup = {row.month: row.reward_amount for row in latest}
+
+    # --- Build final list of amounts (0 for missing months) ---
+    amounts = [latest_lookup.get(month, 0) for month in months]
+    amounts = list(reversed(amounts))
+
+    return amounts
+
+
+def last_year_six_month_reward_amounts(account_id: int):
+    today = get_todays_date_timezone_adjusted()
+
+    # Move 1 year back
+    last_year_today = today.replace(year=today.year - 1)
+    first_of_target_month = last_year_today.replace(day=1)
+
+    # --- Build the 6 months for last year (newest → oldest) ---
+    months = []
+    current = first_of_target_month
+    for _ in range(5):
+        months.append(current)
+        prev = (current - timedelta(days=1)).replace(day=1)
+        current = prev
+
+    # --- Query for the latest reward entry per month ---
+    base = Reward.objects.filter(reward_account__id=account_id).annotate(
+        month=TruncMonth("reward_date")
+    )
+
+    sub = (
+        base.values("month")
+        .annotate(last_date=Max("reward_date"))
+        .filter(month=OuterRef("month"))
+    )
+
+    latest = base.filter(reward_date=Subquery(sub.values("last_date")))
+
+    # Build lookup dictionary: {month: reward_amount}
+    latest_lookup = {row.month: row.reward_amount for row in latest}
+
+    # Build newest → oldest
+    newest_to_oldest = [latest_lookup.get(month, 0) for month in months]
+
+    # Reverse → oldest → newest
+    oldest_to_newest = list(reversed(newest_to_oldest))
+
+    return oldest_to_newest

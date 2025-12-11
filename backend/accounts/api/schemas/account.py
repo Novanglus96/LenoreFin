@@ -4,6 +4,7 @@ from datetime import date
 from accounts.api.schemas.account_type import AccountTypeOut
 from accounts.api.schemas.bank import BankOut
 from pydantic import ConfigDict, condecimal
+from typing import List
 
 BalanceDecimal = condecimal(max_digits=12, decimal_places=2)
 ApyDecimal = condecimal(max_digits=4, decimal_places=2)
@@ -61,6 +62,8 @@ class AccountOut(Schema):
     statement_day: Optional[int] = 15
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
+    current_yr_rewards: List[BalanceDecimal] = []
+    last_yr_rewards: List[BalanceDecimal] = []
 
     model_config = ConfigDict(from_attributes=True)
 
