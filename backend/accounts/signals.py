@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from accounts.models import Account
 from django_q.tasks import async_task
@@ -11,7 +11,9 @@ def update_cache_on_save(sender, instance, **kwargs):
     """
     Update the reminder scratch/cache table when a Reminder is created or updated.
     """
-    if instance.account_type.id == 1:
+    if instance.account_type.id == 1 and getattr(
+        instance, "_should_update_cache", False
+    ):
         async_task(
             "transactions.tasks.update_cc_forecast_cache",
             instance.id,
@@ -26,3 +28,33 @@ def update_cache_on_delete(sender, instance, **kwargs):
     ForecastCacheTransaction.objects.filter(
         Q(source_account_id=instance.id) | Q(destination_account_id=instance.id)
     ).delete()
+
+
+@receiver(pre_save, sender=Account)
+def detect_relevant_changes(sender, instance, **kwargs):
+    instance._should_update_cache = False
+
+    if not instance.pk:
+        instance._should_update_cache = True
+        return
+
+    old = sender.objects.get(pk=instance.pk)
+    relevant = [
+        "annual_rate",
+        "opening_balance",
+        "statement_cycle_length",
+        "statement_cycle_period",
+        "archive_balance",
+        "funding_account",
+        "calculate_payments",
+        "calculate_interest",
+        "payment_strategy",
+        "payment_amount",
+        "minimum_payment_amount",
+        "statement_day",
+        "due_day",
+        "pay_day",
+    ]
+
+    if any(getattr(old, f) != getattr(instance, f) for f in relevant):
+        instance._should_update_cache = True
