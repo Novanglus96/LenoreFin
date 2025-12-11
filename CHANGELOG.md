@@ -1,3 +1,13 @@
+# [1.2.0-rc.12](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.11...v1.2.0-rc.12) (2025-12-11)
+
+
+### Bug Fixes
+
+* caclulator transfers/transactions wrong dates ([7b58ae0](https://github.com/Novanglus96/LenoreFin/commit/7b58ae0b3a99484929fb6b18712cdb912c026d1f))
+* clearing transactions now reloads cache ([8296657](https://github.com/Novanglus96/LenoreFin/commit/8296657232c776fc63051c94824f82884fc01441))
+* failed backups ([e6aedb6](https://github.com/Novanglus96/LenoreFin/commit/e6aedb6fa5c9cdd6984616de2bad156877531690))
+* missing source account on new transactions ([f0a1931](https://github.com/Novanglus96/LenoreFin/commit/f0a1931b7238699507a33126c522518aea5f9034))
+
 # [1.2.0-rc.11](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.10...v1.2.0-rc.11) (2025-12-11)
 
 
