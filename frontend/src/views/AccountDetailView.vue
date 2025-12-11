@@ -27,6 +27,7 @@
           :data="transactions"
           :loading="isLoading"
           :fetching="isFetching"
+          :account-i-d="account_id"
         />
       </v-col>
     </v-row>

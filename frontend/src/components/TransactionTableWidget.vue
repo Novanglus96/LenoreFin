@@ -644,6 +644,7 @@
     data: { type: Object },
     loading: { type: Boolean, default: true },
     fetching: { type: Boolean, default: true },
+    accountID: { type: Number },
   });
 
   const localTransactions = ref(props.data ? props.data.transactions : []);
@@ -693,7 +694,7 @@
     },
     transaction_date: formattedDate,
     memo: "",
-    source_account_id: parseInt(props.account),
+    source_account_id: parseInt(props.accountID),
     destination_account_id: null,
     edit_date: formattedDate,
     add_date: formattedDate,
