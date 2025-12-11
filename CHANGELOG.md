@@ -1,3 +1,10 @@
+# [1.2.0-rc.11](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.10...v1.2.0-rc.11) (2025-12-11)
+
+
+### Features
+
+* added reqrds graph ([c8a5a1b](https://github.com/Novanglus96/LenoreFin/commit/c8a5a1bb2d76ed6bf99871768ef4e2fe8a8fca68))
+
 # [1.2.0-rc.10](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.9...v1.2.0-rc.10) (2025-12-10)
 
 
