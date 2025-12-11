@@ -405,7 +405,7 @@
   const minimum_payment_amount = useField("minimum_payment_amount");
   const statement_day = useField("statement_day");
   const due_day = useField("due_day");
-  const pay_day = useField("payday");
+  const pay_day = useField("pay_day");
 
   const { accounts, isLoading: accounts_isLoading } = useAccounts();
   const { banks, isLoading } = useBanks();
