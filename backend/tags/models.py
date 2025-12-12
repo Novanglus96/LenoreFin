@@ -1,5 +1,4 @@
 from django.db import models
-from django.db.models import Q
 
 # Create your models here.
 
@@ -86,7 +85,7 @@ class Tag(models.Model):
     @property
     def tag_name(self):
         if self.child:
-            return f"{self.parent.tag_name} \ {self.child.tag_name}"
+            return f"{self.parent.tag_name} \\ {self.child.tag_name}"
         return f"{self.parent.tag_name}"
 
     class Meta:
