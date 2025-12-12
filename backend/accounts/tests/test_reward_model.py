@@ -1,6 +1,16 @@
 import datetime
 import pytest
 from accounts.models import Reward
+from django.utils import timezone
+import pytz
+import os
+
+
+def current_date():
+    today = timezone.now()
+    tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+    today_tz = today.astimezone(tz_timezone).date()
+    return today_tz
 
 
 @pytest.mark.django_db
@@ -23,6 +33,14 @@ def test_reward_default_amount(test_checking_account):
     reward = Reward.objects.create(reward_account=test_checking_account)
 
     assert reward.reward_amount == 0
+
+
+@pytest.mark.django_db
+def test_reward_default_date(test_checking_account):
+    """Reward should default reward_date to today when not supplied."""
+    reward = Reward.objects.create(reward_account=test_checking_account)
+
+    assert reward.reward_date == current_date()
 
 
 @pytest.mark.django_db
