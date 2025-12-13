@@ -4,17 +4,17 @@ from accounts.models import Bank, Account
 
 @pytest.mark.django_db
 def test_bank_creation():
-    bank = Bank.objects.create(bank_name="Test Checking Account")
+    bank = Bank.objects.create(bank_name="Test Bank")
 
     assert bank.id is not None
-    assert bank.bank_name == "Test Checking Account"
+    assert bank.bank_name == "Test Bank"
 
 
 @pytest.mark.django_db
 def test_bank_str():
-    bank = Bank.objects.create(bank_name="Test Checking Account")
+    bank = Bank.objects.create(bank_name="Test Bank")
 
-    expected = "Test Checking Account"
+    expected = "Test Bank"
     assert str(bank) == expected
 
 
