@@ -139,12 +139,18 @@ class Account(models.Model):
                 "An account cannot be its own funding account."
             )
         # Ensure the funding account is a checking account
-        if self.funding_account and self.funding_account.account_type.id != 2:
+        if (
+            self.funding_account
+            and self.funding_account.account_type.account_type != "Checking"
+        ):
             raise ValidationError(
                 "A funding account must be a checking account"
             )
         # Ensure the account is a credit card
-        if self.funding_account and self.account_type.id != 1:
+        if (
+            self.funding_account
+            and self.account_type.account_type != "Credit Card"
+        ):
             raise ValidationError(
                 "A funding account can only be set for Credit Card accounts"
             )
