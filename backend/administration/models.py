@@ -211,7 +211,9 @@ class DescriptionHistory(models.Model):
     """
 
     description_normalized = models.CharField(max_length=254, unique=True)
-    description_pretty = models.CharField(max_length=254, default=None)
+    description_pretty = models.CharField(
+        max_length=254, default=None, null=True, blank=True
+    )
     tag = models.ForeignKey(
         Tag, on_delete=models.SET_NULL, null=True, blank=True, default=None
     )

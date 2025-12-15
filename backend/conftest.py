@@ -1,5 +1,6 @@
 import pytest
 from accounts.models import Bank, Account, AccountType
+from tags.models import TagType, MainTag, SubTag, Tag
 from django.utils import timezone
 import pytz
 import os
@@ -15,6 +16,30 @@ def current_date():
 @pytest.fixture
 def bank():
     return Bank.objects.create(bank_name="Test Bank")
+
+
+@pytest.fixture
+def tag_type_expense():
+    return TagType.objects.create(tag_type="Expense")
+
+
+@pytest.fixture
+def test_main_tag(tag_type_expense):
+    return MainTag.objects.create(
+        tag_name="Main Test", tag_type=tag_type_expense
+    )
+
+
+@pytest.fixture
+def test_sub_tag(tag_type_expense):
+    return SubTag.objects.create(tag_name="Sub Test", tag_type=tag_type_expense)
+
+
+@pytest.fixture
+def test_tag(tag_type_expense, test_sub_tag, test_main_tag):
+    return Tag.objects.create(
+        parent=test_main_tag, child=test_sub_tag, tag_type=tag_type_expense
+    )
 
 
 @pytest.fixture
