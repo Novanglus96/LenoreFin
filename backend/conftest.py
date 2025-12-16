@@ -1,6 +1,7 @@
 import pytest
 from accounts.models import Bank, Account, AccountType
 from tags.models import TagType, MainTag, SubTag, Tag
+from transactions.models import TransactionType
 from django.utils import timezone
 import pytz
 import os
@@ -142,3 +143,8 @@ def test_credit_card_account(bank, credit_card_account_type):
         due_day=15,
         pay_day=15,
     )
+
+
+@pytest.fixture
+def test_expense_transaction_type():
+    return TransactionType.objects.create(transaction_type="Expense")
