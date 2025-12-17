@@ -156,7 +156,6 @@ class Transaction(models.Model):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        default=None,
     )
     destination_account = models.ForeignKey(
         Account,
@@ -168,7 +167,10 @@ class Transaction(models.Model):
     )
 
     def __str__(self):
-        return f"#{self.id} | {self.transaction_date} : {self.description} (${self.total_amount})"
+        return (
+            f"#{self.id} | {self.transaction_date} : "
+            f"{self.description} (${self.total_amount:.2f})"
+        )
 
 
 class TransactionImage(models.Model):
