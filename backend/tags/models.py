@@ -70,13 +70,13 @@ class Tag(models.Model):
     """
 
     parent = models.ForeignKey(
-        MainTag, on_delete=models.CASCADE, null=True, blank=True, default=None
+        MainTag, on_delete=models.CASCADE, null=True, blank=True
     )
     child = models.ForeignKey(
         SubTag, on_delete=models.CASCADE, null=True, blank=True, default=None
     )
     tag_type = models.ForeignKey(
-        TagType, on_delete=models.SET_NULL, null=True, blank=True, default=None
+        TagType, on_delete=models.SET_NULL, null=True, blank=True
     )
 
     def __str__(self):
