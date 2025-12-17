@@ -1,7 +1,8 @@
 import pytest
 from accounts.models import Bank, Account, AccountType
 from tags.models import TagType, MainTag, SubTag, Tag
-from transactions.models import TransactionType
+from transactions.models import TransactionType, TransactionStatus, Paycheck
+from administration.models import Payee
 from django.utils import timezone
 import pytz
 import os
@@ -148,3 +149,29 @@ def test_credit_card_account(bank, credit_card_account_type):
 @pytest.fixture
 def test_expense_transaction_type():
     return TransactionType.objects.create(transaction_type="Expense")
+
+
+@pytest.fixture
+def test_pending_transaction_status():
+    return TransactionStatus.objects.create(transaction_status="Pending")
+
+
+@pytest.fixture
+def test_payee():
+    return Payee.objects.create(payee_name="Test Payee")
+
+
+@pytest.fixture
+def test_paycheck(test_payee):
+    return Paycheck.objects.create(
+        gross=1.00,
+        net=1.00,
+        taxes=1.00,
+        health=1.00,
+        pension=1.00,
+        fsa=1.00,
+        dca=1.00,
+        union_dues=1.00,
+        four_fifty_seven_b=1.00,
+        payee=test_payee,
+    )
