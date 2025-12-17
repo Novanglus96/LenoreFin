@@ -153,14 +153,14 @@ class Transaction(models.Model):
     source_account = models.ForeignKey(
         Account,
         related_name="source_transactions",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
     destination_account = models.ForeignKey(
         Account,
         related_name="destination_transactions",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         default=None,
