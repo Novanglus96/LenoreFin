@@ -3,6 +3,7 @@ from django.utils import timezone
 import pytz
 import os
 from django.core.exceptions import ValidationError
+from model_utils import FieldTracker
 
 
 def current_date():
@@ -131,6 +132,7 @@ class Account(models.Model):
     statement_day = models.IntegerField(default=15)
     due_day = models.IntegerField(default=15)
     pay_day = models.IntegerField(default=15)
+    tracker = FieldTracker()
 
     def clean(self):
         # Ensure an account cannot fund itself
