@@ -1,7 +1,12 @@
 import pytest
 from accounts.models import Bank, Account, AccountType
 from tags.models import TagType, MainTag, SubTag, Tag
-from transactions.models import TransactionType, TransactionStatus, Paycheck
+from transactions.models import (
+    TransactionType,
+    TransactionStatus,
+    Paycheck,
+    Transaction,
+)
 from administration.models import Payee
 from django.utils import timezone
 import pytz
@@ -174,4 +179,18 @@ def test_paycheck(test_payee):
         union_dues=1.00,
         four_fifty_seven_b=1.00,
         payee=test_payee,
+    )
+
+
+@pytest.fixture
+def test_transaction(
+    test_pending_transaction_status,
+    test_expense_transaction_type,
+    test_checking_account,
+):
+    return Transaction.objects.create(
+        status=test_pending_transaction_status,
+        description="Description",
+        transaction_type=test_expense_transaction_type,
+        source_account=test_checking_account,
     )
