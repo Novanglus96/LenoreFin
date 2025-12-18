@@ -6,6 +6,8 @@ from transactions.models import (
     TransactionStatus,
     Paycheck,
     Transaction,
+    ReminderCacheTransaction,
+    ForecastCacheTransaction,
 )
 from administration.models import Payee
 from reminders.models import Reminder, Repeat
@@ -190,6 +192,36 @@ def test_transaction(
     test_checking_account,
 ):
     return Transaction.objects.create(
+        status=test_pending_transaction_status,
+        description="Description",
+        transaction_type=test_expense_transaction_type,
+        source_account=test_checking_account,
+    )
+
+
+@pytest.fixture
+def test_reminder_transaction(
+    test_pending_transaction_status,
+    test_expense_transaction_type,
+    test_checking_account,
+    test_reminder,
+):
+    return ReminderCacheTransaction.objects.create(
+        status=test_pending_transaction_status,
+        description="Description",
+        transaction_type=test_expense_transaction_type,
+        source_account=test_checking_account,
+        reminder=test_reminder,
+    )
+
+
+@pytest.fixture
+def test_forecast_transaction(
+    test_pending_transaction_status,
+    test_expense_transaction_type,
+    test_checking_account,
+):
+    return ForecastCacheTransaction.objects.create(
         status=test_pending_transaction_status,
         description="Description",
         transaction_type=test_expense_transaction_type,
