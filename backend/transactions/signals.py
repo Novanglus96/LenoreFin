@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from transactions.models import Transaction, TransactionImage
+from transactions.models import Transaction
 from django_q.tasks import async_task
 from backend.utils.cache import delete_pattern
 
@@ -59,9 +59,3 @@ def invalidate_cache_on_delete(sender, instance, **kwargs):
     if instance.destination_account is not None:
         pattern = f"*account_transactions_{instance.destination_account.id}*"
         delete_pattern(pattern)
-
-
-@receiver(post_delete, sender=TransactionImage)
-def delete_transaction_image_file(sender, instance, **kwargs):
-    if instance.image:
-        instance.image.delete(save=False)
