@@ -11,6 +11,8 @@ from transactions.models import (
 )
 from administration.models import Payee
 from reminders.models import Reminder, Repeat
+from ninja.testing import TestClient
+from backend.api import api
 from django.utils import timezone
 import pytz
 import os
@@ -21,6 +23,11 @@ def current_date():
     tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
     today_tz = today.astimezone(tz_timezone).date()
     return today_tz
+
+
+@pytest.fixture(scope="session")
+def api_client():
+    return TestClient(api)
 
 
 @pytest.fixture
