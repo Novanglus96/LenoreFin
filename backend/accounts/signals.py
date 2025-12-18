@@ -11,7 +11,7 @@ def update_cache_on_save(sender, instance, **kwargs):
     """
     Update the reminder scratch/cache table when a Reminder is created or updated.
     """
-    if instance.account_type.id == 1 and getattr(
+    if instance.account_type.account_type == "Credit Card" and getattr(
         instance, "_should_update_cache", False
     ):
         async_task(
@@ -38,14 +38,13 @@ def detect_relevant_changes(sender, instance, **kwargs):
         instance._should_update_cache = True
         return
 
-    old = sender.objects.get(pk=instance.pk)
-    relevant = [
+    relevant = {
         "annual_rate",
         "opening_balance",
         "statement_cycle_length",
         "statement_cycle_period",
         "archive_balance",
-        "funding_account",
+        "funding_account_id",
         "calculate_payments",
         "calculate_interest",
         "payment_strategy",
@@ -54,7 +53,7 @@ def detect_relevant_changes(sender, instance, **kwargs):
         "statement_day",
         "due_day",
         "pay_day",
-    ]
+    }
 
-    if any(getattr(old, f) != getattr(instance, f) for f in relevant):
+    if relevant & set(instance.tracker.changed()):
         instance._should_update_cache = True
