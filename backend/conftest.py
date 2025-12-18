@@ -8,6 +8,7 @@ from transactions.models import (
     Transaction,
 )
 from administration.models import Payee
+from reminders.models import Reminder, Repeat
 from django.utils import timezone
 import pytz
 import os
@@ -193,4 +194,30 @@ def test_transaction(
         description="Description",
         transaction_type=test_expense_transaction_type,
         source_account=test_checking_account,
+    )
+
+
+@pytest.fixture
+def test_repeat():
+    return Repeat.objects.create(
+        repeat_name="Test Repeat", days=1, weeks=1, months=1, years=1
+    )
+
+
+@pytest.fixture
+def test_reminder(
+    test_tag,
+    test_checking_account,
+    test_savings_account,
+    test_expense_transaction_type,
+    test_repeat,
+):
+    return Reminder.objects.create(
+        tag=test_tag,
+        amount=1.00,
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=test_savings_account,
+        description="Description",
+        transaction_type=test_expense_transaction_type,
+        repeat=test_repeat,
     )
