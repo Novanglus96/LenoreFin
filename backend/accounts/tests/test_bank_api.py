@@ -2,6 +2,7 @@ import pytest
 
 
 @pytest.mark.django_db
+@pytest.mark.api
 def test_create_bank(api_client):
     response = api_client.post(
         "/accounts/banks/create",
@@ -20,6 +21,7 @@ def test_create_bank(api_client):
 
 
 @pytest.mark.django_db
+@pytest.mark.api
 def test_create_bank_duplicate(api_client, bank):
     response = api_client.post(
         "/accounts/banks/create",
@@ -34,6 +36,7 @@ def test_create_bank_duplicate(api_client, bank):
 
 
 @pytest.mark.django_db
+@pytest.mark.api
 def test_update_bank(api_client, bank):
     response = api_client.put(
         f"/accounts/banks/update/{bank.id}",
@@ -51,6 +54,7 @@ def test_update_bank(api_client, bank):
 
 
 @pytest.mark.django_db
+@pytest.mark.api
 def test_get_bank(api_client, bank):
     response = api_client.get(
         f"/accounts/banks/get/{bank.id}",
@@ -64,6 +68,7 @@ def test_get_bank(api_client, bank):
 
 
 @pytest.mark.django_db
+@pytest.mark.api
 def test_list_banks(api_client):
     from accounts.models import Bank
 
@@ -86,6 +91,7 @@ def test_list_banks(api_client):
 
 
 @pytest.mark.django_db
+@pytest.mark.api
 def test_delete_bank(api_client, bank):
     response = api_client.delete(
         f"/accounts/banks/delete/{bank.id}",
@@ -103,6 +109,7 @@ def test_delete_bank(api_client, bank):
 
 
 @pytest.mark.django_db
+@pytest.mark.api
 def test_get_bank_not_found(api_client):
     response = api_client.get(
         "/accounts/banks/get/9999",
