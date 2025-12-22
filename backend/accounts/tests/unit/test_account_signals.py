@@ -16,6 +16,7 @@ def current_date():
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 @patch("accounts.signals.async_task")
 def test_new_account_triggers_cache_update(
     mock_async_task, credit_card_account_type, bank
@@ -50,6 +51,7 @@ def test_new_account_triggers_cache_update(
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 @patch("accounts.signals.async_task")
 def test_relevant_change_triggers_cache_update(
     mock_async_task, test_credit_card_account
@@ -61,6 +63,7 @@ def test_relevant_change_triggers_cache_update(
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 @patch("accounts.signals.async_task")
 def test_irrelevant_change_does_not_trigger_update(
     mock_async_task, test_credit_card_account
@@ -73,6 +76,7 @@ def test_irrelevant_change_does_not_trigger_update(
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 @patch("accounts.signals.async_task")
 def test_non_credit_account_does_not_trigger_update(
     mock_async_task, test_checking_account
@@ -84,6 +88,7 @@ def test_non_credit_account_does_not_trigger_update(
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_account_delete_removes_forecast_cache(
     test_credit_card_account,
     test_checking_account,

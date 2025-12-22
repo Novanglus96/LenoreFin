@@ -14,6 +14,7 @@ def current_date():
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_account_creation(bank, checking_account_type, test_checking_account):
     account = test_checking_account
 
@@ -42,6 +43,7 @@ def test_account_creation(bank, checking_account_type, test_checking_account):
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_account_creation_defaults(bank, checking_account_type):
     account = Account.objects.create(
         account_name="Test Checking Account",
@@ -70,12 +72,14 @@ def test_account_creation_defaults(bank, checking_account_type):
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_account_str(test_checking_account):
     expected = "Test Checking Account"
     assert str(test_checking_account) == expected
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_foreign_key_bank_cascade(test_checking_account, bank):
     assert Account.objects.count() == 1
 
@@ -85,6 +89,7 @@ def test_foreign_key_bank_cascade(test_checking_account, bank):
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_account_cannot_fund_itself(test_checking_account):
     account = test_checking_account
 
@@ -98,6 +103,7 @@ def test_account_cannot_fund_itself(test_checking_account):
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_funding_account_must_be_checking(
     test_credit_card_account, test_savings_account
 ):
@@ -110,6 +116,7 @@ def test_funding_account_must_be_checking(
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_only_credit_cards_can_have_funding_account(
     test_savings_account, test_checking_account
 ):

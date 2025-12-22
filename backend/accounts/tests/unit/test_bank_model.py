@@ -3,6 +3,7 @@ from accounts.models import Bank, Account
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_bank_creation():
     bank = Bank.objects.create(bank_name="Test Bank")
 
@@ -11,6 +12,7 @@ def test_bank_creation():
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_bank_str():
     bank = Bank.objects.create(bank_name="Test Bank")
 
@@ -19,6 +21,7 @@ def test_bank_str():
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_bank_foreign_key_cascade_delete(test_checking_account, bank):
 
     assert Bank.objects.count() == 1

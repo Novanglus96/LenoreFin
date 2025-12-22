@@ -3,6 +3,7 @@ from accounts.models import AccountType
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_account_type_creation():
     account_type = AccountType.objects.create(
         account_type="Checking", color="#059669", icon="mdi-checkbook"
@@ -15,6 +16,7 @@ def test_account_type_creation():
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_account_type_default_color():
     account_type = AccountType.objects.create(
         account_type="Checking", icon="mdi-checkbook"
@@ -24,6 +26,7 @@ def test_account_type_default_color():
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_account_type_string_representation():
     """Ensure __str__ returns the expected formatted string."""
     account_type = AccountType.objects.create(
@@ -35,6 +38,7 @@ def test_account_type_string_representation():
 
 
 @pytest.mark.django_db
+@pytest.mark.unit
 def test_account_type_foreign_key_null_delete(
     test_checking_account, checking_account_type
 ):
