@@ -1,3 +1,10 @@
+# [1.2.0-rc.14](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.13...v1.2.0-rc.14) (2025-12-23)
+
+
+### Bug Fixes
+
+* reminder dates now timezone correct in tables ([#61](https://github.com/Novanglus96/LenoreFin/issues/61)) ([57a66ae](https://github.com/Novanglus96/LenoreFin/commit/57a66ae77bad14dd6cee693f3d6b11ce45e54851))
+
 # [1.2.0-rc.13](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.12...v1.2.0-rc.13) (2025-12-11)
 
 
