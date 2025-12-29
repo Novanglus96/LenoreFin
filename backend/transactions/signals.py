@@ -42,10 +42,14 @@ def invalidate_cache_on_save(sender, instance, **kwargs):
     """
     Update the reminder scratch/cache table when a Reminder is created or updated.
     """
-    pattern = f"*account_transactions_{instance.source_account.id}*"
+    pattern = f"*account_{instance.source_account.id}_transaction_transactions*"
+    delete_pattern(pattern)
+    pattern = f"*account_{instance.source_account.id}_transactions*"
     delete_pattern(pattern)
     if instance.destination_account is not None:
-        pattern = f"*account_transactions_{instance.destination_account.id}*"
+        pattern = f"*account_{instance.destination_account.id}_transaction_transactions*"
+        delete_pattern(pattern)
+        pattern = f"*account_{instance.destination_account.id}_transactions*"
         delete_pattern(pattern)
 
 
@@ -54,8 +58,12 @@ def invalidate_cache_on_delete(sender, instance, **kwargs):
     """
     Remove entries from the reminder scratch table when a Reminder is deleted.
     """
-    pattern = f"*account_transactions_{instance.source_account.id}*"
+    pattern = f"*account_{instance.source_account.id}_transaction_transactions*"
+    delete_pattern(pattern)
+    pattern = f"*account_{instance.source_account.id}_transactions*"
     delete_pattern(pattern)
     if instance.destination_account is not None:
-        pattern = f"*account_transactions_{instance.destination_account.id}*"
+        pattern = f"*account_{instance.destination_account.id}_transaction_transactions*"
+        delete_pattern(pattern)
+        pattern = f"*account_{instance.destination_account.id}_transactions*"
         delete_pattern(pattern)

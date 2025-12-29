@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, call
 from reminders.models import Reminder, Repeat
 from django.utils import timezone
 import pytz
@@ -98,10 +98,19 @@ def test_reminder_save_invalidates_source_account_cache(
         memo="Memo",
     )
 
-    mock_delete_pattern.assert_any_call(
-        f"*account_transactions_{reminder.reminder_source_account.id}*"
+    expected_calls = [
+        call(
+            f"*account_{reminder.reminder_source_account.id}_reminder_transactions*"
+        ),
+        call(f"*account_{reminder.reminder_source_account.id}_transactions*"),
+    ]
+
+    mock_delete_pattern.assert_has_calls(
+        expected_calls,
+        any_order=True,
     )
-    assert mock_delete_pattern.call_count == 1
+
+    assert mock_delete_pattern.call_count == 2
 
 
 @pytest.mark.django_db
@@ -129,10 +138,21 @@ def test_reminder_save_invalidates_destination_account_cache(
         memo="Memo",
     )
 
-    mock_delete_pattern.assert_any_call(
-        f"*account_transactions_{reminder.reminder_destination_account.id}*"
+    expected_calls = [
+        call(
+            f"*account_{reminder.reminder_destination_account.id}_reminder_transactions*"
+        ),
+        call(
+            f"*account_{reminder.reminder_destination_account.id}_transactions*"
+        ),
+    ]
+
+    mock_delete_pattern.assert_has_calls(
+        expected_calls,
+        any_order=True,
     )
-    assert mock_delete_pattern.call_count == 2
+
+    assert mock_delete_pattern.call_count == 4
 
 
 @pytest.mark.django_db
@@ -162,7 +182,15 @@ def test_reminder_delete_invalidates_cache(
     source_id = reminder.reminder_source_account.id
     reminder.delete()
 
-    mock_delete_pattern.assert_any_call(f"*account_transactions_{source_id}*")
+    expected_calls = [
+        call(f"*account_{source_id}_reminder_transactions*"),
+        call(f"*account_{source_id}_transactions*"),
+    ]
+
+    mock_delete_pattern.assert_has_calls(
+        expected_calls,
+        any_order=True,
+    )
 
 
 @pytest.mark.django_db
@@ -193,8 +221,10 @@ def test_reminder_save_invalidates_exactly_expected_patterns(
     calls = {call.args[0] for call in mock_delete_pattern.call_args_list}
 
     expected = {
-        f"*account_transactions_{reminder.reminder_source_account.id}*",
-        f"*account_transactions_{reminder.reminder_destination_account.id}*",
+        f"*account_{reminder.reminder_source_account.id}_reminder_transactions*",
+        f"*account_{reminder.reminder_destination_account.id}_reminder_transactions*",
+        f"*account_{reminder.reminder_source_account.id}_transactions*",
+        f"*account_{reminder.reminder_destination_account.id}_transactions*",
     }
 
     assert calls == expected

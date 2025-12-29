@@ -4,6 +4,7 @@ from accounts.models import Account
 from django_q.tasks import async_task
 from django.db.models import Q
 from transactions.models import ForecastCacheTransaction
+from backend.utils.cache import delete_pattern
 
 
 @receiver(post_save, sender=Account)
@@ -18,6 +19,10 @@ def update_cache_on_save(sender, instance, **kwargs):
             "transactions.tasks.update_cc_forecast_cache",
             instance.id,
         )
+        pattern = f"*account_{instance.id}_forecast_transactions*"
+        delete_pattern(pattern)
+        pattern = f"*account_{instance.id}_transactions*"
+        delete_pattern(pattern)
 
 
 @receiver(post_delete, sender=Account)
@@ -28,6 +33,8 @@ def update_cache_on_delete(sender, instance, **kwargs):
     ForecastCacheTransaction.objects.filter(
         Q(source_account_id=instance.id) | Q(destination_account_id=instance.id)
     ).delete()
+    pattern = f"*account_{instance.id}*"
+    delete_pattern(pattern)
 
 
 @receiver(pre_save, sender=Account)

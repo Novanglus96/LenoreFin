@@ -71,9 +71,19 @@ def test_transaction_save_invalidates_source_cache_only(
     test_transaction.destination_account = None
     test_transaction.save()
 
-    mock_delete_pattern.assert_called_once_with(
-        f"*account_transactions_{test_transaction.source_account.id}*"
+    expected_calls = [
+        call(
+            f"*account_{test_transaction.source_account.id}_transaction_transactions*"
+        ),
+        call(f"*account_{test_transaction.source_account.id}_transactions*"),
+    ]
+
+    mock_delete_pattern.assert_has_calls(
+        expected_calls,
+        any_order=True,
     )
+
+    assert mock_delete_pattern.call_count == 2
 
 
 @pytest.mark.django_db
@@ -85,14 +95,20 @@ def test_transaction_save_invalidates_both_account_caches(
     test_transaction.save()
 
     expected_calls = [
-        call(f"*account_transactions_{test_transaction.source_account.id}*"),
         call(
-            f"*account_transactions_{test_transaction.destination_account.id}*"
+            f"*account_{test_transaction.source_account.id}_transaction_transactions*"
+        ),
+        call(
+            f"*account_{test_transaction.destination_account.id}_transaction_transactions*"
+        ),
+        call(f"*account_{test_transaction.source_account.id}_transactions*"),
+        call(
+            f"*account_{test_transaction.destination_account.id}_transactions*"
         ),
     ]
 
     mock_delete_pattern.assert_has_calls(expected_calls, any_order=True)
-    assert mock_delete_pattern.call_count == 2
+    assert mock_delete_pattern.call_count == 4
 
 
 @pytest.mark.django_db
@@ -109,12 +125,14 @@ def test_transaction_delete_invalidates_both_account_caches(
     test_transaction.delete()
 
     expected_calls = [
-        call(f"*account_transactions_{source_id}*"),
-        call(f"*account_transactions_{dest_id}*"),
+        call(f"*account_{source_id}_transaction_transactions*"),
+        call(f"*account_{dest_id}_transaction_transactions*"),
+        call(f"*account_{source_id}_transactions*"),
+        call(f"*account_{dest_id}_transactions*"),
     ]
 
     mock_delete_pattern.assert_has_calls(expected_calls, any_order=True)
-    assert mock_delete_pattern.call_count == 2
+    assert mock_delete_pattern.call_count == 4
 
 
 @pytest.mark.django_db

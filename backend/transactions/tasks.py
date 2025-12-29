@@ -748,12 +748,16 @@ def update_reminder_cache(reminder_id):
                     )
 
         create_transactions(transactions_to_create, "reminder")
+        pattern = f"*account_{reminder.reminder_source_account.id}_reminder_transactions*"
+        delete_pattern(pattern)
         pattern = (
-            f"*account_transactions_{reminder.reminder_source_account.id}*"
+            f"*account_{reminder.reminder_source_account.id}_transactions*"
         )
         delete_pattern(pattern)
         if reminder.reminder_destination_account is not None:
-            pattern = f"*account_transactions_{reminder.reminder_destination_account.id}*"
+            pattern = f"*account_{reminder.reminder_destination_account.id}_reminder_transactions*"
+            delete_pattern(pattern)
+            pattern = f"*account_{reminder.reminder_destination_account.id}_transactions*"
             delete_pattern(pattern)
     except Exception as e:
         task_logger.warning("There was an error creating cache")
@@ -957,7 +961,9 @@ def update_cc_forecast_cache(account_id):
             x += 1
 
         create_transactions(transactions_to_create, "forecast")
-        pattern = f"*account_transactions_{account_id}*"
+        pattern = f"*account_{account_id}_forecast_transactions*"
+        delete_pattern(pattern)
+        pattern = f"*account_{account_id}_transactions*"
         delete_pattern(pattern)
     except Exception as e:
         api_logger.warning("There was an error creating cache")
