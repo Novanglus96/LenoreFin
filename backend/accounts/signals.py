@@ -28,10 +28,10 @@ def update_cache_on_save(sender, instance, **kwargs):
             instance.id,
         )
         delete_pattern(account_forecast_transactions(instance.id))
-        delete_pattern(account_combined_transactions(instance.id))
-        delete_pattern(account_cleared_balance(instance.id))
-        delete_pattern(account_financials(instance.id))
-        delete_pattern(account_pending_balance(instance.id))
+    delete_pattern(account_combined_transactions(instance.id))
+    delete_pattern(account_cleared_balance(instance.id))
+    delete_pattern(account_financials(instance.id))
+    delete_pattern(account_pending_balance(instance.id))
 
 
 @receiver(post_delete, sender=Account)
