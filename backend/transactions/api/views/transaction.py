@@ -227,7 +227,7 @@ def clear_transaction(request, payload: TransactionList):
             )
         unique_accounts = list(set(accounts_effected))
         for account in unique_accounts:
-            pattern = f"*account_transactions_{account}*"
+            pattern = f"*account_{account}_transactions*"
             delete_pattern(pattern)
         return {"success": True}
     except Exception as e:

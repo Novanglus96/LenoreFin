@@ -45,7 +45,7 @@ def get_transactions_by_account(
         transactions: List of transaction objects
     """
     # Check Cache
-    key = f"account_transactions_{account_id}_{end_date}_{totals_only}_{forecast}_{start_date}_{cleared_only}"
+    key = f"account_{account_id}_transactions_{end_date}_{totals_only}_{forecast}_{start_date}_{cleared_only}"
 
     data = cache.get(key)
     if data:
