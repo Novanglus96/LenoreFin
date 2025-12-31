@@ -4,6 +4,10 @@ from reminders.models import Reminder, Repeat
 from django.utils import timezone
 import pytz
 import os
+from core.cache.keys import (
+    account_combined_transactions,
+    account_reminder_transactions,
+)
 
 
 def current_date():
@@ -100,9 +104,11 @@ def test_reminder_save_invalidates_source_account_cache(
 
     expected_calls = [
         call(
-            f"*account_{reminder.reminder_source_account.id}_reminder_transactions*"
+            account_reminder_transactions(reminder.reminder_source_account.id)
         ),
-        call(f"*account_{reminder.reminder_source_account.id}_transactions*"),
+        call(
+            account_combined_transactions(reminder.reminder_source_account.id)
+        ),
     ]
 
     mock_delete_pattern.assert_has_calls(
@@ -140,10 +146,14 @@ def test_reminder_save_invalidates_destination_account_cache(
 
     expected_calls = [
         call(
-            f"*account_{reminder.reminder_destination_account.id}_reminder_transactions*"
+            account_reminder_transactions(
+                reminder.reminder_destination_account.id
+            )
         ),
         call(
-            f"*account_{reminder.reminder_destination_account.id}_transactions*"
+            account_combined_transactions(
+                reminder.reminder_destination_account.id
+            )
         ),
     ]
 
@@ -183,8 +193,8 @@ def test_reminder_delete_invalidates_cache(
     reminder.delete()
 
     expected_calls = [
-        call(f"*account_{source_id}_reminder_transactions*"),
-        call(f"*account_{source_id}_transactions*"),
+        call(account_reminder_transactions(source_id)),
+        call(account_combined_transactions(source_id)),
     ]
 
     mock_delete_pattern.assert_has_calls(
@@ -221,10 +231,10 @@ def test_reminder_save_invalidates_exactly_expected_patterns(
     calls = {call.args[0] for call in mock_delete_pattern.call_args_list}
 
     expected = {
-        f"*account_{reminder.reminder_source_account.id}_reminder_transactions*",
-        f"*account_{reminder.reminder_destination_account.id}_reminder_transactions*",
-        f"*account_{reminder.reminder_source_account.id}_transactions*",
-        f"*account_{reminder.reminder_destination_account.id}_transactions*",
+        account_reminder_transactions(reminder.reminder_source_account.id),
+        account_reminder_transactions(reminder.reminder_destination_account.id),
+        account_combined_transactions(reminder.reminder_source_account.id),
+        account_combined_transactions(reminder.reminder_destination_account.id),
     }
 
     assert calls == expected
