@@ -1,7 +1,23 @@
-from accounts.dto import DomainAccount, DomainAccountType, DomainBank
+from accounts.dto import (
+    DomainAccount,
+    DomainAccountType,
+    DomainBank,
+    DomainFillObject,
+    DomainTargetObject,
+    DomainDatasetObject,
+    DomainGraphData,
+    DomainForecast,
+)
 from accounts.api.schemas.account import AccountOut
 from accounts.api.schemas.bank import BankOut
 from accounts.api.schemas.account_type import AccountTypeOut
+from accounts.api.schemas.forecast import (
+    TargetObject,
+    FillObject,
+    DatasetObject,
+    GraphData,
+    ForecastOut,
+)
 
 
 def domain_bank_to_schema(
@@ -63,3 +79,55 @@ def domain_account_to_schema(
         )
     else:
         return None
+
+
+def domain_target_object_to_schema(
+    target: DomainTargetObject,
+) -> TargetObject:
+    return TargetObject(value=target.value)
+
+
+def domain_fill_object_to_schema(fill: DomainFillObject) -> FillObject:
+    if fill is not None:
+        return FillObject(
+            target=domain_target_object_to_schema(fill.target),
+            above=fill.above,
+            below=fill.below,
+        )
+    else:
+        return None
+
+
+def domain_dataset_object_to_schema(
+    dataset: DomainDatasetObject,
+) -> DatasetObject:
+    return DatasetObject(
+        borderColor=dataset.borderColor,
+        backgroundColor=dataset.backgroundColor,
+        tension=dataset.tension,
+        data=dataset.data,
+        fill=domain_fill_object_to_schema(dataset.fill),
+        pointStyle=dataset.pointStyle,
+        radius=dataset.radius,
+        hitRadius=dataset.hitRadius,
+        hoverRadius=dataset.hoverRadius,
+        label=dataset.label,
+        hoverBackgroundColor=dataset.hoverBackgroundColor,
+        hoverBorderColor=dataset.hoverBorderColor,
+    )
+
+
+def domain_graph_data_to_schema(graph: DomainGraphData) -> GraphData:
+    return GraphData(
+        labels=graph.labels,
+        datasets=[domain_dataset_object_to_schema(ds) for ds in graph.datasets],
+    )
+
+
+def domain_forecast_to_schema(forecast: DomainForecast) -> ForecastOut:
+    return ForecastOut(
+        lables=forecast.labels,
+        datasets=[
+            domain_dataset_object_to_schema(ds) for ds in forecast.datasets
+        ],
+    )

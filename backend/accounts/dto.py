@@ -49,3 +49,43 @@ class DomainAccount:
     statement_day: Optional[int] = 15
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
+
+
+@dataclass
+class DomainTargetObject:
+    value: int
+
+
+@dataclass
+class DomainFillObject:
+    target: DomainTargetObject
+    above: str
+    below: str
+
+
+@dataclass
+class DomainDatasetObject:
+    borderColor: Optional[str] = None
+    backgroundColor: Optional[str] = None
+    tension: Optional[Decimal] = None
+    data: Optional[List[Decimal]] = None
+    fill: Optional[DomainFillObject] = None
+    pointStyle: Optional[str] = None
+    radius: Optional[int] = None
+    hitRadius: Optional[int] = None
+    hoverRadius: Optional[int] = None
+    label: Optional[str] = None
+    hoverBackgroundColor: Optional[str] = "rgba(75,192,192,0.6)"
+    hoverBorderColor: Optional[str] = "rgba(75,192,192,1)"
+
+
+@dataclass
+class DomainGraphData:
+    labels: List[str]
+    datasets: List[DomainDatasetObject]
+
+
+@dataclass
+class DomainForecast:
+    labels: List[str]
+    datasets: List[DomainDatasetObject]
