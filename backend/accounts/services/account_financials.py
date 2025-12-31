@@ -16,6 +16,8 @@ from transactions.services import (
 )
 from accounts.dto import DomainAccount, DomainBank, DomainAccountType
 from core.dto.utils import dto_from_model
+from django.core.cache import cache
+from core.cache.keys import account_financials
 
 
 class AccountNotFound(Exception):
@@ -26,6 +28,12 @@ def get_account_financials(account_id: int, today: date | None = None):
     """
     Returns an Account annotated with all calculated financial fields.
     """
+    # Check Cache
+    key = account_financials(account_id)
+    data = cache.get(key)
+    if data:
+        return data
+
     today = today or get_todays_date_timezone_adjusted()
 
     qs = Account.objects.filter(id=account_id)
@@ -69,7 +77,7 @@ def get_account_financials(account_id: int, today: date | None = None):
     # Available Credit
     available_credit = account.credit_limit - abs(pending_balance)
 
-    account_financials = DomainAccount(
+    financials = DomainAccount(
         id=account.id,
         account_name=account.account_name,
         account_type=dto_from_model(DomainAccountType, account.account_type),
@@ -100,7 +108,8 @@ def get_account_financials(account_id: int, today: date | None = None):
         pay_day=account.pay_day,
     )
 
-    return account_financials
+    cache.set(key, financials, timeout=60 * 60)
+    return financials
 
 
 def last_six_month_reward_amounts(account_id: int):

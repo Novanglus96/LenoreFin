@@ -2,7 +2,13 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from transactions.models import Transaction
 from django_q.tasks import async_task
-from backend.utils.cache import delete_pattern
+from core.cache.helpers import delete_pattern
+from core.cache.keys import (
+    account_financials,
+    account_real_transactions,
+    account_all_balances,
+    account_combined_transactions,
+)
 
 
 @receiver(post_save, sender=Transaction)
@@ -42,15 +48,19 @@ def invalidate_cache_on_save(sender, instance, **kwargs):
     """
     Update the reminder scratch/cache table when a Reminder is created or updated.
     """
-    pattern = f"*account_{instance.source_account.id}_transaction_transactions*"
-    delete_pattern(pattern)
-    pattern = f"*account_{instance.source_account.id}_transactions*"
-    delete_pattern(pattern)
+    delete_pattern(account_combined_transactions(instance.source_account.id))
+    delete_pattern(account_all_balances(instance.source_account.id))
+    delete_pattern(account_financials(instance.source_account.id))
+    delete_pattern(account_real_transactions(instance.source_account.id))
     if instance.destination_account is not None:
-        pattern = f"*account_{instance.destination_account.id}_transaction_transactions*"
-        delete_pattern(pattern)
-        pattern = f"*account_{instance.destination_account.id}_transactions*"
-        delete_pattern(pattern)
+        delete_pattern(
+            account_combined_transactions(instance.destination_account.id)
+        )
+        delete_pattern(account_all_balances(instance.destination_account.id))
+        delete_pattern(account_financials(instance.destination_account.id))
+        delete_pattern(
+            account_real_transactions(instance.destination_account.id)
+        )
 
 
 @receiver(post_delete, sender=Transaction)
@@ -58,12 +68,16 @@ def invalidate_cache_on_delete(sender, instance, **kwargs):
     """
     Remove entries from the reminder scratch table when a Reminder is deleted.
     """
-    pattern = f"*account_{instance.source_account.id}_transaction_transactions*"
-    delete_pattern(pattern)
+    delete_pattern(account_combined_transactions(instance.source_account.id))
+    delete_pattern(account_all_balances(instance.source_account.id))
+    delete_pattern(account_financials(instance.source_account.id))
+    delete_pattern(account_real_transactions(instance.source_account.id))
     pattern = f"*account_{instance.source_account.id}_transactions*"
     delete_pattern(pattern)
     if instance.destination_account is not None:
-        pattern = f"*account_{instance.destination_account.id}_transaction_transactions*"
-        delete_pattern(pattern)
-        pattern = f"*account_{instance.destination_account.id}_transactions*"
-        delete_pattern(pattern)
+        delete_pattern(account_combined_transactions(instance.destination_account.id))
+        delete_pattern(account_all_balances(instance.destination_account.id))
+        delete_pattern(account_financials(instance.destination_account.id))
+        delete_pattern(
+            account_real_transactions(instance.destination_account.id)
+        )

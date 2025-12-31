@@ -23,6 +23,14 @@ from decimal import Decimal
 from django.db.models import Q, Case, When, Sum, F, DecimalField
 from django.core.cache import cache
 from django.db.models.functions import Abs
+from core.cache.keys import (
+    account_combined_transactions,
+    account_forecast_transactions,
+    account_reminder_transactions,
+    account_cleared_balance,
+    account_pending_balance,
+    account_real_transactions,
+)
 import logging
 
 api_logger = logging.getLogger("api")
@@ -52,8 +60,7 @@ def get_account_transactions_and_balances(
         transactions: List of transaction objects
     """
     # Check Cache
-    key = f"account_{account_id}_transactions_{end_date}_{totals_only}_{forecast}_{start_date}_{cleared_only}"
-
+    key = f"{account_combined_transactions(account_id)}:{end_date}:{totals_only}:{forecast}:{start_date}:{cleared_only}"
     data = cache.get(key)
     if data:
         return data
@@ -251,7 +258,14 @@ def fetch_account_transactions(account_id: int, transactions_type: str):
     transactions = None
 
     # Check Cache
-    key = f"account_{account_id}_{transactions_type}_transactions"
+    key = None
+
+    if transactions_type == "transaction":
+        key = account_real_transactions(account_id)
+    if transactions_type == "reminder":
+        key = account_reminder_transactions(account_id)
+    if transactions_type == "forecast":
+        key = account_forecast_transactions(account_id)
 
     data = cache.get(key)
     if data:
@@ -283,6 +297,12 @@ def fetch_account_transactions(account_id: int, transactions_type: str):
 
 
 def get_account_cleared_balance(account_id: int):
+    # Check Cache
+    key = account_cleared_balance(account_id)
+    data = cache.get(key)
+    if data:
+        return data
+
     qs = Account.objects.filter(id=account_id)
     if not qs.exists():
         raise AccountNotFound()
@@ -312,10 +332,17 @@ def get_account_cleared_balance(account_id: int):
         + account.archive_balance
         + account.opening_balance
     )
+    cache.set(key, cleared_balance, timeout=60 * 60)
     return cleared_balance
 
 
 def get_account_pending_balance(account_id: int):
+    # Check Cache
+    key = account_pending_balance(account_id)
+    data = cache.get(key)
+    if data:
+        return data
+
     qs = Account.objects.filter(id=account_id)
     if not qs.exists():
         raise AccountNotFound()
@@ -344,6 +371,7 @@ def get_account_pending_balance(account_id: int):
         + account.archive_balance
         + account.opening_balance
     )
+    cache.set(key, pending_balance, timeout=60 * 60)
     return pending_balance
 
 

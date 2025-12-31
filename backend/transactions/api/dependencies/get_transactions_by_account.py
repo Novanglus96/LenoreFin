@@ -22,6 +22,7 @@ from transactions.api.dependencies.transaction_utilities import (
 from decimal import Decimal
 from django.db.models import Q
 from django.core.cache import cache
+from core.cache.keys import account_combined_transactions
 
 
 def get_transactions_by_account(
@@ -45,8 +46,7 @@ def get_transactions_by_account(
         transactions: List of transaction objects
     """
     # Check Cache
-    key = f"account_{account_id}_transactions_{end_date}_{totals_only}_{forecast}_{start_date}_{cleared_only}"
-
+    key = f"{account_combined_transactions(account_id)}:{end_date}:{totals_only}:{forecast}:{start_date}:{cleared_only}"
     data = cache.get(key)
     if data:
         return data
