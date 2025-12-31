@@ -11,18 +11,6 @@ from accounts.api.schemas.account import (
 )
 from django.shortcuts import get_object_or_404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Value,
-    F,
-    Sum,
-    Subquery,
-    OuterRef,
-    ExpressionWrapper,
-    DecimalField,
-)
-from django.db.models.functions import Coalesce, Abs
 from administration.api.dependencies.apply_patch import apply_patch
 from accounts.services import get_account_financials, AccountNotFound
 from accounts.mappers import domain_account_to_schema
@@ -120,6 +108,8 @@ def list_accounts(request, query: AccountQuery = Query(...)):
     """
 
     try:
+        account_list = []
+
         # Retrieve all accounts
         qs = Account.objects.all()
 
@@ -138,113 +128,14 @@ def list_accounts(request, query: AccountQuery = Query(...)):
         # name ascending
         qs = qs.order_by("account_type__id", "bank__bank_name", "account_name")
 
-        # Subquery to calculate sum of pretty_total grouped by source_account_id
-        source_balance_subquery = (
-            Transaction.objects.filter(
-                source_account_id=OuterRef("pk"),
-                status_id__in=[2, 3],  # Adjust status conditions as needed
-            )
-            .annotate(
-                pretty_total=Case(
-                    When(transaction_type_id=2, then=Abs(F("total_amount"))),
-                    When(transaction_type_id=1, then=-Abs(F("total_amount"))),
-                    When(
-                        transaction_type_id=3,
-                        then=Case(
-                            When(
-                                source_account_id=OuterRef("pk"),
-                                then=-Abs(F("total_amount")),
-                            ),
-                            default=Abs(F("total_amount")),
-                            output_field=DecimalField(
-                                max_digits=12, decimal_places=2
-                            ),
-                        ),
-                    ),
-                    default=Value(
-                        0,
-                        output_field=DecimalField(
-                            max_digits=12, decimal_places=2
-                        ),
-                    ),
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                )
-            )
-            .values("source_account_id")
-            .annotate(balance=Sum("pretty_total"))
-            .values("balance")[:1]
-        )
+        # Get Account financials
+        for account in qs:
+            result = get_account_financials(account.id)
 
-        # Subquery to calculate sum of pretty_total grouped by destination_account_id
-        destination_balance_subquery = (
-            Transaction.objects.filter(
-                destination_account_id=OuterRef("pk"),
-                status_id__in=[2, 3],  # Adjust status conditions as needed
-            )
-            .annotate(
-                pretty_total=Case(
-                    When(transaction_type_id=2, then=Abs(F("total_amount"))),
-                    When(transaction_type_id=1, then=-Abs(F("total_amount"))),
-                    When(
-                        transaction_type_id=3,
-                        then=Case(
-                            When(
-                                destination_account_id=OuterRef("pk"),
-                                then=Abs(F("total_amount")),
-                            ),
-                            default=Abs(F("total_amount")),
-                            output_field=DecimalField(
-                                max_digits=12, decimal_places=2
-                            ),
-                        ),
-                    ),
-                    default=Value(
-                        0,
-                        output_field=DecimalField(
-                            max_digits=12, decimal_places=2
-                        ),
-                    ),
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                )
-            )
-            .values("destination_account_id")
-            .annotate(balance=Sum("pretty_total"))
-            .values("balance")[:1]
-        )
+            account_list.append(domain_account_to_schema(result))
 
-        # Annotate the Account queryset with the combined balance
-        qs = qs.annotate(
-            source_balance=Coalesce(
-                Subquery(
-                    source_balance_subquery,
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                ),
-                Value(
-                    0,
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                ),
-            ),
-            destination_balance=Coalesce(
-                Subquery(
-                    destination_balance_subquery,
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                ),
-                Value(
-                    0,
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                ),
-            ),
-        ).annotate(
-            balance=ExpressionWrapper(
-                F("source_balance")
-                + F("destination_balance")
-                + F("opening_balance")
-                + F("archive_balance"),
-                output_field=DecimalField(max_digits=12, decimal_places=2),
-            )
-        )
         api_logger.debug("Account list retrieved")
-        return qs
+        return account_list
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account list retrieved")
