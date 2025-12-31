@@ -2,6 +2,12 @@ import pytest
 from unittest.mock import patch, call
 from django.core.files.uploadedfile import SimpleUploadedFile
 from transactions.models import TransactionImage
+from core.cache.keys import (
+    account_financials,
+    account_real_transactions,
+    account_all_balances,
+    account_combined_transactions,
+)
 
 
 @pytest.mark.django_db
@@ -72,10 +78,10 @@ def test_transaction_save_invalidates_source_cache_only(
     test_transaction.save()
 
     expected_calls = [
-        call(
-            f"*account_{test_transaction.source_account.id}_transaction_transactions*"
-        ),
-        call(f"*account_{test_transaction.source_account.id}_transactions*"),
+        call(account_combined_transactions(test_transaction.source_account.id)),
+        call(account_all_balances(test_transaction.source_account.id)),
+        call(account_financials(test_transaction.source_account.id)),
+        call(account_real_transactions(test_transaction.source_account.id)),
     ]
 
     mock_delete_pattern.assert_has_calls(
@@ -83,7 +89,7 @@ def test_transaction_save_invalidates_source_cache_only(
         any_order=True,
     )
 
-    assert mock_delete_pattern.call_count == 2
+    assert mock_delete_pattern.call_count == 4
 
 
 @pytest.mark.django_db
@@ -95,20 +101,24 @@ def test_transaction_save_invalidates_both_account_caches(
     test_transaction.save()
 
     expected_calls = [
+        call(account_combined_transactions(test_transaction.source_account.id)),
+        call(account_all_balances(test_transaction.source_account.id)),
+        call(account_financials(test_transaction.source_account.id)),
+        call(account_real_transactions(test_transaction.source_account.id)),
         call(
-            f"*account_{test_transaction.source_account.id}_transaction_transactions*"
+            account_combined_transactions(
+                test_transaction.destination_account.id
+            )
         ),
+        call(account_all_balances(test_transaction.destination_account.id)),
+        call(account_financials(test_transaction.destination_account.id)),
         call(
-            f"*account_{test_transaction.destination_account.id}_transaction_transactions*"
-        ),
-        call(f"*account_{test_transaction.source_account.id}_transactions*"),
-        call(
-            f"*account_{test_transaction.destination_account.id}_transactions*"
+            account_real_transactions(test_transaction.destination_account.id)
         ),
     ]
 
     mock_delete_pattern.assert_has_calls(expected_calls, any_order=True)
-    assert mock_delete_pattern.call_count == 4
+    assert mock_delete_pattern.call_count == 8
 
 
 @pytest.mark.django_db
@@ -125,14 +135,18 @@ def test_transaction_delete_invalidates_both_account_caches(
     test_transaction.delete()
 
     expected_calls = [
-        call(f"*account_{source_id}_transaction_transactions*"),
-        call(f"*account_{dest_id}_transaction_transactions*"),
-        call(f"*account_{source_id}_transactions*"),
-        call(f"*account_{dest_id}_transactions*"),
+        call(account_combined_transactions(source_id)),
+        call(account_all_balances(source_id)),
+        call(account_financials(source_id)),
+        call(account_real_transactions(source_id)),
+        call(account_combined_transactions(dest_id)),
+        call(account_all_balances(dest_id)),
+        call(account_financials(dest_id)),
+        call(account_real_transactions(dest_id)),
     ]
 
     mock_delete_pattern.assert_has_calls(expected_calls, any_order=True)
-    assert mock_delete_pattern.call_count == 4
+    assert mock_delete_pattern.call_count == 8
 
 
 @pytest.mark.django_db

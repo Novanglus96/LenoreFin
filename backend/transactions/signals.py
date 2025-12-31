@@ -72,10 +72,10 @@ def invalidate_cache_on_delete(sender, instance, **kwargs):
     delete_pattern(account_all_balances(instance.source_account.id))
     delete_pattern(account_financials(instance.source_account.id))
     delete_pattern(account_real_transactions(instance.source_account.id))
-    pattern = f"*account_{instance.source_account.id}_transactions*"
-    delete_pattern(pattern)
     if instance.destination_account is not None:
-        delete_pattern(account_combined_transactions(instance.destination_account.id))
+        delete_pattern(
+            account_combined_transactions(instance.destination_account.id)
+        )
         delete_pattern(account_all_balances(instance.destination_account.id))
         delete_pattern(account_financials(instance.destination_account.id))
         delete_pattern(
