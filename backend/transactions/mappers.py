@@ -4,6 +4,8 @@ from transactions.dto import (
     DomainTransactionStatus,
     DomainTransactionType,
     DomainPaycheck,
+    DomainPaginatedTransactions,
+    DomainTagTransaction,
 )
 from transactions.api.schemas.transaction import (
     TransactionOut,
@@ -11,6 +13,8 @@ from transactions.api.schemas.transaction import (
     TransactionStatusOut,
     TransactionTypeOut,
     PaycheckOut,
+    PaginatedTransactions,
+    TagTransactionOut,
 )
 from administration.mappers import domain_payee_to_schema
 from tags.mappers import domain_tag_to_schema
@@ -93,4 +97,28 @@ def domain_paycheck_to_schema(
         union_dues=pay.union_dues,
         four_fifty_seven_b=pay.four_fifty_seven_b,
         payee=domain_payee_to_schema(pay.payee),
+    )
+
+
+def domain_tag_transaction_to_schema(
+    trans: DomainTagTransaction,
+) -> TagTransactionOut:
+    return TagTransactionOut(
+        transaction=domain_transaction_to_schema(trans.transaction),
+        detail_amt=trans.detail_amt,
+        pretty_account=trans.pretty_account,
+        tag=domain_tag_to_schema(trans.tag),
+    )
+
+
+def domain_paginated_transactions_to_schema(
+    trans: DomainPaginatedTransactions,
+) -> PaginatedTransactions:
+    return PaginatedTransactions(
+        transactions=[
+            domain_transaction_to_schema(t) for t in trans.transactions
+        ],
+        current_page=trans.current_page,
+        total_pages=trans.total_pages,
+        total_records=trans.total_records,
     )

@@ -66,3 +66,19 @@ class DomainTransaction:
     reminder_id: int | None = None
     tag_total: Decimal | None = None
     simulated: bool = False
+
+
+@dataclass
+class DomainTagTransaction:
+    transaction: DomainTransaction
+    detail_amt: Decimal
+    pretty_account: str
+    tag: DomainTag
+
+
+@dataclass
+class DomainPaginatedTransactions:
+    transactions: List[DomainTransaction]
+    current_page: int
+    total_pages: int
+    total_records: int
