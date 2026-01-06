@@ -29,7 +29,7 @@ from transactions.api.dependencies.create_transactions import (
     create_transactions,
 )
 import traceback
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 from transactions.api.dependencies.sort_transactions import sort_transactions

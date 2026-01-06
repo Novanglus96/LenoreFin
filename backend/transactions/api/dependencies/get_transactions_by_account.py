@@ -7,7 +7,7 @@ from transactions.models import (
     ReminderCacheTransaction,
     ForecastCacheTransaction,
 )
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 from transactions.api.dependencies.transaction_utilities import (

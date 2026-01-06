@@ -10,11 +10,9 @@ from utils.dates import (
     get_dates_in_range,
     get_forecast_end_date,
     get_forecast_start_date,
-)
-from datetime import date, datetime
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
     get_todays_date_timezone_adjusted,
 )
+from datetime import date, datetime
 import ast
 from transactions.api.dependencies.get_transactions_by_account import (
     get_transactions_by_account,

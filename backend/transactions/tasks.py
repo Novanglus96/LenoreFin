@@ -53,7 +53,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, Abs
 import pytz
 import os
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 from django.core.management import call_command

@@ -8,7 +8,7 @@ from planning.api.schemas.calculator import (
 )
 from django.shortcuts import get_object_or_404
 from typing import List
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 from dateutil.relativedelta import relativedelta

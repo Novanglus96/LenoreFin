@@ -14,7 +14,7 @@ from typing import List
 import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 from transactions.api.dependencies.get_transactions_by_tag import (

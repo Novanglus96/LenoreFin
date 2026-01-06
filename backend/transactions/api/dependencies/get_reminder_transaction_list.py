@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import List, Optional
 from datetime import date
 from dateutil.relativedelta import relativedelta
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 from reminders.models import Reminder, ReminderExclusion, Repeat

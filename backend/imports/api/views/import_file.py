@@ -15,7 +15,7 @@ from imports.models import (
 from imports.api.schemas.import_file import (
     MappingDefinition,
 )
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 import logging
