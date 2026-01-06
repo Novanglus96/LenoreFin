@@ -4,7 +4,7 @@ from administration.models import Option
 from administration.api.schemas.option import OptionIn, OptionOut
 from django.shortcuts import get_object_or_404
 from typing import List
-from administration.api.dependencies.apply_patch import apply_patch
+from utils.apply_patch import apply_patch
 import logging
 
 api_logger = logging.getLogger("api")

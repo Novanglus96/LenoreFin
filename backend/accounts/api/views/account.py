@@ -11,7 +11,7 @@ from accounts.api.schemas.account import (
 )
 from django.shortcuts import get_object_or_404
 from typing import List
-from administration.api.dependencies.apply_patch import apply_patch
+from utils.apply_patch import apply_patch
 from accounts.services import get_account_financials, AccountNotFound
 from accounts.mappers import domain_account_to_schema
 import logging
