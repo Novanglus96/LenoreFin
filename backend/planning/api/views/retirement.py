@@ -6,7 +6,7 @@ from planning.api.schemas.retirement import (
     DatasetObject,
     ForecastOut,
 )
-from accounts.api.dependencies.get_dates_in_range import get_dates_in_range
+from utils.dates import get_dates_in_range
 from accounts.api.dependencies.get_forecast_end_date import (
     get_forecast_end_date,
 )
