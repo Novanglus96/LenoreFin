@@ -18,6 +18,9 @@ from accounts.dto import DomainAccount, DomainBank, DomainAccountType
 from core.dto.utils import dto_from_model
 from django.core.cache import cache
 from core.cache.keys import account_financials
+from accounts.api.schemas.account import (
+    AccountQuery,
+)
 
 
 class AccountNotFound(Exception):
@@ -185,3 +188,33 @@ def last_year_six_month_reward_amounts(account_id: int):
     oldest_to_newest = list(reversed(newest_to_oldest))
 
     return oldest_to_newest
+
+
+def list_accounts_with_financials(query: AccountQuery) -> list[DomainAccount]:
+    account_list = []
+
+    # Retrieve all accounts
+    qs = Account.objects.all()
+
+    # If inactive argument is provided, filter by active/inactive
+    if not query.inactive:
+        qs = qs.filter(active=True)
+
+    # If account type argument is provided, filter by account type
+    if query.account_type is not None and query.account_type != 0:
+        qs = qs.filter(account_type__id=query.account_type)
+
+    if query.account_type is not None and query.account_type == 0:
+        qs = qs.filter(active=False)
+
+    # Order accounts by account type id ascending, bank name ascending, and account
+    # name ascending
+    qs = qs.order_by("account_type__id", "bank__bank_name", "account_name")
+
+    # Get Account financials
+    for account in qs:
+        result = get_account_financials(account.id)
+
+        account_list.append(result)
+
+    return account_list

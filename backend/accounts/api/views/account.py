@@ -12,7 +12,11 @@ from accounts.api.schemas.account import (
 from django.shortcuts import get_object_or_404
 from typing import List
 from utils.apply_patch import apply_patch
-from accounts.services import get_account_financials, AccountNotFound
+from accounts.services import (
+    get_account_financials,
+    AccountNotFound,
+    list_accounts_with_financials,
+)
 from accounts.mappers import domain_account_to_schema
 import logging
 
@@ -108,34 +112,15 @@ def list_accounts(request, query: AccountQuery = Query(...)):
     """
 
     try:
-        account_list = []
-
-        # Retrieve all accounts
-        qs = Account.objects.all()
-
-        # If inactive argument is provided, filter by active/inactive
-        if not query.inactive:
-            qs = qs.filter(active=True)
-
-        # If account type argument is provided, filter by account type
-        if query.account_type is not None and query.account_type != 0:
-            qs = qs.filter(account_type__id=query.account_type)
-
-        if query.account_type is not None and query.account_type == 0:
-            qs = qs.filter(active=False)
-
-        # Order accounts by account type id ascending, bank name ascending, and account
-        # name ascending
-        qs = qs.order_by("account_type__id", "bank__bank_name", "account_name")
+        domain_accounts = list_accounts_with_financials(query)
+        schema_accounts = []
 
         # Get Account financials
-        for account in qs:
-            result = get_account_financials(account.id)
-
-            account_list.append(domain_account_to_schema(result))
+        for account in domain_accounts:
+            schema_accounts.append(domain_account_to_schema(account))
 
         api_logger.debug("Account list retrieved")
-        return account_list
+        return schema_accounts
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account list retrieved")
