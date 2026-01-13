@@ -39,6 +39,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
+      - name: Re-checkout repo after release
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Upload version artifact
         uses: actions/upload-artifact@v4
         with:
@@ -53,6 +58,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: Download version artifact
         uses: actions/download-artifact@v4
@@ -60,12 +67,10 @@ jobs:
           name: version
           path: ./backend
 
-      - name: Extract version from backend/VERSION
-        id: version
+      - name: Get version from git tag
         run: |
-          VERSION=$(cat backend/VERSION)
+          VERSION=$(git describe --tags --abbrev=0)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Extracted version: $VERSION"
 
       - name: Extract major/minor versions
         id: version_parts
@@ -220,6 +225,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download version artifact
         uses: actions/download-artifact@v4
@@ -227,12 +234,10 @@ jobs:
           name: version
           path: ./backend
 
-      - name: Extract version from backend/VERSION
-        id: version
+      - name: Get version from git tag
         run: |
-          VERSION=$(cat backend/VERSION)
+          VERSION=$(git describe --tags --abbrev=0)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Extracted version: $VERSION"
 
       - name: Extract major/minor versions
         id: version_parts
