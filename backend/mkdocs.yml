@@ -23,6 +23,7 @@ theme:
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
+  custom_dir: docs/overrides
 plugins:
   - search
   - mkdocstrings:
@@ -48,3 +49,4 @@ extra:
   version:
     provider: mike
     default: latest
+    alias: true
