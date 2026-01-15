@@ -2,7 +2,8 @@ site_name: LenoreFin
 site_description: An advanced financial tracker.
 site_author: John Adams
 site_url: https://novanglus96.github.io/LenoreFin/
-copyright: 2025 John Adams
+repo_url: https://github.com/Novanglus96/LenoreFin
+copyright: 2026 John Adams
 nav:
   - Home: index.md
   - Reference:
