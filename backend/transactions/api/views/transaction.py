@@ -37,6 +37,11 @@ from transactions.api.dependencies.get_transactions_by_account import (
     get_transactions_by_account,
 )
 from backend.utils.cache import delete_pattern
+from core.cache.keys import (
+    account_pending_balance,
+    account_cleared_balance,
+    account_financials,
+)
 import logging
 
 api_logger = logging.getLogger("api")
@@ -62,9 +67,11 @@ def create_transaction(request, payload: TransactionIn):
 
     try:
         create_transaction_service(payload)
-        delete_pattern(f"*account:{payload.source_account_id}:transactions*")
-        if payload.destination_account_id:
-            delete_pattern(f"*account:{payload.destination_account_id}:transactions*")
+        for account_id in filter(None, [payload.source_account_id, payload.destination_account_id]):
+            delete_pattern(f"*account:{account_id}:transactions*")
+            delete_pattern(account_pending_balance(account_id))
+            delete_pattern(account_cleared_balance(account_id))
+            delete_pattern(account_financials(account_id))
         return {"id": None}
     except Exception as e:
         api_logger.error("Transaction not created")
@@ -159,6 +166,9 @@ def clear_transaction(request, payload: TransactionList):
         unique_accounts = list(set(accounts_effected))
         for account in unique_accounts:
             delete_pattern(f"*account:{account}:transactions*")
+            delete_pattern(account_pending_balance(account))
+            delete_pattern(account_cleared_balance(account))
+            delete_pattern(account_financials(account))
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
@@ -213,9 +223,18 @@ def delete_transaction(request, payload: TransactionList):
     """
 
     try:
-        # Fetch all relevant transactions at once
         transactions = Transaction.objects.filter(id__in=payload.transactions)
+        account_ids = set()
+        for t in transactions:
+            account_ids.add(t.source_account_id)
+            if t.destination_account_id:
+                account_ids.add(t.destination_account_id)
         transactions.delete()
+        for account_id in account_ids:
+            delete_pattern(f"*account:{account_id}:transactions*")
+            delete_pattern(account_pending_balance(account_id))
+            delete_pattern(account_cleared_balance(account_id))
+            delete_pattern(account_financials(account_id))
         for transaction in payload.transactions:
             api_logger.info(f"Transaction deleted : #{transaction}")
         return {"success": True}
