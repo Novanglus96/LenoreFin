@@ -64,7 +64,7 @@ from transactions.api.dependencies.get_transactions_by_tag import (
 )
 from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP
-from backend.utils.cache import delete_pattern
+from core.cache.helpers import delete_pattern
 import logging
 
 api_logger = logging.getLogger("api")

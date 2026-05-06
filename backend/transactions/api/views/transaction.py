@@ -36,11 +36,8 @@ from django.core.paginator import Paginator
 from transactions.api.dependencies.get_transactions_by_account import (
     get_transactions_by_account,
 )
-from backend.utils.cache import delete_pattern
+from core.cache.helpers import delete_pattern
 from core.cache.keys import (
-    account_pending_balance,
-    account_cleared_balance,
-    account_financials,
     account_all,
 )
 import logging
