@@ -41,6 +41,7 @@ from core.cache.keys import (
     account_pending_balance,
     account_cleared_balance,
     account_financials,
+    account_all,
 )
 import logging
 
@@ -68,10 +69,7 @@ def create_transaction(request, payload: TransactionIn):
     try:
         create_transaction_service(payload)
         for account_id in filter(None, [payload.source_account_id, payload.destination_account_id]):
-            delete_pattern(f"*account:{account_id}:transactions*")
-            delete_pattern(account_pending_balance(account_id))
-            delete_pattern(account_cleared_balance(account_id))
-            delete_pattern(account_financials(account_id))
+            delete_pattern(account_all(account_id))
         return {"id": None}
     except Exception as e:
         api_logger.error("Transaction not created")
@@ -108,10 +106,7 @@ def multiedit_transactions(request, payload: MultiTranscationDate):
         transactions.update(transaction_date=payload.new_date, edit_date=edit_date)
 
         for account_id in account_ids:
-            delete_pattern(f"*account:{account_id}:transactions*")
-            delete_pattern(account_pending_balance(account_id))
-            delete_pattern(account_cleared_balance(account_id))
-            delete_pattern(account_financials(account_id))
+            delete_pattern(account_all(account_id))
 
         api_logger.info(f"Transaction dates updated: #{payload.transaction_ids}")
 
@@ -169,10 +164,7 @@ def clear_transaction(request, payload: TransactionList):
             )
         unique_accounts = list(set(accounts_effected))
         for account in unique_accounts:
-            delete_pattern(f"*account:{account}:transactions*")
-            delete_pattern(account_pending_balance(account))
-            delete_pattern(account_cleared_balance(account))
-            delete_pattern(account_financials(account))
+            delete_pattern(account_all(account))
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
@@ -235,10 +227,7 @@ def delete_transaction(request, payload: TransactionList):
                 account_ids.add(t.destination_account_id)
         transactions.delete()
         for account_id in account_ids:
-            delete_pattern(f"*account:{account_id}:transactions*")
-            delete_pattern(account_pending_balance(account_id))
-            delete_pattern(account_cleared_balance(account_id))
-            delete_pattern(account_financials(account_id))
+            delete_pattern(account_all(account_id))
         for transaction in payload.transactions:
             api_logger.info(f"Transaction deleted : #{transaction}")
         return {"success": True}
@@ -278,10 +267,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         new_ids = {payload.source_account_id, payload.destination_account_id} - {None}
         all_affected = old_ids | new_ids
         for account_id in all_affected:
-            delete_pattern(f"*account:{account_id}:transactions*")
-            delete_pattern(account_pending_balance(account_id))
-            delete_pattern(account_cleared_balance(account_id))
-            delete_pattern(account_financials(account_id))
+            delete_pattern(account_all(account_id))
 
         return {"success": True}
     except Http404:
