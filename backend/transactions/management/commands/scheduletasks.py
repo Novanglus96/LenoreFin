@@ -6,11 +6,9 @@ Author: John Adams <johnmadams96@gmail.com>
 Date: February 15, 2024
 """
 
-from django.core.management.base import BaseCommand, CommandError
-from django_q.tasks import schedule
+from django.core.management.base import BaseCommand
 from django_q.models import Schedule
-from datetime import date, timedelta, datetime
-from django.shortcuts import get_object_or_404
+from datetime import timedelta, datetime
 from django.utils import timezone
 import pytz
 import os
@@ -36,8 +34,6 @@ class Command(BaseCommand):
         today = today_utc.astimezone(tz_timezone).date()
         current_timezone = timezone.get_current_timezone()
         tomorrow = today + timedelta(days=1)
-        next_run_date_tomorrow = tomorrow.strftime("%Y-%m-%d")
-        next_run_date_today = today.strftime("%Y-%m-%d")
 
         # Define tasks to be scheduled
         tasks = [
