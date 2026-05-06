@@ -97,19 +97,23 @@ def multiedit_transactions(request, payload: MultiTranscationDate):
     """
     try:
         edit_date = get_todays_date_timezone_adjusted()
-        # Fetch all relevant transactions at once
-        transactions = Transaction.objects.filter(
-            id__in=payload.transaction_ids
-        )
+        transactions = Transaction.objects.filter(id__in=payload.transaction_ids)
 
-        # Make changes
-        transactions.update(
-            transaction_date=payload.new_date, edit_date=edit_date
-        )
+        account_ids = set()
+        for t in transactions:
+            account_ids.add(t.source_account_id)
+            if t.destination_account_id:
+                account_ids.add(t.destination_account_id)
 
-        api_logger.info(
-            f"Transaction dates updated: #{payload.transaction_ids}"
-        )
+        transactions.update(transaction_date=payload.new_date, edit_date=edit_date)
+
+        for account_id in account_ids:
+            delete_pattern(f"*account:{account_id}:transactions*")
+            delete_pattern(account_pending_balance(account_id))
+            delete_pattern(account_cleared_balance(account_id))
+            delete_pattern(account_financials(account_id))
+
+        api_logger.info(f"Transaction dates updated: #{payload.transaction_ids}")
 
         return {"success": True}
     except Exception as e:
