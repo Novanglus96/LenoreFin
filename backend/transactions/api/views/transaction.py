@@ -273,15 +273,15 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
 
         update_transaction_service(transaction_id, payload)
 
-        # If the account changed, the post_save signal only busts the new
-        # account's cache — manually bust the old account(s) too.
+        # Bust all affected accounts explicitly — don't rely solely on signals.
         old_ids = {old_source_id, old_destination_id} - {None}
         new_ids = {payload.source_account_id, payload.destination_account_id} - {None}
-        for account_id in old_ids - new_ids:
+        all_affected = old_ids | new_ids
+        for account_id in all_affected:
+            delete_pattern(f"*account:{account_id}:transactions*")
             delete_pattern(account_pending_balance(account_id))
             delete_pattern(account_cleared_balance(account_id))
             delete_pattern(account_financials(account_id))
-            delete_pattern(f"*account:{account_id}:transactions*")
 
         return {"success": True}
     except Http404:
