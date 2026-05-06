@@ -42,7 +42,7 @@ def get_account_forecast(
 
     fill = DomainFillObject(
         target=DomainTargetObject(value=0),
-        above="rgb(236 , 253, 245)",
+        above="rgb(76, 175, 80)",
         below="rgb(248, 121, 121)",
     )
     dataset = DomainDatasetObject(

@@ -62,6 +62,9 @@ def create_transaction(request, payload: TransactionIn):
 
     try:
         create_transaction_service(payload)
+        delete_pattern(f"*account:{payload.source_account_id}:transactions*")
+        if payload.destination_account_id:
+            delete_pattern(f"*account:{payload.destination_account_id}:transactions*")
         return {"id": None}
     except Exception as e:
         api_logger.error("Transaction not created")
@@ -155,8 +158,7 @@ def clear_transaction(request, payload: TransactionList):
             )
         unique_accounts = list(set(accounts_effected))
         for account in unique_accounts:
-            pattern = f"*account_{account}_transactions*"
-            delete_pattern(pattern)
+            delete_pattern(f"*account:{account}:transactions*")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions

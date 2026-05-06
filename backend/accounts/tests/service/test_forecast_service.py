@@ -44,6 +44,6 @@ def test_get_account_forecast_dataset_styling(test_checking_account):
     assert dataset.borderColor == "#06966A"
     assert dataset.backgroundColor == "#06966A"
     assert dataset.fill is not None
-    assert dataset.fill.above == "rgb(236 , 253, 245)"
+    assert dataset.fill.above == "rgb(76, 175, 80)"
     assert dataset.fill.below == "rgb(248, 121, 121)"
     assert dataset.fill.target.value == 0
