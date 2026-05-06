@@ -128,11 +128,13 @@ async function clearTransactionFunction(clearedTransaction) {
 }
 
 async function updateTransactionFunction(updatedTransaction) {
+  const mainstore = useMainStore();
   try {
     const response = await apiClient.put(
       "/transactions/update/" + updatedTransaction.id,
       updatedTransaction,
     );
+    mainstore.showSnackbar("Transaction updated successfully!", "success");
     return response.data;
   } catch (error) {
     handleApiError(error, "Transaction not updated: ");
