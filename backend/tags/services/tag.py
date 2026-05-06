@@ -14,6 +14,7 @@ class InvalidTagData(Exception):
     pass
 
 
+
 def _resolve_parent(parent_name: str, parent_id: int, tag_type_id: int) -> int:
     if not parent_name:
         return parent_id
@@ -71,9 +72,6 @@ def create_tag(
 ) -> int:
     resolved_parent_id = _resolve_parent(parent_name, parent_id, tag_type_id)
     resolved_child_id = _resolve_child_for_create(child_name, child_id, tag_type_id)
-
-    if not (parent_name or (child_name and resolved_parent_id)):
-        raise InvalidTagData("Invalid tag data")
 
     try:
         tag = Tag.objects.create(

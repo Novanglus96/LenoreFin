@@ -1,5 +1,5 @@
 import pytest
-from tags.services import create_tag, update_tag, TagNotFound, InvalidTagData
+from tags.services import create_tag, update_tag, TagNotFound
 from tags.models import MainTag, SubTag
 
 
@@ -37,15 +37,16 @@ def test_create_tag_reuses_existing_sub_tag(test_main_tag, tag_type_expense):
 
 @pytest.mark.django_db
 @pytest.mark.service
-def test_create_tag_raises_invalid_data_without_parent(tag_type_expense):
-    with pytest.raises(InvalidTagData):
-        create_tag(
-            parent_id=None,
-            parent_name=None,
-            child_id=None,
-            child_name=None,
-            tag_type_id=tag_type_expense.id,
-        )
+def test_create_tag_with_existing_ids(test_main_tag, test_sub_tag):
+    tag_id = create_tag(
+        parent_id=test_main_tag.id,
+        parent_name=None,
+        child_id=test_sub_tag.id,
+        child_name=None,
+        tag_type_id=test_main_tag.tag_type_id,
+    )
+
+    assert tag_id is not None
 
 
 @pytest.mark.django_db
