@@ -78,6 +78,8 @@ def update_payee(request, payee_id: int, payload: PayeeIn):
         payee.save()
         api_logger.info(f"Payee updated : {payee.payee_name}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Payee not found")
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
@@ -120,6 +122,8 @@ def get_payee(request, payee_id: int):
         payee = get_object_or_404(Payee, id=payee_id)
         api_logger.debug(f"Payee retrieved : {payee.payee_name}")
         return payee
+    except Http404:
+        raise HttpError(404, "Payee not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Payee not retrieved")
@@ -173,6 +177,8 @@ def delete_payee(request, payee_id: int):
         payee.delete()
         api_logger.info(f"Payee deleted : {payee_name}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Payee not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Payee not deleted")
