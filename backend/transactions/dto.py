@@ -49,18 +49,18 @@ class DomainTransaction:
     transaction_date: date
     total_amount: Decimal
     status: DomainTransactionStatus
-    memo: str | None = None
     description: str
     edit_date: date
     add_date: date
     transaction_type: DomainTransactionType
+    source_account_id: int
+    memo: str | None = None
     paycheck: DomainPaycheck | None = None
     balance: Decimal | None = None
     pretty_account: str | None = None
     tags: List[str] | None = None
     details: List[DomainTransactionDetail] | None = None
     pretty_total: Decimal | None = None
-    source_account_id: int
     destination_account_id: int | None = None
     checkNumber: int | None = None
     reminder_id: int | None = None

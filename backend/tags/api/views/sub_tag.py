@@ -3,6 +3,7 @@ from ninja.errors import HttpError
 from tags.models import SubTag
 from tags.api.schemas.sub_tag import SubTagOut, SubTagQuery
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 import logging
 
@@ -34,6 +35,8 @@ def get_subtag(request, subtag_id: int):
         subtag = get_object_or_404(SubTag, id=subtag_id)
         api_logger.debug(f"Sub Tag retrieved : {subtag.tag_name}")
         return subtag
+    except Http404:
+        raise HttpError(404, "Sub Tag not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Sub Tag not retrieved")
@@ -64,7 +67,7 @@ def list_subtags(request, query: SubTagQuery = Query(...)):
             qs = qs.filter(tag_type__id=query.tag_type)
 
         # Filter sub tags by parent if a parent id is specified
-        if query.Configparent is not None:
+        if query.parent is not None:
             qs = qs.filter(parent__id=query.parent).exclude(tag_type__id=3)
 
         # Order tags tag_name

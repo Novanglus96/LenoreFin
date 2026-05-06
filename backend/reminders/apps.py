@@ -6,4 +6,4 @@ class RemindersConfig(AppConfig):
     name = "reminders"
 
     def ready(self):
-        import reminders.signals
+        pass

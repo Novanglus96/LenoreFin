@@ -3,6 +3,7 @@ from ninja.errors import HttpError
 from transactions.models import Paycheck
 from transactions.api.schemas.paycheck import PaycheckIn, PaycheckOut
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 import logging
 
@@ -70,6 +71,8 @@ def update_paycheck(request, paycheck_id: int, payload: PaycheckIn):
         paycheck.save()
         api_logger.info(f"Paycheck updated : #{paycheck_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Paycheck not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Paycheck not updated")
@@ -97,6 +100,8 @@ def get_paycheck(request, paycheck_id: int):
         paycheck = get_object_or_404(Paycheck, id=paycheck_id)
         api_logger.debug(f"Paycheck retrieved : #{paycheck.id}")
         return paycheck
+    except Http404:
+        raise HttpError(404, "Paycheck not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Paycheck not retrieved")
@@ -149,6 +154,8 @@ def delete_paycheck(request, paycheck_id: int):
         paycheck.delete()
         api_logger.info(f"Paycheck deleted : {paycheck_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Paycheck not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Paycheck not deleted")

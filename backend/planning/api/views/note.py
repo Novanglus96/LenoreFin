@@ -3,6 +3,7 @@ from ninja.errors import HttpError
 from planning.models import Note
 from planning.api.schemas.note import NoteIn, NoteOut
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 import logging
 
@@ -62,6 +63,8 @@ def update_note(request, note_id: int, payload: NoteIn):
         note.save()
         api_logger.info(f"Note updated : #{note_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Note not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not updated")
@@ -89,6 +92,8 @@ def get_note(request, note_id: int):
         note = get_object_or_404(Note, id=note_id)
         api_logger.debug(f"Note retrieved : #{note.id}")
         return note
+    except Http404:
+        raise HttpError(404, "Note not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not retrieved")
@@ -142,6 +147,8 @@ def delete_note(request, note_id: int):
         note.delete()
         api_logger.info(f"Note deleted from {note_date}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Note not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not deleted")

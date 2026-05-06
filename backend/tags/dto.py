@@ -1,9 +1,11 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import List
+from typing import TYPE_CHECKING, List
 from accounts.dto import DomainGraphData
-from transactions.dto import DomainTransaction
+
+if TYPE_CHECKING:
+    from transactions.dto import DomainTransaction
 
 
 @dataclass

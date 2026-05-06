@@ -15,12 +15,12 @@ class OptionIn(Schema):
     widget1_type_id: Optional[int] = None
     widget1_month: Optional[int] = 0
     widget1_exclude: Optional[str] = None
-    widget2_graph_name: Optional[str]
+    widget2_graph_name: Optional[str] = None
     widget2_tag_id: Optional[int] = None
     widget2_type_id: Optional[int] = None
     widget2_month: Optional[int] = 0
     widget2_exclude: Optional[str] = None
-    widget3_graph_name: Optional[str]
+    widget3_graph_name: Optional[str] = None
     widget3_tag_id: Optional[int] = None
     widget3_type_id: Optional[int] = None
     widget3_month: Optional[int] = 0

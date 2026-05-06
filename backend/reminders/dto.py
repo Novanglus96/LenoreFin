@@ -23,12 +23,12 @@ class DomainReminder:
     tag: DomainTag
     amount: Decimal
     reminder_source_account: DomainAccount
-    reminder_destination_account: Optional[DomainAccount] = None
     description: str
     transaction_type: DomainTransactionType
     start_date: date
-    next_date: Optional[date] = None
-    end_date: Optional[date] = None
     repeat: DomainRepeat
     auto_add: bool
+    reminder_destination_account: Optional[DomainAccount] = None
+    next_date: Optional[date] = None
+    end_date: Optional[date] = None
     memo: Optional[str] = None

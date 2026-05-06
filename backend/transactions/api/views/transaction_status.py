@@ -7,6 +7,7 @@ from transactions.api.schemas.transaction_status import (
     TransactionStatusOut,
 )
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 import logging
 
@@ -47,6 +48,8 @@ def update_transaction_status(
             f"Transaction status updated : {transaction_status.transaction_status}"
         )
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Transaction status not found")
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
@@ -100,6 +103,8 @@ def get_transaction_status(request, transactionstatus_id: int):
             f"Transaction status retrieved : {transaction_status.transaction_status}"
         )
         return transaction_status
+    except Http404:
+        raise HttpError(404, "Transaction status not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction status not retrieved")
@@ -157,6 +162,8 @@ def delete_transaction_status(request, transactionstatus_id: int):
             f"Transaction status deleted : {transaction_status_name}"
         )
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Transaction status not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction status not deleted")

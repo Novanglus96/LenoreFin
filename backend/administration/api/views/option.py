@@ -3,6 +3,7 @@ from ninja.errors import HttpError
 from administration.models import Option
 from administration.api.schemas.option import OptionIn, OptionOut
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 from utils.apply_patch import apply_patch
 import logging
@@ -40,6 +41,8 @@ def update_option(request, option_id: int, payload: OptionIn):
         option.save()
         api_logger.info(f"Option updated : {option_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Option not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option not updated")
@@ -67,6 +70,8 @@ def get_option(request, option_id: int):
         option = get_object_or_404(Option, id=option_id)
         api_logger.debug(f"Option retrieved : #{option.id}")
         return option
+    except Http404:
+        raise HttpError(404, "Option not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option not retrieved")
@@ -119,6 +124,8 @@ def delete_option(request, option_id: int):
         option.delete()
         api_logger.info(f"Option deleted : #{option_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Option not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option not deleted")

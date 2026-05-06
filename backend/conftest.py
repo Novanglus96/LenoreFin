@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from accounts.models import Bank, Account, AccountType
 from tags.models import TagType, MainTag, SubTag, Tag
 from transactions.models import (
@@ -16,6 +17,18 @@ from backend.api import api
 from django.utils import timezone
 import pytz
 import os
+
+
+@pytest.fixture(autouse=True)
+def patch_delete_pattern():
+    with patch("core.cache.helpers.delete_pattern", return_value=None), \
+         patch("backend.utils.cache.delete_pattern", return_value=None), \
+         patch("accounts.signals.delete_pattern", return_value=None), \
+         patch("reminders.signals.delete_pattern", return_value=None), \
+         patch("transactions.signals.delete_pattern", return_value=None), \
+         patch("transactions.api.views.transaction.delete_pattern", return_value=None), \
+         patch("transactions.tasks.delete_pattern", return_value=None):
+        yield
 
 
 def current_date():
@@ -169,6 +182,11 @@ def test_expense_transaction_type():
 @pytest.fixture
 def test_pending_transaction_status():
     return TransactionStatus.objects.create(transaction_status="Pending")
+
+
+@pytest.fixture
+def test_cleared_transaction_status():
+    return TransactionStatus.objects.create(transaction_status="Cleared")
 
 
 @pytest.fixture

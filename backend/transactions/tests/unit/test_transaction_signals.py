@@ -150,7 +150,8 @@ def test_transaction_delete_invalidates_both_account_caches(
 
 
 @pytest.mark.django_db
-def test_transaction_image_file_is_deleted_on_model_delete(test_transaction):
+def test_transaction_image_file_is_deleted_on_model_delete(test_transaction, tmp_path, settings):
+    settings.MEDIA_ROOT = tmp_path
     image_file = SimpleUploadedFile(
         name="test.jpg",
         content=b"fake image data",

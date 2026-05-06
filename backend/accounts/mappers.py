@@ -126,7 +126,7 @@ def domain_graph_data_to_schema(graph: DomainGraphData) -> GraphData:
 
 def domain_forecast_to_schema(forecast: DomainForecast) -> ForecastOut:
     return ForecastOut(
-        lables=forecast.labels,
+        labels=forecast.labels,
         datasets=[
             domain_dataset_object_to_schema(ds) for ds in forecast.datasets
         ],

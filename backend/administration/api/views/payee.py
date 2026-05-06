@@ -4,6 +4,7 @@ from ninja.errors import HttpError
 from administration.models import Payee
 from administration.api.schemas.payee import PayeeIn, PayeeOut
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 import logging
 

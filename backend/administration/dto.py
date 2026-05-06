@@ -42,13 +42,13 @@ class DomainMessageList:
 @dataclass
 class DomainOption:
     id: int
-    alert_balance: Decimal = None
     alert_period: int
     widget1_graph_name: str
-    widget1_month: int = 0
     widget2_graph_name: str
-    widget2_month: int = 0
     widget3_graph_name: str
+    alert_balance: Optional[Decimal] = None
+    widget1_month: int = 0
+    widget2_month: int = 0
     widget3_month: int = 0
     widget1_tag_id: Optional[int] = None
     widget1_type: Optional[DomainGraphType] = None

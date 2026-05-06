@@ -6,4 +6,4 @@ class ApiConfig(AppConfig):
     name = "transactions"
 
     def ready(self):
-        import transactions.signals
+        pass
