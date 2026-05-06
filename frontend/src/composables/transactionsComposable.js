@@ -192,7 +192,7 @@ export function useTransactions() {
     onSuccess: () => {
       console.log("Success clearing transaction");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.refetchQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["calculator"] });
