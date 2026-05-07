@@ -1,28 +1,12 @@
 from ninja import Router
 from ninja.errors import HttpError
-from accounts.api.schemas.forecast import (
-    TargetObject,
-    FillObject,
-    DatasetObject,
-    ForecastOut,
-)
-from accounts.api.dependencies.get_dates_in_range import get_dates_in_range
-from accounts.api.dependencies.get_forecast_end_date import (
-    get_forecast_end_date,
-)
-from accounts.api.dependencies.get_forecast_start_date import (
-    get_forecast_start_date,
-)
-from datetime import datetime
-from transactions.api.dependencies.get_transactions_by_account import (
-    get_transactions_by_account,
-)
+from accounts.api.schemas.forecast import ForecastOut
+from accounts.services import get_account_forecast
+from accounts.mappers import domain_forecast_to_schema
 import logging
 
 api_logger = logging.getLogger("api")
-db_logger = logging.getLogger("db")
 error_logger = logging.getLogger("error")
-task_logger = logging.getLogger("task")
 
 forecast_router = Router(tags=["Account Forecasts"])
 
@@ -46,77 +30,13 @@ def get_forecast(
     Raises:
         Http404: If the account with the specified ID does not exist.
     """
-
     try:
-        # Retrieve the dates in range as labels for forecast
-        labels = get_dates_in_range(start_interval, end_interval)
-
-        data = []
-        datasets = []
-
-        # Retrieve the transactions in the date range for the account
-        start_date = get_forecast_start_date(start_interval)
-        end_date = get_forecast_end_date(end_interval)
-
-        # Get list of transactions
-        transactions_list, previous_balance = get_transactions_by_account(
-            end_date, account_id, True, True, start_date, False
+        domain_forecast = get_account_forecast(
+            account_id, start_interval, end_interval
         )
-
-        # Get the initial balance
-        # Use opening balance or first previous balance available
-        daily_total = 0
-
-        # Get the totals by day
-        for label_date in labels:
-            parsed_date = datetime.strptime(label_date, "%b %d, %y")
-            formatted_date = parsed_date.strftime("%Y-%m-%d")
-            transactions_today = []
-            for transaction in transactions_list:
-                if isinstance(transaction, dict):
-                    if str(transaction["transaction_date"]) == str(
-                        formatted_date
-                    ):
-                        transactions_today.append(transaction)
-                else:
-                    if str(transaction.transaction_date) == str(formatted_date):
-                        transactions_today.append(transaction)
-            if len(transactions_today) > 0:
-                last_transaction_today = transactions_today[-1]
-                if isinstance(last_transaction_today, dict):
-                    daily_total = last_transaction_today["balance"]
-                else:
-                    daily_total = last_transaction_today.balance
-            else:
-                daily_total = previous_balance
-            current_balance = daily_total
-            previous_balance = daily_total
-            data.append(current_balance)
-
-        # Prepare the graph data for the forecast object
-        targetobject_out = TargetObject(value=0)
-        fillobject_out = FillObject(
-            target=targetobject_out,
-            above="rgb(76, 175, 80)",
-            below="rgb(255, 52, 7)",
-        )
-        datasets_out = DatasetObject(
-            borderColor="#212121",
-            backgroundColor="#212121",
-            tension=0.1,
-            data=data,
-            fill=fillobject_out,
-            pointStyle="circle",
-            radius=2,
-            hitRadius=5,
-            hoverRadius=5,
-        )
-        datasets.append(datasets_out)
-        forecast_out = ForecastOut(labels=labels, datasets=datasets)
         api_logger.debug("Forecast retrieved")
-        return forecast_out
+        return domain_forecast_to_schema(domain_forecast)
     except Exception as e:
-        # Log other types of exceptions
         api_logger.error("Forecast not retrieved")
         error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error : {str(e)}")

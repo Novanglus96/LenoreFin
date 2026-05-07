@@ -3,6 +3,7 @@ from ninja.errors import HttpError
 from tags.models import MainTag
 from tags.api.schemas.main_tag import MainTagOut, MainTagQuery
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 import logging
 
@@ -34,6 +35,8 @@ def get_maintag(request, maintag_id: int):
         maintag = get_object_or_404(MainTag, id=maintag_id)
         api_logger.debug(f"Main Tag retrieved : {maintag.tag_name}")
         return maintag
+    except Http404:
+        raise HttpError(404, "Main Tag not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Main Tag not retrieved")

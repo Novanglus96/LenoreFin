@@ -153,22 +153,24 @@ class Transaction(models.Model):
     source_account = models.ForeignKey(
         Account,
         related_name="source_transactions",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        default=None,
     )
     destination_account = models.ForeignKey(
         Account,
         related_name="destination_transactions",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         default=None,
     )
 
     def __str__(self):
-        return f"#{self.id} | {self.transaction_date} : {self.description} (${self.total_amount})"
+        return (
+            f"#{self.id} | {self.transaction_date} : "
+            f"{self.description} (${self.total_amount:.2f})"
+        )
 
 
 class TransactionImage(models.Model):
@@ -266,7 +268,7 @@ class ReminderCacheTransaction(models.Model):
     source_account = models.ForeignKey(
         Account,
         related_name="reminder_cache_source_transactions",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         default=None,
@@ -274,7 +276,7 @@ class ReminderCacheTransaction(models.Model):
     destination_account = models.ForeignKey(
         Account,
         related_name="reminder_cache_destination_transactions",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         default=None,
@@ -282,7 +284,10 @@ class ReminderCacheTransaction(models.Model):
     reminder = models.ForeignKey(Reminder, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"#{self.id} | {self.transaction_date} : {self.description} (${self.total_amount})"
+        return (
+            f"#{self.id} | {self.transaction_date} : "
+            f"{self.description} (${self.total_amount:.2f})"
+        )
 
 
 class ForecastCacheTransaction(models.Model):
@@ -337,7 +342,7 @@ class ForecastCacheTransaction(models.Model):
     source_account = models.ForeignKey(
         Account,
         related_name="forecast_cache_source_transactions",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         default=None,
@@ -345,14 +350,17 @@ class ForecastCacheTransaction(models.Model):
     destination_account = models.ForeignKey(
         Account,
         related_name="forecast_cache_destination_transactions",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         default=None,
     )
 
     def __str__(self):
-        return f"#{self.id} | {self.transaction_date} : {self.description} (${self.total_amount})"
+        return (
+            f"#{self.id} | {self.transaction_date} : "
+            f"{self.description} (${self.total_amount:.2f})"
+        )
 
 
 class ReminderCacheTransactionDetail(models.Model):

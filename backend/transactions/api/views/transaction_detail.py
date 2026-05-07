@@ -6,6 +6,7 @@ from transactions.api.schemas.transaction_detail import (
     TransactionDetailIn,
 )
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 import logging
 
@@ -44,6 +45,8 @@ def get_transaction_detail(request, transactiondetail_id: int):
             f"Transaction detail retrieved : #{transaction_detail.id}"
         )
         return transaction_detail
+    except Http404:
+        raise HttpError(404, "Transaction detail not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction detail not retrieved")
@@ -98,6 +101,8 @@ def delete_transaction_detail(request, transactiondetail_id: int):
         transaction_detail.delete()
         api_logger.info(f"Transaction detail deleted : #{transactiondetail_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Transaction detail not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction detail not deleted")
@@ -119,7 +124,9 @@ def create_transaction_detail(request, payload: TransactionDetailIn):
     """
 
     try:
-        transaction_detail = TransactionDetail.objects.create(**payload.dict())
+        data = payload.dict()
+        data.pop("account_id", None)
+        transaction_detail = TransactionDetail.objects.create(**data)
         api_logger.info(
             f"Transaction detail created : #{transaction_detail.transaction.id}"
         )
@@ -158,9 +165,12 @@ def update_transaction_detail(
         transaction_detail.account_id = payload.account_id
         transaction_detail.detail_amt = payload.detail_amt
         transaction_detail.tag_id = payload.tag_id
+        transaction_detail.full_toggle = payload.full_toggle
         transaction_detail.save()
         api_logger.info(f"Transaction detail updated : #{transactiondetail_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Transaction detail not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction detail not updated")

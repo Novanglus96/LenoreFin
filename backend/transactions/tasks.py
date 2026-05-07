@@ -53,7 +53,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, Abs
 import pytz
 import os
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 from django.core.management import call_command
@@ -64,7 +64,7 @@ from transactions.api.dependencies.get_transactions_by_tag import (
 )
 from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP
-from backend.utils.cache import delete_pattern
+from core.cache.helpers import delete_pattern
 import logging
 
 api_logger = logging.getLogger("api")
@@ -748,12 +748,16 @@ def update_reminder_cache(reminder_id):
                     )
 
         create_transactions(transactions_to_create, "reminder")
+        pattern = f"*account_{reminder.reminder_source_account.id}_reminder_transactions*"
+        delete_pattern(pattern)
         pattern = (
-            f"*account_transactions_{reminder.reminder_source_account.id}*"
+            f"*account_{reminder.reminder_source_account.id}_transactions*"
         )
         delete_pattern(pattern)
         if reminder.reminder_destination_account is not None:
-            pattern = f"*account_transactions_{reminder.reminder_destination_account.id}*"
+            pattern = f"*account_{reminder.reminder_destination_account.id}_reminder_transactions*"
+            delete_pattern(pattern)
+            pattern = f"*account_{reminder.reminder_destination_account.id}_transactions*"
             delete_pattern(pattern)
     except Exception as e:
         task_logger.warning("There was an error creating cache")
@@ -957,7 +961,9 @@ def update_cc_forecast_cache(account_id):
             x += 1
 
         create_transactions(transactions_to_create, "forecast")
-        pattern = f"*account_transactions_{account_id}*"
+        pattern = f"*account_{account_id}_forecast_transactions*"
+        delete_pattern(pattern)
+        pattern = f"*account_{account_id}_transactions*"
         delete_pattern(pattern)
     except Exception as e:
         api_logger.warning("There was an error creating cache")

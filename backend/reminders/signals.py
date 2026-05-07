@@ -5,7 +5,11 @@ from transactions.models import (
     ReminderCacheTransaction,
 )
 from django_q.tasks import async_task
-from backend.utils.cache import delete_pattern
+from core.cache.helpers import delete_pattern
+from core.cache.keys import (
+    account_combined_transactions,
+    account_reminder_transactions,
+)
 
 
 @receiver(post_save, sender=Reminder)
@@ -29,13 +33,23 @@ def invalidate_cache_on_save(sender, instance, **kwargs):
     """
     Update the reminder scratch/cache table when a Reminder is created or updated.
     """
-    pattern = f"*account_transactions_{instance.reminder_source_account.id}*"
-    delete_pattern(pattern)
+    delete_pattern(
+        account_reminder_transactions(instance.reminder_source_account.id)
+    )
+    delete_pattern(
+        account_combined_transactions(instance.reminder_source_account.id)
+    )
     if instance.reminder_destination_account is not None:
-        pattern = (
-            f"*account_transactions_{instance.reminder_destination_account.id}*"
+        delete_pattern(
+            account_reminder_transactions(
+                instance.reminder_destination_account.id
+            )
         )
-        delete_pattern(pattern)
+        delete_pattern(
+            account_combined_transactions(
+                instance.reminder_destination_account.id
+            )
+        )
 
 
 @receiver(post_delete, sender=Reminder)
@@ -43,10 +57,20 @@ def invalidate_cache_on_delete(sender, instance, **kwargs):
     """
     Remove entries from the reminder scratch table when a Reminder is deleted.
     """
-    pattern = f"*account_transactions_{instance.reminder_source_account.id}*"
-    delete_pattern(pattern)
+    delete_pattern(
+        account_reminder_transactions(instance.reminder_source_account.id)
+    )
+    delete_pattern(
+        account_combined_transactions(instance.reminder_source_account.id)
+    )
     if instance.reminder_destination_account is not None:
-        pattern = (
-            f"*account_transactions_{instance.reminder_destination_account.id}*"
+        delete_pattern(
+            account_reminder_transactions(
+                instance.reminder_destination_account.id
+            )
         )
-        delete_pattern(pattern)
+        delete_pattern(
+            account_combined_transactions(
+                instance.reminder_destination_account.id
+            )
+        )

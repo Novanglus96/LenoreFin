@@ -5,6 +5,7 @@ from accounts.models import AccountType
 from accounts.api.schemas.account_type import AccountTypeIn, AccountTypeOut
 from django.shortcuts import get_object_or_404
 from typing import List
+from django.http import Http404
 import logging
 
 api_logger = logging.getLogger("api")
@@ -74,6 +75,8 @@ def get_account_type(request, accounttype_id: int):
         account_type = get_object_or_404(AccountType, id=accounttype_id)
         api_logger.info(f"Account type retrieved : {account_type.account_type}")
         return account_type
+    except Http404:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Record retrieval error")

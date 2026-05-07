@@ -8,15 +8,11 @@ from planning.api.schemas.budget import (
     BudgetWithTotal,
     BudgetQuery,
 )
-from reminders.models import Repeat
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 import json
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
-    get_todays_date_timezone_adjusted,
-)
+from planning.services.budget import calculate_repeat_window
 from transactions.api.dependencies.get_transactions_by_tag import (
     get_transactions_by_tag,
 )
@@ -100,6 +96,8 @@ def update_budget(request, budget_id: int, payload: BudgetIn):
         budget.save()
         api_logger.info(f"Budget updated : {budget.name}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Budget not found")
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
@@ -142,6 +140,8 @@ def get_budget(request, budget_id: int):
         budget = get_object_or_404(Budget, id=budget_id)
         api_logger.debug(f"Budget retrieved : {budget.name}")
         return budget
+    except Http404:
+        raise HttpError(404, "Budget not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget not retrieved")
@@ -238,6 +238,8 @@ def delete_budget(request, budget_id: int):
         budget.delete()
         api_logger.info(f"Budget deleted : {budget_name}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Budget not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget not deleted")
@@ -245,37 +247,3 @@ def delete_budget(request, budget_id: int):
         raise HttpError(500, "Record retrieval error")
 
 
-def calculate_repeat_window(start_date: datetime, repeat: Repeat) -> tuple:
-    """
-    Calculate the current repeat window (start and end date) based on the Repeat object.
-
-    Args:
-        start_date (datetime or date): The date when the repetition started.
-        repeat (Repeat): The Repeat object containing the interval (days, weeks, months, years).
-
-    Returns:
-        tuple: A tuple of (window_start, window_end) for the current repeat window.
-    """
-    # Combine repeat fields into a single period using relativedelta
-    total_period = relativedelta(
-        days=repeat.days,
-        weeks=repeat.weeks,
-        months=repeat.months,
-        years=repeat.years,
-    )
-
-    # Get the current date (you can use your timezone-adjusted function here)
-    today = get_todays_date_timezone_adjusted()
-
-    # Calculate how many total periods have passed since the start date
-    periods_passed = 0
-    current_period_start = start_date
-
-    while current_period_start + total_period <= today:
-        current_period_start += total_period
-        periods_passed += 1
-
-    window_start = current_period_start
-    window_end = window_start + total_period + relativedelta(days=-1)
-
-    return window_start, window_end

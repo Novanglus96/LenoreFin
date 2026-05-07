@@ -3,6 +3,7 @@ from django.utils import timezone
 import pytz
 import os
 from django.core.exceptions import ValidationError
+from model_utils import FieldTracker
 
 
 def current_date():
@@ -131,6 +132,7 @@ class Account(models.Model):
     statement_day = models.IntegerField(default=15)
     due_day = models.IntegerField(default=15)
     pay_day = models.IntegerField(default=15)
+    tracker = FieldTracker()
 
     def clean(self):
         # Ensure an account cannot fund itself
@@ -139,12 +141,18 @@ class Account(models.Model):
                 "An account cannot be its own funding account."
             )
         # Ensure the funding account is a checking account
-        if self.funding_account and self.funding_account.account_type.id != 2:
+        if (
+            self.funding_account
+            and self.funding_account.account_type.account_type != "Checking"
+        ):
             raise ValidationError(
                 "A funding account must be a checking account"
             )
         # Ensure the account is a credit card
-        if self.funding_account and self.account_type.id != 1:
+        if (
+            self.funding_account
+            and self.account_type.account_type != "Credit Card"
+        ):
             raise ValidationError(
                 "A funding account can only be set for Credit Card accounts"
             )

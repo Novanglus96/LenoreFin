@@ -7,6 +7,7 @@ from transactions.api.schemas.transaction_type import (
     TransactionTypeOut,
 )
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 import logging
 
@@ -47,6 +48,8 @@ def update_transaction_type(
             f"Transaction type updated : {transaction_type.transaction_type}"
         )
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Transaction type not found")
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
@@ -99,6 +102,8 @@ def get_transaction_type(request, transaction_type_id: int):
             f"Transaction type retrieved : {transaction_type.transaction_type}"
         )
         return transaction_type
+    except Http404:
+        raise HttpError(404, "Transaction type not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction type not retrieved")
@@ -154,6 +159,8 @@ def delete_transaction_type(request, transaction_type_id: int):
         transaction_type.delete()
         api_logger.info(f"Transaction type deleted : {transaction_type_name}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Transaction type not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction type not deleted")

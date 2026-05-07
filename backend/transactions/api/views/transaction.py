@@ -1,7 +1,6 @@
 from ninja import Router, Query
 from ninja.errors import HttpError
-from transactions.models import Transaction, Paycheck, TransactionDetail
-from administration.models import DescriptionHistory
+from transactions.models import Transaction, TransactionDetail
 from accounts.models import Account
 from transactions.api.schemas.transaction import (
     TransactionIn,
@@ -12,6 +11,7 @@ from transactions.api.schemas.transaction import (
     TransactionQuery,
 )
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from django.db.models import (
     Case,
     When,
@@ -23,13 +23,11 @@ from django.db.models import (
     DecimalField,
 )
 from django.db.models.functions import Concat, Coalesce, Abs
-from tags.api.dependencies.custom_tag import CustomTag
-from transactions.api.dependencies.full_transaction import FullTransaction
-from transactions.api.dependencies.create_transactions import (
-    create_transactions,
+from transactions.services.transaction import (
+    create_transaction_service,
+    update_transaction_service,
 )
-import traceback
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 from transactions.api.dependencies.sort_transactions import sort_transactions
@@ -38,7 +36,10 @@ from django.core.paginator import Paginator
 from transactions.api.dependencies.get_transactions_by_account import (
     get_transactions_by_account,
 )
-from backend.utils.cache import delete_pattern
+from core.cache.helpers import delete_pattern
+from core.cache.keys import (
+    account_all,
+)
 import logging
 
 api_logger = logging.getLogger("api")
@@ -63,82 +64,14 @@ def create_transaction(request, payload: TransactionIn):
     """
 
     try:
-        transaction = None
-        paycheck_id = None
-        transactions_to_create = []
-        tags = []
-        # Update Description History
-        try:
-            existing_description = DescriptionHistory.objects.get(
-                description_normalized=payload.description.lower()
-            )
-            if payload.details:
-                existing_description.tag_id = payload.details[0].tag_id
-            else:
-                existing_description.tag_id = None
-            existing_description.save()
-        except DescriptionHistory.DoesNotExist:
-            tag_id = None
-            if payload.details:
-                tag_id = payload.details[0].tag_id
-            DescriptionHistory.objects.create(
-                description_normalized=payload.description.lower(),
-                description_pretty=payload.description,
-                tag_id=tag_id,
-            )
-
-        # Create paycheck
-        if payload.paycheck is not None:
-            paycheck = Paycheck.objects.create(
-                gross=payload.paycheck.gross,
-                net=payload.paycheck.net,
-                taxes=payload.paycheck.taxes,
-                health=payload.paycheck.health,
-                pension=payload.paycheck.pension,
-                fsa=payload.paycheck.fsa,
-                dca=payload.paycheck.dca,
-                union_dues=payload.paycheck.union_dues,
-                four_fifty_seven_b=payload.paycheck.four_fifty_seven_b,
-                payee_id=payload.paycheck.payee_id,
-            )
-            paycheck_id = paycheck.id
-        if payload.details is not None:
-            for detail in payload.details:
-                tag_obj = CustomTag(
-                    tag_name=detail.tag_pretty_name,
-                    tag_amount=detail.tag_amt,
-                    tag_id=detail.tag_id,
-                    tag_full_toggle=detail.tag_full_toggle,
-                )
-                tags.append(tag_obj)
-        transaction = FullTransaction(
-            transaction_date=payload.transaction_date,
-            total_amount=payload.total_amount,
-            status_id=payload.status_id,
-            memo=payload.memo,
-            description=payload.description,
-            edit_date=payload.edit_date,
-            add_date=payload.add_date,
-            transaction_type_id=payload.transaction_type_id,
-            paycheck_id=paycheck_id,
-            source_account_id=payload.source_account_id,
-            destination_account_id=payload.destination_account_id,
-            tags=tags,
-            checkNumber=payload.checkNumber,
-        )
-        transactions_to_create.append(transaction)
-        if create_transactions(transactions_to_create):
-            api_logger.info("Transaction created")
-
-            return {"id": None}
-        else:
-            raise Exception("Error creating transaction")
+        create_transaction_service(payload)
+        for account_id in filter(None, [payload.source_account_id, payload.destination_account_id]):
+            delete_pattern(account_all(account_id))
+        return {"id": None}
     except Exception as e:
-        # Log other types of exceptions
         api_logger.error("Transaction not created")
         error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record creation error : {str(e)}")
-        traceback.print_exc()
 
 
 @transaction_router.patch("/multiedit")
@@ -159,19 +92,20 @@ def multiedit_transactions(request, payload: MultiTranscationDate):
     """
     try:
         edit_date = get_todays_date_timezone_adjusted()
-        # Fetch all relevant transactions at once
-        transactions = Transaction.objects.filter(
-            id__in=payload.transaction_ids
-        )
+        transactions = Transaction.objects.filter(id__in=payload.transaction_ids)
 
-        # Make changes
-        transactions.update(
-            transaction_date=payload.new_date, edit_date=edit_date
-        )
+        account_ids = set()
+        for t in transactions:
+            account_ids.add(t.source_account_id)
+            if t.destination_account_id:
+                account_ids.add(t.destination_account_id)
 
-        api_logger.info(
-            f"Transaction dates updated: #{payload.transaction_ids}"
-        )
+        transactions.update(transaction_date=payload.new_date, edit_date=edit_date)
+
+        for account_id in account_ids:
+            delete_pattern(account_all(account_id))
+
+        api_logger.info(f"Transaction dates updated: #{payload.transaction_ids}")
 
         return {"success": True}
     except Exception as e:
@@ -227,8 +161,7 @@ def clear_transaction(request, payload: TransactionList):
             )
         unique_accounts = list(set(accounts_effected))
         for account in unique_accounts:
-            pattern = f"*account_transactions_{account}*"
-            delete_pattern(pattern)
+            delete_pattern(account_all(account))
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
@@ -257,6 +190,8 @@ def get_transaction(request, transaction_id: int):
         transaction = get_object_or_404(Transaction, id=transaction_id)
         api_logger.debug(f"Transaction retrieved : #{transaction.id}")
         return transaction
+    except Http404:
+        raise HttpError(404, "Transaction not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction not retrieved")
@@ -281,9 +216,15 @@ def delete_transaction(request, payload: TransactionList):
     """
 
     try:
-        # Fetch all relevant transactions at once
         transactions = Transaction.objects.filter(id__in=payload.transactions)
+        account_ids = set()
+        for t in transactions:
+            account_ids.add(t.source_account_id)
+            if t.destination_account_id:
+                account_ids.add(t.destination_account_id)
         transactions.delete()
+        for account_id in account_ids:
+            delete_pattern(account_all(account_id))
         for transaction in payload.transactions:
             api_logger.info(f"Transaction deleted : #{transaction}")
         return {"success": True}
@@ -312,118 +253,23 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
     """
 
     try:
-        # Setup variables
-        today = get_todays_date_timezone_adjusted()
-        paycheck = None
+        existing = get_object_or_404(Transaction, id=transaction_id)
+        old_source_id = existing.source_account_id
+        old_destination_id = existing.destination_account_id
 
-        # Get the transaction to update
-        transaction = get_object_or_404(Transaction, id=transaction_id)
+        update_transaction_service(transaction_id, payload)
 
-        # Update Description History
-        try:
-            existing_description = DescriptionHistory.objects.get(
-                description_normalized=payload.description.lower()
-            )
-            if payload.details:
-                existing_description.tag_id = payload.details[0].tag_id
-            else:
-                existing_description.tag_id = None
-            existing_description.save()
-        except DescriptionHistory.DoesNotExist:
-            tag_id = None
-            if payload.details:
-                tag_id = payload.details[0].tag_id
-            DescriptionHistory.objects.create(
-                description_normalized=payload.description.lower(),
-                description_pretty=payload.description,
-                tag_id=tag_id,
-            )
-
-        # Get Details
-        existing_details = TransactionDetail.objects.filter(
-            transaction_id=transaction_id
-        )
-        existing_details.delete()
-        for detail in payload.details:
-            adj_amount = 0
-            if payload.transaction_type_id == 2:
-                if not detail.tag_full_toggle:
-                    adj_amount = abs(detail.tag_amt)
-                else:
-                    adj_amount = abs(payload.total_amount)
-            else:
-                if not detail.tag_full_toggle:
-                    adj_amount = -abs(detail.tag_amt)
-                else:
-                    adj_amount = -abs(payload.total_amount)
-            TransactionDetail.objects.create(
-                transaction_id=transaction_id,
-                detail_amt=adj_amount,
-                tag_id=detail.tag_id,
-                full_toggle=detail.tag_full_toggle,
-            )
-            api_logger.info("Transaction detail created")
-
-        # Get existing paycheck if it exists
-        if transaction.paycheck_id is not None:
-            paycheck = get_object_or_404(Paycheck, id=transaction.paycheck_id)
-
-        # Update existing paycheck
-        if payload.paycheck is not None and paycheck is not None:
-            paycheck.gross = payload.paycheck.gross
-            paycheck.net = payload.paycheck.net
-            paycheck.taxes = payload.paycheck.taxes
-            paycheck.health = payload.paycheck.health
-            paycheck.pension = payload.paycheck.pension
-            paycheck.fsa = payload.paycheck.fsa
-            paycheck.dca = payload.paycheck.dca
-            paycheck.union_dues = payload.paycheck.union_dues
-            paycheck.four_fifty_seven_b = payload.paycheck.four_fifty_seven_b
-            paycheck.payee_id = payload.paycheck.payee_id
-            paycheck.save()
-            api_logger.info("Paycheck updated")
-
-        # Create new paycheck
-        if payload.paycheck is not None and paycheck is None:
-            paycheck = Paycheck.objects.create(
-                gross=payload.paycheck.gross,
-                net=payload.paycheck.net,
-                taxes=payload.paycheck.taxes,
-                health=payload.paycheck.health,
-                pension=payload.paycheck.pension,
-                fsa=payload.paycheck.fsa,
-                dca=payload.paycheck.dca,
-                union_dues=payload.paycheck.union_dues,
-                four_fifty_seven_b=payload.paycheck.four_fifty_seven_b,
-                payee_id=payload.paycheck.payee_id,
-            )
-            api_logger.info("Paycheck created")
-
-        # Delete existing paycheck if no paycheck info passed
-        if payload.paycheck is None and paycheck is not None:
-            paycheck.delete()
-        api_logger.info("Paycheck deleted")
-
-        # Update the transaction
-        transaction.transaction_date = payload.transaction_date
-        transaction.total_amount = payload.total_amount
-        transaction.status_id = payload.status_id
-        transaction.memo = payload.memo
-        transaction.description = payload.description
-        transaction.edit_date = today
-        transaction.source_account_id = payload.source_account_id
-        transaction.destination_account_id = payload.destination_account_id
-        transaction.checkNumber = payload.checkNumber
-        if paycheck is not None:
-            transaction.paycheck_id = paycheck.id
-        else:
-            transaction.paycheck_id = None
-        transaction.save()
-        api_logger.info(f"Transaction updated : {transaction_id}")
+        # Bust all affected accounts explicitly — don't rely solely on signals.
+        old_ids = {old_source_id, old_destination_id} - {None}
+        new_ids = {payload.source_account_id, payload.destination_account_id} - {None}
+        all_affected = old_ids | new_ids
+        for account_id in all_affected:
+            delete_pattern(account_all(account_id))
 
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Transaction not found")
     except Exception as e:
-        # Log other types of exceptions
         api_logger.error("Transaction not updated")
         error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record update error: {str(e)}")

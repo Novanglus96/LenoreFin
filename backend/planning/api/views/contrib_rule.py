@@ -4,6 +4,7 @@ from ninja.errors import HttpError
 from planning.models import ContribRule
 from planning.api.schemas.contrib_rule import ContribRuleIn, ContribRuleOut
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
 import logging
 
@@ -83,6 +84,8 @@ def update_contrib_rule(request, contribrule_id: int, payload: ContribRuleIn):
         contrib_rule.save()
         api_logger.info(f"Contribution rule updated : {contrib_rule.rule}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Contribution rule not found")
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
@@ -129,6 +132,8 @@ def get_contribrule(request, contribrule_id: int):
         contrib_rule = get_object_or_404(ContribRule, id=contribrule_id)
         api_logger.debug(f"Contribution rule retrieved : {contrib_rule.rule}")
         return contrib_rule
+    except Http404:
+        raise HttpError(404, "Contribution rule not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution rule not retrieved")
@@ -182,6 +187,8 @@ def delete_contrib_rule(request, contribrule_id: int):
         contrib_rule.delete()
         api_logger.info(f"Contribtion rule deleted : {rule_name}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Contribution rule not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution rule not deleted")

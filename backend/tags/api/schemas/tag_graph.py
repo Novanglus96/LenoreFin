@@ -1,10 +1,8 @@
 from ninja import Schema
-from pydantic import ConfigDict, condecimal
+from pydantic import ConfigDict
 from transactions.api.schemas.transaction import TransactionOut
 from accounts.api.schemas.forecast import GraphData
 from typing import List
-
-AverageDecimal = condecimal(max_digits=12, decimal_places=2)
 
 
 # The class TagGraphOut is a schema for representing a tag bar graph data.
@@ -12,8 +10,8 @@ class TagGraphOut(Schema):
     data: GraphData
     year1: int
     year2: int
-    year1_avg: AverageDecimal
-    year2_avg: AverageDecimal
+    year1_avg: float
+    year2_avg: float
     transactions: List[TransactionOut]
 
     model_config = ConfigDict(from_attributes=True)

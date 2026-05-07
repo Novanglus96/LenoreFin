@@ -2,6 +2,16 @@ from django.db import models
 from django.utils import timezone
 from tags.models import Tag
 from django.core.exceptions import ValidationError
+import pytz
+import os
+
+
+def current_date_time():
+    today = timezone.now()
+    tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+    today_tz = today.astimezone(tz_timezone)
+    return today_tz
+
 
 # Create your models here.
 
@@ -169,7 +179,7 @@ class Message(models.Model):
     - unread (BooleanField): Whether or not this message is unread, default is True.
     """
 
-    message_date = models.DateTimeField(default=timezone.now)
+    message_date = models.DateTimeField(default=current_date_time)
     message = models.CharField(max_length=254)
     unread = models.BooleanField(default=True)
 
@@ -201,7 +211,9 @@ class DescriptionHistory(models.Model):
     """
 
     description_normalized = models.CharField(max_length=254, unique=True)
-    description_pretty = models.CharField(max_length=254, default=None)
+    description_pretty = models.CharField(
+        max_length=254, default=None, null=True, blank=True
+    )
     tag = models.ForeignKey(
         Tag, on_delete=models.SET_NULL, null=True, blank=True, default=None
     )

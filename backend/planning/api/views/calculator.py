@@ -7,8 +7,9 @@ from planning.api.schemas.calculator import (
     CalculatorOut,
 )
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
-from administration.api.dependencies.get_todays_date_timezone_adjusted import (
+from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 from dateutil.relativedelta import relativedelta
@@ -82,6 +83,8 @@ def update_calculation_rule(
         calculation_rule.save()
         api_logger.info(f"Calculation rule updated : #{calculation_rule_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Calculation rule not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Calculation rule not updated")
@@ -139,6 +142,8 @@ def delete_calculation_rule(request, calculation_rule_id: int):
         calculation_rule.delete()
         api_logger.info(f"Calculation rule deleted: {rule_name}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Calculation rule not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Calculation rule not deleted")
@@ -199,6 +204,8 @@ def get_calculator(request, calculation_rule_id: int, timeframe: int):
         )
         api_logger.debug(f"Calculator retrieved : #{calculation_rule_id}")
         return calculator
+    except Http404:
+        raise HttpError(404, "Calculation rule not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Calculator not retrieved")

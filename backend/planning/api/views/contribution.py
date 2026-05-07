@@ -8,6 +8,7 @@ from planning.api.schemas.contribution import (
     ContributionWithTotals,
 )
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 import logging
 
 api_logger = logging.getLogger("api")
@@ -85,6 +86,8 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
         contribution.save()
         api_logger.info(f"Contribution updated : {contribution.contribution}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Contribution not found")
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
@@ -129,6 +132,8 @@ def get_contribution(request, contribution_id: int):
             f"Contribution retrieved : {contribution.contribution}"
         )
         return contribution
+    except Http404:
+        raise HttpError(404, "Contribution not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution not retrieved")
@@ -202,6 +207,8 @@ def delete_contribution(request, contribution_id: int):
         contribution.delete()
         api_logger.info(f"Contribution deleted : {contribution_name}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Contribution not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution not deleted")

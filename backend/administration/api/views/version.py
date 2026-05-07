@@ -3,6 +3,7 @@ from ninja.errors import HttpError
 from administration.models import Version
 from administration.api.schemas.version import VersionOut
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 import logging
 
 api_logger = logging.getLogger("api")
@@ -30,6 +31,8 @@ def list_version(request):
         qs = get_object_or_404(Version, id=1)
         api_logger.debug("Version retrieved")
         return qs
+    except Http404:
+        raise HttpError(404, "Version not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Version not retrieved")

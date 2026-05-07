@@ -7,7 +7,9 @@ from administration.api.schemas.message import (
     MessageOut,
     AllMessage,
 )
+from administration.services import get_message_list
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 import logging
 
 api_logger = logging.getLogger("api")
@@ -67,6 +69,8 @@ def update_message(request, message_id: int, payload: MessageIn):
         message.save()
         api_logger.info(f"Message updated : {message_id}")
         return {"sucess": True}
+    except Http404:
+        raise HttpError(404, "Message not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not updated")
@@ -122,6 +126,8 @@ def get_message(request, message_id: int):
         message = get_object_or_404(Message, id=message_id)
         api_logger.debug(f"Message retrieved : {message.id}")
         return message
+    except Http404:
+        raise HttpError(404, "Message not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not retrieved")
@@ -150,6 +156,8 @@ def delete_message(request, message_id: int):
         message.delete()
         api_logger.info(f"Message deleted : #{message_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Message not found")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not deleted")
@@ -197,17 +205,7 @@ def list_messages(request):
     """
 
     try:
-        unread = Message.objects.filter(
-            unread=True
-        ).count()  # Total unread messages
-        total = Message.objects.all().count()  # The total number of messages
-        messages = Message.objects.all().order_by("-id")
-        message_list = []
-        for message in messages:
-            message_list.append(MessageOut.from_orm(message))
-        message_list_object = MessageList(
-            unread_count=unread, total_count=total, messages=message_list
-        )
+        message_list_object = get_message_list()
         api_logger.debug("Message list retrieved")
         return message_list_object
     except Exception as e:

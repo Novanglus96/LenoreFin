@@ -6,6 +6,7 @@ from accounts.api.schemas.bank import BankIn, BankOut
 from django.shortcuts import get_object_or_404
 from typing import List
 import logging
+from django.http import Http404
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -119,6 +120,8 @@ def get_bank(request, bank_id: int):
         bank = get_object_or_404(Bank, id=bank_id)
         api_logger.debug(f"Bank retrieved : {bank.bank_name}")
         return bank
+    except Http404:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Bank not retrieved")
