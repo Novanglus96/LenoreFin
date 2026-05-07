@@ -1,3 +1,60 @@
+# [1.2.0](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2...v1.2.0) (2026-05-07)
+
+
+### Bug Fixes
+
+* account available balance now includes pending ([39b5254](https://github.com/Novanglus96/LenoreFin/commit/39b5254f548d9ef190c742430140890325c9ad35))
+* add Http404 handlers to payee view and restore import ([419ea82](https://github.com/Novanglus96/LenoreFin/commit/419ea82bfec6511f542834ff52b023249231fe11))
+* add missing return statement in domain_repeat_to_schema mapper ([0f96826](https://github.com/Novanglus96/LenoreFin/commit/0f96826b2a9cc39da140729b1d626530ce24771f))
+* budgets include pending transactions ([2bec572](https://github.com/Novanglus96/LenoreFin/commit/2bec57281206e75b721809984d9e8ba5f4bb2873))
+* bust account balance caches on transaction create, clear, and delete ([386f920](https://github.com/Novanglus96/LenoreFin/commit/386f920d24884930bed00d225e762104956021ac))
+* bust account caches after batch date edit ([d3d8a31](https://github.com/Novanglus96/LenoreFin/commit/d3d8a31c97a7ab2ee28e77b0b58e1ecfe9f7d844))
+* bust old account caches when a transaction's account changes on edit ([6a85bcc](https://github.com/Novanglus96/LenoreFin/commit/6a85bccab612a1b120ec0ef55094b658e3d9da48))
+* caclulator transfers/transactions wrong dates ([7b58ae0](https://github.com/Novanglus96/LenoreFin/commit/7b58ae0b3a99484929fb6b18712cdb912c026d1f))
+* capture 404 error with ninja ([7e56aca](https://github.com/Novanglus96/LenoreFin/commit/7e56aca17bac072fe94bf65e013481af51d20603))
+* clearing transactions now reloads cache ([8296657](https://github.com/Novanglus96/LenoreFin/commit/8296657232c776fc63051c94824f82884fc01441))
+* clearing transactions now reloads cache ([#57](https://github.com/Novanglus96/LenoreFin/issues/57)) ([2712402](https://github.com/Novanglus96/LenoreFin/commit/271240228fd5cea770cee2f0a09b3025257d0406))
+* correct forecast fill color and transaction cache invalidation ([5b2e5de](https://github.com/Novanglus96/LenoreFin/commit/5b2e5de290eed4c0e7a719a02959975b7addc214))
+* edit account form, typo on pay_day ([26b6455](https://github.com/Novanglus96/LenoreFin/commit/26b64559a3a71fa87f40e193bec694f2b9b5cf5f))
+* explicitly bust all account caches on single transaction edit ([fcdf587](https://github.com/Novanglus96/LenoreFin/commit/fcdf587bc33e3bceaa3371f6d7ddec8fa2b59b5a))
+* failed backups ([e6aedb6](https://github.com/Novanglus96/LenoreFin/commit/e6aedb6fa5c9cdd6984616de2bad156877531690))
+* forecasted reminder transfers had reverse pretty_total logic ([#50](https://github.com/Novanglus96/LenoreFin/issues/50)) ([82793c2](https://github.com/Novanglus96/LenoreFin/commit/82793c2038507065e1a51e9ab271990ce0534dad))
+* incorrect escaping of backslash in tag __str__ ([f1e68ca](https://github.com/Novanglus96/LenoreFin/commit/f1e68ca16fa258de0ce8ef615f26793ea99baa1c))
+* logs missing from production ([492cd33](https://github.com/Novanglus96/LenoreFin/commit/492cd3337ec59975ef4483cf1a66b1caa726c0ee))
+* loop on forecast calc for cc ([5041529](https://github.com/Novanglus96/LenoreFin/commit/50415299d2ed071716b2ad9795fa852c8942e559))
+* messages objects message_date now timezone aware ([839f470](https://github.com/Novanglus96/LenoreFin/commit/839f47009682cca9566ca77613988d4d5efc0c59))
+* missing source account on new transactions ([f0a1931](https://github.com/Novanglus96/LenoreFin/commit/f0a1931b7238699507a33126c522518aea5f9034))
+* pie graph failed when initializing ([df6053b](https://github.com/Novanglus96/LenoreFin/commit/df6053bee5e5427e8913679dc8639e0eff5ef889))
+* pie graph percentages wrong ([#53](https://github.com/Novanglus96/LenoreFin/issues/53)) ([b5fb46e](https://github.com/Novanglus96/LenoreFin/commit/b5fb46e128ad346c8748900e1143f9199e042e59))
+* query issues in prod with move to pydantic 2 ([#49](https://github.com/Novanglus96/LenoreFin/issues/49)) ([bccf97a](https://github.com/Novanglus96/LenoreFin/commit/bccf97a46914e576613af8eeec5b424935133c5d))
+* reminder and forecast transactions source/dest account set null on delete ([f210ea4](https://github.com/Novanglus96/LenoreFin/commit/f210ea4d864eda9f143e93f134734562bb2db622))
+* reminder dates now timezone correct in tables ([#61](https://github.com/Novanglus96/LenoreFin/issues/61)) ([57a66ae](https://github.com/Novanglus96/LenoreFin/commit/57a66ae77bad14dd6cee693f3d6b11ce45e54851))
+* remove duplicate file deletion ([57d25ed](https://github.com/Novanglus96/LenoreFin/commit/57d25ed3cff1a756445354898a708988461494f0))
+* restore forecast chart colors and remove invalid tag data guard ([0888798](https://github.com/Novanglus96/LenoreFin/commit/08887989f8e9b397b6b9b8e33da71ed3af6353ce)), closes [#06966](https://github.com/Novanglus96/LenoreFin/issues/06966)
+* revert refetchQueries back to invalidateQueries for accounts on clear ([601d9a1](https://github.com/Novanglus96/LenoreFin/commit/601d9a1476c56d2afb492cb4795d82cef97e1283))
+* show success snackbar after transaction update ([58225c5](https://github.com/Novanglus96/LenoreFin/commit/58225c5ec1104f18028c71b4716bb1788421af2c))
+* signal wasn't ignoring irrelavent fields ([683fa42](https://github.com/Novanglus96/LenoreFin/commit/683fa42224538bfe263253c43c6497372247aa09))
+* source account is required, no defaults ([b18bd6b](https://github.com/Novanglus96/LenoreFin/commit/b18bd6b15e90d768c6600d83c2a42a11be121bfe))
+* synchronously refresh ReminderCacheTransaction on reminder-to-transaction conversion ([5ad6af7](https://github.com/Novanglus96/LenoreFin/commit/5ad6af7a4508ed5610d00649a7db4da69aa4ce75))
+* tag child can be null, but not parent by default ([6487858](https://github.com/Novanglus96/LenoreFin/commit/6487858a0573a4ec1a8fbc31380ae8f83a7de073))
+* transaction accounts set to null on account deletions at model level ([4c2dc46](https://github.com/Novanglus96/LenoreFin/commit/4c2dc46b5aaeecfc41838246ac2097e5c646b0e1))
+* use account_all pattern for cache busting and force refetch on clear ([9802830](https://github.com/Novanglus96/LenoreFin/commit/9802830136fcf52f3d449ee490911aae17c17f63))
+* use correct delete_pattern and centralize frontend cache invalidation ([eecee07](https://github.com/Novanglus96/LenoreFin/commit/eecee0787cad3c5ffe4f1663a3e850f03d3402da))
+* use signal to ensure transaction images are deleted ([d6a8533](https://github.com/Novanglus96/LenoreFin/commit/d6a8533b8322068b76f97f644cb9867543352585))
+* wire up transactions and accounts signals in AppConfig.ready() ([a58272a](https://github.com/Novanglus96/LenoreFin/commit/a58272afb5327ab96c54ea978591dbaf1f24197b))
+
+
+### Features
+
+* added a loading screen for frontend when backend is loading ([03e640a](https://github.com/Novanglus96/LenoreFin/commit/03e640a1c0eb14abb8cbf223cea7f631eccd143f))
+* added reqrds graph ([c8a5a1b](https://github.com/Novanglus96/LenoreFin/commit/c8a5a1bb2d76ed6bf99871768ef4e2fe8a8fca68))
+* caching tables ([#51](https://github.com/Novanglus96/LenoreFin/issues/51)) ([cc9c651](https://github.com/Novanglus96/LenoreFin/commit/cc9c651b2fcdf5a53178068ccbbd6d406452fea0))
+* calculate credit card bill ([#43](https://github.com/Novanglus96/LenoreFin/issues/43)) ([01cf855](https://github.com/Novanglus96/LenoreFin/commit/01cf85518ca569c38e1073fd280fde5494479e06))
+* extract service layer and add comprehensive test coverage ([7a5f006](https://github.com/Novanglus96/LenoreFin/commit/7a5f00632bd6862fb82a1584e89dc0d5ab701c53))
+* extract service layer and add comprehensive test coverage across all apps ([f6bcb0a](https://github.com/Novanglus96/LenoreFin/commit/f6bcb0aa8b4c9ce4ef5b34df0cbb3d256bf972a9))
+* improve mobile design ([#48](https://github.com/Novanglus96/LenoreFin/issues/48)) ([27a1b5e](https://github.com/Novanglus96/LenoreFin/commit/27a1b5e6510aaf990f4a83afff5ea3585dfb547a))
+* logging ([#52](https://github.com/Novanglus96/LenoreFin/issues/52)) ([2544d61](https://github.com/Novanglus96/LenoreFin/commit/2544d61a741cb02d979146f8222be2ed04eadb88))
+
 # [1.2.0-rc.14](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.13...v1.2.0-rc.14) (2025-12-23)
 
 
