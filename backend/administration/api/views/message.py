@@ -1,5 +1,4 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
 from administration.models import Message
 from administration.api.schemas.message import (
@@ -8,29 +7,15 @@ from administration.api.schemas.message import (
     MessageOut,
     AllMessage,
 )
-from administration.api.dependencies.log_to_db import logToDB
+from administration.services import get_message_list
 from django.shortcuts import get_object_or_404
-from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+from django.http import Http404
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 message_router = Router(tags=["Messages"])
 
@@ -50,25 +35,12 @@ def create_message(request, payload: MessageIn):
 
     try:
         message = Message.objects.create(**payload.dict())
-        logToDB(
-            f"Message created : #{message.id}",
-            None,
-            None,
-            None,
-            3001001,
-            1,
-        )
+        api_logger.info(f"Message created : #{message.id}")
         return {"id": message.id}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Message not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Message not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -95,25 +67,14 @@ def update_message(request, message_id: int, payload: MessageIn):
         message.message = payload.message
         message.unread = payload.unread
         message.save()
-        logToDB(
-            f"Message updated : {message_id}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Message updated : {message_id}")
         return {"sucess": True}
+    except Http404:
+        raise HttpError(404, "Message not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Message not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Message not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -136,25 +97,12 @@ def update_messages(request, message_id: int, payload: AllMessage):
         for message in messages:
             message.unread = payload.unread
             message.save()
-        logToDB(
-            "All messages marked as read",
-            None,
-            None,
-            None,
-            3002006,
-            1,
-        )
+        api_logger.info("All messages marked as read")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Messages not marked as read : {str(e)}",
-            None,
-            None,
-            None,
-            3002906,
-            2,
-        )
+        api_logger.error("Messages not marked as read")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Messages not marked read error")
 
 
@@ -176,25 +124,14 @@ def get_message(request, message_id: int):
 
     try:
         message = get_object_or_404(Message, id=message_id)
-        logToDB(
-            f"Message retrieved : {message.id}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Message retrieved : {message.id}")
         return message
+    except Http404:
+        raise HttpError(404, "Message not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Message not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Message not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -217,25 +154,14 @@ def delete_message(request, message_id: int):
     try:
         message = get_object_or_404(Message, id=message_id)
         message.delete()
-        logToDB(
-            f"Message deleted : #{message_id}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info(f"Message deleted : #{message_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Message not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Message not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Message not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -256,25 +182,12 @@ def delete_messages(request, message_id: int):
         messages = Message.objects.all()
         for message in messages:
             message.delete()
-        logToDB(
-            "All Messages deleted",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info("All Messages deleted")
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"All messages not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("All messages not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -292,34 +205,11 @@ def list_messages(request):
     """
 
     try:
-        unread = Message.objects.filter(
-            unread=True
-        ).count()  # Total unread messages
-        total = Message.objects.all().count()  # The total number of messages
-        messages = Message.objects.all().order_by("-id")
-        message_list = []
-        for message in messages:
-            message_list.append(MessageOut.from_orm(message))
-        message_list_object = MessageList(
-            unread_count=unread, total_count=total, messages=message_list
-        )
-        logToDB(
-            "Message list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        message_list_object = get_message_list()
+        api_logger.debug("Message list retrieved")
         return message_list_object
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Message list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Message list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

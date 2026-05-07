@@ -1,6 +1,5 @@
 from django.contrib import admin
 from .models import Reminder, Repeat, ReminderExclusion
-from django.http import HttpResponse
 from import_export.admin import ImportExportModelAdmin
 
 

@@ -1,3 +1,129 @@
+# [1.2.0-rc.14](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.13...v1.2.0-rc.14) (2025-12-23)
+
+
+### Bug Fixes
+
+* reminder dates now timezone correct in tables ([#61](https://github.com/Novanglus96/LenoreFin/issues/61)) ([57a66ae](https://github.com/Novanglus96/LenoreFin/commit/57a66ae77bad14dd6cee693f3d6b11ce45e54851))
+
+# [1.2.0-rc.13](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.12...v1.2.0-rc.13) (2025-12-11)
+
+
+### Bug Fixes
+
+* edit account form, typo on pay_day ([26b6455](https://github.com/Novanglus96/LenoreFin/commit/26b64559a3a71fa87f40e193bec694f2b9b5cf5f))
+* loop on forecast calc for cc ([5041529](https://github.com/Novanglus96/LenoreFin/commit/50415299d2ed071716b2ad9795fa852c8942e559))
+
+# [1.2.0-rc.12](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.11...v1.2.0-rc.12) (2025-12-11)
+
+
+### Bug Fixes
+
+* caclulator transfers/transactions wrong dates ([7b58ae0](https://github.com/Novanglus96/LenoreFin/commit/7b58ae0b3a99484929fb6b18712cdb912c026d1f))
+* clearing transactions now reloads cache ([8296657](https://github.com/Novanglus96/LenoreFin/commit/8296657232c776fc63051c94824f82884fc01441))
+* failed backups ([e6aedb6](https://github.com/Novanglus96/LenoreFin/commit/e6aedb6fa5c9cdd6984616de2bad156877531690))
+* missing source account on new transactions ([f0a1931](https://github.com/Novanglus96/LenoreFin/commit/f0a1931b7238699507a33126c522518aea5f9034))
+
+# [1.2.0-rc.11](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.10...v1.2.0-rc.11) (2025-12-11)
+
+
+### Features
+
+* added reqrds graph ([c8a5a1b](https://github.com/Novanglus96/LenoreFin/commit/c8a5a1bb2d76ed6bf99871768ef4e2fe8a8fca68))
+
+# [1.2.0-rc.10](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.9...v1.2.0-rc.10) (2025-12-10)
+
+
+### Bug Fixes
+
+* clearing transactions now reloads cache ([#57](https://github.com/Novanglus96/LenoreFin/issues/57)) ([2712402](https://github.com/Novanglus96/LenoreFin/commit/271240228fd5cea770cee2f0a09b3025257d0406))
+
+# [1.2.0-rc.9](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.8...v1.2.0-rc.9) (2025-12-09)
+
+
+### Bug Fixes
+
+* account available balance now includes pending ([39b5254](https://github.com/Novanglus96/LenoreFin/commit/39b5254f548d9ef190c742430140890325c9ad35))
+* budgets include pending transactions ([2bec572](https://github.com/Novanglus96/LenoreFin/commit/2bec57281206e75b721809984d9e8ba5f4bb2873))
+
+# [1.2.0-rc.8](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.7...v1.2.0-rc.8) (2025-12-08)
+
+
+### Bug Fixes
+
+* logs missing from production ([492cd33](https://github.com/Novanglus96/LenoreFin/commit/492cd3337ec59975ef4483cf1a66b1caa726c0ee))
+* pie graph failed when initializing ([df6053b](https://github.com/Novanglus96/LenoreFin/commit/df6053bee5e5427e8913679dc8639e0eff5ef889))
+
+# [1.2.0-rc.7](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.6...v1.2.0-rc.7) (2025-12-08)
+
+
+### Bug Fixes
+
+* pie graph percentages wrong ([#53](https://github.com/Novanglus96/LenoreFin/issues/53)) ([b5fb46e](https://github.com/Novanglus96/LenoreFin/commit/b5fb46e128ad346c8748900e1143f9199e042e59))
+
+# [1.2.0-rc.6](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.5...v1.2.0-rc.6) (2025-12-05)
+
+
+### Features
+
+* logging ([#52](https://github.com/Novanglus96/LenoreFin/issues/52)) ([2544d61](https://github.com/Novanglus96/LenoreFin/commit/2544d61a741cb02d979146f8222be2ed04eadb88))
+
+# [1.2.0-rc.5](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.4...v1.2.0-rc.5) (2025-12-04)
+
+
+### Features
+
+* caching tables ([#51](https://github.com/Novanglus96/LenoreFin/issues/51)) ([cc9c651](https://github.com/Novanglus96/LenoreFin/commit/cc9c651b2fcdf5a53178068ccbbd6d406452fea0))
+
+# [1.2.0-rc.4](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.3...v1.2.0-rc.4) (2025-10-24)
+
+
+### Bug Fixes
+
+* forecasted reminder transfers had reverse pretty_total logic ([#50](https://github.com/Novanglus96/LenoreFin/issues/50)) ([82793c2](https://github.com/Novanglus96/LenoreFin/commit/82793c2038507065e1a51e9ab271990ce0534dad))
+
+# [1.2.0-rc.3](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.2...v1.2.0-rc.3) (2025-10-23)
+
+
+### Bug Fixes
+
+* query issues in prod with move to pydantic 2 ([#49](https://github.com/Novanglus96/LenoreFin/issues/49)) ([bccf97a](https://github.com/Novanglus96/LenoreFin/commit/bccf97a46914e576613af8eeec5b424935133c5d))
+
+# [1.2.0-rc.2](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0-rc.1...v1.2.0-rc.2) (2025-10-23)
+
+
+### Features
+
+* improve mobile design ([#48](https://github.com/Novanglus96/LenoreFin/issues/48)) ([27a1b5e](https://github.com/Novanglus96/LenoreFin/commit/27a1b5e6510aaf990f4a83afff5ea3585dfb547a))
+
+# [1.2.0-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2...v1.2.0-rc.1) (2025-08-25)
+
+
+### Features
+
+* added a loading screen for frontend when backend is loading ([03e640a](https://github.com/Novanglus96/LenoreFin/commit/03e640a1c0eb14abb8cbf223cea7f631eccd143f))
+* calculate credit card bill ([#43](https://github.com/Novanglus96/LenoreFin/issues/43)) ([01cf855](https://github.com/Novanglus96/LenoreFin/commit/01cf85518ca569c38e1073fd280fde5494479e06))
+
+# [1.2.0-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2...v1.2.0-rc.1) (2025-07-22)
+
+
+### Features
+
+* added a loading screen for frontend when backend is loading ([03e640a](https://github.com/Novanglus96/LenoreFin/commit/03e640a1c0eb14abb8cbf223cea7f631eccd143f))
+
+# [1.2.0-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2...v1.2.0-rc.1) (2025-07-22)
+
+
+### Features
+
+* added a loading screen for frontend when backend is loading ([03e640a](https://github.com/Novanglus96/LenoreFin/commit/03e640a1c0eb14abb8cbf223cea7f631eccd143f))
+
+# [1.2.0-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2...v1.2.0-rc.1) (2025-07-22)
+
+
+### Features
+
+* added a loading screen for frontend when backend is loading ([03e640a](https://github.com/Novanglus96/LenoreFin/commit/03e640a1c0eb14abb8cbf223cea7f631eccd143f))
+
 ## [1.1.2](https://github.com/Novanglus96/LenoreFin/compare/v1.1.1...v1.1.2) (2025-07-21)
 
 

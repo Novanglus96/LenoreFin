@@ -1,4 +1,5 @@
 from ninja import Schema
+from pydantic import ConfigDict
 
 
 # The class TagTypeIn is a schema for validating tag types.
@@ -10,3 +11,5 @@ class TagTypeIn(Schema):
 class TagTypeOut(Schema):
     id: int
     tag_type: str
+
+    model_config = ConfigDict(from_attributes=True)

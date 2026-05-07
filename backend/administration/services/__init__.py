@@ -1,0 +1,1 @@
+from administration.services.message import get_message_list as get_message_list

@@ -1,51 +1,12 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
-from accounts.models import Account
-from accounts.api.schemas.forecast import (
-    TargetObject,
-    FillObject,
-    DatasetObject,
-    GraphData,
-    ForecastOut,
-)
-from administration.api.dependencies.log_to_db import logToDB
-from django.shortcuts import get_object_or_404
-from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
-from accounts.api.dependencies.get_dates_in_range import get_dates_in_range
-from accounts.api.dependencies.get_unformatted_dates_in_range import (
-    get_unformatted_dates_in_range,
-)
-from accounts.api.dependencies.get_forecast_end_date import (
-    get_forecast_end_date,
-)
-from accounts.api.dependencies.get_forecast_start_date import (
-    get_forecast_start_date,
-)
-from transactions.api.dependencies.get_complete_transaction_list_with_totals import (
-    get_complete_transaction_list_with_totals,
-)
-from datetime import date, timedelta, datetime
+from accounts.api.schemas.forecast import ForecastOut
+from accounts.services import get_account_forecast
+from accounts.mappers import domain_forecast_to_schema
+import logging
+
+api_logger = logging.getLogger("api")
+error_logger = logging.getLogger("error")
 
 forecast_router = Router(tags=["Account Forecasts"])
 
@@ -69,94 +30,13 @@ def get_forecast(
     Raises:
         Http404: If the account with the specified ID does not exist.
     """
-
     try:
-        # Retrieve the dates in range as labels for forecast
-        labels = get_dates_in_range(start_interval, end_interval)
-
-        dates = get_unformatted_dates_in_range(start_interval, end_interval)
-        data = []
-        datasets = []
-        opening_balance = Account.objects.get(id=account_id).opening_balance
-
-        # Retrieve the transactions in the date range for the account
-        start_date = get_forecast_start_date(start_interval)
-        end_date = get_forecast_end_date(end_interval)
-
-        # Get list of transactions
-        transactions_list, previous_balance = (
-            get_complete_transaction_list_with_totals(
-                end_date, account_id, True, True, start_date
-            )
+        domain_forecast = get_account_forecast(
+            account_id, start_interval, end_interval
         )
-
-        # Get the initial balance
-        # Use opening balance or first previous balance available
-        daily_total = 0
-
-        # Get the totals by day
-        for label_date in labels:
-            parsed_date = datetime.strptime(label_date, "%b %d, %y")
-            formatted_date = parsed_date.strftime("%Y-%m-%d")
-            transactions_today = []
-            for transaction in transactions_list:
-                if isinstance(transaction, dict):
-                    if str(transaction["transaction_date"]) == str(
-                        formatted_date
-                    ):
-                        transactions_today.append(transaction)
-                else:
-                    if str(transaction.transaction_date) == str(formatted_date):
-                        transactions_today.append(transaction)
-            if len(transactions_today) > 0:
-                last_transaction_today = transactions_today[-1]
-                if isinstance(last_transaction_today, dict):
-                    daily_total = last_transaction_today["balance"]
-                else:
-                    daily_total = last_transaction_today.balance
-            else:
-                daily_total = previous_balance
-            current_balance = daily_total
-            previous_balance = daily_total
-            data.append(current_balance)
-
-        # Prepare the graph data for the forecast object
-        targetobject_out = TargetObject(value=0)
-        fillobject_out = FillObject(
-            target=targetobject_out,
-            above="rgb(236 , 253, 245)",
-            below="rgb(248, 121, 121)",
-        )
-        datasets_out = DatasetObject(
-            borderColor="#06966A",
-            backgroundColor="#06966A",
-            tension=0.1,
-            data=data,
-            fill=fillobject_out,
-            pointStyle="circle",
-            radius=2,
-            hitRadius=5,
-            hoverRadius=5,
-        )
-        datasets.append(datasets_out)
-        forecast_out = ForecastOut(labels=labels, datasets=datasets)
-        logToDB(
-            "Forecast retrieved",
-            account_id,
-            None,
-            None,
-            3002002,
-            1,
-        )
-        return forecast_out
+        api_logger.debug("Forecast retrieved")
+        return domain_forecast_to_schema(domain_forecast)
     except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Forecast not retrieved : {str(e)}",
-            account_id,
-            None,
-            None,
-            3002902,
-            2,
-        )
+        api_logger.error("Forecast not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error : {str(e)}")

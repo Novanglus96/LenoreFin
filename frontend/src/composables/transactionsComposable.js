@@ -128,15 +128,35 @@ async function clearTransactionFunction(clearedTransaction) {
 }
 
 async function updateTransactionFunction(updatedTransaction) {
+  const mainstore = useMainStore();
   try {
     const response = await apiClient.put(
       "/transactions/update/" + updatedTransaction.id,
       updatedTransaction,
     );
+    mainstore.showSnackbar("Transaction updated successfully!", "success");
     return response.data;
   } catch (error) {
     handleApiError(error, "Transaction not updated: ");
   }
+}
+
+// Keys invalidated after any transaction mutation. Add new dependent queries here.
+const TRANSACTION_DEPENDENT_KEYS = [
+  ["transactions"],
+  ["accounts"],
+  ["account_forecast"],
+  ["tag_graph"],
+  ["calculator"],
+  ["expense_graph"],
+  ["pay_graph"],
+  ["retirement_forecast"],
+];
+
+function invalidateTransactionDependencies(queryClient, extra = []) {
+  [...TRANSACTION_DEPENDENT_KEYS, ...extra].forEach(key =>
+    queryClient.invalidateQueries({ queryKey: key }),
+  );
 }
 
 export function useTransactions() {
@@ -158,15 +178,7 @@ export function useTransactions() {
     mutationFn: createTransactionFunction,
     onSuccess: data => {
       console.log("Success adding transaction", data);
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
-      queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["description-history"] });
-      queryClient.invalidateQueries({ queryKey: ["calculator"] });
-      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
+      invalidateTransactionDependencies(queryClient, [["description-history"]]);
     },
   });
 
@@ -174,14 +186,7 @@ export function useTransactions() {
     mutationFn: deleteTransactionFunction,
     onSuccess: () => {
       console.log("Success deleting transaction");
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
-      queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["calculator"] });
-      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
+      invalidateTransactionDependencies(queryClient);
     },
   });
 
@@ -189,14 +194,7 @@ export function useTransactions() {
     mutationFn: clearTransactionFunction,
     onSuccess: () => {
       console.log("Success clearing transaction");
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
-      queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["calculator"] });
-      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
+      invalidateTransactionDependencies(queryClient);
     },
   });
 
@@ -204,14 +202,7 @@ export function useTransactions() {
     mutationFn: multiEditTransactionsFunction,
     onSuccess: () => {
       console.log("Success editing dates of transactions");
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
-      queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["calculator"] });
-      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
+      invalidateTransactionDependencies(queryClient);
     },
   });
 
@@ -219,15 +210,7 @@ export function useTransactions() {
     mutationFn: updateTransactionFunction,
     onSuccess: () => {
       console.log("Success updating transaction");
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
-      queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["description-history"] });
-      queryClient.invalidateQueries({ queryKey: ["calculator"] });
-      queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["pay_graph"] });
-      queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
+      invalidateTransactionDependencies(queryClient, [["description-history"]]);
     },
   });
 

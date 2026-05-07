@@ -1,16 +1,17 @@
 from django.db import models
-from datetime import date
 from django.utils import timezone
-from django.db.models import Case, When, Q, Value, IntegerField
-from decimal import Decimal
-import datetime
-from typing import List
-from django.db import IntegrityError, connection, transaction
-from django.shortcuts import get_object_or_404
-from django.db.models.query import QuerySet
-from accounts.models import Account
-from reminders.models import Reminder
 from tags.models import Tag
+from django.core.exceptions import ValidationError
+import pytz
+import os
+
+
+def current_date_time():
+    today = timezone.now()
+    tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
+    today_tz = today.astimezone(tz_timezone)
+    return today_tz
+
 
 # Create your models here.
 
@@ -26,21 +27,6 @@ class SingletonModel(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValidationError("You cannot delete this object")
-
-
-class ErrorLevel(models.Model):
-    """
-    Model representing an error level for logging.
-
-    Fields:
-    - error_level (CharField): The name of the error level, limited to 25 characters,
-    and must be unique.
-    """
-
-    error_level = models.CharField(max_length=25, unique=True)
-
-    def __str__(self):
-        return self.error_level
 
 
 class GraphType(models.Model):
@@ -104,9 +90,6 @@ class Option(SingletonModel):
     - enable_cc_bill_calculation (BooleanField): enable Credit Card bill forecast, default is True
     """
 
-    log_level = models.ForeignKey(
-        ErrorLevel, on_delete=models.SET_NULL, null=True, blank=True
-    )
     alert_balance = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00
     )
@@ -186,55 +169,6 @@ class Payee(models.Model):
         return self.payee_name
 
 
-class LogEntry(models.Model):
-    """
-    Model representing a log entry.
-
-    Fields:
-    - log_date (DateField): The date of the log entry, default is today.
-    - log_entry (CharField): The log entry, limited to 254 characters.
-    - account (ForeignKey): A reference to the Account model, representing
-    the associated account with this log entry. Optional.
-    - reminder (ForeignKey): A reference to the Reminder model, representing
-    the associated reminder with this log entry. Optional.
-    - transaction (ForeignKey): A reference to the Transaction model, representing
-    the associated transaction with this log entry. Optional.
-    - error_num (IntegerField): An error number associated with this log entry.
-    - error_level (ForeignKey): A reference to the ErrorLevel model, representing
-    the error level of this log entry.
-    """
-
-    log_date = models.DateTimeField(auto_now_add=True)
-    log_entry = models.CharField(max_length=254)
-    account = models.ForeignKey(
-        Account, on_delete=models.CASCADE, null=True, blank=True, default=None
-    )
-    reminder = models.ForeignKey(
-        Reminder,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        default=None,
-    )
-    transaction = models.ForeignKey(
-        "transactions.Transaction",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        default=None,
-    )
-    error_num = models.IntegerField(default=None, null=True, blank=True)
-    error_level = models.ForeignKey(
-        ErrorLevel, on_delete=models.SET_NULL, null=True, blank=True
-    )
-
-    class Meta:
-        verbose_name_plural = "Log entries"
-
-    def __str__(self):
-        return self.log_entry
-
-
 class Message(models.Model):
     """
     Model representing a message alert for display in the app inbox.
@@ -245,7 +179,7 @@ class Message(models.Model):
     - unread (BooleanField): Whether or not this message is unread, default is True.
     """
 
-    message_date = models.DateTimeField(default=timezone.now)
+    message_date = models.DateTimeField(default=current_date_time)
     message = models.CharField(max_length=254)
     unread = models.BooleanField(default=True)
 
@@ -277,7 +211,9 @@ class DescriptionHistory(models.Model):
     """
 
     description_normalized = models.CharField(max_length=254, unique=True)
-    description_pretty = models.CharField(max_length=254, default=None)
+    description_pretty = models.CharField(
+        max_length=254, default=None, null=True, blank=True
+    )
     tag = models.ForeignKey(
         Tag, on_delete=models.SET_NULL, null=True, blank=True, default=None
     )

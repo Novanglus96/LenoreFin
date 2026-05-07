@@ -1,5 +1,6 @@
 from ninja import Schema
-from typing import List, Optional, Dict, Any
+from typing import Optional
+from pydantic import ConfigDict
 
 
 # The class RepeatIn is a schema for validating Repeat Intervals.
@@ -19,3 +20,5 @@ class RepeatOut(Schema):
     weeks: Optional[int] = 0
     months: Optional[int] = 0
     years: Optional[int] = 0
+
+    model_config = ConfigDict(from_attributes=True)

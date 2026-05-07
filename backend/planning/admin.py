@@ -7,7 +7,6 @@ from .models import (
     CalculationRule,
     Budget,
 )
-from django.http import HttpResponse
 from import_export.admin import ImportExportModelAdmin
 
 # Register your models here.

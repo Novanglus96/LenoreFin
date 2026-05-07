@@ -1,31 +1,16 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
 from planning.models import Note
 from planning.api.schemas.note import NoteIn, NoteOut
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 note_router = Router(tags=["Notes"])
 
@@ -45,25 +30,12 @@ def create_note(request, payload: NoteIn):
 
     try:
         note = Note.objects.create(**payload.dict())
-        logToDB(
-            f"Note created : {note.note_date}",
-            None,
-            None,
-            None,
-            3001005,
-            2,
-        )
+        api_logger.info(f"Note created : {note.note_date}")
         return {"id": note.id}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Note not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Note not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -89,25 +61,14 @@ def update_note(request, note_id: int, payload: NoteIn):
         note.note_text = payload.note_text
         note.note_date = payload.note_date
         note.save()
-        logToDB(
-            f"Note updated : #{note_id}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Note updated : #{note_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Note not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Note not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Note not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -129,25 +90,14 @@ def get_note(request, note_id: int):
 
     try:
         note = get_object_or_404(Note, id=note_id)
-        logToDB(
-            f"Note retrieved : #{note.id}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Note retrieved : #{note.id}")
         return note
+    except Http404:
+        raise HttpError(404, "Note not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Note not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Note not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -166,25 +116,12 @@ def list_notes(request):
 
     try:
         qs = Note.objects.all().order_by("-note_date", "-id")
-        logToDB(
-            "Note list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Note list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Note list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Note list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -208,23 +145,12 @@ def delete_note(request, note_id: int):
         note = get_object_or_404(Note, id=note_id)
         note_date = note.note_date
         note.delete()
-        logToDB(
-            f"Note deleted from {note_date}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info(f"Note deleted from {note_date}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Note not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Note not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Note not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

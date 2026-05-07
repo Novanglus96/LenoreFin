@@ -1,423 +1,101 @@
 from ninja import Router, Query
-from django.db import IntegrityError
 from ninja.errors import HttpError
-from tags.models import Tag, SubTag, MainTag
-from tags.api.schemas.tag import TagIn, TagOut
-from administration.api.dependencies.log_to_db import logToDB
+from tags.models import Tag
+from tags.api.schemas.tag import TagIn, TagOut, TagQuery
 from django.shortcuts import get_object_or_404
-from typing import List
 from django.db.models import (
     Case,
     When,
-    Q,
-    IntegerField,
     Value,
     F,
     CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
 )
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+from django.db.models.functions import Concat
+from typing import List
+from tags.services import create_tag, update_tag, TagAlreadyExists, TagNotFound, InvalidTagData
+import logging
+
+api_logger = logging.getLogger("api")
+error_logger = logging.getLogger("error")
 
 tag_router = Router(tags=["Tags"])
 
 
 @tag_router.post("/create")
-def create_tag(request, payload: TagIn):
-    """
-    The function `create_tag` creates a tag
-
-    Args:
-        request ():
-        payload (TagIn): An object using schema of TagIn.
-
-    Returns:
-        id: returns the id of the created tag
-    """
-
+def create_tag_view(request, payload: TagIn):
     try:
-        if payload.parent_name:
-            try:
-                parent = MainTag.objects.create(
-                    tag_name=payload.parent_name,
-                    tag_type_id=payload.tag_type_id,
-                )
-                payload.parent_id = parent.id
-            except IntegrityError as integrity_error:
-                # Check if the integrity error is due to a duplicate
-                if "unique constraint" in str(integrity_error).lower():
-                    logToDB(
-                        f"Tag not created : tag exists",
-                        None,
-                        None,
-                        None,
-                        3001004,
-                        2,
-                    )
-                    raise HttpError(400, "Tag already exists")
-                else:
-                    # Log other types of integry errors
-                    logToDB(
-                        "Tag not created : db integrity error",
-                        None,
-                        None,
-                        None,
-                        3001005,
-                        2,
-                    )
-                    raise HttpError(400, "DB integrity error")
-            except Exception as e:
-                # Log other types of exceptions
-                logToDB(
-                    f"Tag not created : {str(e)}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
-                raise HttpError(500, "Record creation error")
-        if payload.child_name:
-            try:
-                existing_child = SubTag.objects.filter(
-                    tag_name=payload.child_name
-                ).first()
-                child = None
-                if not existing_child:
-                    child = SubTag.objects.create(
-                        tag_name=payload.child_name,
-                        tag_type_id=payload.tag_type_id,
-                    )
-                    payload.child_id = child.id
-                else:
-                    payload.child_id = existing_child.id
-            except IntegrityError as integrity_error:
-                # Check if the integrity error is due to a duplicate
-                if "unique constraint" in str(integrity_error).lower():
-                    logToDB(
-                        f"Tag not created : tag exists",
-                        None,
-                        None,
-                        None,
-                        3001004,
-                        2,
-                    )
-                    raise HttpError(400, "Tag already exists")
-                else:
-                    # Log other types of integry errors
-                    logToDB(
-                        "Tag not created : db integrity error",
-                        None,
-                        None,
-                        None,
-                        3001005,
-                        2,
-                    )
-                    raise HttpError(400, "DB integrity error")
-            except Exception as e:
-                # Log other types of exceptions
-                logToDB(
-                    f"Tag not created : {str(e)}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
-                raise HttpError(500, "Record creation error")
-        if payload.parent_name or (payload.child_name and payload.parent_id):
-            tag = Tag.objects.create(
-                parent_id=payload.parent_id,
-                child_id=payload.child_id,
-                tag_type_id=payload.tag_type_id,
-            )
-        else:
-            raise HttpError(500, "Invalid tag data")
-        logToDB(
-            f"Tag created : {tag.tag_name}",
-            None,
-            None,
-            None,
-            3001001,
-            1,
+        tag_id = create_tag(
+            parent_id=payload.parent_id,
+            parent_name=payload.parent_name,
+            child_id=payload.child_id,
+            child_name=payload.child_name,
+            tag_type_id=payload.tag_type_id,
         )
-        return {"id": tag.id}
-    except IntegrityError as integrity_error:
-        # Check if the integrity error is due to a duplicate
-        if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Tag not created : tag exists",
-                None,
-                None,
-                None,
-                3001004,
-                2,
-            )
-            raise HttpError(400, "Tag already exists")
-        else:
-            # Log other types of integry errors
-            logToDB(
-                "Tag not created : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
-            raise HttpError(400, "DB integrity error")
+        api_logger.info(f"Tag created : id={tag_id}")
+        return {"id": tag_id}
+    except TagAlreadyExists as e:
+        api_logger.error(f"Tag not created : {e}")
+        error_logger.error(str(e))
+        raise HttpError(400, "Tag already exists")
+    except InvalidTagData as e:
+        api_logger.error(f"Tag not created : {e}")
+        error_logger.error(str(e))
+        raise HttpError(500, "Invalid tag data")
     except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Tag not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Tag not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record creation error : {str(e)}")
 
 
 @tag_router.put("/update/{tag_id}")
-def update_tag(request, tag_id: int, payload: TagIn):
-    """
-    The function `update_tag` updates the tag specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        tag_id (int): the id of the tag to update
-        payload (TagIn): a tag object
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the tag with the specified ID does not exist.
-    """
-
+def update_tag_view(request, tag_id: int, payload: TagIn):
     try:
-        tag = get_object_or_404(Tag, id=tag_id)
-        maintag = None
-        subtag = None
-        if payload.parent_name:
-            try:
-                parent = MainTag.objects.create(
-                    tag_name=payload.parent_name,
-                    tag_type_id=payload.tag_type_id,
-                )
-                payload.parent_id = parent.id
-            except IntegrityError as integrity_error:
-                # Check if the integrity error is due to a duplicate
-                if "unique constraint" in str(integrity_error).lower():
-                    logToDB(
-                        f"Tag not created : tag exists",
-                        None,
-                        None,
-                        None,
-                        3001004,
-                        2,
-                    )
-                    raise HttpError(400, "Tag already exists")
-                else:
-                    # Log other types of integry errors
-                    logToDB(
-                        "Tag not created : db integrity error",
-                        None,
-                        None,
-                        None,
-                        3001005,
-                        2,
-                    )
-                    raise HttpError(400, "DB integrity error")
-            except Exception as e:
-                # Log other types of exceptions
-                logToDB(
-                    f"Tag not created : {str(e)}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
-                raise HttpError(500, "Record creation error")
-        if payload.child_name:
-            try:
-                child = SubTag.objects.create(
-                    tag_name=payload.child_name,
-                    tag_type_id=payload.tag_type_id,
-                )
-                payload.child_id = child.id
-            except IntegrityError as integrity_error:
-                # Check if the integrity error is due to a duplicate
-                if "unique constraint" in str(integrity_error).lower():
-                    logToDB(
-                        f"Tag not created : tag exists",
-                        None,
-                        None,
-                        None,
-                        3001004,
-                        2,
-                    )
-                    raise HttpError(400, "Tag already exists")
-                else:
-                    # Log other types of integry errors
-                    logToDB(
-                        "Tag not created : db integrity error",
-                        None,
-                        None,
-                        None,
-                        3001005,
-                        2,
-                    )
-                    raise HttpError(400, "DB integrity error")
-            except Exception as e:
-                # Log other types of exceptions
-                logToDB(
-                    f"Tag not created : {str(e)}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
-                raise HttpError(500, "Record creation error")
-        tag.parent_id = payload.parent_id
-        tag.child_id = payload.child_id
-        tag.tag_type_id = payload.tag_type_id
-        tag.save()
-        logToDB(
-            f"Tag updated : {tag.tag_name}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
+        update_tag(
+            tag_id=tag_id,
+            parent_id=payload.parent_id,
+            parent_name=payload.parent_name,
+            child_id=payload.child_id,
+            child_name=payload.child_name,
+            tag_type_id=payload.tag_type_id,
         )
+        api_logger.info(f"Tag updated : id={tag_id}")
         return {"success": True}
-    except IntegrityError as integrity_error:
-        # Check if the integrity error is due to a duplicate
-        if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Tag not updated : tag exists ({payload.tag_name})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
-            )
-            raise HttpError(400, "Tag already exists")
-        else:
-            # Log other types of integry errors
-            logToDB(
-                "Tag not updated : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
-            raise HttpError(400, "DB integrity error")
+    except TagNotFound:
+        raise HttpError(404, "Tag not found")
+    except TagAlreadyExists as e:
+        api_logger.error(f"Tag not updated : {e}")
+        error_logger.error(str(e))
+        raise HttpError(400, "Tag already exists")
     except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Tag not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Tag not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
 @tag_router.get("/get/{tag_id}", response=TagOut)
 def get_tag(request, tag_id: int):
-    """
-    The function `get_tag` retrieves the tag by id
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        tag_id (int): The id of the tag to retrieve.
-
-    Returns:
-        TagOut: the tag object
-
-    Raises:
-        Http404: If the tag with the specified ID does not exist.
-    """
-
     try:
         tag = get_object_or_404(Tag, id=tag_id)
-        logToDB(
-            f"Tag retrieved : {tag.tag_name}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Tag retrieved : {tag.tag_name}")
         return tag
     except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Tag not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Tag not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
 @tag_router.get("/list", response=List[TagOut])
-def list_tags(
-    request,
-    tag_type: Optional[int] = Query(None),
-    parent: Optional[int] = Query(None),
-    child: Optional[int] = Query(None),
-    main_only: Optional[bool] = Query(False),
-):
-    """
-    The function `list_tags` retrieves a list of tags,
-    optionally filtered by tag type, parent, or child.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        tag_type (int): Optional tag type id to filter tags.
-        parent (int): Optional filter on parent
-        child (int): Optional filter on child
-
-    Returns:
-        TagOut: a list of tag objects
-    """
-
+def list_tags(request, query: TagQuery = Query(...)):
     try:
-        # Retrive a list of tags
         qs = Tag.objects.all()
 
-        # Filter tags by tag type if a tag type is specified
-        if tag_type is not None:
-            qs = qs.filter(tag_type__id=tag_type)
-
-        # Filter tags by parent if a parent id is specified
-        if parent is not None:
-            qs = qs.filter(parent__id=parent).exclude(tag_type__id=3)
-
-        # Filter tags by child if a child id is specified
-        if child is not None:
-            qs = qs.filter(child__id=child).exclude(tag_type__id=3)
-
-        # Filter tags for only Main tags if main_only is true
-        if main_only:
+        if query.tag_type is not None:
+            qs = qs.filter(tag_type__id=query.tag_type)
+        if query.parent is not None:
+            qs = qs.filter(parent__id=query.parent).exclude(tag_type__id=3)
+        if query.child is not None:
+            qs = qs.filter(child__id=query.child).exclude(tag_type__id=3)
+        if query.main_only:
             qs = qs.filter(child__isnull=True)
 
         qs = qs.annotate(
@@ -428,69 +106,25 @@ def list_tags(
                 default=Concat(F("parent_tag"), Value(" / "), F("child_tag")),
                 output_field=CharField(),
             ),
-        )
+        ).order_by("tag_name_combined")
 
-        # Order tags by parent__tag_name, child__tag_name
-        qs = qs.order_by("tag_name_combined")
-        logToDB(
-            "Tag list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Tag list retrieved")
         return qs
     except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Tag list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Tag list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
 @tag_router.delete("/delete/{tag_id}")
 def delete_tag(request, tag_id: int):
-    """
-    The function `delete_tag` deletes the tag specified by id.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        tag_id (int): the id of the tag to delete
-
-    Returns:
-        success: True
-
-    Raises:
-        Http404: If the tag with the specified ID does not exist.
-    """
-
     try:
         tag = get_object_or_404(Tag, id=tag_id)
         tag_name = tag.tag_name
         tag.delete()
-        logToDB(
-            f"Tag deleted : {tag_name}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info(f"Tag deleted : {tag_name}")
         return {"success": True}
     except Exception as e:
-        # Log other types of exceptions
-        logToDB(
-            f"Tag not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Tag not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

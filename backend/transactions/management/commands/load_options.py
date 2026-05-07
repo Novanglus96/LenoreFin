@@ -1,6 +1,12 @@
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from administration.models import Option
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 
 class Command(BaseCommand):
@@ -8,12 +14,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         if not Option.objects.filter(pk=1).exists():
-            self.stdout.write(self.style.NOTICE("Loading options fixture..."))
+            task_logger.info("Loading options fixture")
             call_command("loaddata", "administration/fixtures/options.json")
-            self.stdout.write(self.style.SUCCESS("Options fixture loaded."))
+            task_logger.info("Options fixture loaded.")
         else:
-            self.stdout.write(
-                self.style.WARNING(
-                    "Singleton record already exists. Skipping fixture load."
-                )
+            task_logger.warning(
+                "Singleton record already exists. Skipping fixture load."
             )

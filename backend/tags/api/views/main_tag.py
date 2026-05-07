@@ -1,31 +1,16 @@
 from ninja import Router, Query
-from django.db import IntegrityError
 from ninja.errors import HttpError
 from tags.models import MainTag
-from tags.api.schemas.main_tag import MainTagIn, MainTagOut
-from administration.api.dependencies.log_to_db import logToDB
+from tags.api.schemas.main_tag import MainTagOut, MainTagQuery
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 main_tag_router = Router(tags=["Main Tags"])
 
@@ -48,32 +33,21 @@ def get_maintag(request, maintag_id: int):
 
     try:
         maintag = get_object_or_404(MainTag, id=maintag_id)
-        logToDB(
-            f"Main Tag retrieved : {maintag.tag_name}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Main Tag retrieved : {maintag.tag_name}")
         return maintag
+    except Http404:
+        raise HttpError(404, "Main Tag not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Main Tag not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Main Tag not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
 @main_tag_router.get("/list", response=List[MainTagOut])
 def list_maintags(
     request,
-    tag_type: Optional[int] = Query(None),
+    query: MainTagQuery = Query(...),
 ):
     """
     The function `list_maintags` retrieves a list of main tags,
@@ -91,28 +65,15 @@ def list_maintags(
         qs = MainTag.objects.all()
 
         # Filter main tags by tag type if a tag type is specified
-        if tag_type is not None:
-            qs = qs.filter(tag_type__id=tag_type)
+        if query.tag_type is not None:
+            qs = qs.filter(tag_type__id=query.tag_type)
 
         # Order tags by tag_name
         qs = qs.order_by("tag_name")
-        logToDB(
-            "Main Tag list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Main Tag list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Main Tag list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Main Tag list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

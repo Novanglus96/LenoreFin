@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-app-bar color="primary" density="compact">
+    <v-app-bar color="surface" density="compact">
       <template v-slot:prepend>
         <v-menu v-if="isMobile" width="200">
           <template v-slot:activator="{ props }">
@@ -9,38 +9,38 @@
           <v-list>
             <v-list-item
               prepend-icon="mdi-view-dashboard-variant"
-              color="accent"
+              color="selected"
               @click="setAccount(null, True)"
               title="Dashboard"
             ></v-list-item>
             <v-list-item
               prepend-icon="mdi-bank"
               to="/accounts"
-              color="accent"
+              color="selected"
               title="Accounts"
             ></v-list-item>
             <v-list-item
               prepend-icon="mdi-chart-bar"
               to="/forecast"
-              color="accent"
+              color="selected"
               title="Forecast"
             ></v-list-item>
             <v-list-item
               prepend-icon="mdi-bell"
               to="/reminders"
-              color="accent"
+              color="selected"
               title="Reminders"
             ></v-list-item>
             <v-list-item
               prepend-icon="mdi-folder"
               to="/planning"
-              color="accent"
+              color="selected"
               title="Planning"
             ></v-list-item>
             <v-list-item
               prepend-icon="mdi-tag"
               to="/tags"
-              color="accent"
+              color="selected"
               title="Tags"
             ></v-list-item>
           </v-list>
@@ -50,6 +50,12 @@
       <v-app-bar-title>
         <span class="text-caption font-weight-bold">v{{ version }}</span>
       </v-app-bar-title>
+      <v-btn
+        icon="mdi-theme-light-dark"
+        @click="handleToggle"
+        :color="isDark ? '#F5F5F5' : '#121212'"
+        size="small"
+      ></v-btn>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
           <v-btn class="text-none" stacked v-bind="props">
@@ -93,20 +99,20 @@
           </v-card-text>
           <v-card-actions v-if="messages.total_count > 0">
             <v-spacer></v-spacer>
-            <v-btn color="secondary" @click="markRead">Mark All Read</v-btn>
-            <v-btn color="secondary" @click="deleteAll">Delete All</v-btn>
+            <v-btn color="primary" @click="markRead">Mark All Read</v-btn>
+            <v-btn color="primary" @click="deleteAll">Delete All</v-btn>
           </v-card-actions>
         </v-card>
       </v-menu>
     </v-app-bar>
-    <v-navigation-drawer color="secondary" rail permanent v-if="mdAndUp">
+    <v-navigation-drawer color="primary" rail permanent v-if="mdAndUp">
       <v-list density="compact" nav>
         <v-tooltip text="Dashboard">
           <template v-slot:activator="{ props }">
             <v-list-item
               prepend-icon="mdi-view-dashboard-variant"
               v-bind="props"
-              color="accent"
+              color="selected"
               @click="setAccount(null, True)"
             ></v-list-item>
           </template>
@@ -114,12 +120,12 @@
         <v-tooltip text="Accounts">
           <template v-slot:activator="{ props }">
             <v-list-item
-              base-color="white"
+              base-color="surface"
               :active="nav_toggle"
               prepend-icon="mdi-bank"
               @click="nav_toggle = true"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -129,7 +135,7 @@
               prepend-icon="mdi-chart-bar"
               to="/forecast"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -139,19 +145,19 @@
               prepend-icon="mdi-bell"
               to="/reminders"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
         <v-tooltip text="Planning">
           <template v-slot:activator="{ props }">
             <v-list-item
-              base-color="white"
+              base-color="surface"
               :active="!nav_toggle"
               prepend-icon="mdi-folder"
               @click="nav_toggle = false"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -161,7 +167,7 @@
               prepend-icon="mdi-tag"
               to="/tags"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -172,27 +178,40 @@
               as="a"
               href="/admin"
               v-bind="props"
-              color="accent"
+              color="selected"
             ></v-list-item>
           </template>
         </v-tooltip>
       </v-list>
     </v-navigation-drawer>
 
-    <v-navigation-drawer permanent widht="250" color="primary" v-if="mdAndUp">
+    <v-navigation-drawer permanent width="250" color="surface" v-if="mdAndUp">
       <AccountsMenu v-if="nav_toggle" />
       <PlanningMenu v-if="!nav_toggle" />
     </v-navigation-drawer>
   </div>
 </template>
 <script setup>
-  import { ref } from "vue";
-  import { useDisplay } from "vuetify";
+  import { ref, watch, computed } from "vue";
+  import { useDisplay, useTheme } from "vuetify";
   import AccountsMenu from "@/components/AccountsMenu.vue";
   import PlanningMenu from "@/components/PlanningMenu.vue";
   import { useMessages } from "@/composables/messagesComposable";
   import { useRouter } from "vue-router";
   import { useTransactionsStore } from "@/stores/transactions";
+  import { useThemeStore } from "@/stores/themeStore";
+
+  const theme = useTheme();
+  const themeStore = useThemeStore();
+
+  theme.change(themeStore.currentTheme);
+
+  const isDark = computed({
+    get: () => themeStore.currentTheme === "myCustomDarkTheme",
+    set: value => {
+      themeStore.setTheme(value ? "myCustomDarkTheme" : "myCustomLightTheme");
+    },
+  });
 
   const transactions_store = useTransactionsStore();
   const router = useRouter();
@@ -217,4 +236,15 @@
     const formattedDate = newDate.toLocaleString("en-US");
     return formattedDate;
   };
+
+  watch(
+    () => themeStore.currentTheme,
+    newTheme => {
+      theme.change(newTheme);
+    },
+  );
+
+  function handleToggle() {
+    themeStore.toggleTheme();
+  }
 </script>

@@ -29,7 +29,7 @@ services:
       - ./.env.dev
     volumes:
       - ./backend:/usr/src/app
-      - ./backups:/backups
+      - postgres_bkp:/backups
     environment:
       - DEBUG=1
     ports:
@@ -37,6 +37,7 @@ services:
       - 8002:8002
     depends_on:
       - db
+      - redis
     networks:
       - default
     image: lenorefin_backend:development
@@ -50,12 +51,13 @@ services:
       - ./.env.dev
     volumes:
       - ./backend:/usr/src/app
-      - ./backups:/backups
+      - postgres_bkp:/backups
     environment:
       - DEBUG=1
     depends_on:
       - db
       - backend
+      - redis
     networks:
       - default
     image: lenorefin_worker:development
@@ -64,6 +66,7 @@ services:
     image: postgres:15
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+      - postgres_bkp:/backups
     env_file:
       - ./.env.dev
     networks:
@@ -74,6 +77,14 @@ services:
       - POSTGRES_USER=${SQL_USER}
       - POSTGRES_PASSWORD=${SQL_PASSWORD}
       - POSTGRES_DB=${SQL_DATABASE}
+  redis:
+    image: redis:7-alpine
+    container_name: lenorefin_redis_dev
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - default
 
 volumes:
   postgres_data:

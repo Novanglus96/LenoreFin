@@ -1,13 +1,25 @@
-from decimal import Decimal
-from typing import List, Optional, Dict, Any
+from typing import List
 from transactions.api.dependencies.full_transaction import FullTransaction
-from django.db.models.functions import Concat, Coalesce, Abs
-from transactions.models import Transaction, TransactionDetail
-from django.db import IntegrityError, connection, transaction
-from administration.api.dependencies.log_to_db import logToDB
+from transactions.models import (
+    Transaction,
+    TransactionDetail,
+    ReminderCacheTransaction,
+    ReminderCacheTransactionDetail,
+    ForecastCacheTransaction,
+    ForecastCacheTransactionDetail,
+)
+from django.db import transaction
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 
-def create_transactions(transactions: List[FullTransaction]):
+def create_transactions(
+    transactions: List[FullTransaction], transaction_type: str = "transaction"
+):
     """
     The function `create_transactions` creates transactions either individually
     or using bulk_create based on paramters.
@@ -39,20 +51,53 @@ def create_transactions(transactions: List[FullTransaction]):
                             amount = abs(trans.total_amount)
                         elif trans.transaction_type_id == 3:
                             amount = -abs(trans.total_amount)
-                        created_transaction = Transaction.objects.create(
-                            transaction_date=trans.transaction_date,
-                            total_amount=amount,
-                            status_id=trans.status_id,
-                            memo=trans.memo,
-                            description=trans.description,
-                            edit_date=trans.edit_date,
-                            add_date=trans.add_date,
-                            transaction_type_id=trans.transaction_type_id,
-                            paycheck_id=trans.paycheck_id,
-                            source_account_id=trans.source_account_id,
-                            destination_account_id=trans.destination_account_id,
-                            checkNumber=trans.checkNumber,
-                        )
+                        created_transaction = None
+                        if transaction_type == "transaction":
+                            created_transaction = Transaction.objects.create(
+                                transaction_date=trans.transaction_date,
+                                total_amount=amount,
+                                status_id=trans.status_id,
+                                memo=trans.memo,
+                                description=trans.description,
+                                edit_date=trans.edit_date,
+                                add_date=trans.add_date,
+                                transaction_type_id=trans.transaction_type_id,
+                                paycheck_id=trans.paycheck_id,
+                                source_account_id=trans.source_account_id,
+                                destination_account_id=trans.destination_account_id,
+                                checkNumber=trans.checkNumber,
+                            )
+                        if transaction_type == "reminder":
+                            created_transaction = ReminderCacheTransaction.objects.create(
+                                transaction_date=trans.transaction_date,
+                                total_amount=amount,
+                                status_id=trans.status_id,
+                                memo=trans.memo,
+                                description=trans.description,
+                                edit_date=trans.edit_date,
+                                add_date=trans.add_date,
+                                transaction_type_id=trans.transaction_type_id,
+                                paycheck_id=trans.paycheck_id,
+                                source_account_id=trans.source_account_id,
+                                destination_account_id=trans.destination_account_id,
+                                checkNumber=trans.checkNumber,
+                                reminder_id=trans.reminder_id,
+                            )
+                        if transaction_type == "forecast":
+                            created_transaction = ForecastCacheTransaction.objects.create(
+                                transaction_date=trans.transaction_date,
+                                total_amount=amount,
+                                status_id=trans.status_id,
+                                memo=trans.memo,
+                                description=trans.description,
+                                edit_date=trans.edit_date,
+                                add_date=trans.add_date,
+                                transaction_type_id=trans.transaction_type_id,
+                                paycheck_id=trans.paycheck_id,
+                                source_account_id=trans.source_account_id,
+                                destination_account_id=trans.destination_account_id,
+                                checkNumber=trans.checkNumber,
+                            )
                         try:
                             if trans.tags and len(trans.tags) != 0:
                                 for tag in trans.tags:
@@ -69,64 +114,48 @@ def create_transactions(transactions: List[FullTransaction]):
                                             adj_amount = -abs(
                                                 trans.total_amount
                                             )
-                                    TransactionDetail.objects.create(
-                                        transaction_id=created_transaction.id,
-                                        detail_amt=adj_amount,
-                                        tag_id=tag.tag_id,
-                                        full_toggle=tag.tag_full_toggle,
-                                    )
-                        except Except as e:
-                            logToDB(
-                                f"Transaction detail creation error: {e}",
-                                None,
-                                None,
-                                None,
-                                3001901,
-                                2,
+                                    if transaction_type == "transaction":
+                                        TransactionDetail.objects.create(
+                                            transaction_id=created_transaction.id,
+                                            detail_amt=adj_amount,
+                                            tag_id=tag.tag_id,
+                                            full_toggle=tag.tag_full_toggle,
+                                        )
+                                    if transaction_type == "reminder":
+                                        ReminderCacheTransactionDetail.objects.create(
+                                            transaction_id=created_transaction.id,
+                                            detail_amt=adj_amount,
+                                            tag_id=tag.tag_id,
+                                            full_toggle=tag.tag_full_toggle,
+                                        )
+                                    if transaction_type == "forecast":
+                                        ForecastCacheTransactionDetail.objects.create(
+                                            transaction_id=created_transaction.id,
+                                            detail_amt=adj_amount,
+                                            tag_id=tag.tag_id,
+                                            full_toggle=tag.tag_full_toggle,
+                                        )
+                        except Exception as e:
+                            api_logger.error(
+                                "Transaction detail creation error"
                             )
+                            error_logger.error(f"{str(e)}")
                     except Exception as e:
-                        logToDB(
-                            f"Transaction creation error: {e}",
-                            None,
-                            None,
-                            None,
-                            3001901,
-                            2,
-                        )
-                logToDB(
-                    "Transaction(s) created successfully",
-                    None,
-                    None,
-                    None,
-                    3001001,
-                    1,
-                )
+                        api_logger.error("Transaction creation error")
+                        error_logger.error(f"{str(e)}")
+                api_logger.debug("Transaction(s) created successfully")
                 return True
             except Exception as e:
-                print(f"Unable to create transaction(s): {e}")
                 transaction.rollback()
-                logToDB(
-                    f"Transaction(s) not created: {e}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
+                api_logger.warning("Transaction(s) not created")
+                error_logger.warning(f"{str(e)}")
                 return False
     else:
         try:
             transactions_to_create = []
-            transfers_to_create = []
-            related_to_create = []
             transaction_details = []
-            transfer_transaction_details = []
-            related_transaction_details = []
             details_to_create = []
             created_transactions = []
-            created_transfers = []
-            created_related = []
-            transactions_to_update = []
             for index, trans in enumerate(transactions):
                 if trans.transaction_type_id == 1:
                     amount = -abs(trans.total_amount)
@@ -134,20 +163,53 @@ def create_transactions(transactions: List[FullTransaction]):
                     amount = abs(trans.total_amount)
                 elif trans.transaction_type_id == 3:
                     amount = -abs(trans.total_amount)
-                trans_obj = Transaction(
-                    transaction_date=trans.transaction_date,
-                    total_amount=amount,
-                    status_id=trans.status_id,
-                    memo=trans.memo,
-                    description=trans.description,
-                    edit_date=trans.edit_date,
-                    add_date=trans.add_date,
-                    transaction_type_id=trans.transaction_type_id,
-                    paycheck_id=trans.paycheck_id,
-                    source_account_id=trans.source_account_id,
-                    destination_account_id=trans.destination_account_id,
-                    checkNumber=trans.checkNumber,
-                )
+                trans_obj = None
+                if transaction_type == "transaction":
+                    trans_obj = Transaction(
+                        transaction_date=trans.transaction_date,
+                        total_amount=amount,
+                        status_id=trans.status_id,
+                        memo=trans.memo,
+                        description=trans.description,
+                        edit_date=trans.edit_date,
+                        add_date=trans.add_date,
+                        transaction_type_id=trans.transaction_type_id,
+                        paycheck_id=trans.paycheck_id,
+                        source_account_id=trans.source_account_id,
+                        destination_account_id=trans.destination_account_id,
+                        checkNumber=trans.checkNumber,
+                    )
+                if transaction_type == "reminder":
+                    trans_obj = ReminderCacheTransaction(
+                        transaction_date=trans.transaction_date,
+                        total_amount=amount,
+                        status_id=trans.status_id,
+                        memo=trans.memo,
+                        description=trans.description,
+                        edit_date=trans.edit_date,
+                        add_date=trans.add_date,
+                        transaction_type_id=trans.transaction_type_id,
+                        paycheck_id=trans.paycheck_id,
+                        source_account_id=trans.source_account_id,
+                        destination_account_id=trans.destination_account_id,
+                        checkNumber=trans.checkNumber,
+                        reminder_id=trans.reminder_id,
+                    )
+                if transaction_type == "forecast":
+                    trans_obj = ForecastCacheTransaction(
+                        transaction_date=trans.transaction_date,
+                        total_amount=amount,
+                        status_id=trans.status_id,
+                        memo=trans.memo,
+                        description=trans.description,
+                        edit_date=trans.edit_date,
+                        add_date=trans.add_date,
+                        transaction_type_id=trans.transaction_type_id,
+                        paycheck_id=trans.paycheck_id,
+                        source_account_id=trans.source_account_id,
+                        destination_account_id=trans.destination_account_id,
+                        checkNumber=trans.checkNumber,
+                    )
                 transactions_to_create.append(trans_obj)
                 if trans.tags and len(trans.tags) != 0:
                     for tag in trans.tags:
@@ -172,81 +234,85 @@ def create_transactions(transactions: List[FullTransaction]):
             # Create transactions
             try:
                 chunks = list(chunk_list(transactions_to_create, max_bulk))
-                for step, chunk in enumerate(chunks, start=0):
-                    created_transactions.extend(
-                        Transaction.objects.bulk_create(chunk)
-                    )
-                logToDB(
-                    "Transaction chunks created successfully",
-                    None,
-                    None,
-                    None,
-                    3001001,
-                    1,
-                )
+                if transaction_type == "transaction":
+                    for step, chunk in enumerate(chunks, start=0):
+                        created_transactions.extend(
+                            Transaction.objects.bulk_create(chunk)
+                        )
+                if transaction_type == "reminder":
+                    for step, chunk in enumerate(chunks, start=0):
+                        created_transactions.extend(
+                            ReminderCacheTransaction.objects.bulk_create(chunk)
+                        )
+                if transaction_type == "forecast":
+                    for step, chunk in enumerate(chunks, start=0):
+                        created_transactions.extend(
+                            ForecastCacheTransaction.objects.bulk_create(chunk)
+                        )
+                api_logger.info("Transaction chunks created successfully")
             except Exception as e:
-                logToDB(
-                    f"Transaction chunks not created: {e}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
+                api_logger.error("Transaction chunks not created")
+                error_logger.error(f"{str(e)}")
             # Create transaction details
             for trans_detail in transaction_details:
                 transaction_index = trans_detail["transaction_index"]
                 detail_amt = trans_detail["detail_amt"]
                 tag_id = trans_detail["tag_id"]
                 full_toggle = trans_detail["full_toggle"]
-                print(
-                    f"index: {transaction_index}, amt: {detail_amt}, tag_id:{tag_id}"
-                )
-                detail = TransactionDetail(
-                    transaction_id=created_transactions[transaction_index].id,
-                    detail_amt=detail_amt,
-                    tag_id=tag_id,
-                    full_toggle=full_toggle,
-                )
+                detail = None
+                if transaction_type == "transactions":
+                    detail = TransactionDetail(
+                        transaction_id=created_transactions[
+                            transaction_index
+                        ].id,
+                        detail_amt=detail_amt,
+                        tag_id=tag_id,
+                        full_toggle=full_toggle,
+                    )
+                if transaction_type == "reminder":
+                    detail = ReminderCacheTransactionDetail(
+                        transaction_id=created_transactions[
+                            transaction_index
+                        ].id,
+                        detail_amt=detail_amt,
+                        tag_id=tag_id,
+                        full_toggle=full_toggle,
+                    )
+                if transaction_type == "forecast":
+                    detail = ForecastCacheTransactionDetail(
+                        transaction_id=created_transactions[
+                            transaction_index
+                        ].id,
+                        detail_amt=detail_amt,
+                        tag_id=tag_id,
+                        full_toggle=full_toggle,
+                    )
                 details_to_create.append(detail)
             try:
                 chunks = list(chunk_list(details_to_create, max_bulk))
-                for step, chunk in enumerate(chunks, start=0):
-                    TransactionDetail.objects.bulk_create(chunk)
-                logToDB(
-                    "Transaction detail chunks created successfully",
-                    None,
-                    None,
-                    None,
-                    3001001,
-                    1,
+                if transaction_type == "transaction":
+                    for step, chunk in enumerate(chunks, start=0):
+                        TransactionDetail.objects.bulk_create(chunk)
+                if transaction_type == "reminder":
+                    for step, chunk in enumerate(chunks, start=0):
+                        ReminderCacheTransactionDetail.objects.bulk_create(
+                            chunk
+                        )
+                if transaction_type == "forecast":
+                    for step, chunk in enumerate(chunks, start=0):
+                        ForecastCacheTransactionDetail.objects.bulk_create(
+                            chunk
+                        )
+                api_logger.info(
+                    "Transaction detail chunks created successfully"
                 )
             except Exception as e:
-                logToDB(
-                    f"Transaction detail chunks not created: {e}",
-                    None,
-                    None,
-                    None,
-                    3001901,
-                    2,
-                )
-            logToDB(
-                "Transaction(s) created successfully",
-                None,
-                None,
-                None,
-                3001001,
-                1,
-            )
+                api_logger.error("Transaction detail chunks not created")
+                error_logger.error(f"{str(e)}")
+            api_logger.info("Transaction(s) created successfully")
             # update_running_totals()
             return True
         except Exception as e:
-            logToDB(
-                f"Transaction(s) not created: {e}",
-                None,
-                None,
-                None,
-                3001901,
-                2,
-            )
+            api_logger.error("Transaction(s) not created")
+            error_logger.error(f"{str(e)}")
             return False

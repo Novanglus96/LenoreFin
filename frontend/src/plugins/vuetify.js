@@ -9,14 +9,44 @@ import { VDateInput } from "vuetify/labs/VDateInput"; // Import the lab componen
 const myCustomLightTheme = {
   dark: false,
   colors: {
-    primary: "#ECFDF5",
-    secondary: "#06966A",
-    accent: "#FF5900",
+    primary: "#06966A",
+    secondary: "#384B42",
+    accent: "#DEB887",
     error: "#FF3407",
     warning: "#ffc107",
-    info: "#795548",
+    info: "#2687D7",
     success: "#4caf50",
-    selected: "#7fb17f",
+    selected: "#00C783",
+    surface: "#ECFDF5",
+    background: "#F5F5F5",
+    textPending: "#EFFDF6",
+    textCleared: "#1D1D35",
+    bgPending: "#E0E0E0",
+    altAccent: "#D95D3B",
+    "on-background": "#212121",
+    "on-surface": "#212121",
+  },
+};
+
+const myCustomDarkTheme = {
+  dark: true,
+  colors: {
+    primary: "#06966A",
+    secondary: "#b3c7bd",
+    accent: "#FF784E",
+    error: "#CF6679",
+    warning: "#ffc107",
+    info: "#2196F3",
+    success: "#4CAF50",
+    selected: "#A5D6A7",
+    surface: "#212121",
+    background: "#121212",
+    textPending: "#1D1D35",
+    textCleared: "#EFFDF6",
+    bgPending: "#3D3D3D",
+    altAccent: "#D4f$FF",
+    "on-background": "#ffffff",
+    "on-surface": "#ffffff",
   },
 };
 
@@ -30,6 +60,7 @@ export default createVuetify({
     },
     themes: {
       myCustomLightTheme,
+      myCustomDarkTheme,
     },
   },
   icons: {

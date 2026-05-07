@@ -1,5 +1,4 @@
-from decimal import Decimal
-from typing import List, Optional, Dict, Any
+from typing import List, Any
 
 
 def sort_transaction_list(transactions: List[Any]) -> List[Any]:

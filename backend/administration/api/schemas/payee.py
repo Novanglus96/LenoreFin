@@ -1,4 +1,5 @@
 from ninja import Schema
+from pydantic import ConfigDict
 
 
 # The class PayeeIn is a schema for validating payee information.
@@ -10,3 +11,5 @@ class PayeeIn(Schema):
 class PayeeOut(Schema):
     id: int
     payee_name: str
+
+    model_config = ConfigDict(from_attributes=True)

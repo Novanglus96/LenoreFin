@@ -1,9 +1,27 @@
 <template>
-  <v-app>
-    <VueQueryDevtools />
+  <LogoLoader
+    logo="/logov2.png"
+    :size="150"
+    :duration="5"
+    :opacity="0.8"
+    direction="alternate"
+    :messages="[
+      'Balancing the budget... with duct tape...',
+      'Cooking the books (legally, we promise)...',
+      'Checking under the mattress for loose change...',
+      'Calculating compound interest... and snacks...',
+      'Auditing your vibes...',
+      'Putting cash in envelopes...',
+      'Aligning the stars...',
+    ]"
+    v-if="!backendReady"
+  />
+
+  <v-app v-else>
+    <VueQueryDevtools button-position="bottom-left" />
     <AppNavigationVue />
     <v-main>
-      <v-container class="bg-primary h-100" fluid>
+      <v-container class="bg-background h-100" fluid>
         <router-view />
       </v-container>
       <v-snackbar
@@ -16,7 +34,7 @@
       </v-snackbar>
       <v-snackbar
         v-model="showBanner"
-        color="secondary"
+        color="primary"
         location="top"
         timeout="-1"
         :multi-line="true"
@@ -24,10 +42,10 @@
         There's been an update to the application. Click refresh to get the new
         changes!
         <template v-slot:actions>
-          <v-btn color="primary" variant="text" @click="showBanner = false">
+          <v-btn color="secondary" variant="text" @click="showBanner = false">
             Close
           </v-btn>
-          <v-btn color="primary" variant="text" @click="reloadPage">
+          <v-btn color="secondary" variant="text" @click="reloadPage">
             Refresh
           </v-btn>
         </template>
@@ -42,6 +60,10 @@
   import { useOptions } from "@/composables/optionsComposable";
   import { useVersion } from "@/composables/versionComposable";
   import { VueQueryDevtools } from "@tanstack/vue-query-devtools";
+  import { useBackendReady } from "@/composables/useBackendReady";
+  import LogoLoader from "./components/LogoLoader.vue";
+
+  const { backendReady } = useBackendReady();
 
   const reloadPage = () => {
     window.location.reload();
@@ -90,3 +112,12 @@
     showBanner.value = newValue;
   });
 </script>
+<style>
+  .loading-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-size: 1.5rem;
+  }
+</style>

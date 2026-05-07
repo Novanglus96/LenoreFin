@@ -1,31 +1,15 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
 from administration.models import Version
 from administration.api.schemas.version import VersionOut
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
-from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+from django.http import Http404
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 version_router = Router(tags=["Version"])
 
@@ -45,23 +29,12 @@ def list_version(request):
 
     try:
         qs = get_object_or_404(Version, id=1)
-        logToDB(
-            "Version retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Version retrieved")
         return qs
+    except Http404:
+        raise HttpError(404, "Version not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Version not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Version not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
