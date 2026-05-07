@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from typing import List
 from reminders.services import add_reminder_transaction, ReminderNotFound
+from transactions.tasks import update_reminder_cache
 import logging
 
 api_logger = logging.getLogger("api")
@@ -101,6 +102,7 @@ def delete_reminder(request, reminder_id: int):
 def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
     try:
         add_reminder_transaction(reminder_id, payload.transaction_date)
+        update_reminder_cache(reminder_id)
         api_logger.info(f"Reminder transaction added : #{reminder_id}")
         return {"success": True}
     except ReminderNotFound:
