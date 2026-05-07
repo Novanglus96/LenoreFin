@@ -1,4 +1,4 @@
-from ninja import Router, Query
+from ninja import Router
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from transactions.models import TransactionType
@@ -6,29 +6,15 @@ from transactions.api.schemas.transaction_type import (
     TransactionTypeIn,
     TransactionTypeOut,
 )
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 transaction_type_router = Router(tags=["Transaction Types"])
 
@@ -58,48 +44,35 @@ def update_transaction_type(
         )
         transaction_type.transaction_type = payload.transaction_type
         transaction_type.save()
-        logToDB(
-            f"Transaction type updated : {transaction_type.transaction_type}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
+        api_logger.info(
+            f"Transaction type updated : {transaction_type.transaction_type}"
         )
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Transaction type not found")
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Transaction type not updated : transaction type exists ({payload.transaction_type})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
+            api_logger.error(
+                f"Transaction type not updated : transaction type exists ({payload.transaction_type})"
+            )
+            error_logger.error(
+                f"Transaction type not updated : transaction type exists ({payload.transaction_type})"
             )
             raise HttpError(400, "Transaction type already exists")
         else:
             # Log other types of integry errors
-            logToDB(
-                "Transaction type not updated : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
+            api_logger.error(
+                "Transaction type not updated : db integrity error"
+            )
+            error_logger.error(
+                "Transaction type not updated : db integrity error"
             )
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction type not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Transaction type not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -125,25 +98,16 @@ def get_transaction_type(request, transaction_type_id: int):
         transaction_type = get_object_or_404(
             TransactionType, id=transaction_type_id
         )
-        logToDB(
-            f"Transaction type retrieved : {transaction_type.transaction_type}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
+        api_logger.debug(
+            f"Transaction type retrieved : {transaction_type.transaction_type}"
         )
         return transaction_type
+    except Http404:
+        raise HttpError(404, "Transaction type not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction type not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Transaction type not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -162,25 +126,12 @@ def list_transaction_types(request):
 
     try:
         qs = TransactionType.objects.all().order_by("id")
-        logToDB(
-            "Transaction type list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Transaction type list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction type list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Transaction type list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -206,23 +157,12 @@ def delete_transaction_type(request, transaction_type_id: int):
         )
         transaction_type_name = transaction_type.transaction_type
         transaction_type.delete()
-        logToDB(
-            f"Transaction type deleted : {transaction_type_name}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info(f"Transaction type deleted : {transaction_type_name}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Transaction type not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Transaction type not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Transaction type not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

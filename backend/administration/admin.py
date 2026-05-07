@@ -1,50 +1,14 @@
 from django.contrib import admin
 from .models import (
-    ErrorLevel,
     Option,
-    LogEntry,
     Message,
     Payee,
     Version,
     DescriptionHistory,
 )
-from django.http import HttpResponse
 from import_export.admin import ImportExportModelAdmin
 
 # Register your models here.
-
-
-class LogAdmin(admin.ModelAdmin):
-    list_display = [
-        "log_date",
-        "error_level",
-        "error_num",
-        "log_entry",
-        "account",
-        "reminder",
-        "transaction",
-    ]
-
-    list_display_links = [
-        "log_date",
-        "log_entry",
-    ]
-
-    list_filter = ["error_level", "error_num"]
-
-    ordering = ["-log_date"]
-
-    def has_add_permission(self, request):
-        # Return False to disable adding
-        return False
-
-    # def has_delete_permission(self, request, obj=None):
-    # Return False to disable deleting
-    #   return False
-
-    def has_change_permission(self, request, obj=None):
-        # Return False to disable editing
-        return False
 
 
 class OptionAdmin(admin.ModelAdmin):
@@ -70,7 +34,6 @@ class OptionAdmin(admin.ModelAdmin):
             )
 
     list_display = [
-        "log_level",
         "alert_balance",
         "alert_period",
         "auto_archive",
@@ -78,20 +41,11 @@ class OptionAdmin(admin.ModelAdmin):
     ]
 
     list_display_links = [
-        "log_level",
         "alert_balance",
         "alert_period",
         "auto_archive",
         "archive_length",
     ]
-
-
-class ErrorLevelAdmin(admin.ModelAdmin):
-    list_display = ["id", "error_level"]
-
-    list_display_links = ["error_level"]
-
-    ordering = ["id"]
 
 
 class PayeeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
@@ -150,9 +104,7 @@ class DescriptionHistoryAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     ordering = ["id"]
 
 
-admin.site.register(ErrorLevel, ErrorLevelAdmin)
 admin.site.register(Option, OptionAdmin)
-admin.site.register(LogEntry, LogAdmin)
 admin.site.register(Payee, PayeeAdmin)
 admin.site.register(Message, MessageAdmin)
 admin.site.register(Version, VersionAdmin)

@@ -1,31 +1,16 @@
-from ninja import Router, Query
-from django.db import IntegrityError
+from ninja import Router
 from ninja.errors import HttpError
 from transactions.models import Paycheck
 from transactions.api.schemas.paycheck import PaycheckIn, PaycheckOut
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 paycheck_router = Router(tags=["Paychecks"])
 
@@ -45,25 +30,12 @@ def create_paycheck(request, payload: PaycheckIn):
 
     try:
         paycheck = Paycheck.objects.create(**payload.dict())
-        logToDB(
-            f"Paycheck created : #{paycheck.id}",
-            None,
-            None,
-            None,
-            3001001,
-            1,
-        )
+        api_logger.info(f"Paycheck created : #{paycheck.id}")
         return {"id": paycheck.id}
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Paycheck not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Paycheck not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -97,25 +69,14 @@ def update_paycheck(request, paycheck_id: int, payload: PaycheckIn):
         paycheck.four_fifty_seven_b = payload.four_fifty_seven_b
         paycheck.payee_id = payload.payee_id
         paycheck.save()
-        logToDB(
-            f"Paycheck updated : #{paycheck_id}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Paycheck updated : #{paycheck_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Paycheck not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Paycheck not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Paycheck not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -137,25 +98,14 @@ def get_paycheck(request, paycheck_id: int):
 
     try:
         paycheck = get_object_or_404(Paycheck, id=paycheck_id)
-        logToDB(
-            f"Paycheck retrieved : #{paycheck.id}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
-        )
+        api_logger.debug(f"Paycheck retrieved : #{paycheck.id}")
         return paycheck
+    except Http404:
+        raise HttpError(404, "Paycheck not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Paycheck not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Paycheck not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -174,25 +124,12 @@ def list_paychecks(request):
 
     try:
         qs = Paycheck.objects.all().order_by("id")
-        logToDB(
-            "Paycheck list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Paycheck list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Paycheck list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Paycheck list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -215,23 +152,12 @@ def delete_paycheck(request, paycheck_id: int):
     try:
         paycheck = get_object_or_404(Paycheck, id=paycheck_id)
         paycheck.delete()
-        logToDB(
-            f"Paycheck deleted : {paycheck_id}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info(f"Paycheck deleted : {paycheck_id}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Paycheck not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Paycheck not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Paycheck not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

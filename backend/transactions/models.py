@@ -7,22 +7,12 @@ Date: February 15, 2024
 """
 
 from django.db import models
-from datetime import date
 from django.utils import timezone
-from django.db.models.signals import post_save, pre_delete, post_delete
-from django.dispatch import receiver
-from django.db.models import Case, When, Q, Value, IntegerField
-from decimal import Decimal
-import datetime
-from typing import List
-from django.db import IntegrityError, connection, transaction
-from django.shortcuts import get_object_or_404
-from django.db.models.query import QuerySet
 from accounts.models import Account
 from tags.models import Tag
-from administration.models import LogEntry, Option
 import pytz
 import os
+from reminders.models import Reminder
 
 
 def transaction_image_name(instance, filename):
@@ -163,22 +153,24 @@ class Transaction(models.Model):
     source_account = models.ForeignKey(
         Account,
         related_name="source_transactions",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        default=None,
     )
     destination_account = models.ForeignKey(
         Account,
         related_name="destination_transactions",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         default=None,
     )
 
     def __str__(self):
-        return f"#{self.id} | {self.transaction_date} : {self.description} (${self.total_amount})"
+        return (
+            f"#{self.id} | {self.transaction_date} : "
+            f"{self.description} (${self.total_amount:.2f})"
+        )
 
 
 class TransactionImage(models.Model):
@@ -215,6 +207,205 @@ class TransactionDetail(models.Model):
     """
 
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
+    detail_amt = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00
+    )
+    tag = models.ForeignKey(
+        Tag, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    full_toggle = models.BooleanField(default=False)
+
+
+class ReminderCacheTransaction(models.Model):
+    """
+    Model representing a transaction.
+
+    Fields:
+    - transaction_date (DateField): The date of the transaction, defaults to today.
+    - total_amount (DecimalField): The total amount of the transaction, default is 0.00.
+    - status (ForeignKey): A reference to the TransactionStatus model, representing the
+    status of the transaction.
+    - memo (CharField): A memo to document this transaction, limited to 254 characters.
+    - description (CharField): A description of this description, limited to 254 characters.
+    - edit_date (DateField): The last date this transacion was edited, defaults to today.
+    - add_date (DateField): The date this transaction was added, defaults to today.
+    - transaction_type (ForeignKey): A reference to the TransactionType model, representing
+    the type of this transaction.
+    - paycheck (ForeignKey): A reference to the Paycheck model, representing a paycheck
+    associated with this transaction.  Default is None, and is Optional.
+    - checkNumber (IntegerField): Number of a check associated with this transaction. Default
+    is None, and is Optional.
+    - sourceAccount (ForeignKey): A reference to Account model, representing the source account.
+    - destinationAccount (ForeignKey): A reference to Account model, representing the destination
+    account.
+    """
+
+    transaction_date = models.DateField(default=current_date)
+    total_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00
+    )
+    status = models.ForeignKey(
+        TransactionStatus, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    memo = models.TextField(null=True, blank=True, default=None)
+    description = models.CharField(max_length=254)
+    edit_date = models.DateField(default=current_date)
+    add_date = models.DateField(default=current_date)
+    transaction_type = models.ForeignKey(
+        TransactionType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    paycheck = models.ForeignKey(
+        Paycheck,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+    )
+    checkNumber = models.IntegerField(null=True, blank=True, default=None)
+    source_account = models.ForeignKey(
+        Account,
+        related_name="reminder_cache_source_transactions",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+    )
+    destination_account = models.ForeignKey(
+        Account,
+        related_name="reminder_cache_destination_transactions",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+    )
+    reminder = models.ForeignKey(Reminder, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return (
+            f"#{self.id} | {self.transaction_date} : "
+            f"{self.description} (${self.total_amount:.2f})"
+        )
+
+
+class ForecastCacheTransaction(models.Model):
+    """
+    Model representing a transaction.
+
+    Fields:
+    - transaction_date (DateField): The date of the transaction, defaults to today.
+    - total_amount (DecimalField): The total amount of the transaction, default is 0.00.
+    - status (ForeignKey): A reference to the TransactionStatus model, representing the
+    status of the transaction.
+    - memo (CharField): A memo to document this transaction, limited to 254 characters.
+    - description (CharField): A description of this description, limited to 254 characters.
+    - edit_date (DateField): The last date this transacion was edited, defaults to today.
+    - add_date (DateField): The date this transaction was added, defaults to today.
+    - transaction_type (ForeignKey): A reference to the TransactionType model, representing
+    the type of this transaction.
+    - paycheck (ForeignKey): A reference to the Paycheck model, representing a paycheck
+    associated with this transaction.  Default is None, and is Optional.
+    - checkNumber (IntegerField): Number of a check associated with this transaction. Default
+    is None, and is Optional.
+    - sourceAccount (ForeignKey): A reference to Account model, representing the source account.
+    - destinationAccount (ForeignKey): A reference to Account model, representing the destination
+    account.
+    """
+
+    transaction_date = models.DateField(default=current_date)
+    total_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00
+    )
+    status = models.ForeignKey(
+        TransactionStatus, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    memo = models.TextField(null=True, blank=True, default=None)
+    description = models.CharField(max_length=254)
+    edit_date = models.DateField(default=current_date)
+    add_date = models.DateField(default=current_date)
+    transaction_type = models.ForeignKey(
+        TransactionType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    paycheck = models.ForeignKey(
+        Paycheck,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+    )
+    checkNumber = models.IntegerField(null=True, blank=True, default=None)
+    source_account = models.ForeignKey(
+        Account,
+        related_name="forecast_cache_source_transactions",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+    )
+    destination_account = models.ForeignKey(
+        Account,
+        related_name="forecast_cache_destination_transactions",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    def __str__(self):
+        return (
+            f"#{self.id} | {self.transaction_date} : "
+            f"{self.description} (${self.total_amount:.2f})"
+        )
+
+
+class ReminderCacheTransactionDetail(models.Model):
+    """
+    Model representing a transaction detail, that combined with an associated
+    transaction, represents a full transaction.
+
+    Fields:
+    - transaction (ForeignKey): A reference to the Transaction model, representing
+    the transaction associated with this transaction detail.
+    - detail_amt (DecimalField): The amount associated with this transaction detail,
+    default is 0.00.
+    - tag (ForeignKey): A refernce to the Tag model, representing the tag category
+    ot this transaction detail.
+    """
+
+    transaction = models.ForeignKey(
+        ReminderCacheTransaction, on_delete=models.CASCADE
+    )
+    detail_amt = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00
+    )
+    tag = models.ForeignKey(
+        Tag, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    full_toggle = models.BooleanField(default=False)
+
+
+class ForecastCacheTransactionDetail(models.Model):
+    """
+    Model representing a transaction detail, that combined with an associated
+    transaction, represents a full transaction.
+
+    Fields:
+    - transaction (ForeignKey): A reference to the Transaction model, representing
+    the transaction associated with this transaction detail.
+    - detail_amt (DecimalField): The amount associated with this transaction detail,
+    default is 0.00.
+    - tag (ForeignKey): A refernce to the Tag model, representing the tag category
+    ot this transaction detail.
+    """
+
+    transaction = models.ForeignKey(
+        ForecastCacheTransaction, on_delete=models.CASCADE
+    )
     detail_amt = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00
     )

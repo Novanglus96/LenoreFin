@@ -236,9 +236,10 @@ See the full <a href="https://novanglus96.github.io/LenoreFin"><strong>documenta
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] v1.1 Release
+- [ ] v1.2 Release
   - [ ] Credit Card Bill Calculations
-  - [ ] Interest Tracking On Loans
+  - [ ] Loading Screen on app load
+  - [ ] Interest Tracking On Loans 
 - [ ] Financial Wizard
 
 See the [open issues](https://github.com/Novanglus96/LenoreFin/issues) for a full list of proposed features (and known issues).
@@ -250,16 +251,76 @@ See the [open issues](https://github.com/Novanglus96/LenoreFin/issues) for a ful
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**. Please follow these steps and guidelines to help us maintain a smooth development process.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+### 1. Fork the Repository
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+- Click the **Fork** button at the top-right of this repository to create your own copy.
+- Clone your fork locally.
+
+### 2. Branch Naming
+Create branches following this pattern:
+
+- **Features**: feature/**branch-name** - *For new features or enhancements*.
+- **Fixes**: fix/**branch-name** - *For bug fixes or patches*.
+
+### 3. Pull Request Targets
+Submit pull requests to the appropriate branch based on the stability of your changes:
+
+| Target Branch | Purpose                                      |
+| ------------- | -------------------------------------------- |
+| main          | Production-ready changes for release.        |
+| rc            | Release candidates for staging releases.     |
+| alpha         | Experimental and unstable changes.           |
+| beta          | More stable than alpha, for broader testing. |
+
+*PRs to main and rc branches are for finalized changes intended for the next release.
+PRs to alpha and beta are for testing and experimental work.*
+
+### 4. Commit Message Format
+We use semantic commit messages to automate changelog and versioning.
+
+Format:
+
+```cpp
+<type>(optional scope): <short description>
+```
+| Common types |                                                         |
+| ------------ | ------------------------------------------------------- |
+| feat:        | A new feature                                           |
+| fix:         | A bug fix                                               |
+| chore:       | Changes to build process or auxiliary tools             |
+| docs:        | Documentation only                                      |
+| style:       | Formatting, missing semicolons, etc; no code change     |
+| refactor:    | Code change that neither fixes a bug nor adds a feature |
+| perf:        | Performance improvements                                |
+| test:        | Adding or fixing tests                                  |
+
+**Breaking changes**: Add ! after type or scope
+
+```makefile
+feat!: drop support for Node 10
+fix(api)!: change endpoint response format
+```
+
+Examples:
+
+- feat: add user profile page
+- fix(auth): handle expired tokens gracefully
+- chore: update dependencies
+- perf: optimize image loading
+
+### 5. Pull Request Checklist
+Before submitting your PR, please ensure:
+
+- Your branch is up to date with the target branch.
+- Your code passes all tests and linters.
+- You have added or updated tests if applicable.
+- Relevant documentation has been added or updated.
+- Your PR description clearly explains your changes and references related issues.
+
+### 6. Testing Changes
+Please test your changes locally or in a staging environment before opening a PR. Use alpha or beta branches for testing experimental changes.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

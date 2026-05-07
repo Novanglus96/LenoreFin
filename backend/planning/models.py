@@ -1,12 +1,5 @@
 from django.db import models
-from datetime import date
 from django.utils import timezone
-from decimal import Decimal
-import datetime
-from typing import List
-from django.db import IntegrityError, connection, transaction
-from django.shortcuts import get_object_or_404
-from django.db.models.query import QuerySet
 from tags.models import Tag
 from reminders.models import Repeat
 import pytz

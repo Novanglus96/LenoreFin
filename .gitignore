@@ -1,3 +1,7 @@
+# mempalace MCP tool artifacts
+entities.json
+mempalace.yaml
+
 *.devdbrc
 mediafiles
 *.DS_Store

@@ -1,43 +1,40 @@
 <template>
   <div>
-    <v-row class="pa-1 ga-1" no-gutters>
-      <v-col class="rounded">
-        <TagsHeaderWidget @tag-selected="clickSelectedTag" v-if="!isMobile" />
-        <TagsHeaderWidgetMobile
-          @tag-selected="clickSelectedTag"
-          v-if="isMobile"
-        />
-      </v-col>
-    </v-row>
-    <TagTransactionsWidget
-      :tagID="selected_tag"
-      :key="selected_tag"
-      v-if="selected_tag && !isMobile"
-    />
-    <TagTransactionsWidgetMobile
-      :tagID="selected_tag"
-      :key="selected_tag"
-      v-if="selected_tag && isMobile"
-    />
-    <v-card v-else>
-      <v-card-title>Please select a tag</v-card-title>
-    </v-card>
+    <div>
+      <v-row class="pa-1 ga-1" no-gutters>
+        <v-col class="rounded">
+          <TagsHeaderWidget @tag-selected="clickSelectedTag" />
+        </v-col>
+      </v-row>
+      <TagTransactionsWidget
+        :tagID="selected_tag"
+        :key="selected_tag"
+        v-if="selected_tag"
+      />
+      <div v-else>
+        <v-row class="pa-1 ga-1 rounded" no-gutters>
+          <v-col class="rounded">
+            <v-card variant="outlined" :elevation="4" class="bg-surface">
+              <v-card-text class="text-center">
+                <span class="text-subtitle-2 text-accent">
+                  Please select a tag...
+                </span>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+      </div>
+    </div>
   </div>
 </template>
 <script setup>
-import TagsHeaderWidget from "@/components/TagsHeaderWidget.vue";
-import TagsHeaderWidgetMobile from "@/components/TagsHeaderWidgetMobile.vue";
-import { ref } from "vue";
-import TagTransactionsWidget from "@/components/TagTransactionsWidget.vue";
-import TagTransactionsWidgetMobile from "@/components/TagTransactionsWidgetMobile.vue";
-import { useDisplay } from "vuetify";
+  import TagsHeaderWidget from "@/components/TagsHeaderWidget.vue";
+  import { ref } from "vue";
+  import TagTransactionsWidget from "@/components/TagTransactionsWidget.vue";
 
-const { smAndDown } = useDisplay();
-const isMobile = smAndDown;
+  const selected_tag = ref(null);
 
-const selected_tag = ref(null);
-
-const clickSelectedTag = tag_id => {
-  selected_tag.value = tag_id;
-};
+  const clickSelectedTag = tag_id => {
+    selected_tag.value = tag_id;
+  };
 </script>

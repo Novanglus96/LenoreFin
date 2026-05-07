@@ -1,8 +1,9 @@
 from ninja import Schema
-from decimal import Decimal
-from pydantic import BaseModel, Field
-from datetime import date, timedelta, datetime
-from typing import List, Optional, Dict, Any
+from pydantic import condecimal
+from datetime import date
+from typing import List, Optional
+
+AmountDecimal = condecimal(max_digits=12, decimal_places=2)
 
 
 # The class TypeMappingSchema is a schema for representing import type mappings.
@@ -33,7 +34,7 @@ class TagMappingSchema(Schema):
 class TransactionImportTagSchema(Schema):
     tag_id: int
     tag_name: str
-    tag_amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    tag_amount: AmountDecimal
 
 
 # The class TransactionImportErrorSchema is a schema for representing import transaction errors.
@@ -48,7 +49,7 @@ class TransactionImportSchema(Schema):
     transactionDate: date
     transactionTypeID: int
     transactionStatusID: int
-    amount: Decimal = Field(whole_digits=10, decimal_places=2)
+    amount: AmountDecimal
     description: str
     sourceAccountID: int
     destinationAccountID: Optional[int] = None

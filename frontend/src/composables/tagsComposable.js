@@ -76,6 +76,17 @@ async function getGraphByTagsFunction(widget_id) {
   }
 }
 
+async function getGraphByTagsNewFunction(widget_id) {
+  try {
+    const response = await apiClient.get(
+      "/tags/graph-by-tags/new?widget_id=" + widget_id,
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Graph by tags not fetched: ");
+  }
+}
+
 async function getTransactionsByTagsFunction(tag_id) {
   try {
     const response = await apiClient.get("/tags/tag-graphs/list?tag=" + tag_id);
@@ -111,7 +122,11 @@ async function createTagFunction(newTag) {
 
 export function useTags(tag_type) {
   const queryClient = useQueryClient();
-  const { data: tags, isLoading } = useQuery({
+  const {
+    data: tags,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["tags"],
     queryFn: () => getTagsFunction(tag_type),
     select: response => response,
@@ -134,6 +149,7 @@ export function useTags(tag_type) {
     isLoading,
     tags,
     addTag,
+    isFetching,
   };
 }
 
@@ -169,7 +185,11 @@ export function useMainTags() {
 
 export function useGraphs(widget_id) {
   const queryClient = useQueryClient();
-  const { data: tag_graph, isLoading } = useQuery({
+  const {
+    data: tag_graph,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["tag_graph", { widgetID: widget_id }],
     queryFn: () => getGraphByTagsFunction(widget_id),
     select: response => response,
@@ -179,12 +199,36 @@ export function useGraphs(widget_id) {
   return {
     isLoading,
     tag_graph,
+    isFetching,
+  };
+}
+
+export function useGraphsNew(widget_id) {
+  const queryClient = useQueryClient();
+  const { data: tag_graph_items, isLoading } = useQuery({
+    queryKey: ["tag_graph_items", { widgetID: widget_id }],
+    queryFn: () => getGraphByTagsNewFunction(widget_id),
+    select: response =>
+      response.map(item => ({
+        ...item,
+        value: Number(item.value) || 0, // ensure numeric
+      })),
+    client: queryClient,
+  });
+
+  return {
+    isLoading,
+    tag_graph_items,
   };
 }
 
 export function useGraphTransactions(tag_id) {
   const queryClient = useQueryClient();
-  const { data: tag_transactions, isLoading } = useQuery({
+  const {
+    data: tag_transactions,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["tag_transactions", { tagID: tag_id }],
     queryFn: () => getTransactionsByTagsFunction(tag_id),
     select: response => response,
@@ -194,5 +238,6 @@ export function useGraphTransactions(tag_id) {
   return {
     isLoading,
     tag_transactions,
+    isFetching,
   };
 }

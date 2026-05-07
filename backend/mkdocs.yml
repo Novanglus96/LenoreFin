@@ -1,7 +1,9 @@
 site_name: LenoreFin
 site_description: An advanced financial tracker.
 site_author: John Adams
-copyright: 2025 John Adams
+site_url: https://novanglus96.github.io/LenoreFin/
+repo_url: https://github.com/Novanglus96/LenoreFin
+copyright: 2026 John Adams
 nav:
   - Home: index.md
   - Reference:
@@ -22,6 +24,7 @@ theme:
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
+  custom_dir: docs/overrides
 plugins:
   - search
   - mkdocstrings:
@@ -43,3 +46,8 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+extra:
+  version:
+    provider: mike
+    default: latest
+    alias: true

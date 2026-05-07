@@ -1,9 +1,12 @@
 from ninja.security import HttpBearer
 from decouple import config
+from django.conf import settings
 
 
 class GlobalAuth(HttpBearer):
     def authenticate(self, request, token):
-        api_key = config("VITE_API_KEY", default=None)
+        api_key = getattr(settings, "VITE_API_KEY", None) or config(
+            "VITE_API_KEY", default=None
+        )
         if token == api_key:
             return token

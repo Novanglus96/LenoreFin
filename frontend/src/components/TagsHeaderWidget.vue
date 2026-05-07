@@ -3,7 +3,7 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      class="bg-secondary"
+      class="bg-primary"
       v-if="!isLoading"
     >
       <template v-slot:text>
@@ -26,9 +26,10 @@
             <v-slide-group
               v-model="tag_selected"
               class="pa-4"
-              selected-class="bg-accent"
+              selected-class="bg-selected"
               show-arrows
               center-active
+              v-if="!smAndDown"
             >
               <v-slide-group-item
                 v-for="tag in tags"
@@ -38,7 +39,7 @@
                 :value="tag.id"
               >
                 <v-card
-                  color="primary"
+                  color="surface"
                   :class="['ma-4', selectedClass]"
                   height="75"
                   width="250"
@@ -51,18 +52,57 @@
                     ></v-icon>
                   </template>
                   <template v-slot:title>
-                    <span class="text-subtitle-1 font-weight-bold">{{
-                      tag.parent ? tag.parent.tag_name : tag.tag_name
-                    }}</span>
+                    <span class="text-subtitle-1 font-weight-bold">
+                      {{ tag.parent ? tag.parent.tag_name : tag.tag_name }}
+                    </span>
                   </template>
                   <template v-slot:subtitle>
-                    <span :class="!tag.child ? 'text-primary' : 'text-black'">{{
-                      !tag.child ? "..." : tag.child.tag_name
-                    }}</span>
+                    <span
+                      :class="
+                        !tag.child
+                          ? 'text-secondary'
+                          : 'text-secondary-lighten-2'
+                      "
+                    >
+                      {{ !tag.child ? "..." : tag.child.tag_name }}
+                    </span>
                   </template>
                 </v-card>
               </v-slide-group-item>
             </v-slide-group>
+            <v-select
+              :items="tags"
+              variant="outlined"
+              :loading="isLoading"
+              item-title="tag_name"
+              item-value="id"
+              v-model="tag_selected"
+              density="compact"
+              @update:model-value="clickSelectTag"
+              bg-color="secondary"
+              menu
+              color="primary"
+              v-else
+            >
+              <template v-slot:item="{ props, item }">
+                <v-list-item
+                  v-bind="props"
+                  :title="
+                    item.raw.parent
+                      ? item.raw.parent.tag_name
+                      : item.raw.tag_name
+                  "
+                  :subtitle="item.raw.parent ? item.raw.tag_name : null"
+                >
+                  <template v-slot:prepend>
+                    <v-icon
+                      icon="mdi-tag"
+                      :color="tagColor(item.raw.tag_type.id)"
+                    ></v-icon>
+                  </template>
+                </v-list-item>
+              </template>
+            </v-select>
           </v-col>
         </v-row>
       </template>
@@ -71,30 +111,31 @@
   </div>
 </template>
 <script setup>
-import { ref, defineEmits } from "vue";
-import { useTags } from "@/composables/tagsComposable";
-import TagForm from "@/components/TagForm.vue";
+  import { ref, defineEmits } from "vue";
+  import { useTags } from "@/composables/tagsComposable";
+  import TagForm from "@/components/TagForm.vue";
+  import { useDisplay } from "vuetify";
 
-const tagAddFormDialog = ref(false);
-const emit = defineEmits(["tagSelected"]);
-const tag_selected = ref(null);
-const { tags, isLoading } = useTags();
+  const tagAddFormDialog = ref(false);
+  const emit = defineEmits(["tagSelected"]);
+  const tag_selected = ref(null);
+  const { tags, isLoading } = useTags();
+  const { smAndDown } = useDisplay();
+  const clickSelectTag = () => {
+    emit("tagSelected", tag_selected.value);
+  };
 
-const clickSelectTag = () => {
-  emit("tagSelected", tag_selected.value);
-};
+  const updateAddDialog = () => {
+    tagAddFormDialog.value = false;
+  };
 
-const updateAddDialog = () => {
-  tagAddFormDialog.value = false;
-};
-
-const tagColor = typeID => {
-  if (typeID == 1) {
-    return "red";
-  } else if (typeID == 2) {
-    return "green";
-  } else if (typeID == 3) {
-    return "grey";
-  }
-};
+  const tagColor = typeID => {
+    if (typeID == 1) {
+      return "error";
+    } else if (typeID == 2) {
+      return "success";
+    } else if (typeID == 3) {
+      return "info";
+    }
+  };
 </script>

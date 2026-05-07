@@ -129,8 +129,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="clickClose" color="secondary">Close</v-btn>
-          <v-btn color="secondary" type="submit">
+          <v-btn @click="clickClose" color="primary">Close</v-btn>
+          <v-btn color="primary" type="submit">
             {{ props.isEdit ? "Edit Transfer" : "Add Transfer" }}
           </v-btn>
         </v-card-actions>

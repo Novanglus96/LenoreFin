@@ -1,4 +1,4 @@
-from ninja import Router, Query
+from ninja import Router
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from planning.models import Contribution
@@ -7,29 +7,14 @@ from planning.api.schemas.contribution import (
     ContributionOut,
     ContributionWithTotals,
 )
-from administration.api.dependencies.log_to_db import logToDB
 from django.shortcuts import get_object_or_404
-from typing import List
-from django.db.models import (
-    Case,
-    When,
-    Q,
-    IntegerField,
-    Value,
-    F,
-    CharField,
-    Sum,
-    Subquery,
-    OuterRef,
-    FloatField,
-    Window,
-    ExpressionWrapper,
-    DecimalField,
-    Func,
-    Count,
-)
-from django.db.models.functions import Concat, Coalesce, Abs
-from typing import List, Optional, Dict, Any
+from django.http import Http404
+import logging
+
+api_logger = logging.getLogger("api")
+db_logger = logging.getLogger("db")
+error_logger = logging.getLogger("error")
+task_logger = logging.getLogger("task")
 
 contribution_router = Router(tags=["Contributions"])
 
@@ -49,48 +34,27 @@ def create_contribution(request, payload: ContributionIn):
 
     try:
         contribution = Contribution.objects.create(**payload.dict())
-        logToDB(
-            f"Contribution created : {payload.contribution}",
-            None,
-            None,
-            None,
-            3001001,
-            1,
-        )
+        api_logger.info(f"Contribution created : {payload.contribution}")
         return {"id": contribution.id}
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Contribution not created : contribution exists ({payload.contribution})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
+            api_logger.error(
+                f"Contribution not created : contribution exists ({payload.contribution})"
+            )
+            error_logger.error(
+                f"Contribution not created : contribution exists ({payload.contribution})"
             )
             raise HttpError(400, "Conitribution already exists")
         else:
             # Log other types of integry errors
-            logToDB(
-                "Contribution not created : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
+            api_logger.error("Contribution not created : db integrity error")
+            error_logger.error("Contribution not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Contribution not created : {str(e)}",
-            None,
-            None,
-            None,
-            3001901,
-            2,
-        )
+        api_logger.error("Contribution not created")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -120,48 +84,29 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
         contribution.cap = payload.cap
         contribution.active = payload.active
         contribution.save()
-        logToDB(
-            f"Contribution updated : {contribution.contribution}",
-            None,
-            None,
-            None,
-            3001002,
-            1,
-        )
+        api_logger.info(f"Contribution updated : {contribution.contribution}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Contribution not found")
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
-            logToDB(
-                f"Contribution not updated : contribution exists ({payload.contribution})",
-                None,
-                None,
-                None,
-                3001004,
-                2,
+            api_logger.error(
+                f"Contribution not updated : contribution exists ({payload.contribution})"
+            )
+            error_logger.error(
+                f"Contribution not updated : contribution exists ({payload.contribution})"
             )
             raise HttpError(400, "Contribution already exists")
         else:
             # Log other types of integry errors
-            logToDB(
-                "Contribution not updated : db integrity error",
-                None,
-                None,
-                None,
-                3001005,
-                2,
-            )
+            api_logger.error("Contribution not updated : db integrity error")
+            error_logger.error("Contribution not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Contribution not updated : {str(e)}",
-            None,
-            None,
-            None,
-            3001902,
-            2,
-        )
+        api_logger.error("Contribution not updated")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -183,25 +128,16 @@ def get_contribution(request, contribution_id: int):
 
     try:
         contribution = get_object_or_404(Contribution, id=contribution_id)
-        logToDB(
-            f"Contribution retrieved : {contribution.contribution}",
-            None,
-            None,
-            None,
-            3001006,
-            1,
+        api_logger.debug(
+            f"Contribution retrieved : {contribution.contribution}"
         )
         return contribution
+    except Http404:
+        raise HttpError(404, "Contribution not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Contribution not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001904,
-            2,
-        )
+        api_logger.error("Contribution not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -240,25 +176,12 @@ def list_contributions(request):
             emergency_paycheck_total=emergency_paycheck_total,
             total_emergency=total_emergency,
         )
-        logToDB(
-            "Contribution list retrieved",
-            None,
-            None,
-            None,
-            3001007,
-            1,
-        )
+        api_logger.debug("Contribution list retrieved")
         return contributions_with_totals
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Contribution list not retrieved : {str(e)}",
-            None,
-            None,
-            None,
-            3001907,
-            2,
-        )
+        api_logger.error("Contribution list not retrieved")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -282,23 +205,12 @@ def delete_contribution(request, contribution_id: int):
         contribution = get_object_or_404(Contribution, id=contribution_id)
         contribution_name = contribution.contribution
         contribution.delete()
-        logToDB(
-            f"Contribution deleted : {contribution_name}",
-            None,
-            None,
-            None,
-            3001003,
-            1,
-        )
+        api_logger.info(f"Contribution deleted : {contribution_name}")
         return {"success": True}
+    except Http404:
+        raise HttpError(404, "Contribution not found")
     except Exception as e:
         # Log other types of exceptions
-        logToDB(
-            f"Contribution not deleted : {str(e)}",
-            None,
-            None,
-            None,
-            3001903,
-            2,
-        )
+        api_logger.error("Contribution not deleted")
+        error_logger.error(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
