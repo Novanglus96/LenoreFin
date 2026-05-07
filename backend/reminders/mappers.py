@@ -9,7 +9,7 @@ from transactions.mappers import domain_transaction_type_to_schema
 def domain_repeat_to_schema(
     repeat: DomainRepeat,
 ) -> RepeatOut:
-    RepeatOut(
+    return RepeatOut(
         id=repeat.id,
         repeat_name=repeat.repeat_name,
         days=repeat.days,
