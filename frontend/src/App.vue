@@ -19,7 +19,7 @@
 
   <v-app v-else>
     <VueQueryDevtools button-position="bottom-left" />
-    <AppNavigationVue />
+    <AppNavigationVue v-if="showNav" />
     <v-main>
       <v-container class="bg-background h-100" fluid>
         <router-view />
@@ -57,6 +57,7 @@
   import AppNavigationVue from "@/views/AppNavigationVue.vue";
   import { useMainStore } from "@/stores/main";
   import { onMounted, computed, ref, watch, onUnmounted } from "vue";
+  import { useRoute } from "vue-router";
   import { useOptions } from "@/composables/optionsComposable";
   import { useVersion } from "@/composables/versionComposable";
   import { VueQueryDevtools } from "@tanstack/vue-query-devtools";
@@ -64,6 +65,8 @@
   import LogoLoader from "./components/LogoLoader.vue";
 
   const { backendReady } = useBackendReady();
+  const route = useRoute();
+  const showNav = computed(() => route.name !== "login");
 
   const reloadPage = () => {
     window.location.reload();

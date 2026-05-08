@@ -19,6 +19,7 @@ from accounts.services import (
 )
 from accounts.mappers import domain_account_to_schema
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -29,7 +30,7 @@ task_logger = logging.getLogger("task")
 account_router = Router(tags=["Accounts"])
 
 
-@account_router.post("/create")
+@account_router.post("/create", auth=FullAccessAuth())
 def create_account(request, payload: AccountIn):
     """
     The function `create_account` creates an account
@@ -128,7 +129,7 @@ def list_accounts(request, query: AccountQuery = Query(...)):
         raise HttpError(500, f"Record retrieval error : {str(e)}")
 
 
-@account_router.patch("/update/{account_id}")
+@account_router.patch("/update/{account_id}", auth=FullAccessAuth())
 def update_account(request, account_id: int, payload: AccountUpdate):
     """
     The function `update_account` updates the account specified by id,
@@ -188,7 +189,7 @@ def update_account(request, account_id: int, payload: AccountUpdate):
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
-@account_router.delete("/delete/{account_id}")
+@account_router.delete("/delete/{account_id}", auth=FullAccessAuth())
 def delete_account(request, account_id: int):
     """
     The function `delete_account` deletes the account specified by id,

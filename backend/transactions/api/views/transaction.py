@@ -41,6 +41,7 @@ from core.cache.keys import (
     account_all,
 )
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -50,7 +51,7 @@ task_logger = logging.getLogger("task")
 transaction_router = Router(tags=["Transactions"])
 
 
-@transaction_router.post("/create")
+@transaction_router.post("/create", auth=FullAccessAuth())
 def create_transaction(request, payload: TransactionIn):
     """
     The function `create_transaction` creates a transaction
@@ -74,7 +75,7 @@ def create_transaction(request, payload: TransactionIn):
         raise HttpError(500, f"Record creation error : {str(e)}")
 
 
-@transaction_router.patch("/multiedit")
+@transaction_router.patch("/multiedit", auth=FullAccessAuth())
 def multiedit_transactions(request, payload: MultiTranscationDate):
     """
     The function `multiedit_transactions` changes the transaction dates of mutliple
@@ -115,7 +116,7 @@ def multiedit_transactions(request, payload: MultiTranscationDate):
         raise HttpError(500, f"Transaction dates error: {str(e)}")
 
 
-@transaction_router.patch("/clear")
+@transaction_router.patch("/clear", auth=FullAccessAuth())
 def clear_transaction(request, payload: TransactionList):
     """
     The function `clear_transaction` changes the status to cleared, edits the date to today
@@ -199,7 +200,7 @@ def get_transaction(request, transaction_id: int):
         raise HttpError(500, "Record retrieval error")
 
 
-@transaction_router.patch("/delete")
+@transaction_router.patch("/delete", auth=FullAccessAuth())
 def delete_transaction(request, payload: TransactionList):
     """
     The function `delete_transaction` deletes the transaction(s) specified by id,
@@ -235,7 +236,7 @@ def delete_transaction(request, payload: TransactionList):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@transaction_router.put("/update/{transaction_id}")
+@transaction_router.put("/update/{transaction_id}", auth=FullAccessAuth())
 def update_transaction(request, transaction_id: int, payload: TransactionIn):
     """
     The function `update_transaction` updates the transaction specified by id.

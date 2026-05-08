@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -16,7 +17,7 @@ task_logger = logging.getLogger("task")
 payee_router = Router(tags=["Payees"])
 
 
-@payee_router.post("/create")
+@payee_router.post("/create", auth=FullAccessAuth())
 def create_payee(request, payload: PayeeIn):
     """
     The function `create_payee` creates a payee
@@ -55,7 +56,7 @@ def create_payee(request, payload: PayeeIn):
         raise HttpError(500, "Record creation error")
 
 
-@payee_router.put("/update/{payee_id}")
+@payee_router.put("/update/{payee_id}", auth=FullAccessAuth())
 def update_payee(request, payee_id: int, payload: PayeeIn):
     """
     The function `update_payee` updates the payee specified by id.
@@ -155,7 +156,7 @@ def list_payees(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@payee_router.delete("/delete/{payee_id}")
+@payee_router.delete("/delete/{payee_id}", auth=FullAccessAuth())
 def delete_payee(request, payee_id: int):
     """
     The function `delete_payee` deletes the payee specified by id.

@@ -1,21 +1,8 @@
 // useBackendReady.js
 import { ref, onMounted } from "vue";
-import axios from "axios";
-import { useApiKey } from "./ueApiKey";
-
-const apiKey = useApiKey();
+import apiClient from "./apiClient";
 
 const backendReady = ref(false);
-
-const apiClient = axios.create({
-  baseURL: "/api/v1",
-  withCredentials: false,
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-});
 
 export function useBackendReady() {
   onMounted(async () => {

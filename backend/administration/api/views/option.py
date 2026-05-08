@@ -7,6 +7,7 @@ from django.http import Http404
 from typing import List
 from utils.apply_patch import apply_patch
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -16,7 +17,7 @@ task_logger = logging.getLogger("task")
 option_router = Router(tags=["Options"])
 
 
-@option_router.patch("/update/{option_id}")
+@option_router.patch("/update/{option_id}", auth=FullAccessAuth())
 def update_option(request, option_id: int, payload: OptionIn):
     """
     The function `update_option` updates the option specified by id,
@@ -103,7 +104,7 @@ def list_options(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@option_router.delete("/delete/{option_id}")
+@option_router.delete("/delete/{option_id}", auth=FullAccessAuth())
 def delete_option(request, option_id: int):
     """
     The function `delete_option` deletes the option specified by id.

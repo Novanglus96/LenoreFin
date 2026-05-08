@@ -19,7 +19,8 @@ def test_health_check(api_client):
 @pytest.mark.django_db
 @pytest.mark.api
 def test_health_check_no_auth(api_client):
-    # The global auth applies to all routes — no auth header should return 401
+    # Health endpoint is public — no auth required
     response = api_client.get("/administration/health/")
 
-    assert response.status_code == 401
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"

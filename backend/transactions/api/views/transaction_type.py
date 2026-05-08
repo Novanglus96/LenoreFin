@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -19,7 +20,7 @@ task_logger = logging.getLogger("task")
 transaction_type_router = Router(tags=["Transaction Types"])
 
 
-@transaction_type_router.put("/update/{transaction_type_id}")
+@transaction_type_router.put("/update/{transaction_type_id}", auth=FullAccessAuth())
 def update_transaction_type(
     request, transaction_type_id: int, payload: TransactionTypeIn
 ):
@@ -135,7 +136,7 @@ def list_transaction_types(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@transaction_type_router.delete("/delete/{transaction_type_id}")
+@transaction_type_router.delete("/delete/{transaction_type_id}", auth=FullAccessAuth())
 def delete_transaction_type(request, transaction_type_id: int):
     """
     The function `delete_transaction_type` deletes the transaction type specified by id.
