@@ -73,12 +73,15 @@ async function deleteAccountFunction(deletedAccount) {
 }
 
 async function updateAccountFunction(updatedAccount) {
-  const updated = {
-    ...updatedAccount,
-    open_date: formatDateToYYYYMMDD(updatedAccount.open_date),
-    due_date: formatDateToYYYYMMDD(updatedAccount.due_date),
-    next_cycle_date: formatDateToYYYYMMDD(updatedAccount.next_cycle_date),
-  };
+  const updated = { ...updatedAccount };
+  if ("open_date" in updatedAccount)
+    updated.open_date = formatDateToYYYYMMDD(updatedAccount.open_date);
+  if ("due_date" in updatedAccount)
+    updated.due_date = formatDateToYYYYMMDD(updatedAccount.due_date);
+  if ("next_cycle_date" in updatedAccount)
+    updated.next_cycle_date = formatDateToYYYYMMDD(
+      updatedAccount.next_cycle_date,
+    );
   try {
     const response = await apiClient.patch(
       "/accounts/update/" + updatedAccount.id,
