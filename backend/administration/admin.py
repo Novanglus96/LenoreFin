@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
 from .models import (
     Option,
     Message,
@@ -103,6 +105,39 @@ class DescriptionHistoryAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
     ordering = ["id"]
 
+
+class RestrictedUserAdmin(UserAdmin):
+    """
+    Readonly-group users can only view and change their own profile.
+    Full Access users and superusers retain normal UserAdmin behaviour.
+    """
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser or request.user.groups.filter(name="Full Access").exists():
+            return qs
+        return qs.filter(pk=request.user.pk)
+
+    def has_add_permission(self, request):
+        if request.user.is_superuser or request.user.groups.filter(name="Full Access").exists():
+            return super().has_add_permission(request)
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.groups.filter(name="Full Access").exists():
+            return super().has_delete_permission(request, obj)
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        if request.user.is_superuser or request.user.groups.filter(name="Full Access").exists():
+            return super().has_change_permission(request, obj)
+        return obj.pk == request.user.pk
+
+
+admin.site.unregister(User)
+admin.site.register(User, RestrictedUserAdmin)
 
 admin.site.register(Option, OptionAdmin)
 admin.site.register(Payee, PayeeAdmin)
