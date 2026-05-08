@@ -1,3 +1,10 @@
+# [1.3.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.4...v1.3.0-alpha.5) (2026-05-08)
+
+
+### Bug Fixes
+
+* correct GITHUB_ENV writes in Compute project identifiers step ([#75](https://github.com/Novanglus96/LenoreFin/issues/75)) ([3000669](https://github.com/Novanglus96/LenoreFin/commit/3000669291114b5d5da816863bb4faf20723f4b1))
+
 # [1.3.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.3...v1.3.0-alpha.4) (2026-05-08)
 
 
