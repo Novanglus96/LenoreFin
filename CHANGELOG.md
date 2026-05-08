@@ -1,3 +1,10 @@
+# [1.3.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.5...v1.3.0-alpha.6) (2026-05-08)
+
+
+### Bug Fixes
+
+* restore csrf=False on auth classes broken by django-ninja 1.6 upgrade ([#77](https://github.com/Novanglus96/LenoreFin/issues/77)) ([c8f5edd](https://github.com/Novanglus96/LenoreFin/commit/c8f5eddfac98912661ddb4e2c6c54d38deb12367))
+
 # [1.3.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.4...v1.3.0-alpha.5) (2026-05-08)
 
 
