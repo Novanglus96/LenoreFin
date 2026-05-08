@@ -17,6 +17,7 @@
             @click="showConfirmDelete = true"
             size="small"
             variant="text"
+            v-if="authStore.isFullAccess"
           >
             delete
           </v-btn>
@@ -48,6 +49,7 @@
             @click="canEdit = true"
             size="small"
             variant="text"
+            v-if="authStore.isFullAccess"
           >
             edit
           </v-btn>
@@ -210,11 +212,13 @@
 <script setup>
   import { defineProps, watchEffect, onMounted, ref, defineEmits } from "vue";
   import { useField, useForm } from "vee-validate";
+  import { useAuthStore } from "@/stores/auth";
   import { useTags } from "@/composables/tagsComposable";
   import { useRepeats } from "@/composables/repeatsComposable";
   import { useBudgets } from "@/composables/budgetsComposable";
 
   const emit = defineEmits(["updateDialog"]);
+  const authStore = useAuthStore();
   const { tags: tag_items, isLoading: tags_isLoading } = useTags();
   const { repeats, isLoading: repeats_isLoading } = useRepeats();
   const { addBudget, removeBudget, editBudget } = useBudgets();

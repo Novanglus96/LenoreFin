@@ -11,6 +11,7 @@
         :disabled="isActive"
         @click="showOptions = true"
         variant="plain"
+        v-if="authStore.isFullAccess"
       ></v-btn>
       <v-dialog width="300" v-model="showOptions">
         <v-card>
@@ -80,6 +81,7 @@
 </template>
 <script setup>
   import { ref, computed, watch } from "vue";
+  import { useAuthStore } from "@/stores/auth";
   import {
     Chart as ChartJS,
     CategoryScale,
@@ -98,6 +100,7 @@
   import { useOptions } from "@/composables/optionsComposable";
   import { useAccounts } from "@/composables/accountsComposable";
 
+  const authStore = useAuthStore();
   const { options: appOptions, editOptions } = useOptions();
   const { accounts, isLoading: accounts_isLoading } = useAccounts();
   const showOptions = ref(false);

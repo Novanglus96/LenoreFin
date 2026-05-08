@@ -15,6 +15,7 @@
                 size="small"
                 variant="text"
                 @click="tagAddFormDialog = true"
+                v-if="authStore.isFullAccess"
               >
                 Add Tag
               </v-btn>
@@ -115,9 +116,11 @@
   import { useTags } from "@/composables/tagsComposable";
   import TagForm from "@/components/TagForm.vue";
   import { useDisplay } from "vuetify";
+  import { useAuthStore } from "@/stores/auth";
 
   const tagAddFormDialog = ref(false);
   const emit = defineEmits(["tagSelected"]);
+  const authStore = useAuthStore();
   const tag_selected = ref(null);
   const { tags, isLoading } = useTags();
   const { smAndDown } = useDisplay();

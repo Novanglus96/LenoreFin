@@ -47,7 +47,7 @@
         no-data-text="No transactions!"
         loading-text="Loading transactions..."
         disable-sort
-        :show-select="props.variant === 'account'"
+        :show-select="props.variant === 'account' && authStore.isFullAccess"
         fixed-footer
         striped="odd"
         density="compact"

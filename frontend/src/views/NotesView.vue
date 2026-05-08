@@ -4,7 +4,7 @@
       <v-card variant="outlined" :elevation="4" class="bg-surface">
         <v-card-title class="text-left">
           <span class="text-subtitle-2 text-primary">Notes</span>
-          <v-tooltip text="Add Note" location="top">
+          <v-tooltip text="Add Note" location="top" v-if="authStore.isFullAccess">
             <template v-slot:activator="{ props }">
               <v-btn
                 icon="mdi-note-plus"
@@ -44,7 +44,7 @@
             no-data-text="No notes!"
             loading-text="Loading notes..."
             disable-sort
-            :show-select="true"
+            :show-select="authStore.isFullAccess"
             fixed-footer
             striped="odd"
             density="compact"
@@ -58,33 +58,35 @@
           >
             <template v-slot:top>
               <div class="d-flex align-center">
-                <v-btn
-                  variant="plain"
-                  icon
-                  @click="editNoteDialog = true"
-                  :disabled="selectedNote.length === 0"
-                >
-                  <v-icon icon="mdi-pencil"></v-icon>
-                </v-btn>
-                <NoteForm
-                  v-model="editNoteDialog"
-                  :key="editedNote ? editedNote.id : 0"
-                  :isEdit="true"
-                  @update-dialog="updateEditDialog"
-                  :passedFormData="editedNote"
-                  @edit-note="clickEditNote"
-                />
-                <v-btn
-                  variant="plain"
-                  icon
-                  :disabled="selectedNote.length === 0"
-                >
-                  <v-icon
-                    icon="mdi-delete"
-                    @click="deleteNoteDialog = true"
-                    color="error"
-                  ></v-icon>
-                </v-btn>
+                <template v-if="authStore.isFullAccess">
+                  <v-btn
+                    variant="plain"
+                    icon
+                    @click="editNoteDialog = true"
+                    :disabled="selectedNote.length === 0"
+                  >
+                    <v-icon icon="mdi-pencil"></v-icon>
+                  </v-btn>
+                  <NoteForm
+                    v-model="editNoteDialog"
+                    :key="editedNote ? editedNote.id : 0"
+                    :isEdit="true"
+                    @update-dialog="updateEditDialog"
+                    :passedFormData="editedNote"
+                    @edit-note="clickEditNote"
+                  />
+                  <v-btn
+                    variant="plain"
+                    icon
+                    :disabled="selectedNote.length === 0"
+                  >
+                    <v-icon
+                      icon="mdi-delete"
+                      @click="deleteNoteDialog = true"
+                      color="error"
+                    ></v-icon>
+                  </v-btn>
+                </template>
                 <v-dialog
                   v-model="deleteNoteDialog"
                   :key="editedNote ? editedNote.id : 0"
@@ -137,10 +139,12 @@
   import { useNotes } from "@/composables/notesComposable";
   import NoteForm from "@/components/NoteForm.vue";
   import { useDisplay } from "vuetify";
+  import { useAuthStore } from "@/stores/auth";
 
   const page = ref(1);
   const itemsPerPage = ref(10);
   const { mdAndUp } = useDisplay();
+  const authStore = useAuthStore();
   const editedNote = ref({ id: 0 });
 
   const { notes, addNote, removeNote, editNote, isLoading } = useNotes();
