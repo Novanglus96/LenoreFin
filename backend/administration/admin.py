@@ -150,6 +150,8 @@ class GraphTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
     ordering = ["id"]
 
+    readonly_fields = ["slug"]
+
     def has_delete_permission(self, request, obj=None):
         if obj is not None and obj.is_system:
             return False

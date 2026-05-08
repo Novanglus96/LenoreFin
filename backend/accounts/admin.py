@@ -12,6 +12,8 @@ class AccountTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
     ordering = ["account_type"]
 
+    readonly_fields = ["slug"]
+
     def has_delete_permission(self, request, obj=None):
         if obj is not None and obj.is_system:
             return False

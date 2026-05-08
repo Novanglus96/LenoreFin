@@ -24,6 +24,12 @@ class SystemObjectMixin(models.Model):
         return slug
 
     def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                stored_slug = type(self).objects.values_list("slug", flat=True).get(pk=self.pk)
+                self.slug = stored_slug
+            except type(self).DoesNotExist:
+                pass
         if not self.slug:
             self.slug = self._generate_unique_slug()
         super().save(*args, **kwargs)

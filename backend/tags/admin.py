@@ -14,6 +14,8 @@ class MainTagAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
     list_filter = ["tag_type__tag_type"]
 
+    readonly_fields = ["slug"]
+
     search_fields = []
 
     def has_delete_permission(self, request, obj=None):
@@ -33,6 +35,8 @@ class SubTagAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     ordering = ["tag_name"]
 
     list_filter = ["tag_type__tag_type"]
+
+    readonly_fields = ["slug"]
 
     search_fields = []
 
@@ -54,6 +58,8 @@ class TagAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
     list_filter = ["parent", "child", "tag_type"]
 
+    readonly_fields = ["slug"]
+
     search_fields = ["parent", "child"]
 
     def has_delete_permission(self, request, obj=None):
@@ -71,6 +77,8 @@ class TagTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     list_display_links = ["tag_type"]
 
     ordering = ["id"]
+
+    readonly_fields = ["slug"]
 
     def has_delete_permission(self, request, obj=None):
         if obj is not None and obj.is_system:
