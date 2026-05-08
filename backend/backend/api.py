@@ -42,7 +42,7 @@ from planning.api.routers.budget import budget_router
 from planning.api.routers.retirement import retirement_router
 from administration.api.routers.health import health_router
 
-api = NinjaAPI(auth=SessionAuth(), csrf=False)
+api = NinjaAPI(auth=SessionAuth())
 api.title = "LenoreFin API"
 api.version = get_version()
 api.description = "API documentation for LenoreFin"
