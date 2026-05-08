@@ -1,3 +1,11 @@
+# [1.3.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.2...v1.3.0-alpha.3) (2026-05-08)
+
+
+### Bug Fixes
+
+* correct budget percentage calculation when rollover produces negative starting balance ([#67](https://github.com/Novanglus96/LenoreFin/issues/67)) ([e4ffc23](https://github.com/Novanglus96/LenoreFin/commit/e4ffc23c83594ee7496fa3f7bbbd4082da7fd930))
+* correct budget percentage calculation when rollover produces negative starting balance ([#68](https://github.com/Novanglus96/LenoreFin/issues/68)) ([29e942a](https://github.com/Novanglus96/LenoreFin/commit/29e942a268fd474bbc6dbad20f6e1cf2919a0550))
+
 # [1.3.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.1...v1.3.0-alpha.2) (2026-05-08)
 
 
