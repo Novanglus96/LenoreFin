@@ -168,3 +168,35 @@ def test_delete_budget_not_found(api_client):
     response = api_client.delete("/planning/budget/delete/9999", headers=AUTH)
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_list_budgets_negative_rollover_is_fully_over(api_client, test_repeat):
+    """When rollover debt exceeds the period budget, used_percentage must be 100."""
+    from planning.models import Budget
+    from django.utils import timezone
+    import pytz
+
+    today = timezone.now().astimezone(pytz.timezone("America/New_York")).date()
+    Budget.objects.create(
+        tag_ids="[]",
+        name="Negative Rollover Budget",
+        amount=100.00,
+        roll_over=True,
+        repeat=test_repeat,
+        start_day=today,
+        roll_over_amt=-150.00,  # overspent $150 last period → budget_total = -$50
+        active=True,
+        widget=True,
+        next_start=today,
+    )
+
+    response = api_client.get("/planning/budget/list", headers=AUTH)
+    assert response.status_code == 200
+
+    budget = next(
+        b for b in response.json() if b["budget"]["name"] == "Negative Rollover Budget"
+    )
+    assert budget["used_percentage"] == 100
+    assert budget["remaining_percentage"] == 0
