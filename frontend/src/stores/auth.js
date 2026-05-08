@@ -32,6 +32,8 @@ export const useAuthStore = defineStore("auth", () => {
   async function logout() {
     try {
       await apiClient.post("/auth/logout");
+    } catch {
+      // session may already be expired; clear local state regardless
     } finally {
       user.value = null;
     }

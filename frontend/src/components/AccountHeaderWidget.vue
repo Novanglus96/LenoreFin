@@ -36,6 +36,13 @@
                     </span>
                   </template>
                 </v-tooltip>
+                <span class="mx-1" v-else>
+                  {{
+                    account.active
+                      ? account.account_name
+                      : account.account_name + " (Inactive)"
+                  }}
+                </span>
                 <EditAccountForm
                   v-model="editDialog"
                   :account="account"

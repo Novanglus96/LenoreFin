@@ -126,6 +126,16 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.meta.public) {
+    if (to.name === "login") {
+      const { useAuthStore } = await import("@/stores/auth");
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) {
+        await authStore.fetchCurrentUser();
+      }
+      if (authStore.isAuthenticated) {
+        return next(to.query.redirect || "/");
+      }
+    }
     return next();
   }
 

@@ -3,7 +3,9 @@
     <v-row align="center" justify="center">
       <v-col cols="12" sm="8" md="4">
         <v-card class="pa-6" elevation="4" rounded="lg">
-          <v-card-title class="text-h5 text-center mb-4">LenoreFin</v-card-title>
+          <div class="d-flex justify-center mb-4">
+            <v-img src="/logov2.png" max-width="150" />
+          </div>
 
           <v-form @submit.prevent="handleLogin">
             <v-text-field

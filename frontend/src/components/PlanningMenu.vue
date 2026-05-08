@@ -35,11 +35,13 @@
   import { useRouter } from "vue-router";
   import { useTransactionsStore } from "@/stores/transactions";
   import { useDisplay } from "vuetify";
+  import { useAuthStore } from "@/stores/auth";
 
   const { smAndDown } = useDisplay();
   const isMobile = smAndDown;
 
   const transactions_store = useTransactionsStore();
+  const authStore = useAuthStore();
   const router = useRouter();
   const app_personal = computed(() => process.env.VUE_APP_PERSONAL === "true");
 
@@ -102,6 +104,7 @@
 
   const filteredPlanningMenu = computed(() =>
     planning_menu.value.filter(item => {
+      if (item.link === "/planning/calculator" && !authStore.isFullAccess) return false;
       return (item.personal && app_personal) || !item.personal;
     }),
   );

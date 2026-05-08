@@ -4,6 +4,7 @@ import { useMainStore } from "@/stores/main";
 import { onUnmounted } from "vue";
 
 function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   if (error.response) {
     console.error("Response error:", error.response.data);

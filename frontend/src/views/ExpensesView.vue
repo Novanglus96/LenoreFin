@@ -9,6 +9,7 @@
           :disabled="isLoading"
           @click="showOptions = true"
           variant="plain"
+          v-if="authStore.isFullAccess"
         ></v-btn>
         <v-dialog width="300" v-model="showOptions">
           <v-card>
@@ -133,6 +134,7 @@
 </template>
 <script setup>
   import { ref, watch } from "vue";
+  import { useAuthStore } from "@/stores/auth";
   import ReportGraphWidget from "@/components/ReportGraphWidget.vue";
   import ReportTableWidget from "@/components/ReportTableWidget.vue";
   import { useExpenseGraph } from "@/composables/planningGraphComposable";
@@ -140,6 +142,7 @@
   import { useOptions } from "@/composables/optionsComposable";
   import { useParentTags } from "@/composables/tagsComposable";
 
+  const authStore = useAuthStore();
   const { options: appOptions, editOptions } = useOptions();
   const { expense_graph: expenses, isLoading } = useExpenseGraph();
   const { parent_tags, isLoading: parent_tags_isLoading } = useParentTags(1);

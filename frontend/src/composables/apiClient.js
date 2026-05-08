@@ -10,7 +10,11 @@ const apiClient = axios.create({
 apiClient.interceptors.response.use(
   response => response,
   error => {
-    if (error.response?.status === 401) {
+    const is401 = error.response?.status === 401;
+    const isAuthCheck = error.config?.url?.includes("/auth/me");
+    const alreadyOnLogin = router.currentRoute.value.name === "login";
+
+    if (is401 && !isAuthCheck && !alreadyOnLogin) {
       const currentPath = router.currentRoute.value.fullPath;
       router.push({ name: "login", query: { redirect: currentPath } });
     }

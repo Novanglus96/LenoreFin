@@ -9,6 +9,7 @@ import { useMainStore } from "@/stores/main";
 import { useTransactionsStore } from "@/stores/transactions";
 
 function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   if (error.response) {
     console.error("Response error:", error.response.data);

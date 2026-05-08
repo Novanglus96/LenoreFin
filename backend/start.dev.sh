@@ -8,9 +8,10 @@ python manage.py collectstatic --no-input
 if [ "$DJANGO_SUPERUSER_USERNAME" ]; then
     (python manage.py createsuperuser \
         --noinput \
-        --username $DJANGO_SUPERUSER_USERNAME \
-        --email $DJANGO_SUPERUSER_EMAIL) ||
+        --username "$DJANGO_SUPERUSER_USERNAME" \
+        --email "$DJANGO_SUPERUSER_EMAIL") ||
         true
+    python manage.py assign_superuser_group
 fi
 
 python manage.py loaddata accounts/fixtures/account_types

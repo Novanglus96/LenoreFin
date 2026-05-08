@@ -4,7 +4,7 @@
       <span class="text-subtitle-2 text-primary">
         Per Paycheck Contribution Rules
       </span>
-      <v-tooltip text="Add Contribution" location="top">
+      <v-tooltip text="Add Contribution" location="top" v-if="authStore.isFullAccess">
         <template v-slot:activator="{ props }">
           <v-btn
             icon="mdi-pail-plus"
@@ -154,51 +154,53 @@
         </template>
         <template v-slot:top>
           <div class="d-flex align-center">
-            <v-btn
-              variant="plain"
-              icon
-              @click="editContributionDialog = true"
-              :disabled="selectedContribution.length === 0"
-            >
-              <v-icon icon="mdi-pencil"></v-icon>
-            </v-btn>
-            <ContributionForm
-              v-model="editContributionDialog"
-              :key="editContrib ? editContrib.id : 0"
-              :isEdit="true"
-              @update-dialog="updateEditDialog"
-              :passedFormData="editContrib"
-              @edit-contribution="clickEditContribution"
-            />
-            <v-btn
-              variant="plain"
-              icon
-              :disabled="selectedContribution.length === 0"
-            >
-              <v-icon
-                icon="mdi-delete"
-                @click="deleteContributionDialog = true"
-                color="error"
-              ></v-icon>
-            </v-btn>
-            <v-dialog
-              v-model="deleteContributionDialog"
-              :key="editContrib ? editContrib.id : 0"
-              width="400"
-            >
-              <v-card>
-                <v-card-title>Delete Contribution?</v-card-title>
-                <v-card-text>
-                  <span>{{ editContrib.contribution }}</span>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn @click="deleteContributionDialog = false">Close</v-btn>
-                  <v-btn @click="clickDeleteContribution(editContrib)">
-                    Delete
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
+            <template v-if="authStore.isFullAccess">
+              <v-btn
+                variant="plain"
+                icon
+                @click="editContributionDialog = true"
+                :disabled="selectedContribution.length === 0"
+              >
+                <v-icon icon="mdi-pencil"></v-icon>
+              </v-btn>
+              <ContributionForm
+                v-model="editContributionDialog"
+                :key="editContrib ? editContrib.id : 0"
+                :isEdit="true"
+                @update-dialog="updateEditDialog"
+                :passedFormData="editContrib"
+                @edit-contribution="clickEditContribution"
+              />
+              <v-btn
+                variant="plain"
+                icon
+                :disabled="selectedContribution.length === 0"
+              >
+                <v-icon
+                  icon="mdi-delete"
+                  @click="deleteContributionDialog = true"
+                  color="error"
+                ></v-icon>
+              </v-btn>
+              <v-dialog
+                v-model="deleteContributionDialog"
+                :key="editContrib ? editContrib.id : 0"
+                width="400"
+              >
+                <v-card>
+                  <v-card-title>Delete Contribution?</v-card-title>
+                  <v-card-text>
+                    <span>{{ editContrib.contribution }}</span>
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-btn @click="deleteContributionDialog = false">Close</v-btn>
+                    <v-btn @click="clickDeleteContribution(editContrib)">
+                      Delete
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </template>
           </div>
         </template>
         <template v-slot:[`header.per_paycheck`] v-if="mdAndUp">
@@ -329,10 +331,12 @@
   import ContributionForm from "@/components/ContributionForm.vue";
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
+  import { useAuthStore } from "@/stores/auth";
 
   const page = ref(1);
   const itemsPerPage = ref(5);
   const { smAndDown, mdAndUp } = useDisplay();
+  const authStore = useAuthStore();
   const editContributionDialog = ref(false);
   const addContributionDialog = ref(false);
   const deleteContributionDialog = ref(false);

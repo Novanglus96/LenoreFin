@@ -253,6 +253,8 @@
 
   async function handleLogout() {
     await authStore.logout();
-    router.push({ name: "login" });
+    // Full page reload clears all SPA state and bfcache — ensures
+    // the back button cannot restore an authenticated page after logout.
+    window.location.href = "/login";
   }
 </script>
