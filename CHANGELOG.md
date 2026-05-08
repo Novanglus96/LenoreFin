@@ -1,3 +1,10 @@
+# [1.3.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.3...v1.3.0-alpha.4) (2026-05-08)
+
+
+### Bug Fixes
+
+* disabling an account no longer wipes open_date ([#74](https://github.com/Novanglus96/LenoreFin/issues/74)) ([4dec53a](https://github.com/Novanglus96/LenoreFin/commit/4dec53af855c81f82fa762abb35e11d132b79338))
+
 # [1.3.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.2...v1.3.0-alpha.3) (2026-05-08)
 
 
