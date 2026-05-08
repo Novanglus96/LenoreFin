@@ -1,3 +1,10 @@
+# [1.3.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.1...v1.3.0-alpha.2) (2026-05-08)
+
+
+### Bug Fixes
+
+* auth post-login bugs — superuser group, logout, 401 race ([#66](https://github.com/Novanglus96/LenoreFin/issues/66)) ([b2db4a0](https://github.com/Novanglus96/LenoreFin/commit/b2db4a0b2e8cd8be699b1e4d43a8826e42dfaf1d))
+
 # [1.3.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0...v1.3.0-alpha.1) (2026-05-08)
 
 
