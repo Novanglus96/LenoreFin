@@ -96,14 +96,20 @@ def test_me_unauthenticated(api_client):
 @pytest.mark.django_db
 @pytest.mark.api
 def test_logout_success(api_client, full_access_user):
-    with patch("administration.api.views.auth.logout") as mock_logout, \
-         patch(
-             "administration.api.dependencies.auth.SessionAuth.authenticate",
-             return_value=full_access_user,
-         ):
+    with patch("administration.api.views.auth.logout") as mock_logout:
         response = api_client.post("/auth/logout", user=full_access_user)
     assert response.status_code == 200
     assert response.json()["success"] is True
+    mock_logout.assert_called_once()
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_logout_unauthenticated_still_clears_session(api_client):
+    """Logout with no session should still return 200 — auth=None makes it always reachable."""
+    with patch("administration.api.views.auth.logout") as mock_logout:
+        response = api_client.post("/auth/logout")
+    assert response.status_code == 200
     mock_logout.assert_called_once()
 
 

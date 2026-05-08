@@ -39,9 +39,10 @@ def auth_login(request, payload: LoginIn):
     return UserOut(id=user.id, username=user.username, group=_user_group(user))
 
 
-@auth_router.post("/logout", auth=SessionAuth())
+@auth_router.post("/logout", auth=None)
 def auth_logout(request):
-    api_logger.info(f"User logged out: {request.user.username}")
+    if request.user.is_authenticated:
+        api_logger.info(f"User logged out: {request.user.username}")
     logout(request)
     return {"success": True}
 
