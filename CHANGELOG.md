@@ -1,3 +1,10 @@
+# [1.3.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0...v1.3.0-alpha.1) (2026-05-08)
+
+
+### Features
+
+* add session-based auth with group permissions (Full Access / Readonly) ([#65](https://github.com/Novanglus96/LenoreFin/issues/65)) ([85c6e07](https://github.com/Novanglus96/LenoreFin/commit/85c6e07db5a6138f5673b765f2bb2156f9195662))
+
 # [1.2.0](https://github.com/Novanglus96/LenoreFin/compare/v1.1.2...v1.2.0) (2026-05-07)
 
 
