@@ -1,3 +1,10 @@
+# [1.3.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.6...v1.3.0-alpha.7) (2026-05-08)
+
+
+### Bug Fixes
+
+* reminder conversion now updates start_date to next non-excluded date ([#76](https://github.com/Novanglus96/LenoreFin/issues/76)) ([7d6b4ab](https://github.com/Novanglus96/LenoreFin/commit/7d6b4ab1ba1bc2906378041c8c186a3e9dfedb08))
+
 # [1.3.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.5...v1.3.0-alpha.6) (2026-05-08)
 
 
