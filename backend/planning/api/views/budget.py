@@ -194,9 +194,12 @@ def list_budgets(
             budget_total = budget.amount
             if budget.roll_over:
                 budget_total += budget.roll_over_amt
-            if total:
+            if budget_total <= 0:
+                # Negative rollover already exceeds the budget for this period
+                used_percentage = 100
+            elif total:
                 used_percentage = min(
-                    100, round(abs(total) / abs(budget_total) * 100)
+                    100, round(abs(total) / budget_total * 100)
                 )
             else:
                 used_percentage = 0
