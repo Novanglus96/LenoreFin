@@ -135,6 +135,12 @@ class RestrictedUserAdmin(UserAdmin):
             return super().has_change_permission(request, obj)
         return obj.pk == request.user.pk
 
+    def get_readonly_fields(self, request, obj=None):
+        readonly = super().get_readonly_fields(request, obj)
+        if request.user.is_superuser or request.user.groups.filter(name="Full Access").exists():
+            return readonly
+        return list(readonly) + ["is_superuser", "is_staff", "groups", "user_permissions"]
+
 
 admin.site.unregister(User)
 admin.site.register(User, RestrictedUserAdmin)
