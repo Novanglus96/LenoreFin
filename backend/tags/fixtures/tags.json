@@ -3,8 +3,10 @@
         "model": "tags.Tag",
         "pk": "4",
         "fields": {
-            "parent": 24,  
-            "tag_type": 3
+            "parent": 24,
+            "tag_type": 3,
+            "is_system": true,
+            "slug": "balance-adjustment"
         }
     },
     {
@@ -13,7 +15,9 @@
         "fields": {
             "parent": 2,
             "child": 1,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "car--gasoline"
         }
     },
     {
@@ -21,7 +25,9 @@
         "pk": "5",
         "fields": {
             "parent": 2,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "car"
         }
     },
     {
@@ -29,7 +35,9 @@
         "pk": "6",
         "fields": {
             "parent": 3,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "cash"
         }
     },
     {
@@ -37,7 +45,9 @@
         "pk": "7",
         "fields": {
             "parent": 4,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "charity"
         }
     },
     {
@@ -45,7 +55,9 @@
         "pk": "8",
         "fields": {
             "parent": 5,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "christmas"
         }
     },
     {
@@ -53,7 +65,9 @@
         "pk": "9",
         "fields": {
             "parent": 6,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "credit-card"
         }
     },
     {
@@ -62,7 +76,9 @@
         "fields": {
             "parent": 7,
             "child": 2,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "debt--car-payment"
         }
     },
     {
@@ -70,7 +86,9 @@
         "pk": "10",
         "fields": {
             "parent": 7,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "debt"
         }
     },
     {
@@ -78,7 +96,9 @@
         "pk": "11",
         "fields": {
             "parent": 8,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "family"
         }
     },
     {
@@ -86,7 +106,9 @@
         "pk": "14",
         "fields": {
             "parent": 25,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "fsa"
         }
     },
     {
@@ -94,7 +116,9 @@
         "pk": "12",
         "fields": {
             "parent": 9,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "fun"
         }
     },
     {
@@ -102,7 +126,9 @@
         "pk": "13",
         "fields": {
             "parent": 10,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "groceries"
         }
     },
     {
@@ -110,7 +136,9 @@
         "pk": "15",
         "fields": {
             "parent": 26,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "hoa"
         }
     },
     {
@@ -119,7 +147,9 @@
         "fields": {
             "parent": 11,
             "child": 11,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "home--home-insurance"
         }
     },
     {
@@ -128,7 +158,9 @@
         "fields": {
             "parent": 11,
             "child": 12,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "home--property-taxes"
         }
     },
     {
@@ -137,7 +169,9 @@
         "fields": {
             "parent": 11,
             "child": 13,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "home--rent"
         }
     },
     {
@@ -145,7 +179,9 @@
         "pk": "16",
         "fields": {
             "parent": 11,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "home"
         }
     },
     {
@@ -154,7 +190,9 @@
         "fields": {
             "parent": 13,
             "child": 3,
-            "tag_type": 2
+            "tag_type": 2,
+            "is_system": true,
+            "slug": "income--paycheck"
         }
     },
     {
@@ -162,7 +200,9 @@
         "pk": "18",
         "fields": {
             "parent": 15,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "interest-charged"
         }
     },
     {
@@ -170,7 +210,9 @@
         "pk": "19",
         "fields": {
             "parent": 14,
-            "tag_type": 2
+            "tag_type": 2,
+            "is_system": true,
+            "slug": "interest-earned"
         }
     },
     {
@@ -178,7 +220,9 @@
         "pk": "20",
         "fields": {
             "parent": 16,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "investment"
         }
     },
     {
@@ -187,7 +231,9 @@
         "fields": {
             "parent": 17,
             "child": 4,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "kids--child-care"
         }
     },
     {
@@ -196,7 +242,9 @@
         "fields": {
             "parent": 17,
             "child": 6,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "kids--clothes"
         }
     },
     {
@@ -205,7 +253,9 @@
         "fields": {
             "parent": 17,
             "child": 5,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "kids--diapers-wipes"
         }
     },
     {
@@ -214,7 +264,9 @@
         "fields": {
             "parent": 17,
             "child": 7,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "kids--furniture"
         }
     },
     {
@@ -223,7 +275,9 @@
         "fields": {
             "parent": 17,
             "child": 8,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "kids--health"
         }
     },
     {
@@ -232,7 +286,9 @@
         "fields": {
             "parent": 17,
             "child": 9,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "kids--misc"
         }
     },
     {
@@ -241,7 +297,9 @@
         "fields": {
             "parent": 17,
             "child": 10,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "kids--toys-books"
         }
     },
     {
@@ -249,7 +307,9 @@
         "pk": "25",
         "fields": {
             "parent": 17,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "kids"
         }
     },
     {
@@ -257,7 +317,9 @@
         "pk": "29",
         "fields": {
             "parent": 18,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "project"
         }
     },
     {
@@ -265,7 +327,9 @@
         "pk": "31",
         "fields": {
             "parent": 19,
-            "tag_type": 2
+            "tag_type": 2,
+            "is_system": true,
+            "slug": "refund"
         }
     },
     {
@@ -273,7 +337,9 @@
         "pk": "33",
         "fields": {
             "parent": 21,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "subscriptions"
         }
     },
     {
@@ -281,7 +347,9 @@
         "pk": "34",
         "fields": {
             "parent": 1,
-            "tag_type": 3
+            "tag_type": 3,
+            "is_system": true,
+            "slug": "transfer"
         }
     },
     {
@@ -290,7 +358,9 @@
         "fields": {
             "parent": 22,
             "child": 14,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "utilities--electricity"
         }
     },
     {
@@ -299,7 +369,9 @@
         "fields": {
             "parent": 22,
             "child": 15,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "utilities--internet"
         }
     },
     {
@@ -308,7 +380,9 @@
         "fields": {
             "parent": 22,
             "child": 16,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "utilities--natural-gas"
         }
     },
     {
@@ -317,7 +391,9 @@
         "fields": {
             "parent": 22,
             "child": 17,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "utilities--sewer"
         }
     },
     {
@@ -326,7 +402,9 @@
         "fields": {
             "parent": 22,
             "child": 18,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "utilities--water"
         }
     },
     {
@@ -334,7 +412,9 @@
         "pk": "35",
         "fields": {
             "parent": 22,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "utilities"
         }
     },
     {
@@ -342,7 +422,9 @@
         "pk": "41",
         "fields": {
             "parent": 23,
-            "tag_type": 1
+            "tag_type": 1,
+            "is_system": true,
+            "slug": "vacation"
         }
     },
     {
@@ -350,7 +432,9 @@
         "pk": "76",
         "fields": {
             "parent": 13,
-            "tag_type": 2
+            "tag_type": 2,
+            "is_system": true,
+            "slug": "income"
         }
     }
 ]

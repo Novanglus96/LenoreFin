@@ -1,9 +1,10 @@
 from django.db import models
+from core.mixins import SystemObjectMixin
 
 # Create your models here.
 
 
-class TagType(models.Model):
+class TagType(SystemObjectMixin, models.Model):
     """
     Model representing a tag type for categorizing tags.
 
@@ -12,13 +13,15 @@ class TagType(models.Model):
     and must be unique.
     """
 
+    _slug_source_field = "tag_type"
+
     tag_type = models.CharField(max_length=254, unique=True)
 
     def __str__(self):
         return self.tag_type
 
 
-class MainTag(models.Model):
+class MainTag(SystemObjectMixin, models.Model):
     """
     Model representing a tag for categorizing transaction details.
 
@@ -29,6 +32,8 @@ class MainTag(models.Model):
     type of this tag.
     """
 
+    _slug_source_field = "tag_name"
+
     tag_name = models.CharField(max_length=254, unique=True)
     tag_type = models.ForeignKey(
         TagType, on_delete=models.SET_NULL, null=True, blank=True, default=None
@@ -38,7 +43,7 @@ class MainTag(models.Model):
         return self.tag_name
 
 
-class SubTag(models.Model):
+class SubTag(SystemObjectMixin, models.Model):
     """
     Model representing a tag for categorizing transaction details.
 
@@ -49,6 +54,8 @@ class SubTag(models.Model):
     type of this tag.
     """
 
+    _slug_source_field = "tag_name"
+
     tag_name = models.CharField(max_length=254, unique=True)
     tag_type = models.ForeignKey(
         TagType, on_delete=models.SET_NULL, null=True, blank=True, default=None
@@ -58,7 +65,7 @@ class SubTag(models.Model):
         return self.tag_name
 
 
-class Tag(models.Model):
+class Tag(SystemObjectMixin, models.Model):
     """
     Model representing a tag for categorizing transaction details.
 
@@ -81,6 +88,12 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.tag_name
+
+    def _get_slug_base(self):
+        parent_slug = self.parent.slug if self.parent and self.parent.slug else ""
+        if self.child and self.child.slug:
+            return f"{parent_slug}--{self.child.slug}"
+        return parent_slug
 
     @property
     def tag_name(self):

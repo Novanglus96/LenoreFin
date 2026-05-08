@@ -4,6 +4,7 @@ from tags.models import Tag
 from django.core.exceptions import ValidationError
 import pytz
 import os
+from core.mixins import SystemObjectMixin
 
 
 def current_date_time():
@@ -29,13 +30,15 @@ class SingletonModel(models.Model):
         raise ValidationError("You cannot delete this object")
 
 
-class GraphType(models.Model):
+class GraphType(SystemObjectMixin, models.Model):
     """
     Model representing a graph type.
 
     Fields:
     - graph_type (CharField): The name of the graph type.
     """
+
+    _slug_source_field = "graph_type"
 
     graph_type = models.CharField(max_length=25, unique=True)
 

@@ -157,6 +157,8 @@ def delete_transaction_status(request, transactionstatus_id: int):
         transaction_status = get_object_or_404(
             TransactionStatus, id=transactionstatus_id
         )
+        if transaction_status.is_system:
+            raise HttpError(403, "Cannot delete a system object")
         transaction_status_name = transaction_status.transaction_status
         transaction_status.delete()
         api_logger.info(
@@ -165,6 +167,8 @@ def delete_transaction_status(request, transactionstatus_id: int):
         return {"success": True}
     except Http404:
         raise HttpError(404, "Transaction status not found")
+    except HttpError:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction status not deleted")

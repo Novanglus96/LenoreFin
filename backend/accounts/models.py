@@ -4,6 +4,7 @@ import pytz
 import os
 from django.core.exceptions import ValidationError
 from model_utils import FieldTracker
+from core.mixins import SystemObjectMixin
 
 
 def current_date():
@@ -16,7 +17,7 @@ def current_date():
 # Create your models here.
 
 
-class AccountType(models.Model):
+class AccountType(SystemObjectMixin, models.Model):
     """
     Model representing an account type for categorizing accounts.
 
@@ -27,6 +28,8 @@ class AccountType(models.Model):
     - icon (CharField): The icon associciated with accounts of this type, limited to 25
     characters.
     """
+
+    _slug_source_field = "account_type"
 
     account_type = models.CharField(max_length=254, unique=True)
     color = models.CharField(max_length=7, default="#059669")
