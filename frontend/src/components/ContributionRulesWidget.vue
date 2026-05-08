@@ -4,7 +4,7 @@
       <span class="text-subtitle-2 text-primary">
         Per Paycheck Overage Rules
       </span>
-      <v-tooltip text="Add Overage Rule" location="top">
+      <v-tooltip text="Add Overage Rule" location="top" v-if="authStore.isFullAccess">
         <template v-slot:activator="{ props }">
           <v-btn
             icon="mdi-water-plus"
@@ -44,7 +44,7 @@
         no-data-text="No rules!"
         loading-text="Loading rules..."
         disable-sort
-        :show-select="true"
+        :show-select="authStore.isFullAccess"
         fixed-footer
         striped="odd"
         density="compact"
@@ -59,53 +59,55 @@
       >
         <template v-slot:top>
           <div class="d-flex align-center">
-            <v-btn
-              variant="plain"
-              icon
-              @click="editContributionRuleDialog = true"
-              :disabled="selectedContributionRule.length === 0"
-            >
-              <v-icon icon="mdi-pencil"></v-icon>
-            </v-btn>
-            <ContributionRuleForm
-              v-model="editContributionRuleDialog"
-              :key="editRule ? editRule.id : 0"
-              :isEdit="true"
-              @update-dialog="updateEditDialog"
-              :passedFormData="editRule"
-              @edit-contribution-rule="clickEditContributionRule"
-            />
-            <v-btn
-              variant="plain"
-              icon
-              :disabled="selectedContributionRule.length == 0"
-            >
-              <v-icon
-                icon="mdi-delete"
-                @click="deleteContributionRuleDialog = true"
-                color="error"
-              ></v-icon>
-            </v-btn>
-            <v-dialog
-              v-model="deleteContributionRuleDialog"
-              :key="editRule ? editRule.id : 0"
-              width="400"
-            >
-              <v-card>
-                <v-card-title>Delete Rule?</v-card-title>
-                <v-card-text>
-                  <span>{{ editRule.rule }}</span>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn @click="deleteContributionRuleDialog = false">
-                    Close
-                  </v-btn>
-                  <v-btn @click="clickDeleteContributionRule(editRule)">
-                    Delete
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
+            <template v-if="authStore.isFullAccess">
+              <v-btn
+                variant="plain"
+                icon
+                @click="editContributionRuleDialog = true"
+                :disabled="selectedContributionRule.length === 0"
+              >
+                <v-icon icon="mdi-pencil"></v-icon>
+              </v-btn>
+              <ContributionRuleForm
+                v-model="editContributionRuleDialog"
+                :key="editRule ? editRule.id : 0"
+                :isEdit="true"
+                @update-dialog="updateEditDialog"
+                :passedFormData="editRule"
+                @edit-contribution-rule="clickEditContributionRule"
+              />
+              <v-btn
+                variant="plain"
+                icon
+                :disabled="selectedContributionRule.length == 0"
+              >
+                <v-icon
+                  icon="mdi-delete"
+                  @click="deleteContributionRuleDialog = true"
+                  color="error"
+                ></v-icon>
+              </v-btn>
+              <v-dialog
+                v-model="deleteContributionRuleDialog"
+                :key="editRule ? editRule.id : 0"
+                width="400"
+              >
+                <v-card>
+                  <v-card-title>Delete Rule?</v-card-title>
+                  <v-card-text>
+                    <span>{{ editRule.rule }}</span>
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-btn @click="deleteContributionRuleDialog = false">
+                      Close
+                    </v-btn>
+                    <v-btn @click="clickDeleteContributionRule(editRule)">
+                      Delete
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </template>
           </div>
         </template>
         <template v-slot:bottom>
@@ -174,10 +176,12 @@
   import { useContributionRules } from "@/composables/contributionsComposable";
   import ContributionRuleForm from "@/components/ContributionRuleForm.vue";
   import { useDisplay } from "vuetify";
+  import { useAuthStore } from "@/stores/auth";
 
   const page = ref(1);
   const itemsPerPage = ref(3);
   const { mdAndUp } = useDisplay();
+  const authStore = useAuthStore();
   const editRule = ref({ id: 0 });
   const editContributionRuleDialog = ref(false);
   const addContributionRuleDialog = ref(false);
