@@ -5,6 +5,9 @@ from ninja.errors import HttpError
 class SessionAuth(NinjaSessionAuth):
     """Requires an authenticated Django session."""
 
+    def __init__(self):
+        super().__init__(csrf=False)
+
     def authenticate(self, request, token):
         if request.user.is_authenticated:
             return request.user
@@ -13,6 +16,9 @@ class SessionAuth(NinjaSessionAuth):
 
 class FullAccessAuth(NinjaSessionAuth):
     """Requires an authenticated session AND membership in the Full Access group."""
+
+    def __init__(self):
+        super().__init__(csrf=False)
 
     def authenticate(self, request, token):
         if not request.user.is_authenticated:
