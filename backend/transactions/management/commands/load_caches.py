@@ -43,7 +43,7 @@ class Command(BaseCommand):
 
         # Recreate Forecast Cache for all CC Accounts
         task_logger.info("Recreating forecast cache for all CC accounts")
-        for account in Account.objects.filter(account_type_id=1):
+        for account in Account.objects.filter(account_type__slug='credit-card'):
             task_logger.debug(f"Loading cache for account #{account.id}")
             update_cc_forecast_cache(account.id)
 

@@ -42,7 +42,7 @@ def get_reminder_transaction_list(
         reminders = Reminder.objects.filter(
             reminder_source_account_id=transfer_ids[0],
             reminder_destination_account_id=transfer_ids[1],
-            transaction_type_id=3,
+            transaction_type__slug='transfer',
             next_date__lte=end_date,
         )
     else:
@@ -53,7 +53,7 @@ def get_reminder_transaction_list(
         )
 
     # Get a Pending status object
-    status = TransactionStatus.objects.get(id=1)
+    status = TransactionStatus.objects.get(slug='pending')
 
     # Create temporary transactions based on reminders
     for reminder in reminders:
@@ -68,7 +68,7 @@ def get_reminder_transaction_list(
         source_account_name = reminder.reminder_source_account.account_name
         pretty_account = source_account_name
         pretty_total = reminder.amount
-        if reminder.transaction_type.id == 3:
+        if reminder.transaction_type.slug == 'transfer':
             pretty_account = (
                 source_account_name + " => " + destination_account_name
             )
@@ -76,9 +76,9 @@ def get_reminder_transaction_list(
                 pretty_total = -abs(reminder.amount)
             else:
                 pretty_total = abs(reminder.amount)
-        if reminder.transaction_type.id == 1:
+        if reminder.transaction_type.slug == 'expense':
             pretty_total = -abs(reminder.amount)
-        if reminder.transaction_type.id == 2:
+        if reminder.transaction_type.slug == 'income':
             pretty_total = abs(reminder.amount)
         repeat = Repeat.objects.get(id=reminder.repeat.id)
         tags = []

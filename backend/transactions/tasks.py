@@ -11,6 +11,7 @@ from transactions.models import (
     ReminderCacheTransaction,
     ForecastCacheTransaction,
     TransactionStatus,
+    TransactionType,
 )
 from tags.api.dependencies.custom_tag import CustomTag
 from transactions.api.dependencies.create_transactions import (
@@ -118,6 +119,7 @@ def convert_reminder():
 
     # Add transactions and modify next date
     if reminders and len(reminders) > 0:
+        pending_status_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='pending')
         for reminder in reminders:
             if reminder.auto_add:
                 if not ReminderExclusion.objects.filter(
@@ -141,7 +143,7 @@ def convert_reminder():
                     transaction = FullTransaction(
                         transaction_date=todayDate,
                         total_amount=reminder.amount,
-                        status_id=1,
+                        status_id=pending_status_id,
                         memo=reminder.memo,
                         description=reminder.description,
                         edit_date=todayDate,
@@ -480,7 +482,7 @@ def archive_transactions():
     """
     try:
         # Load archive options
-        options = Option.objects.get(id=1)
+        options = Option.load()
 
         if options.auto_archive:
             # Set variables
@@ -494,7 +496,8 @@ def archive_transactions():
             transactions = Transaction.objects.filter(
                 transaction_date__lte=cutoff_date
             )
-            transactions.update(status_id=4)
+            archived_status_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='archived')
+            transactions.update(status_id=archived_status_id)
 
             # For each account, update archive balance with the sum of all
             # archived transactions
@@ -503,18 +506,18 @@ def archive_transactions():
             source_balance_subquery = (
                 Transaction.objects.filter(
                     source_account_id=OuterRef("pk"),
-                    status_id=4,
+                    status__slug='archived',
                 )
                 .annotate(
                     pretty_total=Case(
                         When(
-                            transaction_type_id=2, then=Abs(F("total_amount"))
+                            transaction_type__slug='income', then=Abs(F("total_amount"))
                         ),
                         When(
-                            transaction_type_id=1, then=-Abs(F("total_amount"))
+                            transaction_type__slug='expense', then=-Abs(F("total_amount"))
                         ),
                         When(
-                            transaction_type_id=3,
+                            transaction_type__slug='transfer',
                             then=Case(
                                 When(
                                     source_account_id=OuterRef("pk"),
@@ -546,18 +549,18 @@ def archive_transactions():
             destination_balance_subquery = (
                 Transaction.objects.filter(
                     destination_account_id=OuterRef("pk"),
-                    status_id=4,
+                    status__slug='archived',
                 )
                 .annotate(
                     pretty_total=Case(
                         When(
-                            transaction_type_id=2, then=Abs(F("total_amount"))
+                            transaction_type__slug='income', then=Abs(F("total_amount"))
                         ),
                         When(
-                            transaction_type_id=1, then=-Abs(F("total_amount"))
+                            transaction_type__slug='expense', then=-Abs(F("total_amount"))
                         ),
                         When(
-                            transaction_type_id=3,
+                            transaction_type__slug='transfer',
                             then=Case(
                                 When(
                                     destination_account_id=OuterRef("pk"),
@@ -676,6 +679,7 @@ def update_reminder_cache(reminder_id):
             months=reminder.repeat.months,
             years=reminder.repeat.years,
         )
+        pending_status_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='pending')
 
         # For no repeat, just enter next transaction
         if delta == relativedelta():
@@ -693,7 +697,7 @@ def update_reminder_cache(reminder_id):
             transaction = FullReminderTransaction(
                 transaction_date=working_date,
                 total_amount=reminder.amount,
-                status_id=1,
+                status_id=pending_status_id,
                 memo=reminder.memo,
                 description=reminder.description,
                 edit_date=today,
@@ -725,7 +729,7 @@ def update_reminder_cache(reminder_id):
                 transaction = FullReminderTransaction(
                     transaction_date=working_date,
                     total_amount=reminder.amount,
-                    status_id=1,
+                    status_id=pending_status_id,
                     memo=reminder.memo,
                     description=reminder.description,
                     edit_date=today,
@@ -803,7 +807,9 @@ def update_cc_forecast_cache(account_id):
         today = get_todays_date_timezone_adjusted()
         end_date = today + relativedelta(years=1)
         temp_id = -10001
-        status = TransactionStatus.objects.get(id=1)
+        status = TransactionStatus.objects.get(slug='pending')
+        expense_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='expense')
+        transfer_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='transfer')
         interest_calculations = account.calculate_interest
         transactions_to_create = []
         statement_day = account.statement_day
@@ -815,13 +821,13 @@ def update_cc_forecast_cache(account_id):
         transactions_qs = Transaction.objects.filter(
             Q(source_account_id=account_id)
             | Q(destination_account_id=account_id)
-        ).exclude(status_id=4)
+        ).exclude(status__slug='archived')
 
         # Get Reminder transactions for this account
         reminder_cache_qs = ReminderCacheTransaction.objects.filter(
             Q(source_account_id=account_id)
             | Q(destination_account_id=account_id)
-        ).exclude(status_id=4)
+        ).exclude(status__slug='archived')
 
         # Annotate pretty totals
         transactions_qs = annotate_transaction_total(
@@ -899,7 +905,7 @@ def update_cc_forecast_cache(account_id):
                                 description=f"({account.account_name} Estimated Interest)",
                                 edit_date=today,
                                 add_date=today,
-                                transaction_type_id=1,
+                                transaction_type_id=expense_type_id,
                                 paycheck_id=None,
                                 source_account_id=account_id,
                                 destination_account_id=None,
@@ -945,7 +951,7 @@ def update_cc_forecast_cache(account_id):
                         description=f"({account.account_name} Estimated Payment)",
                         edit_date=today,
                         add_date=today,
-                        transaction_type_id=3,
+                        transaction_type_id=transfer_type_id,
                         paycheck_id=None,
                         source_account_id=funding_account.id,
                         destination_account_id=account_id,
@@ -1126,15 +1132,15 @@ def annotate_transaction_total(
     all_transactions = transactions.annotate(
         pretty_total=Case(
             When(
-                transaction_type_id=2,
+                transaction_type__slug='income',
                 then=Abs(F("total_amount")),
             ),
             When(
-                transaction_type_id=1,
+                transaction_type__slug='expense',
                 then=-Abs(F("total_amount")),
             ),
             When(
-                transaction_type_id=3,
+                transaction_type__slug='transfer',
                 then=Case(
                     When(
                         source_account_id=account_id,

@@ -18,9 +18,9 @@ def sort_transactions(
     if asc:
         transactions = transactions.annotate(
             custom_order=Case(
-                When(status_id=1, then=Value(2)),
-                When(status_id=2, then=Value(0)),
-                When(status_id=3, then=Value(0)),
+                When(status__slug='pending', then=Value(2)),
+                When(status__slug='cleared', then=Value(0)),
+                When(status__slug='reconciled', then=Value(0)),
                 default=Value(1),
                 output_field=IntegerField(),
             )
@@ -33,9 +33,9 @@ def sort_transactions(
     else:
         transactions = transactions.annotate(
             custom_order=Case(
-                When(status_id=1, then=Value(2)),
-                When(status_id=2, then=Value(0)),
-                When(status_id=3, then=Value(0)),
+                When(status__slug='pending', then=Value(2)),
+                When(status__slug='cleared', then=Value(0)),
+                When(status__slug='reconciled', then=Value(0)),
                 default=Value(1),
                 output_field=IntegerField(),
             )
