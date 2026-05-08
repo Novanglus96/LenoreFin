@@ -18,7 +18,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='maintag',
             name='slug',
-            field=models.SlugField(blank=True, max_length=120, unique=True),
+            field=models.SlugField(blank=True, max_length=120, default=''),
+            preserve_default=False,
         ),
         migrations.AddField(
             model_name='subtag',
@@ -28,7 +29,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='subtag',
             name='slug',
-            field=models.SlugField(blank=True, max_length=120, unique=True),
+            field=models.SlugField(blank=True, max_length=120, default=''),
+            preserve_default=False,
         ),
         migrations.AddField(
             model_name='tag',
@@ -38,7 +40,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tag',
             name='slug',
-            field=models.SlugField(blank=True, max_length=120, unique=True),
+            field=models.SlugField(blank=True, max_length=120, default=''),
+            preserve_default=False,
         ),
         migrations.AddField(
             model_name='tagtype',
@@ -48,6 +51,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tagtype',
             name='slug',
-            field=models.SlugField(blank=True, max_length=120, unique=True),
+            field=models.SlugField(blank=True, max_length=120, default=''),
+            preserve_default=False,
         ),
     ]

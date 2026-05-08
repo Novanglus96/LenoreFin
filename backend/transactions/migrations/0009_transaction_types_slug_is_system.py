@@ -18,7 +18,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactionstatus',
             name='slug',
-            field=models.SlugField(blank=True, max_length=120, unique=True),
+            field=models.SlugField(blank=True, max_length=120, default=''),
+            preserve_default=False,
         ),
         migrations.AddField(
             model_name='transactiontype',
@@ -28,6 +29,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactiontype',
             name='slug',
-            field=models.SlugField(blank=True, max_length=120, unique=True),
+            field=models.SlugField(blank=True, max_length=120, default=''),
+            preserve_default=False,
         ),
     ]

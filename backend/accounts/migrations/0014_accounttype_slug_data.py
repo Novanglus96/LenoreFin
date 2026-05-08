@@ -1,4 +1,4 @@
-from django.db import migrations
+from django.db import migrations, models
 from django.utils.text import slugify
 
 
@@ -23,4 +23,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(populate_accounttype_slugs, migrations.RunPython.noop),
+        migrations.AlterField(
+            model_name="accounttype",
+            name="slug",
+            field=models.SlugField(blank=True, max_length=120, unique=True),
+        ),
     ]

@@ -1,4 +1,4 @@
-from django.db import migrations
+from django.db import migrations, models
 from django.utils.text import slugify
 
 
@@ -42,4 +42,24 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(populate_tag_slugs, migrations.RunPython.noop),
+        migrations.AlterField(
+            model_name="tagtype",
+            name="slug",
+            field=models.SlugField(blank=True, max_length=120, unique=True),
+        ),
+        migrations.AlterField(
+            model_name="maintag",
+            name="slug",
+            field=models.SlugField(blank=True, max_length=120, unique=True),
+        ),
+        migrations.AlterField(
+            model_name="subtag",
+            name="slug",
+            field=models.SlugField(blank=True, max_length=120, unique=True),
+        ),
+        migrations.AlterField(
+            model_name="tag",
+            name="slug",
+            field=models.SlugField(blank=True, max_length=120, unique=True),
+        ),
     ]
