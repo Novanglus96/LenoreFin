@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from typing import List
 from django.http import Http404
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -16,7 +17,7 @@ task_logger = logging.getLogger("task")
 account_type_router = Router(tags=["Account Types"])
 
 
-@account_type_router.post("/create")
+@account_type_router.post("/create", auth=FullAccessAuth())
 def create_account_type(request, payload: AccountTypeIn):
     """
     The function `create_account_type` creates an account type
@@ -108,7 +109,7 @@ def list_account_types(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@account_type_router.put("/update/{accounttype_id}")
+@account_type_router.put("/update/{accounttype_id}", auth=FullAccessAuth())
 def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
     """
     The function `update_account_type` updates the account type specified by id.
@@ -155,7 +156,7 @@ def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
         raise HttpError(500, "Record update error")
 
 
-@account_type_router.delete("/delete/{accounttype_id}")
+@account_type_router.delete("/delete/{accounttype_id}", auth=FullAccessAuth())
 def delete_account_type(request, accounttype_id: int):
     """
     The function `delete_account_type` deletes the account type specified by id.

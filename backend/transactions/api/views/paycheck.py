@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -15,7 +16,7 @@ task_logger = logging.getLogger("task")
 paycheck_router = Router(tags=["Paychecks"])
 
 
-@paycheck_router.post("/create")
+@paycheck_router.post("/create", auth=FullAccessAuth())
 def create_paycheck(request, payload: PaycheckIn):
     """
     The function `create_paycheck` creates a paycheck
@@ -39,7 +40,7 @@ def create_paycheck(request, payload: PaycheckIn):
         raise HttpError(500, "Record creation error")
 
 
-@paycheck_router.put("/update/{paycheck_id}")
+@paycheck_router.put("/update/{paycheck_id}", auth=FullAccessAuth())
 def update_paycheck(request, paycheck_id: int, payload: PaycheckIn):
     """
     The function `update_paycheck` updates the paycheck specified by id.
@@ -133,7 +134,7 @@ def list_paychecks(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@paycheck_router.delete("/delete/{paycheck_id}")
+@paycheck_router.delete("/delete/{paycheck_id}", auth=FullAccessAuth())
 def delete_paycheck(request, paycheck_id: int):
     """
     The function `delete_paycheck` deletes the paycheck specified by id.

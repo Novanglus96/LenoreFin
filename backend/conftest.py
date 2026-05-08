@@ -15,8 +15,11 @@ from reminders.models import Reminder, Repeat
 from ninja.testing import TestClient
 from backend.api import api
 from django.utils import timezone
+from django.contrib.auth.models import User, Group
 import pytz
 import os
+
+
 
 
 @pytest.fixture(autouse=True)
@@ -38,9 +41,51 @@ def current_date():
     return today_tz
 
 
+@pytest.fixture
+def full_access_user(db):
+    group, _ = Group.objects.get_or_create(name="Full Access")
+    user, _ = User.objects.get_or_create(username="test_full_access")
+    user.set_password("testpass")
+    user.save()
+    user.groups.set([group])
+    return user
+
+
+@pytest.fixture
+def readonly_user(db):
+    group, _ = Group.objects.get_or_create(name="Readonly")
+    user, _ = User.objects.get_or_create(username="test_readonly")
+    user.set_password("testpass")
+    user.save()
+    user.groups.set([group])
+    return user
+
+
 @pytest.fixture(scope="session")
 def api_client():
     return TestClient(api)
+
+
+@pytest.fixture(autouse=True)
+def patch_auth_as_full_access():
+    """Default all API test requests to an authenticated full-access user.
+
+    Tests that need to verify 401/403 behaviour should override this via
+    an explicit patch on administration.api.dependencies.auth.
+    """
+    from unittest.mock import Mock
+    full_access_mock = Mock()
+    full_access_mock.is_authenticated = True
+    full_access_mock.groups.filter.return_value.exists.return_value = True
+
+    with patch(
+        "administration.api.dependencies.auth.SessionAuth.authenticate",
+        return_value=full_access_mock,
+    ), patch(
+        "administration.api.dependencies.auth.FullAccessAuth.authenticate",
+        return_value=full_access_mock,
+    ):
+        yield
 
 
 @pytest.fixture

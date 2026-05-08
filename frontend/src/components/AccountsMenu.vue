@@ -9,6 +9,7 @@
         prepend-icon="mdi-plus-circle"
         base-color="primary"
         :to="add_account_link"
+        v-if="authStore.isFullAccess"
       >
         <v-list-item-title>
           <span :class="isMobile ? 'text-h6' : ''">Add Account</span>
@@ -389,8 +390,10 @@
   import { useTransactionsStore } from "@/stores/transactions";
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
+  import { useAuthStore } from "@/stores/auth";
 
   const { smAndDown } = useDisplay();
+  const authStore = useAuthStore();
   const isMobile = smAndDown;
 
   const transactions_store = useTransactionsStore();

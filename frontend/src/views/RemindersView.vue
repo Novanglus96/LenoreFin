@@ -7,7 +7,7 @@
     </v-row>
     <v-row class="pa-1 ga-1 rounded" no-gutters>
       <v-col class="rounded">
-        <RemindersWidget :allowEdit="true" variant="full" />
+        <RemindersWidget :allowEdit="authStore.isFullAccess" variant="full" />
       </v-col>
     </v-row>
   </div>
@@ -15,4 +15,6 @@
 <script setup>
   import RemindersWidget from "@/components/RemindersWidget.vue";
   import ReminderHeaderWidget from "@/components/ReminderHeaderWidget.vue";
+  import { useAuthStore } from "@/stores/auth";
+  const authStore = useAuthStore();
 </script>

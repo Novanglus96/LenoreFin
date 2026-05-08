@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -19,7 +20,7 @@ task_logger = logging.getLogger("task")
 transaction_status_router = Router(tags=["Transaction Statuses"])
 
 
-@transaction_status_router.put("/update/{transactionstatus_id}")
+@transaction_status_router.put("/update/{transactionstatus_id}", auth=FullAccessAuth())
 def update_transaction_status(
     request, transactionstatus_id: int, payload: TransactionStatusIn
 ):
@@ -136,7 +137,7 @@ def list_transaction_statuses(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@transaction_status_router.delete("/delete/{transactionstatus_id}")
+@transaction_status_router.delete("/delete/{transactionstatus_id}", auth=FullAccessAuth())
 def delete_transaction_status(request, transactionstatus_id: int):
     """
     The function `delete_transaction_status` deletes the transaction status specified by id.

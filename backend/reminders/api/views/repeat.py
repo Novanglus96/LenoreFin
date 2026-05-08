@@ -6,6 +6,7 @@ from reminders.api.schemas.repeat import RepeatIn, RepeatOut
 from django.shortcuts import get_object_or_404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -15,7 +16,7 @@ task_logger = logging.getLogger("task")
 repeat_router = Router(tags=["Repeats"])
 
 
-@repeat_router.post("/create")
+@repeat_router.post("/create", auth=FullAccessAuth())
 def create_repeat(request, payload: RepeatIn):
     """
     The function `create_repeat` creates a repeat
@@ -54,7 +55,7 @@ def create_repeat(request, payload: RepeatIn):
         raise HttpError(500, "Record creation error")
 
 
-@repeat_router.put("/update/{repeat_id}")
+@repeat_router.put("/update/{repeat_id}", auth=FullAccessAuth())
 def update_repeat(request, repeat_id: int, payload: RepeatIn):
     """
     The function `update_repeat` updates the repeat specified by id.
@@ -154,7 +155,7 @@ def list_repeats(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@repeat_router.delete("/delete/{repeat_id}")
+@repeat_router.delete("/delete/{repeat_id}", auth=FullAccessAuth())
 def delete_repeat(request, repeat_id: int):
     """
     The function `delete_repeat` deletes the repeat specified by id.

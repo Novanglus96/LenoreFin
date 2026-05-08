@@ -6,7 +6,7 @@
         <v-tooltip
           text="File Import"
           location="top"
-          v-if="!smAndDown && props.variant === 'account'"
+          v-if="!smAndDown && props.variant === 'account' && authStore.isFullAccess"
         >
           <template v-slot:activator="{ props }">
             <v-btn
@@ -463,7 +463,7 @@
             icon
             @click="transactionAddFormDialog = true"
             variant="elevated"
-            v-if="selected_all.length === 0 && props.variant === 'account'"
+            v-if="selected_all.length === 0 && props.variant === 'account' && authStore.isFullAccess"
           >
             <v-icon icon="mdi-invoice-plus"></v-icon>
           </v-fab>
@@ -483,6 +483,7 @@
             icon
             :disabled="true"
             variant="plain"
+            v-if="authStore.isFullAccess"
           >
             <v-icon></v-icon>
             <v-speed-dial
@@ -618,9 +619,11 @@
   import { useDisplay } from "vuetify";
   import { useTransactions } from "@/composables/transactionsComposable";
   import { useReminders } from "@/composables/remindersComposable";
+  import { useAuthStore } from "@/stores/auth";
 
   const { removeTransaction, clearTransaction } = useTransactions();
   const { addReminderTransaction } = useReminders();
+  const authStore = useAuthStore();
   const { smAndDown, mdAndUp } = useDisplay();
   const transactions_store = useTransactionsStore();
   const today = new Date();
