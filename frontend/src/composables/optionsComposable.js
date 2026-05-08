@@ -3,6 +3,7 @@ import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
 
 async function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   const backendHealthy = await isBackendHealthy();
 

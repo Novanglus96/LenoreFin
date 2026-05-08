@@ -3,6 +3,7 @@ import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
 
 function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   if (error.response) {
     console.error("Response error:", error.response.data);
