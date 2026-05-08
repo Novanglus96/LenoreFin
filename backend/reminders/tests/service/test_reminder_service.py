@@ -81,6 +81,68 @@ def test_add_reminder_transaction_raises_for_nonexistent_reminder():
 
 @pytest.mark.django_db
 @pytest.mark.service
+def test_add_reminder_transaction_advances_start_date(
+    test_reminder,
+    test_pending_transaction_status,
+    test_expense_transaction_type,
+    test_checking_account,
+    test_tag,
+):
+    """Converting the current next_date advances start_date to the next non-excluded occurrence."""
+    next_occurrence = date(2026, 4, 1)
+    test_reminder.next_date = next_occurrence
+    test_reminder.start_date = next_occurrence
+    test_reminder.save()
+
+    with patch("reminders.services.reminder.create_transactions"):
+        add_reminder_transaction(test_reminder.id, next_occurrence)
+
+    test_reminder.refresh_from_db()
+    assert test_reminder.start_date != next_occurrence, (
+        "start_date should advance past the converted date"
+    )
+    assert test_reminder.start_date == test_reminder.next_date
+
+
+@pytest.mark.django_db
+@pytest.mark.service
+def test_add_reminder_transaction_advances_start_date_past_exclusions(
+    test_reminder,
+    test_pending_transaction_status,
+    test_expense_transaction_type,
+    test_checking_account,
+    test_tag,
+):
+    """start_date skips over any existing exclusions when advancing."""
+    from reminders.models import ReminderExclusion
+
+    base_date = date(2026, 5, 1)
+    test_reminder.next_date = base_date
+    test_reminder.start_date = base_date
+    test_reminder.save()
+
+    # Pre-exclude the two dates immediately after base_date so the loop must skip them
+    repeat = test_reminder.repeat
+    from dateutil.relativedelta import relativedelta
+    skip1 = base_date + relativedelta(
+        days=repeat.days, weeks=repeat.weeks, months=repeat.months, years=repeat.years
+    )
+    skip2 = skip1 + relativedelta(
+        days=repeat.days, weeks=repeat.weeks, months=repeat.months, years=repeat.years
+    )
+    ReminderExclusion.objects.create(reminder=test_reminder, exclude_date=skip1)
+    ReminderExclusion.objects.create(reminder=test_reminder, exclude_date=skip2)
+
+    with patch("reminders.services.reminder.create_transactions"):
+        add_reminder_transaction(test_reminder.id, base_date)
+
+    test_reminder.refresh_from_db()
+    assert test_reminder.start_date not in (base_date, skip1, skip2)
+    assert test_reminder.start_date == test_reminder.next_date
+
+
+@pytest.mark.django_db
+@pytest.mark.service
 def test_add_reminder_transaction_skips_duplicate_transaction(
     test_reminder,
     test_pending_transaction_status,
