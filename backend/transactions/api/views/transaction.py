@@ -219,15 +219,9 @@ def delete_transaction(request, payload: TransactionList):
     """
 
     try:
-        transactions = Transaction.objects.filter(id__in=payload.transactions)
-        account_ids = set()
+        transactions = list(Transaction.objects.filter(id__in=payload.transactions))
         for t in transactions:
-            account_ids.add(t.source_account_id)
-            if t.destination_account_id:
-                account_ids.add(t.destination_account_id)
-        transactions.delete()
-        for account_id in account_ids:
-            delete_pattern(account_all(account_id))
+            t.delete()
         for transaction in payload.transactions:
             api_logger.info(f"Transaction deleted : #{transaction}")
         return {"success": True}

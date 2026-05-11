@@ -66,6 +66,7 @@ from transactions.api.dependencies.get_transactions_by_tag import (
 from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP
 from core.cache.helpers import delete_pattern
+from core.cache.keys import account_all_transactions
 import logging
 
 api_logger = logging.getLogger("api")
@@ -752,17 +753,11 @@ def update_reminder_cache(reminder_id):
                     )
 
         create_transactions(transactions_to_create, "reminder")
-        pattern = f"*account_{reminder.reminder_source_account.id}_reminder_transactions*"
-        delete_pattern(pattern)
-        pattern = (
-            f"*account_{reminder.reminder_source_account.id}_transactions*"
-        )
-        delete_pattern(pattern)
+        delete_pattern(account_all_transactions(reminder.reminder_source_account.id))
+        update_cc_forecast_cache(reminder.reminder_source_account.id)
         if reminder.reminder_destination_account is not None:
-            pattern = f"*account_{reminder.reminder_destination_account.id}_reminder_transactions*"
-            delete_pattern(pattern)
-            pattern = f"*account_{reminder.reminder_destination_account.id}_transactions*"
-            delete_pattern(pattern)
+            delete_pattern(account_all_transactions(reminder.reminder_destination_account.id))
+            update_cc_forecast_cache(reminder.reminder_destination_account.id)
     except Exception as e:
         task_logger.warning("There was an error creating cache")
         error_logger.warning(f"{str(e)}")
@@ -783,7 +778,7 @@ def update_cc_forecast_cache(account_id):
         account = Account.objects.get(id=account_id)
 
         # Exit if not cc account
-        if account.account_type.id != 1:
+        if account.account_type.slug != 'credit-card':
             return
 
         # Delete any existing cache entries for this reminder
@@ -935,42 +930,60 @@ def update_cc_forecast_cache(account_id):
                     else:
                         cycle_payment = abs(cycle_balance) + abs(cycle_interest)
                 if cycle["statement_due"] > today:
-                    tags = []
-                    tag_obj = CustomTag(
-                        tag_name="Credit Card",
-                        tag_amount=abs(cycle_payment),
-                        tag_id=9,
-                        tag_full_toggle=True,
+                    next_statement_end = increment_date(
+                        cycle["statement_end"], statement_cycle_period, statement_cycle_length
                     )
-                    tags.append(tag_obj)
-                    transaction = FullTransaction(
-                        transaction_date=cycle["statement_pay_day"],
-                        total_amount=abs(cycle_payment),
-                        status_id=status.id,
-                        memo=None,
-                        description=f"({account.account_name} Estimated Payment)",
-                        edit_date=today,
-                        add_date=today,
-                        transaction_type_id=transfer_type_id,
-                        paycheck_id=None,
+                    payment_window_filter = dict(
                         source_account_id=funding_account.id,
                         destination_account_id=account_id,
-                        tags=tags,
-                        checkNumber=None,
+                        transaction_type_id=transfer_type_id,
+                        transaction_date__gt=cycle["statement_end"],
+                        transaction_date__lte=next_statement_end,
                     )
-                    transactions_to_create.append(transaction)
-                    total_payments += cycle_payment
-                    temp_id -= 1
+                    existing_payment_sum = (
+                        transactions_qs.filter(**payment_window_filter)
+                        .aggregate(sum=Sum("pretty_total"))["sum"]
+                        or Decimal(0)
+                    ) + (
+                        reminder_cache_qs.filter(**payment_window_filter)
+                        .aggregate(sum=Sum("pretty_total"))["sum"]
+                        or Decimal(0)
+                    )
+                    remaining_payment = cycle_payment - existing_payment_sum
+                    if remaining_payment > 0:
+                        tags = []
+                        tag_obj = CustomTag(
+                            tag_name="Credit Card",
+                            tag_amount=abs(remaining_payment),
+                            tag_id=9,
+                            tag_full_toggle=True,
+                        )
+                        tags.append(tag_obj)
+                        transaction = FullTransaction(
+                            transaction_date=cycle["statement_pay_day"],
+                            total_amount=abs(remaining_payment),
+                            status_id=status.id,
+                            memo=None,
+                            description=f"({account.account_name} Estimated Payment)",
+                            edit_date=today,
+                            add_date=today,
+                            transaction_type_id=transfer_type_id,
+                            paycheck_id=None,
+                            source_account_id=funding_account.id,
+                            destination_account_id=account_id,
+                            tags=tags,
+                            checkNumber=None,
+                        )
+                        transactions_to_create.append(transaction)
+                        total_payments += remaining_payment
+                        temp_id -= 1
             if x == 0:
                 account.last_statement_amount = cycle_payment
                 account.save()
             x += 1
 
         create_transactions(transactions_to_create, "forecast")
-        pattern = f"*account_{account_id}_forecast_transactions*"
-        delete_pattern(pattern)
-        pattern = f"*account_{account_id}_transactions*"
-        delete_pattern(pattern)
+        delete_pattern(account_all_transactions(account_id))
     except Exception as e:
         api_logger.warning("There was an error creating cache")
         error_logger.warning(f"{str(e)}")
