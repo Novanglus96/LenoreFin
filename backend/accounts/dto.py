@@ -11,6 +11,8 @@ class DomainAccountType:
     account_type: str
     color: str
     icon: str
+    slug: str = ""
+    is_system: bool = False
 
 
 @dataclass

@@ -15,5 +15,7 @@ class AccountTypeOut(Schema):
     account_type: str
     color: str
     icon: str
+    slug: str
+    is_system: bool
 
     model_config = ConfigDict(from_attributes=True)

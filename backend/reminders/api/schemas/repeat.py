@@ -20,5 +20,7 @@ class RepeatOut(Schema):
     weeks: Optional[int] = 0
     months: Optional[int] = 0
     years: Optional[int] = 0
+    slug: str
+    is_system: bool
 
     model_config = ConfigDict(from_attributes=True)
