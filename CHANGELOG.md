@@ -1,3 +1,10 @@
+# [1.3.0-alpha.8](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.7...v1.3.0-alpha.8) (2026-05-11)
+
+
+### Features
+
+* add is_system and slug fields to system-seeded models ([#78](https://github.com/Novanglus96/LenoreFin/issues/78)) ([ca652a8](https://github.com/Novanglus96/LenoreFin/commit/ca652a8981b4e04c9bbb318071ff5d11b40454b4))
+
 # [1.3.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.6...v1.3.0-alpha.7) (2026-05-08)
 
 
