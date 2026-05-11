@@ -11,5 +11,7 @@ class TagTypeIn(Schema):
 class TagTypeOut(Schema):
     id: int
     tag_type: str
+    slug: str
+    is_system: bool
 
     model_config = ConfigDict(from_attributes=True)

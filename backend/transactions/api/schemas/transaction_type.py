@@ -12,5 +12,6 @@ class TransactionTypeOut(Schema):
     id: int
     transaction_type: str
     slug: str
+    is_system: bool
 
     model_config = ConfigDict(from_attributes=True)

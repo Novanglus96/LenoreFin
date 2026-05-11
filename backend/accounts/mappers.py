@@ -38,6 +38,8 @@ def domain_account_type_to_schema(
             account_type=account_type.account_type,
             color=account_type.color,
             icon=account_type.icon,
+            slug=account_type.slug,
+            is_system=account_type.is_system,
         )
     else:
         return None
