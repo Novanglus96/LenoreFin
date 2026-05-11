@@ -117,3 +117,19 @@ def test_delete_transaction_type_not_found(api_client):
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_transaction_type_schema_has_slug_and_is_system(api_client, test_expense_transaction_type):
+    response = api_client.get(
+        f"/transactions/transaction-types/get/{test_expense_transaction_type.id}",
+        headers=AUTH,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "slug" in data
+    assert "is_system" in data
+    assert data["slug"] == test_expense_transaction_type.slug
+    assert data["is_system"] == test_expense_transaction_type.is_system
