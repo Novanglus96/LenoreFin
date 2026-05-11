@@ -173,10 +173,14 @@ def delete_repeat(request, repeat_id: int):
 
     try:
         repeat = get_object_or_404(Repeat, id=repeat_id)
+        if repeat.is_system:
+            raise HttpError(403, "Cannot delete a system object")
         repeat_name = repeat.repeat_name
         repeat.delete()
         api_logger.info(f"Repeat deleted : {repeat_name}")
         return {"success": True}
+    except HttpError:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat not deleted")

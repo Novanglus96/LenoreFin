@@ -1,6 +1,6 @@
 from ninja import Router, Query
 from ninja.errors import HttpError
-from transactions.models import Transaction, TransactionDetail
+from transactions.models import Transaction, TransactionDetail, TransactionStatus
 from accounts.models import Account
 from transactions.api.schemas.transaction import (
     TransactionIn,
@@ -140,14 +140,16 @@ def clear_transaction(request, payload: TransactionList):
         transactions_to_update = []
         accounts_effected = []
 
+        pending_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='pending')
+        cleared_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='cleared')
         for transaction in transactions:
             accounts_effected.append(transaction.source_account.id)
             if transaction.destination_account:
                 accounts_effected.append(transaction.destination_account.id)
-            if transaction.status_id == 2:
-                transaction.status_id = 1
-            elif transaction.status_id == 1:
-                transaction.status_id = 2
+            if transaction.status_id == cleared_id:
+                transaction.status_id = pending_id
+            elif transaction.status_id == pending_id:
+                transaction.status_id = cleared_id
 
             transaction.edit_date = get_todays_date_timezone_adjusted()
             transactions_to_update.append(transaction)
@@ -365,7 +367,7 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
             # If this is upcoming transaction
             # Filter transactions for pending status
             if query.view_type == 2:
-                qs = Transaction.objects.filter(status_id=1)
+                qs = Transaction.objects.filter(status__slug='pending')
             # If this is rule transactions
             # Filter by tag and maxdays
             elif query.view_type == 3:
@@ -395,7 +397,7 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
             qs = qs.annotate(
                 pretty_account=Case(
                     When(
-                        transaction_type_id=3,
+                        transaction_type__slug='transfer',
                         then=Concat(
                             F("source_name"),
                             Value(" => "),
@@ -409,15 +411,15 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
             qs = qs.annotate(
                 pretty_total=Case(
                     When(
-                        transaction_type_id=2,
+                        transaction_type__slug='income',
                         then=Abs(F("total_amount")),
                     ),
                     When(
-                        transaction_type_id=1,
+                        transaction_type__slug='expense',
                         then=-Abs(F("total_amount")),
                     ),
                     When(
-                        transaction_type_id=3,
+                        transaction_type__slug='transfer',
                         then=-Abs(F("total_amount")),
                     ),
                     default=Value(

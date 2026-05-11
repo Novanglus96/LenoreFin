@@ -85,19 +85,19 @@ def get_account_transactions_and_balances(
     all_transactions = Transaction.objects.filter(
         Q(source_account_id=account_id) | Q(destination_account_id=account_id),
         transaction_date__lt=end_date,
-    ).exclude(status_id=4)
+    ).exclude(status__slug='archived')
 
     # Get Reminder transactions
     reminder_transactions = ReminderCacheTransaction.objects.filter(
         Q(source_account_id=account_id) | Q(destination_account_id=account_id),
         transaction_date__lt=end_date,
-    ).exclude(status_id=4)
+    ).exclude(status__slug='archived')
 
     # Get Forecast transactions
     forecast_transactions = ForecastCacheTransaction.objects.filter(
         Q(source_account_id=account_id) | Q(destination_account_id=account_id),
         transaction_date__lt=end_date,
-    ).exclude(status_id=4)
+    ).exclude(status__slug='archived')
 
     # If not totals only, annotate transactions with pretty information
     if not totals_only:
@@ -128,7 +128,7 @@ def get_account_transactions_and_balances(
         )
 
     # Sort and get balances for cleared transactions
-    cleared_transactions = all_transactions.exclude(status_id=1)
+    cleared_transactions = all_transactions.exclude(status__slug='pending')
     cleared_transactions = sort_transactions(cleared_transactions, True)
     cleared_transactions = annotate_transaction_balance(
         cleared_transactions, opening_balance, archive_balance
@@ -148,7 +148,7 @@ def get_account_transactions_and_balances(
         )
 
     # Get pending transactions
-    pending_transactions = all_transactions.filter(status_id=1)
+    pending_transactions = all_transactions.filter(status__slug='pending')
     if not totals_only:
         pending_transactions = add_tags_to_transactions(
             pending_transactions, "t"

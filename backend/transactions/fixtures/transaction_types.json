@@ -3,21 +3,27 @@
     "model": "transactions.TransactionType",
     "pk": 1,
     "fields": {
-        "transaction_type": "Expense"
+        "transaction_type": "Expense",
+        "is_system": true,
+        "slug": "expense"
     }
   },
   {
     "model": "transactions.TransactionType",
     "pk": 2,
     "fields": {
-        "transaction_type": "Income"
+        "transaction_type": "Income",
+        "is_system": true,
+        "slug": "income"
     }
   },
   {
     "model": "transactions.TransactionType",
     "pk": 3,
     "fields": {
-        "transaction_type": "Transfer"
+        "transaction_type": "Transfer",
+        "is_system": true,
+        "slug": "transfer"
     }
   }
 ]

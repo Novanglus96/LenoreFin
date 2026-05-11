@@ -6,11 +6,21 @@ from import_export.admin import ImportExportModelAdmin
 
 
 class AccountTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_display = ["id", "account_type", "color", "icon"]
+    list_display = ["id", "account_type", "color", "icon", "is_system", "slug"]
 
     list_display_links = ["account_type"]
 
     ordering = ["account_type"]
+
+    readonly_fields = ["slug"]
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.is_system:
+            return False
+        return super().has_delete_permission(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        queryset.filter(is_system=False).delete()
 
 
 class AccountAdmin(ImportExportModelAdmin, admin.ModelAdmin):

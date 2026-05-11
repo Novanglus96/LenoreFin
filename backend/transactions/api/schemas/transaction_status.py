@@ -11,5 +11,6 @@ class TransactionStatusIn(Schema):
 class TransactionStatusOut(Schema):
     id: int
     transaction_status: str
+    slug: str
 
     model_config = ConfigDict(from_attributes=True)

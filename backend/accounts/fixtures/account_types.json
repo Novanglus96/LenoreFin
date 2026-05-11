@@ -5,7 +5,9 @@
     "fields": {
       "account_type": "Credit Card",
       "color": "#e84d08",
-      "icon": "mdi-credit-card"
+      "icon": "mdi-credit-card",
+      "is_system": true,
+      "slug": "credit-card"
     }
   },
   {
@@ -14,7 +16,9 @@
     "fields": {
       "account_type": "Checking",
       "color": "#059669",
-      "icon": "mdi-checkbook"
+      "icon": "mdi-checkbook",
+      "is_system": true,
+      "slug": "checking"
     }
   },
   {
@@ -23,7 +27,9 @@
     "fields": {
       "account_type": "Savings",
       "color": "#60a5fa",
-      "icon": "mdi-piggy-bank"
+      "icon": "mdi-piggy-bank",
+      "is_system": true,
+      "slug": "savings"
     }
   },
   {
@@ -32,7 +38,9 @@
     "fields": {
       "account_type": "Investment",
       "color": "#231f20",
-      "icon": "mdi-finance"
+      "icon": "mdi-finance",
+      "is_system": true,
+      "slug": "investment"
     }
   },
   {
@@ -41,7 +49,9 @@
     "fields": {
       "account_type": "Loan",
       "color": "eab308",
-      "icon": "mdi-car-back"
+      "icon": "mdi-car-back",
+      "is_system": true,
+      "slug": "loan"
     }
   }
 ]

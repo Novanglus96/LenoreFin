@@ -28,7 +28,7 @@ def list_tag_types(request):
     """
 
     try:
-        qs = TagType.objects.exclude(id=3).order_by("id")
+        qs = TagType.objects.exclude(slug='misc').order_by("id")
         api_logger.debug("Tag type list retrieved")
         return qs
     except Exception as e:

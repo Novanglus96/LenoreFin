@@ -121,10 +121,14 @@ def list_tags(request, query: TagQuery = Query(...)):
 def delete_tag(request, tag_id: int):
     try:
         tag = get_object_or_404(Tag, id=tag_id)
+        if tag.is_system:
+            raise HttpError(403, "Cannot delete a system object")
         tag_name = tag.tag_name
         tag.delete()
         api_logger.info(f"Tag deleted : {tag_name}")
         return {"success": True}
+    except HttpError:
+        raise
     except Exception as e:
         api_logger.error("Tag not deleted")
         error_logger.error(f"{str(e)}")

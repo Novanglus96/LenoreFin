@@ -156,12 +156,16 @@ def delete_transaction_type(request, transaction_type_id: int):
         transaction_type = get_object_or_404(
             TransactionType, id=transaction_type_id
         )
+        if transaction_type.is_system:
+            raise HttpError(403, "Cannot delete a system object")
         transaction_type_name = transaction_type.transaction_type
         transaction_type.delete()
         api_logger.info(f"Transaction type deleted : {transaction_type_name}")
         return {"success": True}
     except Http404:
         raise HttpError(404, "Transaction type not found")
+    except HttpError:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction type not deleted")

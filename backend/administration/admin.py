@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from .models import (
+    GraphType,
     Option,
     Message,
     Payee,
@@ -142,9 +143,28 @@ class RestrictedUserAdmin(UserAdmin):
         return list(readonly) + ["is_superuser", "is_staff", "groups", "user_permissions"]
 
 
+class GraphTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ["id", "graph_type", "is_system", "slug"]
+
+    list_display_links = ["graph_type"]
+
+    ordering = ["id"]
+
+    readonly_fields = ["slug"]
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.is_system:
+            return False
+        return super().has_delete_permission(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        queryset.filter(is_system=False).delete()
+
+
 admin.site.unregister(User)
 admin.site.register(User, RestrictedUserAdmin)
 
+admin.site.register(GraphType, GraphTypeAdmin)
 admin.site.register(Option, OptionAdmin)
 admin.site.register(Payee, PayeeAdmin)
 admin.site.register(Message, MessageAdmin)

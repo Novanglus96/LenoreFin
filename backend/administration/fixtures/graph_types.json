@@ -3,28 +3,36 @@
     "model": "administration.GraphType",
     "pk": 1,
     "fields": {
-        "graph_type": "All Expenses"
+        "graph_type": "All Expenses",
+        "is_system": true,
+        "slug": "all-expenses"
     }
   },
   {
     "model": "administration.GraphType",
     "pk": 2,
     "fields": {
-        "graph_type": "All Income"
+        "graph_type": "All Income",
+        "is_system": true,
+        "slug": "all-income"
     }
   },
   {
     "model": "administration.GraphType",
     "pk": 3,
     "fields": {
-        "graph_type": "Untagged"
+        "graph_type": "Untagged",
+        "is_system": true,
+        "slug": "untagged"
     }
   },
   {
     "model": "administration.GraphType",
     "pk": 4,
     "fields": {
-        "graph_type": "Custom"
+        "graph_type": "Custom",
+        "is_system": true,
+        "slug": "custom"
     }
   }
 ]

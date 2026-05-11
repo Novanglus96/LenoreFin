@@ -174,10 +174,14 @@ def delete_account_type(request, accounttype_id: int):
 
     try:
         account_type = get_object_or_404(AccountType, id=accounttype_id)
+        if account_type.is_system:
+            raise HttpError(403, "Cannot delete a system object")
         account_type_name = account_type.account_type
         account_type.delete()
         api_logger.info(f"Account type deleted : {account_type_name}")
         return {"success": True}
+    except HttpError:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account type not deleted")

@@ -22,10 +22,14 @@ COLORS = [
 
 def get_retirement_forecast() -> DomainForecast:
     try:
-        retirement_accounts_string = Option.objects.get(id=1).retirement_accounts
-        retirement_array = ast.literal_eval(retirement_accounts_string)
-        if not isinstance(retirement_array, list):
+        option = Option.load()
+        retirement_accounts_string = option.retirement_accounts if option else None
+        if not retirement_accounts_string:
             retirement_array = []
+        else:
+            retirement_array = ast.literal_eval(retirement_accounts_string)
+            if not isinstance(retirement_array, list):
+                retirement_array = []
     except (Option.DoesNotExist, ValueError, SyntaxError):
         retirement_array = []
 
