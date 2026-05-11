@@ -1,3 +1,10 @@
+# [1.3.0-alpha.9](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.8...v1.3.0-alpha.9) (2026-05-11)
+
+
+### Bug Fixes
+
+* correct CC payment calculation, deduplication, and cache invalidation ([#80](https://github.com/Novanglus96/LenoreFin/issues/80)) ([6f4a745](https://github.com/Novanglus96/LenoreFin/commit/6f4a745e764406cf8aa246a48cc22e1c40dede21))
+
 # [1.3.0-alpha.8](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.7...v1.3.0-alpha.8) (2026-05-11)
 
 
