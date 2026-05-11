@@ -26,6 +26,15 @@ def update_reminder_cache_on_delete(sender, instance, **kwargs):
     Remove entries from the reminder scratch table when a Reminder is deleted.
     """
     ReminderCacheTransaction.objects.filter(reminder=instance).delete()
+    async_task(
+        "transactions.tasks.update_cc_forecast_cache",
+        instance.reminder_source_account.id,
+    )
+    if instance.reminder_destination_account is not None:
+        async_task(
+            "transactions.tasks.update_cc_forecast_cache",
+            instance.reminder_destination_account.id,
+        )
 
 
 @receiver(post_save, sender=Reminder)
