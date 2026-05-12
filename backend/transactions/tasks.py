@@ -868,8 +868,8 @@ def update_cc_forecast_cache(account_id):
                 + previous_balance
             )
             cycle_payment = Decimal(0.00)
-            # Calculate Interest
-            if interest_calculations:
+            # Calculate Interest (only for cycles that haven't started yet)
+            if interest_calculations and cycle["statement_start"] > today:
                 if cycle_balance != cycle["statement_debits"]:
                     unpaid = cycle_balance - cycle["statement_debits"]
                     cycle_interest = calculate_interest(
@@ -879,11 +879,7 @@ def update_cc_forecast_cache(account_id):
                         cycle["statement_end"],
                     )
                     total_interest += cycle_interest
-                    # Create Interest Transaction for cycles that haven't started yet
-                    if (
-                        cycle["statement_start"] > today
-                        and cycle_interest < 0
-                    ):
+                    if cycle_interest < 0:
                         tags = []
                         tag_obj = CustomTag(
                             tag_name="Interest Charged",
