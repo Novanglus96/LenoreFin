@@ -239,7 +239,7 @@ def test_cycles_generated_up_to_forecast_end_date(
             ReminderCacheTransaction.objects.filter(source_account_id=cc.id), cc.id
         )
         end_date = FIXED_TODAY + timedelta(days=365)
-        cycles = generate_statement_cycles(
+        cycles, _ = generate_statement_cycles(
             statement_day=1,
             due_day=25,
             pay_day=25,
@@ -271,7 +271,7 @@ def test_first_cycle_start_when_today_after_statement_day(
         reminder_qs = annotate_transaction_total(
             ReminderCacheTransaction.objects.filter(source_account_id=cc.id), cc.id
         )
-        cycles = generate_statement_cycles(
+        cycles, _ = generate_statement_cycles(
             statement_day=1,
             due_day=25,
             pay_day=25,
@@ -305,7 +305,7 @@ def test_first_cycle_start_when_today_before_statement_day(
         reminder_qs = annotate_transaction_total(
             ReminderCacheTransaction.objects.filter(source_account_id=cc.id), cc.id
         )
-        cycles = generate_statement_cycles(
+        cycles, _ = generate_statement_cycles(
             statement_day=15,
             due_day=25,
             pay_day=25,
@@ -354,7 +354,7 @@ def test_cycle_debits_only_include_transactions_in_period(
         reminder_qs = annotate_transaction_total(
             ReminderCacheTransaction.objects.filter(source_account_id=cc.id), cc.id
         )
-        cycles = generate_statement_cycles(
+        cycles, _ = generate_statement_cycles(
             statement_day=1,
             due_day=25,
             pay_day=25,
@@ -396,7 +396,7 @@ def test_previous_balance_includes_non_trans_bal_and_prior_transactions(
             ReminderCacheTransaction.objects.filter(source_account_id=cc.id), cc.id
         )
         non_trans_bal = Decimal("-50.00")
-        cycles = generate_statement_cycles(
+        cycles, _ = generate_statement_cycles(
             statement_day=1,
             due_day=25,
             pay_day=25,

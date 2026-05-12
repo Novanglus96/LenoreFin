@@ -835,7 +835,7 @@ def update_cc_forecast_cache(account_id):
         )
 
         # Calculate statement cycles
-        statement_cycles = generate_statement_cycles(
+        statement_cycles, last_cycle_due = generate_statement_cycles(
             statement_day,
             due_day,
             pay_day,
@@ -870,8 +870,8 @@ def update_cc_forecast_cache(account_id):
             cycle_payment = Decimal(0.00)
             # Calculate Interest
             if interest_calculations:
-                # If we are past due date, calculate interest
-                if statement_cycles[0]["statement_due"] < today:
+                # If the previous cycle's due date has passed, interest is accruing
+                if last_cycle_due < today:
                     if cycle_balance != cycle["statement_debits"]:
                         unpaid = cycle_balance - cycle["statement_debits"]
                         cycle_interest = calculate_interest(
@@ -1034,6 +1034,8 @@ def generate_statement_cycles(
         statement_due = (statement_start + relativedelta(months=1)).replace(day=due_day)
         statement_pay_day = (statement_start + relativedelta(months=1)).replace(day=pay_day)
 
+    last_cycle_due = statement_due
+
     previous_balance = (
         transactions.filter(
             transaction_date__lte=statement_start,
@@ -1102,7 +1104,7 @@ def generate_statement_cycles(
             }
         )
         statement_start = statement_end
-    return statement_cycles
+    return statement_cycles, last_cycle_due
 
 
 def increment_date(incr_date: date, period: str, length: int):
