@@ -1,3 +1,10 @@
+# [1.4.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.1...v1.4.0-alpha.2) (2026-05-12)
+
+
+### Features
+
+* add custom JSON backup/restore system with scheduled automation ([#92](https://github.com/Novanglus96/LenoreFin/issues/92)) ([b8d7bc2](https://github.com/Novanglus96/LenoreFin/commit/b8d7bc2f801a426eb9d16bad10dd15f68e49aeb3))
+
 # [1.4.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0...v1.4.0-alpha.1) (2026-05-12)
 
 
