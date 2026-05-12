@@ -72,7 +72,7 @@ class Account(models.Model):
     - rewards_amount (DecimalField): The amount of rewards associated with the account, defaulting to 0.00.
     - credit_limit (DecimalField): The credit limit of the account, defaulting to 0.00.
     - bank (ForeignKey): A reference to the Bank model representing the bank associated with the account.
-    - last_statement_amount (DecimalField): The amount of the last statement for the account, defaulting to 0.00.
+    - statement_balance (DecimalField): The calculated payment amount for the current billing cycle, defaulting to 0.00.
     - funding_account (ForeignKey): A reference to another Account that funds this account, can be null.
     - calculate_payments (BooleanField): Enable/Disable payment calculations.  Default=False.
     - calcualte_interest (BooleanField): Enable/Disable interest calculations. Default==False.
@@ -103,7 +103,7 @@ class Account(models.Model):
         max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE)
-    last_statement_amount = models.DecimalField(
+    statement_balance = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
     archive_balance = models.DecimalField(

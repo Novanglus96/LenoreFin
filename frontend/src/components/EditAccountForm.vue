@@ -173,13 +173,13 @@
               <v-row dense>
                 <v-col>
                   <v-text-field
-                    v-model="last_statement_amount.value.value"
+                    v-model="statement_balance.value.value"
                     variant="outlined"
-                    label="Last Statement Amount"
+                    label="Statement Balance"
                     prefix="$"
                     density="comfortable"
                     clearable
-                    :error-messages="last_statement_amount.errorMessage.value"
+                    :error-messages="statement_balance.errorMessage.value"
                   ></v-text-field>
                 </v-col>
                 <v-col>
@@ -343,7 +343,7 @@
         otherwise: schema => schema.notRequired(),
       }),
     bank_id: yup.number().required("Must select a bank."),
-    last_statement_amount: yup
+    statement_balance: yup
       .number()
       .when(["account_type_id", "calculate_payments"], {
         is: (type, calc) => type === 1 && calc === true,
@@ -396,7 +396,7 @@
   const rewards_amount = useField("rewards_amount");
   const credit_limit = useField("credit_limit");
   const bank_id = useField("bank_id");
-  const last_statement_amount = useField("last_statement_amount");
+  const statement_balance = useField("statement_balance");
   const funding_account_id = useField("funding_account_id");
   const calculate_payments = useField("calculate_payments");
   const calculate_interest = useField("calculate_interest");
@@ -474,7 +474,7 @@
     rewards_amount.value.value = props.account.rewards_amount;
     credit_limit.value.value = props.account.credit_limit;
     bank_id.value.value = props.account.bank.id;
-    last_statement_amount.value.value = props.account.last_statement_amount;
+    statement_balance.value.value = props.account.statement_balance;
     funding_account_id.value.value = props.account.funding_account
       ? props.account.funding_account.id
       : null;

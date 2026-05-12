@@ -41,7 +41,7 @@ class DomainAccount:
     rewards_amount: Optional[Decimal] = None
     available_credit: Optional[Decimal] = None
     balance: Optional[Decimal] = None
-    last_statement_amount: Optional[Decimal] = None
+    statement_balance: Optional[Decimal] = None
     funding_account: Optional[DomainAccount] = None
     calculate_payments: Optional[bool] = False
     calculate_interest: Optional[bool] = False

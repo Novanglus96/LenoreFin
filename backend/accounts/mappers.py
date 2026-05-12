@@ -66,7 +66,7 @@ def domain_account_to_schema(
             available_credit=account.available_credit,
             balance=account.balance,
             bank=domain_bank_to_schema(account.bank),
-            last_statement_amount=account.last_statement_amount,
+            statement_balance=account.statement_balance,
             funding_account=domain_account_to_schema(account.funding_account),
             calculate_payments=account.calculate_payments,
             calculate_interest=account.calculate_interest,

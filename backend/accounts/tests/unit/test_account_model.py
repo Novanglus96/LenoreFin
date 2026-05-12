@@ -29,7 +29,7 @@ def test_account_creation(bank, checking_account_type, test_checking_account):
     assert account.statement_cycle_period == "m"
     assert account.credit_limit == 55555
     assert account.bank == bank
-    assert account.last_statement_amount == 555.55
+    assert account.statement_balance == 555.55
     assert account.archive_balance == 555.55
     assert account.funding_account is None
     assert not account.calculate_payments
@@ -58,7 +58,7 @@ def test_account_creation_defaults(bank, checking_account_type):
     assert account.statement_cycle_length == 0
     assert account.statement_cycle_period == "d"
     assert account.credit_limit == 0.00
-    assert account.last_statement_amount == 0.00
+    assert account.statement_balance == 0.00
     assert account.archive_balance == 0.00
     assert account.funding_account is None
     assert not account.calculate_payments

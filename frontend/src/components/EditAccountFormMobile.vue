@@ -156,9 +156,9 @@
             <v-row dense>
               <v-col>
                 <v-text-field
-                  v-model="formData.last_statement_amount"
+                  v-model="formData.statement_balance"
                   variant="outlined"
-                  label="Last Statement Amount"
+                  label="Statement Balance"
                   prefix="$"
                   @update:model-value="checkForm"
                   density="comfortable"
@@ -225,7 +225,7 @@
     rewards_amount: props.account.rewards_amount,
     credit_limit: props.account.credit_limit,
     bank_id: props.account.bank.id,
-    last_statement_amount: props.account.last_statement_amount,
+    statement_balance: props.account.statement_balance,
   });
 
   const clickEditAccount = () => {

@@ -974,7 +974,7 @@ def update_cc_forecast_cache(account_id):
                         total_payments += remaining_payment
                         temp_id -= 1
             if x == 0:
-                account.last_statement_amount = cycle_payment
+                account.statement_balance = cycle_payment
                 account.save()
             x += 1
 
