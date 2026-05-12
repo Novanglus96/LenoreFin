@@ -27,6 +27,15 @@ async function getRetirementForecastFunction() {
   }
 }
 
+async function getRetirementTransactionsFunction() {
+  try {
+    const response = await apiClient.get("/planning/retirement/transactions");
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Retirement transactions not fetched: ");
+  }
+}
+
 export function useRetirementForecast() {
   const queryClient = useQueryClient();
   const {
@@ -44,5 +53,20 @@ export function useRetirementForecast() {
     isLoading,
     isFetching,
     retirement_forecast,
+  };
+}
+
+export function useRetirementTransactions() {
+  const queryClient = useQueryClient();
+  const { data: retirement_transactions, isLoading } = useQuery({
+    queryKey: ["retirement_transactions"],
+    queryFn: () => getRetirementTransactionsFunction(),
+    select: response => response,
+    client: queryClient,
+  });
+
+  return {
+    retirement_transactions,
+    isLoading,
   };
 }
