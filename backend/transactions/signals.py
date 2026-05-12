@@ -6,9 +6,10 @@ from core.cache.keys import account_all
 
 
 def _refresh_account(account_id):
-    from transactions.tasks import update_cc_forecast_cache
+    from transactions.tasks import update_cc_forecast_cache, update_interest_forecast_cache
     delete_pattern(account_all(account_id))
     update_cc_forecast_cache(account_id)
+    update_interest_forecast_cache(account_id)
 
 
 @receiver(post_save, sender=Transaction)

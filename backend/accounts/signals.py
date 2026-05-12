@@ -19,12 +19,15 @@ def update_cache_on_save(sender, instance, **kwargs):
     """
     Update the reminder scratch/cache table when a Reminder is created or updated.
     """
-    if instance.account_type.account_type == "Credit Card" and getattr(
-        instance, "_should_update_cache", False
-    ):
-        from transactions.tasks import update_cc_forecast_cache
-        update_cc_forecast_cache(instance.id)
-        delete_pattern(account_forecast_transactions(instance.id))
+    if getattr(instance, "_should_update_cache", False):
+        if instance.account_type.account_type == "Credit Card":
+            from transactions.tasks import update_cc_forecast_cache
+            update_cc_forecast_cache(instance.id)
+            delete_pattern(account_forecast_transactions(instance.id))
+        elif instance.account_type.slug in {"savings", "investment"}:
+            from transactions.tasks import update_interest_forecast_cache
+            update_interest_forecast_cache(instance.id)
+            delete_pattern(account_forecast_transactions(instance.id))
     delete_pattern(account_combined_transactions(instance.id))
     delete_pattern(account_cleared_balance(instance.id))
     delete_pattern(account_financials(instance.id))
