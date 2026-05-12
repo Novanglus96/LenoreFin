@@ -1,3 +1,25 @@
+# [1.4.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0...v1.4.0-alpha.1) (2026-05-12)
+
+
+### Bug Fixes
+
+* auth post-login bugs — superuser group, logout, 401 race ([#66](https://github.com/Novanglus96/LenoreFin/issues/66)) ([b2db4a0](https://github.com/Novanglus96/LenoreFin/commit/b2db4a0b2e8cd8be699b1e4d43a8826e42dfaf1d))
+* correct budget percentage calculation when rollover produces negative starting balance ([#67](https://github.com/Novanglus96/LenoreFin/issues/67)) ([e4ffc23](https://github.com/Novanglus96/LenoreFin/commit/e4ffc23c83594ee7496fa3f7bbbd4082da7fd930))
+* correct budget percentage calculation when rollover produces negative starting balance ([#68](https://github.com/Novanglus96/LenoreFin/issues/68)) ([29e942a](https://github.com/Novanglus96/LenoreFin/commit/29e942a268fd474bbc6dbad20f6e1cf2919a0550))
+* correct CC payment calculation, deduplication, and cache invalidation ([#80](https://github.com/Novanglus96/LenoreFin/issues/80)) ([6f4a745](https://github.com/Novanglus96/LenoreFin/commit/6f4a745e764406cf8aa246a48cc22e1c40dede21))
+* correct GITHUB_ENV writes in Compute project identifiers step ([#75](https://github.com/Novanglus96/LenoreFin/issues/75)) ([3000669](https://github.com/Novanglus96/LenoreFin/commit/3000669291114b5d5da816863bb4faf20723f4b1))
+* disabling an account no longer wipes open_date ([#74](https://github.com/Novanglus96/LenoreFin/issues/74)) ([4dec53a](https://github.com/Novanglus96/LenoreFin/commit/4dec53af855c81f82fa762abb35e11d132b79338))
+* reminder conversion now updates start_date to next non-excluded date ([#76](https://github.com/Novanglus96/LenoreFin/issues/76)) ([7d6b4ab](https://github.com/Novanglus96/LenoreFin/commit/7d6b4ab1ba1bc2906378041c8c186a3e9dfedb08))
+* resolve three Phase 2b bugs found during CC interest testing ([#84](https://github.com/Novanglus96/LenoreFin/issues/84)) ([d325509](https://github.com/Novanglus96/LenoreFin/commit/d325509e00d07b87783968f9561ace662226fc20))
+* restore csrf=False on auth classes broken by django-ninja 1.6 upgrade ([#77](https://github.com/Novanglus96/LenoreFin/issues/77)) ([c8f5edd](https://github.com/Novanglus96/LenoreFin/commit/c8f5eddfac98912661ddb4e2c6c54d38deb12367))
+
+
+### Features
+
+* add is_system and slug fields to system-seeded models ([#78](https://github.com/Novanglus96/LenoreFin/issues/78)) ([ca652a8](https://github.com/Novanglus96/LenoreFin/commit/ca652a8981b4e04c9bbb318071ff5d11b40454b4))
+* add session-based auth with group permissions (Full Access / Readonly) ([#65](https://github.com/Novanglus96/LenoreFin/issues/65)) ([85c6e07](https://github.com/Novanglus96/LenoreFin/commit/85c6e07db5a6138f5673b765f2bb2156f9195662))
+* scheduled daily pruning of django-q2 task history ([#85](https://github.com/Novanglus96/LenoreFin/issues/85)) ([f711f21](https://github.com/Novanglus96/LenoreFin/commit/f711f217e989e32fe7714af729a6cd17e180c955))
+
 # [1.3.0](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0...v1.3.0) (2026-05-12)
 
 
