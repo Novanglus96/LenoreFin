@@ -774,23 +774,25 @@ def update_cc_forecast_cache(account_id):
 
     """
     try:
-        # Get the account object
         account = Account.objects.get(id=account_id)
+    except Account.DoesNotExist:
+        return
 
-        # Exit if not cc account
-        if account.account_type.slug != 'credit-card':
-            return
+    # Exit if not cc account
+    if account.account_type.slug != 'credit-card':
+        return
 
-        # Delete any existing cache entries for this reminder
-        ForecastCacheTransaction.objects.filter(
-            Q(source_account_id=account_id)
-            | Q(destination_account_id=account_id)
-        ).delete()
+    # Delete any existing cache entries for this account
+    ForecastCacheTransaction.objects.filter(
+        Q(source_account_id=account_id)
+        | Q(destination_account_id=account_id)
+    ).delete()
 
-        # Exit if this is not CC or cc calculations are turned off
-        if not account.calculate_payments:
-            return
+    # Exit if cc calculations are turned off
+    if not account.calculate_payments:
+        return
 
+    try:
         # Define account variables
         statement_cycle_length = account.statement_cycle_length
         statement_cycle_period = account.statement_cycle_period
@@ -875,7 +877,7 @@ def update_cc_forecast_cache(account_id):
                         cycle_interest = calculate_interest(
                             unpaid,
                             annual_rate,
-                            statement_cycles[x - 1]["statement_end"],
+                            cycle["statement_start"],
                             cycle["statement_end"],
                         )
                         total_interest += cycle_interest
@@ -985,8 +987,7 @@ def update_cc_forecast_cache(account_id):
         create_transactions(transactions_to_create, "forecast")
         delete_pattern(account_all_transactions(account_id))
     except Exception as e:
-        api_logger.warning("There was an error creating cache")
-        error_logger.warning(f"{str(e)}")
+        error_logger.exception(f"Error calculating CC forecast for account {account_id}: {e}")
 
 
 def generate_statement_cycles(
@@ -1028,10 +1029,8 @@ def generate_statement_cycles(
         statement_start = today.replace(day=statement_day)
     else:
         statement_start = one_month_prior.replace(day=statement_day)
-    statement_due = statement_start + relativedelta(months=1)
-    statement_due = statement_due.replace(day=due_day)
-    statement_pay_day = statement_start + relativedelta(months=1)
-    statement_pay_day = statement_pay_day.replace(day=pay_day)
+    statement_due = statement_start.replace(day=due_day)
+    statement_pay_day = statement_start.replace(day=pay_day)
 
     previous_balance = (
         transactions.filter(
