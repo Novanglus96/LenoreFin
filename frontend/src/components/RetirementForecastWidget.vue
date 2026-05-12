@@ -69,13 +69,38 @@
       </v-progress-circular>
       <Line
         :data="retirement_forecast"
-        :options="options"
+        :options="chartOptions"
         v-if="!isActive"
         ref="Forecast"
         aria-label="Account Forecast"
       >
         Unable to load forecast
       </Line>
+    </v-card-text>
+
+    <!-- Transaction List -->
+    <v-card-text>
+      <v-divider class="mb-3"></v-divider>
+      <div class="text-subtitle-2 text-primary mb-2">Transactions</div>
+      <v-data-table
+        :headers="txnHeaders"
+        :items="retirement_transactions ?? []"
+        :loading="txnLoading"
+        density="compact"
+        no-data-text="No transactions found"
+        :items-per-page="TXN_PAGE_SIZE"
+        v-model:page="txnPage"
+      >
+        <template v-slot:item.transaction_date="{ item }">
+          {{ formatDate(item.transaction_date) }}
+        </template>
+        <template v-slot:item.total_amount="{ item }">
+          {{ formatCurrency(item.total_amount) }}
+        </template>
+        <template v-slot:item.balance="{ item }">
+          {{ item.balance != null ? formatCurrency(item.balance) : "—" }}
+        </template>
+      </v-data-table>
     </v-card-text>
   </v-card>
 </template>
@@ -95,7 +120,7 @@
   } from "chart.js";
   import { Line } from "vue-chartjs";
   import annotationPlugin from "chartjs-plugin-annotation";
-  import { useRetirementForecast } from "@/composables/retirementComposable";
+  import { useRetirementForecast, useRetirementTransactions } from "@/composables/retirementComposable";
   import { useField, useForm } from "vee-validate";
   import { useOptions } from "@/composables/optionsComposable";
   import { useAccounts } from "@/composables/accountsComposable";
@@ -127,11 +152,13 @@
     { immediate: true },
   );
 
-  const { isLoading, retirement_forecast, isFetching } =
-    useRetirementForecast();
+  const { isLoading, retirement_forecast, isFetching } = useRetirementForecast();
+  const { retirement_transactions, isLoading: txnLoading } = useRetirementTransactions();
+
   const isActive = computed(
     () => !(isLoading.value === false && isFetching.value === false),
   );
+
   ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -144,7 +171,31 @@
     annotationPlugin,
   );
 
-  const options = ref({
+  const TXN_PAGE_SIZE = 15;
+  const txnPage = ref(1);
+
+  watch(
+    retirement_transactions,
+    txns => {
+      if (!txns || txns.length === 0) return;
+      const today = new Date().toISOString().slice(0, 10);
+      const idx = txns.findIndex(t => t.transaction_date >= today);
+      const target = idx >= 0 ? idx : txns.length - 1;
+      txnPage.value = Math.floor(target / TXN_PAGE_SIZE) + 1;
+    },
+    { immediate: true },
+  );
+
+  const txnHeaders = [
+    { title: "Date", key: "transaction_date" },
+    { title: "Account", key: "account_name" },
+    { title: "Description", key: "description" },
+    { title: "Type", key: "transaction_type_name" },
+    { title: "Amount", key: "total_amount", align: "end" },
+    { title: "Balance", key: "balance", align: "end" },
+  ];
+
+  const chartOptions = ref({
     responsive: true,
     maintainAspectRatio: true,
     aspectRatio: "5",
@@ -186,10 +237,7 @@
         callbacks: {
           label: function (context) {
             let label = context.dataset.label || "";
-
-            if (label) {
-              label += ": ";
-            }
+            if (label) label += ": ";
             if (context.parsed.y !== null) {
               label += new Intl.NumberFormat("en-US", {
                 style: "currency",
@@ -207,7 +255,6 @@
     scales: {
       y: {
         ticks: {
-          // Include a dollar sign in the ticks
           callback: function (value) {
             return "$" + value;
           },
@@ -215,6 +262,21 @@
       },
     },
   });
+
+  function formatDate(d) {
+    return new Date(d + "T00:00:00").toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  function formatCurrency(val) {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(val);
+  }
 
   const submit = handleSubmit(values => {
     let data = {

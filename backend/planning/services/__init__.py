@@ -1,2 +1,3 @@
 from planning.services.retirement import get_retirement_forecast as get_retirement_forecast
+from planning.services.retirement import get_retirement_transactions as get_retirement_transactions
 from planning.services.budget import calculate_repeat_window as calculate_repeat_window
