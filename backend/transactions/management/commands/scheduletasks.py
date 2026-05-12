@@ -28,6 +28,12 @@ class Command(BaseCommand):
             **options: Additional keyword arguments.
         """
 
+        # Read backup config for dynamic scheduling
+        from administration.models import BackupConfig
+        backup_cfg = BackupConfig.load()
+        backup_frequency = backup_cfg.frequency
+        backup_time = backup_cfg.backup_time
+
         # Calculate the next run date for scheduled tasks
         today_utc = timezone.now()
         tz_timezone = pytz.timezone(os.environ.get("TIMEZONE"))
@@ -86,10 +92,10 @@ class Command(BaseCommand):
             {
                 "task_name": "Backup Database",
                 "function": "transactions.tasks.create_backup",
-                "time": "00:00",
-                "arguments": "True,0",
-                "type": "HOURLY",  # DAILY, HOURLY, MINUTES
-                "start_today": True,
+                "time": backup_time,
+                "arguments": "",
+                "type": backup_frequency,
+                "start_today": backup_frequency == "HOURLY",
                 "delete": False,
             },
             {
@@ -130,6 +136,8 @@ class Command(BaseCommand):
                 schedule_type = Schedule.DAILY
             elif task["type"] == "HOURLY":
                 schedule_type = Schedule.HOURLY
+            elif task["type"] == "WEEKLY":
+                schedule_type = Schedule.WEEKLY
             elif task["type"] == "MINUTES":
                 schedule_type = Schedule.MINUTES
                 next_run = timezone.now()

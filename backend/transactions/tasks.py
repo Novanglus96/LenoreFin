@@ -75,15 +75,36 @@ error_logger = logging.getLogger("error")
 task_logger = logging.getLogger("task")
 
 
-def create_backup(clean=True, keep=0):
+def create_backup(*args, **kwargs):
     """
-    The function `create_backup` creates a database backup and optionally
-    keeps only the last x backups, default is 1.
+    Creates a user-data JSON backup and prunes old backups according to
+    BackupConfig.copies_to_keep.
+    """
+    call_command("export_user_data")
+    cleanup_old_backups()
 
-    Args:
+
+def cleanup_old_backups():
     """
-    call_command("dbbackup", "--clean", "--compress")
-    call_command("mediabackup", "--clean", "--compress")
+    Prunes backup files beyond BackupConfig.copies_to_keep.
+    """
+    from administration.models import BackupConfig
+    from django.conf import settings
+    config = BackupConfig.load()
+    keep = config.copies_to_keep
+    location = settings.DBBACKUP_STORAGE_OPTIONS.get("location", "/backups/")
+    if not os.path.exists(location):
+        return
+    backup_files = sorted(
+        [f for f in os.listdir(location) if f.endswith(".json.gz") or f.endswith(".json")],
+        key=lambda f: os.path.getmtime(os.path.join(location, f)),
+    )
+    for f in backup_files[:-keep] if len(backup_files) > keep else []:
+        try:
+            os.remove(os.path.join(location, f))
+            task_logger.info(f"Deleted old backup: {f}")
+        except OSError as e:
+            error_logger.exception(f"Failed to delete backup {f}: {e}")
 
 
 def create_message(message_text):
