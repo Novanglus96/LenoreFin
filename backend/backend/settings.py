@@ -158,7 +158,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 DBBACKUP_STORAGE = "django.core.files.storage.FileSystemStorage"
-DBBACKUP_STORAGE_OPTIONS = {"location": "/backups/"}
+DBBACKUP_STORAGE_OPTIONS = {"location": os.environ.get("BACKUP_LOCATION", "/backups/")}
 DBBACKUP_CLEANUP_KEEP = 2
 DBBACKUP_CLEANUP_KEEP_MEDIA = 2
 

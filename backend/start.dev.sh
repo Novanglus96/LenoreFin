@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir -p /backups
+
 python manage.py makemigrations --no-input
 python manage.py migrate --no-input
 python manage.py collectstatic --no-input
@@ -27,6 +29,7 @@ python manage.py scheduletasks
 python manage.py load_version_fixture
 python manage.py loaddata administration/fixtures/graph_types
 python manage.py load_options
+python manage.py load_backup_config
 python manage.py load_caches
 
 python manage.py runserver 0.0.0.0:8001 &

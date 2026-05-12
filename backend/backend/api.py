@@ -41,6 +41,7 @@ from planning.api.routers.planning_graph import planning_graph_router
 from planning.api.routers.budget import budget_router
 from planning.api.routers.retirement import retirement_router
 from administration.api.routers.health import health_router
+from administration.api.routers.backup import backup_router
 
 api = NinjaAPI(auth=SessionAuth())
 api.title = "LenoreFin API"
@@ -81,4 +82,5 @@ api.add_router("/planning/graph", planning_graph_router)
 api.add_router("/planning/budget", budget_router)
 api.add_router("/planning/retirement", retirement_router)
 api.add_router("/administration/health", health_router)
+api.add_router("/administration/backups", backup_router)
 api.add_router("/auth", auth_router)

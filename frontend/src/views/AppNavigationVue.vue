@@ -172,6 +172,16 @@
             ></v-list-item>
           </template>
         </v-tooltip>
+        <v-tooltip text="Backup & Restore">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              prepend-icon="mdi-database-arrow-up"
+              to="/backup"
+              v-bind="props"
+              color="selected"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
         <v-tooltip text="Settings">
           <template v-slot:activator="{ props }">
             <v-list-item

@@ -86,6 +86,9 @@ COPY . $APP_HOME
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
 
+# create backups directory owned by app user so the volume initialises correctly
+RUN mkdir -p /backups && chown app:app /backups
+
 # change to the app user
 USER app
 
