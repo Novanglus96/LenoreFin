@@ -262,6 +262,48 @@
               </v-row>
             </v-container>
           </v-sheet>
+          <v-sheet border rounded v-if="['savings', 'investment'].includes(props.account.account_type.slug)">
+            <v-container>
+              <v-row dense>
+                <v-col>
+                  <h4 class="text-h6 font-weight-bold mb-2">
+                    Savings / Investment Info
+                  </h4>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-checkbox
+                    v-model="calculate_interest.value.value"
+                    label="Calculate Interest"
+                    :error-messages="calculate_interest.errorMessage.value"
+                  ></v-checkbox>
+                </v-col>
+              </v-row>
+              <v-row dense v-if="calculate_interest.value.value">
+                <v-col>
+                  <v-text-field
+                    v-model="annual_rate.value.value"
+                    variant="outlined"
+                    label="Annual Rate (APY)"
+                    suffix="%"
+                    density="comfortable"
+                    :error-messages="annual_rate.errorMessage.value"
+                  ></v-text-field>
+                </v-col>
+                <v-col>
+                  <v-select
+                    label="Interest Deposit Day"
+                    :items="intervals"
+                    v-model="interest_deposit_day.value.value"
+                    density="comfortable"
+                    clearable
+                    :error-messages="interest_deposit_day.errorMessage.value"
+                  ></v-select>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-sheet>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -292,11 +334,12 @@
     account_name: yup.string().required("Must provide an account name."),
     account_type_id: yup.number().required("Must select an account type."),
     opening_balance: yup.number().required("Must provide opening balance."),
-    annual_rate: yup.number().when("account_type_id", {
-      is: 1,
+    annual_rate: yup.number().when(["account_type_id", "calculate_interest"], {
+      is: (type, calc) => type === 1 || ((type === 3 || type === 4) && calc === true),
       then: schema => schema.required("Must provide annual rate (APR/APY)."),
       otherwise: schema => schema.notRequired(),
     }),
+    interest_deposit_day: yup.number().nullable().notRequired(),
     active: yup.boolean().required("Must mark active/inactive."),
     open_date: yup.string().required("Must provide opening date."),
     statement_cycle_length: yup
@@ -406,6 +449,7 @@
   const statement_day = useField("statement_day");
   const due_day = useField("due_day");
   const pay_day = useField("pay_day");
+  const interest_deposit_day = useField("interest_deposit_day");
 
   const { accounts, isLoading: accounts_isLoading } = useAccounts();
   const { banks, isLoading } = useBanks();
@@ -486,6 +530,7 @@
     statement_day.value.value = props.account.statement_day;
     due_day.value.value = props.account.due_day;
     pay_day.value.value = props.account.pay_day;
+    interest_deposit_day.value.value = props.account.interest_deposit_day;
   };
 
   function parseDateAsLocal(dateString) {

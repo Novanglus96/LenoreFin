@@ -30,9 +30,17 @@ def update_reminder_cache_on_delete(sender, instance, **kwargs):
         "transactions.tasks.update_cc_forecast_cache",
         instance.reminder_source_account.id,
     )
+    async_task(
+        "transactions.tasks.update_interest_forecast_cache",
+        instance.reminder_source_account.id,
+    )
     if instance.reminder_destination_account is not None:
         async_task(
             "transactions.tasks.update_cc_forecast_cache",
+            instance.reminder_destination_account.id,
+        )
+        async_task(
+            "transactions.tasks.update_interest_forecast_cache",
             instance.reminder_destination_account.id,
         )
 

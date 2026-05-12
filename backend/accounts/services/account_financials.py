@@ -109,6 +109,7 @@ def get_account_financials(account_id: int, today: date | None = None):
         statement_day=account.statement_day,
         due_day=account.due_day,
         pay_day=account.pay_day,
+        interest_deposit_day=account.interest_deposit_day,
     )
 
     cache.set(key, financials, timeout=60 * 60)

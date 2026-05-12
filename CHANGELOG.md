@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/Novanglus96/LenoreFin/compare/v1.2.0...v1.3.0) (2026-05-12)
+
+
+### Features
+
+* savings and investment account interest forecasting ([#87](https://github.com/Novanglus96/LenoreFin/issues/87)) ([3fbd5d4](https://github.com/Novanglus96/LenoreFin/commit/3fbd5d4d0e25733fee949a3da741b2d9ad6d1e83)), closes [#65](https://github.com/Novanglus96/LenoreFin/issues/65) [#66](https://github.com/Novanglus96/LenoreFin/issues/66)
+
 # [1.3.0-alpha.11](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.10...v1.3.0-alpha.11) (2026-05-12)
 
 

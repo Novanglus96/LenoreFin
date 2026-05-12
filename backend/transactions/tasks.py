@@ -782,6 +782,105 @@ def update_reminder_cache(reminder_id):
         error_logger.warning(f"{str(e)}")
 
 
+def update_interest_forecast_cache(account_id):
+    """
+    Generate estimated monthly interest income transactions for savings and
+    investment accounts. Compounds monthly over a 1-year window.
+    """
+    try:
+        account = Account.objects.get(id=account_id)
+    except Account.DoesNotExist:
+        return
+
+    if account.account_type.slug not in {'savings', 'investment'}:
+        return
+
+    ForecastCacheTransaction.objects.filter(
+        Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+    ).delete()
+
+    if not account.calculate_interest or not account.annual_rate:
+        return
+
+    try:
+        today = get_todays_date_timezone_adjusted()
+        end_date = today + relativedelta(years=1)
+
+        income_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='income')
+        status = TransactionStatus.objects.get(slug='pending')
+
+        transactions_qs = Transaction.objects.filter(
+            Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+        ).exclude(status__slug='archived')
+        transactions_qs = annotate_transaction_total(transactions_qs, account_id)
+
+        reminder_qs = ReminderCacheTransaction.objects.filter(
+            Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+        ).exclude(status__slug='archived')
+        reminder_qs = annotate_transaction_total(reminder_qs, account_id)
+
+        balance = (
+            Decimal(account.opening_balance or 0)
+            + Decimal(account.archive_balance or 0)
+            + (transactions_qs.aggregate(sum=Sum('pretty_total'))['sum'] or Decimal(0))
+        )
+
+        transactions_to_create = []
+        period_start = today
+
+        while period_start < end_date:
+            period_end = increment_date(period_start, 'm', 1)
+
+            period_reminder_sum = (
+                reminder_qs.filter(
+                    transaction_date__gt=period_start,
+                    transaction_date__lte=period_end,
+                ).aggregate(sum=Sum('pretty_total'))['sum'] or Decimal(0)
+            )
+            balance += period_reminder_sum
+
+            if balance > 0:
+                interest = calculate_interest(
+                    balance, account.annual_rate, period_start, period_end
+                )
+                if interest > 0:
+                    deposit_day = account.interest_deposit_day
+                    if deposit_day:
+                        try:
+                            transaction_date = period_end.replace(day=deposit_day)
+                        except ValueError:
+                            transaction_date = period_end
+                    else:
+                        transaction_date = period_end
+                    transactions_to_create.append(
+                        FullTransaction(
+                            transaction_date=transaction_date,
+                            total_amount=interest,
+                            status_id=status.id,
+                            memo="Interest",
+                            description=f"({account.account_name} Estimated Interest)",
+                            edit_date=today,
+                            add_date=today,
+                            transaction_type_id=income_type_id,
+                            paycheck_id=None,
+                            source_account_id=account_id,
+                            destination_account_id=None,
+                            tags=[],
+                            checkNumber=None,
+                        )
+                    )
+                    balance += interest
+
+            period_start = period_end
+
+        create_transactions(transactions_to_create, 'forecast')
+        delete_pattern(account_all_transactions(account_id))
+    except Exception as e:
+        error_logger.exception(
+            f"Error calculating interest forecast for account {account_id}: {e}"
+        )
+
+
 def update_cc_forecast_cache(account_id):
     """
     The function `archive_transactions` archives older transactions based on the

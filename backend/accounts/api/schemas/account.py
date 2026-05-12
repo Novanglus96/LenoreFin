@@ -32,6 +32,7 @@ class AccountIn(Schema):
     statement_day: Optional[int] = 15
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
+    interest_deposit_day: Optional[int] = None
 
 
 # The class AccountOut is a schema for representing accounts.
@@ -62,6 +63,7 @@ class AccountOut(Schema):
     statement_day: Optional[int] = 15
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
+    interest_deposit_day: Optional[int] = None
     current_yr_rewards: List[BalanceDecimal] = []
     last_yr_rewards: List[BalanceDecimal] = []
 
@@ -91,6 +93,7 @@ class AccountUpdate(Schema):
     statement_day: Optional[int] = 15
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
+    interest_deposit_day: Optional[int] = None
 
 
 class AccountQuery(Schema):
