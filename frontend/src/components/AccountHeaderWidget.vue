@@ -133,11 +133,11 @@
             >
               <div class="text-white font-weight-bold text-body">
                 <NumberFlow
-                  :value="account.last_statement_amount"
+                  :value="account.statement_balance"
                   :format="{ style: 'currency', currency: 'USD' }"
                 />
               </div>
-              <div class="text-primary-lighten-2">last statement balance</div>
+              <div class="text-primary-lighten-2">{{ account.calculate_payments && account.payment_strategy === 'M' ? 'minimum due' : 'statement balance' }}</div>
             </v-col>
             <v-col
               v-if="account.account_type.id == 1"
@@ -268,11 +268,11 @@
               >
                 <div class="text-white font-weight-bold text-body">
                   <NumberFlow
-                    :value="account.last_statement_amount"
+                    :value="account.statement_balance"
                     :format="{ style: 'currency', currency: 'USD' }"
                   />
                 </div>
-                <div class="text-primary-lighten-2">last statement</div>
+                <div class="text-primary-lighten-2">{{ account.calculate_payments && account.payment_strategy === 'M' ? 'minimum due' : 'statement balance' }}</div>
               </v-col>
             </v-row>
             <v-row density="compact">

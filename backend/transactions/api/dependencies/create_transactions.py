@@ -3,6 +3,7 @@ from transactions.api.dependencies.full_transaction import FullTransaction
 from transactions.models import (
     Transaction,
     TransactionDetail,
+    TransactionType,
     ReminderCacheTransaction,
     ReminderCacheTransactionDetail,
     ForecastCacheTransaction,
@@ -33,6 +34,7 @@ def create_transactions(
     # Initiate variables...
     max_bulk = 1000  # Chunk size for bulk record creations
     bulk_lower_limit = 10  # Lower limit to process as bulk_create
+    income_type_id = TransactionType.objects.values_list("id", flat=True).get(slug="income")
 
     # Define how to break up records into chunks
     def chunk_list(lst, chunk_size):
@@ -45,11 +47,9 @@ def create_transactions(
             try:
                 for trans in transactions:
                     try:
-                        if trans.transaction_type_id == 1:
-                            amount = -abs(trans.total_amount)
-                        elif trans.transaction_type_id == 2:
+                        if trans.transaction_type_id == income_type_id:
                             amount = abs(trans.total_amount)
-                        elif trans.transaction_type_id == 3:
+                        else:
                             amount = -abs(trans.total_amount)
                         created_transaction = None
                         if transaction_type == "transaction":
@@ -102,7 +102,7 @@ def create_transactions(
                             if trans.tags and len(trans.tags) != 0:
                                 for tag in trans.tags:
                                     adj_amount = 0
-                                    if trans.transaction_type_id == 2:
+                                    if trans.transaction_type_id == income_type_id:
                                         if not tag.tag_full_toggle:
                                             adj_amount = abs(tag.tag_amount)
                                         else:
@@ -157,11 +157,9 @@ def create_transactions(
             details_to_create = []
             created_transactions = []
             for index, trans in enumerate(transactions):
-                if trans.transaction_type_id == 1:
-                    amount = -abs(trans.total_amount)
-                elif trans.transaction_type_id == 2:
+                if trans.transaction_type_id == income_type_id:
                     amount = abs(trans.total_amount)
-                elif trans.transaction_type_id == 3:
+                else:
                     amount = -abs(trans.total_amount)
                 trans_obj = None
                 if transaction_type == "transaction":
@@ -214,7 +212,7 @@ def create_transactions(
                 if trans.tags and len(trans.tags) != 0:
                     for tag in trans.tags:
                         adj_amount = 0
-                        if trans.transaction_type_id == 2:
+                        if trans.transaction_type_id == income_type_id:
                             if not tag.tag_full_toggle:
                                 adj_amount = abs(tag.tag_amount)
                             else:

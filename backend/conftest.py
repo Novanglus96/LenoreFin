@@ -151,7 +151,7 @@ def test_checking_account(bank, checking_account_type):
         statement_cycle_period="m",
         credit_limit=55555,
         bank=bank,
-        last_statement_amount=555.55,
+        statement_balance=555.55,
         archive_balance=555.55,
         funding_account=None,
         calculate_payments=False,
@@ -178,7 +178,7 @@ def test_savings_account(bank, savings_account_type):
         statement_cycle_period="m",
         credit_limit=55555,
         bank=bank,
-        last_statement_amount=555.55,
+        statement_balance=555.55,
         archive_balance=555.55,
         funding_account=None,
         calculate_payments=False,
@@ -205,7 +205,7 @@ def test_credit_card_account(bank, credit_card_account_type):
         statement_cycle_period="m",
         credit_limit=55555,
         bank=bank,
-        last_statement_amount=555.55,
+        statement_balance=555.55,
         archive_balance=555.55,
         funding_account=None,
         calculate_payments=False,
@@ -222,6 +222,11 @@ def test_credit_card_account(bank, credit_card_account_type):
 @pytest.fixture
 def test_expense_transaction_type():
     return TransactionType.objects.create(transaction_type="Expense")
+
+
+@pytest.fixture
+def test_income_transaction_type():
+    return TransactionType.objects.create(transaction_type="Income")
 
 
 @pytest.fixture

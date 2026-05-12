@@ -6,7 +6,7 @@ Covers:
   - generate_statement_cycles — cycle date generation and transaction aggregation
   - update_cc_forecast_cache — full integration: early-return guards, all three payment
     strategies, existing-payment deduplication, zero-balance guard, cache management,
-    last_statement_amount update
+    statement_balance update
 
 Note on interest in update_cc_forecast_cache:
   The interest condition is `statement_cycles[0]["statement_due"] < today`.
@@ -106,7 +106,7 @@ def _make_cc_account(bank, credit_card_account_type, checking_account,
         statement_cycle_period="m",
         credit_limit=10000,
         bank=bank,
-        last_statement_amount=Decimal("0.00"),
+        statement_balance=Decimal("0.00"),
         funding_account=checking_account,
         calculate_payments=calculate_payments,
         calculate_interest=calculate_interest,
@@ -650,10 +650,10 @@ def test_payment_source_is_funding_account(
 
 @pytest.mark.django_db
 @pytest.mark.service
-def test_last_statement_amount_updated_after_calculation(
+def test_statement_balance_updated_after_calculation(
     bank, credit_card_account_type, test_checking_account,
 ):
-    """account.last_statement_amount is set to the first cycle's payment after running."""
+    """account.statement_balance is set to the first cycle's payment after running."""
 
     with patch(PATCH_TODAY, return_value=FIXED_TODAY):
         cc = _make_cc_account(
@@ -663,7 +663,7 @@ def test_last_statement_amount_updated_after_calculation(
         update_cc_forecast_cache(cc.id)
 
     cc.refresh_from_db()
-    assert cc.last_statement_amount == Decimal("150.00")
+    assert cc.statement_balance == Decimal("150.00")
 
 
 @pytest.mark.django_db

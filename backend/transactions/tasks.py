@@ -774,23 +774,25 @@ def update_cc_forecast_cache(account_id):
 
     """
     try:
-        # Get the account object
         account = Account.objects.get(id=account_id)
+    except Account.DoesNotExist:
+        return
 
-        # Exit if not cc account
-        if account.account_type.slug != 'credit-card':
-            return
+    # Exit if not cc account
+    if account.account_type.slug != 'credit-card':
+        return
 
-        # Delete any existing cache entries for this reminder
-        ForecastCacheTransaction.objects.filter(
-            Q(source_account_id=account_id)
-            | Q(destination_account_id=account_id)
-        ).delete()
+    # Delete any existing cache entries for this account
+    ForecastCacheTransaction.objects.filter(
+        Q(source_account_id=account_id)
+        | Q(destination_account_id=account_id)
+    ).delete()
 
-        # Exit if this is not CC or cc calculations are turned off
-        if not account.calculate_payments:
-            return
+    # Exit if cc calculations are turned off
+    if not account.calculate_payments:
+        return
 
+    try:
         # Define account variables
         statement_cycle_length = account.statement_cycle_length
         statement_cycle_period = account.statement_cycle_period
@@ -866,49 +868,43 @@ def update_cc_forecast_cache(account_id):
                 + previous_balance
             )
             cycle_payment = Decimal(0.00)
-            # Calculate Interest
-            if interest_calculations:
-                # If we are past due date, calculate interest
-                if statement_cycles[0]["statement_due"] < today:
-                    if cycle_balance != cycle["statement_debits"]:
-                        unpaid = cycle_balance - cycle["statement_debits"]
-                        cycle_interest = calculate_interest(
-                            unpaid,
-                            annual_rate,
-                            statement_cycles[x - 1]["statement_end"],
-                            cycle["statement_end"],
+            # Calculate Interest (only for cycles that haven't started yet)
+            if interest_calculations and cycle["statement_start"] > today:
+                if cycle_balance != cycle["statement_debits"]:
+                    unpaid = cycle_balance - cycle["statement_debits"]
+                    cycle_interest = calculate_interest(
+                        unpaid,
+                        annual_rate,
+                        cycle["statement_start"],
+                        cycle["statement_end"],
+                    )
+                    total_interest += cycle_interest
+                    if cycle_interest < 0:
+                        tags = []
+                        tag_obj = CustomTag(
+                            tag_name="Interest Charged",
+                            tag_amount=cycle_interest,
+                            tag_id=18,
+                            tag_full_toggle=True,
                         )
-                        total_interest += cycle_interest
-                        # Create Inteterest Transaction
-                        if (
-                            cycle["statement_end"] > today
-                            and cycle_interest < 0
-                        ):
-                            tags = []
-                            tag_obj = CustomTag(
-                                tag_name="Interest Charged",
-                                tag_amount=cycle_interest,
-                                tag_id=18,
-                                tag_full_toggle=True,
-                            )
-                            tags.append(tag_obj)
-                            transaction = FullTransaction(
-                                transaction_date=cycle["statement_end"],
-                                total_amount=cycle_interest,
-                                status_id=status.id,
-                                memo="Interest Charge",
-                                description=f"({account.account_name} Estimated Interest)",
-                                edit_date=today,
-                                add_date=today,
-                                transaction_type_id=expense_type_id,
-                                paycheck_id=None,
-                                source_account_id=account_id,
-                                destination_account_id=None,
-                                tags=tags,
-                                checkNumber=None,
-                            )
-                            transactions_to_create.append(transaction)
-                            temp_id -= 1
+                        tags.append(tag_obj)
+                        transaction = FullTransaction(
+                            transaction_date=cycle["statement_end"],
+                            total_amount=cycle_interest,
+                            status_id=status.id,
+                            memo="Interest Charge",
+                            description=f"({account.account_name} Estimated Interest)",
+                            edit_date=today,
+                            add_date=today,
+                            transaction_type_id=expense_type_id,
+                            paycheck_id=None,
+                            source_account_id=account_id,
+                            destination_account_id=None,
+                            tags=tags,
+                            checkNumber=None,
+                        )
+                        transactions_to_create.append(transaction)
+                        temp_id -= 1
             # Calculate Payment
             if cycle_balance < 0:
                 if payment_strategy == "F":
@@ -978,15 +974,14 @@ def update_cc_forecast_cache(account_id):
                         total_payments += remaining_payment
                         temp_id -= 1
             if x == 0:
-                account.last_statement_amount = cycle_payment
+                account.statement_balance = cycle_payment
                 account.save()
             x += 1
 
         create_transactions(transactions_to_create, "forecast")
         delete_pattern(account_all_transactions(account_id))
     except Exception as e:
-        api_logger.warning("There was an error creating cache")
-        error_logger.warning(f"{str(e)}")
+        error_logger.exception(f"Error calculating CC forecast for account {account_id}: {e}")
 
 
 def generate_statement_cycles(
@@ -1026,12 +1021,12 @@ def generate_statement_cycles(
 
     if today.day > statement_day:
         statement_start = today.replace(day=statement_day)
+        statement_due = statement_start.replace(day=due_day)
+        statement_pay_day = statement_start.replace(day=pay_day)
     else:
         statement_start = one_month_prior.replace(day=statement_day)
-    statement_due = statement_start + relativedelta(months=1)
-    statement_due = statement_due.replace(day=due_day)
-    statement_pay_day = statement_start + relativedelta(months=1)
-    statement_pay_day = statement_pay_day.replace(day=pay_day)
+        statement_due = (statement_start + relativedelta(months=1)).replace(day=due_day)
+        statement_pay_day = (statement_start + relativedelta(months=1)).replace(day=pay_day)
 
     previous_balance = (
         transactions.filter(
