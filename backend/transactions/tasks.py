@@ -879,9 +879,9 @@ def update_cc_forecast_cache(account_id):
                         cycle["statement_end"],
                     )
                     total_interest += cycle_interest
-                    # Create Interest Transaction
+                    # Create Interest Transaction for cycles that haven't started yet
                     if (
-                        cycle["statement_end"] > today
+                        cycle["statement_start"] > today
                         and cycle_interest < 0
                     ):
                         tags = []
