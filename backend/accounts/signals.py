@@ -1,7 +1,6 @@
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from accounts.models import Account
-from django_q.tasks import async_task
 from django.db.models import Q
 from transactions.models import ForecastCacheTransaction
 from core.cache.helpers import delete_pattern
@@ -23,10 +22,8 @@ def update_cache_on_save(sender, instance, **kwargs):
     if instance.account_type.account_type == "Credit Card" and getattr(
         instance, "_should_update_cache", False
     ):
-        async_task(
-            "transactions.tasks.update_cc_forecast_cache",
-            instance.id,
-        )
+        from transactions.tasks import update_cc_forecast_cache
+        update_cc_forecast_cache(instance.id)
         delete_pattern(account_forecast_transactions(instance.id))
     delete_pattern(account_combined_transactions(instance.id))
     delete_pattern(account_cleared_balance(instance.id))

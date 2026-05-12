@@ -25,9 +25,9 @@ def current_date():
 
 @pytest.mark.django_db
 @pytest.mark.unit
-@patch("accounts.signals.async_task")
+@patch("transactions.tasks.update_cc_forecast_cache")
 def test_new_account_triggers_cache_update(
-    mock_async_task, credit_card_account_type, bank
+    mock_update_cc, credit_card_account_type, bank
 ):
     account = Account.objects.create(
         account_name="Test Credit Card Account",
@@ -52,47 +52,44 @@ def test_new_account_triggers_cache_update(
         due_day=15,
         pay_day=15,
     )
-    mock_async_task.assert_called_once_with(
-        "transactions.tasks.update_cc_forecast_cache",
-        account.id,
-    )
+    mock_update_cc.assert_called_once_with(account.id)
 
 
 @pytest.mark.django_db
 @pytest.mark.unit
-@patch("accounts.signals.async_task")
+@patch("transactions.tasks.update_cc_forecast_cache")
 def test_relevant_change_triggers_cache_update(
-    mock_async_task, test_credit_card_account
+    mock_update_cc, test_credit_card_account
 ):
     test_credit_card_account.opening_balance = 500
     test_credit_card_account.save()
 
-    mock_async_task.assert_called_once()
+    mock_update_cc.assert_called_once()
 
 
 @pytest.mark.django_db
 @pytest.mark.unit
-@patch("accounts.signals.async_task")
+@patch("transactions.tasks.update_cc_forecast_cache")
 def test_irrelevant_change_does_not_trigger_update(
-    mock_async_task, test_credit_card_account
+    mock_update_cc, test_credit_card_account
 ):
-    mock_async_task.reset_mock()
+    mock_update_cc.reset_mock()
     test_credit_card_account.account_name = "New Name"
     test_credit_card_account.save()
 
-    mock_async_task.assert_not_called()
+    mock_update_cc.assert_not_called()
 
 
 @pytest.mark.django_db
 @pytest.mark.unit
-@patch("accounts.signals.async_task")
+@patch("transactions.tasks.update_cc_forecast_cache")
 def test_non_credit_account_does_not_trigger_update(
-    mock_async_task, test_checking_account
+    mock_update_cc, test_checking_account
 ):
     test_checking_account.opening_balance = 500
     test_checking_account.save()
 
-    mock_async_task.assert_not_called()
+    mock_update_cc.assert_not_called()
 
 
 @pytest.mark.django_db
