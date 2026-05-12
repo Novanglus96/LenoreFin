@@ -1,3 +1,10 @@
+# [1.4.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.2...v1.4.0-alpha.3) (2026-05-12)
+
+
+### Features
+
+* improve retirement forecast with area chart and transaction list ([#93](https://github.com/Novanglus96/LenoreFin/issues/93)) ([c1e7ed4](https://github.com/Novanglus96/LenoreFin/commit/c1e7ed4683197b305a56fef8de37b968a5d9e481))
+
 # [1.4.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.1...v1.4.0-alpha.2) (2026-05-12)
 
 
