@@ -101,6 +101,15 @@ class Command(BaseCommand):
                 "start_today": True,
                 "delete": False,
             },
+            {
+                "task_name": "Prune Task History",
+                "function": "transactions.tasks.prune_task_history",
+                "time": "03:00",
+                "arguments": "",
+                "type": "DAILY",
+                "start_today": False,
+                "delete": False,
+            },
         ]
 
         # Schedule or modify tasks

@@ -471,6 +471,25 @@ def finish_imports():
     return string_return
 
 
+def prune_task_history():
+    """
+    Delete old django-q2 task history records.
+    Success records older than 7 days and failure records older than 30 days
+    are removed to keep the task queue tables from growing unbounded.
+    """
+    from django_q.models import Success, Failure
+
+    cutoff_success = timezone.now() - relativedelta(days=7)
+    cutoff_failure = timezone.now() - relativedelta(days=30)
+
+    deleted_success, _ = Success.objects.filter(stopped__lt=cutoff_success).delete()
+    deleted_failure, _ = Failure.objects.filter(stopped__lt=cutoff_failure).delete()
+
+    task_logger.info(
+        f"Pruned task history: {deleted_success} success, {deleted_failure} failure records removed"
+    )
+
+
 def archive_transactions():
     """
     The function `archive_transactions` archives older transactions based on the
