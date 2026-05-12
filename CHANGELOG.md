@@ -1,3 +1,10 @@
+# [1.3.0-alpha.11](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.10...v1.3.0-alpha.11) (2026-05-12)
+
+
+### Features
+
+* scheduled daily pruning of django-q2 task history ([#85](https://github.com/Novanglus96/LenoreFin/issues/85)) ([f711f21](https://github.com/Novanglus96/LenoreFin/commit/f711f217e989e32fe7714af729a6cd17e180c955))
+
 # [1.3.0-alpha.10](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.9...v1.3.0-alpha.10) (2026-05-12)
 
 
