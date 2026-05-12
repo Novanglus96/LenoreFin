@@ -177,6 +177,48 @@
             </v-row>
           </v-container>
         </v-sheet>
+        <v-sheet border rounded v-if="['savings', 'investment'].includes(props.account.account_type.slug)">
+          <v-container>
+            <v-row dense>
+              <v-col>
+                <h4 class="text-h6 font-weight-bold mb-2">
+                  Savings / Investment Info
+                </h4>
+              </v-col>
+            </v-row>
+            <v-row dense>
+              <v-col>
+                <v-checkbox
+                  v-model="formData.calculate_interest"
+                  label="Calculate Interest"
+                  @update:model-value="checkForm"
+                ></v-checkbox>
+              </v-col>
+            </v-row>
+            <v-row dense v-if="formData.calculate_interest">
+              <v-col>
+                <v-text-field
+                  v-model="formData.annual_rate"
+                  variant="outlined"
+                  label="Annual Rate (APY)"
+                  suffix="%"
+                  @update:model-value="checkForm"
+                  density="comfortable"
+                ></v-text-field>
+              </v-col>
+              <v-col>
+                <v-select
+                  label="Interest Deposit Day"
+                  :items="intervals"
+                  v-model="formData.interest_deposit_day"
+                  density="comfortable"
+                  clearable
+                  @update:model-value="checkForm"
+                ></v-select>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-sheet>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -226,6 +268,8 @@
     credit_limit: props.account.credit_limit,
     bank_id: props.account.bank.id,
     statement_balance: props.account.statement_balance,
+    calculate_interest: props.account.calculate_interest,
+    interest_deposit_day: props.account.interest_deposit_day,
   });
 
   const clickEditAccount = () => {

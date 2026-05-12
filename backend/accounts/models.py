@@ -135,6 +135,7 @@ class Account(models.Model):
     statement_day = models.IntegerField(default=15)
     due_day = models.IntegerField(default=15)
     pay_day = models.IntegerField(default=15)
+    interest_deposit_day = models.IntegerField(null=True, blank=True, default=None)
     tracker = FieldTracker()
 
     def clean(self):

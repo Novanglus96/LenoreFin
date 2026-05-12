@@ -68,6 +68,7 @@ def detect_relevant_changes(sender, instance, **kwargs):
         "statement_day",
         "due_day",
         "pay_day",
+        "interest_deposit_day",
     }
 
     if relevant & set(instance.tracker.changed()):

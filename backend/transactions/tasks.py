@@ -844,9 +844,17 @@ def update_interest_forecast_cache(account_id):
                     balance, account.annual_rate, period_start, period_end
                 )
                 if interest > 0:
+                    deposit_day = account.interest_deposit_day
+                    if deposit_day:
+                        try:
+                            transaction_date = period_end.replace(day=deposit_day)
+                        except ValueError:
+                            transaction_date = period_end
+                    else:
+                        transaction_date = period_end
                     transactions_to_create.append(
                         FullTransaction(
-                            transaction_date=period_end,
+                            transaction_date=transaction_date,
                             total_amount=interest,
                             status_id=status.id,
                             memo="Interest",
