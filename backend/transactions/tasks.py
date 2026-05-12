@@ -1027,10 +1027,12 @@ def generate_statement_cycles(
 
     if today.day > statement_day:
         statement_start = today.replace(day=statement_day)
+        statement_due = statement_start.replace(day=due_day)
+        statement_pay_day = statement_start.replace(day=pay_day)
     else:
         statement_start = one_month_prior.replace(day=statement_day)
-    statement_due = statement_start.replace(day=due_day)
-    statement_pay_day = statement_start.replace(day=pay_day)
+        statement_due = (statement_start + relativedelta(months=1)).replace(day=due_day)
+        statement_pay_day = (statement_start + relativedelta(months=1)).replace(day=pay_day)
 
     previous_balance = (
         transactions.filter(
