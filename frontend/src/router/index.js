@@ -16,8 +16,15 @@ import ExpensesView from "@/views/ExpensesView.vue";
 import NotesView from "@/views/NotesView.vue";
 import RetirementView from "@/views/RetirementView.vue";
 import BudgetsView from "@/views/BudgetsView.vue";
+import LoginView from "@/views/LoginView.vue";
 
 const routes = [
+  {
+    path: "/login",
+    name: "login",
+    component: LoginView,
+    meta: { public: true },
+  },
   {
     path: "/",
     name: "dashboard",
@@ -110,16 +117,41 @@ const router = createRouter({
   routes,
 });
 
-// Add a global beforeEach guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const isPageReload = sessionStorage.getItem("isPageReload");
   sessionStorage.removeItem("isPageReload");
 
-  if (isPageReload && to.fullPath !== "/") {
-    next("/");
-  } else {
-    next();
+  if (isPageReload && to.fullPath !== "/" && !to.meta.public) {
+    return next("/");
   }
+
+  if (to.meta.public) {
+    if (to.name === "login") {
+      const { useAuthStore } = await import("@/stores/auth");
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) {
+        await authStore.fetchCurrentUser();
+      }
+      if (authStore.isAuthenticated) {
+        return next(to.query.redirect || "/");
+      }
+    }
+    return next();
+  }
+
+  // Lazy import to avoid circular dependency at module load time
+  const { useAuthStore } = await import("@/stores/auth");
+  const authStore = useAuthStore();
+
+  if (!authStore.isAuthenticated) {
+    await authStore.fetchCurrentUser();
+  }
+
+  if (!authStore.isAuthenticated) {
+    return next({ name: "login", query: { redirect: to.fullPath } });
+  }
+
+  next();
 });
 
 // Set a flag to detect page reload

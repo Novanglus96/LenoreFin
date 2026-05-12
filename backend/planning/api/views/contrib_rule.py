@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -16,7 +17,7 @@ task_logger = logging.getLogger("task")
 contrib_rule_router = Router(tags=["Contribution Rules"])
 
 
-@contrib_rule_router.post("/create")
+@contrib_rule_router.post("/create", auth=FullAccessAuth())
 def create_contrib_rule(request, payload: ContribRuleIn):
     """
     The function `create_contrib_rule` creates a contribution rule
@@ -59,7 +60,7 @@ def create_contrib_rule(request, payload: ContribRuleIn):
         raise HttpError(500, f"Record creation error: {str(e)}")
 
 
-@contrib_rule_router.put("/update/{contribrule_id}")
+@contrib_rule_router.put("/update/{contribrule_id}", auth=FullAccessAuth())
 def update_contrib_rule(request, contribrule_id: int, payload: ContribRuleIn):
     """
     The function `update_contrib_rule` updates the contribution rule specified by id.
@@ -165,7 +166,7 @@ def list_contrib_rules(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@contrib_rule_router.delete("/delete/{contribrule_id}")
+@contrib_rule_router.delete("/delete/{contribrule_id}", auth=FullAccessAuth())
 def delete_contrib_rule(request, contribrule_id: int):
     """
     The function `delete_contrib_rule` deletes the contribution rule specified by id.

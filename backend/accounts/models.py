@@ -4,6 +4,7 @@ import pytz
 import os
 from django.core.exceptions import ValidationError
 from model_utils import FieldTracker
+from core.mixins import SystemObjectMixin
 
 
 def current_date():
@@ -16,7 +17,7 @@ def current_date():
 # Create your models here.
 
 
-class AccountType(models.Model):
+class AccountType(SystemObjectMixin, models.Model):
     """
     Model representing an account type for categorizing accounts.
 
@@ -27,6 +28,8 @@ class AccountType(models.Model):
     - icon (CharField): The icon associciated with accounts of this type, limited to 25
     characters.
     """
+
+    _slug_source_field = "account_type"
 
     account_type = models.CharField(max_length=254, unique=True)
     color = models.CharField(max_length=7, default="#059669")
@@ -69,7 +72,7 @@ class Account(models.Model):
     - rewards_amount (DecimalField): The amount of rewards associated with the account, defaulting to 0.00.
     - credit_limit (DecimalField): The credit limit of the account, defaulting to 0.00.
     - bank (ForeignKey): A reference to the Bank model representing the bank associated with the account.
-    - last_statement_amount (DecimalField): The amount of the last statement for the account, defaulting to 0.00.
+    - statement_balance (DecimalField): The calculated payment amount for the current billing cycle, defaulting to 0.00.
     - funding_account (ForeignKey): A reference to another Account that funds this account, can be null.
     - calculate_payments (BooleanField): Enable/Disable payment calculations.  Default=False.
     - calcualte_interest (BooleanField): Enable/Disable interest calculations. Default==False.
@@ -100,7 +103,7 @@ class Account(models.Model):
         max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE)
-    last_statement_amount = models.DecimalField(
+    statement_balance = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
     archive_balance = models.DecimalField(
@@ -132,6 +135,7 @@ class Account(models.Model):
     statement_day = models.IntegerField(default=15)
     due_day = models.IntegerField(default=15)
     pay_day = models.IntegerField(default=15)
+    interest_deposit_day = models.IntegerField(null=True, blank=True, default=None)
     tracker = FieldTracker()
 
     def clean(self):

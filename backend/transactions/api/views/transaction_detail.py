@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -78,7 +79,7 @@ def list_transactiondetails(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@transaction_detail_router.delete("/delete/{transactiondetail_id}")
+@transaction_detail_router.delete("/delete/{transactiondetail_id}", auth=FullAccessAuth())
 def delete_transaction_detail(request, transactiondetail_id: int):
     """
     The function `delete_transaction_detail` deletes the transaction detail specified by id.
@@ -110,7 +111,7 @@ def delete_transaction_detail(request, transactiondetail_id: int):
         raise HttpError(500, "Record retrieval error")
 
 
-@transaction_detail_router.post("/create")
+@transaction_detail_router.post("/create", auth=FullAccessAuth())
 def create_transaction_detail(request, payload: TransactionDetailIn):
     """
     The function `create_transaction_detail` creates a transaction detail
@@ -138,7 +139,7 @@ def create_transaction_detail(request, payload: TransactionDetailIn):
         raise HttpError(500, "Record creation error")
 
 
-@transaction_detail_router.put("/update/{transactiondetail_id}")
+@transaction_detail_router.put("/update/{transactiondetail_id}", auth=FullAccessAuth())
 def update_transaction_detail(
     request, transactiondetail_id: int, payload: TransactionDetailIn
 ):

@@ -3,7 +3,7 @@
     <v-container class="pa-0 ma-1">
       <v-row dense>
         <v-col cols="1">
-          <v-tooltip text="Delete Tag(s)" location="top">
+          <v-tooltip text="Delete Tag(s)" location="top" v-if="authStore.isFullAccess">
             <template v-slot:activator="{ props }">
               <v-btn
                 icon="mdi-tag-minus"
@@ -72,7 +72,7 @@
           </v-tooltip>
         </v-col>
         <v-col cols="1">
-          <v-tooltip text="Add New Tag" location="top">
+          <v-tooltip text="Add New Tag" location="top" v-if="authStore.isFullAccess">
             <template v-slot:activator="{ props }">
               <v-btn
                 icon="mdi-tag-plus"
@@ -133,6 +133,7 @@
 <script setup>
   import { ref, defineEmits, defineProps, onMounted, watchEffect } from "vue";
   import { useTags } from "@/composables/tagsComposable";
+  import { useAuthStore } from "@/stores/auth";
   import Vue3Datatable from "@bhplugin/vue3-datatable";
   import "@bhplugin/vue3-datatable/dist/style.css";
 
@@ -155,6 +156,7 @@
 
   // Define emits
   const emit = defineEmits(["tagTableUpdated"]);
+  const authStore = useAuthStore();
 
   // Define reactive variables...
   const tagToAdd = ref(null); // Tag object to add to tag list

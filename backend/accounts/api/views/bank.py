@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from typing import List
 import logging
 from django.http import Http404
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -16,7 +17,7 @@ task_logger = logging.getLogger("task")
 bank_router = Router(tags=["Banks"])
 
 
-@bank_router.post("/create")
+@bank_router.post("/create", auth=FullAccessAuth())
 def create_bank(request, payload: BankIn):
     """
     The function `create_bank` creates a bank
@@ -55,7 +56,7 @@ def create_bank(request, payload: BankIn):
         raise HttpError(500, "Record creation error")
 
 
-@bank_router.put("/update/{bank_id}")
+@bank_router.put("/update/{bank_id}", auth=FullAccessAuth())
 def update_bank(request, bank_id: int, payload: BankIn):
     """
     The function `update_bank` updates the bank specified by id.
@@ -153,7 +154,7 @@ def list_banks(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@bank_router.delete("/delete/{bank_id}")
+@bank_router.delete("/delete/{bank_id}", auth=FullAccessAuth())
 def delete_bank(request, bank_id: int):
     """
     The function `delete_bank` deletes the bank specified by id.

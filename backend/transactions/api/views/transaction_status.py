@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -19,7 +20,7 @@ task_logger = logging.getLogger("task")
 transaction_status_router = Router(tags=["Transaction Statuses"])
 
 
-@transaction_status_router.put("/update/{transactionstatus_id}")
+@transaction_status_router.put("/update/{transactionstatus_id}", auth=FullAccessAuth())
 def update_transaction_status(
     request, transactionstatus_id: int, payload: TransactionStatusIn
 ):
@@ -136,7 +137,7 @@ def list_transaction_statuses(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@transaction_status_router.delete("/delete/{transactionstatus_id}")
+@transaction_status_router.delete("/delete/{transactionstatus_id}", auth=FullAccessAuth())
 def delete_transaction_status(request, transactionstatus_id: int):
     """
     The function `delete_transaction_status` deletes the transaction status specified by id.
@@ -156,6 +157,8 @@ def delete_transaction_status(request, transactionstatus_id: int):
         transaction_status = get_object_or_404(
             TransactionStatus, id=transactionstatus_id
         )
+        if transaction_status.is_system:
+            raise HttpError(403, "Cannot delete a system object")
         transaction_status_name = transaction_status.transaction_status
         transaction_status.delete()
         api_logger.info(
@@ -164,6 +167,8 @@ def delete_transaction_status(request, transactionstatus_id: int):
         return {"success": True}
     except Http404:
         raise HttpError(404, "Transaction status not found")
+    except HttpError:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction status not deleted")

@@ -17,7 +17,7 @@
                 class="d-flex align-center justify-center mx-1 px-1 gx-1 bg-primary-lighten-1"
                 variant="outlined"
               >
-                <v-tooltip text="Edit Account" location="top">
+                <v-tooltip text="Edit Account" location="top" v-if="authStore.isFullAccess">
                   <template v-slot:activator="{ props }">
                     <span
                       class="mx-1"
@@ -36,6 +36,13 @@
                     </span>
                   </template>
                 </v-tooltip>
+                <span class="mx-1" v-else>
+                  {{
+                    account.active
+                      ? account.account_name
+                      : account.account_name + " (Inactive)"
+                  }}
+                </span>
                 <EditAccountForm
                   v-model="editDialog"
                   :account="account"
@@ -44,6 +51,7 @@
                 <v-tooltip
                   :text="account.active ? 'Delete Account' : 'Enable Account'"
                   location="top"
+                  v-if="authStore.isFullAccess"
                 >
                   <template v-slot:activator="{ props }">
                     <v-btn
@@ -71,7 +79,7 @@
           <!-- Large Display View -->
           <v-row density="compact" v-if="!smAndDown">
             <v-col class="text-center align-content-end">
-              <v-tooltip text="Adjust Balance" location="top">
+              <v-tooltip text="Adjust Balance" location="top" v-if="authStore.isFullAccess">
                 <template v-slot:activator="{ props }">
                   <div
                     class="text-accent font-weight-bold text-h4 d-inline-block"
@@ -90,6 +98,15 @@
                   </div>
                 </template>
               </v-tooltip>
+              <div
+                class="text-accent font-weight-bold text-h4 d-inline-block"
+                v-if="!authStore.isFullAccess"
+              >
+                <NumberFlow
+                  :value="account.balance"
+                  :format="{ style: 'currency', currency: 'USD' }"
+                />
+              </div>
               <AdjustBalanceForm
                 v-model="adjBalDialog"
                 :account="account"
@@ -116,11 +133,11 @@
             >
               <div class="text-white font-weight-bold text-body">
                 <NumberFlow
-                  :value="account.last_statement_amount"
+                  :value="account.statement_balance"
                   :format="{ style: 'currency', currency: 'USD' }"
                 />
               </div>
-              <div class="text-primary-lighten-2">last statement balance</div>
+              <div class="text-primary-lighten-2">{{ account.calculate_payments && account.payment_strategy === 'M' ? 'minimum due' : 'statement balance' }}</div>
             </v-col>
             <v-col
               v-if="account.account_type.id == 1"
@@ -179,7 +196,7 @@
           <!-- Small Display View -->
           <v-row density="compact" v-if="smAndDown">
             <v-col class="text-center align-content-end">
-              <v-tooltip text="Adjust Balance" location="top">
+              <v-tooltip text="Adjust Balance" location="top" v-if="authStore.isFullAccess">
                 <template v-slot:activator="{ props }">
                   <div
                     class="text-accent-lighten-1 font-weight-bold text-h4 d-inline-block"
@@ -198,6 +215,15 @@
                   </div>
                 </template>
               </v-tooltip>
+              <div
+                class="text-accent-lighten-1 font-weight-bold text-h4 d-inline-block"
+                v-if="!authStore.isFullAccess"
+              >
+                <NumberFlow
+                  :value="account.balance"
+                  :format="{ style: 'currency', currency: 'USD' }"
+                />
+              </div>
               <AdjustBalanceForm
                 v-model="adjBalDialog"
                 :account="account"
@@ -242,11 +268,11 @@
               >
                 <div class="text-white font-weight-bold text-body">
                   <NumberFlow
-                    :value="account.last_statement_amount"
+                    :value="account.statement_balance"
                     :format="{ style: 'currency', currency: 'USD' }"
                   />
                 </div>
-                <div class="text-primary-lighten-2">last statement</div>
+                <div class="text-primary-lighten-2">{{ account.calculate_payments && account.payment_strategy === 'M' ? 'minimum due' : 'statement balance' }}</div>
               </v-col>
             </v-row>
             <v-row density="compact">
@@ -327,8 +353,10 @@
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
   import RewardsGraphs from "./RewardsGraphs.vue";
+  import { useAuthStore } from "@/stores/auth";
 
   const { smAndDown } = useDisplay();
+  const authStore = useAuthStore();
   const adjBalDialog = ref(false);
   const editDialog = ref(false);
   const deleteDialog = ref(false);

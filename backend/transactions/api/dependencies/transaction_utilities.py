@@ -66,7 +66,7 @@ def annotate_transaction_display_info(
     all_transactions = all_transactions.annotate(
         pretty_account=Case(
             When(
-                transaction_type_id=3,
+                transaction_type__slug='transfer',
                 then=Concat(
                     F("source_name"),
                     Value(" => "),
@@ -96,15 +96,15 @@ def annotate_transaction_total(
     all_transactions = transactions.annotate(
         pretty_total=Case(
             When(
-                transaction_type_id=2,
+                transaction_type__slug='income',
                 then=Abs(F("total_amount")),
             ),
             When(
-                transaction_type_id=1,
+                transaction_type__slug='expense',
                 then=-Abs(F("total_amount")),
             ),
             When(
-                transaction_type_id=3,
+                transaction_type__slug='transfer',
                 then=Case(
                     When(
                         source_account_id=account_id,
@@ -140,9 +140,9 @@ def sort_transactions(
     if asc:
         transactions = transactions.annotate(
             custom_order=Case(
-                When(status_id=1, then=Value(2)),
-                When(status_id=2, then=Value(0)),
-                When(status_id=3, then=Value(0)),
+                When(status__slug='pending', then=Value(2)),
+                When(status__slug='cleared', then=Value(0)),
+                When(status__slug='reconciled', then=Value(0)),
                 default=Value(1),
                 output_field=IntegerField(),
             )
@@ -150,9 +150,9 @@ def sort_transactions(
     else:
         transactions = transactions.annotate(
             custom_order=Case(
-                When(status_id=1, then=Value(2)),
-                When(status_id=2, then=Value(0)),
-                When(status_id=3, then=Value(0)),
+                When(status__slug='pending', then=Value(2)),
+                When(status__slug='cleared', then=Value(0)),
+                When(status__slug='reconciled', then=Value(0)),
                 default=Value(1),
                 output_field=IntegerField(),
             )
@@ -276,15 +276,15 @@ def sort_transaction_list(
     # Helper function to sort by priority
     def get_priority(transaction):
         if isinstance(transaction, dict):
-            status_id = (
-                transaction["status"].id if transaction["status"] else None
+            status_slug = (
+                transaction["status"].slug if transaction["status"] else None
             )
         else:
-            status_id = transaction.status.id if transaction.status else None
+            status_slug = transaction.status.slug if transaction.status else None
 
-        if status_id == 1:
+        if status_slug == 'pending':
             return 2
-        elif status_id in [2, 3]:
+        elif status_slug in ['cleared', 'reconciled']:
             return 0
         else:
             return 1

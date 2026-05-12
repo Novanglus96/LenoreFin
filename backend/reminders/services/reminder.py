@@ -77,4 +77,6 @@ def add_reminder_transaction(reminder_id: int, transaction_date: date) -> None:
         next_date += relativedelta(months=repeat.months)
         next_date += relativedelta(years=repeat.years)
     reminder.next_date = next_date
+    if next_date is not None:
+        reminder.start_date = next_date
     reminder.save()

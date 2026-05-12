@@ -12,6 +12,7 @@ from typing import List
 from reminders.services import add_reminder_transaction, ReminderNotFound
 from transactions.tasks import update_reminder_cache
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 error_logger = logging.getLogger("error")
@@ -19,7 +20,7 @@ error_logger = logging.getLogger("error")
 reminder_router = Router(tags=["Reminders"])
 
 
-@reminder_router.post("/create")
+@reminder_router.post("/create", auth=FullAccessAuth())
 def create_reminder(request, payload: ReminderIn):
     try:
         reminder = Reminder.objects.create(**payload.dict())
@@ -31,7 +32,7 @@ def create_reminder(request, payload: ReminderIn):
         raise HttpError(500, "Record creation error")
 
 
-@reminder_router.put("/update/{reminder_id}")
+@reminder_router.put("/update/{reminder_id}", auth=FullAccessAuth())
 def update_reminder(request, reminder_id: int, payload: ReminderIn):
     try:
         reminder = get_object_or_404(Reminder, id=reminder_id)
@@ -84,7 +85,7 @@ def list_reminders(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@reminder_router.delete("/delete/{reminder_id}")
+@reminder_router.delete("/delete/{reminder_id}", auth=FullAccessAuth())
 def delete_reminder(request, reminder_id: int):
     try:
         reminder = get_object_or_404(Reminder, id=reminder_id)
@@ -98,7 +99,7 @@ def delete_reminder(request, reminder_id: int):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@reminder_router.put("/addtrans/{reminder_id}")
+@reminder_router.put("/addtrans/{reminder_id}", auth=FullAccessAuth())
 def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
     try:
         add_reminder_transaction(reminder_id, payload.transaction_date)

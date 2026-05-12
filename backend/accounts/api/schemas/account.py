@@ -22,7 +22,7 @@ class AccountIn(Schema):
     statement_cycle_period: Optional[str] = None
     credit_limit: Optional[BalanceDecimal] = None
     bank_id: int
-    last_statement_amount: Optional[BalanceDecimal] = None
+    statement_balance: Optional[BalanceDecimal] = None
     funding_account_id: Optional[int] = None
     calculate_payments: Optional[bool] = None
     calculate_interest: Optional[bool] = None
@@ -32,6 +32,7 @@ class AccountIn(Schema):
     statement_day: Optional[int] = 15
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
+    interest_deposit_day: Optional[int] = None
 
 
 # The class AccountOut is a schema for representing accounts.
@@ -52,7 +53,7 @@ class AccountOut(Schema):
     available_credit: Optional[BalanceDecimal] = None
     balance: Optional[BalanceDecimal] = None
     bank: BankOut
-    last_statement_amount: Optional[BalanceDecimal] = None
+    statement_balance: Optional[BalanceDecimal] = None
     funding_account: Optional["AccountOut"] = None
     calculate_payments: Optional[bool] = None
     calculate_interest: Optional[bool] = None
@@ -62,6 +63,7 @@ class AccountOut(Schema):
     statement_day: Optional[int] = 15
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
+    interest_deposit_day: Optional[int] = None
     current_yr_rewards: List[BalanceDecimal] = []
     last_yr_rewards: List[BalanceDecimal] = []
 
@@ -80,7 +82,7 @@ class AccountUpdate(Schema):
     statement_cycle_period: Optional[str] = None
     credit_limit: Optional[BalanceDecimal] = None
     bank_id: Optional[int] = None
-    last_statement_amount: Optional[BalanceDecimal] = None
+    statement_balance: Optional[BalanceDecimal] = None
     rewards_amount: Optional[BalanceDecimal] = None
     funding_account_id: Optional[int] = None
     calculate_payments: Optional[bool] = None
@@ -91,6 +93,7 @@ class AccountUpdate(Schema):
     statement_day: Optional[int] = 15
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
+    interest_deposit_day: Optional[int] = None
 
 
 class AccountQuery(Schema):

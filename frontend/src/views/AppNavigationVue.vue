@@ -56,6 +56,7 @@
         :color="isDark ? '#F5F5F5' : '#121212'"
         size="small"
       ></v-btn>
+      <v-btn icon="mdi-logout" size="small" @click="handleLogout"></v-btn>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
           <v-btn class="text-none" stacked v-bind="props">
@@ -200,6 +201,7 @@
   import { useRouter } from "vue-router";
   import { useTransactionsStore } from "@/stores/transactions";
   import { useThemeStore } from "@/stores/themeStore";
+  import { useAuthStore } from "@/stores/auth";
 
   const theme = useTheme();
   const themeStore = useThemeStore();
@@ -220,6 +222,7 @@
   const { messages, markRead, deleteAll } = useMessages();
   const { mdAndUp, smAndDown } = useDisplay();
   const isMobile = smAndDown;
+  const authStore = useAuthStore();
   const nav_toggle = ref(true);
 
   const setAccount = (account, forecast) => {
@@ -246,5 +249,12 @@
 
   function handleToggle() {
     themeStore.toggleTheme();
+  }
+
+  async function handleLogout() {
+    await authStore.logout();
+    // Full page reload clears all SPA state and bfcache — ensures
+    // the back button cannot restore an authenticated page after logout.
+    window.location.href = "/login";
   }
 </script>

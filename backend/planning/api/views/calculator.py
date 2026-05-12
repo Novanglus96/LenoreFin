@@ -19,6 +19,7 @@ from transactions.api.dependencies.get_transactions_by_tag import (
     get_transactions_by_tag,
 )
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -28,7 +29,7 @@ task_logger = logging.getLogger("task")
 calculator_router = Router(tags=["Calculator"])
 
 
-@calculator_router.post("/calculation_rule/create")
+@calculator_router.post("/calculation_rule/create", auth=FullAccessAuth())
 def create_calculation_rule(request, payload: CalculationRuleIn):
     """
     The function `create_calculation_rule` creates a calculation
@@ -53,7 +54,7 @@ def create_calculation_rule(request, payload: CalculationRuleIn):
         raise HttpError(500, "Record creation error")
 
 
-@calculator_router.put("/calculation_rule/update/{calculation_rule_id}")
+@calculator_router.put("/calculation_rule/update/{calculation_rule_id}", auth=FullAccessAuth())
 def update_calculation_rule(
     request, calculation_rule_id: int, payload: CalculationRuleIn
 ):
@@ -118,7 +119,7 @@ def list_calculation_rules(request):
         raise HttpError(500, "Record retrieval error")
 
 
-@calculator_router.delete("/calculation_rule/delete/{calculation_rule_id}")
+@calculator_router.delete("/calculation_rule/delete/{calculation_rule_id}", auth=FullAccessAuth())
 def delete_calculation_rule(request, calculation_rule_id: int):
     """
     The function `delete_calculation_rule` deletes the calculation rule specified by id.

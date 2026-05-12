@@ -1,6 +1,7 @@
 from ninja import NinjaAPI
-from administration.api.dependencies.auth import GlobalAuth
+from administration.api.dependencies.auth import SessionAuth
 from administration.api.dependencies.version import get_version
+from administration.api.routers.auth import auth_router
 
 # Import routers from apps
 from accounts.api.routers.account_type import account_type_router
@@ -41,7 +42,7 @@ from planning.api.routers.budget import budget_router
 from planning.api.routers.retirement import retirement_router
 from administration.api.routers.health import health_router
 
-api = NinjaAPI(auth=GlobalAuth())
+api = NinjaAPI(auth=SessionAuth())
 api.title = "LenoreFin API"
 api.version = get_version()
 api.description = "API documentation for LenoreFin"
@@ -80,3 +81,4 @@ api.add_router("/planning/graph", planning_graph_router)
 api.add_router("/planning/budget", budget_router)
 api.add_router("/planning/retirement", retirement_router)
 api.add_router("/administration/health", health_router)
+api.add_router("/auth", auth_router)

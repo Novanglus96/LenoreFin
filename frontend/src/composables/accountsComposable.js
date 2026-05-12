@@ -1,21 +1,9 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
-import axios from "axios";
+import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
-import { useApiKey } from "./ueApiKey";
-
-const apiKey = useApiKey();
-
-const apiClient = axios.create({
-  baseURL: "/api/v1",
-  withCredentials: false,
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-});
 
 function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   if (error.response) {
     console.error("Response error:", error.response.data);
@@ -85,12 +73,15 @@ async function deleteAccountFunction(deletedAccount) {
 }
 
 async function updateAccountFunction(updatedAccount) {
-  const updated = {
-    ...updatedAccount,
-    open_date: formatDateToYYYYMMDD(updatedAccount.open_date),
-    due_date: formatDateToYYYYMMDD(updatedAccount.due_date),
-    next_cycle_date: formatDateToYYYYMMDD(updatedAccount.next_cycle_date),
-  };
+  const updated = { ...updatedAccount };
+  if ("open_date" in updatedAccount)
+    updated.open_date = formatDateToYYYYMMDD(updatedAccount.open_date);
+  if ("due_date" in updatedAccount)
+    updated.due_date = formatDateToYYYYMMDD(updatedAccount.due_date);
+  if ("next_cycle_date" in updatedAccount)
+    updated.next_cycle_date = formatDateToYYYYMMDD(
+      updatedAccount.next_cycle_date,
+    );
   try {
     const response = await apiClient.patch(
       "/accounts/update/" + updatedAccount.id,

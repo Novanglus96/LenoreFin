@@ -12,7 +12,7 @@
               {{ getGraphTitle(i) }}
             </span>
 
-            <v-btn icon="mdi-cog" variant="text" size="small" class="ms-auto" />
+            <v-btn icon="mdi-cog" variant="text" size="small" class="ms-auto" v-if="authStore.isFullAccess" />
           </v-card-title>
           <v-card-text
             class="d-flex justify-center align-center pa-0 ga-0 ma-0 w-100"
@@ -37,7 +37,7 @@
             <span class="text-subtitle-2 text-primary">
               {{ getGraphTitle(page) }}
             </span>
-            <v-btn icon="mdi-cog" variant="text" size="small" class="ms-auto" />
+            <v-btn icon="mdi-cog" variant="text" size="small" class="ms-auto" v-if="authStore.isFullAccess" />
           </v-card-title>
           <v-card-text
             class="d-flex justify-center align-center pa-0 ga-0 ma-0 w-100"
@@ -60,7 +60,9 @@
   import { useGraphsNew } from "@/composables/tagsComposable";
   import { useOptions } from "@/composables/optionsComposable";
   import { ref } from "vue";
+  import { useAuthStore } from "@/stores/auth";
 
+  const authStore = useAuthStore();
   const { options: appOptions } = useOptions();
   const { lgAndUp } = useDisplay();
   const page = ref(1);

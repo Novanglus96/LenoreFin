@@ -10,6 +10,7 @@ from planning.api.schemas.contribution import (
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -19,7 +20,7 @@ task_logger = logging.getLogger("task")
 contribution_router = Router(tags=["Contributions"])
 
 
-@contribution_router.post("/create")
+@contribution_router.post("/create", auth=FullAccessAuth())
 def create_contribution(request, payload: ContributionIn):
     """
     The function `create_contribution` creates a contribution
@@ -58,7 +59,7 @@ def create_contribution(request, payload: ContributionIn):
         raise HttpError(500, "Record creation error")
 
 
-@contribution_router.put("/update/{contribution_id}")
+@contribution_router.put("/update/{contribution_id}", auth=FullAccessAuth())
 def update_contribution(request, contribution_id: int, payload: ContributionIn):
     """
     The function `update_contribution` updates the contribution specified by id.
@@ -185,7 +186,7 @@ def list_contributions(request):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@contribution_router.delete("/delete/{contribution_id}")
+@contribution_router.delete("/delete/{contribution_id}", auth=FullAccessAuth())
 def delete_contribution(request, contribution_id: int):
     """
     The function `delete_contribution` deletes the contribution specified by id.

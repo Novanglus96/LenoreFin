@@ -99,7 +99,7 @@ def get_account_financials(account_id: int, today: date | None = None):
         rewards_amount=rewards_amount,
         available_credit=available_credit,
         balance=cleared_balance,
-        last_statement_amount=account.last_statement_amount,
+        statement_balance=account.statement_balance,
         funding_account=dto_from_model(DomainAccount, account.funding_account),
         calculate_payments=account.calculate_payments,
         calculate_interest=account.calculate_interest,
@@ -109,6 +109,7 @@ def get_account_financials(account_id: int, today: date | None = None):
         statement_day=account.statement_day,
         due_day=account.due_day,
         pay_day=account.pay_day,
+        interest_deposit_day=account.interest_deposit_day,
     )
 
     cache.set(key, financials, timeout=60 * 60)

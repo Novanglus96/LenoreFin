@@ -1,12 +1,28 @@
-from ninja.security import HttpBearer
-from decouple import config
-from django.conf import settings
+from ninja.security import SessionAuth as NinjaSessionAuth
+from ninja.errors import HttpError
 
 
-class GlobalAuth(HttpBearer):
+class SessionAuth(NinjaSessionAuth):
+    """Requires an authenticated Django session."""
+
+    def __init__(self):
+        super().__init__(csrf=False)
+
     def authenticate(self, request, token):
-        api_key = getattr(settings, "VITE_API_KEY", None) or config(
-            "VITE_API_KEY", default=None
-        )
-        if token == api_key:
-            return token
+        if request.user.is_authenticated:
+            return request.user
+        return None
+
+
+class FullAccessAuth(NinjaSessionAuth):
+    """Requires an authenticated session AND membership in the Full Access group."""
+
+    def __init__(self):
+        super().__init__(csrf=False)
+
+    def authenticate(self, request, token):
+        if not request.user.is_authenticated:
+            return None
+        if request.user.groups.filter(name="Full Access").exists():
+            return request.user
+        raise HttpError(403, "Read-only access: this action is not permitted")

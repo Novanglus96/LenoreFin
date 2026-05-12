@@ -75,19 +75,39 @@ class ForecastCacheTransactionDetailAdmin(
 
 
 class TransactionTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_display = ["id", "transaction_type"]
+    list_display = ["id", "transaction_type", "is_system", "slug"]
 
     list_display_links = ["transaction_type"]
 
     ordering = ["id"]
 
+    readonly_fields = ["slug"]
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.is_system:
+            return False
+        return super().has_delete_permission(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        queryset.filter(is_system=False).delete()
+
 
 class TransactionStatusAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_display = ["id", "transaction_status"]
+    list_display = ["id", "transaction_status", "is_system", "slug"]
 
     list_display_links = ["transaction_status"]
 
     ordering = ["id"]
+
+    readonly_fields = ["slug"]
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.is_system:
+            return False
+        return super().has_delete_permission(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        queryset.filter(is_system=False).delete()
 
 
 class TransactionAdmin(ImportExportModelAdmin, admin.ModelAdmin):

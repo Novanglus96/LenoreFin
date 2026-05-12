@@ -2,7 +2,7 @@
   <v-card variant="outlined" :elevation="4" class="bg-surface ma-0 pa-0 ga-0">
     <v-card-title class="text-left">
       <span class="text-subtitle-2 text-primary">Budgets</span>
-      <v-tooltip text="Add Budget" v-if="!props.widget">
+      <v-tooltip text="Add Budget" v-if="!props.widget && authStore.isFullAccess">
         <template v-slot:activator="{ props }">
           <v-btn
             icon="mdi-plus-circle"
@@ -171,9 +171,11 @@
   import AddBudgetForm from "./AddBudgetForm.vue";
   import AddBudgetFormMobile from "./AddBudgetFormMobile.vue";
   import { useDisplay } from "vuetify";
+  import { useAuthStore } from "@/stores/auth";
 
   const { smAndDown, lgAndUp } = useDisplay();
   const isMobile = smAndDown;
+  const authStore = useAuthStore();
 
   const props = defineProps({
     widget: Boolean,

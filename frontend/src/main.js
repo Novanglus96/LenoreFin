@@ -18,3 +18,16 @@ app.use(pinia);
 app.use(vuetify);
 app.use(VueQueryPlugin);
 app.mount("#app");
+
+// If the browser restores a page from bfcache (back/forward navigation),
+// re-validate the session so a logged-out user never sees stale content.
+window.addEventListener("pageshow", async event => {
+  if (event.persisted) {
+    const { useAuthStore } = await import("@/stores/auth");
+    const authStore = useAuthStore();
+    await authStore.fetchCurrentUser();
+    if (!authStore.isAuthenticated) {
+      window.location.href = "/login";
+    }
+  }
+});

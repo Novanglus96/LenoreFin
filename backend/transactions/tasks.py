@@ -11,6 +11,7 @@ from transactions.models import (
     ReminderCacheTransaction,
     ForecastCacheTransaction,
     TransactionStatus,
+    TransactionType,
 )
 from tags.api.dependencies.custom_tag import CustomTag
 from transactions.api.dependencies.create_transactions import (
@@ -65,6 +66,7 @@ from transactions.api.dependencies.get_transactions_by_tag import (
 from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP
 from core.cache.helpers import delete_pattern
+from core.cache.keys import account_all_transactions
 import logging
 
 api_logger = logging.getLogger("api")
@@ -118,6 +120,7 @@ def convert_reminder():
 
     # Add transactions and modify next date
     if reminders and len(reminders) > 0:
+        pending_status_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='pending')
         for reminder in reminders:
             if reminder.auto_add:
                 if not ReminderExclusion.objects.filter(
@@ -141,7 +144,7 @@ def convert_reminder():
                     transaction = FullTransaction(
                         transaction_date=todayDate,
                         total_amount=reminder.amount,
-                        status_id=1,
+                        status_id=pending_status_id,
                         memo=reminder.memo,
                         description=reminder.description,
                         edit_date=todayDate,
@@ -468,6 +471,25 @@ def finish_imports():
     return string_return
 
 
+def prune_task_history():
+    """
+    Delete old django-q2 task history records.
+    Success records older than 7 days and failure records older than 30 days
+    are removed to keep the task queue tables from growing unbounded.
+    """
+    from django_q.models import Success, Failure
+
+    cutoff_success = timezone.now() - relativedelta(days=7)
+    cutoff_failure = timezone.now() - relativedelta(days=30)
+
+    deleted_success, _ = Success.objects.filter(stopped__lt=cutoff_success).delete()
+    deleted_failure, _ = Failure.objects.filter(stopped__lt=cutoff_failure).delete()
+
+    task_logger.info(
+        f"Pruned task history: {deleted_success} success, {deleted_failure} failure records removed"
+    )
+
+
 def archive_transactions():
     """
     The function `archive_transactions` archives older transactions based on the
@@ -480,7 +502,7 @@ def archive_transactions():
     """
     try:
         # Load archive options
-        options = Option.objects.get(id=1)
+        options = Option.load()
 
         if options.auto_archive:
             # Set variables
@@ -494,7 +516,8 @@ def archive_transactions():
             transactions = Transaction.objects.filter(
                 transaction_date__lte=cutoff_date
             )
-            transactions.update(status_id=4)
+            archived_status_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='archived')
+            transactions.update(status_id=archived_status_id)
 
             # For each account, update archive balance with the sum of all
             # archived transactions
@@ -503,18 +526,18 @@ def archive_transactions():
             source_balance_subquery = (
                 Transaction.objects.filter(
                     source_account_id=OuterRef("pk"),
-                    status_id=4,
+                    status__slug='archived',
                 )
                 .annotate(
                     pretty_total=Case(
                         When(
-                            transaction_type_id=2, then=Abs(F("total_amount"))
+                            transaction_type__slug='income', then=Abs(F("total_amount"))
                         ),
                         When(
-                            transaction_type_id=1, then=-Abs(F("total_amount"))
+                            transaction_type__slug='expense', then=-Abs(F("total_amount"))
                         ),
                         When(
-                            transaction_type_id=3,
+                            transaction_type__slug='transfer',
                             then=Case(
                                 When(
                                     source_account_id=OuterRef("pk"),
@@ -546,18 +569,18 @@ def archive_transactions():
             destination_balance_subquery = (
                 Transaction.objects.filter(
                     destination_account_id=OuterRef("pk"),
-                    status_id=4,
+                    status__slug='archived',
                 )
                 .annotate(
                     pretty_total=Case(
                         When(
-                            transaction_type_id=2, then=Abs(F("total_amount"))
+                            transaction_type__slug='income', then=Abs(F("total_amount"))
                         ),
                         When(
-                            transaction_type_id=1, then=-Abs(F("total_amount"))
+                            transaction_type__slug='expense', then=-Abs(F("total_amount"))
                         ),
                         When(
-                            transaction_type_id=3,
+                            transaction_type__slug='transfer',
                             then=Case(
                                 When(
                                     destination_account_id=OuterRef("pk"),
@@ -676,6 +699,7 @@ def update_reminder_cache(reminder_id):
             months=reminder.repeat.months,
             years=reminder.repeat.years,
         )
+        pending_status_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='pending')
 
         # For no repeat, just enter next transaction
         if delta == relativedelta():
@@ -693,7 +717,7 @@ def update_reminder_cache(reminder_id):
             transaction = FullReminderTransaction(
                 transaction_date=working_date,
                 total_amount=reminder.amount,
-                status_id=1,
+                status_id=pending_status_id,
                 memo=reminder.memo,
                 description=reminder.description,
                 edit_date=today,
@@ -725,7 +749,7 @@ def update_reminder_cache(reminder_id):
                 transaction = FullReminderTransaction(
                     transaction_date=working_date,
                     total_amount=reminder.amount,
-                    status_id=1,
+                    status_id=pending_status_id,
                     memo=reminder.memo,
                     description=reminder.description,
                     edit_date=today,
@@ -748,20 +772,113 @@ def update_reminder_cache(reminder_id):
                     )
 
         create_transactions(transactions_to_create, "reminder")
-        pattern = f"*account_{reminder.reminder_source_account.id}_reminder_transactions*"
-        delete_pattern(pattern)
-        pattern = (
-            f"*account_{reminder.reminder_source_account.id}_transactions*"
-        )
-        delete_pattern(pattern)
+        delete_pattern(account_all_transactions(reminder.reminder_source_account.id))
+        update_cc_forecast_cache(reminder.reminder_source_account.id)
         if reminder.reminder_destination_account is not None:
-            pattern = f"*account_{reminder.reminder_destination_account.id}_reminder_transactions*"
-            delete_pattern(pattern)
-            pattern = f"*account_{reminder.reminder_destination_account.id}_transactions*"
-            delete_pattern(pattern)
+            delete_pattern(account_all_transactions(reminder.reminder_destination_account.id))
+            update_cc_forecast_cache(reminder.reminder_destination_account.id)
     except Exception as e:
         task_logger.warning("There was an error creating cache")
         error_logger.warning(f"{str(e)}")
+
+
+def update_interest_forecast_cache(account_id):
+    """
+    Generate estimated monthly interest income transactions for savings and
+    investment accounts. Compounds monthly over a 1-year window.
+    """
+    try:
+        account = Account.objects.get(id=account_id)
+    except Account.DoesNotExist:
+        return
+
+    if account.account_type.slug not in {'savings', 'investment'}:
+        return
+
+    ForecastCacheTransaction.objects.filter(
+        Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+    ).delete()
+
+    if not account.calculate_interest or not account.annual_rate:
+        return
+
+    try:
+        today = get_todays_date_timezone_adjusted()
+        end_date = today + relativedelta(years=1)
+
+        income_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='income')
+        status = TransactionStatus.objects.get(slug='pending')
+
+        transactions_qs = Transaction.objects.filter(
+            Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+        ).exclude(status__slug='archived')
+        transactions_qs = annotate_transaction_total(transactions_qs, account_id)
+
+        reminder_qs = ReminderCacheTransaction.objects.filter(
+            Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+        ).exclude(status__slug='archived')
+        reminder_qs = annotate_transaction_total(reminder_qs, account_id)
+
+        balance = (
+            Decimal(account.opening_balance or 0)
+            + Decimal(account.archive_balance or 0)
+            + (transactions_qs.aggregate(sum=Sum('pretty_total'))['sum'] or Decimal(0))
+        )
+
+        transactions_to_create = []
+        period_start = today
+
+        while period_start < end_date:
+            period_end = increment_date(period_start, 'm', 1)
+
+            period_reminder_sum = (
+                reminder_qs.filter(
+                    transaction_date__gt=period_start,
+                    transaction_date__lte=period_end,
+                ).aggregate(sum=Sum('pretty_total'))['sum'] or Decimal(0)
+            )
+            balance += period_reminder_sum
+
+            if balance > 0:
+                interest = calculate_interest(
+                    balance, account.annual_rate, period_start, period_end
+                )
+                if interest > 0:
+                    deposit_day = account.interest_deposit_day
+                    if deposit_day:
+                        try:
+                            transaction_date = period_end.replace(day=deposit_day)
+                        except ValueError:
+                            transaction_date = period_end
+                    else:
+                        transaction_date = period_end
+                    transactions_to_create.append(
+                        FullTransaction(
+                            transaction_date=transaction_date,
+                            total_amount=interest,
+                            status_id=status.id,
+                            memo="Interest",
+                            description=f"({account.account_name} Estimated Interest)",
+                            edit_date=today,
+                            add_date=today,
+                            transaction_type_id=income_type_id,
+                            paycheck_id=None,
+                            source_account_id=account_id,
+                            destination_account_id=None,
+                            tags=[],
+                            checkNumber=None,
+                        )
+                    )
+                    balance += interest
+
+            period_start = period_end
+
+        create_transactions(transactions_to_create, 'forecast')
+        delete_pattern(account_all_transactions(account_id))
+    except Exception as e:
+        error_logger.exception(
+            f"Error calculating interest forecast for account {account_id}: {e}"
+        )
 
 
 def update_cc_forecast_cache(account_id):
@@ -775,23 +892,25 @@ def update_cc_forecast_cache(account_id):
 
     """
     try:
-        # Get the account object
         account = Account.objects.get(id=account_id)
+    except Account.DoesNotExist:
+        return
 
-        # Exit if not cc account
-        if account.account_type.id != 1:
-            return
+    # Exit if not cc account
+    if account.account_type.slug != 'credit-card':
+        return
 
-        # Delete any existing cache entries for this reminder
-        ForecastCacheTransaction.objects.filter(
-            Q(source_account_id=account_id)
-            | Q(destination_account_id=account_id)
-        ).delete()
+    # Delete any existing cache entries for this account
+    ForecastCacheTransaction.objects.filter(
+        Q(source_account_id=account_id)
+        | Q(destination_account_id=account_id)
+    ).delete()
 
-        # Exit if this is not CC or cc calculations are turned off
-        if not account.calculate_payments:
-            return
+    # Exit if cc calculations are turned off
+    if not account.calculate_payments:
+        return
 
+    try:
         # Define account variables
         statement_cycle_length = account.statement_cycle_length
         statement_cycle_period = account.statement_cycle_period
@@ -803,7 +922,9 @@ def update_cc_forecast_cache(account_id):
         today = get_todays_date_timezone_adjusted()
         end_date = today + relativedelta(years=1)
         temp_id = -10001
-        status = TransactionStatus.objects.get(id=1)
+        status = TransactionStatus.objects.get(slug='pending')
+        expense_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='expense')
+        transfer_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='transfer')
         interest_calculations = account.calculate_interest
         transactions_to_create = []
         statement_day = account.statement_day
@@ -815,13 +936,13 @@ def update_cc_forecast_cache(account_id):
         transactions_qs = Transaction.objects.filter(
             Q(source_account_id=account_id)
             | Q(destination_account_id=account_id)
-        ).exclude(status_id=4)
+        ).exclude(status__slug='archived')
 
         # Get Reminder transactions for this account
         reminder_cache_qs = ReminderCacheTransaction.objects.filter(
             Q(source_account_id=account_id)
             | Q(destination_account_id=account_id)
-        ).exclude(status_id=4)
+        ).exclude(status__slug='archived')
 
         # Annotate pretty totals
         transactions_qs = annotate_transaction_total(
@@ -865,49 +986,43 @@ def update_cc_forecast_cache(account_id):
                 + previous_balance
             )
             cycle_payment = Decimal(0.00)
-            # Calculate Interest
-            if interest_calculations:
-                # If we are past due date, calculate interest
-                if statement_cycles[0]["statement_due"] < today:
-                    if cycle_balance != cycle["statement_debits"]:
-                        unpaid = cycle_balance - cycle["statement_debits"]
-                        cycle_interest = calculate_interest(
-                            unpaid,
-                            annual_rate,
-                            statement_cycles[x - 1]["statement_end"],
-                            cycle["statement_end"],
+            # Calculate Interest (only for cycles that haven't started yet)
+            if interest_calculations and cycle["statement_start"] > today:
+                if cycle_balance != cycle["statement_debits"]:
+                    unpaid = cycle_balance - cycle["statement_debits"]
+                    cycle_interest = calculate_interest(
+                        unpaid,
+                        annual_rate,
+                        cycle["statement_start"],
+                        cycle["statement_end"],
+                    )
+                    total_interest += cycle_interest
+                    if cycle_interest < 0:
+                        tags = []
+                        tag_obj = CustomTag(
+                            tag_name="Interest Charged",
+                            tag_amount=cycle_interest,
+                            tag_id=18,
+                            tag_full_toggle=True,
                         )
-                        total_interest += cycle_interest
-                        # Create Inteterest Transaction
-                        if (
-                            cycle["statement_end"] > today
-                            and cycle_interest < 0
-                        ):
-                            tags = []
-                            tag_obj = CustomTag(
-                                tag_name="Interest Charged",
-                                tag_amount=cycle_interest,
-                                tag_id=18,
-                                tag_full_toggle=True,
-                            )
-                            tags.append(tag_obj)
-                            transaction = FullTransaction(
-                                transaction_date=cycle["statement_end"],
-                                total_amount=cycle_interest,
-                                status_id=status.id,
-                                memo="Interest Charge",
-                                description=f"({account.account_name} Estimated Interest)",
-                                edit_date=today,
-                                add_date=today,
-                                transaction_type_id=1,
-                                paycheck_id=None,
-                                source_account_id=account_id,
-                                destination_account_id=None,
-                                tags=tags,
-                                checkNumber=None,
-                            )
-                            transactions_to_create.append(transaction)
-                            temp_id -= 1
+                        tags.append(tag_obj)
+                        transaction = FullTransaction(
+                            transaction_date=cycle["statement_end"],
+                            total_amount=cycle_interest,
+                            status_id=status.id,
+                            memo="Interest Charge",
+                            description=f"({account.account_name} Estimated Interest)",
+                            edit_date=today,
+                            add_date=today,
+                            transaction_type_id=expense_type_id,
+                            paycheck_id=None,
+                            source_account_id=account_id,
+                            destination_account_id=None,
+                            tags=tags,
+                            checkNumber=None,
+                        )
+                        transactions_to_create.append(transaction)
+                        temp_id -= 1
             # Calculate Payment
             if cycle_balance < 0:
                 if payment_strategy == "F":
@@ -929,45 +1044,62 @@ def update_cc_forecast_cache(account_id):
                     else:
                         cycle_payment = abs(cycle_balance) + abs(cycle_interest)
                 if cycle["statement_due"] > today:
-                    tags = []
-                    tag_obj = CustomTag(
-                        tag_name="Credit Card",
-                        tag_amount=abs(cycle_payment),
-                        tag_id=9,
-                        tag_full_toggle=True,
+                    next_statement_end = increment_date(
+                        cycle["statement_end"], statement_cycle_period, statement_cycle_length
                     )
-                    tags.append(tag_obj)
-                    transaction = FullTransaction(
-                        transaction_date=cycle["statement_pay_day"],
-                        total_amount=abs(cycle_payment),
-                        status_id=status.id,
-                        memo=None,
-                        description=f"({account.account_name} Estimated Payment)",
-                        edit_date=today,
-                        add_date=today,
-                        transaction_type_id=3,
-                        paycheck_id=None,
+                    payment_window_filter = dict(
                         source_account_id=funding_account.id,
                         destination_account_id=account_id,
-                        tags=tags,
-                        checkNumber=None,
+                        transaction_type_id=transfer_type_id,
+                        transaction_date__gt=cycle["statement_end"],
+                        transaction_date__lte=next_statement_end,
                     )
-                    transactions_to_create.append(transaction)
-                    total_payments += cycle_payment
-                    temp_id -= 1
+                    existing_payment_sum = (
+                        transactions_qs.filter(**payment_window_filter)
+                        .aggregate(sum=Sum("pretty_total"))["sum"]
+                        or Decimal(0)
+                    ) + (
+                        reminder_cache_qs.filter(**payment_window_filter)
+                        .aggregate(sum=Sum("pretty_total"))["sum"]
+                        or Decimal(0)
+                    )
+                    remaining_payment = cycle_payment - existing_payment_sum
+                    if remaining_payment > 0:
+                        tags = []
+                        tag_obj = CustomTag(
+                            tag_name="Credit Card",
+                            tag_amount=abs(remaining_payment),
+                            tag_id=9,
+                            tag_full_toggle=True,
+                        )
+                        tags.append(tag_obj)
+                        transaction = FullTransaction(
+                            transaction_date=cycle["statement_pay_day"],
+                            total_amount=abs(remaining_payment),
+                            status_id=status.id,
+                            memo=None,
+                            description=f"({account.account_name} Estimated Payment)",
+                            edit_date=today,
+                            add_date=today,
+                            transaction_type_id=transfer_type_id,
+                            paycheck_id=None,
+                            source_account_id=funding_account.id,
+                            destination_account_id=account_id,
+                            tags=tags,
+                            checkNumber=None,
+                        )
+                        transactions_to_create.append(transaction)
+                        total_payments += remaining_payment
+                        temp_id -= 1
             if x == 0:
-                account.last_statement_amount = cycle_payment
+                account.statement_balance = cycle_payment
                 account.save()
             x += 1
 
         create_transactions(transactions_to_create, "forecast")
-        pattern = f"*account_{account_id}_forecast_transactions*"
-        delete_pattern(pattern)
-        pattern = f"*account_{account_id}_transactions*"
-        delete_pattern(pattern)
+        delete_pattern(account_all_transactions(account_id))
     except Exception as e:
-        api_logger.warning("There was an error creating cache")
-        error_logger.warning(f"{str(e)}")
+        error_logger.exception(f"Error calculating CC forecast for account {account_id}: {e}")
 
 
 def generate_statement_cycles(
@@ -1007,12 +1139,12 @@ def generate_statement_cycles(
 
     if today.day > statement_day:
         statement_start = today.replace(day=statement_day)
+        statement_due = statement_start.replace(day=due_day)
+        statement_pay_day = statement_start.replace(day=pay_day)
     else:
         statement_start = one_month_prior.replace(day=statement_day)
-    statement_due = statement_start + relativedelta(months=1)
-    statement_due = statement_due.replace(day=due_day)
-    statement_pay_day = statement_start + relativedelta(months=1)
-    statement_pay_day = statement_pay_day.replace(day=pay_day)
+        statement_due = (statement_start + relativedelta(months=1)).replace(day=due_day)
+        statement_pay_day = (statement_start + relativedelta(months=1)).replace(day=pay_day)
 
     previous_balance = (
         transactions.filter(
@@ -1126,15 +1258,15 @@ def annotate_transaction_total(
     all_transactions = transactions.annotate(
         pretty_total=Case(
             When(
-                transaction_type_id=2,
+                transaction_type__slug='income',
                 then=Abs(F("total_amount")),
             ),
             When(
-                transaction_type_id=1,
+                transaction_type__slug='expense',
                 then=-Abs(F("total_amount")),
             ),
             When(
-                transaction_type_id=3,
+                transaction_type__slug='transfer',
                 then=Case(
                     When(
                         source_account_id=account_id,

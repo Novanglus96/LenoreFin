@@ -1,6 +1,6 @@
 from ninja import Router, Query
 from ninja.errors import HttpError
-from transactions.models import Transaction, TransactionDetail
+from transactions.models import Transaction, TransactionDetail, TransactionStatus
 from accounts.models import Account
 from transactions.api.schemas.transaction import (
     TransactionIn,
@@ -41,6 +41,7 @@ from core.cache.keys import (
     account_all,
 )
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -50,7 +51,7 @@ task_logger = logging.getLogger("task")
 transaction_router = Router(tags=["Transactions"])
 
 
-@transaction_router.post("/create")
+@transaction_router.post("/create", auth=FullAccessAuth())
 def create_transaction(request, payload: TransactionIn):
     """
     The function `create_transaction` creates a transaction
@@ -74,7 +75,7 @@ def create_transaction(request, payload: TransactionIn):
         raise HttpError(500, f"Record creation error : {str(e)}")
 
 
-@transaction_router.patch("/multiedit")
+@transaction_router.patch("/multiedit", auth=FullAccessAuth())
 def multiedit_transactions(request, payload: MultiTranscationDate):
     """
     The function `multiedit_transactions` changes the transaction dates of mutliple
@@ -115,7 +116,7 @@ def multiedit_transactions(request, payload: MultiTranscationDate):
         raise HttpError(500, f"Transaction dates error: {str(e)}")
 
 
-@transaction_router.patch("/clear")
+@transaction_router.patch("/clear", auth=FullAccessAuth())
 def clear_transaction(request, payload: TransactionList):
     """
     The function `clear_transaction` changes the status to cleared, edits the date to today
@@ -139,14 +140,16 @@ def clear_transaction(request, payload: TransactionList):
         transactions_to_update = []
         accounts_effected = []
 
+        pending_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='pending')
+        cleared_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='cleared')
         for transaction in transactions:
             accounts_effected.append(transaction.source_account.id)
             if transaction.destination_account:
                 accounts_effected.append(transaction.destination_account.id)
-            if transaction.status_id == 2:
-                transaction.status_id = 1
-            elif transaction.status_id == 1:
-                transaction.status_id = 2
+            if transaction.status_id == cleared_id:
+                transaction.status_id = pending_id
+            elif transaction.status_id == pending_id:
+                transaction.status_id = cleared_id
 
             transaction.edit_date = get_todays_date_timezone_adjusted()
             transactions_to_update.append(transaction)
@@ -199,7 +202,7 @@ def get_transaction(request, transaction_id: int):
         raise HttpError(500, "Record retrieval error")
 
 
-@transaction_router.patch("/delete")
+@transaction_router.patch("/delete", auth=FullAccessAuth())
 def delete_transaction(request, payload: TransactionList):
     """
     The function `delete_transaction` deletes the transaction(s) specified by id,
@@ -216,15 +219,9 @@ def delete_transaction(request, payload: TransactionList):
     """
 
     try:
-        transactions = Transaction.objects.filter(id__in=payload.transactions)
-        account_ids = set()
+        transactions = list(Transaction.objects.filter(id__in=payload.transactions))
         for t in transactions:
-            account_ids.add(t.source_account_id)
-            if t.destination_account_id:
-                account_ids.add(t.destination_account_id)
-        transactions.delete()
-        for account_id in account_ids:
-            delete_pattern(account_all(account_id))
+            t.delete()
         for transaction in payload.transactions:
             api_logger.info(f"Transaction deleted : #{transaction}")
         return {"success": True}
@@ -235,7 +232,7 @@ def delete_transaction(request, payload: TransactionList):
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@transaction_router.put("/update/{transaction_id}")
+@transaction_router.put("/update/{transaction_id}", auth=FullAccessAuth())
 def update_transaction(request, transaction_id: int, payload: TransactionIn):
     """
     The function `update_transaction` updates the transaction specified by id.
@@ -364,7 +361,7 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
             # If this is upcoming transaction
             # Filter transactions for pending status
             if query.view_type == 2:
-                qs = Transaction.objects.filter(status_id=1)
+                qs = Transaction.objects.filter(status__slug='pending')
             # If this is rule transactions
             # Filter by tag and maxdays
             elif query.view_type == 3:
@@ -394,7 +391,7 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
             qs = qs.annotate(
                 pretty_account=Case(
                     When(
-                        transaction_type_id=3,
+                        transaction_type__slug='transfer',
                         then=Concat(
                             F("source_name"),
                             Value(" => "),
@@ -408,15 +405,15 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
             qs = qs.annotate(
                 pretty_total=Case(
                     When(
-                        transaction_type_id=2,
+                        transaction_type__slug='income',
                         then=Abs(F("total_amount")),
                     ),
                     When(
-                        transaction_type_id=1,
+                        transaction_type__slug='expense',
                         then=-Abs(F("total_amount")),
                     ),
                     When(
-                        transaction_type_id=3,
+                        transaction_type__slug='transfer',
                         then=-Abs(F("total_amount")),
                     ),
                     default=Value(
