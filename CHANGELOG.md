@@ -1,3 +1,10 @@
+# [1.3.0-alpha.10](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.9...v1.3.0-alpha.10) (2026-05-12)
+
+
+### Bug Fixes
+
+* resolve three Phase 2b bugs found during CC interest testing ([#84](https://github.com/Novanglus96/LenoreFin/issues/84)) ([d325509](https://github.com/Novanglus96/LenoreFin/commit/d325509e00d07b87783968f9561ace662226fc20))
+
 # [1.3.0-alpha.9](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0-alpha.8...v1.3.0-alpha.9) (2026-05-11)
 
 
