@@ -1,3 +1,10 @@
+# [1.4.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.3...v1.4.0-alpha.4) (2026-05-13)
+
+
+### Performance Improvements
+
+* async forecast cache updates, N+1 elimination, and query invalidation fixes ([#94](https://github.com/Novanglus96/LenoreFin/issues/94)) ([2b44818](https://github.com/Novanglus96/LenoreFin/commit/2b44818efeb2474261fa93e3b919735b550ba887))
+
 # [1.4.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.2...v1.4.0-alpha.3) (2026-05-12)
 
 
