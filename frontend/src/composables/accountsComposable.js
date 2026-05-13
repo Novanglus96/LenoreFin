@@ -180,6 +180,7 @@ export function useAccountByID(account_id) {
     queryKey: ["accounts", { id: account_id }],
     queryFn: () => getAccountByIDFunction(account_id),
     select: response => response,
+    enabled: !!account_id,
     client: queryClient,
   });
 

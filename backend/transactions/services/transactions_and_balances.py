@@ -15,6 +15,7 @@ from transactions.api.dependencies.transaction_utilities import (
     add_balances_to_transaction_list,
     annotate_transaction_display_info,
     annotate_transaction_total,
+    annotate_transaction_total_for_parent,
     add_tags_to_transactions,
     sort_transactions,
     annotate_transaction_balance,
@@ -59,6 +60,12 @@ def get_account_transactions_and_balances(
     Returns:
         transactions: List of transaction objects
     """
+    # Delegate to the parent-account handler when this account has children
+    if Account.objects.filter(parent_account_id=account_id).exists():
+        return get_parent_account_transactions_and_balances(
+            end_date, account_id, totals_only, forecast, start_date
+        )
+
     # Forecast results depend on async task completion — skip cache to ensure freshness.
     use_cache = not forecast
     key = f"{account_combined_transactions(account_id)}:{end_date}:{totals_only}:{forecast}:{start_date}:{cleared_only}"
@@ -242,6 +249,131 @@ def get_account_transactions_and_balances(
         if use_cache:
             cache.set(key, my_tuple, timeout=60 * 60)
         return my_tuple
+
+
+def get_parent_account_transactions_and_balances(
+    end_date: date,
+    account_id: int,
+    totals_only: bool,
+    forecast: bool = False,
+    start_date: Optional[date] = None,
+) -> Tuple[List[TransactionOut], Decimal]:
+    """
+    Returns combined transactions for a parent account by merging all children.
+    Internal transfers between children are excluded — they net to zero in the
+    combined view and don't exist at the bank statement level.
+    """
+    use_cache = not forecast
+    key = f"{account_combined_transactions(account_id)}:parent:{end_date}:{totals_only}:{forecast}:{start_date}"
+    if use_cache:
+        data = cache.get(key)
+        if data:
+            return data
+
+    today = get_todays_date_timezone_adjusted()
+
+    children = Account.objects.filter(parent_account_id=account_id)
+    child_ids = list(children.values_list('id', flat=True))
+
+    if not child_ids:
+        return [], Decimal(0.00)
+
+    opening_balance = sum(c.opening_balance or Decimal(0) for c in children)
+    archive_balance = sum(c.archive_balance or Decimal(0) for c in children)
+
+    # Transfers where both sides are children cancel out in the combined view
+    internal_transfer_q = Q(
+        transaction_type__slug='transfer',
+        source_account_id__in=child_ids,
+        destination_account_id__in=child_ids,
+    )
+
+    touch_any_child = Q(source_account_id__in=child_ids) | Q(destination_account_id__in=child_ids)
+
+    all_transactions = (
+        Transaction.objects.filter(touch_any_child, transaction_date__lt=end_date)
+        .exclude(status__slug='archived')
+        .exclude(internal_transfer_q)
+        .select_related("status", "transaction_type")
+    )
+    reminder_transactions = (
+        ReminderCacheTransaction.objects.filter(touch_any_child, transaction_date__lt=end_date)
+        .exclude(status__slug='archived')
+        .exclude(internal_transfer_q)
+        .select_related("status", "transaction_type")
+    )
+    forecast_transactions = (
+        ForecastCacheTransaction.objects.filter(touch_any_child, transaction_date__lt=end_date)
+        .exclude(status__slug='archived')
+        .exclude(internal_transfer_q)
+        .select_related("status", "transaction_type")
+    )
+
+    if not totals_only:
+        all_transactions = annotate_transaction_display_info(all_transactions)
+        reminder_transactions = annotate_transaction_display_info(reminder_transactions)
+        forecast_transactions = annotate_transaction_display_info(forecast_transactions)
+
+    all_transactions = annotate_transaction_total_for_parent(all_transactions, child_ids)
+    reminder_transactions = annotate_transaction_total_for_parent(reminder_transactions, child_ids)
+    forecast_transactions = annotate_transaction_total_for_parent(forecast_transactions, child_ids)
+
+    if not totals_only:
+        reminder_transactions = add_tags_to_transactions(reminder_transactions, "r")
+        forecast_transactions = add_tags_to_transactions(forecast_transactions, "f")
+
+    cleared_transactions = all_transactions.exclude(status__slug='pending')
+    cleared_transactions = sort_transactions(cleared_transactions, True)
+    cleared_transactions = annotate_transaction_balance(cleared_transactions, opening_balance, archive_balance)
+    cleared_balance = opening_balance + archive_balance
+    if cleared_transactions:
+        cleared_balance = (
+            cleared_transactions.order_by("custom_order", "transaction_date", "-pretty_total", "-id")
+            .last()
+            .balance
+        )
+    if not totals_only:
+        cleared_transactions = add_tags_to_transactions(cleared_transactions, "t")
+
+    pending_transactions = all_transactions.filter(status__slug='pending')
+    if not totals_only:
+        pending_transactions = add_tags_to_transactions(pending_transactions, "t")
+
+    cleared_transactions_list = [TransactionOut.from_orm(obj) for obj in cleared_transactions]
+    pending_transactions_list = [TransactionOut.from_orm(obj) for obj in pending_transactions]
+    reminder_transactions_list = [
+        TransactionOut.from_orm(obj).model_copy(update={"id": -obj.id, "simulated": True})
+        for obj in reminder_transactions
+    ]
+    forecast_transactions_list = [
+        TransactionOut.from_orm(obj).model_copy(update={"id": -obj.id - 10000, "simulated": True})
+        for obj in forecast_transactions
+    ]
+
+    transactions_to_be_sorted = pending_transactions_list + reminder_transactions_list + forecast_transactions_list
+    sorted_transactions = sort_transaction_list(transactions_to_be_sorted)
+    sorted_transactions_with_balances = add_balances_to_transaction_list(sorted_transactions, cleared_balance)
+    transactions = cleared_transactions_list + sorted_transactions_with_balances
+
+    if forecast:
+        def filter_new(txns, start):
+            return [t for t in txns if t.transaction_date and t.transaction_date >= start]
+
+        def filter_prev(txns, start):
+            return [t for t in txns if t.transaction_date and t.transaction_date < start]
+
+        previous_balance = opening_balance + archive_balance
+        start = start_date or today
+        filtered = filter_new(transactions, start)
+        previous = filter_prev(transactions, start)
+        if previous:
+            previous_balance = previous[-1].balance if not isinstance(previous[-1], dict) else previous[-1]["balance"]
+        return (filtered, previous_balance)
+    else:
+        result = (transactions, Decimal(0.00))
+        if use_cache:
+            cache.set(key, result, timeout=60 * 60)
+        return result
 
 
 def fetch_account_transactions(account_id: int, transactions_type: str):

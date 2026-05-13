@@ -67,6 +67,59 @@
               </v-row>
             </v-container>
           </v-sheet>
+          <v-sheet border rounded v-if="!props.account.is_parent_account">
+            <v-container>
+              <v-row dense>
+                <v-col>
+                  <h4 class="text-h6 font-weight-bold mb-2">Parent Account</h4>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-autocomplete
+                    clearable
+                    label="Parent Account"
+                    :items="sameTypeAccounts"
+                    variant="outlined"
+                    :loading="accounts_isLoading"
+                    item-title="account_name"
+                    item-value="id"
+                    v-model="parent_account_id.value.value"
+                    density="comfortable"
+                    :error-messages="parent_account_id.errorMessage.value"
+                    hint="Roll this account up under a parent. Interest is calculated at the parent level."
+                    persistent-hint
+                  ></v-autocomplete>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-sheet>
+          <v-sheet border rounded v-if="props.account.is_parent_account">
+            <v-container>
+              <v-row dense>
+                <v-col>
+                  <h4 class="text-h6 font-weight-bold mb-2">Child Accounts</h4>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-autocomplete
+                    clearable
+                    label="Interest Child Account"
+                    :items="childAccounts"
+                    variant="outlined"
+                    item-title="account_name"
+                    item-value="id"
+                    v-model="interest_child_account_id.value.value"
+                    density="comfortable"
+                    :error-messages="interest_child_account_id.errorMessage.value"
+                    hint="Interest forecast deposits will be posted to this child account."
+                    persistent-hint
+                  ></v-autocomplete>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-sheet>
           <v-sheet border rounded v-if="props.account.account_type.id == 1">
             <v-container>
               <v-row dense>
@@ -262,7 +315,7 @@
               </v-row>
             </v-container>
           </v-sheet>
-          <v-sheet border rounded v-if="['savings', 'investment'].includes(props.account.account_type.slug)">
+          <v-sheet border rounded v-if="['savings', 'investment'].includes(props.account.account_type.slug) && !parent_account_id.value.value">
             <v-container>
               <v-row dense>
                 <v-col>
@@ -450,9 +503,26 @@
   const due_day = useField("due_day");
   const pay_day = useField("pay_day");
   const interest_deposit_day = useField("interest_deposit_day");
+  const parent_account_id = useField("parent_account_id");
+  const interest_child_account_id = useField("interest_child_account_id");
 
   const { accounts, isLoading: accounts_isLoading } = useAccounts();
   const { banks, isLoading } = useBanks();
+
+  const sameTypeAccounts = computed(() => {
+    if (!accounts.value) return []
+    return accounts.value.filter(
+      a =>
+        a.id !== props.account.id &&
+        a.account_type.id === props.account.account_type.id &&
+        a.parent_account_id === null,
+    )
+  })
+
+  const childAccounts = computed(() => {
+    if (!accounts.value) return []
+    return accounts.value.filter(a => a.parent_account_id === props.account.id)
+  })
   const mainstore = useMainStore();
   const emit = defineEmits(["updateDialog"]);
   const props = defineProps({
@@ -531,6 +601,8 @@
     due_day.value.value = props.account.due_day;
     pay_day.value.value = props.account.pay_day;
     interest_deposit_day.value.value = props.account.interest_deposit_day;
+    parent_account_id.value.value = props.account.parent_account_id ?? null;
+    interest_child_account_id.value.value = props.account.interest_child_account_id ?? null;
   };
 
   function parseDateAsLocal(dateString) {

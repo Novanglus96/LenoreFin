@@ -33,6 +33,8 @@ class AccountIn(Schema):
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
     interest_deposit_day: Optional[int] = None
+    parent_account_id: Optional[int] = None
+    interest_child_account_id: Optional[int] = None
 
 
 # The class AccountOut is a schema for representing accounts.
@@ -64,6 +66,9 @@ class AccountOut(Schema):
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
     interest_deposit_day: Optional[int] = None
+    is_parent_account: bool = False
+    parent_account_id: Optional[int] = None
+    interest_child_account_id: Optional[int] = None
     current_yr_rewards: List[BalanceDecimal] = []
     last_yr_rewards: List[BalanceDecimal] = []
 
@@ -94,6 +99,8 @@ class AccountUpdate(Schema):
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
     interest_deposit_day: Optional[int] = None
+    parent_account_id: Optional[int] = None
+    interest_child_account_id: Optional[int] = None
 
 
 class AccountQuery(Schema):

@@ -23,6 +23,7 @@ from decimal import Decimal
 from django.db.models import Q
 from django.core.cache import cache
 from core.cache.keys import account_combined_transactions
+from transactions.services.transactions_and_balances import get_parent_account_transactions_and_balances
 
 
 def get_transactions_by_account(
@@ -45,6 +46,12 @@ def get_transactions_by_account(
     Returns:
         transactions: List of transaction objects
     """
+    # Delegate to the parent-account handler when this account has children
+    if Account.objects.filter(parent_account_id=account_id).exists():
+        return get_parent_account_transactions_and_balances(
+            end_date, account_id, totals_only, forecast, start_date
+        )
+
     # Forecast results depend on async task completion — skip cache to ensure freshness.
     # Non-forecast results are safe to cache since they only change via mutations which
     # clear the cache immediately.

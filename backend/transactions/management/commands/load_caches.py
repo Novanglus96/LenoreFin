@@ -47,9 +47,13 @@ class Command(BaseCommand):
             task_logger.debug(f"Loading cache for account #{account.id}")
             update_cc_forecast_cache(account.id)
 
-        # Recreate Forecast Cache for all savings/investment accounts
+        # Recreate Forecast Cache for all savings/investment accounts.
+        # Skip child accounts — the parent path in update_interest_forecast_cache handles them.
         task_logger.info("Recreating forecast cache for all savings/investment accounts")
-        for account in Account.objects.filter(account_type__slug__in=['savings', 'investment']):
+        for account in Account.objects.filter(
+            account_type__slug__in=['savings', 'investment'],
+            parent_account__isnull=True,
+        ):
             task_logger.debug(f"Loading cache for account #{account.id}")
             update_interest_forecast_cache(account.id)
 

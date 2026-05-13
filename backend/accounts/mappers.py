@@ -77,6 +77,9 @@ def domain_account_to_schema(
             due_day=account.due_day,
             pay_day=account.pay_day,
             interest_deposit_day=account.interest_deposit_day,
+            is_parent_account=account.is_parent_account,
+            parent_account_id=account.parent_account_id,
+            interest_child_account_id=account.interest_child_account_id,
             current_yr_rewards=account.current_yr_rewards,
             last_yr_rewards=account.last_yr_rewards,
         )

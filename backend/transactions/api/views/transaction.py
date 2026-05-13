@@ -51,6 +51,30 @@ task_logger = logging.getLogger("task")
 transaction_router = Router(tags=["Transactions"])
 
 
+def _invalidate_accounts(*account_ids):
+    """Invalidate cache for each account and its parent (if any)."""
+    parent_ids = set(
+        Account.objects.filter(id__in=account_ids, parent_account_id__isnull=False)
+        .values_list('parent_account_id', flat=True)
+    )
+    for account_id in account_ids:
+        delete_pattern(account_all(account_id))
+    for parent_id in parent_ids:
+        delete_pattern(account_all(parent_id))
+
+
+def _assert_not_parent(*account_ids):
+    """Raise 400 if any of the given account IDs belong to a parent account."""
+    parent_ids = set(
+        Account.objects.filter(id__in=account_ids)
+        .filter(child_accounts__isnull=False)
+        .distinct()
+        .values_list('id', flat=True)
+    )
+    if parent_ids:
+        raise HttpError(400, "Cannot add transactions directly to a parent account.")
+
+
 @transaction_router.post("/create", auth=FullAccessAuth())
 def create_transaction(request, payload: TransactionIn):
     """
@@ -65,10 +89,13 @@ def create_transaction(request, payload: TransactionIn):
     """
 
     try:
+        affected = list(filter(None, [payload.source_account_id, payload.destination_account_id]))
+        _assert_not_parent(*affected)
         create_transaction_service(payload)
-        for account_id in filter(None, [payload.source_account_id, payload.destination_account_id]):
-            delete_pattern(account_all(account_id))
+        _invalidate_accounts(*affected)
         return {"id": None}
+    except HttpError:
+        raise
     except Exception as e:
         api_logger.error("Transaction not created")
         error_logger.error(f"{str(e)}")
@@ -103,8 +130,7 @@ def multiedit_transactions(request, payload: MultiTranscationDate):
 
         transactions.update(transaction_date=payload.new_date, edit_date=edit_date)
 
-        for account_id in account_ids:
-            delete_pattern(account_all(account_id))
+        _invalidate_accounts(*account_ids)
 
         api_logger.info(f"Transaction dates updated: #{payload.transaction_ids}")
 
@@ -163,8 +189,7 @@ def clear_transaction(request, payload: TransactionList):
                 transactions_to_update, ["status_id", "edit_date"]
             )
         unique_accounts = list(set(accounts_effected))
-        for account in unique_accounts:
-            delete_pattern(account_all(account))
+        _invalidate_accounts(*unique_accounts)
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
@@ -254,16 +279,16 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         old_source_id = existing.source_account_id
         old_destination_id = existing.destination_account_id
 
+        new_ids = {payload.source_account_id, payload.destination_account_id} - {None}
+        _assert_not_parent(*new_ids)
         update_transaction_service(transaction_id, payload)
 
-        # Bust all affected accounts explicitly — don't rely solely on signals.
         old_ids = {old_source_id, old_destination_id} - {None}
-        new_ids = {payload.source_account_id, payload.destination_account_id} - {None}
-        all_affected = old_ids | new_ids
-        for account_id in all_affected:
-            delete_pattern(account_all(account_id))
+        _invalidate_accounts(*(old_ids | new_ids))
 
         return {"success": True}
+    except HttpError:
+        raise
     except Http404:
         raise HttpError(404, "Transaction not found")
     except Exception as e:

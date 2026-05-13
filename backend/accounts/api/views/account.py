@@ -164,6 +164,12 @@ def update_account(request, account_id: int, payload: AccountUpdate):
             account.minimum_payment_amount = 0.00
             account.funding_account = None
 
+        if account.parent_account_id:
+            if account.calculate_interest:
+                raise HttpError(400, "A child account cannot have interest calculations enabled.")
+            if account.annual_rate and account.annual_rate != 0:
+                raise HttpError(400, "A child account cannot have an APY set.")
+
         account.save()
         api_logger.info(f"Account updated : {account.account_name}")
         return {"success": True}

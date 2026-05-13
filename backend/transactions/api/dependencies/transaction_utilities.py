@@ -124,6 +124,39 @@ def annotate_transaction_total(
     return all_transactions
 
 
+def annotate_transaction_total_for_parent(
+    transactions: QuerySet,
+    child_ids: list,
+) -> QuerySet:
+    """
+    Like annotate_transaction_total but for a combined parent account view.
+    Transfers where the child account is the source are negative; destination is positive.
+    Internal transfers (both sides are children) must be excluded before calling this.
+    """
+    if not isinstance(transactions, QuerySet):
+        raise TypeError("Expected a QuerySet")
+
+    all_transactions = transactions.annotate(
+        pretty_total=Case(
+            When(transaction_type__slug='income', then=Abs(F("total_amount"))),
+            When(transaction_type__slug='expense', then=-Abs(F("total_amount"))),
+            When(
+                transaction_type__slug='transfer',
+                source_account_id__in=child_ids,
+                then=-Abs(F("total_amount")),
+            ),
+            When(
+                transaction_type__slug='transfer',
+                destination_account_id__in=child_ids,
+                then=Abs(F("total_amount")),
+            ),
+            default=Value(0, output_field=DecimalField(max_digits=12, decimal_places=2)),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+    )
+    return all_transactions
+
+
 def sort_transactions(
     transactions: QuerySet[Transaction],
     asc: bool = True,
