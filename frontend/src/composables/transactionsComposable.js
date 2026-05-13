@@ -135,10 +135,13 @@ const TRANSACTION_DEPENDENT_KEYS = [
   ["accounts"],
   ["account_forecast"],
   ["tag_graph"],
+  ["tag_graph_items"],
   ["calculator"],
   ["expense_graph"],
   ["pay_graph"],
+  ["budgets"],
   ["retirement_forecast"],
+  ["retirement_transactions"],
 ];
 
 function invalidateTransactionDependencies(queryClient, extra = []) {

@@ -85,19 +85,19 @@ def get_account_transactions_and_balances(
     all_transactions = Transaction.objects.filter(
         Q(source_account_id=account_id) | Q(destination_account_id=account_id),
         transaction_date__lt=end_date,
-    ).exclude(status__slug='archived')
+    ).exclude(status__slug='archived').select_related("status", "transaction_type")
 
     # Get Reminder transactions
     reminder_transactions = ReminderCacheTransaction.objects.filter(
         Q(source_account_id=account_id) | Q(destination_account_id=account_id),
         transaction_date__lt=end_date,
-    ).exclude(status__slug='archived')
+    ).exclude(status__slug='archived').select_related("status", "transaction_type")
 
     # Get Forecast transactions
     forecast_transactions = ForecastCacheTransaction.objects.filter(
         Q(source_account_id=account_id) | Q(destination_account_id=account_id),
         transaction_date__lt=end_date,
-    ).exclude(status__slug='archived')
+    ).exclude(status__slug='archived').select_related("status", "transaction_type")
 
     # If not totals only, annotate transactions with pretty information
     if not totals_only:

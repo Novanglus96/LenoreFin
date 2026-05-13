@@ -66,7 +66,7 @@ from transactions.api.dependencies.get_transactions_by_tag import (
 from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP
 from core.cache.helpers import delete_pattern
-from core.cache.keys import account_all_transactions
+from core.cache.keys import account_all, account_all_transactions
 import logging
 
 api_logger = logging.getLogger("api")
@@ -895,7 +895,7 @@ def update_interest_forecast_cache(account_id):
             period_start = period_end
 
         create_transactions(transactions_to_create, 'forecast')
-        delete_pattern(account_all_transactions(account_id))
+        delete_pattern(account_all(account_id))
     except Exception as e:
         error_logger.exception(
             f"Error calculating interest forecast for account {account_id}: {e}"
@@ -1118,7 +1118,9 @@ def update_cc_forecast_cache(account_id):
             x += 1
 
         create_transactions(transactions_to_create, "forecast")
-        delete_pattern(account_all_transactions(account_id))
+        delete_pattern(account_all(account_id))
+        if funding_account:
+            delete_pattern(account_all(funding_account.id))
     except Exception as e:
         error_logger.exception(f"Error calculating CC forecast for account {account_id}: {e}")
 
