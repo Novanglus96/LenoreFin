@@ -263,6 +263,7 @@ Q_CLUSTER = {
     "max_attempts": 1,
     "label": "Tasks",
     "catch_up": False,
+    "poll": 1,
 }
 
 JAZZMIN_SETTINGS = {

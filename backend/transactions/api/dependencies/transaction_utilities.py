@@ -213,40 +213,48 @@ def add_tags_to_transactions(
 
     _extended_summary_
     """
-    # Add tags to transactions
-    for transaction in transactions:
-        transaction_details = None
-        if type == "t":
-            transaction_details = TransactionDetail.objects.filter(
-                transaction_id=transaction.id
-            )
-        if type == "r":
-            transaction_details = ReminderCacheTransactionDetail.objects.filter(
-                transaction_id=transaction.id
-            )
-        if type == "f":
-            transaction_details = ForecastCacheTransactionDetail.objects.filter(
-                transaction_id=transaction.id
-            )
-        details = list(transaction_details)
-        tag_list = list(
-            transaction_details.annotate(
-                parent_tag=F("tag__parent__tag_name"),
-                child_tag=F("tag__child__tag_name"),
-                tag_name_combined=Case(
-                    When(child_tag__isnull=True, then=F("parent_tag")),
-                    default=Concat(
-                        F("parent_tag"), Value(" / "), F("child_tag")
-                    ),
-                    output_field=CharField(),
+    transaction_list = list(transactions)
+    if not transaction_list:
+        return transactions
+
+    txn_ids = [t.id for t in transaction_list]
+
+    if type == "t":
+        detail_model = TransactionDetail
+    elif type == "r":
+        detail_model = ReminderCacheTransactionDetail
+    else:
+        detail_model = ForecastCacheTransactionDetail
+
+    all_details = list(
+        detail_model.objects.filter(transaction_id__in=txn_ids)
+        .select_related("transaction", "tag")
+        .annotate(
+            parent_tag=F("tag__parent__tag_name"),
+            child_tag=F("tag__child__tag_name"),
+            tag_name_combined=Case(
+                When(child_tag__isnull=True, then=F("parent_tag")),
+                default=Concat(
+                    F("parent_tag"), Value(" / "), F("child_tag")
                 ),
-            )
-            .exclude(tag_name_combined__isnull=True)
-            .values_list("tag_name_combined", flat=True)
+                output_field=CharField(),
+            ),
         )
-        transaction.tags = tag_list
-        transaction.details = details
-    return transactions
+    )
+
+    details_by_txn: dict = {}
+    tags_by_txn: dict = {}
+    for detail in all_details:
+        tid = detail.transaction_id
+        details_by_txn.setdefault(tid, []).append(detail)
+        if detail.tag_name_combined:
+            tags_by_txn.setdefault(tid, []).append(detail.tag_name_combined)
+
+    for transaction in transaction_list:
+        transaction.tags = tags_by_txn.get(transaction.id, [])
+        transaction.details = details_by_txn.get(transaction.id, [])
+
+    return transaction_list
 
 
 def sort_transaction_list(

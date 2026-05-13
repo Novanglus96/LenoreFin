@@ -66,7 +66,8 @@ from transactions.api.dependencies.get_transactions_by_tag import (
 from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP
 from core.cache.helpers import delete_pattern
-from core.cache.keys import account_all_transactions
+from core.cache.keys import account_all, account_all_transactions
+from django.db import transaction as db_transaction
 import logging
 
 api_logger = logging.getLogger("api")
@@ -816,11 +817,11 @@ def update_interest_forecast_cache(account_id):
     if account.account_type.slug not in {'savings', 'investment'}:
         return
 
-    ForecastCacheTransaction.objects.filter(
-        Q(source_account_id=account_id) | Q(destination_account_id=account_id)
-    ).delete()
-
     if not account.calculate_interest or not account.annual_rate:
+        ForecastCacheTransaction.objects.filter(
+            Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+        ).delete()
+        delete_pattern(account_all(account_id))
         return
 
     try:
@@ -894,8 +895,12 @@ def update_interest_forecast_cache(account_id):
 
             period_start = period_end
 
-        create_transactions(transactions_to_create, 'forecast')
-        delete_pattern(account_all_transactions(account_id))
+        with db_transaction.atomic():
+            ForecastCacheTransaction.objects.filter(
+                Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+            ).delete()
+            create_transactions(transactions_to_create, 'forecast')
+        delete_pattern(account_all(account_id))
     except Exception as e:
         error_logger.exception(
             f"Error calculating interest forecast for account {account_id}: {e}"
@@ -921,14 +926,13 @@ def update_cc_forecast_cache(account_id):
     if account.account_type.slug != 'credit-card':
         return
 
-    # Delete any existing cache entries for this account
-    ForecastCacheTransaction.objects.filter(
-        Q(source_account_id=account_id)
-        | Q(destination_account_id=account_id)
-    ).delete()
-
-    # Exit if cc calculations are turned off
+    # Exit if cc calculations are turned off — clear any stale records and bail
     if not account.calculate_payments:
+        ForecastCacheTransaction.objects.filter(
+            Q(source_account_id=account_id)
+            | Q(destination_account_id=account_id)
+        ).delete()
+        delete_pattern(account_all(account_id))
         return
 
     try:
@@ -1117,8 +1121,15 @@ def update_cc_forecast_cache(account_id):
                 account.save()
             x += 1
 
-        create_transactions(transactions_to_create, "forecast")
-        delete_pattern(account_all_transactions(account_id))
+        with db_transaction.atomic():
+            ForecastCacheTransaction.objects.filter(
+                Q(source_account_id=account_id)
+                | Q(destination_account_id=account_id)
+            ).delete()
+            create_transactions(transactions_to_create, "forecast")
+        delete_pattern(account_all(account_id))
+        if funding_account:
+            delete_pattern(account_all(funding_account.id))
     except Exception as e:
         error_logger.exception(f"Error calculating CC forecast for account {account_id}: {e}")
 

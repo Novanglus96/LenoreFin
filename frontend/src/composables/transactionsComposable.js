@@ -135,16 +135,30 @@ const TRANSACTION_DEPENDENT_KEYS = [
   ["accounts"],
   ["account_forecast"],
   ["tag_graph"],
+  ["tag_graph_items"],
   ["calculator"],
   ["expense_graph"],
   ["pay_graph"],
+  ["budgets"],
   ["retirement_forecast"],
+  ["retirement_transactions"],
 ];
 
 function invalidateTransactionDependencies(queryClient, extra = []) {
   [...TRANSACTION_DEPENDENT_KEYS, ...extra].forEach(key =>
     queryClient.invalidateQueries({ queryKey: key }),
   );
+}
+
+// Forecast results are not cached on the backend, so this delayed invalidation
+// reliably gets fresh DB data once the async forecast task completes (~1-2s with
+// poll:1). The 3.5s window gives comfortable margin over the task execution time.
+function scheduleForecastRefetch(queryClient) {
+  setTimeout(() => {
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
+    queryClient.invalidateQueries({ queryKey: ["accounts"] });
+  }, 3500);
 }
 
 export function useTransactions() {
@@ -167,6 +181,7 @@ export function useTransactions() {
     onSuccess: data => {
       console.log("Success adding transaction", data);
       invalidateTransactionDependencies(queryClient, [["description-history"]]);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
@@ -175,6 +190,7 @@ export function useTransactions() {
     onSuccess: () => {
       console.log("Success deleting transaction");
       invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
@@ -183,6 +199,7 @@ export function useTransactions() {
     onSuccess: () => {
       console.log("Success clearing transaction");
       invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
@@ -191,6 +208,7 @@ export function useTransactions() {
     onSuccess: () => {
       console.log("Success editing dates of transactions");
       invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
@@ -199,6 +217,7 @@ export function useTransactions() {
     onSuccess: () => {
       console.log("Success updating transaction");
       invalidateTransactionDependencies(queryClient, [["description-history"]]);
+      scheduleForecastRefetch(queryClient);
     },
   });
 

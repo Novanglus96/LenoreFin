@@ -51,16 +51,23 @@ def test_transaction_delete_triggers_both_account_refreshes(
 
 
 @pytest.mark.django_db
-@patch("transactions.tasks.update_cc_forecast_cache")
+@patch("transactions.signals.async_task")
 @patch("transactions.signals.delete_pattern")
 def test_refresh_account_clears_cache_then_recalculates(
-    mock_delete, mock_forecast, test_transaction
+    mock_delete, mock_async_task, test_transaction
 ):
     from transactions.signals import _refresh_account
     _refresh_account(test_transaction.source_account_id)
 
     mock_delete.assert_called_once_with(account_all(test_transaction.source_account_id))
-    mock_forecast.assert_called_once_with(test_transaction.source_account_id)
+    mock_async_task.assert_any_call(
+        "transactions.tasks.update_cc_forecast_cache",
+        test_transaction.source_account_id,
+    )
+    mock_async_task.assert_any_call(
+        "transactions.tasks.update_interest_forecast_cache",
+        test_transaction.source_account_id,
+    )
 
 
 @pytest.mark.django_db
