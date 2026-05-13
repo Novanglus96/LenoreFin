@@ -150,6 +150,20 @@ function invalidateTransactionDependencies(queryClient, extra = []) {
   );
 }
 
+// Forecast cache is rebuilt asynchronously after mutations. Re-invalidate after
+// a short delay to pick up the updated ForecastCacheTransaction records once
+// the background task completes (poll: 1 in Q_CLUSTER means tasks start within ~1s).
+function scheduleForecastRefetch(queryClient) {
+  setTimeout(() => {
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["accounts"] });
+  }, 3500);
+  setTimeout(() => {
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["accounts"] });
+  }, 8000);
+}
+
 export function useTransactions() {
   const queryClient = useQueryClient();
   const transcation_store = useTransactionsStore();
@@ -170,6 +184,7 @@ export function useTransactions() {
     onSuccess: data => {
       console.log("Success adding transaction", data);
       invalidateTransactionDependencies(queryClient, [["description-history"]]);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
@@ -178,6 +193,7 @@ export function useTransactions() {
     onSuccess: () => {
       console.log("Success deleting transaction");
       invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
@@ -186,6 +202,7 @@ export function useTransactions() {
     onSuccess: () => {
       console.log("Success clearing transaction");
       invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
@@ -194,6 +211,7 @@ export function useTransactions() {
     onSuccess: () => {
       console.log("Success editing dates of transactions");
       invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
@@ -202,6 +220,7 @@ export function useTransactions() {
     onSuccess: () => {
       console.log("Success updating transaction");
       invalidateTransactionDependencies(queryClient, [["description-history"]]);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
