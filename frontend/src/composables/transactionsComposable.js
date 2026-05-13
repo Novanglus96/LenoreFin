@@ -150,18 +150,15 @@ function invalidateTransactionDependencies(queryClient, extra = []) {
   );
 }
 
-// Forecast cache is rebuilt asynchronously after mutations. Re-invalidate after
-// a short delay to pick up the updated ForecastCacheTransaction records once
-// the background task completes (poll: 1 in Q_CLUSTER means tasks start within ~1s).
+// Forecast results are not cached on the backend, so this delayed invalidation
+// reliably gets fresh DB data once the async forecast task completes (~1-2s with
+// poll:1). The 3.5s window gives comfortable margin over the task execution time.
 function scheduleForecastRefetch(queryClient) {
   setTimeout(() => {
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
     queryClient.invalidateQueries({ queryKey: ["accounts"] });
   }, 3500);
-  setTimeout(() => {
-    queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    queryClient.invalidateQueries({ queryKey: ["accounts"] });
-  }, 8000);
 }
 
 export function useTransactions() {

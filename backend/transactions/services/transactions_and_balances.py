@@ -59,11 +59,13 @@ def get_account_transactions_and_balances(
     Returns:
         transactions: List of transaction objects
     """
-    # Check Cache
+    # Forecast results depend on async task completion — skip cache to ensure freshness.
+    use_cache = not forecast
     key = f"{account_combined_transactions(account_id)}:{end_date}:{totals_only}:{forecast}:{start_date}:{cleared_only}"
-    data = cache.get(key)
-    if data:
-        return data
+    if use_cache:
+        data = cache.get(key)
+        if data:
+            return data
 
     # Setup variables
     today = get_todays_date_timezone_adjusted()
@@ -234,11 +236,11 @@ def get_account_transactions_and_balances(
             else:
                 previous_balance = previous_transactions[-1].balance
         my_tuple = (filtered_transactions, previous_balance)
-        cache.set(key, my_tuple, timeout=60 * 60)
         return my_tuple
     else:
         my_tuple = (transactions, Decimal(0.00))
-        cache.set(key, my_tuple, timeout=60 * 60)
+        if use_cache:
+            cache.set(key, my_tuple, timeout=60 * 60)
         return my_tuple
 
 
