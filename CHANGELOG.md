@@ -1,3 +1,10 @@
+# [1.4.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.4...v1.4.0-alpha.5) (2026-05-13)
+
+
+### Features
+
+* add parent account support with combined balance and interest forecasting ([#95](https://github.com/Novanglus96/LenoreFin/issues/95)) ([56c6128](https://github.com/Novanglus96/LenoreFin/commit/56c612871e9e18282a142ece432fd3e002610da8))
+
 # [1.4.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.3...v1.4.0-alpha.4) (2026-05-13)
 
 
