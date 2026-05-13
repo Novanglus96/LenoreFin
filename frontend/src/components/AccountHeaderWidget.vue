@@ -17,6 +17,7 @@
                 class="d-flex align-center justify-center mx-1 px-1 gx-1 bg-primary-lighten-1"
                 variant="outlined"
               >
+                <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="mr-1">combined</v-chip>
                 <v-tooltip text="Edit Account" location="top" v-if="authStore.isFullAccess">
                   <template v-slot:activator="{ props }">
                     <span
@@ -79,7 +80,7 @@
           <!-- Large Display View -->
           <v-row density="compact" v-if="!smAndDown">
             <v-col class="text-center align-content-end">
-              <v-tooltip text="Adjust Balance" location="top" v-if="authStore.isFullAccess">
+              <v-tooltip text="Adjust Balance" location="top" v-if="authStore.isFullAccess && !account.is_parent_account">
                 <template v-slot:activator="{ props }">
                   <div
                     class="text-accent font-weight-bold text-h4 d-inline-block"
@@ -100,7 +101,7 @@
               </v-tooltip>
               <div
                 class="text-accent font-weight-bold text-h4 d-inline-block"
-                v-if="!authStore.isFullAccess"
+                v-if="!authStore.isFullAccess || account.is_parent_account"
               >
                 <NumberFlow
                   :value="account.balance"
@@ -112,7 +113,7 @@
                 :account="account"
                 @update-dialog="updateAdjBalDialog"
               />
-              <div class="text-primary-lighten-2">current balance</div>
+              <div class="text-primary-lighten-2">{{ account.is_parent_account ? 'combined balance' : 'current balance' }}</div>
             </v-col>
             <v-col
               v-if="account.account_type.id == 1"
@@ -196,7 +197,7 @@
           <!-- Small Display View -->
           <v-row density="compact" v-if="smAndDown">
             <v-col class="text-center align-content-end">
-              <v-tooltip text="Adjust Balance" location="top" v-if="authStore.isFullAccess">
+              <v-tooltip text="Adjust Balance" location="top" v-if="authStore.isFullAccess && !account.is_parent_account">
                 <template v-slot:activator="{ props }">
                   <div
                     class="text-accent-lighten-1 font-weight-bold text-h4 d-inline-block"
@@ -217,7 +218,7 @@
               </v-tooltip>
               <div
                 class="text-accent-lighten-1 font-weight-bold text-h4 d-inline-block"
-                v-if="!authStore.isFullAccess"
+                v-if="!authStore.isFullAccess || account.is_parent_account"
               >
                 <NumberFlow
                   :value="account.balance"
@@ -229,7 +230,7 @@
                 :account="account"
                 @update-dialog="updateAdjBalDialog"
               />
-              <div class="text-primary-lighten-2">current balance</div>
+              <div class="text-primary-lighten-2">{{ account.is_parent_account ? 'combined balance' : 'current balance' }}</div>
             </v-col>
           </v-row>
           <v-row density="compact" v-if="smAndDown">

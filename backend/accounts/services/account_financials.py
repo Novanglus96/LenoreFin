@@ -71,11 +71,15 @@ def get_account_financials(account_id: int, today: date | None = None):
         else Decimal("0.00")
     )
 
-    # Cleared Balance
-    cleared_balance = get_account_cleared_balance(account_id)
-
-    # Pending Balance
-    pending_balance = get_account_pending_balance(account_id)
+    # For parent accounts, sum balances across all children
+    is_parent = account.child_accounts.exists()
+    if is_parent:
+        child_ids = list(account.child_accounts.values_list('id', flat=True))
+        cleared_balance = sum(get_account_cleared_balance(cid) for cid in child_ids)
+        pending_balance = sum(get_account_pending_balance(cid) for cid in child_ids)
+    else:
+        cleared_balance = get_account_cleared_balance(account_id)
+        pending_balance = get_account_pending_balance(account_id)
 
     # Available Credit
     available_credit = account.credit_limit - abs(pending_balance)
@@ -110,6 +114,9 @@ def get_account_financials(account_id: int, today: date | None = None):
         due_day=account.due_day,
         pay_day=account.pay_day,
         interest_deposit_day=account.interest_deposit_day,
+        is_parent_account=is_parent,
+        parent_account_id=account.parent_account_id,
+        interest_child_account_id=account.interest_child_account_id,
     )
 
     cache.set(key, financials, timeout=60 * 60)

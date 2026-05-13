@@ -32,6 +32,10 @@ def update_cache_on_save(sender, instance, **kwargs):
     delete_pattern(account_cleared_balance(instance.id))
     delete_pattern(account_financials(instance.id))
     delete_pattern(account_pending_balance(instance.id))
+    # Also invalidate the parent's financials cache if this is a child account
+    if instance.parent_account_id:
+        delete_pattern(account_financials(instance.parent_account_id))
+        delete_pattern(account_combined_transactions(instance.parent_account_id))
 
 
 @receiver(post_delete, sender=Account)
@@ -69,6 +73,8 @@ def detect_relevant_changes(sender, instance, **kwargs):
         "due_day",
         "pay_day",
         "interest_deposit_day",
+        "parent_account_id",
+        "interest_child_account_id",
     }
 
     if relevant & set(instance.tracker.changed()):

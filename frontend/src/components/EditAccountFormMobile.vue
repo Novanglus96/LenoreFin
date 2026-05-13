@@ -70,6 +70,57 @@
             </v-row>
           </v-container>
         </v-sheet>
+        <v-sheet border rounded v-if="!props.account.is_parent_account">
+          <v-container>
+            <v-row dense>
+              <v-col>
+                <h4 class="text-h6 font-weight-bold mb-2">Parent Account</h4>
+              </v-col>
+            </v-row>
+            <v-row dense>
+              <v-col>
+                <v-autocomplete
+                  clearable
+                  label="Parent Account"
+                  :items="sameTypeAccounts"
+                  variant="outlined"
+                  :loading="accounts_isLoading"
+                  item-title="account_name"
+                  item-value="id"
+                  v-model="formData.parent_account_id"
+                  density="comfortable"
+                  hint="Roll this account up under a parent. Interest is calculated at the parent level."
+                  persistent-hint
+                ></v-autocomplete>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-sheet>
+        <v-sheet border rounded v-if="props.account.is_parent_account">
+          <v-container>
+            <v-row dense>
+              <v-col>
+                <h4 class="text-h6 font-weight-bold mb-2">Child Accounts</h4>
+              </v-col>
+            </v-row>
+            <v-row dense>
+              <v-col>
+                <v-autocomplete
+                  clearable
+                  label="Interest Child Account"
+                  :items="childAccounts"
+                  variant="outlined"
+                  item-title="account_name"
+                  item-value="id"
+                  v-model="formData.interest_child_account_id"
+                  density="comfortable"
+                  hint="Interest forecast deposits will be posted to this child account."
+                  persistent-hint
+                ></v-autocomplete>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-sheet>
         <v-sheet border rounded v-if="props.account.account_type.id == 1">
           <v-container>
             <v-row dense>
@@ -177,7 +228,7 @@
             </v-row>
           </v-container>
         </v-sheet>
-        <v-sheet border rounded v-if="['savings', 'investment'].includes(props.account.account_type.slug)">
+        <v-sheet border rounded v-if="['savings', 'investment'].includes(props.account.account_type.slug) && !formData.parent_account_id">
           <v-container>
             <v-row dense>
               <v-col>
@@ -239,12 +290,13 @@
 <script setup>
   import { defineEmits, defineProps, ref, computed } from "vue";
   import { useBanks } from "@/composables/banksComposable";
-  import { useAccountByID } from "@/composables/accountsComposable";
+  import { useAccountByID, useAccounts } from "@/composables/accountsComposable";
   import VueDatePicker from "@vuepic/vue-datepicker";
   import "@vuepic/vue-datepicker/dist/main.css";
   import { useMainStore } from "@/stores/main";
 
   const { banks, isLoading } = useBanks();
+  const { accounts, isLoading: accounts_isLoading } = useAccounts();
   const editSubmit = ref(true);
   const mainstore = useMainStore();
   const emit = defineEmits(["updateDialog"]);
@@ -270,7 +322,24 @@
     statement_balance: props.account.statement_balance,
     calculate_interest: props.account.calculate_interest,
     interest_deposit_day: props.account.interest_deposit_day,
+    parent_account_id: props.account.parent_account_id ?? null,
+    interest_child_account_id: props.account.interest_child_account_id ?? null,
   });
+
+  const sameTypeAccounts = computed(() => {
+    if (!accounts.value) return []
+    return accounts.value.filter(
+      a =>
+        a.id !== props.account.id &&
+        a.account_type.id === props.account.account_type.id &&
+        a.parent_account_id === null,
+    )
+  })
+
+  const childAccounts = computed(() => {
+    if (!accounts.value) return []
+    return accounts.value.filter(a => a.parent_account_id === props.account.id)
+  })
 
   const clickEditAccount = () => {
     editAccount(formData.value);

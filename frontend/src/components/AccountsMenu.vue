@@ -55,15 +55,17 @@
           v-if="checking_accounts && checking_accounts.length == 0"
         ></v-list-item>
         <v-list-item
-          v-for="(account, i) in checking_accounts"
+          v-for="(account, i) in sortForMenu(checking_accounts)"
           :key="i"
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
+          :class="account.parent_account_id ? 'pl-6' : ''"
         >
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
+              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
             </span>
           </v-list-item-title>
           <v-list-item-subtitle>
@@ -117,15 +119,17 @@
           v-if="savings_accounts && savings_accounts.length == 0"
         ></v-list-item>
         <v-list-item
-          v-for="(account, i) in savings_accounts"
+          v-for="(account, i) in sortForMenu(savings_accounts)"
           :key="i"
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
+          :class="account.parent_account_id ? 'pl-6' : ''"
         >
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
+              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
             </span>
           </v-list-item-title>
           <v-list-item-subtitle>
@@ -179,15 +183,17 @@
           v-if="cc_accounts && cc_accounts.length == 0"
         ></v-list-item>
         <v-list-item
-          v-for="(account, i) in cc_accounts"
+          v-for="(account, i) in sortForMenu(cc_accounts)"
           :key="i"
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
+          :class="account.parent_account_id ? 'pl-6' : ''"
         >
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
+              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
             </span>
           </v-list-item-title>
           <v-list-item-subtitle>
@@ -241,15 +247,17 @@
           v-if="investment_accounts && investment_accounts.length == 0"
         ></v-list-item>
         <v-list-item
-          v-for="(account, i) in investment_accounts"
+          v-for="(account, i) in sortForMenu(investment_accounts)"
           :key="i"
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
+          :class="account.parent_account_id ? 'pl-6' : ''"
         >
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
+              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
             </span>
           </v-list-item-title>
           <v-list-item-subtitle>
@@ -303,15 +311,17 @@
           v-if="loan_accounts && loan_accounts.length == 0"
         ></v-list-item>
         <v-list-item
-          v-for="(account, i) in loan_accounts"
+          v-for="(account, i) in sortForMenu(loan_accounts)"
           :key="i"
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
+          :class="account.parent_account_id ? 'pl-6' : ''"
         >
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
+              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
             </span>
           </v-list-item-title>
           <v-list-item-subtitle>
@@ -399,6 +409,20 @@
   const transactions_store = useTransactionsStore();
   const router = useRouter();
   const groupActive = ref(null);
+
+  const sortForMenu = accounts => {
+    if (!accounts) return []
+    const parents = accounts.filter(a => a.is_parent_account)
+    const children = accounts.filter(a => a.parent_account_id !== null)
+    const standalone = accounts.filter(a => !a.is_parent_account && a.parent_account_id === null)
+    const result = []
+    for (const parent of parents) {
+      result.push(parent)
+      result.push(...children.filter(c => c.parent_account_id === parent.id))
+    }
+    result.push(...standalone)
+    return result
+  }
 
   const setAccount = (account, forecast) => {
     transactions_store.pageinfo.account_id = account;

@@ -136,7 +136,27 @@ class Account(models.Model):
     due_day = models.IntegerField(default=15)
     pay_day = models.IntegerField(default=15)
     interest_deposit_day = models.IntegerField(null=True, blank=True, default=None)
+    parent_account = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        related_name="child_accounts",
+    )
+    interest_child_account = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
     tracker = FieldTracker()
+
+    @property
+    def is_parent_account(self):
+        return self.child_accounts.exists()
 
     def clean(self):
         # Ensure an account cannot fund itself
@@ -160,6 +180,35 @@ class Account(models.Model):
             raise ValidationError(
                 "A funding account can only be set for Credit Card accounts"
             )
+        # Child accounts cannot manage their own interest — the parent handles it
+        if self.parent_account_id:
+            if self.calculate_interest:
+                raise ValidationError(
+                    "A child account cannot have interest calculations enabled. Set this on the parent account instead."
+                )
+            if self.annual_rate and self.annual_rate != 0:
+                raise ValidationError(
+                    "A child account cannot have an APY set. Set this on the parent account instead."
+                )
+        # Ensure an account cannot be its own parent
+        if self.parent_account and self.parent_account == self:
+            raise ValidationError("An account cannot be its own parent.")
+        # Enforce flat hierarchy: a parent cannot itself have a parent
+        if self.parent_account and self.parent_account.parent_account_id is not None:
+            raise ValidationError(
+                "Cannot set a parent account that already has a parent (only one level of hierarchy allowed)."
+            )
+        # Enforce flat hierarchy: an account with children cannot become a child
+        if self.parent_account_id and self.pk and self.child_accounts.exists():
+            raise ValidationError(
+                "An account with child accounts cannot itself be assigned a parent."
+            )
+        # Ensure interest_child_account is a direct child of this account
+        if self.interest_child_account and self.pk:
+            if self.interest_child_account.parent_account_id != self.pk:
+                raise ValidationError(
+                    "The interest child account must be a direct child of this account."
+                )
 
     def __str__(self):
         return self.account_name

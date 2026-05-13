@@ -52,6 +52,9 @@ class DomainAccount:
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
     interest_deposit_day: Optional[int] = None
+    is_parent_account: bool = False
+    parent_account_id: Optional[int] = None
+    interest_child_account_id: Optional[int] = None
 
 
 @dataclass

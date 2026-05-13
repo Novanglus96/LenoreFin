@@ -463,7 +463,7 @@
             icon
             @click="transactionAddFormDialog = true"
             variant="elevated"
-            v-if="selected_all.length === 0 && props.variant === 'account' && authStore.isFullAccess"
+            v-if="selected_all.length === 0 && props.variant === 'account' && authStore.isFullAccess && !isParentAccount"
           >
             <v-icon icon="mdi-invoice-plus"></v-icon>
           </v-fab>
@@ -483,7 +483,7 @@
             icon
             :disabled="true"
             variant="plain"
-            v-if="authStore.isFullAccess"
+            v-if="authStore.isFullAccess && !isParentAccount"
           >
             <v-icon></v-icon>
             <v-speed-dial
@@ -620,6 +620,7 @@
   import { useTransactions } from "@/composables/transactionsComposable";
   import { useReminders } from "@/composables/remindersComposable";
   import { useAuthStore } from "@/stores/auth";
+  import { useAccountByID } from "@/composables/accountsComposable";
 
   const { removeTransaction, clearTransaction } = useTransactions();
   const { addReminderTransaction } = useReminders();
@@ -649,6 +650,9 @@
     fetching: { type: Boolean, default: true },
     accountID: { type: Number },
   });
+
+  const { account: accountDetail } = useAccountByID(props.accountID);
+  const isParentAccount = computed(() => accountDetail.value?.is_parent_account ?? false);
 
   const localTransactions = ref(props.data ? props.data.transactions : []);
   const localLoading = ref(props.loading);
