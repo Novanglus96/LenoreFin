@@ -35,7 +35,6 @@ async function getOptionsFunction() {
 
 async function updateOptionsFunction(updatedOptions) {
   try {
-    console.log("update_options:", updatedOptions);
     const response = await apiClient.patch(
       "/administration/options/update/1",
       updatedOptions,
@@ -69,9 +68,9 @@ export function useOptions() {
   const updateOptionsMutation = useMutation({
     mutationFn: updateOptionsFunction,
     onSuccess: () => {
-      console.log("Success updating options");
       queryClient.invalidateQueries({ queryKey: ["options"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["tag_graph_items"] });
       queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
     },
