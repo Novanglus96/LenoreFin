@@ -43,6 +43,12 @@
               color="selected"
               title="Tags"
             ></v-list-item>
+            <v-list-item
+              prepend-icon="mdi-account-tie"
+              to="/payees"
+              color="selected"
+              title="Payees"
+            ></v-list-item>
           </v-list>
         </v-menu>
         <v-img :width="132" aspect-ratio="1/1" cover src="logov2.png"></v-img>
@@ -167,6 +173,16 @@
             <v-list-item
               prepend-icon="mdi-tag"
               to="/tags"
+              v-bind="props"
+              color="selected"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="Payees">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              prepend-icon="mdi-account-tie"
+              to="/payees"
               v-bind="props"
               color="selected"
             ></v-list-item>

@@ -400,6 +400,9 @@
                       :disabled="!is_paycheck.value.value"
                     ></v-autocomplete>
                   </v-col>
+                  <v-col cols="auto" class="d-flex align-center">
+                    <AddPayeeForm />
+                  </v-col>
                 </v-row>
               </v-container>
             </v-window-item>
@@ -457,6 +460,7 @@
   import TagTable from "@/components/TagTable.vue";
   import { useDescriptionHistory } from "@/composables/descriptionHistoryComposable";
   import CalculatorWidget from "@/components/CalculatorWidget.vue";
+  import AddPayeeForm from "@/components/AddPayeeForm.vue";
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";
 
