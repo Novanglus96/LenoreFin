@@ -1,3 +1,10 @@
+# [1.4.0-alpha.14](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.13...v1.4.0-alpha.14) (2026-05-14)
+
+
+### Bug Fixes
+
+* missing closing bracket on v-dialog tag in ReminderForm ([#105](https://github.com/Novanglus96/LenoreFin/issues/105)) ([16adb8b](https://github.com/Novanglus96/LenoreFin/commit/16adb8b8c64f43072c4233610d1e30299c7442e3))
+
 # [1.4.0-alpha.13](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.12...v1.4.0-alpha.13) (2026-05-14)
 
 
