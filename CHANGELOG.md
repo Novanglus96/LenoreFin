@@ -1,3 +1,10 @@
+# [1.4.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.6...v1.4.0-alpha.7) (2026-05-14)
+
+
+### Features
+
+* add payee management — CRUD view and inline add from transaction form ([#98](https://github.com/Novanglus96/LenoreFin/issues/98)) ([8b75e5f](https://github.com/Novanglus96/LenoreFin/commit/8b75e5f6ac3c9c686785801eb879fc92427b3489))
+
 # [1.4.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.5...v1.4.0-alpha.6) (2026-05-14)
 
 
