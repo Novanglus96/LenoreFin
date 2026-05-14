@@ -1,5 +1,5 @@
 <template>
-  <v-dialog persistent width="1024" min-height="800px">
+  <v-dialog persistent :fullscreen="smAndDown" :width="smAndDown ? undefined : '1024'"
     <form @submit.prevent="submit">
       <v-card>
         <v-card-title>
@@ -9,7 +9,7 @@
         <v-card-text>
           <v-container>
             <v-row>
-              <v-col>
+              <v-col :cols="smAndDown ? 12 : undefined">
                 <v-text-field
                   v-model="amount.value.value"
                   variant="outlined"
@@ -21,7 +21,7 @@
                   @blur="reformatNumberToMoney"
                 ></v-text-field>
               </v-col>
-              <v-col>
+              <v-col :cols="smAndDown ? 12 : undefined">
                 <v-text-field
                   v-model="description.value.value"
                   variant="outlined"
@@ -31,7 +31,7 @@
               </v-col>
             </v-row>
             <v-row>
-              <v-col>
+              <v-col :cols="smAndDown ? 12 : undefined">
                 <v-autocomplete
                   clearable
                   label="Transaction Type*"
@@ -44,7 +44,7 @@
                   :error-messages="transaction_type_id.errorMessage.value"
                 ></v-autocomplete>
               </v-col>
-              <v-col>
+              <v-col :cols="smAndDown ? 12 : undefined">
                 <v-autocomplete
                   clearable
                   label="Tag*"
@@ -78,7 +78,7 @@
               </v-col>
             </v-row>
             <v-row>
-              <v-col>
+              <v-col :cols="smAndDown ? 12 : undefined">
                 <v-autocomplete
                   clearable
                   label="Source Account*"
@@ -103,7 +103,7 @@
                   </template>
                 </v-autocomplete>
               </v-col>
-              <v-col>
+              <v-col :cols="smAndDown ? 12 : undefined">
                 <v-autocomplete
                   clearable
                   label="Destination Account*"
@@ -131,7 +131,7 @@
               </v-col>
             </v-row>
             <v-row>
-              <v-col>
+              <v-col :cols="smAndDown ? 12 : undefined">
                 <span class="text-subtitle-2">Start Date</span>
                 <VueDatePicker
                   v-model="start_date.value.value"
@@ -150,7 +150,7 @@
                   {{ start_date.errorMessage.value }}
                 </span>
               </v-col>
-              <v-col>
+              <v-col :cols="smAndDown ? 12 : undefined">
                 <span class="text-subtitle-2">End Date</span>
                 <VueDatePicker
                   v-model="end_date.value.value"
@@ -171,7 +171,7 @@
               </v-col>
             </v-row>
             <v-row>
-              <v-col>
+              <v-col :cols="smAndDown ? 12 : undefined">
                 <v-autocomplete
                   clearable
                   label="Repeats*"
@@ -184,7 +184,7 @@
                   :error-messages="repeat_id.errorMessage.value"
                 ></v-autocomplete>
               </v-col>
-              <v-col>
+              <v-col :cols="smAndDown ? 12 : undefined">
                 <v-switch
                   v-model="auto_add.value.value"
                   hide-details
@@ -218,6 +218,7 @@
 </template>
 <script setup>
   import { defineEmits, defineProps, onMounted, watchEffect, watch } from "vue";
+  import { useDisplay } from "vuetify";
   import { useTransactionTypes } from "@/composables/transactionTypesComposable";
   import { useAccounts } from "@/composables/accountsComposable";
   import { useTags } from "@/composables/tagsComposable";
@@ -274,6 +275,7 @@
     memo: yup.string().nullable().notRequired(),
   });
 
+  const { smAndDown } = useDisplay();
   const { handleSubmit } = useForm({ validationSchema: schema });
 
   const description = useField("description");
