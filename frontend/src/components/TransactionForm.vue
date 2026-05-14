@@ -402,22 +402,85 @@
             </v-window-item>
             <v-window-item value="attachments">
               <v-container>
-                <v-carousel>
-                  <v-carousel-item
-                    src="https://cdn.vuetifyjs.com/images/cards/docks.jpg"
-                    cover
-                  ></v-carousel-item>
-
-                  <v-carousel-item
-                    src="https://cdn.vuetifyjs.com/images/cards/hotel.jpg"
-                    cover
-                  ></v-carousel-item>
-
-                  <v-carousel-item
-                    src="https://cdn.vuetifyjs.com/images/cards/sunshine.jpg"
-                    cover
-                  ></v-carousel-item>
-                </v-carousel>
+                <div
+                  v-if="!props.isEdit"
+                  class="text-center pa-6 text-medium-emphasis"
+                >
+                  Save the transaction first to add attachments.
+                </div>
+                <div v-else>
+                  <v-row dense class="mb-3">
+                    <v-col>
+                      <v-btn
+                        prepend-icon="mdi-paperclip"
+                        variant="outlined"
+                        size="small"
+                        @click="triggerFileInput"
+                      >
+                        Add Attachment
+                      </v-btn>
+                      <input
+                        ref="fileInput"
+                        type="file"
+                        style="display: none"
+                        @change="handleFileUpload"
+                      />
+                    </v-col>
+                  </v-row>
+                  <v-row v-if="attachments_isLoading">
+                    <v-col class="text-center">
+                      <v-progress-circular indeterminate></v-progress-circular>
+                    </v-col>
+                  </v-row>
+                  <v-row v-else-if="images && images.length > 0" dense>
+                    <v-col
+                      v-for="img in images"
+                      :key="img.id"
+                      cols="6"
+                      sm="4"
+                      md="3"
+                    >
+                      <v-card variant="outlined">
+                        <v-img
+                          :src="img.url"
+                          height="120"
+                          cover
+                          class="bg-grey-lighten-3"
+                        >
+                          <template v-slot:error>
+                            <div
+                              class="d-flex align-center justify-center fill-height"
+                            >
+                              <v-icon
+                                icon="mdi-file-document-outline"
+                                size="48"
+                                color="grey"
+                              ></v-icon>
+                            </div>
+                          </template>
+                        </v-img>
+                        <v-card-subtitle class="text-truncate px-2 py-1">
+                          {{ img.filename }}
+                        </v-card-subtitle>
+                        <v-card-actions class="pa-1">
+                          <v-spacer></v-spacer>
+                          <v-btn
+                            icon="mdi-delete"
+                            size="x-small"
+                            color="error"
+                            variant="text"
+                            @click="deleteImage(img.id)"
+                          ></v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                  <v-row v-else>
+                    <v-col class="text-center text-medium-emphasis">
+                      No attachments yet.
+                    </v-col>
+                  </v-row>
+                </div>
               </v-container>
             </v-window-item>
           </v-window>
@@ -438,6 +501,7 @@
 <script setup>
   import {
     ref,
+    computed,
     defineEmits,
     defineProps,
     onMounted,
@@ -450,6 +514,7 @@
   import { useAccounts } from "@/composables/accountsComposable";
   import { useTransactions } from "@/composables/transactionsComposable";
   import { usePayees } from "@/composables/payeesComposable";
+  import { useTransactionImages } from "@/composables/transactionImagesComposable";
   import VueDatePicker from "@vuepic/vue-datepicker";
   import "@vuepic/vue-datepicker/dist/main.css";
   import TagTable from "@/components/TagTable.vue";
@@ -617,6 +682,22 @@
     passedFormData: Object,
     account_id: { type: Number, default: 1 },
   });
+
+  const transactionIdRef = computed(() => props.passedFormData?.id ?? null);
+  const { images, attachments_isLoading, uploadImage, deleteImage } =
+    useTransactionImages(transactionIdRef);
+
+  const fileInput = ref(null);
+  function triggerFileInput() {
+    fileInput.value?.click();
+  }
+  function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+      uploadImage(file);
+      event.target.value = "";
+    }
+  }
 
   // Re-validate gross when any paycheck amount changes so the total error updates live
   watch(

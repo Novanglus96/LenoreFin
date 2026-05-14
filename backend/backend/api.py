@@ -29,6 +29,7 @@ from administration.api.routers.message import message_router
 from transactions.api.routers.transaction_detail import (
     transaction_detail_router,
 )
+from transactions.api.routers.transaction_image import router as transaction_image_router
 from tags.api.routers.tag_graph import tag_graph_router
 from tags.api.routers.graph_by_tags import graph_by_tags_router
 from imports.api.routers.import_file import import_file_router
@@ -70,6 +71,7 @@ api.add_router("/transactions/paychecks", paycheck_router)
 api.add_router("/transactions", transaction_router)
 api.add_router("/administration/messages", message_router)
 api.add_router("/transactions/transaction-details", transaction_detail_router)
+api.add_router("/transactions/attachments", transaction_image_router)
 api.add_router("/tags/tag-graphs", tag_graph_router)
 api.add_router("/tags/graph-by-tags", graph_by_tags_router)
 api.add_router("/file-imports", import_file_router)
