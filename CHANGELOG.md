@@ -1,3 +1,10 @@
+# [1.4.0-alpha.16](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.15...v1.4.0-alpha.16) (2026-05-14)
+
+
+### Bug Fixes
+
+* surface attachment_count on TransactionOut to show paperclip icon ([#107](https://github.com/Novanglus96/LenoreFin/issues/107)) ([4aaa588](https://github.com/Novanglus96/LenoreFin/commit/4aaa5888ed30a2d1abf2f586cff96ccb5294f843))
+
 # [1.4.0-alpha.15](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.14...v1.4.0-alpha.15) (2026-05-14)
 
 
