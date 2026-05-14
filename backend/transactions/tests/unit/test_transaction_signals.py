@@ -84,4 +84,35 @@ def test_transaction_image_file_is_deleted_on_model_delete(test_transaction, tmp
         transaction=test_transaction,
     )
 
+    path = tmp_path / image.image.name
+    assert path.exists()
+
     image.delete()
+
+    assert not path.exists()
+
+
+@pytest.mark.django_db
+def test_transaction_image_file_is_deleted_on_transaction_cascade(
+    test_transaction, tmp_path, settings
+):
+    """post_delete signal fires during CASCADE, cleaning up the file on disk."""
+    settings.MEDIA_ROOT = tmp_path
+    image_file = SimpleUploadedFile(
+        name="cascade.jpg",
+        content=b"fake image data",
+        content_type="image/jpeg",
+    )
+
+    image = TransactionImage.objects.create(
+        image=image_file,
+        transaction=test_transaction,
+    )
+
+    path = tmp_path / image.image.name
+    assert path.exists()
+
+    # Deleting the transaction triggers CASCADE which fires the post_delete signal
+    test_transaction.delete()
+
+    assert not path.exists()
