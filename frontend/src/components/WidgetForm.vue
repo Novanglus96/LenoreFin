@@ -131,9 +131,11 @@
     formData.graph_type = options.value[`widget${w}_type`]?.id ?? 1;
     formData.tag_id = options.value[`widget${w}_tag_id`] ?? null;
     const excludeStr = options.value[`widget${w}_exclude`];
-    formData.exclude = excludeStr
-      ? excludeStr.split(",").map(id => parseInt(id)).filter(Boolean)
-      : [];
+    try {
+      formData.exclude = excludeStr ? JSON.parse(excludeStr).filter(Boolean) : [];
+    } catch {
+      formData.exclude = [];
+    }
   };
 
   const submitForm = () => {
@@ -142,9 +144,7 @@
       [`widget${w}_graph_name`]: formData.graph_name,
       [`widget${w}_tag_id`]: formData.tag_id ?? null,
       [`widget${w}_type_id`]: formData.graph_type,
-      [`widget${w}_exclude`]: formData.exclude?.length
-        ? formData.exclude.join(",")
-        : "",
+      [`widget${w}_exclude`]: JSON.stringify(formData.exclude ?? []),
     });
     menu.value = false;
   };
