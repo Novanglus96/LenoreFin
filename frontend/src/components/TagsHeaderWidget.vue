@@ -70,7 +70,7 @@
                   <template v-slot:prepend>
                     <v-icon
                       icon="mdi-tag"
-                      :color="tagColor(tag.tag_type.id)"
+                      :color="tagColor(tag.tag_type.id, tag.is_system)"
                     ></v-icon>
                   </template>
                   <template v-slot:title>
@@ -119,7 +119,7 @@
                   <template v-slot:prepend>
                     <v-icon
                       icon="mdi-tag"
-                      :color="tagColor(item.raw.tag_type.id)"
+                      :color="tagColor(item.raw.tag_type.id, item.raw.is_system)"
                     ></v-icon>
                   </template>
                 </v-list-item>
@@ -193,13 +193,14 @@
     deleteDialog.value = false;
   };
 
-  const tagColor = typeID => {
+  const tagColor = (typeID, isSystem) => {
+    const suffix = isSystem ? "-darken-2" : "-lighten-2";
     if (typeID == 1) {
-      return "error";
+      return `error${suffix}`;
     } else if (typeID == 2) {
-      return "success";
+      return `success${suffix}`;
     } else if (typeID == 3) {
-      return "info";
+      return `info${suffix}`;
     }
   };
 </script>
