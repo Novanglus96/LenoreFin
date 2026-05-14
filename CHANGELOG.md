@@ -1,3 +1,10 @@
+# [1.4.0-alpha.12](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.11...v1.4.0-alpha.12) (2026-05-14)
+
+
+### Features
+
+* wire up widget edit form for dashboard pie chart widgets ([#103](https://github.com/Novanglus96/LenoreFin/issues/103)) ([8f1a080](https://github.com/Novanglus96/LenoreFin/commit/8f1a0802841173b48f1e1feb603478afbe28f6f4))
+
 # [1.4.0-alpha.11](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.10...v1.4.0-alpha.11) (2026-05-14)
 
 
