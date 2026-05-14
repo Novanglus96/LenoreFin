@@ -1,3 +1,10 @@
+# [1.4.0-alpha.11](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.10...v1.4.0-alpha.11) (2026-05-14)
+
+
+### Features
+
+* add VITE_OPT_FEATURES flag to gate optional planning menu items ([#102](https://github.com/Novanglus96/LenoreFin/issues/102)) ([59e8fac](https://github.com/Novanglus96/LenoreFin/commit/59e8fac28a1037d5432615da43b52717b8beddf3))
+
 # [1.4.0-alpha.10](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.9...v1.4.0-alpha.10) (2026-05-14)
 
 
