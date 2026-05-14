@@ -1,3 +1,10 @@
+# [1.4.0-alpha.13](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.12...v1.4.0-alpha.13) (2026-05-14)
+
+
+### Bug Fixes
+
+* consolidate mobile form twins into single responsive components ([#104](https://github.com/Novanglus96/LenoreFin/issues/104)) ([bf3460b](https://github.com/Novanglus96/LenoreFin/commit/bf3460b18b7e8a596229c109f53fa9fc7263033c))
+
 # [1.4.0-alpha.12](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.11...v1.4.0-alpha.12) (2026-05-14)
 
 
