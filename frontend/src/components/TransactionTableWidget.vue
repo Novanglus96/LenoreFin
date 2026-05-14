@@ -183,7 +183,7 @@
               <template v-slot:activator="{ props }">
                 <v-icon
                   icon="mdi-paperclip"
-                  v-if="item.attachments"
+                  v-if="item.attachment_count"
                   color="textPending"
                   v-bind="props"
                 ></v-icon>
@@ -392,7 +392,7 @@
                     {{ item.pretty_account }}
                   </span>
                 </v-col>
-                <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.attachments">
+                <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.attachment_count">
                   <v-icon
                     icon="mdi-paperclip"
                     color="textPending"

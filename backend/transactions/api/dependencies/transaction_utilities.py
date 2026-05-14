@@ -18,6 +18,7 @@ from django.db.models import (
     Window,
     Sum,
     ExpressionWrapper,
+    Count,
 )
 from django.db.models.functions import Concat, Coalesce
 from accounts.models import Account
@@ -76,6 +77,9 @@ def annotate_transaction_display_info(
             default=F("source_name"),
             output_field=CharField(),
         )
+    )
+    all_transactions = all_transactions.annotate(
+        attachment_count=Count("transactionimage", distinct=True)
     )
     return all_transactions
 

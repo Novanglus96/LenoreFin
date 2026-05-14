@@ -71,6 +71,7 @@ class TransactionOut(Schema):
     reminder_id: Optional[int] = None
     tag_total: Optional[AmountDecimal] = None
     simulated: Optional[bool] = False
+    attachment_count: Optional[int] = 0
 
     model_config = ConfigDict(from_attributes=True)
 

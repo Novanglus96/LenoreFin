@@ -21,6 +21,7 @@ from django.db.models import (
     Subquery,
     OuterRef,
     DecimalField,
+    Count,
 )
 from django.db.models.functions import Concat, Coalesce, Abs
 from transactions.services.transaction import (
@@ -215,7 +216,13 @@ def get_transaction(request, transaction_id: int):
     """
 
     try:
-        transaction = get_object_or_404(Transaction, id=transaction_id)
+        transaction = (
+            Transaction.objects.annotate(
+                attachment_count=Count("transactionimage", distinct=True)
+            ).filter(id=transaction_id).first()
+        )
+        if transaction is None:
+            raise Http404
         api_logger.debug(f"Transaction retrieved : #{transaction.id}")
         return transaction
     except Http404:

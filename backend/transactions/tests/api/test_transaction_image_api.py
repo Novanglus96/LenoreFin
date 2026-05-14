@@ -7,6 +7,40 @@ AUTH = {"Authorization": "Bearer test-api-key"}
 
 @pytest.mark.django_db
 @pytest.mark.api
+def test_transaction_list_attachment_count_zero(api_client, test_transaction):
+    response = api_client.get(
+        f"/transactions/get/{test_transaction.id}",
+        headers=AUTH,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["attachment_count"] == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_transaction_list_attachment_count_reflects_uploads(
+    api_client, settings, tmp_path, test_transaction
+):
+    settings.MEDIA_ROOT = tmp_path
+
+    for name in ("receipt1.jpg", "receipt2.jpg"):
+        TransactionImage.objects.create(
+            image=SimpleUploadedFile(name, b"bytes", content_type="image/jpeg"),
+            transaction=test_transaction,
+        )
+
+    response = api_client.get(
+        f"/transactions/get/{test_transaction.id}",
+        headers=AUTH,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["attachment_count"] == 2
+
+
+@pytest.mark.django_db
+@pytest.mark.api
 def test_list_transaction_images_empty(api_client, test_transaction):
     response = api_client.get(
         f"/transactions/attachments/list/{test_transaction.id}",
