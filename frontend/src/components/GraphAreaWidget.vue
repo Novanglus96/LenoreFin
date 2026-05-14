@@ -12,7 +12,7 @@
               {{ getGraphTitle(i) }}
             </span>
 
-            <v-btn icon="mdi-cog" variant="text" size="small" class="ms-auto" v-if="authStore.isFullAccess" />
+            <WidgetForm v-if="authStore.isFullAccess" :widget="i" class="ms-auto" />
           </v-card-title>
           <v-card-text
             class="d-flex justify-center align-center pa-0 ga-0 ma-0 w-100"
@@ -37,7 +37,7 @@
             <span class="text-subtitle-2 text-primary">
               {{ getGraphTitle(page) }}
             </span>
-            <v-btn icon="mdi-cog" variant="text" size="small" class="ms-auto" v-if="authStore.isFullAccess" />
+            <WidgetForm v-if="authStore.isFullAccess" :widget="page" class="ms-auto" />
           </v-card-title>
           <v-card-text
             class="d-flex justify-center align-center pa-0 ga-0 ma-0 w-100"
@@ -56,6 +56,7 @@
 </template>
 <script setup>
   import PieGraphWidget from "@/components/PieGraphWidget.vue";
+  import WidgetForm from "@/components/WidgetForm.vue";
   import { useDisplay } from "vuetify";
   import { useGraphsNew } from "@/composables/tagsComposable";
   import { useOptions } from "@/composables/optionsComposable";
@@ -75,10 +76,6 @@
     useGraphsNew(3);
 
   function getGraphTitle(widget) {
-    if (!lgAndUp) {
-      return "Graph Unknown";
-    }
-
     return appOptions.value
       ? appOptions.value[`widget${widget}_graph_name`]
       : `Graph ${widget}`;

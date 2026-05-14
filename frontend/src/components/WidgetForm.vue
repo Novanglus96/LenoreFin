@@ -5,18 +5,18 @@
     v-model="menu"
     @update:model-value="onMenuStateChange"
   >
-    <template v-slot:activator="{ props }">
+    <template v-slot:activator="{ props: menuProps }">
       <v-btn
         icon="mdi-cog"
         flat
         size="xs"
-        v-bind="props"
+        v-bind="menuProps"
         :disabled="isLoading"
       ></v-btn>
     </template>
     <v-form v-model="formValid" ref="form">
       <v-card :width="isMobile ? '400' : '350'">
-        <v-card-title>Widget {{ props.widget }}</v-card-title>
+        <v-card-title>Widget {{ widget }}</v-card-title>
         <v-card-subtitle>Settings</v-card-subtitle>
         <v-card-text>
           <v-container>
@@ -27,7 +27,6 @@
                   variant="outlined"
                   label="Graph Name*"
                   :rules="required"
-                  @update:model-value="checkFormComplete"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -36,7 +35,6 @@
                 <v-radio-group
                   title="Graph Type"
                   v-model="formData.graph_type"
-                  @update:model-value="checkFormComplete"
                 >
                   <v-radio label="All Expenses" :value="1"></v-radio>
                   <v-radio label="All Income" :value="2"></v-radio>
@@ -57,7 +55,6 @@
                   :loading="parent_tags_isLoading"
                   v-model="formData.tag_id"
                   :rules="required"
-                  @update:model-value="checkFormComplete"
                   density="compact"
                 ></v-autocomplete>
               </v-col>
@@ -75,7 +72,6 @@
                   variant="outlined"
                   :loading="tags_isLoading"
                   v-model="formData.exclude"
-                  @update:model-value="checkFormComplete"
                   density="compact"
                 ></v-autocomplete>
               </v-col>
@@ -83,12 +79,71 @@
           </v-container>
         </v-card-text>
         <v-card-actions>
-          <!--<v-btn @click="resetForm">Reset</v-btn>-->
-          <v-btn :disabled="!formComplete" @click="submitForm()" type="submit">
-            Save
-          </v-btn>
+          <v-btn :disabled="!formComplete" @click="submitForm">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-form>
   </v-menu>
 </template>
+<script setup>
+  import { ref, reactive, computed } from "vue";
+  import { useOptions } from "@/composables/optionsComposable";
+  import { useTags, useParentTags } from "@/composables/tagsComposable";
+  import { useDisplay } from "vuetify";
+
+  const props = defineProps({
+    widget: {
+      type: Number,
+      required: true,
+    },
+  });
+
+  const { smAndDown } = useDisplay();
+  const isMobile = smAndDown;
+
+  const { options, isLoading, editOptions } = useOptions();
+  const { tags, isLoading: tags_isLoading } = useTags();
+  const { parent_tags, isLoading: parent_tags_isLoading } = useParentTags();
+
+  const menu = ref(false);
+  const formValid = ref(false);
+  const formData = reactive({
+    graph_name: "",
+    graph_type: 1,
+    tag_id: null,
+    exclude: [],
+  });
+
+  const required = [v => !!v || "This field is required."];
+
+  const formComplete = computed(() => {
+    if (!formData.graph_name) return false;
+    if (formData.graph_type === 4 && !formData.tag_id) return false;
+    return true;
+  });
+
+  const onMenuStateChange = val => {
+    if (!val || !options.value) return;
+    const w = props.widget;
+    formData.graph_name = options.value[`widget${w}_graph_name`] ?? "";
+    formData.graph_type = options.value[`widget${w}_type`]?.id ?? 1;
+    formData.tag_id = options.value[`widget${w}_tag_id`] ?? null;
+    const excludeStr = options.value[`widget${w}_exclude`];
+    formData.exclude = excludeStr
+      ? excludeStr.split(",").map(id => parseInt(id)).filter(Boolean)
+      : [];
+  };
+
+  const submitForm = () => {
+    const w = props.widget;
+    editOptions({
+      [`widget${w}_graph_name`]: formData.graph_name,
+      [`widget${w}_tag_id`]: formData.tag_id ?? null,
+      [`widget${w}_type_id`]: formData.graph_type,
+      [`widget${w}_exclude`]: formData.exclude?.length
+        ? formData.exclude.join(",")
+        : null,
+    });
+    menu.value = false;
+  };
+</script>
