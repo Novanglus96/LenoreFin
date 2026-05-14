@@ -1,5 +1,5 @@
 <template>
-  <v-dialog persistent width="1024">
+  <v-dialog persistent :fullscreen="smAndDown" :width="smAndDown ? undefined : '1024'">
     <v-card>
       <v-card-title>
         <span class="text-h5" v-if="props.isEdit == false">
@@ -41,10 +41,10 @@
                       {{ transaction_date.errorMessage.value }}
                     </span>
                   </v-col>
-                  <v-col></v-col>
+                  <v-col v-if="!smAndDown"></v-col>
                 </v-row>
                 <v-row dense>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 12 : undefined">
                     <v-autocomplete
                       clearable
                       label="Transaction Type*"
@@ -59,7 +59,7 @@
                       density="compact"
                     ></v-autocomplete>
                   </v-col>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 12 : undefined">
                     <v-autocomplete
                       clearable
                       label="Transaction Status*"
@@ -75,7 +75,7 @@
                   </v-col>
                 </v-row>
                 <v-row dense>
-                  <v-col cols="3">
+                  <v-col :cols="smAndDown ? 12 : 3">
                     <v-text-field
                       v-model="amount.value.value"
                       variant="outlined"
@@ -108,7 +108,7 @@
                       key="amount"
                     />
                   </v-col>
-                  <v-col cols="3">
+                  <v-col :cols="smAndDown ? 12 : 3">
                     <v-text-field
                       v-model="checkNumber.value.value"
                       variant="outlined"
@@ -118,7 +118,7 @@
                       v-if="transaction_type_id.value.value != 3"
                     ></v-text-field>
                   </v-col>
-                  <v-col cols="6">
+                  <v-col :cols="smAndDown ? 12 : 6">
                     <v-combobox
                       v-model="description.value.value"
                       :items="
@@ -138,7 +138,7 @@
                   </v-col>
                 </v-row>
                 <v-row dense>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 12 : undefined">
                     <v-autocomplete
                       clearable
                       label="Source Account*"
@@ -164,7 +164,7 @@
                       </template>
                     </v-autocomplete>
                   </v-col>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 12 : undefined">
                     <v-autocomplete
                       clearable
                       label="Destination Account*"
@@ -193,14 +193,14 @@
                   </v-col>
                 </v-row>
                 <v-row dense>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 12 : undefined">
                     <TagTable
                       :tags="details"
                       :totalAmount="parseFloat(amount.value.value)"
                       @tag-table-updated="tagsUpdated"
                     />
                   </v-col>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 12 : undefined">
                     <v-textarea
                       clearable
                       label="Memo"
@@ -224,10 +224,10 @@
                       :disabled="transaction_type_id.value.value != 2"
                     ></v-checkbox>
                   </v-col>
-                  <v-col></v-col>
+                  <v-col v-if="!smAndDown"></v-col>
                 </v-row>
                 <v-row dense>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 6 : undefined">
                     <v-text-field
                       v-model="gross.value.value"
                       variant="outlined"
@@ -241,7 +241,7 @@
                       :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 6 : undefined">
                     <v-text-field
                       v-model="amount.value.value"
                       variant="outlined"
@@ -255,7 +255,7 @@
                       :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 6 : undefined">
                     <v-text-field
                       v-model="taxes.value.value"
                       variant="outlined"
@@ -271,7 +271,7 @@
                   </v-col>
                 </v-row>
                 <v-row dense>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 6 : undefined">
                     <v-text-field
                       v-model="health.value.value"
                       variant="outlined"
@@ -305,7 +305,7 @@
                       key="health"
                     />
                   </v-col>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 6 : undefined">
                     <v-text-field
                       v-model="pension.value.value"
                       variant="outlined"
@@ -319,7 +319,7 @@
                       :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 6 : undefined">
                     <v-text-field
                       v-model="fsa.value.value"
                       variant="outlined"
@@ -335,7 +335,7 @@
                   </v-col>
                 </v-row>
                 <v-row dense>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 6 : undefined">
                     <v-text-field
                       v-model="dca.value.value"
                       variant="outlined"
@@ -349,7 +349,7 @@
                       :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 6 : undefined">
                     <v-text-field
                       v-model="union_dues.value.value"
                       variant="outlined"
@@ -363,7 +363,7 @@
                       :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 6 : undefined">
                     <v-text-field
                       v-model="four_fifty_seven_b.value.value"
                       variant="outlined"
@@ -379,7 +379,7 @@
                   </v-col>
                 </v-row>
                 <v-row dense>
-                  <v-col>
+                  <v-col :cols="smAndDown ? 12 : undefined">
                     <v-autocomplete
                       clearable
                       label="Payee*"
@@ -394,7 +394,7 @@
                       :disabled="!is_paycheck.value.value"
                     ></v-autocomplete>
                   </v-col>
-                  <v-col cols="auto" class="d-flex align-center">
+                  <v-col cols="auto" class="d-flex align-center" v-if="!smAndDown">
                     <AddPayeeForm />
                   </v-col>
                 </v-row>
@@ -444,6 +444,7 @@
     watchEffect,
     watch,
   } from "vue";
+  import { useDisplay } from "vuetify";
   import { useTransactionTypes } from "@/composables/transactionTypesComposable";
   import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
   import { useAccounts } from "@/composables/accountsComposable";
@@ -561,6 +562,7 @@
   });
 
   const { handleSubmit, resetForm } = useForm({ validationSchema: schema });
+  const { smAndDown } = useDisplay();
 
   const transaction_date = useField("transaction_date");
   const transaction_type_id = useField("transaction_type_id");

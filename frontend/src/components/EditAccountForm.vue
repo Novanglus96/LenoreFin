@@ -1,5 +1,5 @@
 <template>
-  <v-dialog width="800">
+  <v-dialog :fullscreen="smAndDown" :width="smAndDown ? undefined : '800'">
     <form @submit.prevent="submit">
       <v-card min-height="550px">
         <v-card-text>
@@ -11,7 +11,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="account_name.value.value"
                     variant="outlined"
@@ -20,7 +20,7 @@
                     :error-messages="account_name.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-autocomplete
                     clearable
                     label="Bank Name*"
@@ -51,7 +51,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="opening_balance.value.value"
                     variant="outlined"
@@ -61,7 +61,7 @@
                     :error-messages="opening_balance.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col v-if="!smAndDown">
                   <v-spacer></v-spacer>
                 </v-col>
               </v-row>
@@ -130,14 +130,14 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-checkbox
                     v-model="calculate_payments.value.value"
                     label="Calculate Payments"
                     :error-messages="calculate_payments.errorMessage.value"
                   ></v-checkbox>
                 </v-col>
-                <v-col v-if="calculate_payments.value.value">
+                <v-col :cols="smAndDown ? 12 : undefined" v-if="calculate_payments.value.value">
                   <v-checkbox
                     v-model="calculate_interest.value.value"
                     label="Calculate Interest"
@@ -146,7 +146,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="credit_limit.value.value"
                     variant="outlined"
@@ -156,7 +156,7 @@
                     :error-messages="credit_limit.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="annual_rate.value.value"
                     variant="outlined"
@@ -168,7 +168,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Statement End Day"
                     :items="intervals"
@@ -178,7 +178,7 @@
                     :error-messages="statement_day.errorMessage.value"
                   ></v-select>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Statement Due Day"
                     :items="intervals"
@@ -188,7 +188,7 @@
                     :error-messages="due_day.errorMessage.value"
                   ></v-select>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Statement Pay Day"
                     :items="intervals"
@@ -200,7 +200,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Statement Cycle Length"
                     :items="intervals"
@@ -210,7 +210,7 @@
                     :error-messages="statement_cycle_length.errorMessage.value"
                   ></v-select>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Statment Cycle Period"
                     :items="units"
@@ -224,7 +224,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="statement_balance.value.value"
                     variant="outlined"
@@ -235,7 +235,7 @@
                     :error-messages="statement_balance.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="rewards_amount.value.value"
                     variant="outlined"
@@ -248,7 +248,7 @@
                 </v-col>
               </v-row>
               <v-row dense v-if="calculate_payments.value.value">
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-autocomplete
                     label="Payment Strategy"
                     :items="payment_strategies"
@@ -261,7 +261,7 @@
                     clearable
                   ></v-autocomplete>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-autocomplete
                     clearable
                     label="Funding Account"
@@ -290,7 +290,7 @@
                 </v-col>
               </v-row>
               <v-row dense v-if="calculate_payments.value.value">
-                <v-col v-if="payment_strategy.value.value == 'C'">
+                <v-col :cols="smAndDown ? 12 : undefined" v-if="payment_strategy.value.value == 'C'">
                   <v-text-field
                     v-model="payment_amount.value.value"
                     variant="outlined"
@@ -301,7 +301,7 @@
                     :error-messages="payment_amount.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="minimum_payment_amount.value.value"
                     variant="outlined"
@@ -334,7 +334,7 @@
                 </v-col>
               </v-row>
               <v-row dense v-if="calculate_interest.value.value">
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="annual_rate.value.value"
                     variant="outlined"
@@ -344,7 +344,7 @@
                     :error-messages="annual_rate.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Interest Deposit Day"
                     :items="intervals"
@@ -376,6 +376,7 @@
     watchEffect,
     ref,
   } from "vue";
+  import { useDisplay } from "vuetify";
   import { useBanks } from "@/composables/banksComposable";
   import { useAccountByID } from "@/composables/accountsComposable";
   import { useMainStore } from "@/stores/main";
@@ -476,6 +477,7 @@
       }),
   });
 
+  const { smAndDown } = useDisplay();
   const { handleSubmit } = useForm({
     validationSchema: schema,
   });
