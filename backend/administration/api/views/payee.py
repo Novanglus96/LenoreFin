@@ -174,12 +174,19 @@ def delete_payee(request, payee_id: int):
 
     try:
         payee = get_object_or_404(Payee, id=payee_id)
+        if payee.paycheck_set.exists():
+            api_logger.error(
+                f"Payee not deleted : linked to paychecks ({payee.payee_name})"
+            )
+            raise HttpError(400, "Payee is linked to existing paychecks and cannot be deleted")
         payee_name = payee.payee_name
         payee.delete()
         api_logger.info(f"Payee deleted : {payee_name}")
         return {"success": True}
     except Http404:
         raise HttpError(404, "Payee not found")
+    except HttpError:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Payee not deleted")
