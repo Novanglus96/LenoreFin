@@ -184,7 +184,7 @@
                 <v-icon
                   icon="mdi-paperclip"
                   v-if="item.attachment_count"
-                  color="textPending"
+                  color="warning"
                   v-bind="props"
                 ></v-icon>
               </template>
@@ -395,7 +395,7 @@
                 <v-col class="ma-0 pa-0 ga-0" cols="1" v-if="item.attachment_count">
                   <v-icon
                     icon="mdi-paperclip"
-                    color="textPending"
+                    color="warning"
                     v-bind="props"
                   ></v-icon>
                 </v-col>

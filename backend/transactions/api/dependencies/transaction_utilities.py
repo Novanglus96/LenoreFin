@@ -1,6 +1,7 @@
 from transactions.models import (
     Transaction,
     TransactionDetail,
+    TransactionImage,
     ReminderCacheTransactionDetail,
     ForecastCacheTransactionDetail,
 )
@@ -78,9 +79,22 @@ def annotate_transaction_display_info(
             output_field=CharField(),
         )
     )
-    all_transactions = all_transactions.annotate(
-        attachment_count=Count("transactionimage", distinct=True)
-    )
+    if transactions.model is Transaction:
+        image_subquery = (
+            TransactionImage.objects.filter(transaction=OuterRef("pk"))
+            .values("transaction")
+            .annotate(c=Count("id"))
+            .values("c")
+        )
+        all_transactions = all_transactions.annotate(
+            attachment_count=Coalesce(
+                Subquery(image_subquery), Value(0, output_field=IntegerField())
+            )
+        )
+    else:
+        all_transactions = all_transactions.annotate(
+            attachment_count=Value(0, output_field=IntegerField())
+        )
     return all_transactions
 
 
