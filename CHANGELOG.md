@@ -1,3 +1,10 @@
+# [1.4.0-alpha.10](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.9...v1.4.0-alpha.10) (2026-05-14)
+
+
+### Bug Fixes
+
+* differentiate system vs user tag icon colors ([#101](https://github.com/Novanglus96/LenoreFin/issues/101)) ([bb64c02](https://github.com/Novanglus96/LenoreFin/commit/bb64c02f1936556a89c019b6bdbb5db6b1e1ddff))
+
 # [1.4.0-alpha.9](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.8...v1.4.0-alpha.9) (2026-05-14)
 
 
