@@ -1,5 +1,5 @@
 <template>
-  <v-dialog persistent :fullscreen="smAndDown" :width="smAndDown ? undefined : '1024'"
+  <v-dialog persistent :fullscreen="smAndDown" :width="smAndDown ? undefined : '1024'">
     <form @submit.prevent="submit">
       <v-card>
         <v-card-title>
