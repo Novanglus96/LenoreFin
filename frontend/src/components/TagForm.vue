@@ -3,7 +3,7 @@
     <form @submit.prevent="submit">
       <v-card>
         <v-card-title>
-          <span class="text-h5">Add Tag</span>
+          <span class="text-h5">{{ isEdit ? "Edit Tag" : "Add Tag" }}</span>
         </v-card-title>
         <v-card-text>
           <v-container>
@@ -56,11 +56,22 @@
   </v-dialog>
 </template>
 <script setup>
-  import { defineEmits } from "vue";
+  import { defineEmits, defineProps, watchEffect } from "vue";
   import { useTags, useParentTags } from "@/composables/tagsComposable";
   import { useTagTypes } from "@/composables/tagtypesComposable";
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";
+
+  const props = defineProps({
+    isEdit: {
+      type: Boolean,
+      default: false,
+    },
+    tagData: {
+      type: Object,
+      default: null,
+    },
+  });
 
   const schema = yup.object({
     tag_name: yup.string().required("Tag name is required."),
@@ -78,13 +89,31 @@
   const parent_id = useField("parent_id");
 
   const { tag_types, isLoading: tag_types_isLoading } = useTagTypes();
-  const { addTag } = useTags();
+  const { addTag, editTag } = useTags();
   const { parent_tags, isLoading: parent_tags_isLoading } = useParentTags();
 
   const emit = defineEmits(["updateDialog"]);
 
+  watchEffect(() => {
+    if (props.isEdit && props.tagData) {
+      const tag = props.tagData;
+      tag_type_id.value.value = tag.tag_type?.id ?? null;
+      if (tag.child) {
+        tag_name.value.value = tag.child.tag_name;
+        parent_id.value.value = tag.parent?.id ?? null;
+      } else {
+        tag_name.value.value = tag.parent?.tag_name ?? "";
+        parent_id.value.value = null;
+      }
+    }
+  });
+
   const submit = handleSubmit(values => {
-    addTag(values);
+    if (props.isEdit && props.tagData) {
+      editTag(props.tagData.id, values);
+    } else {
+      addTag(values);
+    }
     closeDialog();
   });
 

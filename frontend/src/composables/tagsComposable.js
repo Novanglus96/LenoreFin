@@ -108,6 +108,41 @@ async function createTagFunction(newTag) {
   }
 }
 
+async function updateTagFunction({ tagId, tag }) {
+  const mainstore = useMainStore();
+  try {
+    let data = {};
+    if (tag.parent_id == null) {
+      data = {
+        parent_name: tag.tag_name,
+        tag_type_id: tag.tag_type_id,
+      };
+    } else {
+      data = {
+        child_name: tag.tag_name,
+        tag_type_id: tag.tag_type_id,
+        parent_id: tag.parent_id,
+      };
+    }
+    const response = await apiClient.put(`/tags/update/${tagId}`, data);
+    mainstore.showSnackbar("Tag updated successfully!", "success");
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Tag not updated: ");
+  }
+}
+
+async function deleteTagFunction(tagId) {
+  const mainstore = useMainStore();
+  try {
+    const response = await apiClient.delete(`/tags/delete/${tagId}`);
+    mainstore.showSnackbar("Tag deleted successfully!", "success");
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Tag not deleted: ");
+  }
+}
+
 export function useTags(tag_type) {
   const queryClient = useQueryClient();
   const {
@@ -124,7 +159,20 @@ export function useTags(tag_type) {
   const createTagMutation = useMutation({
     mutationFn: createTagFunction,
     onSuccess: () => {
-      console.log("Success adding tag");
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+
+  const updateTagMutation = useMutation({
+    mutationFn: updateTagFunction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+
+  const deleteTagMutation = useMutation({
+    mutationFn: deleteTagFunction,
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
   });
@@ -133,10 +181,20 @@ export function useTags(tag_type) {
     createTagMutation.mutate(newTag);
   }
 
+  async function editTag(tagId, tag) {
+    updateTagMutation.mutate({ tagId, tag });
+  }
+
+  async function removeTag(tagId) {
+    deleteTagMutation.mutate(tagId);
+  }
+
   return {
     isLoading,
     tags,
     addTag,
+    editTag,
+    removeTag,
     isFetching,
   };
 }

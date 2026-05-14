@@ -21,6 +21,7 @@ class TagIn(Schema):
 class TagOut(Schema):
     id: int
     tag_name: str
+    is_system: bool
     parent: MainTagOut
     child: Optional[SubTagOut] = None
     tag_type: Optional[TagTypeOut] = None
