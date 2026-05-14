@@ -43,50 +43,50 @@
   const transactions_store = useTransactionsStore();
   const authStore = useAuthStore();
   const router = useRouter();
-  const app_personal = computed(() => process.env.VUE_APP_PERSONAL === "true");
+  const optFeatures = import.meta.env.VITE_OPT_FEATURES === "true";
 
   const planning_menu = ref([
     {
       title: "Pay",
       link: "/planning/pay",
       icon: "mdi-checkbook",
-      personal: false,
+      optional: false,
     },
     {
       title: "Expenses",
       link: "/planning/expenses",
       icon: "mdi-cash",
-      personal: false,
+      optional: false,
     },
     {
       title: "Budgets",
       link: "/planning/budgets",
       icon: "mdi-pail",
-      personal: false,
+      optional: false,
     },
     {
       title: "Contributions",
       link: "/planning/contributions",
       icon: "mdi-pail",
-      personal: true,
+      optional: true,
     },
     {
       title: "Retirement",
       link: "/planning/retirement",
       icon: "mdi-piggy-bank",
-      personal: false,
+      optional: false,
     },
     {
       title: "Notes",
       link: "/planning/notes",
       icon: "mdi-note",
-      personal: true,
+      optional: true,
     },
     {
       title: "Calculator",
       link: "/planning/calculator",
       icon: "mdi-calculator",
-      personal: true,
+      optional: true,
     },
   ]);
 
@@ -105,7 +105,8 @@
   const filteredPlanningMenu = computed(() =>
     planning_menu.value.filter(item => {
       if (item.link === "/planning/calculator" && !authStore.isFullAccess) return false;
-      return (item.personal && app_personal) || !item.personal;
+      if (item.optional && !optFeatures) return false;
+      return true;
     }),
   );
 </script>
