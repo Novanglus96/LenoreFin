@@ -1,126 +1,103 @@
 <template>
   <v-dialog width="400">
-    <v-card>
-      <v-card-title>Adjust Balance</v-card-title>
-      <v-card-text>
-        <v-container>
-          <v-row density>
-            <v-col>
-              <v-text-field
-                v-model="currentBalance"
-                variant="outlined"
-                label="Current Balance"
-                prefix="$"
-                disabled
-              ></v-text-field>
-            </v-col>
-          </v-row>
-          <v-row density>
-            <v-col>
-              <v-text-field
-                v-model="new_balance"
-                variant="outlined"
-                label="New Balance*"
-                :rules="required"
-                prefix="$"
-                @update:model-value="checkBalance"
-              ></v-text-field>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn @click="emit('updateDialog', false)" color="primary">
-          Close
-        </v-btn>
-        <v-btn
-          @click="clickAdjustBalance()"
-          color="primary"
-          :disabled="balanceSubmit"
-        >
-          Adjust
-        </v-btn>
-      </v-card-actions>
-    </v-card>
+    <form @submit.prevent="submit">
+      <v-card>
+        <v-card-title>Adjust Balance</v-card-title>
+        <v-card-text>
+          <v-container>
+            <v-row density>
+              <v-col>
+                <v-text-field
+                  v-model="currentBalance"
+                  variant="outlined"
+                  label="Current Balance"
+                  prefix="$"
+                  disabled
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row density>
+              <v-col>
+                <v-text-field
+                  v-model="new_balance.value.value"
+                  variant="outlined"
+                  label="New Balance*"
+                  :error-messages="new_balance.errorMessage.value"
+                  prefix="$"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="emit('updateDialog', false)" color="primary">Close</v-btn>
+          <v-btn color="primary" type="submit">Adjust</v-btn>
+        </v-card-actions>
+      </v-card>
+    </form>
   </v-dialog>
 </template>
 <script setup>
   import { defineEmits, defineProps, ref, watch } from "vue";
   import { useTransactions } from "@/composables/transactionsComposable";
+  import { useField, useForm } from "vee-validate";
+  import * as yup from "yup";
 
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   const formattedDate = `${year}-${month}-${day}`;
-  const props = defineProps({
-    account: Object,
-  });
 
-  const checkBalance = async () => {
-    if (new_balance.value !== "" && new_balance.value !== null) {
-      balanceSubmit.value = false;
-    } else {
-      balanceSubmit.value = true;
-    }
-  };
+  const props = defineProps({ account: Object });
+  const emit = defineEmits(["updateDialog"]);
+  const { addTransaction } = useTransactions();
 
   const currentBalance = ref(props.account.balance);
-
   watch(
     () => props.account.balance,
     newValue => {
       currentBalance.value = newValue;
     },
   );
-  const required = [
-    value => {
-      if (value) return true;
 
-      return "This field is required.";
-    },
-  ];
-
-  const new_balance = ref("");
-  const balanceForm = ref({
-    id: 0,
-    status_id: 2,
-    transaction_type_id: 1,
-    transaction_date: formattedDate,
-    memo: "",
-    source_account_id: props.account.id,
-    destination_account_id: null,
-    edit_date: formattedDate,
-    add_date: formattedDate,
-    details: [
-      {
-        tag_id: 4,
-        tag_amt: 0,
-        tag_pretty_name: "Balance Adjustment",
-        tag_full_toggle: true,
-      },
-    ],
-    total_amount: "",
-    description: "Balance Adjustment",
+  const schema = yup.object({
+    new_balance: yup
+      .number()
+      .typeError("New balance is required.")
+      .required("New balance is required."),
   });
 
-  const balanceSubmit = ref(true);
+  const { handleSubmit, resetForm } = useForm({ validationSchema: schema });
+  const new_balance = useField("new_balance");
 
-  const emit = defineEmits(["updateDialog"]);
-  const { addTransaction } = useTransactions();
-  const clickAdjustBalance = async () => {
-    if (new_balance.value - currentBalance.value < 0) {
-      balanceForm.value.transaction_type_id = 1;
-    } else {
-      balanceForm.value.transaction_type_id = 2;
-    }
-    balanceForm.value.total_amount = parseFloat(
-      (new_balance.value - currentBalance.value).toFixed(2),
+  const submit = handleSubmit(values => {
+    const diff = parseFloat(
+      (values.new_balance - currentBalance.value).toFixed(2),
     );
-    console.log("adjBal:", balanceForm.value);
-    await addTransaction(balanceForm.value);
+    addTransaction({
+      id: 0,
+      status_id: 2,
+      transaction_type_id: diff < 0 ? 1 : 2,
+      transaction_date: formattedDate,
+      memo: "",
+      source_account_id: props.account.id,
+      destination_account_id: null,
+      edit_date: formattedDate,
+      add_date: formattedDate,
+      details: [
+        {
+          tag_id: 4,
+          tag_amt: 0,
+          tag_pretty_name: "Balance Adjustment",
+          tag_full_toggle: true,
+        },
+      ],
+      total_amount: diff,
+      description: "Balance Adjustment",
+    });
+    resetForm();
     emit("updateDialog", false);
-    new_balance.value = "";
-  };
+  });
 </script>

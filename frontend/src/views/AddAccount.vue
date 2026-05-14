@@ -1,7 +1,6 @@
 <template>
-  <v-form @submit.prevent>
+  <form @submit.prevent="submit">
     <v-card v-if="page1">
-      <!--TODO: use v-stepper here-->
       <v-card-title>What bank is this account with?</v-card-title>
       <v-card-text>
         <v-row dense>
@@ -14,9 +13,8 @@
               :loading="isLoading"
               item-title="bank_name"
               item-value="id"
-              v-model="formData.bank_id"
-              :rules="required"
-              @update:model-value="checkNext"
+              v-model="bank_id.value.value"
+              :error-messages="bank_id.errorMessage.value"
             ></v-autocomplete>
           </v-col>
         </v-row>
@@ -35,18 +33,16 @@
               :loading="account_types_isLoading"
               item-title="account_type"
               item-value="id"
-              v-model="formData.account_type_id"
-              :rules="required"
-              @update:model-value="checkNext"
+              v-model="account_type_id.value.value"
+              :error-messages="account_type_id.errorMessage.value"
             ></v-autocomplete>
           </v-col>
         </v-row>
         <v-row dense>
           <v-col>
             <v-text-field
-              v-model="formData.account_name"
-              :rules="required"
-              @update:model-value="checkNext"
+              v-model="account_name.value.value"
+              :error-messages="account_name.errorMessage.value"
               variant="outlined"
               label="Name Your Account*"
             ></v-text-field>
@@ -57,16 +53,7 @@
         </v-row>
       </v-card-text>
       <v-card-actions>
-        <v-btn
-          @click="
-            page1
-              ? ((page1 = false), (page2 = true))
-              : ((page1 = true), (page2 = false))
-          "
-          :disabled="next1"
-        >
-          Next
-        </v-btn>
+        <v-btn @click="goToPage2" :disabled="!page1Valid">Next</v-btn>
       </v-card-actions>
     </v-card>
     <v-card v-if="page2" min-height="500">
@@ -76,55 +63,57 @@
           <v-col>
             When did you open this account?*
             <VueDatePicker
-              v-model="formData.open_date"
+              v-model="open_date.value.value"
               timezone="America/New_York"
               model-type="yyyy-MM-dd"
               :enable-time-picker="false"
               auto-apply
               format="yyyy-MM-dd"
-              @update:model-value="checkNext"
             ></VueDatePicker>
+            <span
+              class="text-error text-caption"
+              v-if="open_date.errorMessage.value"
+            >
+              {{ open_date.errorMessage.value }}
+            </span>
           </v-col>
         </v-row>
         <v-row dense>
           <v-col>
             <v-text-field
-              v-model="formData.opening_balance"
+              v-model="opening_balance.value.value"
               variant="outlined"
               label="Opening Balance*"
-              :rules="required"
+              :error-messages="opening_balance.errorMessage.value"
               prefix="$"
-              @update:model-value="checkNext"
             ></v-text-field>
           </v-col>
         </v-row>
-        <v-row dense v-if="formData.account_type_id == 1">
+        <v-row dense v-if="account_type_id.value.value == 1">
           <v-col>
             <v-text-field
-              v-model="formData.annual_rate"
+              v-model="annual_rate.value.value"
               variant="outlined"
               label="Annual Rate (APR/APY)*"
-              :rules="required"
+              :error-messages="annual_rate.errorMessage.value"
               suffix="%"
-              @update:model-value="checkNext"
             ></v-text-field>
           </v-col>
           <v-col>
             <v-text-field
-              v-model="formData.credit_limit"
+              v-model="credit_limit.value.value"
               variant="outlined"
               label="Credit Limit*"
-              :rules="required"
+              :error-messages="credit_limit.errorMessage.value"
               prefix="$"
-              @update:model-value="checkNext"
             ></v-text-field>
           </v-col>
         </v-row>
-        <v-row dense v-if="formData.account_type_id == 1">
+        <v-row dense v-if="account_type_id.value.value == 1">
           <v-col>
             When is your next due date?
             <VueDatePicker
-              v-model="formData.due_date"
+              v-model="due_date.value.value"
               timezone="America/New_York"
               model-type="yyyy-MM-dd"
               :enable-time-picker="false"
@@ -133,9 +122,9 @@
             ></VueDatePicker>
           </v-col>
           <v-col>
-            When does this statment period end?
+            When does this statement period end?
             <VueDatePicker
-              v-model="formData.next_cycle_date"
+              v-model="next_cycle_date.value.value"
               timezone="America/New_York"
               model-type="yyyy-MM-dd"
               :enable-time-picker="false"
@@ -144,21 +133,19 @@
             ></VueDatePicker>
           </v-col>
         </v-row>
-        <v-row dense v-if="formData.account_type_id == 1">
+        <v-row dense v-if="account_type_id.value.value == 1">
           <v-col>
             <v-select
-              label="Statment Cycle Length"
-              required
+              label="Statement Cycle Length"
               :items="intervals"
-              v-model="formData.statement_cycle_length"
+              v-model="statement_cycle_length.value.value"
             ></v-select>
           </v-col>
           <v-col>
             <v-select
-              label="Statment Cycle Period"
-              required
+              label="Statement Cycle Period"
               :items="units"
-              v-model="formData.statement_cycle_period"
+              v-model="statement_cycle_period.value.value"
               item-value="letter"
               item-title="name"
             ></v-select>
@@ -168,10 +155,10 @@
       </v-card-text>
       <v-card-actions>
         <v-btn @click="goBack">Back</v-btn>
-        <v-btn @click="submitForm" :disabled="submitDisabled">Submit</v-btn>
+        <v-btn type="submit">Submit</v-btn>
       </v-card-actions>
     </v-card>
-  </v-form>
+  </form>
 </template>
 <script setup>
   import { useBanks } from "@/composables/banksComposable";
@@ -183,90 +170,108 @@
   import { useMainStore } from "@/stores/main";
   import { useRouter } from "vue-router";
   import AddBankForm from "@/components/AddBankForm.vue";
+  import { useField, useForm } from "vee-validate";
+  import * as yup from "yup";
 
   const router = useRouter();
   const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
+  const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  const formattedDate = `${year}-${month}-${day}`;
   const mainstore = useMainStore();
-  const required = [
-    value => {
-      if (value) return true;
 
-      return "This field is required.";
-    },
-  ];
-  const formData = ref({
-    account_name: null,
-    account_type_id: null,
-    opening_balance: 0,
-    annual_rate: 0.0,
-    due_date: null,
-    active: true,
-    open_date: formattedDate,
-    next_cycle_date: null,
-    statement_cycle_length: null,
-    statement_cycle_period: null,
-    credit_limit: 0,
-    bank_id: null,
+  const schema = yup.object({
+    bank_id: yup
+      .number()
+      .typeError("Bank is required.")
+      .required("Bank is required."),
+    account_type_id: yup
+      .number()
+      .typeError("Account type is required.")
+      .required("Account type is required."),
+    account_name: yup.string().required("Account name is required."),
+    open_date: yup.string().nullable().required("Open date is required."),
+    opening_balance: yup
+      .number()
+      .typeError("Opening balance is required.")
+      .required("Opening balance is required."),
+    annual_rate: yup.number().when("account_type_id", {
+      is: 1,
+      then: schema =>
+        schema
+          .typeError("Annual rate is required.")
+          .required("Annual rate is required."),
+      otherwise: schema => schema.notRequired(),
+    }),
+    credit_limit: yup.number().when("account_type_id", {
+      is: 1,
+      then: schema =>
+        schema
+          .typeError("Credit limit is required.")
+          .required("Credit limit is required."),
+      otherwise: schema => schema.notRequired(),
+    }),
+    due_date: yup.string().nullable().notRequired(),
+    next_cycle_date: yup.string().nullable().notRequired(),
+    statement_cycle_length: yup.number().nullable().notRequired(),
+    statement_cycle_period: yup.string().nullable().notRequired(),
   });
 
-  const submitDisabled = ref(true);
+  const { handleSubmit } = useForm({ validationSchema: schema });
+
+  const bank_id = useField("bank_id");
+  const account_type_id = useField("account_type_id");
+  const account_name = useField("account_name");
+  const open_date = useField("open_date");
+  const opening_balance = useField("opening_balance");
+  const annual_rate = useField("annual_rate");
+  const credit_limit = useField("credit_limit");
+  const due_date = useField("due_date");
+  const next_cycle_date = useField("next_cycle_date");
+  const statement_cycle_length = useField("statement_cycle_length");
+  const statement_cycle_period = useField("statement_cycle_period");
+
+  // Initialise defaults
+  open_date.value.value = formattedDate;
+  opening_balance.value.value = 0;
+  annual_rate.value.value = 0.0;
+  credit_limit.value.value = 0;
+
   const page1 = ref(true);
-  const next1 = ref(true);
   const page2 = ref(false);
+
+  const page1Valid = computed(
+    () =>
+      !!bank_id.value.value &&
+      !!account_type_id.value.value &&
+      !!account_name.value.value,
+  );
+
   const { banks, isLoading } = useBanks();
   const { account_types, isLoading: account_types_isLoading } =
     useAccountTypes();
   const { addAccount } = useAccounts();
-  const goBack = async () => {
-    page2.value = false;
-    page1.value = true;
-    formData.value.annual_rate = 0.0;
-    formData.value.due_date = null;
-    formData.value.next_cycle_date = null;
-    formData.value.statement_cycle_length = null;
-    formData.value.statement_cycle_period = null;
-    formData.value.credit_limit = 0;
+
+  const goToPage2 = () => {
+    page1.value = false;
+    page2.value = true;
   };
 
-  const checkNext = async () => {
-    if (
-      formData.value.account_name !== null &&
-      formData.value.bank_id !== null &&
-      formData.value.account_name !== "" &&
-      formData.value.account_type_id !== null
-    ) {
-      next1.value = false;
-    } else {
-      next1.value = true;
-    }
-    if (
-      formData.value.annual_rate !== null &&
-      formData.value.annual_rate !== "" &&
-      formData.value.credit_limit !== null &&
-      formData.value.credit_limit !== "" &&
-      formData.value.open_date !== null &&
-      formData.value.open_date !== "" &&
-      formData.value.opening_balance !== null &&
-      formData.value.opening_balance !== ""
-    ) {
-      submitDisabled.value = false;
-    } else {
-      submitDisabled.value = true;
-    }
+  const goBack = () => {
+    page2.value = false;
+    page1.value = true;
+    annual_rate.value.value = 0.0;
+    due_date.value.value = null;
+    next_cycle_date.value.value = null;
+    statement_cycle_length.value.value = null;
+    statement_cycle_period.value.value = null;
+    credit_limit.value.value = 0;
   };
-  const units = computed(() => {
-    return mainstore.units;
-  });
-  const intervals = computed(() => {
-    return mainstore.intervals;
-  });
-  const submitForm = () => {
-    addAccount(formData.value);
+
+  const submit = handleSubmit(values => {
+    addAccount({ ...values, active: true });
     router.push("/");
-  };
+  });
+
+  const units = computed(() => mainstore.units);
+  const intervals = computed(() => mainstore.intervals);
 </script>
