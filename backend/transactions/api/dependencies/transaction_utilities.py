@@ -78,9 +78,14 @@ def annotate_transaction_display_info(
             output_field=CharField(),
         )
     )
-    all_transactions = all_transactions.annotate(
-        attachment_count=Count("transactionimage", distinct=True)
-    )
+    if transactions.model is Transaction:
+        all_transactions = all_transactions.annotate(
+            attachment_count=Count("transactionimage", distinct=True)
+        )
+    else:
+        all_transactions = all_transactions.annotate(
+            attachment_count=Value(0, output_field=IntegerField())
+        )
     return all_transactions
 
 
