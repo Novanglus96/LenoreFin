@@ -1,3 +1,10 @@
+# [1.4.0-alpha.9](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.8...v1.4.0-alpha.9) (2026-05-14)
+
+
+### Features
+
+* add edit/delete for tags, blocking is_system tags ([#100](https://github.com/Novanglus96/LenoreFin/issues/100)) ([54a235b](https://github.com/Novanglus96/LenoreFin/commit/54a235b3def23fe38fb5fa73c6eee34122a2e9fb))
+
 # [1.4.0-alpha.8](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.7...v1.4.0-alpha.8) (2026-05-14)
 
 
