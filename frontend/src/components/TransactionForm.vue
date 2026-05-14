@@ -14,7 +14,7 @@
       </v-card-title>
 
       <v-card-text>
-        <v-form v-model="formValid" @submit.prevent ref="transactionForm">
+        <form @submit.prevent="submit">
           <v-tabs v-model="tab" color="accent">
             <v-tab value="trans" density="compact">Transaction Details</v-tab>
             <v-tab value="pay" density="compact">Paycheck Info</v-tab>
@@ -26,23 +26,22 @@
                 <v-row dense>
                   <v-col>
                     <VueDatePicker
-                      v-model="formData.transaction_date"
+                      v-model="transaction_date.value.value"
                       timezone="America/New_York"
                       model-type="yyyy-MM-dd"
                       :enable-time-picker="false"
                       auto-apply
                       format="yyyy-MM-dd"
-                      :state="!formData.transaction_date ? false : null"
+                      :state="transaction_date.errorMessage.value ? false : null"
                     ></VueDatePicker>
-                  </v-col>
-                  <v-col>
                     <span
-                      v-if="!formData.transaction_date"
+                      v-if="transaction_date.errorMessage.value"
                       class="text-error text-caption"
                     >
-                      This field is required.
+                      {{ transaction_date.errorMessage.value }}
                     </span>
                   </v-col>
+                  <v-col></v-col>
                 </v-row>
                 <v-row dense>
                   <v-col>
@@ -54,8 +53,8 @@
                       :loading="transaction_types_isLoading"
                       item-title="transaction_type"
                       item-value="id"
-                      v-model="formData.transaction_type_id"
-                      :rules="required"
+                      v-model="transaction_type_id.value.value"
+                      :error-messages="transaction_type_id.errorMessage.value"
                       :disabled="props.isEdit"
                       density="compact"
                     ></v-autocomplete>
@@ -69,8 +68,8 @@
                       :loading="transaction_statuses_isLoading"
                       item-title="transaction_status"
                       item-value="id"
-                      v-model="formData.status_id"
-                      :rules="required"
+                      v-model="status_id.value.value"
+                      :error-messages="status_id.errorMessage.value"
                       density="compact"
                     ></v-autocomplete>
                   </v-col>
@@ -78,19 +77,14 @@
                 <v-row dense>
                   <v-col cols="3">
                     <v-text-field
-                      v-model="amount"
+                      v-model="amount.value.value"
                       variant="outlined"
                       label="Amount*"
-                      :rules="required"
+                      :error-messages="amount.errorMessage.value"
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @blur="
-                        () => {
-                          amount = formatCurrencyNoSymbol(amount);
-                          transactionForm.validate();
-                        }
-                      "
+                      @blur="formatAmount"
                       density="compact"
                     >
                       <template v-slot:append-inner>
@@ -108,7 +102,7 @@
                     </v-text-field>
                     <CalculatorWidget
                       v-model="showAmountCalculator"
-                      :amount="amount"
+                      :amount="amount.value.value"
                       @update-dialog="updateShowAmountCalculator"
                       @update-amount="updateAmount"
                       key="amount"
@@ -116,22 +110,17 @@
                   </v-col>
                   <v-col cols="3">
                     <v-text-field
-                      v-model="formData.checkNumber"
+                      v-model="checkNumber.value.value"
                       variant="outlined"
                       label="Check #"
                       type="number"
-                      @update:model-value="
-                        () => {
-                          resetTagField();
-                        }
-                      "
                       density="compact"
-                      v-if="formData.transaction_type_id != 3"
+                      v-if="transaction_type_id.value.value != 3"
                     ></v-text-field>
                   </v-col>
                   <v-col cols="6">
                     <v-combobox
-                      v-model="formData.description"
+                      v-model="description.value.value"
                       :items="
                         descriptionHistory.map(item => item.description_pretty)
                       "
@@ -141,12 +130,7 @@
                       hide-selected
                       :loading="description_history_isLoading"
                       variant="outlined"
-                      :rules="required"
-                      @update:model-value="
-                        () => {
-                          resetTagField();
-                        }
-                      "
+                      :error-messages="description.errorMessage.value"
                       density="compact"
                       auto-select-first="exact"
                       return-object="false"
@@ -163,8 +147,8 @@
                       :loading="accounts_isLoading"
                       item-title="account_name"
                       item-value="id"
-                      v-model="formData.source_account_id"
-                      :rules="required"
+                      v-model="source_account_id.value.value"
+                      :error-messages="source_account_id.errorMessage.value"
                       density="compact"
                     >
                       <template v-slot:item="{ props, item }">
@@ -189,9 +173,9 @@
                       :loading="accounts_isLoading"
                       item-title="account_name"
                       item-value="id"
-                      v-model="formData.destination_account_id"
-                      :rules="required"
-                      v-if="formData.transaction_type_id == 3"
+                      v-model="destination_account_id.value.value"
+                      :error-messages="destination_account_id.errorMessage.value"
+                      v-if="transaction_type_id.value.value == 3"
                       density="compact"
                     >
                       <template v-slot:item="{ props, item }">
@@ -210,10 +194,9 @@
                 </v-row>
                 <v-row dense>
                   <v-col>
-                    <!-- TODO: Enable adding tags here -->
                     <TagTable
-                      :tags="formData.details"
-                      :totalAmount="parseFloat(amount)"
+                      :tags="details"
+                      :totalAmount="parseFloat(amount.value.value)"
                       @tag-table-updated="tagsUpdated"
                     />
                   </v-col>
@@ -222,7 +205,7 @@
                       clearable
                       label="Memo"
                       variant="outlined"
-                      v-model="formData.memo"
+                      v-model="memo.value.value"
                       :rows="11"
                       no-resize
                     ></v-textarea>
@@ -235,12 +218,10 @@
                 <v-row dense>
                   <v-col>
                     <v-checkbox
-                      v-model="isPaycheck"
+                      v-model="is_paycheck.value.value"
                       label="Is this a Paycheck?"
-                      @update:model-value="selectPaycheckChange()"
-                      :disabled="
-                        formData.transaction_type_id == 2 ? false : true
-                      "
+                      @update:model-value="selectPaycheckChange"
+                      :disabled="transaction_type_id.value.value != 2"
                     ></v-checkbox>
                   </v-col>
                   <v-col></v-col>
@@ -248,86 +229,60 @@
                 <v-row dense>
                   <v-col>
                     <v-text-field
-                      v-model="paycheck.gross"
+                      v-model="gross.value.value"
                       variant="outlined"
                       label="Gross*"
-                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      :error-messages="gross.errorMessage.value"
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @blur="
-                        () => {
-                          paycheck.gross = formatCurrencyNoSymbol(
-                            paycheck.gross,
-                          );
-                          transactionForm.validate();
-                        }
-                      "
+                      @blur="() => { if (gross.value.value) gross.value.value = formatCurrencyNoSymbol(gross.value.value); }"
                       density="compact"
-                      :disabled="!isPaycheck"
+                      :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
                   <v-col>
                     <v-text-field
-                      v-model="amount"
+                      v-model="amount.value.value"
                       variant="outlined"
                       label="Net*"
-                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      :error-messages="amount.errorMessage.value"
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @blur="
-                        () => {
-                          amount = formatCurrencyNoSymbol(amount);
-                          transactionForm.validate();
-                        }
-                      "
+                      @blur="formatAmount"
                       density="compact"
-                      :disabled="!isPaycheck"
+                      :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
                   <v-col>
                     <v-text-field
-                      v-model="paycheck.taxes"
+                      v-model="taxes.value.value"
                       variant="outlined"
                       label="Taxes*"
-                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      :error-messages="taxes.errorMessage.value"
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @blur="
-                        () => {
-                          paycheck.taxes = formatCurrencyNoSymbol(
-                            paycheck.taxes,
-                          );
-                          transactionForm.validate();
-                        }
-                      "
+                      @blur="() => { if (taxes.value.value) taxes.value.value = formatCurrencyNoSymbol(taxes.value.value); }"
                       density="compact"
-                      :disabled="!isPaycheck"
+                      :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
                 </v-row>
                 <v-row dense>
                   <v-col>
                     <v-text-field
-                      v-model="paycheck.health"
+                      v-model="health.value.value"
                       variant="outlined"
                       label="Health*"
-                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      :error-messages="health.errorMessage.value"
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @blur="
-                        () => {
-                          paycheck.health = formatCurrencyNoSymbol(
-                            paycheck.health,
-                          );
-                          transactionForm.validate();
-                        }
-                      "
+                      @blur="() => { if (health.value.value) health.value.value = formatCurrencyNoSymbol(health.value.value); }"
                       density="compact"
-                      :disabled="!isPaycheck"
+                      :disabled="!is_paycheck.value.value"
                     >
                       <template v-slot:append-inner>
                         <v-tooltip text="Calculator" location="top">
@@ -344,7 +299,7 @@
                     </v-text-field>
                     <CalculatorWidget
                       v-model="showHealthCalculator"
-                      :amount="paycheck.health"
+                      :amount="health.value.value"
                       @update-dialog="updateShowHealthCalculator"
                       @update-amount="updateHealth"
                       key="health"
@@ -352,105 +307,74 @@
                   </v-col>
                   <v-col>
                     <v-text-field
-                      v-model="paycheck.pension"
+                      v-model="pension.value.value"
                       variant="outlined"
                       label="Pension*"
-                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      :error-messages="pension.errorMessage.value"
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @blur="
-                        () => {
-                          paycheck.pension = formatCurrencyNoSymbol(
-                            paycheck.pension,
-                          );
-                          transactionForm.validate();
-                        }
-                      "
+                      @blur="() => { if (pension.value.value) pension.value.value = formatCurrencyNoSymbol(pension.value.value); }"
                       density="compact"
-                      :disabled="!isPaycheck"
+                      :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
                   <v-col>
                     <v-text-field
-                      v-model="paycheck.fsa"
+                      v-model="fsa.value.value"
                       variant="outlined"
                       label="FSA*"
-                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      :error-messages="fsa.errorMessage.value"
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @blur="
-                        () => {
-                          paycheck.fsa = formatCurrencyNoSymbol(paycheck.fsa);
-                          transactionForm.validate();
-                        }
-                      "
+                      @blur="() => { if (fsa.value.value) fsa.value.value = formatCurrencyNoSymbol(fsa.value.value); }"
                       density="compact"
-                      :disabled="!isPaycheck"
+                      :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
                 </v-row>
                 <v-row dense>
                   <v-col>
                     <v-text-field
-                      v-model="paycheck.dca"
+                      v-model="dca.value.value"
                       variant="outlined"
                       label="DCA*"
-                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      :error-messages="dca.errorMessage.value"
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @blur="
-                        () => {
-                          paycheck.dca = formatCurrencyNoSymbol(paycheck.dca);
-                          transactionForm.validate();
-                        }
-                      "
+                      @blur="() => { if (dca.value.value) dca.value.value = formatCurrencyNoSymbol(dca.value.value); }"
                       density="compact"
-                      :disabled="!isPaycheck"
+                      :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
                   <v-col>
                     <v-text-field
-                      v-model="paycheck.union_dues"
+                      v-model="union_dues.value.value"
                       variant="outlined"
                       label="Union Dues*"
-                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      :error-messages="union_dues.errorMessage.value"
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @blur="
-                        () => {
-                          paycheck.union_dues = formatCurrencyNoSymbol(
-                            paycheck.union_dues,
-                          );
-                          transactionForm.validate();
-                        }
-                      "
+                      @blur="() => { if (union_dues.value.value) union_dues.value.value = formatCurrencyNoSymbol(union_dues.value.value); }"
                       density="compact"
-                      :disabled="!isPaycheck"
+                      :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
                   <v-col>
                     <v-text-field
-                      v-model="paycheck.four_fifty_seven_b"
+                      v-model="four_fifty_seven_b.value.value"
                       variant="outlined"
                       label="457b*"
-                      :rules="[...requiredPaycheck, ...grossTotal]"
+                      :error-messages="four_fifty_seven_b.errorMessage.value"
                       prefix="$"
                       type="number"
                       step="1.00"
-                      @blur="
-                        () => {
-                          paycheck.four_fifty_seven_b = formatCurrencyNoSymbol(
-                            paycheck.four_fifty_seven_b,
-                          );
-                          transactionForm.validate();
-                        }
-                      "
+                      @blur="() => { if (four_fifty_seven_b.value.value) four_fifty_seven_b.value.value = formatCurrencyNoSymbol(four_fifty_seven_b.value.value); }"
                       density="compact"
-                      :disabled="!isPaycheck"
+                      :disabled="!is_paycheck.value.value"
                     ></v-text-field>
                   </v-col>
                 </v-row>
@@ -464,10 +388,10 @@
                       :loading="payees_isLoading"
                       item-title="payee_name"
                       item-value="id"
-                      v-model="paycheck.payee_id"
-                      :rules="requiredPaycheck"
+                      v-model="payee_id.value.value"
+                      :error-messages="payee_id.errorMessage.value"
                       density="compact"
-                      :disabled="!isPaycheck"
+                      :disabled="!is_paycheck.value.value"
                     ></v-autocomplete>
                   </v-col>
                 </v-row>
@@ -494,40 +418,28 @@
               </v-container>
             </v-window-item>
           </v-window>
-        </v-form>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" variant="text" @click="closeDialog"
+              >Close</v-btn
+            >
+            <v-btn color="primary" variant="text" type="submit">
+              {{ props.isEdit ? "Update" : "Add" }}
+            </v-btn>
+          </v-card-actions>
+        </form>
       </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="primary" variant="text" @click="closeDialog">Close</v-btn>
-        <v-btn
-          color="primary"
-          variant="text"
-          @click="submitForm"
-          :disabled="!formValid"
-          type="submit"
-        >
-          {{ props.isEdit ? "Update" : "Add" }}
-        </v-btn>
-      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 <script setup>
-  /**
-   * Vue script setup for transaction creation/editing
-   * @fileoverview
-   * @author John Adams
-   * @version 1.0.0
-   */
-
-  // Import Vue composition functions and components...
   import {
     ref,
     defineEmits,
     defineProps,
     onMounted,
     watchEffect,
-    computed,
+    watch,
   } from "vue";
   import { useTransactionTypes } from "@/composables/transactionTypesComposable";
   import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
@@ -539,79 +451,144 @@
   import TagTable from "@/components/TagTable.vue";
   import { useDescriptionHistory } from "@/composables/descriptionHistoryComposable";
   import CalculatorWidget from "./CalculatorWidget.vue";
-
-  // Define reactive variables...
-  const tagToAdd = ref(null); // Tag object to add to tag list
-  const tagAmount = ref(null); // Tag amount to add to tag list
-  const tab = ref(0); // Tab model
-  const isPaycheck = ref(null); // True if this transaction a paycheck
-  const paycheckTotalsMatch = ref(false); // True if the paycheck fields total = gross
-  const formValid = ref(false);
-  const transactionForm = ref(null);
-  const showAmountCalculator = ref(false);
-  const showHealthCalculator = ref(false);
-
-  // Define emits
-  const emit = defineEmits(["updateDialog"]);
-
-  // Define validation rules
-  // General required validation rule
-  const required = [
-    value => {
-      if (value !== null && value !== undefined && value !== "") return true;
-      return "This field is required.";
-    },
-  ];
-
-  // Computed property for conditional validation based on `isPaycheck`
-  const requiredPaycheck = computed(() => {
-    return isPaycheck.value
-      ? [
-          value => {
-            if (value !== null && value !== undefined && value !== "")
-              return true;
-            return "This field is required for paycheck.";
-          },
-        ]
-      : [];
-  });
-
-  // Computed property for conditional validation based on `isPaycheck`
-  const grossTotal = computed(() => {
-    return isPaycheck.value
-      ? [
-          () => {
-            if (
-              roundToTwoDecimals(
-                parseFloat(paycheck.value.dca) +
-                  parseFloat(paycheck.value.four_fifty_seven_b) +
-                  parseFloat(paycheck.value.fsa) +
-                  parseFloat(paycheck.value.health) +
-                  parseFloat(paycheck.value.pension) +
-                  parseFloat(paycheck.value.taxes) +
-                  parseFloat(paycheck.value.union_dues) +
-                  parseFloat(amount.value),
-              ) === roundToTwoDecimals(parseFloat(paycheck.value.gross))
-            )
-              return true;
-            return "All fields must total gross.";
-          },
-        ]
-      : [];
-  });
+  import { useField, useForm } from "vee-validate";
+  import * as yup from "yup";
 
   function roundToTwoDecimals(value) {
-    return Math.round(value * 100) / 100; // Round to 2 decimal places
+    return Math.round(value * 100) / 100;
   }
 
-  // Date variables...
+  const paycheckRequiredWhen = then =>
+    yup.number().when("is_paycheck", {
+      is: true,
+      then: schema =>
+        schema.typeError(`${then} is required.`).required(`${then} is required.`),
+      otherwise: schema => schema.nullable().notRequired(),
+    });
+
+  const schema = yup.object({
+    transaction_date: yup
+      .string()
+      .nullable()
+      .required("Transaction date is required."),
+    transaction_type_id: yup
+      .number()
+      .typeError("Transaction type is required.")
+      .required("Transaction type is required."),
+    status_id: yup
+      .number()
+      .typeError("Status is required.")
+      .required("Status is required."),
+    amount: yup
+      .number()
+      .typeError("Amount is required.")
+      .required("Amount is required.")
+      .positive("Amount must be greater than zero."),
+    description: yup.string().required("Description is required."),
+    source_account_id: yup
+      .number()
+      .typeError("Source account is required.")
+      .required("Source account is required."),
+    destination_account_id: yup.mixed().when("transaction_type_id", {
+      is: 3,
+      then: schema =>
+        schema.required("Destination account is required for transfers."),
+      otherwise: schema => schema.nullable().notRequired(),
+    }),
+    memo: yup.string().nullable().notRequired(),
+    checkNumber: yup.number().nullable().notRequired(),
+    is_paycheck: yup.boolean().notRequired(),
+    gross: yup.number().when("is_paycheck", {
+      is: true,
+      then: schema =>
+        schema
+          .typeError("Gross is required.")
+          .required("Gross is required.")
+          .test(
+            "gross-total",
+            "All paycheck fields must total gross.",
+            function (value) {
+              const {
+                taxes,
+                health,
+                pension,
+                fsa,
+                dca,
+                union_dues,
+                four_fifty_seven_b,
+                amount: net,
+              } = this.parent;
+              if (!value) return true;
+              const sum = roundToTwoDecimals(
+                parseFloat(dca || 0) +
+                  parseFloat(four_fifty_seven_b || 0) +
+                  parseFloat(fsa || 0) +
+                  parseFloat(health || 0) +
+                  parseFloat(pension || 0) +
+                  parseFloat(taxes || 0) +
+                  parseFloat(union_dues || 0) +
+                  parseFloat(net || 0),
+              );
+              return sum === roundToTwoDecimals(parseFloat(value));
+            },
+          ),
+      otherwise: schema => schema.nullable().notRequired(),
+    }),
+    taxes: paycheckRequiredWhen("Taxes"),
+    health: paycheckRequiredWhen("Health"),
+    pension: paycheckRequiredWhen("Pension"),
+    fsa: paycheckRequiredWhen("FSA"),
+    dca: paycheckRequiredWhen("DCA"),
+    union_dues: paycheckRequiredWhen("Union dues"),
+    four_fifty_seven_b: paycheckRequiredWhen("457b"),
+    payee_id: yup.number().when("is_paycheck", {
+      is: true,
+      then: schema =>
+        schema
+          .typeError("Payee is required.")
+          .required("Payee is required."),
+      otherwise: schema => schema.nullable().notRequired(),
+    }),
+  });
+
+  const { handleSubmit, resetForm } = useForm({ validationSchema: schema });
+
+  const transaction_date = useField("transaction_date");
+  const transaction_type_id = useField("transaction_type_id");
+  const status_id = useField("status_id");
+  const amount = useField("amount");
+  const description = useField("description");
+  const source_account_id = useField("source_account_id");
+  const destination_account_id = useField("destination_account_id");
+  const memo = useField("memo");
+  const checkNumber = useField("checkNumber");
+  const is_paycheck = useField("is_paycheck");
+  const gross = useField("gross");
+  const taxes = useField("taxes");
+  const health = useField("health");
+  const pension = useField("pension");
+  const fsa = useField("fsa");
+  const dca = useField("dca");
+  const union_dues = useField("union_dues");
+  const four_fifty_seven_b = useField("four_fifty_seven_b");
+  const payee_id = useField("payee_id");
+
+  // Non-validated state
+  const tab = ref(0);
+  const showAmountCalculator = ref(false);
+  const showHealthCalculator = ref(false);
+  const details = ref([]);
+  const reminder = ref(null);
+  const formId = ref(0);
+  const formAddDate = ref(null);
+  const paycheckId = ref(0);
+
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   const formattedDate = `${year}-${month}-${day}`;
 
-  // API calls and data retrieval...
   const { accounts, isLoading: accounts_isLoading } = useAccounts();
   const { transaction_types, isLoading: transaction_types_isLoading } =
     useTransactionTypes();
@@ -621,293 +598,155 @@
   const { payees, isLoading: payees_isLoading } = usePayees();
   const { descriptionHistory, isLoading: description_history_isLoading } =
     useDescriptionHistory();
-  // Define props...
+
+  const emit = defineEmits(["updateDialog"]);
   const props = defineProps({
-    itemFormDialog: {
-      type: Boolean,
-      default: false,
-    },
-    isEdit: {
-      type: Boolean,
-      default: false,
-    },
+    itemFormDialog: { type: Boolean, default: false },
+    isEdit: { type: Boolean, default: false },
     passedFormData: Object,
-    account_id: {
-      type: Number,
-      default: 1,
+    account_id: { type: Number, default: 1 },
+  });
+
+  // Re-validate gross when any paycheck amount changes so the total error updates live
+  watch(
+    () => [
+      taxes.value.value,
+      health.value.value,
+      pension.value.value,
+      fsa.value.value,
+      dca.value.value,
+      union_dues.value.value,
+      four_fifty_seven_b.value.value,
+      amount.value.value,
+    ],
+    () => {
+      if (is_paycheck.value.value) {
+        gross.validate();
+      }
     },
-  });
-
-  // Initialze Form Data...
-  const formData = ref({
-    id: props.passedFormData ? props.passedFormData.id : 0,
-    status_id: props.passedFormData.status.id || 1,
-    transaction_type_id: props.passedFormData.transaction_type.id || 1,
-    transaction_date: props.passedFormData.transaction_date || formattedDate,
-    memo: props.passedFormData.memo || "",
-    source_account_id:
-      props.passedFormData.source_account_id || props.passedFormData.account_id,
-    destination_account_id: props.passedFormData.destination_account_id || null,
-    edit_date: formattedDate,
-    add_date: props.passedFormData.add_date || formattedDate,
-    total_amount: props.passedFormData.total_amount || 0,
-    checkNumber: props.passedFormData.checkNumber || null,
-    description: props.passedFormData.description || null,
-    details: [],
-    paycheck: null,
-    reminder: null,
-  });
-
-  const paycheck = ref({
-    id: 0,
-    gross: null,
-    net: null,
-    taxes: null,
-    health: null,
-    pension: null,
-    fsa: null,
-    dca: null,
-    union_dues: null,
-    four_fifty_seven_b: null,
-    payee_id: null,
-  });
-
-  // Initialize amount with absolute value...
-  const amount = ref(
-    props.passedFormData.total_amount
-      ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
-      : null,
   );
 
-  // Define functions...
-
-  /**
-   * `watchpassedFormData` Watches for changes to passedFormData prop and updates
-   * local variable formData as appropiate.
-   */
-  const watchPassedFormData = () => {
-    watchEffect(() => {
-      if (props.passedFormData) {
-        formData.value = {
-          id: props.passedFormData.id,
-          status_id: props.passedFormData.status.id,
-          transaction_type_id: props.passedFormData.transaction_type.id,
-          transaction_date: props.passedFormData.transaction_date,
-          memo: props.passedFormData.memo,
-          source_account_id:
-            props.passedFormData.source_account_id ||
-            props.passedFormData.account_id,
-          destination_account_id: props.passedFormData.destination_account_id,
-          edit_date: formattedDate,
-          add_date: props.passedFormData.add_date,
-          tag_id: props.passedFormData.tag_id,
-          total_amount: props.passedFormData.total_amount,
-          checkNumber: props.passedFormData.checkNumber,
-          description: props.passedFormData.description,
-          details: fillTagTable(props.passedFormData.details),
-          reminder: props.passedFormData.reminder,
-        };
-        paycheck.value = {
-          id: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.id
-            : 0,
-          gross: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.gross
-            : null,
-          net: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.net
-            : null,
-          taxes: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.taxes
-            : null,
-          health: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.health
-            : null,
-          pension: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.pension
-            : null,
-          fsa: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.fsa
-            : null,
-          dca: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.dca
-            : null,
-          union_dues: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.union_dues
-            : null,
-          four_fifty_seven_b: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.four_fifty_seven_b
-            : null,
-          payee_id: props.passedFormData.paycheck
-            ? props.passedFormData.paycheck.payee.id
-            : null,
-        };
-        amount.value = props.passedFormData.total_amount
-          ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
-          : null;
-        if (props.passedFormData.paycheck) {
-          isPaycheck.value = true;
-          paycheckTotalsMatch.value = true;
-        } else {
-          isPaycheck.value = false;
-          paycheckTotalsMatch.value = false;
-        }
-      }
-    });
+  const fillTagTable = detailsList => {
+    if (!detailsList) return [];
+    return detailsList.map(detail => ({
+      tag_id: detail.tag.id,
+      tag_amt: parseFloat(Math.abs(detail.detail_amt)).toFixed(2),
+      tag_pretty_name: detail.tag.tag_name,
+      tag_full_toggle: detail.full_toggle ?? false,
+    }));
   };
 
-  /**
-   * `fillTagTable` Formats tag details for display in tag table.
-   * @param {list} details - The list of tag details.
-   * @returns {table} - A list of formatted tags for display in the table.
-   */
-  const fillTagTable = details => {
-    let table = [];
-    let pretty_name = "";
-    let tag_full_toggle = null;
-    if (details) {
-      for (const detail of details) {
-        if (detail.full_toggle) {
-          tag_full_toggle = detail.full_toggle;
-        } else {
-          tag_full_toggle = false;
-        }
-        pretty_name = detail.tag.tag_name;
-        let tag_row = {
-          tag_id: detail.tag.id,
-          tag_amt: parseFloat(Math.abs(detail.detail_amt)).toFixed(2),
-          tag_pretty_name: pretty_name,
-          tag_full_toggle: tag_full_toggle,
-        };
-        table.push(tag_row);
-      }
-    }
+  const initializeFormData = () => {
+    const p = props.passedFormData;
+    formId.value = p.id ?? 0;
+    formAddDate.value = p.add_date ?? formattedDate;
+    reminder.value = p.reminder ?? null;
+    details.value = fillTagTable(p.details);
 
-    return table;
-  };
-
-  /**
-   * `submitForm` Submits the formData and creates/edits transaction.
-   */
-  const submitForm = async () => {
-    if (formData.value.transaction_type_id == 2) {
-      formData.value.total_amount = Math.abs(amount.value);
-    } else {
-      formData.value.total_amount = -Math.abs(amount.value);
-    }
-    if (isPaycheck.value) {
-      paycheck.value.net = amount.value;
-      formData.value.paycheck = paycheck.value;
-    }
-    if (props.isEdit == false) {
-      await addTransaction(formData.value);
-    } else {
-      await editTransaction(formData.value);
-    }
-
-    closeDialog();
-  };
-
-  /**
-   * `closeDialog` Emits updateDialog to close form.
-   */
-  const closeDialog = () => {
-    formData.value = {
-      id: props.passedFormData ? props.passedFormData.id : 0,
-      status_id: props.passedFormData.status.id || 1,
-      transaction_type_id: props.passedFormData.transaction_type.id || 1,
-      transaction_date: props.passedFormData.transaction_date || formattedDate,
-      memo: props.passedFormData.memo || "",
-      source_account_id: props.passedFormData.source_account_id || null,
-      destination_account_id:
-        props.passedFormData.destination_account_id || null,
-      edit_date: formattedDate,
-      add_date: props.passedFormData.add_date || formattedDate,
-      total_amount: props.passedFormData.total_amount || 0,
-      checkNumber: props.passedFormData.checkNumber || null,
-      description: props.passedFormData.description || null,
-      details: fillTagTable(props.passedFormData.details),
-      paycheck: null,
-    };
-    amount.value = props.passedFormData.total_amount
-      ? parseFloat(Math.abs(props.passedFormData.total_amount)).toFixed(2)
+    transaction_date.value.value = p.transaction_date ?? formattedDate;
+    transaction_type_id.value.value = p.transaction_type?.id ?? 1;
+    status_id.value.value = p.status?.id ?? 1;
+    amount.value.value = p.total_amount
+      ? parseFloat(Math.abs(p.total_amount)).toFixed(2)
       : null;
-    paycheck.value = {
-      id: props.passedFormData.paycheck ? props.passedFormData.paycheck.id : 0,
-      gross: props.passedFormData.paycheck
-        ? props.passedFormData.paycheck.gross
-        : null,
-      net: props.passedFormData.paycheck
-        ? props.passedFormData.paycheck.net
-        : null,
-      taxes: props.passedFormData.paycheck
-        ? props.passedFormData.paycheck.taxes
-        : null,
-      health: props.passedFormData.paycheck
-        ? props.passedFormData.paycheck.health
-        : null,
-      pension: props.passedFormData.paycheck
-        ? props.passedFormData.paycheck.pension
-        : null,
-      fsa: props.passedFormData.paycheck
-        ? props.passedFormData.paycheck.fsa
-        : null,
-      dca: props.passedFormData.paycheck
-        ? props.passedFormData.paycheck.dca
-        : null,
-      union_dues: props.passedFormData.paycheck
-        ? props.passedFormData.paycheck.union_dues
-        : null,
-      four_fifty_seven_b: props.passedFormData.paycheck
-        ? props.passedFormData.paycheck.four_fifty_seven_b
-        : null,
-      payee_id: props.passedFormData.paycheck
-        ? props.passedFormData.paycheck.payee.id
+    description.value.value = p.description ?? null;
+    source_account_id.value.value =
+      p.source_account_id ?? p.account_id ?? null;
+    destination_account_id.value.value = p.destination_account_id ?? null;
+    memo.value.value = p.memo ?? "";
+    checkNumber.value.value = p.checkNumber ?? null;
+    is_paycheck.value.value = !!p.paycheck;
+
+    paycheckId.value = p.paycheck?.id ?? 0;
+    gross.value.value = p.paycheck?.gross ?? null;
+    taxes.value.value = p.paycheck?.taxes ?? null;
+    health.value.value = p.paycheck?.health ?? null;
+    pension.value.value = p.paycheck?.pension ?? null;
+    fsa.value.value = p.paycheck?.fsa ?? null;
+    dca.value.value = p.paycheck?.dca ?? null;
+    union_dues.value.value = p.paycheck?.union_dues ?? null;
+    four_fifty_seven_b.value.value = p.paycheck?.four_fifty_seven_b ?? null;
+    payee_id.value.value = p.paycheck?.payee?.id ?? null;
+  };
+
+  const selectPaycheckChange = () => {
+    gross.value.value = null;
+    taxes.value.value = null;
+    health.value.value = null;
+    pension.value.value = null;
+    fsa.value.value = null;
+    dca.value.value = null;
+    union_dues.value.value = null;
+    four_fifty_seven_b.value.value = null;
+    payee_id.value.value = null;
+  };
+
+  const submit = handleSubmit(values => {
+    const payload = {
+      id: formId.value,
+      transaction_date: values.transaction_date,
+      transaction_type_id: values.transaction_type_id,
+      status_id: values.status_id,
+      total_amount:
+        values.transaction_type_id == 2
+          ? Math.abs(values.amount)
+          : -Math.abs(values.amount),
+      description: values.description,
+      source_account_id: values.source_account_id,
+      destination_account_id:
+        values.transaction_type_id == 3
+          ? values.destination_account_id
+          : null,
+      memo: values.memo,
+      checkNumber: values.checkNumber,
+      edit_date: formattedDate,
+      add_date: formAddDate.value,
+      details: details.value,
+      reminder: reminder.value,
+      paycheck: values.is_paycheck
+        ? {
+            id: paycheckId.value,
+            gross: values.gross,
+            net: values.amount,
+            taxes: values.taxes,
+            health: values.health,
+            pension: values.pension,
+            fsa: values.fsa,
+            dca: values.dca,
+            union_dues: values.union_dues,
+            four_fifty_seven_b: values.four_fifty_seven_b,
+            payee_id: values.payee_id,
+          }
         : null,
     };
-    tagToAdd.value = null;
-    tagAmount.value = null;
-    if (props.passedFormData.paycheck) {
-      isPaycheck.value = true;
+
+    if (props.isEdit) {
+      editTransaction(payload);
     } else {
-      isPaycheck.value = false;
+      addTransaction(payload);
     }
+    closeDialog();
+  });
+
+  const closeDialog = () => {
+    resetForm();
+    initializeFormData();
     tab.value = 0;
     emit("updateDialog", false);
   };
 
-  /**
-   * `selectPaycheckChange` Handles when switching between paycheck or not.
-   */
-  const selectPaycheckChange = () => {
-    paycheck.value.dca = null;
-    paycheck.value.four_fifty_seven_b = null;
-    paycheck.value.fsa = null;
-    paycheck.value.gross = null;
-    paycheck.value.health = null;
-    paycheck.value.payee_id = null;
-    paycheck.value.pension = null;
-    paycheck.value.taxes = null;
-    paycheck.value.union_dues = null;
-    transactionForm.value.validate();
-  };
-
-  /**
-   * `resetTagField` Convenience function adds total and Untagged as default option for tags.
-   */
-  const resetTagField = () => {
-    tagAmount.value = amount.value;
-  };
-
-  /**
-   * `clickTagAdd` Adds a tag to the tag table.
-   */
   const tagsUpdated = data => {
-    formData.value.details = data.tags;
+    details.value = data.tags;
+  };
+
+  const formatAmount = () => {
+    if (amount.value.value) {
+      amount.value.value = formatCurrencyNoSymbol(amount.value.value);
+    }
   };
 
   const updateAmount = data => {
-    amount.value = data;
+    amount.value.value = data;
   };
 
   const updateShowAmountCalculator = () => {
@@ -915,19 +754,21 @@
   };
 
   const updateHealth = data => {
-    paycheck.value.health = data;
+    health.value.value = data;
   };
 
   const updateShowHealthCalculator = () => {
     showHealthCalculator.value = !showHealthCalculator.value;
   };
 
-  // Lifecycle hook...
-
   onMounted(() => {
-    // Perform actions on mount
-    watchPassedFormData();
+    watchEffect(() => {
+      if (props.passedFormData) {
+        initializeFormData();
+      }
+    });
   });
+
   const formatCurrencyNoSymbol = value => {
     return new Intl.NumberFormat("en-US", {
       style: "decimal",
