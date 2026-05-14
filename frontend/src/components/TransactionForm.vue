@@ -533,7 +533,12 @@
                   parseFloat(union_dues || 0) +
                   parseFloat(net || 0),
               );
-              return sum === roundToTwoDecimals(parseFloat(value));
+              const grossVal = roundToTwoDecimals(parseFloat(value));
+              if (sum === grossVal) return true;
+              const diff = roundToTwoDecimals(grossVal - sum);
+              return this.createError({
+                message: `Fields total $${sum.toFixed(2)} but gross is $${grossVal.toFixed(2)} — ${diff > 0 ? "short" : "over"} by $${Math.abs(diff).toFixed(2)}.`,
+              });
             },
           ),
       otherwise: schema => schema.nullable().notRequired(),
