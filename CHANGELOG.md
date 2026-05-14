@@ -1,3 +1,10 @@
+# [1.4.0-alpha.17](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.16...v1.4.0-alpha.17) (2026-05-14)
+
+
+### Bug Fixes
+
+* guard attachment_count annotation to Transaction queryset only ([#108](https://github.com/Novanglus96/LenoreFin/issues/108)) ([0057240](https://github.com/Novanglus96/LenoreFin/commit/00572406c3cb3cbf2e0d1fafc9097a24cf5342f5))
+
 # [1.4.0-alpha.16](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.15...v1.4.0-alpha.16) (2026-05-14)
 
 
