@@ -1,3 +1,10 @@
+# [1.4.0-alpha.8](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.7...v1.4.0-alpha.8) (2026-05-14)
+
+
+### Bug Fixes
+
+* show paycheck gross discrepancy amount in validation error ([#99](https://github.com/Novanglus96/LenoreFin/issues/99)) ([7dac50d](https://github.com/Novanglus96/LenoreFin/commit/7dac50d54687a18070b841a5efcefe17d2f39c0d))
+
 # [1.4.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.6...v1.4.0-alpha.7) (2026-05-14)
 
 
