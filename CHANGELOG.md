@@ -1,3 +1,10 @@
+# [1.4.0-alpha.15](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.14...v1.4.0-alpha.15) (2026-05-14)
+
+
+### Features
+
+* add file attachments to transactions ([#106](https://github.com/Novanglus96/LenoreFin/issues/106)) ([970f82d](https://github.com/Novanglus96/LenoreFin/commit/970f82de843a814b331f39a02cc43918e997e6b9))
+
 # [1.4.0-alpha.14](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.13...v1.4.0-alpha.14) (2026-05-14)
 
 
