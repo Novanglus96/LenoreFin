@@ -69,8 +69,8 @@
                 >
                   <template v-slot:prepend>
                     <v-icon
-                      icon="mdi-tag"
-                      :color="tagColor(tag.tag_type.id, tag.is_system)"
+                      :icon="tag.is_system ? 'mdi-tag' : 'mdi-tag-outline'"
+                      :color="tagColor(tag.tag_type.id)"
                     ></v-icon>
                   </template>
                   <template v-slot:title>
@@ -118,8 +118,8 @@
                 >
                   <template v-slot:prepend>
                     <v-icon
-                      icon="mdi-tag"
-                      :color="tagColor(item.raw.tag_type.id, item.raw.is_system)"
+                      :icon="item.raw.is_system ? 'mdi-tag' : 'mdi-tag-outline'"
+                      :color="tagColor(item.raw.tag_type.id)"
                     ></v-icon>
                   </template>
                 </v-list-item>
@@ -193,14 +193,13 @@
     deleteDialog.value = false;
   };
 
-  const tagColor = (typeID, isSystem) => {
-    const suffix = isSystem ? "-darken-2" : "-lighten-2";
+  const tagColor = typeID => {
     if (typeID == 1) {
-      return `error${suffix}`;
+      return "error";
     } else if (typeID == 2) {
-      return `success${suffix}`;
+      return "success";
     } else if (typeID == 3) {
-      return `info${suffix}`;
+      return "info";
     }
   };
 </script>
