@@ -8,6 +8,7 @@ import AddAccount from "@/views/AddAccount.vue";
 import ForecastView from "@/views/ForecastView.vue";
 import RemindersView from "@/views/RemindersView.vue";
 import TagsView from "@/views/TagsView.vue";
+import PayeesView from "@/views/PayeesView.vue";
 import DocumentView from "@/views/DocumentView.vue";
 import CalculatorView from "@/views/CalculatorView.vue";
 import PayView from "@/views/PayView.vue";
@@ -70,6 +71,11 @@ const routes = [
     path: "/tags",
     name: "tags",
     component: TagsView,
+  },
+  {
+    path: "/payees",
+    name: "payees",
+    component: PayeesView,
   },
   {
     path: "/planning/calculator",
