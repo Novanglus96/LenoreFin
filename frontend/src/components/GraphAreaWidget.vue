@@ -12,7 +12,7 @@
               {{ getGraphTitle(i) }}
             </span>
 
-            <WidgetForm v-if="authStore.isFullAccess" :widget="i" class="ms-auto" />
+            <WidgetForm v-if="authStore.isFullAccess" :widget="i" />
           </v-card-title>
           <v-card-text
             class="d-flex justify-center align-center pa-0 ga-0 ma-0 w-100"
@@ -37,7 +37,7 @@
             <span class="text-subtitle-2 text-primary">
               {{ getGraphTitle(page) }}
             </span>
-            <WidgetForm v-if="authStore.isFullAccess" :widget="page" class="ms-auto" />
+            <WidgetForm v-if="authStore.isFullAccess" :widget="page" />
           </v-card-title>
           <v-card-text
             class="d-flex justify-center align-center pa-0 ga-0 ma-0 w-100"

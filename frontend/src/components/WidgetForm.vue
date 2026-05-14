@@ -9,7 +9,9 @@
       <v-btn
         icon="mdi-cog"
         flat
-        size="xs"
+        size="x-small"
+        variant="text"
+        class="ms-auto"
         v-bind="menuProps"
         :disabled="isLoading"
       ></v-btn>
@@ -142,7 +144,7 @@
       [`widget${w}_type_id`]: formData.graph_type,
       [`widget${w}_exclude`]: formData.exclude?.length
         ? formData.exclude.join(",")
-        : null,
+        : "",
     });
     menu.value = false;
   };
