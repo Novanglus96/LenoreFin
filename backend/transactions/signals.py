@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from transactions.models import Transaction
+from transactions.models import Transaction, TransactionImage
 from django_q.tasks import async_task
 from core.cache.helpers import delete_pattern
 from core.cache.keys import account_all
@@ -24,3 +24,9 @@ def update_forecast_cache_on_delete(sender, instance, **kwargs):
     _refresh_account(instance.source_account_id)
     if instance.destination_account_id is not None:
         _refresh_account(instance.destination_account_id)
+
+
+@receiver(post_delete, sender=TransactionImage)
+def delete_transaction_image_file(sender, instance, **kwargs):
+    if instance.image:
+        instance.image.delete(save=False)

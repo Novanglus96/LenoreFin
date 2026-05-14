@@ -26,6 +26,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api/, ""),
       },
+      "/media": {
+        target: "https://back-dev.danielleandjohn.love", // Serve media files from backend in dev
+        changeOrigin: true,
+      },
     },
   },
   define: {
