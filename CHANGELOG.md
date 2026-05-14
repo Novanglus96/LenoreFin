@@ -1,3 +1,10 @@
+# [1.4.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.5...v1.4.0-alpha.6) (2026-05-14)
+
+
+### Bug Fixes
+
+* migrate transaction forms to vee-validate + Yup validation ([#97](https://github.com/Novanglus96/LenoreFin/issues/97)) ([9ac358b](https://github.com/Novanglus96/LenoreFin/commit/9ac358b89ccbf8fee311f243eab4bc631a56813c))
+
 # [1.4.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.4...v1.4.0-alpha.5) (2026-05-13)
 
 
