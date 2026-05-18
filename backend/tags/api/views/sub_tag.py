@@ -40,7 +40,7 @@ def get_subtag(request, subtag_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Sub Tag not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -77,5 +77,5 @@ def list_subtags(request, query: SubTagQuery = Query(...)):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Sub Tag list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

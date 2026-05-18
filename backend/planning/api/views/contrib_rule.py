@@ -40,7 +40,7 @@ def create_contrib_rule(request, payload: ContribRuleIn):
             api_logger.error(
                 f"Contribution rule not created : rule exists ({payload.rule})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Contribution rule not created : rule exists ({payload.rule})"
             )
             raise HttpError(400, "Conitribution rule already exists")
@@ -49,14 +49,14 @@ def create_contrib_rule(request, payload: ContribRuleIn):
             api_logger.error(
                 "Contribution rule not created : db integrity error"
             )
-            error_logger.error(
+            error_logger.exception(
                 "Contribution rule not created : db integrity error"
             )
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution rule not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record creation error: {str(e)}")
 
 
@@ -93,7 +93,7 @@ def update_contrib_rule(request, contribrule_id: int, payload: ContribRuleIn):
             api_logger.error(
                 f"Contribution rule not updated : contribution rule exists ({payload.rule})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Contribution rule not updated : contribution rule exists ({payload.rule})"
             )
             raise HttpError(400, "Contribution rule already exists")
@@ -102,7 +102,7 @@ def update_contrib_rule(request, contribrule_id: int, payload: ContribRuleIn):
             api_logger.error(
                 "Contribution rule not updated : db integrity error"
             )
-            error_logger.error(
+            error_logger.exception(
                 "Contribution rule not updated : db integrity error"
             )
             raise HttpError(400, "DB integrity error")
@@ -138,7 +138,7 @@ def get_contribrule(request, contribrule_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution rule not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -162,7 +162,7 @@ def list_contrib_rules(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution rule list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -193,5 +193,5 @@ def delete_contrib_rule(request, contribrule_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution rule not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

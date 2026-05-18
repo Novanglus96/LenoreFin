@@ -26,7 +26,7 @@ def list_transaction_images(request, transaction_id: int):
         api_logger.debug(f"Attachments listed for transaction #{transaction_id}")
         return images
     except Exception as e:
-        error_logger.error(str(e))
+        error_logger.exception(str(e))
         raise HttpError(500, "Record retrieval error")
 
 
@@ -48,7 +48,7 @@ def upload_transaction_image(
     except Http404:
         raise HttpError(404, "Transaction not found")
     except Exception as e:
-        error_logger.error(str(e))
+        error_logger.exception(str(e))
         raise HttpError(500, "Upload error")
 
 
@@ -65,5 +65,5 @@ def delete_transaction_image(request, image_id: int):
     except Http404:
         raise HttpError(404, "Attachment not found")
     except Exception as e:
-        error_logger.error(str(e))
+        error_logger.exception(str(e))
         raise HttpError(500, "Delete error")

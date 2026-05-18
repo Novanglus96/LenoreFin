@@ -252,7 +252,7 @@ def roll_over_budgets():
     except Exception as e:
         # Log other types of exceptions
         task_logger.error("Budget roll overs not calculated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
 
 
 def calculate_repeat_window(start_date: datetime, repeat: Repeat) -> tuple:
@@ -680,7 +680,7 @@ def archive_transactions():
         task_logger.info("Transactions successfully archived.")
     except Exception as e:
         task_logger.error("Transactions not archived")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         return f"Error archiving transactions: {str(e)}"
 
 

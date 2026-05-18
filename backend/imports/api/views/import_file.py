@@ -36,5 +36,5 @@ def import_file(
         return {"id": file_import_id}
     except Exception as e:
         task_logger.error("File import failed")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "File import error")

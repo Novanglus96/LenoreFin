@@ -57,7 +57,7 @@ def update_transaction_status(
             api_logger.error(
                 f"Transaction status not updated : transaction status exists ({payload.transaction_status})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Transaction status not updated : transaction status exists ({payload.transaction_status})"
             )
             raise HttpError(400, "Transaction status already exists")
@@ -66,14 +66,14 @@ def update_transaction_status(
             api_logger.error(
                 "Transaction status not updated : db integrity error"
             )
-            error_logger.error(
+            error_logger.exception(
                 "Transaction status not updated : db integrity error"
             )
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction status not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -109,7 +109,7 @@ def get_transaction_status(request, transactionstatus_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction status not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -133,7 +133,7 @@ def list_transaction_statuses(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction status list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -172,5 +172,5 @@ def delete_transaction_status(request, transactionstatus_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction status not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

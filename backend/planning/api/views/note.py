@@ -36,7 +36,7 @@ def create_note(request, payload: NoteIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -69,7 +69,7 @@ def update_note(request, note_id: int, payload: NoteIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -98,7 +98,7 @@ def get_note(request, note_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -122,7 +122,7 @@ def list_notes(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -153,5 +153,5 @@ def delete_note(request, note_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

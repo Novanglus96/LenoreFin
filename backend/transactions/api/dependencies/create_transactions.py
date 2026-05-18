@@ -139,10 +139,10 @@ def create_transactions(
                             api_logger.error(
                                 "Transaction detail creation error"
                             )
-                            error_logger.error(f"{str(e)}")
+                            error_logger.exception(f"{str(e)}")
                     except Exception as e:
                         api_logger.error("Transaction creation error")
-                        error_logger.error(f"{str(e)}")
+                        error_logger.exception(f"{str(e)}")
                 api_logger.debug("Transaction(s) created successfully")
                 return True
             except Exception as e:
@@ -250,7 +250,7 @@ def create_transactions(
                 api_logger.info("Transaction chunks created successfully")
             except Exception as e:
                 api_logger.error("Transaction chunks not created")
-                error_logger.error(f"{str(e)}")
+                error_logger.exception(f"{str(e)}")
             # Create transaction details
             for trans_detail in transaction_details:
                 transaction_index = trans_detail["transaction_index"]
@@ -306,11 +306,11 @@ def create_transactions(
                 )
             except Exception as e:
                 api_logger.error("Transaction detail chunks not created")
-                error_logger.error(f"{str(e)}")
+                error_logger.exception(f"{str(e)}")
             api_logger.info("Transaction(s) created successfully")
             # update_running_totals()
             return True
         except Exception as e:
             api_logger.error("Transaction(s) not created")
-            error_logger.error(f"{str(e)}")
+            error_logger.exception(f"{str(e)}")
             return False
