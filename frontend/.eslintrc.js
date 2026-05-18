@@ -14,6 +14,9 @@ module.exports = {
     ecmaVersion: 2021, // Support for ES2021 features
     sourceType: "module", // Use ECMAScript modules
   },
+  globals: {
+    __OPT_FEATURES__: "readonly",
+  },
   rules: {
     "no-console": process.env.NODE_ENV === "production" ? "warn" : "off", // Warn on console in production
     "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off", // Warn on debugger in production
