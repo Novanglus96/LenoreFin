@@ -198,6 +198,16 @@
             ></v-list-item>
           </template>
         </v-tooltip>
+        <v-tooltip text="Logs">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              prepend-icon="mdi-file-document-outline"
+              to="/logs"
+              v-bind="props"
+              color="selected"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
         <v-tooltip text="Settings">
           <template v-slot:activator="{ props }">
             <v-list-item
