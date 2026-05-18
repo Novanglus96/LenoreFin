@@ -1,3 +1,10 @@
+# [1.4.0-alpha.24](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.23...v1.4.0-alpha.24) (2026-05-18)
+
+
+### Bug Fixes
+
+* mobile menu admin links, auth gating, and version placement ([#116](https://github.com/Novanglus96/LenoreFin/issues/116)) ([a78c83f](https://github.com/Novanglus96/LenoreFin/commit/a78c83fdaa65469559c301be8bee0e5ea9c84136))
+
 # [1.4.0-alpha.23](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.22...v1.4.0-alpha.23) (2026-05-18)
 
 
