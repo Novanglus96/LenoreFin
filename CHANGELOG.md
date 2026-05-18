@@ -1,3 +1,10 @@
+# [1.4.0-alpha.23](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.22...v1.4.0-alpha.23) (2026-05-18)
+
+
+### Features
+
+* logging improvements — traceback capture, log viewer, bundle download ([#115](https://github.com/Novanglus96/LenoreFin/issues/115)) ([42e7594](https://github.com/Novanglus96/LenoreFin/commit/42e7594fbb6c0ae6fa77836e87d14e3aae78bdd2))
+
 # [1.4.0-alpha.22](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.21...v1.4.0-alpha.22) (2026-05-18)
 
 
