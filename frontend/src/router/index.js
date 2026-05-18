@@ -18,6 +18,7 @@ import NotesView from "@/views/NotesView.vue";
 import RetirementView from "@/views/RetirementView.vue";
 import BudgetsView from "@/views/BudgetsView.vue";
 import BackupView from "@/views/BackupView.vue";
+import LogsView from "@/views/LogsView.vue";
 import LoginView from "@/views/LoginView.vue";
 
 const routes = [
@@ -116,6 +117,11 @@ const routes = [
     path: "/backup",
     name: "backup",
     component: BackupView,
+  },
+  {
+    path: "/logs",
+    name: "logs",
+    component: LogsView,
   },
   {
     path: "/:catchAll(.*)",

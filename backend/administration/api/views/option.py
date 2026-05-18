@@ -47,7 +47,7 @@ def update_option(request, option_id: int, payload: OptionIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -76,7 +76,7 @@ def get_option(request, option_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -100,7 +100,7 @@ def list_options(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -130,5 +130,5 @@ def delete_option(request, option_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

@@ -36,7 +36,7 @@ def create_paycheck(request, payload: PaycheckIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Paycheck not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -77,7 +77,7 @@ def update_paycheck(request, paycheck_id: int, payload: PaycheckIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Paycheck not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -106,7 +106,7 @@ def get_paycheck(request, paycheck_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Paycheck not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -130,7 +130,7 @@ def list_paychecks(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Paycheck list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -160,5 +160,5 @@ def delete_paycheck(request, paycheck_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Paycheck not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

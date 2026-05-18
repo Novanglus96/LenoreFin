@@ -46,7 +46,7 @@ def create_reminder(request, payload: ReminderIn):
         raise
     except Exception as e:
         api_logger.error("Reminder not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -74,7 +74,7 @@ def update_reminder(request, reminder_id: int, payload: ReminderIn):
         return {"success": True}
     except Exception as e:
         api_logger.error("Reminder not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -88,7 +88,7 @@ def get_reminder(request, reminder_id: int):
         raise HttpError(404, "Reminder not found")
     except Exception as e:
         api_logger.error("Reminder not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -100,7 +100,7 @@ def list_reminders(request):
         return qs
     except Exception as e:
         api_logger.error("Reminder list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -114,7 +114,7 @@ def delete_reminder(request, reminder_id: int):
         return {"success": True}
     except Exception as e:
         api_logger.error("Reminder not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -129,5 +129,5 @@ def add_reminder_trans(request, reminder_id: int, payload: ReminderTransIn):
         raise HttpError(404, "Reminder not found")
     except Exception as e:
         api_logger.error("Reminder transaction not added")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record update error : {str(e)}")

@@ -43,19 +43,19 @@ def create_contribution(request, payload: ContributionIn):
             api_logger.error(
                 f"Contribution not created : contribution exists ({payload.contribution})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Contribution not created : contribution exists ({payload.contribution})"
             )
             raise HttpError(400, "Conitribution already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Contribution not created : db integrity error")
-            error_logger.error("Contribution not created : db integrity error")
+            error_logger.exception("Contribution not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -95,19 +95,19 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
             api_logger.error(
                 f"Contribution not updated : contribution exists ({payload.contribution})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Contribution not updated : contribution exists ({payload.contribution})"
             )
             raise HttpError(400, "Contribution already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Contribution not updated : db integrity error")
-            error_logger.error("Contribution not updated : db integrity error")
+            error_logger.exception("Contribution not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -138,7 +138,7 @@ def get_contribution(request, contribution_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -182,7 +182,7 @@ def list_contributions(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -213,5 +213,5 @@ def delete_contribution(request, contribution_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Contribution not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

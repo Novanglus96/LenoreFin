@@ -99,7 +99,7 @@ def create_transaction(request, payload: TransactionIn):
         raise
     except Exception as e:
         api_logger.error("Transaction not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record creation error : {str(e)}")
 
 
@@ -139,7 +139,7 @@ def multiedit_transactions(request, payload: MultiTranscationDate):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Tranasction dates not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Transaction dates error: {str(e)}")
 
 
@@ -195,7 +195,7 @@ def clear_transaction(request, payload: TransactionList):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction clear error")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Transaction clear error: {str(e)}")
 
 
@@ -230,7 +230,7 @@ def get_transaction(request, transaction_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -260,7 +260,7 @@ def delete_transaction(request, payload: TransactionList):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -300,7 +300,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         raise HttpError(404, "Transaction not found")
     except Exception as e:
         api_logger.error("Transaction not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
@@ -495,5 +495,5 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

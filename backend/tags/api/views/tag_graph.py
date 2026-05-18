@@ -136,5 +136,5 @@ def list_transactions_bytag(request, tag: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Tag details not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

@@ -55,12 +55,12 @@ def create_budget(request, payload: BudgetIn):
         else:
             # Log other types of integry errors
             api_logger.error("Budget not created : db integrity error")
-            error_logger.error("Budget not created : db integrity error")
+            error_logger.exception("Budget not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -105,19 +105,19 @@ def update_budget(request, budget_id: int, payload: BudgetIn):
             api_logger.error(
                 f"Budget not updated : budget exists ({payload.budget})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Budget not updated : budget exists ({payload.budget})"
             )
             raise HttpError(400, "Budget already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Budget not updated : db integrity error")
-            error_logger.error("Budget not updated : db integrity error")
+            error_logger.exception("Budget not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -146,7 +146,7 @@ def get_budget(request, budget_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -216,7 +216,7 @@ def list_budgets(
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -247,7 +247,7 @@ def delete_budget(request, budget_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 

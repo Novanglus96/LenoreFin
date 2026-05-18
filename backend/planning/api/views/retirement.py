@@ -35,7 +35,7 @@ def get_forecast(request):
         return ForecastOut(labels=domain.labels, datasets=datasets)
     except Exception as e:
         api_logger.error("Forecast not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error : {str(e)}")
 
 
@@ -47,5 +47,5 @@ def get_transactions(request):
         return transactions
     except Exception as e:
         api_logger.error("Retirement transactions not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error : {str(e)}")

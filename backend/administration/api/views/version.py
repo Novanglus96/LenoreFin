@@ -36,5 +36,5 @@ def list_version(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Version not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

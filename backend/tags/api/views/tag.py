@@ -36,15 +36,15 @@ def create_tag_view(request, payload: TagIn):
         return {"id": tag_id}
     except TagAlreadyExists as e:
         api_logger.error(f"Tag not created : {e}")
-        error_logger.error(str(e))
+        error_logger.exception(str(e))
         raise HttpError(400, "Tag already exists")
     except InvalidTagData as e:
         api_logger.error(f"Tag not created : {e}")
-        error_logger.error(str(e))
+        error_logger.exception(str(e))
         raise HttpError(500, "Invalid tag data")
     except Exception as e:
         api_logger.error("Tag not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record creation error : {str(e)}")
 
 
@@ -65,11 +65,11 @@ def update_tag_view(request, tag_id: int, payload: TagIn):
         raise HttpError(404, "Tag not found")
     except TagAlreadyExists as e:
         api_logger.error(f"Tag not updated : {e}")
-        error_logger.error(str(e))
+        error_logger.exception(str(e))
         raise HttpError(400, "Tag already exists")
     except Exception as e:
         api_logger.error("Tag not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
@@ -81,7 +81,7 @@ def get_tag(request, tag_id: int):
         return tag
     except Exception as e:
         api_logger.error("Tag not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -113,7 +113,7 @@ def list_tags(request, query: TagQuery = Query(...)):
         return qs
     except Exception as e:
         api_logger.error("Tag list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -131,5 +131,5 @@ def delete_tag(request, tag_id: int):
         raise
     except Exception as e:
         api_logger.error("Tag not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

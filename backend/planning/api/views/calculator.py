@@ -50,7 +50,7 @@ def create_calculation_rule(request, payload: CalculationRuleIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Calculation rule not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -89,7 +89,7 @@ def update_calculation_rule(
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Calculation rule not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -115,7 +115,7 @@ def list_calculation_rules(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Calculation rule list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -148,7 +148,7 @@ def delete_calculation_rule(request, calculation_rule_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Calculation rule not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -210,5 +210,5 @@ def get_calculator(request, calculation_rule_id: int, timeframe: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Calculator not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
