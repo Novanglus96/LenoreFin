@@ -1,3 +1,10 @@
+# [1.4.0-alpha.21](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.20...v1.4.0-alpha.21) (2026-05-18)
+
+
+### Features
+
+* migrate to Django 5.2 LTS ([#113](https://github.com/Novanglus96/LenoreFin/issues/113)) ([0dcd127](https://github.com/Novanglus96/LenoreFin/commit/0dcd127f9d5dae741fd3d32f2cf1672354c25aae))
+
 # [1.4.0-alpha.20](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.19...v1.4.0-alpha.20) (2026-05-18)
 
 
