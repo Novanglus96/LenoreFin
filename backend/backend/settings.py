@@ -191,31 +191,32 @@ LOGGING = {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": str(LOG_DIR / "db.log"),
             "maxBytes": 1024 * 1024 * 5,  # 5MB
-            "backupCount": 5,
+            "backupCount": 2,
             "formatter": "standard",
             "level": DB_LOG_LEVEL,
         },
         "api_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": str(LOG_DIR / "api.log"),
-            "maxBytes": 1024 * 1024 * 5,
-            "backupCount": 5,
+            "maxBytes": 1024 * 1024 * 5,  # 5MB, 2 backups (~10MB max)
+            "backupCount": 2,
             "formatter": "standard",
             "level": DB_LOG_LEVEL,
         },
         "error_file_handler": {
-            "class": "logging.handlers.RotatingFileHandler",
+            "class": "logging.handlers.TimedRotatingFileHandler",
             "filename": str(LOG_DIR / "error.log"),
-            "maxBytes": 1024 * 1024 * 5,
-            "backupCount": 5,
+            "when": "midnight",
+            "interval": 1,
+            "backupCount": 30,  # 30 days of error history
             "formatter": "detailed",
             "level": DB_LOG_LEVEL,
         },
         "task_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": str(LOG_DIR / "task.log"),
-            "maxBytes": 1024 * 1024 * 5,
-            "backupCount": 5,
+            "maxBytes": 1024 * 1024 * 5,  # 5MB, 2 backups (~10MB max)
+            "backupCount": 2,
             "formatter": "standard",
             "level": DB_LOG_LEVEL,
         },
