@@ -9,8 +9,6 @@ from transactions.models import (
     ForecastCacheTransactionDetail,
 )
 from django.db import connection
-from django.core.management import call_command
-from io import StringIO
 import logging
 
 api_logger = logging.getLogger("api")
@@ -59,9 +57,6 @@ class Command(BaseCommand):
 
 
 def reset_ids_for_model(app_label, model_label):
-    out = StringIO()
-    call_command("sqlsequencereset", app_label, stdout=out)
-    sql = out.getvalue()
-
+    table = f"{app_label}_{model_label}"
     with connection.cursor() as cursor:
-        cursor.execute(sql)
+        cursor.execute(f"ALTER SEQUENCE {table}_id_seq RESTART WITH 1")
