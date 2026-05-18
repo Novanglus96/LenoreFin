@@ -268,102 +268,154 @@ Q_CLUSTER = {
 }
 
 JAZZMIN_SETTINGS = {
-    "show_ui_builder": bool(int(os.environ.get("DEBUG"))),
-    # title of the window (Will default to current_admin_site.site_title if absent or None)
-    "site_title": "Admin",
-    # Title on the login screen (19 chars max) (defaults to current_admin_site.site_header if absent or None)
-    "site_header": "Admin",
-    # Title on the brand (19 chars max) (defaults to current_admin_site.site_header if absent or None)
-    "site_brand": "Admin",
-    # Logo to use for your site, must be present in static files, used for brand on top left
+    "show_ui_builder": DEBUG,
+    "site_title": "LenoreFin",
+    "site_header": "LenoreFin",
+    "site_brand": "LenoreFin",
     "site_logo": "logov2.png",
-    # Logo to use for your site, must be present in static files, used for login form logo (defaults to site_logo)
     "login_logo": None,
-    # Logo to use for login form in dark themes (defaults to login_logo)
     "login_logo_dark": None,
-    # CSS classes that are applied to the logo above
     "site_logo_classes": "img-fluid",
-    # Relative path to a favicon for your site, will default to site_logo if absent (ideally 32x32 px)
     "site_icon": "favicon.ico",
-    # Welcome text on the login screen
     "welcome_sign": "Please log in",
-    # Copyright on the footer
     "copyright": "John Adams",
-    # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
     "user_avatar": None,
     ############
     # Top Menu #
     ############
-    # Links to put along the top menu
     "topmenu_links": [
-        # external url that opens in a new window (Permissions can be added)
-        {
-            "name": "Back to Site",
-            "url": "/",
-            "new_window": False,
-        },
+        {"name": "Back to Site", "url": "/", "new_window": False},
     ],
     #############
     # User Menu #
     #############
-    # Additional links to include in the user menu on the top right ("app" url type is not allowed)
     "usermenu_links": [
-        {
-            "name": "Back to Site",
-            "url": "/",
-            "new_window": False,
-        },
+        {"name": "Back to Site", "url": "/", "new_window": False},
     ],
     "icons": {
-        "accounts.AccountType": "fas fa-university",
-        "accounts.Account": "fas fa-university",
-        "accounts.Bank": "fas fa-university",
-        "accounts.Reward": "fas fa-university",
-        "administration.ErrorLevel": "fas fa-exclamation-triangle",
-        "administration.LogEntry": "fas fa-clipboard-list",
-        "administration.Message": "fas fa-comment",
-        "administration.Option": "fas fa-cog",
-        "administration.Payee": "fas fa-user-circle",
-        "administration.Version": "fas fa-info",
-        "administration.DescriptionHistory": "fas fa-clipboard-list",
+        # Accounts
+        "accounts.Bank": "fas fa-landmark",
+        "accounts.Account": "fas fa-wallet",
+        "accounts.AccountType": "fas fa-layer-group",
+        "accounts.Reward": "fas fa-star",
+        # Administration
+        "administration.Option": "fas fa-sliders-h",
+        "administration.Payee": "fas fa-user-tie",
+        "administration.Message": "fas fa-envelope",
+        "administration.Version": "fas fa-code-branch",
+        "administration.DescriptionHistory": "fas fa-history",
+        "administration.GraphType": "fas fa-chart-bar",
+        # Auth
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
-        "planning.CalculationRule": "fas fa-folder",
-        "planning.ChristmasGift": "fas fa-folder",
-        "planning.ContribRule": "fas fa-folder",
-        "planning.Contribution": "fas fa-folder",
-        "planning.Note": "fas fa-folder",
-        "planning.Budget": "fas fa-folder",
-        "reminders.ReminderExclusion": "fas fa-bell-slash",
+        # Planning
+        "planning.Budget": "fas fa-dollar-sign",
+        "planning.Contribution": "fas fa-piggy-bank",
+        "planning.ContribRule": "fas fa-ruler-combined",
+        "planning.Note": "fas fa-sticky-note",
+        "planning.CalculationRule": "fas fa-calculator",
+        "planning.ChristmasGift": "fas fa-gift",
+        # Reminders
         "reminders.Reminder": "fas fa-bell",
         "reminders.Repeat": "fas fa-redo",
+        "reminders.ReminderExclusion": "fas fa-bell-slash",
+        # Tags
         "tags.TagType": "fas fa-tags",
-        "tags.Tag": "fas fa-tags",
-        "tags.MainTag": "fas fa-tags",
-        "tags.SubTag": "fas fa-tags",
-        "transactions.Paycheck": "fas fa-money-check",
-        "transactions.TransactionStatus": "fas fa-money-check",
-        "transactions.TransactionType": "fas fa-money-check",
-        "transactions.Transaction": "fas fa-money-check",
-        "transactions.TransactionDetail": "fas fa-money-check",
+        "tags.MainTag": "fas fa-tag",
+        "tags.SubTag": "fas fa-tag",
+        "tags.Tag": "fas fa-tag",
+        # Transactions
+        "transactions.Transaction": "fas fa-exchange-alt",
+        "transactions.Paycheck": "fas fa-money-bill-wave",
+        "transactions.TransactionType": "fas fa-list-ul",
+        "transactions.TransactionStatus": "fas fa-traffic-light",
+        "transactions.TransactionDetail": "fas fa-receipt",
+        "transactions.ReminderCacheTransaction": "fas fa-clipboard-list",
+        "transactions.ForecastCacheTransaction": "fas fa-chart-line",
+        "transactions.ReminderCacheTransactionDetail": "fas fa-clipboard",
+        "transactions.ForecastCacheTransactionDetail": "fas fa-chart-area",
+        # Imports
+        "imports.FileImport": "fas fa-file-import",
+        "imports.TransactionImport": "fas fa-file-alt",
+        "imports.TransactionImportTag": "fas fa-tag",
+        "imports.TransactionImportError": "fas fa-exclamation-triangle",
+        "imports.TypeMapping": "fas fa-random",
+        "imports.StatusMapping": "fas fa-random",
+        "imports.AccountMapping": "fas fa-random",
+        "imports.TagMapping": "fas fa-random",
+        # Django Q
+        "django_q.Success": "fas fa-check-circle",
+        "django_q.Failure": "fas fa-times-circle",
+        "django_q.Schedule": "fas fa-clock",
+        "django_q.OrmQ": "fas fa-tasks",
     },
-    # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-chevron-right",
     "order_with_respect_to": [
+        # Accounts
         "accounts",
         "accounts.Bank",
         "accounts.Account",
         "accounts.AccountType",
+        "accounts.Reward",
+        # Transactions
         "transactions",
         "transactions.Transaction",
+        "transactions.Paycheck",
+        "transactions.TransactionType",
+        "transactions.TransactionStatus",
+        "transactions.TransactionDetail",
+        "transactions.ReminderCacheTransaction",
+        "transactions.ReminderCacheTransactionDetail",
+        "transactions.ForecastCacheTransaction",
+        "transactions.ForecastCacheTransactionDetail",
+        # Reminders
         "reminders",
+        "reminders.Reminder",
+        "reminders.Repeat",
+        "reminders.ReminderExclusion",
+        # Tags
         "tags",
         "tags.Tag",
+        "tags.MainTag",
+        "tags.SubTag",
         "tags.TagType",
+        # Planning
         "planning",
+        "planning.Budget",
+        "planning.Contribution",
+        "planning.ContribRule",
+        "planning.Note",
+        "planning.CalculationRule",
+        "planning.ChristmasGift",
+        # Administration
+        "administration",
         "administration.Option",
+        "administration.Payee",
+        "administration.Version",
+        "administration.Message",
+        "administration.DescriptionHistory",
+        "administration.GraphType",
+        # Auth
+        "auth",
+        "auth.User",
+        "auth.Group",
+        # Imports
+        "imports",
         "imports.FileImport",
+        "imports.TransactionImport",
+        "imports.TransactionImportTag",
+        "imports.TransactionImportError",
+        "imports.TypeMapping",
+        "imports.StatusMapping",
+        "imports.AccountMapping",
+        "imports.TagMapping",
+        # Tasks
+        "django_q",
+        "django_q.Schedule",
+        "django_q.Success",
+        "django_q.Failure",
+        "django_q.OrmQ",
     ],
     "changeform_format": "collapsible",
 }
