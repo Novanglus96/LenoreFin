@@ -71,9 +71,7 @@
               ></v-list-item>
             </template>
             <v-divider class="my-1"></v-divider>
-            <v-list-item>
-              <span class="text-caption text-medium-emphasis">v{{ version }}</span>
-            </v-list-item>
+            <div class="text-center text-caption text-medium-emphasis py-2">v{{ version }}</div>
           </v-list>
         </v-menu>
         <v-img :width="132" aspect-ratio="1/1" cover src="logov2.png"></v-img>
