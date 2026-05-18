@@ -49,11 +49,36 @@
               color="selected"
               title="Payees"
             ></v-list-item>
+            <template v-if="authStore.isFullAccess">
+              <v-divider class="my-1"></v-divider>
+              <v-list-item
+                prepend-icon="mdi-database-arrow-up"
+                to="/backup"
+                color="selected"
+                title="Backup & Restore"
+              ></v-list-item>
+              <v-list-item
+                prepend-icon="mdi-file-document-outline"
+                to="/logs"
+                color="selected"
+                title="Logs"
+              ></v-list-item>
+              <v-list-item
+                prepend-icon="mdi-cog"
+                href="/admin"
+                color="selected"
+                title="Settings"
+              ></v-list-item>
+            </template>
+            <v-divider class="my-1"></v-divider>
+            <v-list-item>
+              <span class="text-caption text-medium-emphasis">v{{ version }}</span>
+            </v-list-item>
           </v-list>
         </v-menu>
         <v-img :width="132" aspect-ratio="1/1" cover src="logov2.png"></v-img>
       </template>
-      <v-app-bar-title>
+      <v-app-bar-title v-if="!isMobile">
         <span class="text-caption font-weight-bold">v{{ version }}</span>
       </v-app-bar-title>
       <v-btn
@@ -188,7 +213,7 @@
             ></v-list-item>
           </template>
         </v-tooltip>
-        <v-tooltip text="Backup & Restore">
+        <v-tooltip text="Backup & Restore" v-if="authStore.isFullAccess">
           <template v-slot:activator="{ props }">
             <v-list-item
               prepend-icon="mdi-database-arrow-up"
@@ -198,7 +223,7 @@
             ></v-list-item>
           </template>
         </v-tooltip>
-        <v-tooltip text="Logs">
+        <v-tooltip text="Logs" v-if="authStore.isFullAccess">
           <template v-slot:activator="{ props }">
             <v-list-item
               prepend-icon="mdi-file-document-outline"
@@ -208,7 +233,7 @@
             ></v-list-item>
           </template>
         </v-tooltip>
-        <v-tooltip text="Settings">
+        <v-tooltip text="Settings" v-if="authStore.isFullAccess">
           <template v-slot:activator="{ props }">
             <v-list-item
               prepend-icon="mdi-cog"
