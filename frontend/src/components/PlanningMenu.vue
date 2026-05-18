@@ -43,7 +43,10 @@
   const transactions_store = useTransactionsStore();
   const authStore = useAuthStore();
   const router = useRouter();
-  const optFeatures = import.meta.env.VITE_OPT_FEATURES === "true";
+  const runtimeOpt = window.__APP_CONFIG__?.VITE_OPT_FEATURES;
+  const optFeatures = (runtimeOpt && runtimeOpt !== "__VITE_OPT_FEATURES__")
+    ? runtimeOpt === "true"
+    : __OPT_FEATURES__;
 
   const planning_menu = ref([
     {
