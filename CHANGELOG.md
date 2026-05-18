@@ -1,3 +1,10 @@
+# [1.4.0-alpha.18](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.17...v1.4.0-alpha.18) (2026-05-18)
+
+
+### Bug Fixes
+
+* read VITE_OPT_FEATURES from process.env instead of .env file ([#109](https://github.com/Novanglus96/LenoreFin/issues/109)) ([057f2a5](https://github.com/Novanglus96/LenoreFin/commit/057f2a52c5511724f17b1e1a10b4728cf46f32ea))
+
 # [1.4.0-alpha.17](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.16...v1.4.0-alpha.17) (2026-05-14)
 
 
