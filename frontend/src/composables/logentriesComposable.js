@@ -1,3 +1,4 @@
+import { unref } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
@@ -27,11 +28,11 @@ export function useLogs({ logType, page, pageSize, level, search } = {}) {
     queryKey: ["logs", logType, page, pageSize, level, search],
     queryFn: () =>
       getLogsFunction({
-        logType: logType?.value ?? logType ?? "error",
-        page: page?.value ?? page ?? 1,
-        pageSize: pageSize?.value ?? pageSize ?? 100,
-        level: level?.value ?? level ?? null,
-        search: search?.value ?? search ?? null,
+        logType: unref(logType) ?? "error",
+        page: unref(page) ?? 1,
+        pageSize: unref(pageSize) ?? 100,
+        level: unref(level) ?? null,
+        search: unref(search) ?? null,
       }),
     client: queryClient,
   });
