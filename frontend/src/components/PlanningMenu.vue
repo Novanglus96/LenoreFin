@@ -43,7 +43,7 @@
   const transactions_store = useTransactionsStore();
   const authStore = useAuthStore();
   const router = useRouter();
-  const optFeatures = import.meta.env.VITE_OPT_FEATURES === "true";
+  const optFeatures = __OPT_FEATURES__;
 
   const planning_menu = ref([
     {

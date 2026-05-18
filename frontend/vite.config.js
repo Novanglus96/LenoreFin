@@ -37,7 +37,7 @@ export default defineConfig({
     __VUE_PROD_DEVTOOLS__: false,
     __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
     "import.meta.env.VITE_APP_VERSION": JSON.stringify(pkg.version),
-    "import.meta.env.VITE_OPT_FEATURES": JSON.stringify(process.env.VITE_OPT_FEATURES || "false"),
+    __OPT_FEATURES__: process.env.VITE_OPT_FEATURES === "true",
   },
   resolve: {
     alias: {
