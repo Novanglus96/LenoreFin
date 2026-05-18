@@ -44,6 +44,7 @@
           item-value="value"
           density="compact"
           variant="outlined"
+          multiple
           clearable
           hide-details
         ></v-select>
@@ -138,7 +139,7 @@
 
   const activeTab = ref("error");
   const currentPage = ref(1);
-  const selectedLevel = ref(null);
+  const selectedLevel = ref([]);
   const searchText = ref("");
   const appliedSearch = ref("");
   const isDownloading = ref(false);
@@ -171,7 +172,7 @@
 
   watch(activeTab, () => {
     currentPage.value = 1;
-    selectedLevel.value = null;
+    selectedLevel.value = [];
     searchText.value = "";
     appliedSearch.value = "";
   });

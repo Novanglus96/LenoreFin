@@ -13,7 +13,8 @@ function handleApiError(error, message) {
 async function getLogsFunction({ logType = "error", page = 1, pageSize = 100, level = null, search = null } = {}) {
   try {
     const params = { log_type: logType, page, page_size: pageSize };
-    if (level) params.level = level;
+    const levelList = Array.isArray(level) ? level : (level ? [level] : []);
+    if (levelList.length > 0) params.level = levelList.join(",");
     if (search) params.search = search;
     const response = await apiClient.get("/administration/logs", { params });
     return response.data;
@@ -48,7 +49,7 @@ export async function downloadLogBundle() {
     const url = URL.createObjectURL(response.data);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "lenore_logs.zip";
+    a.download = "lenorefin_logs.zip";
     a.click();
     URL.revokeObjectURL(url);
   } catch (error) {

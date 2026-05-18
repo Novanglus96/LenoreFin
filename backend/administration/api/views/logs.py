@@ -65,16 +65,21 @@ def get_logs(
 ):
     if log_type not in VALID_LOG_TYPES:
         raise HttpError(400, f"Invalid log_type. Choose from: {', '.join(sorted(VALID_LOG_TYPES))}")
-    if level and level.upper() not in VALID_LEVELS:
-        raise HttpError(400, f"Invalid level. Choose from: {', '.join(sorted(VALID_LEVELS))}")
+
+    selected_levels = set()
+    if level:
+        selected_levels = {l.strip().upper() for l in level.split(",")}
+        invalid = selected_levels - VALID_LEVELS
+        if invalid:
+            raise HttpError(400, f"Invalid level(s): {', '.join(sorted(invalid))}. Choose from: {', '.join(sorted(VALID_LEVELS))}")
 
     try:
         entries = _parse_log_file(log_type)
         # Newest first
         entries = list(reversed(entries))
 
-        if level:
-            entries = [e for e in entries if e["level"] == level.upper()]
+        if selected_levels:
+            entries = [e for e in entries if e["level"] in selected_levels]
         if search:
             search_lower = search.lower()
             entries = [e for e in entries if search_lower in e["message"].lower()]
@@ -111,7 +116,7 @@ def download_log_bundle(request):
 
         buffer.seek(0)
         response = HttpResponse(buffer.read(), content_type="application/zip")
-        response["Content-Disposition"] = 'attachment; filename="lenore_logs.zip"'
+        response["Content-Disposition"] = 'attachment; filename="lenorefin_logs.zip"'
         api_logger.info("Log bundle downloaded")
         return response
     except Exception as e:
