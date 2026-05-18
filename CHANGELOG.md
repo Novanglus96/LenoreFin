@@ -1,3 +1,10 @@
+# [1.4.0-alpha.20](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.19...v1.4.0-alpha.20) (2026-05-18)
+
+
+### Bug Fixes
+
+* declare __OPT_FEATURES__ as ESLint global to fix production build ([#111](https://github.com/Novanglus96/LenoreFin/issues/111)) ([6995913](https://github.com/Novanglus96/LenoreFin/commit/699591343113d5b840af7c784f3b78f1d0cea31e))
+
 # [1.4.0-alpha.19](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.18...v1.4.0-alpha.19) (2026-05-18)
 
 
