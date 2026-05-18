@@ -1,3 +1,10 @@
+# [1.4.0-alpha.22](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.21...v1.4.0-alpha.22) (2026-05-18)
+
+
+### Bug Fixes
+
+* patch frontend security vulnerabilities and update patch/minor deps ([#114](https://github.com/Novanglus96/LenoreFin/issues/114)) ([6b85e9f](https://github.com/Novanglus96/LenoreFin/commit/6b85e9f4a87af58549734b81a17c30db64703c7d))
+
 # [1.4.0-alpha.21](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.20...v1.4.0-alpha.21) (2026-05-18)
 
 
