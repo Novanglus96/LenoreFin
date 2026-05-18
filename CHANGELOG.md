@@ -1,3 +1,10 @@
+# [1.4.0-alpha.19](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.18...v1.4.0-alpha.19) (2026-05-18)
+
+
+### Bug Fixes
+
+* use plain global constant for opt features flag ([#110](https://github.com/Novanglus96/LenoreFin/issues/110)) ([e6afd23](https://github.com/Novanglus96/LenoreFin/commit/e6afd23ec21af0cd8383d7757ded5616bbf73b9c))
+
 # [1.4.0-alpha.18](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.17...v1.4.0-alpha.18) (2026-05-18)
 
 
