@@ -1,4 +1,4 @@
-Django==4.2.3
+Django==5.2
 gunicorn==26.0.0
 psycopg2-binary==2.9.12
 markdown==3.10.2
