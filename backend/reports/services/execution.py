@@ -151,6 +151,8 @@ def run_report(
     show_transactions: bool,
     show_subtotal: bool,
     include_pending: bool,
+    period2_date_from: Optional[date] = None,
+    period2_date_to: Optional[date] = None,
 ):
     start, end = compute_date_range(date_range_type, date_from, date_to)
     status_ids = _get_status_ids(include_pending)
@@ -164,6 +166,8 @@ def run_report(
         return _run_comparison(
             start, end, status_ids, account_ids, tag_selections,
             group_by, show_subtotal,
+            period2_date_from=period2_date_from,
+            period2_date_to=period2_date_to,
         )
 
 
@@ -230,8 +234,12 @@ def _run_totals(start, end, status_ids, account_ids, tag_selections, group_by, s
     return result
 
 
-def _run_comparison(start, end, status_ids, account_ids, tag_selections, group_by, show_subtotal):
-    prior_start, prior_end = _shift_back_one_year(start, end)
+def _run_comparison(start, end, status_ids, account_ids, tag_selections, group_by, show_subtotal,
+                    period2_date_from=None, period2_date_to=None):
+    if period2_date_from and period2_date_to:
+        prior_start, prior_end = period2_date_from, period2_date_to
+    else:
+        prior_start, prior_end = _shift_back_one_year(start, end)
     base1 = _build_base_qs(start, end, status_ids, account_ids)
     base2 = _build_base_qs(prior_start, prior_end, status_ids, account_ids)
     rows = []

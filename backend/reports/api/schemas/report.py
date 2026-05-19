@@ -24,6 +24,8 @@ class ReportConfigIn(Schema):
     date_range_type: str
     date_from: Optional[date] = None
     date_to: Optional[date] = None
+    period2_date_from: Optional[date] = None
+    period2_date_to: Optional[date] = None
     account_ids: List[int] = []
     group_by: str
     show_transactions: bool = False
@@ -40,6 +42,8 @@ class ReportConfigOut(Schema):
     date_range_type: str
     date_from: Optional[date] = None
     date_to: Optional[date] = None
+    period2_date_from: Optional[date] = None
+    period2_date_to: Optional[date] = None
     account_ids: List[int]
     group_by: str
     show_transactions: bool
@@ -57,6 +61,8 @@ class ReportRunIn(Schema):
     date_range_type: str
     date_from: Optional[date] = None
     date_to: Optional[date] = None
+    period2_date_from: Optional[date] = None
+    period2_date_to: Optional[date] = None
     account_ids: List[int] = []
     group_by: str
     show_transactions: bool = False

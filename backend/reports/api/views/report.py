@@ -30,6 +30,8 @@ def _serialize_config(config: ReportConfig) -> dict:
         "date_range_type": config.date_range_type,
         "date_from": config.date_from,
         "date_to": config.date_to,
+        "period2_date_from": config.period2_date_from,
+        "period2_date_to": config.period2_date_to,
         "account_ids": list(config.accounts.values_list("id", flat=True)),
         "group_by": config.group_by,
         "show_transactions": config.show_transactions,
@@ -68,7 +70,8 @@ def _apply_tag_selections(config: ReportConfig, selections: list):
 
 def _run_from_params(
     report_type, date_range_type, group_by, date_from, date_to,
-    account_ids, tag_selections_raw, show_transactions, show_subtotal, include_pending
+    account_ids, tag_selections_raw, show_transactions, show_subtotal, include_pending,
+    period2_date_from=None, period2_date_to=None,
 ):
     valid_types = {"TOTALS", "COMPARISON"}
     valid_ranges = {"THIS_YEAR", "LAST_YEAR", "THIS_QUARTER", "LAST_QUARTER", "TRAILING_12", "CUSTOM"}
@@ -99,6 +102,8 @@ def _run_from_params(
         show_transactions=show_transactions,
         show_subtotal=show_subtotal,
         include_pending=include_pending,
+        period2_date_from=period2_date_from,
+        period2_date_to=period2_date_to,
     )
 
 
@@ -133,6 +138,8 @@ def create_report(request, payload: ReportConfigIn):
             date_range_type=payload.date_range_type,
             date_from=payload.date_from,
             date_to=payload.date_to,
+            period2_date_from=payload.period2_date_from,
+            period2_date_to=payload.period2_date_to,
             group_by=payload.group_by,
             show_transactions=payload.show_transactions,
             show_subtotal=payload.show_subtotal,
@@ -165,6 +172,8 @@ def run_adhoc_report(request, payload: ReportRunIn):
             show_transactions=payload.show_transactions,
             show_subtotal=payload.show_subtotal,
             include_pending=payload.include_pending,
+            period2_date_from=payload.period2_date_from,
+            period2_date_to=payload.period2_date_to,
         )
         return result
     except HttpError:
@@ -193,6 +202,8 @@ def update_report(request, report_id: int, payload: ReportConfigIn):
         config.date_range_type = payload.date_range_type
         config.date_from = payload.date_from
         config.date_to = payload.date_to
+        config.period2_date_from = payload.period2_date_from
+        config.period2_date_to = payload.period2_date_to
         config.group_by = payload.group_by
         config.show_transactions = payload.show_transactions
         config.show_subtotal = payload.show_subtotal
@@ -243,6 +254,8 @@ def run_saved_report(request, report_id: int):
             show_transactions=config.show_transactions,
             show_subtotal=config.show_subtotal,
             include_pending=config.include_pending,
+            period2_date_from=config.period2_date_from,
+            period2_date_to=config.period2_date_to,
         )
         return result
     except (HttpError, Http404):

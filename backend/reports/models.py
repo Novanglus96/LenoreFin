@@ -30,6 +30,8 @@ class ReportConfig(models.Model):
     date_range_type = models.CharField(max_length=20, choices=DATE_RANGE_CHOICES)
     date_from = models.DateField(null=True, blank=True)
     date_to = models.DateField(null=True, blank=True)
+    period2_date_from = models.DateField(null=True, blank=True)
+    period2_date_to = models.DateField(null=True, blank=True)
     accounts = models.ManyToManyField("accounts.Account", blank=True)
     group_by = models.CharField(max_length=10, choices=GROUP_BY_CHOICES)
     show_transactions = models.BooleanField(default=False)

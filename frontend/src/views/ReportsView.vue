@@ -91,41 +91,67 @@
                 ></v-select>
               </v-col>
 
-              <!-- Date Range -->
-              <v-col cols="12" sm="6" md="3">
-                <v-select
-                  label="Date Range"
-                  v-model="form.date_range_type"
-                  :items="dateRangeOptions"
-                  item-title="label"
-                  item-value="value"
-                  density="comfortable"
-                  variant="outlined"
-                  hide-details
-                ></v-select>
-              </v-col>
-
-              <!-- Custom date range -->
-              <template v-if="form.date_range_type === 'CUSTOM'">
+              <!-- Date Range (TOTALS only) -->
+              <template v-if="form.report_type !== 'COMPARISON'">
                 <v-col cols="12" sm="6" md="3">
-                  <v-text-field
-                    label="From"
-                    v-model="form.date_from"
-                    type="date"
+                  <v-select
+                    label="Date Range"
+                    v-model="form.date_range_type"
+                    :items="dateRangeOptions"
+                    item-title="label"
+                    item-value="value"
                     density="comfortable"
                     variant="outlined"
                     hide-details
-                  ></v-text-field>
+                  ></v-select>
+                </v-col>
+
+                <!-- Custom date range -->
+                <template v-if="form.date_range_type === 'CUSTOM'">
+                  <v-col cols="12" sm="6" md="3">
+                    <v-text-field
+                      label="From"
+                      v-model="form.date_from"
+                      type="date"
+                      density="comfortable"
+                      variant="outlined"
+                      hide-details
+                    ></v-text-field>
+                  </v-col>
+                  <v-col cols="12" sm="6" md="3">
+                    <v-text-field
+                      label="To"
+                      v-model="form.date_to"
+                      type="date"
+                      density="comfortable"
+                      variant="outlined"
+                      hide-details
+                    ></v-text-field>
+                  </v-col>
+                </template>
+              </template>
+
+              <!-- Year pickers (COMPARISON only) -->
+              <template v-if="form.report_type === 'COMPARISON'">
+                <v-col cols="12" sm="6" md="3">
+                  <v-select
+                    label="Year 1 (Primary)"
+                    v-model="form.year1"
+                    :items="yearOptions"
+                    density="comfortable"
+                    variant="outlined"
+                    hide-details
+                  ></v-select>
                 </v-col>
                 <v-col cols="12" sm="6" md="3">
-                  <v-text-field
-                    label="To"
-                    v-model="form.date_to"
-                    type="date"
+                  <v-select
+                    label="Year 2 (Compare Against)"
+                    v-model="form.year2"
+                    :items="yearOptions"
                     density="comfortable"
                     variant="outlined"
                     hide-details
-                  ></v-text-field>
+                  ></v-select>
                 </v-col>
               </template>
 
@@ -170,7 +196,7 @@
                   v-model="form.tag_selections"
                   :items="tagItems"
                   item-title="label"
-                  item-value="key"
+                  item-value="id"
                   :return-object="true"
                   multiple
                   chips
@@ -181,16 +207,25 @@
                   clearable
                 >
                   <template v-slot:chip="{ props, item }">
-                    <v-chip v-bind="props" size="small" :color="tagLevelColor(item.raw.type)">
+                    <v-chip v-bind="props" size="small">
+                      <template v-slot:prepend>
+                        <v-icon
+                          :icon="item.raw.is_system ? 'mdi-tag' : 'mdi-tag-outline'"
+                          :color="tagColor(item.raw.tag_type_id)"
+                          size="x-small"
+                          class="mr-1"
+                        ></v-icon>
+                      </template>
                       {{ item.raw.label }}
                     </v-chip>
                   </template>
                   <template v-slot:item="{ props, item }">
                     <v-list-item v-bind="props">
                       <template v-slot:prepend>
-                        <v-chip size="x-small" :color="tagLevelColor(item.raw.type)" class="mr-2">
-                          {{ tagLevelLabel(item.raw.type) }}
-                        </v-chip>
+                        <v-icon
+                          :icon="item.raw.is_system ? 'mdi-tag' : 'mdi-tag-outline'"
+                          :color="tagColor(item.raw.tag_type_id)"
+                        ></v-icon>
                       </template>
                     </v-list-item>
                   </template>
@@ -306,14 +341,14 @@
                     </td>
                   </tr>
                 </template>
-                <template v-slot:bottom>
-                  <v-divider v-if="results.subtotal !== null && results.subtotal !== undefined"></v-divider>
-                  <div class="d-flex justify-end pa-2 font-weight-bold" v-if="results.subtotal !== null && results.subtotal !== undefined">
-                    <span class="mr-8">Total</span>
-                    <span :class="results.subtotal < 0 ? 'text-error' : 'text-success'">
+                <template v-slot:body.append v-if="results.subtotal !== null && results.subtotal !== undefined">
+                  <tr class="font-weight-bold" style="border-top: 2px solid rgba(128,128,128,0.3)">
+                    <td></td>
+                    <td class="pa-2">Total</td>
+                    <td class="text-end pa-2" :class="results.subtotal < 0 ? 'text-error' : 'text-success'">
                       {{ formatCurrency(results.subtotal) }}
-                    </span>
-                  </div>
+                    </td>
+                  </tr>
                 </template>
               </v-data-table>
 
@@ -328,14 +363,13 @@
                     {{ formatCurrency(item.total) }}
                   </span>
                 </template>
-                <template v-slot:bottom>
-                  <v-divider v-if="results.subtotal !== null && results.subtotal !== undefined"></v-divider>
-                  <div class="d-flex justify-end pa-2 font-weight-bold" v-if="results.subtotal !== null && results.subtotal !== undefined">
-                    <span class="mr-8">Total</span>
-                    <span :class="results.subtotal < 0 ? 'text-error' : 'text-success'">
+                <template v-slot:body.append v-if="results.subtotal !== null && results.subtotal !== undefined">
+                  <tr class="font-weight-bold" style="border-top: 2px solid rgba(128,128,128,0.3)">
+                    <td class="pa-2">Total</td>
+                    <td class="text-end pa-2" :class="results.subtotal < 0 ? 'text-error' : 'text-success'">
                       {{ formatCurrency(results.subtotal) }}
-                    </span>
-                  </div>
+                    </td>
+                  </tr>
                 </template>
               </v-data-table>
             </template>
@@ -362,20 +396,19 @@
                     {{ formatCurrency(item.difference) }}
                   </span>
                 </template>
-                <template v-slot:bottom>
-                  <v-divider v-if="results.subtotal !== null && results.subtotal !== undefined"></v-divider>
-                  <div class="d-flex justify-end pa-2 font-weight-bold" v-if="results.subtotal !== null && results.subtotal !== undefined">
-                    <span class="mr-auto">Total</span>
-                    <span :class="results.subtotal < 0 ? 'text-error' : 'text-success'" class="mr-8">
+                <template v-slot:body.append v-if="results.subtotal !== null && results.subtotal !== undefined">
+                  <tr class="font-weight-bold" style="border-top: 2px solid rgba(128,128,128,0.3)">
+                    <td class="pa-2">Total</td>
+                    <td class="text-end pa-2" :class="results.subtotal < 0 ? 'text-error' : 'text-success'">
                       {{ formatCurrency(results.subtotal) }}
-                    </span>
-                    <span :class="results.subtotal2 < 0 ? 'text-error' : 'text-success'" class="mr-8">
+                    </td>
+                    <td class="text-end pa-2" :class="results.subtotal2 < 0 ? 'text-error' : 'text-success'">
                       {{ formatCurrency(results.subtotal2) }}
-                    </span>
-                    <span :class="(results.subtotal - results.subtotal2) < 0 ? 'text-error' : 'text-success'" style="min-width:100px; text-align:right">
+                    </td>
+                    <td class="text-end pa-2" :class="(results.subtotal - results.subtotal2) < 0 ? 'text-error' : 'text-success'">
                       {{ formatCurrency(results.subtotal - results.subtotal2) }}
-                    </span>
-                  </div>
+                    </td>
+                  </tr>
                 </template>
               </v-data-table>
             </template>
@@ -461,7 +494,7 @@
   import { ref, computed } from "vue";
   import { useReports } from "@/composables/reportsComposable";
   import { useAccounts } from "@/composables/accountsComposable";
-  import { useTags, useMainTags, useSubTags } from "@/composables/tagsComposable";
+  import { useTags } from "@/composables/tagsComposable";
   import { useMainStore } from "@/stores/main";
 
   const mainStore = useMainStore();
@@ -469,17 +502,19 @@
   const { reports, isLoading, saveReport, updateReport, deleteReport, isSaving, isRunning } = reportsComposable;
   const { accounts } = useAccounts(false);
   const { tags } = useTags();
-  const { main_tags } = useMainTags();
-  const { sub_tags } = useSubTags();
 
   // ---------------------------------------------------------------------------
   // Form state
   // ---------------------------------------------------------------------------
+  const currentYear = new Date().getFullYear();
+
   const defaultForm = () => ({
     report_type: "TOTALS",
     date_range_type: "THIS_YEAR",
     date_from: null,
     date_to: null,
+    year1: currentYear,
+    year2: currentYear - 1,
     group_by: "TAG",
     account_ids: [],
     tag_selections: [],
@@ -518,6 +553,8 @@
     { label: "Custom", value: "CUSTOM" },
   ];
 
+  const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
+
   const groupByOptions = computed(() => {
     const opts = [{ label: "Tag", value: "TAG" }];
     if (form.value.report_type === "TOTALS") {
@@ -534,32 +571,21 @@
   );
 
   // ---------------------------------------------------------------------------
-  // Tag items — unified list across all three levels
+  // Tag items — flat list of leaf tags (tag_name includes parent path)
   // ---------------------------------------------------------------------------
-  const tagItems = computed(() => {
-    const items = [];
-    (main_tags.value ?? []).forEach(t => {
-      items.push({ key: `main-${t.id}`, type: "main_tag", id: t.id, label: t.tag_name });
-    });
-    (sub_tags.value ?? []).forEach(t => {
-      items.push({ key: `sub-${t.id}`, type: "sub_tag", id: t.id, label: t.tag_name });
-    });
-    (tags.value ?? []).forEach(t => {
-      items.push({ key: `tag-${t.id}`, type: "tag", id: t.id, label: t.tag_name });
-    });
-    return items;
-  });
+  const tagItems = computed(() =>
+    (tags.value ?? []).map(t => ({
+      id: t.id,
+      label: t.tag_name,
+      is_system: t.is_system,
+      tag_type_id: t.tag_type?.id ?? null,
+    }))
+  );
 
-  function tagLevelColor(type) {
-    if (type === "main_tag") return "primary";
-    if (type === "sub_tag") return "secondary";
-    return "surface-variant";
-  }
-
-  function tagLevelLabel(type) {
-    if (type === "main_tag") return "Main";
-    if (type === "sub_tag") return "Sub";
-    return "Tag";
+  function tagColor(typeId) {
+    if (typeId === 1) return "error";
+    if (typeId === 2) return "success";
+    return "info";
   }
 
   // ---------------------------------------------------------------------------
@@ -604,18 +630,23 @@
     activeSavedName.value = report.name;
     activeSavedDescription.value = report.description ?? "";
 
-    const selItems = (report.tag_selections ?? []).map(sel => {
-      if (sel.tag_id) return tagItems.value.find(t => t.type === "tag" && t.id === sel.tag_id);
-      if (sel.sub_tag_id) return tagItems.value.find(t => t.type === "sub_tag" && t.id === sel.sub_tag_id);
-      if (sel.main_tag_id) return tagItems.value.find(t => t.type === "main_tag" && t.id === sel.main_tag_id);
-      return null;
-    }).filter(Boolean);
+    const selItems = (report.tag_selections ?? [])
+      .filter(sel => sel.tag_id)
+      .map(sel => tagItems.value.find(t => t.id === sel.tag_id))
+      .filter(Boolean);
 
+    const isComparison = report.report_type === "COMPARISON";
     form.value = {
       report_type: report.report_type,
-      date_range_type: report.date_range_type,
-      date_from: report.date_from ?? null,
-      date_to: report.date_to ?? null,
+      date_range_type: isComparison ? "THIS_YEAR" : report.date_range_type,
+      date_from: isComparison ? null : (report.date_from ?? null),
+      date_to: isComparison ? null : (report.date_to ?? null),
+      year1: isComparison && report.date_from
+        ? parseInt(report.date_from.slice(0, 4))
+        : currentYear,
+      year2: isComparison && report.period2_date_from
+        ? parseInt(report.period2_date_from.slice(0, 4))
+        : currentYear - 1,
       group_by: report.group_by,
       account_ids: report.account_ids ?? [],
       tag_selections: selItems,
@@ -627,21 +658,24 @@
   }
 
   function buildPayload() {
+    const isComparison = form.value.report_type === "COMPARISON";
     return {
       report_type: form.value.report_type,
-      date_range_type: form.value.date_range_type,
-      date_from: form.value.date_from || null,
-      date_to: form.value.date_to || null,
+      date_range_type: isComparison ? "CUSTOM" : form.value.date_range_type,
+      date_from: isComparison ? `${form.value.year1}-01-01` : (form.value.date_from || null),
+      date_to: isComparison ? `${form.value.year1}-12-31` : (form.value.date_to || null),
+      period2_date_from: isComparison ? `${form.value.year2}-01-01` : null,
+      period2_date_to: isComparison ? `${form.value.year2}-12-31` : null,
       group_by: form.value.group_by,
       account_ids: form.value.account_ids,
       tag_selections: (form.value.tag_selections ?? []).map(sel => ({
-        tag_id: sel.type === "tag" ? sel.id : null,
-        sub_tag_id: sel.type === "sub_tag" ? sel.id : null,
-        main_tag_id: sel.type === "main_tag" ? sel.id : null,
+        tag_id: sel.id,
+        sub_tag_id: null,
+        main_tag_id: null,
       })),
       show_subtotal: form.value.show_subtotal,
       include_pending: form.value.include_pending,
-      show_transactions: form.value.report_type === "TOTALS" ? form.value.show_transactions : false,
+      show_transactions: isComparison ? false : form.value.show_transactions,
     };
   }
 
