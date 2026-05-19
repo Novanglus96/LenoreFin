@@ -73,11 +73,19 @@
   import { VueQueryDevtools } from "@tanstack/vue-query-devtools";
   import { useBackendReady } from "@/composables/useBackendReady";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  import { useQueryClient } from "@tanstack/vue-query";
   import LogoLoader from "./components/LogoLoader.vue";
 
   const { backendReady } = useBackendReady();
+  const queryClient = useQueryClient();
   const { isOnline } = useOnlineStatus();
   const showOfflineBanner = computed(() => !isOnline.value);
+
+  watch(isOnline, online => {
+    if (online) {
+      queryClient.invalidateQueries();
+    }
+  });
   const route = useRoute();
   const showNav = computed(() => route.name !== "login");
 

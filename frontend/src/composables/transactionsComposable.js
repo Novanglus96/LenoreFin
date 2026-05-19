@@ -2,11 +2,11 @@ import {
   useQuery,
   useQueryClient,
   useMutation,
-  keepPreviousData,
 } from "@tanstack/vue-query";
 import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
 import { useTransactionsStore } from "@/stores/transactions";
+import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
 function handleApiError(error, message) {
   if (error.response?.status === 401) throw error;
@@ -164,6 +164,7 @@ function scheduleForecastRefetch(queryClient) {
 export function useTransactions() {
   const queryClient = useQueryClient();
   const transcation_store = useTransactionsStore();
+  const { isOnline } = useOnlineStatus();
   const {
     data: transactions,
     isLoading,
@@ -171,7 +172,9 @@ export function useTransactions() {
   } = useQuery({
     queryKey: ["transactions", transcation_store.pageinfo],
     queryFn: () => getTransactionsFunction(transcation_store.pageinfo),
-    placeholderData: keepPreviousData,
+    // When online: keep previous account's data visible while new data loads (smooth switching).
+    // When offline: return undefined so stale data from a different account is never shown.
+    placeholderData: previousData => (isOnline.value ? previousData : undefined),
     select: response => response,
     client: queryClient,
   });
