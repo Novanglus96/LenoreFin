@@ -229,6 +229,20 @@ export function useMainTags() {
   };
 }
 
+export function useSubTags() {
+  const queryClient = useQueryClient();
+  const { data: sub_tags, isLoading } = useQuery({
+    queryKey: ["sub_tags"],
+    queryFn: async () => {
+      const response = await apiClient.get("/tags/sub-tags/list");
+      return response.data;
+    },
+    select: response => response,
+    client: queryClient,
+  });
+  return { isLoading, sub_tags };
+}
+
 export function useGraphs(widget_id) {
   const queryClient = useQueryClient();
   const {
