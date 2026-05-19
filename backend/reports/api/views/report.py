@@ -1,5 +1,6 @@
 from ninja import Router
 from ninja.errors import HttpError
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from typing import List
 import logging
@@ -101,6 +102,21 @@ def _run_from_params(
     )
 
 
+def _safe_user(request):
+    """Return request.user only if it's a real persisted User (integer PK).
+    Falls back to None for AnonymousUser, Mock objects, and bare requests."""
+    try:
+        user = request.user
+        return user if isinstance(getattr(user, "pk", None), int) else None
+    except AttributeError:
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Literal routes must be declared BEFORE parametric routes so Django URL
+# matching hits them first (Django matches patterns in registration order).
+# ---------------------------------------------------------------------------
+
 @report_router.get("", response=List[ReportConfigOut])
 def list_reports(request):
     configs = ReportConfig.objects.prefetch_related("tag_selections", "accounts").all()
@@ -121,7 +137,7 @@ def create_report(request, payload: ReportConfigIn):
             show_transactions=payload.show_transactions,
             show_subtotal=payload.show_subtotal,
             include_pending=payload.include_pending,
-            created_by=request.user,
+            created_by=_safe_user(request),
         )
         if payload.account_ids:
             config.accounts.set(payload.account_ids)
@@ -133,6 +149,29 @@ def create_report(request, payload: ReportConfigIn):
     except Exception as e:
         error_logger.exception(str(e))
         raise HttpError(500, "Failed to create report config")
+
+
+@report_router.post("/run", response=ReportResultOut)
+def run_adhoc_report(request, payload: ReportRunIn):
+    try:
+        result = _run_from_params(
+            report_type=payload.report_type,
+            date_range_type=payload.date_range_type,
+            group_by=payload.group_by,
+            date_from=payload.date_from,
+            date_to=payload.date_to,
+            account_ids=payload.account_ids,
+            tag_selections_raw=payload.tag_selections,
+            show_transactions=payload.show_transactions,
+            show_subtotal=payload.show_subtotal,
+            include_pending=payload.include_pending,
+        )
+        return result
+    except HttpError:
+        raise
+    except Exception as e:
+        error_logger.exception(str(e))
+        raise HttpError(500, "Failed to run report")
 
 
 @report_router.get("/{report_id}", response=ReportConfigOut)
@@ -163,7 +202,7 @@ def update_report(request, report_id: int, payload: ReportConfigIn):
         _apply_tag_selections(config, payload.tag_selections)
         api_logger.info(f"Report config updated: {config.name}")
         return _serialize_config(config)
-    except HttpError:
+    except (HttpError, Http404):
         raise
     except Exception as e:
         error_logger.exception(str(e))
@@ -178,34 +217,11 @@ def delete_report(request, report_id: int):
         config.delete()
         api_logger.info(f"Report config deleted: {name}")
         return {"success": True}
-    except HttpError:
+    except (HttpError, Http404):
         raise
     except Exception as e:
         error_logger.exception(str(e))
         raise HttpError(500, "Failed to delete report config")
-
-
-@report_router.post("/run", response=ReportResultOut)
-def run_adhoc_report(request, payload: ReportRunIn):
-    try:
-        result = _run_from_params(
-            report_type=payload.report_type,
-            date_range_type=payload.date_range_type,
-            group_by=payload.group_by,
-            date_from=payload.date_from,
-            date_to=payload.date_to,
-            account_ids=payload.account_ids,
-            tag_selections_raw=payload.tag_selections,
-            show_transactions=payload.show_transactions,
-            show_subtotal=payload.show_subtotal,
-            include_pending=payload.include_pending,
-        )
-        return result
-    except HttpError:
-        raise
-    except Exception as e:
-        error_logger.exception(str(e))
-        raise HttpError(500, "Failed to run report")
 
 
 @report_router.post("/{report_id}/run", response=ReportResultOut)
@@ -229,7 +245,7 @@ def run_saved_report(request, report_id: int):
             include_pending=config.include_pending,
         )
         return result
-    except HttpError:
+    except (HttpError, Http404):
         raise
     except Exception as e:
         error_logger.exception(str(e))
