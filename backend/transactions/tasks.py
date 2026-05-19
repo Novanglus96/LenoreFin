@@ -1133,18 +1133,27 @@ def generate_statement_cycles(
     statement_cycles = []
     today = get_todays_date_timezone_adjusted()
     one_month_prior = today - relativedelta(months=1)
-    statement_start = today
-    statement_due = today
-    statement_pay_day = today
 
-    if today.day > statement_day:
-        statement_start = today.replace(day=statement_day)
-        statement_due = statement_start.replace(day=due_day)
-        statement_pay_day = statement_start.replace(day=pay_day)
-    else:
-        statement_start = one_month_prior.replace(day=statement_day)
-        statement_due = (statement_start + relativedelta(months=1)).replace(day=due_day)
-        statement_pay_day = (statement_start + relativedelta(months=1)).replace(day=pay_day)
+    # Always start from the most recently closed statement period so the
+    # just-closed cycle (with its upcoming payment due date) is included.
+    # Previously the if/else split caused today.day > statement_day to skip
+    # the just-closed period, and due/pay dates were incremented at the top
+    # of the loop (one month too late). Both are fixed here.
+    statement_start = one_month_prior.replace(day=statement_day)
+
+    # Anchor due/pay dates to after the first cycle's statement_end.
+    # When due_day or pay_day < statement_day, a naive +1-month formula
+    # lands before the statement closes; push forward by one more month.
+    _first_end = increment_date(statement_start, statement_cycle_period, statement_cycle_length)
+    _candidate_due = _first_end.replace(day=due_day)
+    if _candidate_due < _first_end:
+        _candidate_due += relativedelta(months=1)
+    statement_due = _candidate_due
+
+    _candidate_pay = _first_end.replace(day=pay_day)
+    if _candidate_pay < _first_end:
+        _candidate_pay += relativedelta(months=1)
+    statement_pay_day = _candidate_pay
 
     previous_balance = (
         transactions.filter(
@@ -1159,8 +1168,6 @@ def generate_statement_cycles(
             statement_start, statement_cycle_period, statement_cycle_length
         )
 
-        statement_due = increment_date(statement_due, "m", 1)
-        statement_pay_day = increment_date(statement_pay_day, "m", 1)
         statement_transaction_credits = (
             transactions.filter(
                 transaction_date__gt=statement_start,
@@ -1214,6 +1221,8 @@ def generate_statement_cycles(
             }
         )
         statement_start = statement_end
+        statement_due = increment_date(statement_due, "m", 1)
+        statement_pay_day = increment_date(statement_pay_day, "m", 1)
     return statement_cycles
 
 

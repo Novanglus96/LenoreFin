@@ -10,10 +10,9 @@ Covers:
 
 Note on interest in update_cc_forecast_cache:
   The interest condition is `statement_cycles[0]["statement_due"] < today`.
-  Because statement_due is incremented twice (once before the loop, once inside it),
-  it always lands ~2 months in the future — making this branch unreachable in normal
-  operation.  calculate_interest is therefore tested in isolation below, and the
-  update_cc_forecast_cache tests focus on the payment path.
+  In practice this means interest is only charged when the first cycle's due date
+  has already passed (i.e. the card is past-due).  calculate_interest is tested in
+  isolation below; update_cc_forecast_cache tests focus on the payment path.
 """
 import pytest
 from datetime import date, timedelta
@@ -25,7 +24,7 @@ from transactions.models import Transaction, ForecastCacheTransaction, Transacti
 from transactions.api.dependencies.transaction_utilities import annotate_transaction_total
 
 # Fixed date used across all tests that need a predictable today.
-# statement_day=1, today.day=15 → today.day > statement_day → statement_start = 2026-06-01
+# statement_day=1, today=2026-06-15 → one_month_prior=2026-05-15 → statement_start=2026-05-01
 FIXED_TODAY = date(2026, 6, 15)
 PATCH_TODAY = "transactions.tasks.get_todays_date_timezone_adjusted"
 
@@ -259,9 +258,9 @@ def test_cycles_generated_up_to_forecast_end_date(
 def test_first_cycle_start_when_today_after_statement_day(
     bank, credit_card_account_type, test_checking_account,
 ):
-    """When today.day > statement_day, first cycle starts on statement_day this month."""
-    # FIXED_TODAY = 2026-06-15, statement_day=1, so today.day(15) > 1
-    # → statement_start = 2026-06-01
+    """First cycle always starts on statement_day of the prior month so the just-closed period is included."""
+    # FIXED_TODAY = 2026-06-15, statement_day=1
+    # one_month_prior = 2026-05-15 → statement_start = 2026-05-01
     with patch(PATCH_TODAY, return_value=FIXED_TODAY):
         cc = _make_cc_account(bank, credit_card_account_type, test_checking_account)
         transactions_qs = annotate_transaction_total(
@@ -283,8 +282,98 @@ def test_first_cycle_start_when_today_after_statement_day(
             account_id=cc.id,
             non_trans_bal=Decimal("0.00"),
         )
-    assert cycles[0]["statement_start"] == date(2026, 6, 1)
-    assert cycles[0]["statement_end"] == date(2026, 7, 1)
+    assert cycles[0]["statement_start"] == date(2026, 5, 1)
+    assert cycles[0]["statement_end"] == date(2026, 6, 1)
+
+
+@pytest.mark.django_db
+@pytest.mark.service
+def test_due_date_after_statement_end_when_due_day_less_than_statement_day(
+    bank, credit_card_account_type, test_checking_account,
+):
+    """When due_day < statement_day the due date must land *after* the statement closes.
+
+    Example: statement_day=18, due_day=15, today=2026-05-19
+      statement_start = 2026-04-18, statement_end = 2026-05-18
+      naive formula: (Apr 18 + 1m).replace(15) = May 15  ← before statement_end!
+      correct:       May 18.replace(15) < May 18 → push to June 15
+    """
+    today = date(2026, 5, 19)
+    with patch(PATCH_TODAY, return_value=today):
+        cc = _make_cc_account(
+            bank, credit_card_account_type, test_checking_account,
+            opening_balance=Decimal("-399.73"),
+        )
+        # Override statement_day/due_day/pay_day for this test
+        cc.statement_day = 18
+        cc.due_day = 15
+        cc.pay_day = 15
+        cc.save()
+
+        transactions_qs = annotate_transaction_total(
+            Transaction.objects.filter(source_account_id=cc.id), cc.id
+        )
+        from transactions.models import ReminderCacheTransaction
+        reminder_qs = annotate_transaction_total(
+            ReminderCacheTransaction.objects.filter(source_account_id=cc.id), cc.id
+        )
+        cycles = generate_statement_cycles(
+            statement_day=18,
+            due_day=15,
+            pay_day=15,
+            forecast_end_date=today + timedelta(days=60),
+            statement_cycle_length=1,
+            statement_cycle_period="m",
+            transactions=transactions_qs,
+            reminder_transactions=reminder_qs,
+            account_id=cc.id,
+            non_trans_bal=Decimal("0.00"),
+        )
+
+    # Cycle 0: 2026-04-18 → 2026-05-18
+    assert cycles[0]["statement_start"] == date(2026, 4, 18)
+    assert cycles[0]["statement_end"] == date(2026, 5, 18)
+    # Due/pay date must be AFTER statement_end (May 18) → June 15
+    assert cycles[0]["statement_due"] == date(2026, 6, 15)
+    assert cycles[0]["statement_pay_day"] == date(2026, 6, 15)
+
+
+@pytest.mark.django_db
+@pytest.mark.service
+def test_due_date_correct_when_due_day_after_statement_end_same_month(
+    bank, credit_card_account_type, test_checking_account,
+):
+    """When due_day > statement_day the due date stays in the same month as statement_end.
+
+    Example: statement_day=1, due_day=25
+      statement_end = 2026-06-01, due = June 25 (still in June, no extra month needed).
+    """
+    with patch(PATCH_TODAY, return_value=FIXED_TODAY):
+        cc = _make_cc_account(bank, credit_card_account_type, test_checking_account)
+        transactions_qs = annotate_transaction_total(
+            Transaction.objects.filter(source_account_id=cc.id), cc.id
+        )
+        from transactions.models import ReminderCacheTransaction
+        reminder_qs = annotate_transaction_total(
+            ReminderCacheTransaction.objects.filter(source_account_id=cc.id), cc.id
+        )
+        cycles = generate_statement_cycles(
+            statement_day=1,
+            due_day=25,
+            pay_day=25,
+            forecast_end_date=FIXED_TODAY + timedelta(days=60),
+            statement_cycle_length=1,
+            statement_cycle_period="m",
+            transactions=transactions_qs,
+            reminder_transactions=reminder_qs,
+            account_id=cc.id,
+            non_trans_bal=Decimal("0.00"),
+        )
+
+    # Cycle 0: 2026-05-01 → 2026-06-01; due June 25 (same month as end)
+    assert cycles[0]["statement_end"] == date(2026, 6, 1)
+    assert cycles[0]["statement_due"] == date(2026, 6, 25)
+    assert cycles[0]["statement_pay_day"] == date(2026, 6, 25)
 
 
 @pytest.mark.django_db
@@ -327,9 +416,10 @@ def test_cycle_debits_only_include_transactions_in_period(
     bank, credit_card_account_type, test_checking_account,
 ):
     """Only expenses with transaction_date > statement_start and <= statement_end count."""
-    # statement_start=2026-06-01, statement_end=2026-07-01
-    # Expense on 2026-06-15 (in period) → counted
-    # Expense on 2026-05-31 (before period) → not counted
+    # Cycle 0: 2026-05-01 to 2026-06-01 (one_month_prior.replace(day=1))
+    # Cycle 1: 2026-06-01 to 2026-07-01
+    # Expense on 2026-05-31 (> May 1, <= Jun 1) → in cycle 0
+    # Expense on 2026-06-15 (> Jun 1, <= Jul 1) → in cycle 1
     with patch(PATCH_TODAY, return_value=FIXED_TODAY):
         cc = _make_cc_account(bank, credit_card_account_type, test_checking_account)
         Transaction.objects.create(
@@ -367,8 +457,10 @@ def test_cycle_debits_only_include_transactions_in_period(
             non_trans_bal=Decimal("0.00"),
         )
 
-    # Cycle 0: 2026-06-01 to 2026-07-01 — only the June 15 expense ($100) is in it
-    assert cycles[0]["statement_debits"] == Decimal("-100.00")
+    # Cycle 0: 2026-05-01 → 2026-06-01 — May 31 expense ($50) is in it
+    assert cycles[0]["statement_debits"] == Decimal("-50.00")
+    # Cycle 1: 2026-06-01 → 2026-07-01 — Jun 15 expense ($100) is in it
+    assert cycles[1]["statement_debits"] == Decimal("-100.00")
 
 
 @pytest.mark.django_db
@@ -379,9 +471,9 @@ def test_previous_balance_includes_non_trans_bal_and_prior_transactions(
     """previous_balance = non_trans_bal + sum of transactions on or before statement_start."""
     with patch(PATCH_TODAY, return_value=FIXED_TODAY):
         cc = _make_cc_account(bank, credit_card_account_type, test_checking_account)
-        # Expense on 2026-05-31 — before statement_start (2026-06-01), so included in previous_balance
+        # Expense on 2026-04-30 — before statement_start (2026-05-01), so included in previous_balance
         Transaction.objects.create(
-            transaction_date=date(2026, 5, 31),
+            transaction_date=date(2026, 4, 30),
             total_amount=Decimal("75.00"),
             status=_pending_status(),
             transaction_type=_expense_type(),
@@ -409,7 +501,7 @@ def test_previous_balance_includes_non_trans_bal_and_prior_transactions(
             non_trans_bal=non_trans_bal,
         )
 
-    # previous_balance = -50.00 + (-75.00) = -125.00
+    # previous_balance = -50.00 (non_trans_bal) + (-75.00) (Apr 30 expense) = -125.00
     assert cycles[0]["previous_balance"] == Decimal("-125.00")
 
 
@@ -579,10 +671,10 @@ def test_existing_payment_reduces_forecast_payment(
             strategy="F", opening_balance=Decimal("-200.00"),
         )
         transfer_type = _transfer_type()
-        # Existing payment: $100 from checking → CC, dated in the first pay window
-        # Payment window: statement_end (2026-07-01) < date <= next_statement_end (2026-08-01)
+        # Existing payment: $100 from checking → CC, dated in the first pay window.
+        # Cycle 0: 2026-05-01 → 2026-06-01; payment window: > 2026-06-01 and <= 2026-07-01
         Transaction.objects.create(
-            transaction_date=date(2026, 7, 15),
+            transaction_date=date(2026, 6, 15),
             total_amount=Decimal("100.00"),
             status=_pending_status(),
             transaction_type=transfer_type,
@@ -612,8 +704,9 @@ def test_fully_covered_payment_creates_no_forecast(
             strategy="F", opening_balance=Decimal("-200.00"),
         )
         transfer_type = _transfer_type()
+        # Cycle 0 payment window: > 2026-06-01 and <= 2026-07-01
         Transaction.objects.create(
-            transaction_date=date(2026, 7, 15),
+            transaction_date=date(2026, 6, 15),
             total_amount=Decimal("200.00"),
             status=_pending_status(),
             transaction_type=transfer_type,
