@@ -17,13 +17,13 @@
       reveal
       size="310"
       style="max-width: 100%; height: auto"
-      v-if="props.graph_items && props.graph_items[0].value != 0"
+      v-if="props.graph_items && props.graph_items.length > 0 && props.graph_items[0].value != 0"
     ></v-pie>
     <v-progress-circular
       color="accent"
       :size="300"
       :width="36"
-      v-if="props.graph_items && props.graph_items[0].value == 0"
+      v-if="!props.graph_items || props.graph_items.length === 0 || props.graph_items[0].value == 0"
     >
       None
     </v-progress-circular>

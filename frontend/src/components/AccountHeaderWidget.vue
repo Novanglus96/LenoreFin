@@ -3,8 +3,8 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      :class="account.active ? 'bg-primary' : 'bg-primary-darken-2'"
-      v-if="!isLoading"
+      :class="account && account.active ? 'bg-primary' : 'bg-primary-darken-2'"
+      v-if="account"
     >
       <template v-slot:text>
         <v-container fluid>
@@ -368,7 +368,7 @@
     account: Array,
   });
 
-  const { account, isLoading } = useAccountByID(props.account);
+  const { account } = useAccountByID(props.account);
 
   const updateAdjBalDialog = value => {
     adjBalDialog.value = value;

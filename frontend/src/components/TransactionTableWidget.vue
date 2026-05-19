@@ -671,6 +671,7 @@
   watch(
     () => props.data,
     val => {
+      if (!val) return;
       localTransactions.value = val.transactions;
       localPage.value = val.current_page;
       localPageTotal.value = val.total_pages;
