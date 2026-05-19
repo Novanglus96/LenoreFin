@@ -44,7 +44,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="clickClose" color="primary">Close</v-btn>
-          <v-btn color="primary" type="submit">
+          <v-btn color="primary" type="submit" :disabled="!isOnline">
             {{ props.isEdit ? "Save Changes" : "Add Note" }}
           </v-btn>
         </v-card-actions>
@@ -55,8 +55,10 @@
 <script setup>
   import { defineEmits, defineProps, watchEffect, onMounted } from "vue";
   import { useField, useForm } from "vee-validate";
+  const { isOnline } = useOnlineStatus();
   import VueDatePicker from "@vuepic/vue-datepicker";
   import "@vuepic/vue-datepicker/dist/main.css";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const { handleSubmit } = useForm({
     validationSchema: {

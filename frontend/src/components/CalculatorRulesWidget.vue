@@ -43,7 +43,7 @@
                 <v-card-title>Delete this rule?</v-card-title>
                 <v-card-actions>
                   <v-btn @click="showDeleteDialog = false">Close</v-btn>
-                  <v-btn @click="confirmDeleteRule">Delete</v-btn>
+                  <v-btn @click="confirmDeleteRule" :disabled="!isOnline">Delete</v-btn>
                 </v-card-actions>
               </v-card>
             </v-dialog>
@@ -65,6 +65,8 @@
   import CalculatorRuleForm from "./CalculatorRuleForm.vue";
   import { useCalculationRule } from "@/composables/calculatorComposable";
   import { usePlanningStore } from "@/stores/planning";
+  const { isOnline } = useOnlineStatus();
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const planningstore = usePlanningStore();
 

@@ -155,7 +155,7 @@
       </v-card-text>
       <v-card-actions>
         <v-btn @click="goBack">Back</v-btn>
-        <v-btn type="submit">Submit</v-btn>
+        <v-btn type="submit" :disabled="!isOnline">Submit</v-btn>
       </v-card-actions>
     </v-card>
   </form>
@@ -169,7 +169,9 @@
   import "@vuepic/vue-datepicker/dist/main.css";
   import { useMainStore } from "@/stores/main";
   import { useRouter } from "vue-router";
+  const { isOnline } = useOnlineStatus();
   import AddBankForm from "@/components/AddBankForm.vue";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";
 

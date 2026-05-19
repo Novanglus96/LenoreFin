@@ -32,7 +32,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="emit('updateDialog', false)" color="primary">Close</v-btn>
-          <v-btn color="primary" type="submit">Adjust</v-btn>
+          <v-btn color="primary" type="submit" :disabled="!isOnline">Adjust</v-btn>
         </v-card-actions>
       </v-card>
     </form>
@@ -41,7 +41,9 @@
 <script setup>
   import { defineEmits, defineProps, ref, watch } from "vue";
   import { useTransactions } from "@/composables/transactionsComposable";
+  const { isOnline } = useOnlineStatus();
   import { useField, useForm } from "vee-validate";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import * as yup from "yup";
 
   const today = new Date();

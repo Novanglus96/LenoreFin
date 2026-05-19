@@ -415,7 +415,7 @@
                         prepend-icon="mdi-paperclip"
                         variant="outlined"
                         size="small"
-                        @click="triggerFileInput"
+                        @click="triggerFileInput" :disabled="!isOnline"
                       >
                         Add Attachment
                       </v-btn>
@@ -469,7 +469,7 @@
                             size="x-small"
                             color="error"
                             variant="text"
-                            @click="deleteImage(img.id)"
+                            @click="deleteImage(img.id)" :disabled="!isOnline"
                           ></v-btn>
                         </v-card-actions>
                       </v-card>
@@ -489,7 +489,7 @@
             <v-btn color="primary" variant="text" @click="closeDialog"
               >Close</v-btn
             >
-            <v-btn color="primary" variant="text" type="submit">
+            <v-btn color="primary" variant="text" type="submit" :disabled="!isOnline">
               {{ props.isEdit ? "Update" : "Add" }}
             </v-btn>
           </v-card-actions>
@@ -519,9 +519,11 @@
   import "@vuepic/vue-datepicker/dist/main.css";
   import TagTable from "@/components/TagTable.vue";
   import { useDescriptionHistory } from "@/composables/descriptionHistoryComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import CalculatorWidget from "./CalculatorWidget.vue";
   import AddPayeeForm from "./AddPayeeForm.vue";
   import { useField, useForm } from "vee-validate";
+  const { isOnline } = useOnlineStatus();
   import * as yup from "yup";
 
   function roundToTwoDecimals(value) {

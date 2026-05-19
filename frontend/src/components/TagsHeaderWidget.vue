@@ -142,7 +142,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" variant="text" @click="confirmDelete">Delete</v-btn>
+          <v-btn color="error" variant="text" @click="confirmDelete" :disabled="!isOnline">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -154,6 +154,8 @@
   import TagForm from "@/components/TagForm.vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
+  const { isOnline } = useOnlineStatus();
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const tagAddFormDialog = ref(false);
   const tagEditFormDialog = ref(false);

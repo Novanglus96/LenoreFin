@@ -65,7 +65,7 @@
             </v-row>
             <v-row dense>
               <v-col>
-                <v-btn color="primary" @click="saveConfig" :loading="isSaving">Save Settings</v-btn>
+                <v-btn color="primary" @click="saveConfig" :loading="isSaving" :disabled="!isOnline">Save Settings</v-btn>
               </v-col>
             </v-row>
           </v-container>
@@ -83,7 +83,7 @@
             </v-row>
             <v-row dense>
               <v-col>
-                <v-btn color="primary" prepend-icon="mdi-database-arrow-up" @click="runBackup">
+                <v-btn color="primary" prepend-icon="mdi-database-arrow-up" @click="runBackup" :disabled="!isOnline">
                   Backup Now
                 </v-btn>
               </v-col>
@@ -197,7 +197,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="restoreDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="doRestore" :loading="isRestoring">Restore</v-btn>
+          <v-btn color="error" @click="doRestore" :loading="isRestoring" :disabled="!isOnline">Restore</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -212,7 +212,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="doDelete">Delete</v-btn>
+          <v-btn color="error" @click="doDelete" :disabled="!isOnline">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -226,8 +226,10 @@
     useBackupFiles,
     downloadBackup,
   } from "@/composables/backupComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const { backupConfig, editBackupConfig } = useBackupConfig();
+  const { isOnline } = useOnlineStatus();
   const {
     backupFiles,
     isLoading: filesLoading,

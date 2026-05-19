@@ -194,7 +194,7 @@
                   </v-card-text>
                   <v-card-actions>
                     <v-btn @click="deleteContributionDialog = false">Close</v-btn>
-                    <v-btn @click="clickDeleteContribution(editContrib)">
+                    <v-btn @click="clickDeleteContribution(editContrib)" :disabled="!isOnline">
                       Delete
                     </v-btn>
                   </v-card-actions>
@@ -332,6 +332,8 @@
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
+  const { isOnline } = useOnlineStatus();
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const page = ref(1);
   const itemsPerPage = ref(5);

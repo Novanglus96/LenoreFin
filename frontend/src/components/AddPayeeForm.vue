@@ -26,7 +26,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="closeDialog">Close</v-btn>
-          <v-btn color="primary" variant="text" type="submit">Save</v-btn>
+          <v-btn color="primary" variant="text" type="submit" :disabled="!isOnline">Save</v-btn>
         </v-card-actions>
       </v-card>
     </form>
@@ -35,7 +35,9 @@
 <script setup>
   import { ref } from "vue";
   import { usePayees } from "@/composables/payeesComposable";
+  const { isOnline } = useOnlineStatus();
   import { useField, useForm } from "vee-validate";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import * as yup from "yup";
 
   const { addPayee } = usePayees();

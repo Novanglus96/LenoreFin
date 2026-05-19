@@ -31,7 +31,7 @@
                   <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn variant="text" @click="closeAddDialog">Cancel</v-btn>
-                    <v-btn color="primary" variant="text" type="submit">Save</v-btn>
+                    <v-btn color="primary" variant="text" type="submit" :disabled="!isOnline">Save</v-btn>
                   </v-card-actions>
                 </v-card>
               </form>
@@ -94,7 +94,7 @@
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn variant="text" @click="closeEditDialog">Cancel</v-btn>
-            <v-btn color="primary" variant="text" type="submit">Save</v-btn>
+            <v-btn color="primary" variant="text" type="submit" :disabled="!isOnline">Save</v-btn>
           </v-card-actions>
         </v-card>
       </form>
@@ -111,7 +111,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" variant="text" @click="confirmDelete">Delete</v-btn>
+          <v-btn color="error" variant="text" @click="confirmDelete" :disabled="!isOnline">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -123,6 +123,8 @@
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";
   import { useAuthStore } from "@/stores/auth";
+  const { isOnline } = useOnlineStatus();
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const authStore = useAuthStore();
   const { payees, isLoading, addPayee, editPayee, removePayee } = usePayees();

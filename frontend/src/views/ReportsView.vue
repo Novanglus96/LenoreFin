@@ -440,7 +440,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="saveDialog = false">Cancel</v-btn>
-          <v-btn color="primary" :loading="isSaving" @click="doSave">Save</v-btn>
+          <v-btn color="primary" :loading="isSaving" @click="doSave" :disabled="!isOnline">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -468,7 +468,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="updateDialog = false">Cancel</v-btn>
-          <v-btn color="primary" :loading="isSaving" @click="doUpdate">Update</v-btn>
+          <v-btn color="primary" :loading="isSaving" @click="doUpdate" :disabled="!isOnline">Update</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -483,7 +483,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="doDelete">Delete</v-btn>
+          <v-btn color="error" @click="doDelete" :disabled="!isOnline">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -496,8 +496,10 @@
   import { useAccounts } from "@/composables/accountsComposable";
   import { useTags } from "@/composables/tagsComposable";
   import { useMainStore } from "@/stores/main";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const mainStore = useMainStore();
+  const { isOnline } = useOnlineStatus();
   const reportsComposable = useReports();
   const { reports, isLoading, saveReport, updateReport, deleteReport, isSaving, isRunning } = reportsComposable;
   const { accounts } = useAccounts(false);

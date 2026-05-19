@@ -85,6 +85,11 @@
       <v-app-bar-title v-if="!isMobile">
         <span class="text-caption font-weight-bold">v{{ version }}</span>
       </v-app-bar-title>
+      <v-tooltip text="You're offline — editing disabled" v-if="!isOnline">
+        <template v-slot:activator="{ props }">
+          <v-icon icon="mdi-wifi-off" color="warning" class="mx-2" v-bind="props"></v-icon>
+        </template>
+      </v-tooltip>
       <v-btn
         icon="mdi-theme-light-dark"
         @click="handleToggle"
@@ -135,8 +140,8 @@
           </v-card-text>
           <v-card-actions v-if="messages.total_count > 0">
             <v-spacer></v-spacer>
-            <v-btn color="primary" @click="markRead">Mark All Read</v-btn>
-            <v-btn color="primary" @click="deleteAll">Delete All</v-btn>
+            <v-btn color="primary" @click="markRead" :disabled="!isOnline">Mark All Read</v-btn>
+            <v-btn color="primary" @click="deleteAll" :disabled="!isOnline">Delete All</v-btn>
           </v-card-actions>
         </v-card>
       </v-menu>
@@ -277,6 +282,7 @@
   import { useTransactionsStore } from "@/stores/transactions";
   import { useThemeStore } from "@/stores/themeStore";
   import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const theme = useTheme();
   const themeStore = useThemeStore();
@@ -299,6 +305,7 @@
   const isMobile = smAndDown;
   const authStore = useAuthStore();
   const nav_toggle = ref(true);
+  const { isOnline } = useOnlineStatus();
 
   const setAccount = (account, forecast) => {
     transactions_store.pageinfo.account_id = account;

@@ -101,7 +101,7 @@
                     <v-btn @click="deleteContributionRuleDialog = false">
                       Close
                     </v-btn>
-                    <v-btn @click="clickDeleteContributionRule(editRule)">
+                    <v-btn @click="clickDeleteContributionRule(editRule)" :disabled="!isOnline">
                       Delete
                     </v-btn>
                   </v-card-actions>
@@ -177,6 +177,8 @@
   import ContributionRuleForm from "@/components/ContributionRuleForm.vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
+  const { isOnline } = useOnlineStatus();
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const page = ref(1);
   const itemsPerPage = ref(3);
