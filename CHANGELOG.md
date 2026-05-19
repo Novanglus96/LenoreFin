@@ -1,3 +1,10 @@
+# [1.4.0-alpha.28](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.27...v1.4.0-alpha.28) (2026-05-19)
+
+
+### Features
+
+* PWA offline mode — readonly when offline, service worker, install support ([#121](https://github.com/Novanglus96/LenoreFin/issues/121)) ([168c9b7](https://github.com/Novanglus96/LenoreFin/commit/168c9b746f09b8423bd77e400f8097f4eb573125)), closes [#06966](https://github.com/Novanglus96/LenoreFin/issues/06966)
+
 # [1.4.0-alpha.27](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.26...v1.4.0-alpha.27) (2026-05-19)
 
 
