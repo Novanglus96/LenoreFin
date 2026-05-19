@@ -1,5 +1,6 @@
 module.exports = {
   root: true,
+  ignorePatterns: ["dist/"],
   env: {
     node: true, // Enable Node.js global variables and scope
     browser: true, // Enable browser global variables
