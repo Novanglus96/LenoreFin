@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "reminders",
     "planning",
     "administration",
+    "reports",
     "corsheaders",
     "django_filters",
     "dbbackup",
@@ -334,6 +335,8 @@ JAZZMIN_SETTINGS = {
         "transactions.ForecastCacheTransaction": "fas fa-chart-line",
         "transactions.ReminderCacheTransactionDetail": "fas fa-clipboard",
         "transactions.ForecastCacheTransactionDetail": "fas fa-chart-area",
+        # Reports
+        "reports.ReportConfig": "fas fa-chart-pie",
         # Imports
         "imports.FileImport": "fas fa-file-import",
         "imports.TransactionImport": "fas fa-file-alt",
@@ -400,6 +403,9 @@ JAZZMIN_SETTINGS = {
         "auth",
         "auth.User",
         "auth.Group",
+        # Reports
+        "reports",
+        "reports.ReportConfig",
         # Imports
         "imports",
         "imports.FileImport",
