@@ -94,7 +94,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="clickClose" color="primary">Close</v-btn>
-          <v-btn color="primary" type="submit">
+          <v-btn color="primary" type="submit" :disabled="!isOnline">
             {{ props.isEdit ? "Save Changes" : "Add Contribution" }}
           </v-btn>
         </v-card-actions>
@@ -105,7 +105,9 @@
 <script setup>
   import { defineEmits, defineProps, watchEffect, onMounted } from "vue";
   import { useDisplay } from "vuetify";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import { useField, useForm } from "vee-validate";
+  const { isOnline } = useOnlineStatus();
 
   const { smAndDown } = useDisplay();
   const { handleSubmit } = useForm({

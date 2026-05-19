@@ -13,6 +13,7 @@
                 v-bind="props"
                 @click="addNoteDialog = true"
                 size="small"
+                :disabled="!isOnline"
               ></v-btn>
             </template>
           </v-tooltip>
@@ -63,7 +64,7 @@
                     variant="plain"
                     icon
                     @click="editNoteDialog = true"
-                    :disabled="selectedNote.length === 0"
+                    :disabled="selectedNote.length === 0 || !isOnline"
                   >
                     <v-icon icon="mdi-pencil"></v-icon>
                   </v-btn>
@@ -78,7 +79,7 @@
                   <v-btn
                     variant="plain"
                     icon
-                    :disabled="selectedNote.length === 0"
+                    :disabled="selectedNote.length === 0 || !isOnline"
                   >
                     <v-icon
                       icon="mdi-delete"
@@ -101,7 +102,7 @@
                     </v-card-text>
                     <v-card-actions>
                       <v-btn @click="deleteNoteDialog = false">Close</v-btn>
-                      <v-btn @click="clickDeleteNote(editedNote)">Delete</v-btn>
+                      <v-btn @click="clickDeleteNote(editedNote)" :disabled="!isOnline">Delete</v-btn>
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
@@ -140,6 +141,8 @@
   import NoteForm from "@/components/NoteForm.vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const page = ref(1);
   const itemsPerPage = ref(10);

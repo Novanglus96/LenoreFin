@@ -81,7 +81,7 @@
           </v-container>
         </v-card-text>
         <v-card-actions>
-          <v-btn :disabled="!formComplete" @click="submitForm">Save</v-btn>
+          <v-btn :disabled="!formComplete || !isOnline" @click="submitForm">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-form>
@@ -91,6 +91,8 @@
   import { ref, reactive, computed } from "vue";
   import { useOptions } from "@/composables/optionsComposable";
   import { useTags, useParentTags } from "@/composables/tagsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
   import { useDisplay } from "vuetify";
 
   const props = defineProps({

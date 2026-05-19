@@ -49,7 +49,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="closeDialog">Close</v-btn>
-          <v-btn color="primary" variant="text" type="submit">Save</v-btn>
+          <v-btn color="primary" variant="text" type="submit" :disabled="!isOnline">Save</v-btn>
         </v-card-actions>
       </v-card>
     </form>
@@ -58,6 +58,8 @@
 <script setup>
   import { defineEmits, defineProps, watchEffect } from "vue";
   import { useTags, useParentTags } from "@/composables/tagsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
   import { useTagTypes } from "@/composables/tagtypesComposable";
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";

@@ -210,7 +210,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="closeDialog">Close</v-btn>
-          <v-btn color="primary" variant="text" type="submit">Save</v-btn>
+          <v-btn color="primary" variant="text" type="submit" :disabled="!isOnline">Save</v-btn>
         </v-card-actions>
       </v-card>
     </form>
@@ -225,6 +225,8 @@
   import VueDatePicker from "@vuepic/vue-datepicker";
   import "@vuepic/vue-datepicker/dist/main.css";
   import { useReminders } from "@/composables/remindersComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
   import { useRepeats } from "@/composables/repeatsComposable";
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";

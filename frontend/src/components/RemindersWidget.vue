@@ -159,6 +159,7 @@
             @click="reminderAddFormDialog = true"
             variant="elevated"
             v-if="selected_reminder.length === 0"
+            :disabled="!isOnline"
           >
             <v-icon icon="mdi-bell-plus"></v-icon>
           </v-fab>
@@ -205,7 +206,7 @@
                   <template v-slot:activator="{ props }">
                     <v-btn
                       icon="mdi-bell-remove"
-                      :disabled="selected_reminder.length === 0"
+                      :disabled="selected_reminder.length === 0 || !isOnline"
                       color="error"
                       v-bind="props"
                       @click="showDeleteDialog = true"
@@ -227,6 +228,7 @@
                           clickRemoveReminder();
                           showDeleteDialog = false;
                         "
+                        :disabled="!isOnline"
                       ></v-btn>
                     </v-card-actions>
                   </v-card>
@@ -237,7 +239,7 @@
                   <template v-slot:activator="{ props }">
                     <v-btn
                       icon="mdi-bell-cog"
-                      :disabled="selected_reminder.length === 0"
+                      :disabled="selected_reminder.length === 0 || !isOnline"
                       @click="reminderEditFormDialog = true"
                       v-bind="props"
                     ></v-btn>
@@ -262,6 +264,8 @@
   import { useReminders } from "@/composables/remindersComposable";
   import ReminderForm from "@/components/ReminderForm.vue";
   import { useDisplay } from "vuetify";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const selected_reminder = ref([]);
   const { mdAndUp } = useDisplay();

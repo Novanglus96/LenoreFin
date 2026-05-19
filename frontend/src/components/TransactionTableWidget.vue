@@ -464,6 +464,7 @@
             @click="transactionAddFormDialog = true"
             variant="elevated"
             v-if="selected_all.length === 0 && props.variant === 'account' && authStore.isFullAccess && !isParentAccount"
+            :disabled="!isOnline"
           >
             <v-icon icon="mdi-invoice-plus"></v-icon>
           </v-fab>
@@ -515,7 +516,8 @@
                       :disabled="
                         (selected_transactions &&
                           selected_transactions.length === 0) ||
-                        deleteDisable
+                        deleteDisable ||
+                        !isOnline
                       "
                       color="error"
                       v-bind="props"
@@ -544,6 +546,7 @@
                           clickRemoveTransaction(selected_transactions);
                           showDeleteDialog = false;
                         "
+                        :disabled="!isOnline"
                       ></v-btn>
                     </v-card-actions>
                   </v-card>
@@ -561,7 +564,8 @@
                       :disabled="
                         (selected_transactions &&
                           selected_transactions.length === 0) ||
-                        editDisable
+                        editDisable ||
+                        !isOnline
                       "
                       @click="displayEditForm"
                       v-bind="props"
@@ -579,7 +583,7 @@
                   <template v-slot:activator="{ props }">
                     <v-btn
                       icon="mdi-invoice-text-clock"
-                      :disabled="clearDisable"
+                      :disabled="clearDisable || !isOnline"
                       @click="
                         clickClearTransaction(
                           selected_transactions,
@@ -621,6 +625,8 @@
   import { useReminders } from "@/composables/remindersComposable";
   import { useAuthStore } from "@/stores/auth";
   import { useAccountByID } from "@/composables/accountsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { removeTransaction, clearTransaction } = useTransactions();
   const { addReminderTransaction } = useReminders();
@@ -671,6 +677,7 @@
   watch(
     () => props.data,
     val => {
+      if (!val) return;
       localTransactions.value = val.transactions;
       localPage.value = val.current_page;
       localPageTotal.value = val.total_pages;

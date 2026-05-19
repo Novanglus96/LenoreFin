@@ -13,7 +13,7 @@
           <v-btn
             color="error"
             prepend-icon="mdi-delete"
-            :disabled="canEdit || !props.budget"
+            :disabled="canEdit || !props.budget || !isOnline"
             @click="showConfirmDelete = true"
             size="small"
             variant="text"
@@ -38,14 +38,14 @@
                 <v-btn color="primary" @click="showConfirmDelete = false">
                   Cancel
                 </v-btn>
-                <v-btn color="primary" @click="deleteClicked">Delete</v-btn>
+                <v-btn color="primary" @click="deleteClicked" :disabled="!isOnline">Delete</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
           <v-btn
             color="primary"
             prepend-icon="mdi-pencil"
-            :disabled="canEdit || !props.budget"
+            :disabled="canEdit || !props.budget || !isOnline"
             @click="canEdit = true"
             size="small"
             variant="text"
@@ -202,7 +202,7 @@
         <v-btn color="primary" :disabled="!canEdit" @click="resetForm">
           {{ props.edit ? "Cancel" : "Close" }}
         </v-btn>
-        <v-btn color="primary" type="submit" :disabled="!canEdit">
+        <v-btn color="primary" type="submit" :disabled="!canEdit || !isOnline">
           {{ props.edit ? "Save Changes" : "Add Budget" }}
         </v-btn>
       </v-card-actions>
@@ -216,6 +216,8 @@
   import { useTags } from "@/composables/tagsComposable";
   import { useRepeats } from "@/composables/repeatsComposable";
   import { useBudgets } from "@/composables/budgetsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const emit = defineEmits(["updateDialog"]);
   const authStore = useAuthStore();

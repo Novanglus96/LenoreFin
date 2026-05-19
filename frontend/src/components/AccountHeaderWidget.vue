@@ -3,8 +3,8 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      :class="account.active ? 'bg-primary' : 'bg-primary-darken-2'"
-      v-if="!isLoading"
+      :class="account && account.active ? 'bg-primary' : 'bg-primary-darken-2'"
+      v-if="account"
     >
       <template v-slot:text>
         <v-container fluid>
@@ -65,6 +65,7 @@
                       v-bind="props"
                       size="small"
                       class="mx-0"
+                      :disabled="!isOnline"
                     />
                   </template>
                 </v-tooltip>
@@ -355,6 +356,8 @@
   import { useDisplay } from "vuetify";
   import RewardsGraphs from "./RewardsGraphs.vue";
   import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { smAndDown } = useDisplay();
   const authStore = useAuthStore();
@@ -368,7 +371,7 @@
     account: Array,
   });
 
-  const { account, isLoading } = useAccountByID(props.account);
+  const { account } = useAccountByID(props.account);
 
   const updateAdjBalDialog = value => {
     adjBalDialog.value = value;

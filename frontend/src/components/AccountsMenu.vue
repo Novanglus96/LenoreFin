@@ -10,6 +10,7 @@
         base-color="primary"
         :to="add_account_link"
         v-if="authStore.isFullAccess"
+        :disabled="!isOnline"
       >
         <v-list-item-title>
           <span :class="isMobile ? 'text-h6' : ''">Add Account</span>
@@ -401,6 +402,8 @@
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { smAndDown } = useDisplay();
   const authStore = useAuthStore();

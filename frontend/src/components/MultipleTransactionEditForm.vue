@@ -25,7 +25,7 @@
           <v-btn color="primary" variant="text" @click="closeDialog">
             Close
           </v-btn>
-          <v-btn color="primary" variant="text" type="submit" @click="submit">
+          <v-btn color="primary" variant="text" type="submit" @click="submit" :disabled="!isOnline">
             Update
           </v-btn>
         </v-card-actions>
@@ -37,6 +37,8 @@
   import { defineEmits, defineProps, onMounted, watchEffect } from "vue";
   import { useField, useForm } from "vee-validate";
   import { useTransactions } from "@/composables/transactionsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { mutliEditTransactions } = useTransactions();
 

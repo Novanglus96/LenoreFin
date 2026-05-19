@@ -5,11 +5,46 @@ import vueDevTools from "vite-plugin-vue-devtools";
 import { fileURLToPath, URL } from "node:url";
 import eslint from "vite-plugin-eslint";
 import pkg from "./package.json";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "logov2.png", "apple-touch-icon.png"],
+      manifest: {
+        name: "LenoreFin",
+        short_name: "LenoreFin",
+        description: "Personal finance tracking",
+        theme_color: "#06966a",
+        background_color: "#121212",
+        display: "standalone",
+        start_url: "/",
+        icons: [
+          { src: "android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+          { src: "android-chrome-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
+      },
+      workbox: {
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api\//, /^\/admin/, /^\/static\//],
+        runtimeCaching: [
+          {
+            urlPattern: /^\/api\//,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "api-cache",
+              networkTimeoutSeconds: 10,
+              expiration: { maxEntries: 100, maxAgeSeconds: 3600 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
+    }),
     createHtmlPlugin({
       inject: {
         data: {

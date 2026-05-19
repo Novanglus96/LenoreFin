@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-row class="pa-1 ga-1" no-gutters v-if="!isLoading">
+    <v-row class="pa-1 ga-1" no-gutters v-if="expenses">
       <v-col class="rounded text-center">
         <v-btn
           icon="mdi-cog"
@@ -49,7 +49,7 @@
               </v-card-text>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" type="submit">Save Changes</v-btn>
+                <v-btn color="primary" type="submit" :disabled="!isOnline">Save Changes</v-btn>
               </v-card-actions>
             </form>
           </v-card>
@@ -141,6 +141,8 @@
   import { useField, useForm } from "vee-validate";
   import { useOptions } from "@/composables/optionsComposable";
   import { useParentTags } from "@/composables/tagsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const authStore = useAuthStore();
   const { options: appOptions, editOptions } = useOptions();

@@ -114,7 +114,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="clickClose" color="primary">Close</v-btn>
-          <v-btn color="primary" type="submit">
+          <v-btn color="primary" type="submit" :disabled="!isOnline">
             {{ props.isEdit ? "Save Changes" : "Add Rule" }}
           </v-btn>
         </v-card-actions>
@@ -128,6 +128,8 @@
   import { useTags } from "@/composables/tagsComposable";
   import { useAccounts } from "@/composables/accountsComposable";
   import { useCalculationRule } from "@/composables/calculatorComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { tags: tag_items, isLoading: tags_isLoading } = useTags();
   const { accounts, isLoading: accounts_isLoading } = useAccounts();
