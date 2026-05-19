@@ -1,57 +1,27 @@
-version: "3.8"
-
 services:
-  frontend:
-    build: ./frontend
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /home/app/web/start.app.sh
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+      - media_volume:/home/app/web/mediafiles
+      - postgres_bkp:/backups/
+    ports:
+      - 7000:80
+    depends_on:
+      - db
+      - redis
     networks:
       - default
-    restart: unless-stopped
-    expose:
-      - 80
-    image: lenorefin_frontend:production
-    container_name: lenorefin_frontend
     env_file:
       - ./.env
+    image: lenorefin:production
+    container_name: lenorefin
     environment:
-      - TIMEZONE=America/New_York
-      - TZ=${TIMEZONE}
-  backend:
-    build:
-      context: ./backend
-    command: /home/app/web/start.sh
-    volumes:
-      - static_volume:/home/app/web/staticfiles
-      - media_volume:/home/app/web/mediafiles
-      - postgres_bkp:/backups/
-    expose:
-      - 8000
-    depends_on:
-      - db
-      - redis
-    networks:
-      - default
-    env_file:
-      - ./.env
-    image: lenorefin_backend:production
-    container_name: lenorefin_backend
-  worker:
-    build:
-      context: ./backend
-    command: /home/app/web/start_worker.sh
-    volumes:
-      - static_volume:/home/app/web/staticfiles
-      - media_volume:/home/app/web/mediafiles
-      - postgres_bkp:/backups/
-    depends_on:
-      - db
-      - backend
-      - redis
-    networks:
-      - default
-    env_file:
-      - ./.env
-    image: lenorefin_worker:production
-    container_name: lenorefin_worker
+      - DEBUG=0
+
   db:
     image: postgres:15
     volumes:
@@ -67,29 +37,14 @@ services:
       - POSTGRES_USER=${SQL_USER}
       - POSTGRES_PASSWORD=${SQL_PASSWORD}
       - POSTGRES_DB=${SQL_DATABASE}
-  nginx:
-    image: novanglus96/lenoreapps_proxy:latest
-    volumes:
-      - static_volume:/home/app/web/staticfiles
-      - media_volume:/home/app/web/mediafiles
-    depends_on:
-      - backend
-      - frontend
-    networks:
-      - default
-    ports:
-      - 7000:80
-    container_name: lenorefin_proxy
-    environment:
-      - TZ=${TIMEZONE}
+
   redis:
     image: redis:7-alpine
     container_name: lenorefin_redis
-    ports:
-      - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
     networks:
       - default
+    restart: unless-stopped
 
 volumes:
   postgres_data:
