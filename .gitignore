@@ -4,6 +4,7 @@ mempalace.yaml
 
 *.devdbrc
 mediafiles
+backend/logs/
 *.DS_Store
 static
 media
