@@ -129,79 +129,75 @@ SQL_PASSWORD=somepassword
 SQL_HOST=db
 SQL_PORT=5432
 DATABASE=postgres
-DJANGO_SUPERUSER_PASSWORD=suepervisorpassword
+DJANGO_SUPERUSER_PASSWORD=supervisorpassword
 DJANGO_SUPERUSER_EMAIL=someone@somewhere.com
 DJANGO_SUPERUSER_USERNAME=supervisor
 VITE_API_KEY=someapikey
 TIMEZONE=America/New_York
+# Optional: set to "true" to enable Contributions, Notes, and Calculator in the Planning menu
+VITE_OPT_FEATURES=false
 ```
 
 Adjust these values according to your environment and application requirements.
 
 ### Step 2: Create a `docker-compose.yml` File
 
-Create a `docker-compose.yml` file in the root directory of the project. Below is an example configuration:
+As of v1.4, LenoreFin uses a single consolidated container image (`novanglus96/lenorefin`) that bundles the frontend, backend, nginx, and worker together. You only need three services:
 
 ```yaml
 services:
-  frontend:
-    image: novanglus96/lenorefin_frontend:latest
-    container_name: lenorefin_frontend
-    networks:
-      - lenorefin
-    restart: unless-stopped
-    expose:
-      - 80
-    env_file:
-      - ./.env
-  backend:
-    image: novanglus96/lenorefin_backend:latest
-    container_name: lenorefin_backend
-    command: /home/app/web/start.sh
+  app:
+    image: novanglus96/lenorefin:latest
+    container_name: lenorefin
+    command: /home/app/web/start.app.sh
     volumes:
-      - lenorefin_static_volume:/home/app/web/staticfiles
-      - lenorefin_media_volume:/home/app/web/mediafiles
-    expose:
-      - 8000
+      - lenorefin_static:/home/app/web/staticfiles
+      - lenorefin_media:/home/app/web/mediafiles
+      - lenorefin_bkp:/backups/
+    ports:
+      - "8080:80"
     depends_on:
       - db
+      - redis
     networks:
       - lenorefin
     env_file:
       - ./.env
+    environment:
+      - DEBUG=0
+
   db:
     image: postgres:15
     container_name: lenorefin_db
     volumes:
-      - lenorefin_postgres_data:/var/lib/postgresql/data/
+      - lenorefin_postgres:/var/lib/postgresql/data/
+      - lenorefin_bkp:/backups/
+    networks:
+      - lenorefin
     env_file:
-      - ./.env.db
+      - ./.env
+    environment:
+      - TZ=UTC
+      - POSTGRES_USER=${SQL_USER}
+      - POSTGRES_PASSWORD=${SQL_PASSWORD}
+      - POSTGRES_DB=${SQL_DATABASE}
+
+  redis:
+    image: redis:7-alpine
+    container_name: lenorefin_redis
+    command: ["redis-server", "--appendonly", "yes"]
     networks:
       - lenorefin
-  nginx:
-    image: novanglus96/lenoreapps_proxy:latest
-    container_name: lenorefin_nginx
-    ports:
-      - "8080:80"
-    volumes:
-      - lenorefin_static_volume:/home/app/web/staticfiles
-      - lenorefin_media_volume:/home/app/web/mediafiles
-    depends_on:
-      - backend
-      - frontend
-    networks:
-      - lenorefin
+    restart: unless-stopped
 
 networks:
   lenorefin:
 
 volumes:
-  lenorefin_postgres_data:
-    external: true
-  lenorefin_static_volume:
-    external: true
-  lenorefin_media_volume:
-    external: true
+  lenorefin_postgres:
+  lenorefin_static:
+  lenorefin_media:
+  lenorefin_bkp:
 ```
 
 ### Step 3: Run the Application
@@ -216,12 +212,75 @@ volumes:
 
 ### Notes
 
-* Adjust exposed ports as needed for your environment.
+* Adjust the port (`8080:80`) as needed for your environment.
 * If you encounter any issues, ensure your `.env` file has the correct values and your Docker and Docker Compose installations are up to date.
 
 Enjoy using LenoreFin!
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Migrating from pre-v1.4 to v1.4
+
+Version 1.4 consolidates the previous multi-container setup (separate `frontend`, `backend`, `worker`, and `nginx` containers) into a single `app` container. Follow these steps to migrate an existing installation.
+
+### 1. Back up your database
+
+Before making any changes, export your data:
+
+```bash
+docker exec lenorefin_backend python manage.py export_user_data
+```
+
+Copy the backup out of the container to a safe location.
+
+### 2. Stop and remove old containers
+
+```bash
+docker compose down
+```
+
+### 3. Update your `docker-compose.yml`
+
+Replace your existing `docker-compose.yml` with the new 3-service format shown in **Step 2** above. The old `frontend`, `backend`, `worker`, and `nginx` services are no longer needed.
+
+### 4. Update your `.env` file
+
+Add the new optional variable (it defaults to `false` if omitted):
+
+```env
+VITE_OPT_FEATURES=false
+```
+
+### 5. Rename volumes (if using named volumes from the old setup)
+
+The old setup used volumes named `lenorefin_static_volume`, `lenorefin_media_volume`, and `lenorefin_postgres_data`. The new setup uses `lenorefin_static`, `lenorefin_media`, and `lenorefin_postgres`.
+
+If you have existing data you want to preserve, copy it between volumes before starting:
+
+```bash
+# Example: migrate postgres data
+docker run --rm \
+  -v lenorefin_postgres_data:/from \
+  -v lenorefin_postgres:/to \
+  alpine sh -c "cp -av /from/. /to/"
+```
+
+Repeat for `lenorefin_static_volume` → `lenorefin_static` and `lenorefin_media_volume` → `lenorefin_media` if needed.
+
+Alternatively, use the backup/restore feature: restore your data export after the new stack is running via the **Backup & Restore** page in the app.
+
+### 6. Pull and start the new image
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+### 7. Verify
+
+Open the app in your browser. Check the **Admin → Version** page to confirm you are on v1.4+.
 
 
 
