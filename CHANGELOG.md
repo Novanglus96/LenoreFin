@@ -1,3 +1,10 @@
+# [1.4.0-alpha.25](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.24...v1.4.0-alpha.25) (2026-05-19)
+
+
+### Features
+
+* custom reporting — Phase 6 ([#118](https://github.com/Novanglus96/LenoreFin/issues/118)) ([acd886f](https://github.com/Novanglus96/LenoreFin/commit/acd886feb4fa49da4ba4cfa256367d18ed8a88b2))
+
 # [1.4.0-alpha.24](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.23...v1.4.0-alpha.24) (2026-05-18)
 
 
