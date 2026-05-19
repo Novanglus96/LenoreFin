@@ -381,10 +381,10 @@
   import { useAccountByID } from "@/composables/accountsComposable";
   import { useMainStore } from "@/stores/main";
   import { useAccounts } from "@/composables/accountsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";
-  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const schema = yup.object({
     account_name: yup.string().required("Must provide an account name."),

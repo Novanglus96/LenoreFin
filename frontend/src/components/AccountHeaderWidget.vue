@@ -65,6 +65,7 @@
                       v-bind="props"
                       size="small"
                       class="mx-0"
+                      :disabled="!isOnline"
                     />
                   </template>
                 </v-tooltip>
@@ -355,6 +356,8 @@
   import { useDisplay } from "vuetify";
   import RewardsGraphs from "./RewardsGraphs.vue";
   import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { smAndDown } = useDisplay();
   const authStore = useAuthStore();

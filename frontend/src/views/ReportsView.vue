@@ -267,6 +267,7 @@
                   prepend-icon="mdi-play"
                   :loading="isRunning"
                   @click="executeReport"
+                  :disabled="!isOnline"
                 >Run Report</v-btn>
               </v-col>
               <v-col cols="auto" v-if="results">

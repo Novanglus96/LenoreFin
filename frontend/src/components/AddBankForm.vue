@@ -35,10 +35,10 @@
 <script setup>
   import { ref } from "vue";
   import { useBanks } from "@/composables/banksComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";
-  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const { addBank } = useBanks();
   const dialog = ref(false);

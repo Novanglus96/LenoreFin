@@ -13,6 +13,7 @@
                   prepend-icon="mdi-plus"
                   v-bind="props"
                   v-if="authStore.isFullAccess"
+                  :disabled="!isOnline"
                 >
                   Add Payee
                 </v-btn>
@@ -63,6 +64,7 @@
                   variant="text"
                   size="small"
                   @click="openEditDialog(item)"
+                  :disabled="!isOnline"
                 ></v-btn>
                 <v-btn
                   icon="mdi-delete"
@@ -70,6 +72,7 @@
                   size="small"
                   color="error"
                   @click="openDeleteDialog(item)"
+                  :disabled="!isOnline"
                 ></v-btn>
               </template>
             </v-data-table>
@@ -123,8 +126,8 @@
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";
   import { useAuthStore } from "@/stores/auth";
-  const { isOnline } = useOnlineStatus();
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const authStore = useAuthStore();
   const { payees, isLoading, addPayee, editPayee, removePayee } = usePayees();

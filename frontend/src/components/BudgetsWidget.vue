@@ -10,6 +10,7 @@
             size="small"
             @click="showAddForm = true"
             v-bind="props"
+            :disabled="!isOnline"
           ></v-btn>
         </template>
       </v-tooltip>
@@ -172,6 +173,8 @@
   import AddBudgetFormMobile from "./AddBudgetFormMobile.vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { smAndDown, lgAndUp } = useDisplay();
   const isMobile = smAndDown;

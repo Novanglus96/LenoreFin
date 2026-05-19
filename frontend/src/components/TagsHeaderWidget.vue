@@ -4,7 +4,7 @@
       variant="outlined"
       :elevation="4"
       class="bg-primary"
-      v-if="!isLoading"
+      v-if="tags"
     >
       <template v-slot:text>
         <v-row desnity="compact">
@@ -16,6 +16,7 @@
                 variant="text"
                 @click="tagAddFormDialog = true"
                 v-if="authStore.isFullAccess"
+                :disabled="!isOnline"
               >
                 Add Tag
               </v-btn>
@@ -25,6 +26,7 @@
                 variant="text"
                 @click="openEditDialog"
                 v-if="authStore.isFullAccess && selectedTag && !selectedTag.is_system"
+                :disabled="!isOnline"
               ></v-btn>
               <v-btn
                 icon="mdi-delete"
@@ -33,6 +35,7 @@
                 color="error"
                 @click="deleteDialog = true"
                 v-if="authStore.isFullAccess && selectedTag && !selectedTag.is_system"
+                :disabled="!isOnline"
               ></v-btn>
               <TagForm
                 v-model="tagAddFormDialog"
@@ -129,7 +132,7 @@
         </v-row>
       </template>
     </v-card>
-    <v-skeleton-loader type="card" v-if="isLoading"></v-skeleton-loader>
+    <v-skeleton-loader type="card" v-if="!tags"></v-skeleton-loader>
 
     <v-dialog v-model="deleteDialog" max-width="400" persistent>
       <v-card>
@@ -154,8 +157,8 @@
   import TagForm from "@/components/TagForm.vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
-  const { isOnline } = useOnlineStatus();
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const tagAddFormDialog = ref(false);
   const tagEditFormDialog = ref(false);

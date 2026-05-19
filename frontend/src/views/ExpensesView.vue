@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-row class="pa-1 ga-1" no-gutters v-if="!isLoading">
+    <v-row class="pa-1 ga-1" no-gutters v-if="expenses">
       <v-col class="rounded text-center">
         <v-btn
           icon="mdi-cog"
@@ -141,8 +141,8 @@
   import { useField, useForm } from "vee-validate";
   import { useOptions } from "@/composables/optionsComposable";
   import { useParentTags } from "@/composables/tagsComposable";
-  const { isOnline } = useOnlineStatus();
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const authStore = useAuthStore();
   const { options: appOptions, editOptions } = useOptions();

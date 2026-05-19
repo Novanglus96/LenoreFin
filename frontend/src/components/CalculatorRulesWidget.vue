@@ -11,6 +11,7 @@
             v-bind="props"
             @click="calcAddRuleFormDialog = true"
             size="small"
+            :disabled="!isOnline"
           ></v-btn>
         </template>
       </v-tooltip>
@@ -32,10 +33,10 @@
         >
           <v-list-item-title>{{ item.name }}</v-list-item-title>
           <template #append>
-            <v-btn variant="plain" icon @click.stop="clickEditRule(item)">
+            <v-btn variant="plain" icon @click.stop="clickEditRule(item)" :disabled="!isOnline">
               <v-icon>mdi-pencil</v-icon>
             </v-btn>
-            <v-btn variant="plain" icon @click.stop="clickDeleteRule(item.id)">
+            <v-btn variant="plain" icon @click.stop="clickDeleteRule(item.id)" :disabled="!isOnline">
               <v-icon>mdi-delete</v-icon>
             </v-btn>
             <v-dialog v-model="showDeleteDialog" width="400">
@@ -65,8 +66,8 @@
   import CalculatorRuleForm from "./CalculatorRuleForm.vue";
   import { useCalculationRule } from "@/composables/calculatorComposable";
   import { usePlanningStore } from "@/stores/planning";
-  const { isOnline } = useOnlineStatus();
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const planningstore = usePlanningStore();
 

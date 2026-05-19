@@ -13,6 +13,7 @@
             v-bind="props"
             @click="addContributionRuleDialog = true"
             size="small"
+            :disabled="!isOnline"
           ></v-btn>
         </template>
       </v-tooltip>
@@ -64,7 +65,7 @@
                 variant="plain"
                 icon
                 @click="editContributionRuleDialog = true"
-                :disabled="selectedContributionRule.length === 0"
+                :disabled="selectedContributionRule.length === 0 || !isOnline"
               >
                 <v-icon icon="mdi-pencil"></v-icon>
               </v-btn>
@@ -79,7 +80,7 @@
               <v-btn
                 variant="plain"
                 icon
-                :disabled="selectedContributionRule.length == 0"
+                :disabled="selectedContributionRule.length === 0 || !isOnline"
               >
                 <v-icon
                   icon="mdi-delete"
@@ -177,8 +178,8 @@
   import ContributionRuleForm from "@/components/ContributionRuleForm.vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
-  const { isOnline } = useOnlineStatus();
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const page = ref(1);
   const itemsPerPage = ref(3);

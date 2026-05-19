@@ -70,7 +70,7 @@
       <Line
         :data="retirement_forecast"
         :options="chartOptions"
-        v-if="!isActive"
+        v-if="!isActive && retirement_forecast"
         ref="Forecast"
         aria-label="Account Forecast"
       >
@@ -124,8 +124,8 @@
   import { useField, useForm } from "vee-validate";
   import { useOptions } from "@/composables/optionsComposable";
   import { useAccounts } from "@/composables/accountsComposable";
-  const { isOnline } = useOnlineStatus();
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const authStore = useAuthStore();
   const { options: appOptions, editOptions } = useOptions();

@@ -55,10 +55,10 @@
 <script setup>
   import { defineEmits, defineProps, watchEffect, onMounted } from "vue";
   import { useField, useForm } from "vee-validate";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
   import VueDatePicker from "@vuepic/vue-datepicker";
   import "@vuepic/vue-datepicker/dist/main.css";
-  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const { handleSubmit } = useForm({
     validationSchema: {

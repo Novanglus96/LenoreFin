@@ -35,9 +35,9 @@
 <script setup>
   import { ref } from "vue";
   import { usePayees } from "@/composables/payeesComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
   import { useField, useForm } from "vee-validate";
-  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import * as yup from "yup";
 
   const { addPayee } = usePayees();

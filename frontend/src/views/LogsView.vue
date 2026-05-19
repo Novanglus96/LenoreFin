@@ -11,6 +11,7 @@
           size="small"
           :loading="isDownloading"
           @click="handleDownloadBundle"
+          :disabled="!isOnline"
         >
           Download Log Bundle
         </v-btn>
@@ -136,6 +137,8 @@
 <script setup>
   import { ref, computed, watch } from "vue";
   import { useLogs, downloadLogBundle } from "@/composables/logentriesComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const activeTab = ref("error");
   const currentPage = ref(1);

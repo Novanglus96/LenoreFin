@@ -225,10 +225,10 @@
   import VueDatePicker from "@vuepic/vue-datepicker";
   import "@vuepic/vue-datepicker/dist/main.css";
   import { useReminders } from "@/composables/remindersComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
   import { useRepeats } from "@/composables/repeatsComposable";
   import { useField, useForm } from "vee-validate";
-  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import * as yup from "yup";
 
   const schema = yup.object({

@@ -57,7 +57,7 @@
       <Line
         :data="account_forecast"
         :options="options"
-        v-if="!isActive"
+        v-if="!isActive && account_forecast"
         ref="Forecast"
         aria-label="Account Forecast"
       >

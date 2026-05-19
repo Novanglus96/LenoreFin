@@ -91,9 +91,9 @@
   import { ref, reactive, computed } from "vue";
   import { useOptions } from "@/composables/optionsComposable";
   import { useTags, useParentTags } from "@/composables/tagsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
   import { useDisplay } from "vuetify";
-  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const props = defineProps({
     widget: {

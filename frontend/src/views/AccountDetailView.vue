@@ -44,16 +44,15 @@
 
   const transactions_store = useTransactionsStore();
   const route = useRoute();
-  const account_id = ref(route.params.accountID);
+  const account_id = ref(parseInt(route.params.accountID));
   const timeframe = ref(90);
   const { isLoading, transactions, isFetching } = useTransactions();
 
   watch(
     () => route.params.accountID,
     newAccountID => {
-      // Update the account_id ref with the new value
-      account_id.value = newAccountID;
-      transactions_store.pageinfo.account_id = newAccountID;
+      account_id.value = parseInt(newAccountID);
+      transactions_store.pageinfo.account_id = parseInt(newAccountID);
       transactions_store.pageinfo.forecast = false;
     },
   );

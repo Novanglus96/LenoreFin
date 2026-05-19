@@ -37,8 +37,8 @@
   import { defineEmits, defineProps, onMounted, watchEffect } from "vue";
   import { useField, useForm } from "vee-validate";
   import { useTransactions } from "@/composables/transactionsComposable";
-  const { isOnline } = useOnlineStatus();
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { mutliEditTransactions } = useTransactions();
 

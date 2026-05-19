@@ -13,7 +13,7 @@
           <v-btn
             color="error"
             prepend-icon="mdi-delete"
-            :disabled="canEdit || !props.budget"
+            :disabled="canEdit || !props.budget || !isOnline"
             @click="showConfirmDelete = true"
             size="small"
             variant="text"
@@ -45,7 +45,7 @@
           <v-btn
             color="primary"
             prepend-icon="mdi-pencil"
-            :disabled="canEdit || !props.budget"
+            :disabled="canEdit || !props.budget || !isOnline"
             @click="canEdit = true"
             size="small"
             variant="text"
@@ -216,8 +216,8 @@
   import { useTags } from "@/composables/tagsComposable";
   import { useRepeats } from "@/composables/repeatsComposable";
   import { useBudgets } from "@/composables/budgetsComposable";
-  const { isOnline } = useOnlineStatus();
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const emit = defineEmits(["updateDialog"]);
   const authStore = useAuthStore();

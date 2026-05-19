@@ -128,8 +128,8 @@
   import { useTags } from "@/composables/tagsComposable";
   import { useAccounts } from "@/composables/accountsComposable";
   import { useCalculationRule } from "@/composables/calculatorComposable";
-  const { isOnline } = useOnlineStatus();
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { tags: tag_items, isLoading: tags_isLoading } = useTags();
   const { accounts, isLoading: accounts_isLoading } = useAccounts();

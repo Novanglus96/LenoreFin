@@ -74,6 +74,7 @@
                 href="/admin"
                 color="selected"
                 title="Settings"
+                :disabled="!isOnline"
               ></v-list-item>
             </template>
             <v-divider class="my-1"></v-divider>
@@ -260,6 +261,7 @@
               href="/admin"
               v-bind="props"
               color="selected"
+              :disabled="!isOnline"
             ></v-list-item>
           </template>
         </v-tooltip>

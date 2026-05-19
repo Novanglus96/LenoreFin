@@ -58,9 +58,9 @@
 <script setup>
   import { defineEmits, defineProps, watchEffect } from "vue";
   import { useTags, useParentTags } from "@/composables/tagsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
   import { useTagTypes } from "@/composables/tagtypesComposable";
-  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";
 

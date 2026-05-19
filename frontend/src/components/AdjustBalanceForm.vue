@@ -41,9 +41,9 @@
 <script setup>
   import { defineEmits, defineProps, ref, watch } from "vue";
   import { useTransactions } from "@/composables/transactionsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
   import { useField, useForm } from "vee-validate";
-  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import * as yup from "yup";
 
   const today = new Date();

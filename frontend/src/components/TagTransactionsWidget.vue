@@ -6,7 +6,7 @@
           variant="outlined"
           :elevation="4"
           class="bg-surface"
-          v-if="!isLoading"
+          v-if="!isLoading && tag_transactions"
         >
           <v-card-title>
             <span class="text-subtitle-2 text-primary">Tag Totals</span>
@@ -87,16 +87,16 @@
     props.tagID,
   );
   const this_year_avg = computed(() =>
-    tag_transactions.value.year1_avg ? tag_transactions.value.year1_avg : 0,
+    tag_transactions.value?.year1_avg ?? 0,
   );
   const show_year1 = computed(() =>
-    tag_transactions.value.year1_avg !== 0 ? true : false,
+    (tag_transactions.value?.year1_avg ?? 0) !== 0,
   );
   const last_year_avg = computed(() =>
-    tag_transactions.value.year2_avg ? tag_transactions.value.year2_avg : 0,
+    tag_transactions.value?.year2_avg ?? 0,
   );
   const show_year2 = computed(() =>
-    tag_transactions.value.year2_avg !== 0 ? true : false,
+    (tag_transactions.value?.year2_avg ?? 0) !== 0,
   );
   const options = ref({
     responsive: true,

@@ -66,8 +66,8 @@
 <script setup>
   import { defineEmits, defineProps, watchEffect, onMounted } from "vue";
   import { useField, useForm } from "vee-validate";
-  const { isOnline } = useOnlineStatus();
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { handleSubmit } = useForm({
     validationSchema: {
