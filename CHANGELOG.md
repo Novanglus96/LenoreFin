@@ -1,3 +1,10 @@
+# [1.4.0-alpha.27](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.26...v1.4.0-alpha.27) (2026-05-19)
+
+
+### Features
+
+* consolidate production containers into single app image ([#120](https://github.com/Novanglus96/LenoreFin/issues/120)) ([66a5e75](https://github.com/Novanglus96/LenoreFin/commit/66a5e7564655a13c907bc51def1ba6e79b1884e9))
+
 # [1.4.0-alpha.26](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.25...v1.4.0-alpha.26) (2026-05-19)
 
 
