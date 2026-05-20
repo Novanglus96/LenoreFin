@@ -76,6 +76,7 @@ def update_bank(request, bank_id: int, payload: BankIn):
     try:
         bank = get_object_or_404(Bank, id=bank_id)
         bank.bank_name = payload.bank_name
+        bank.logo_url = payload.logo_url
         bank.save()
         api_logger.info(f"Bank updated : {bank.bank_name}")
         return {"success": True}

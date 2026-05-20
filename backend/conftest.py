@@ -23,6 +23,19 @@ import os
 
 
 @pytest.fixture(autouse=True)
+def clear_cache_between_tests():
+    """Clear locmem cache before each test.
+
+    SQLite in-memory DB reuses IDs after transaction rollbacks, so tests can
+    hit stale cache entries from a previous test that used the same account ID.
+    """
+    from django.core.cache import cache
+    cache.clear()
+    yield
+    cache.clear()
+
+
+@pytest.fixture(autouse=True)
 def patch_delete_pattern():
     with patch("core.cache.helpers.delete_pattern", return_value=None), \
          patch("backend.utils.cache.delete_pattern", return_value=None), \
