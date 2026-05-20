@@ -1,3 +1,10 @@
+# [1.4.0-alpha.30](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.29...v1.4.0-alpha.30) (2026-05-20)
+
+
+### Bug Fixes
+
+* replace django-jazzmin with django-unfold for admin theming ([#124](https://github.com/Novanglus96/LenoreFin/issues/124)) ([db90547](https://github.com/Novanglus96/LenoreFin/commit/db905470708264418571c70cfc00fe75f77837b7)), closes [#06966](https://github.com/Novanglus96/LenoreFin/issues/06966)
+
 # [1.4.0-alpha.29](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.28...v1.4.0-alpha.29) (2026-05-20)
 
 
