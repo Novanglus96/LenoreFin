@@ -542,8 +542,7 @@
       editAccount(values);
       closeForm();
     },
-    errors => {
-      // Validation failed
+    () => {
       generalError.value = "Please fix the errors below before saving.";
     },
   );
