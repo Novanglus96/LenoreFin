@@ -49,12 +49,6 @@
               color="selected"
               title="Payees"
             ></v-list-item>
-            <v-list-item
-              prepend-icon="mdi-chart-pie"
-              to="/reports"
-              color="selected"
-              title="Reports"
-            ></v-list-item>
             <template v-if="authStore.isFullAccess">
               <v-divider class="my-1"></v-divider>
               <v-list-item
@@ -218,16 +212,6 @@
             <v-list-item
               prepend-icon="mdi-account-tie"
               to="/payees"
-              v-bind="props"
-              color="selected"
-            ></v-list-item>
-          </template>
-        </v-tooltip>
-        <v-tooltip text="Reports">
-          <template v-slot:activator="{ props }">
-            <v-list-item
-              prepend-icon="mdi-chart-pie"
-              to="/reports"
               v-bind="props"
               color="selected"
             ></v-list-item>

@@ -91,6 +91,12 @@
       icon: "mdi-calculator",
       optional: true,
     },
+    {
+      title: "Reports",
+      link: "/reports",
+      icon: "mdi-chart-pie",
+      optional: false,
+    },
   ]);
 
   const setAccount = (account, forecast, link) => {
