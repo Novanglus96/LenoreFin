@@ -1,113 +1,72 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
-from .models import (
-    GraphType,
-    Option,
-    Message,
-    Payee,
-    Version,
-    DescriptionHistory,
-)
+from unfold.admin import ModelAdmin
 from import_export.admin import ImportExportModelAdmin
+from .models import GraphType, Option, Message, Payee, Version, DescriptionHistory
 
-# Register your models here.
 
-
-class OptionAdmin(admin.ModelAdmin):
+class OptionAdmin(ModelAdmin):
 
     def has_add_permission(self, request, obj=None):
-        # Only allow adding if no instances exist
         return not Option.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
-        # Disable delete permission
         return False
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
-        # Redirect to the singleton instance change page
         singleton = Option.load()
         if singleton:
-            return super(OptionAdmin, self).change_view(
-                request, str(singleton.pk), form_url, extra_context
-            )
-        else:
-            return super(OptionAdmin, self).change_view(
-                request, object_id, form_url, extra_context
-            )
+            return super().change_view(request, str(singleton.pk), form_url, extra_context)
+        return super().change_view(request, object_id, form_url, extra_context)
 
-    list_display = [
-        "alert_balance",
-        "alert_period",
-        "auto_archive",
-        "archive_length",
-    ]
-
-    list_display_links = [
-        "alert_balance",
-        "alert_period",
-        "auto_archive",
-        "archive_length",
-    ]
+    list_display = ["alert_balance", "alert_period", "auto_archive", "archive_length"]
+    list_display_links = ["alert_balance", "alert_period", "auto_archive", "archive_length"]
 
 
-class PayeeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class PayeeAdmin(ModelAdmin, ImportExportModelAdmin):
     list_display = ["id", "payee_name"]
-
     list_display_links = ["payee_name"]
-
     ordering = ["payee_name"]
 
 
-class MessageAdmin(admin.ModelAdmin):
+class MessageAdmin(ModelAdmin):
     list_display = ["message_date", "message", "unread"]
-
     list_display_links = ["message"]
-
     ordering = ["-message_date"]
 
     def has_add_permission(self, request):
-        # Return False to disable adding
         return False
 
     def has_delete_permission(self, request, obj=None):
-        # Return False to disable deleting
         return False
 
     def has_change_permission(self, request, obj=None):
-        # Return False to disable editing
         return False
 
 
-class VersionAdmin(admin.ModelAdmin):
+class VersionAdmin(ModelAdmin):
     list_display = ["version_number"]
-
     list_display_links = ["version_number"]
-
     ordering = ["version_number"]
 
     def has_add_permission(self, request):
-        # Return False to disable adding
         return False
 
     def has_delete_permission(self, request, obj=None):
-        # Return False to disable deleting
         return False
 
     def has_change_permission(self, request, obj=None):
-        # Return False to disable editing
         return False
 
 
-class DescriptionHistoryAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class DescriptionHistoryAdmin(ModelAdmin, ImportExportModelAdmin):
     list_display = ["id", "description_pretty", "tag"]
-
     list_display_links = ["description_pretty"]
-
     ordering = ["id"]
 
 
-class RestrictedUserAdmin(UserAdmin):
+class RestrictedUserAdmin(ModelAdmin, UserAdmin):
     """
     Readonly-group users can only view and change their own profile.
     Full Access users and superusers retain normal UserAdmin behaviour.
@@ -143,13 +102,10 @@ class RestrictedUserAdmin(UserAdmin):
         return list(readonly) + ["is_superuser", "is_staff", "groups", "user_permissions"]
 
 
-class GraphTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class GraphTypeAdmin(ModelAdmin, ImportExportModelAdmin):
     list_display = ["id", "graph_type", "is_system", "slug"]
-
     list_display_links = ["graph_type"]
-
     ordering = ["id"]
-
     readonly_fields = ["slug"]
 
     def has_delete_permission(self, request, obj=None):

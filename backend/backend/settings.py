@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from django.templatetags.static import static
 import os
 import logging
 
@@ -37,7 +38,10 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
 
 INSTALLED_APPS = [
     "import_export",
-    "jazzmin",
+    "unfold",
+    "unfold.contrib.filters",
+    "unfold.contrib.forms",
+    "unfold.contrib.import_export",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -268,196 +272,129 @@ Q_CLUSTER = {
     "poll": 1,
 }
 
-JAZZMIN_SETTINGS = {
-    "show_ui_builder": DEBUG,
-    "site_title": "LenoreFin",
-    "site_header": "LenoreFin",
-    "site_brand": "LenoreFin",
-    "site_logo": "logov2.png",
-    "custom_css": "admin_custom.css",
-    "login_logo": None,
-    "login_logo_dark": None,
-    "site_logo_classes": "img-fluid",
-    "site_icon": "favicon.ico",
-    "welcome_sign": "Please log in",
-    "copyright": "John Adams",
-    "user_avatar": None,
-    ############
-    # Top Menu #
-    ############
-    "topmenu_links": [
-        {"name": "Back to Site", "url": "/", "new_window": False},
-    ],
-    #############
-    # User Menu #
-    #############
-    "usermenu_links": [
-        {"name": "Back to Site", "url": "/", "new_window": False},
-    ],
-    "icons": {
-        # Accounts
-        "accounts.Bank": "fas fa-landmark",
-        "accounts.Account": "fas fa-wallet",
-        "accounts.AccountType": "fas fa-layer-group",
-        "accounts.Reward": "fas fa-star",
-        # Administration
-        "administration.Option": "fas fa-sliders-h",
-        "administration.Payee": "fas fa-user-tie",
-        "administration.Message": "fas fa-envelope",
-        "administration.Version": "fas fa-code-branch",
-        "administration.DescriptionHistory": "fas fa-history",
-        "administration.GraphType": "fas fa-chart-bar",
-        # Auth
-        "auth.user": "fas fa-user",
-        "auth.Group": "fas fa-users",
-        # Planning
-        "planning.Budget": "fas fa-dollar-sign",
-        "planning.Contribution": "fas fa-piggy-bank",
-        "planning.ContribRule": "fas fa-ruler-combined",
-        "planning.Note": "fas fa-sticky-note",
-        "planning.CalculationRule": "fas fa-calculator",
-        "planning.ChristmasGift": "fas fa-gift",
-        # Reminders
-        "reminders.Reminder": "fas fa-bell",
-        "reminders.Repeat": "fas fa-redo",
-        "reminders.ReminderExclusion": "fas fa-bell-slash",
-        # Tags
-        "tags.TagType": "fas fa-tags",
-        "tags.MainTag": "fas fa-tag",
-        "tags.SubTag": "fas fa-tag",
-        "tags.Tag": "fas fa-tag",
-        # Transactions
-        "transactions.Transaction": "fas fa-exchange-alt",
-        "transactions.Paycheck": "fas fa-money-bill-wave",
-        "transactions.TransactionType": "fas fa-list-ul",
-        "transactions.TransactionStatus": "fas fa-traffic-light",
-        "transactions.TransactionDetail": "fas fa-receipt",
-        "transactions.ReminderCacheTransaction": "fas fa-clipboard-list",
-        "transactions.ForecastCacheTransaction": "fas fa-chart-line",
-        "transactions.ReminderCacheTransactionDetail": "fas fa-clipboard",
-        "transactions.ForecastCacheTransactionDetail": "fas fa-chart-area",
-        # Reports
-        "reports.ReportConfig": "fas fa-chart-pie",
-        # Imports
-        "imports.FileImport": "fas fa-file-import",
-        "imports.TransactionImport": "fas fa-file-alt",
-        "imports.TransactionImportTag": "fas fa-tag",
-        "imports.TransactionImportError": "fas fa-exclamation-triangle",
-        "imports.TypeMapping": "fas fa-random",
-        "imports.StatusMapping": "fas fa-random",
-        "imports.AccountMapping": "fas fa-random",
-        "imports.TagMapping": "fas fa-random",
-        # Django Q
-        "django_q.Success": "fas fa-check-circle",
-        "django_q.Failure": "fas fa-times-circle",
-        "django_q.Schedule": "fas fa-clock",
-        "django_q.OrmQ": "fas fa-tasks",
+UNFOLD = {
+    "SITE_TITLE": "LenoreFin",
+    "SITE_HEADER": "LenoreFin",
+    "SITE_URL": "/",
+    "SITE_LOGO": lambda request: static("logov2.png"),
+    "SITE_ICON": lambda request: static("favicon.ico"),
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+    "COLORS": {
+        "primary": {
+            "50": "240 253 250",
+            "100": "204 251 241",
+            "200": "153 246 228",
+            "300": "94 234 212",
+            "400": "45 212 191",
+            "500": "20 184 166",
+            "600": "13 148 136",
+            "700": "15 118 110",
+            "800": "17 94 89",
+            "900": "19 78 74",
+            "950": "4 47 46",
+        },
     },
-    "default_icon_parents": "fas fa-chevron-circle-right",
-    "default_icon_children": "fas fa-chevron-right",
-    "order_with_respect_to": [
-        # Accounts
-        "accounts",
-        "accounts.Bank",
-        "accounts.Account",
-        "accounts.AccountType",
-        "accounts.Reward",
-        # Transactions
-        "transactions",
-        "transactions.Transaction",
-        "transactions.Paycheck",
-        "transactions.TransactionType",
-        "transactions.TransactionStatus",
-        "transactions.TransactionDetail",
-        "transactions.ReminderCacheTransaction",
-        "transactions.ReminderCacheTransactionDetail",
-        "transactions.ForecastCacheTransaction",
-        "transactions.ForecastCacheTransactionDetail",
-        # Reminders
-        "reminders",
-        "reminders.Reminder",
-        "reminders.Repeat",
-        "reminders.ReminderExclusion",
-        # Tags
-        "tags",
-        "tags.Tag",
-        "tags.MainTag",
-        "tags.SubTag",
-        "tags.TagType",
-        # Planning
-        "planning",
-        "planning.Budget",
-        "planning.Contribution",
-        "planning.ContribRule",
-        "planning.Note",
-        "planning.CalculationRule",
-        "planning.ChristmasGift",
-        # Administration
-        "administration",
-        "administration.Option",
-        "administration.Payee",
-        "administration.Version",
-        "administration.Message",
-        "administration.DescriptionHistory",
-        "administration.GraphType",
-        # Auth
-        "auth",
-        "auth.User",
-        "auth.Group",
-        # Reports
-        "reports",
-        "reports.ReportConfig",
-        # Imports
-        "imports",
-        "imports.FileImport",
-        "imports.TransactionImport",
-        "imports.TransactionImportTag",
-        "imports.TransactionImportError",
-        "imports.TypeMapping",
-        "imports.StatusMapping",
-        "imports.AccountMapping",
-        "imports.TagMapping",
-        # Tasks
-        "django_q",
-        "django_q.Schedule",
-        "django_q.Success",
-        "django_q.Failure",
-        "django_q.OrmQ",
-    ],
-    "changeform_format": "collapsible",
-}
-
-JAZZMIN_UI_TWEAKS = {
-    "navbar_small_text": False,
-    "footer_small_text": False,
-    "body_small_text": True,
-    "brand_small_text": True,
-    "brand_colour": "navbar-teal",
-    "accent": "accent-success",
-    "navbar": "navbar-teal navbar-dark",
-    "no_navbar_border": False,
-    "navbar_fixed": False,
-    "layout_boxed": False,
-    "footer_fixed": False,
-    "sidebar_fixed": True,
-    "sidebar": "sidebar-light-teal",
-    "sidebar_nav_small_text": False,
-    "sidebar_disable_expand": False,
-    "sidebar_nav_child_indent": False,
-    "sidebar_nav_compact_style": True,
-    "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": True,
-    "theme": "minty",
-    "dark_mode_theme": "darkly",
-    "button_classes": {
-        "primary": "btn-outline-primary",
-        "secondary": "btn-outline-secondary",
-        "info": "btn-info",
-        "warning": "btn-warning",
-        "danger": "btn-danger",
-        "success": "btn-success",
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "Accounts",
+                "items": [
+                    {"title": "Banks", "link": "/admin/accounts/bank/"},
+                    {"title": "Accounts", "link": "/admin/accounts/account/"},
+                    {"title": "Account Types", "link": "/admin/accounts/accounttype/"},
+                    {"title": "Rewards", "link": "/admin/accounts/reward/"},
+                ],
+            },
+            {
+                "title": "Transactions",
+                "items": [
+                    {"title": "Transactions", "link": "/admin/transactions/transaction/"},
+                    {"title": "Paychecks", "link": "/admin/transactions/paycheck/"},
+                    {"title": "Transaction Types", "link": "/admin/transactions/transactiontype/"},
+                    {"title": "Transaction Statuses", "link": "/admin/transactions/transactionstatus/"},
+                    {"title": "Transaction Details", "link": "/admin/transactions/transactiondetail/"},
+                    {"title": "Reminder Cache", "link": "/admin/transactions/remindercachetransaction/"},
+                    {"title": "Forecast Cache", "link": "/admin/transactions/forecastcachetransaction/"},
+                ],
+            },
+            {
+                "title": "Reminders",
+                "items": [
+                    {"title": "Reminders", "link": "/admin/reminders/reminder/"},
+                    {"title": "Repeats", "link": "/admin/reminders/repeat/"},
+                    {"title": "Exclusions", "link": "/admin/reminders/reminderexclusion/"},
+                ],
+            },
+            {
+                "title": "Tags",
+                "items": [
+                    {"title": "Tags", "link": "/admin/tags/tag/"},
+                    {"title": "Main Tags", "link": "/admin/tags/maintag/"},
+                    {"title": "Sub Tags", "link": "/admin/tags/subtag/"},
+                    {"title": "Tag Types", "link": "/admin/tags/tagtype/"},
+                ],
+            },
+            {
+                "title": "Planning",
+                "items": [
+                    {"title": "Budgets", "link": "/admin/planning/budget/"},
+                    {"title": "Contributions", "link": "/admin/planning/contribution/"},
+                    {"title": "Contribution Rules", "link": "/admin/planning/contribrule/"},
+                    {"title": "Notes", "link": "/admin/planning/note/"},
+                    {"title": "Calculation Rules", "link": "/admin/planning/calculationrule/"},
+                    {"title": "Christmas Gifts", "link": "/admin/planning/christmasgift/"},
+                ],
+            },
+            {
+                "title": "Administration",
+                "items": [
+                    {"title": "Options", "link": "/admin/administration/option/"},
+                    {"title": "Payees", "link": "/admin/administration/payee/"},
+                    {"title": "Version", "link": "/admin/administration/version/"},
+                    {"title": "Messages", "link": "/admin/administration/message/"},
+                    {"title": "Description History", "link": "/admin/administration/descriptionhistory/"},
+                    {"title": "Graph Types", "link": "/admin/administration/graphtype/"},
+                ],
+            },
+            {
+                "title": "Users & Groups",
+                "items": [
+                    {"title": "Users", "link": "/admin/auth/user/"},
+                    {"title": "Groups", "link": "/admin/auth/group/"},
+                ],
+            },
+            {
+                "title": "Reports",
+                "items": [
+                    {"title": "Report Configs", "link": "/admin/reports/reportconfig/"},
+                ],
+            },
+            {
+                "title": "Imports",
+                "items": [
+                    {"title": "File Imports", "link": "/admin/imports/fileimport/"},
+                    {"title": "Transaction Imports", "link": "/admin/imports/transactionimport/"},
+                    {"title": "Import Errors", "link": "/admin/imports/transactionimporterror/"},
+                    {"title": "Type Mappings", "link": "/admin/imports/typemapping/"},
+                    {"title": "Status Mappings", "link": "/admin/imports/statusmapping/"},
+                    {"title": "Account Mappings", "link": "/admin/imports/accountmapping/"},
+                    {"title": "Tag Mappings", "link": "/admin/imports/tagmapping/"},
+                ],
+            },
+            {
+                "title": "Task Queue",
+                "items": [
+                    {"title": "Schedules", "link": "/admin/django_q/schedule/"},
+                    {"title": "Successful Tasks", "link": "/admin/django_q/success/"},
+                    {"title": "Failed Tasks", "link": "/admin/django_q/failure/"},
+                    {"title": "Queued Tasks", "link": "/admin/django_q/ormq/"},
+                ],
+            },
+        ],
     },
-    "actions_sticky_top": False,
 }
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB

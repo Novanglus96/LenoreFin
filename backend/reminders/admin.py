@@ -1,26 +1,19 @@
 from django.contrib import admin
-from .models import Reminder, Repeat, ReminderExclusion
+from unfold.admin import ModelAdmin
 from import_export.admin import ImportExportModelAdmin
+from .models import Reminder, Repeat, ReminderExclusion
 
 
-# Register your models here.
-
-
-class ReminderExclusionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class ReminderExclusionAdmin(ModelAdmin, ImportExportModelAdmin):
     list_display = ["id", "reminder", "exclude_date"]
-
     list_display_links = ["id", "reminder"]
-
     ordering = ["reminder", "exclude_date"]
 
 
-class RepeatAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class RepeatAdmin(ModelAdmin, ImportExportModelAdmin):
     list_display = ["id", "repeat_name", "days", "weeks", "months", "years", "is_system", "slug"]
-
     list_display_links = ["repeat_name"]
-
     ordering = ["id"]
-
     readonly_fields = ["slug"]
 
     def has_delete_permission(self, request, obj=None):
@@ -32,19 +25,9 @@ class RepeatAdmin(ImportExportModelAdmin, admin.ModelAdmin):
         queryset.filter(is_system=False).delete()
 
 
-class ReminderAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_display = [
-        "id",
-        "description",
-        "amount",
-        "next_date",
-        "start_date",
-        "end_date",
-        "auto_add",
-    ]
-
+class ReminderAdmin(ModelAdmin, ImportExportModelAdmin):
+    list_display = ["id", "description", "amount", "next_date", "start_date", "end_date", "auto_add"]
     list_display_links = ["id", "description"]
-
     ordering = ["next_date", "description", "id"]
 
 

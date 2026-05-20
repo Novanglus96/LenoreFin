@@ -68,7 +68,7 @@ def get_logs(
 
     selected_levels = set()
     if level:
-        selected_levels = {l.strip().upper() for l in level.split(",")}
+        selected_levels = {lvl.strip().upper() for lvl in level.split(",")}
         invalid = selected_levels - VALID_LEVELS
         if invalid:
             raise HttpError(400, f"Invalid level(s): {', '.join(sorted(invalid))}. Choose from: {', '.join(sorted(VALID_LEVELS))}")

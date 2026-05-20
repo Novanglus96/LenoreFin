@@ -1,17 +1,13 @@
 from django.contrib import admin
-from .models import AccountType, Bank, Account, Reward
+from unfold.admin import ModelAdmin
 from import_export.admin import ImportExportModelAdmin
+from .models import AccountType, Bank, Account, Reward
 
-# Register your models here.
 
-
-class AccountTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class AccountTypeAdmin(ModelAdmin, ImportExportModelAdmin):
     list_display = ["id", "account_type", "color", "icon", "is_system", "slug"]
-
     list_display_links = ["account_type"]
-
     ordering = ["account_type"]
-
     readonly_fields = ["slug"]
 
     def has_delete_permission(self, request, obj=None):
@@ -23,43 +19,24 @@ class AccountTypeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
         queryset.filter(is_system=False).delete()
 
 
-class AccountAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class AccountAdmin(ModelAdmin, ImportExportModelAdmin):
     list_display = ["id", "account_name", "active", "open_date", "bank"]
-
     list_display_links = ["account_name"]
-
     search_fields = ["account_name"]
-
     ordering = ["account_name"]
-
     list_filter = ["bank", "active"]
 
 
-class BankAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class BankAdmin(ModelAdmin, ImportExportModelAdmin):
     list_display = ["id", "bank_name"]
-
     list_display_links = ["bank_name"]
-
     search_fields = ["bank_name"]
-
     ordering = ["bank_name"]
 
 
-class RewardAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_display = [
-        "id",
-        "reward_date",
-        "reward_account",
-        "reward_amount",
-    ]
-
-    list_display_links = [
-        "id",
-        "reward_date",
-        "reward_account",
-        "reward_amount",
-    ]
-
+class RewardAdmin(ModelAdmin, ImportExportModelAdmin):
+    list_display = ["id", "reward_date", "reward_account", "reward_amount"]
+    list_display_links = ["id", "reward_date", "reward_account", "reward_amount"]
     ordering = ["-id"]
 
 
