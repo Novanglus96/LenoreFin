@@ -64,5 +64,7 @@
 
   const clickChangeTime = value => {
     timeframe.value = value;
+    transactions_store.pageinfo.maxdays = value;
+    transactions_store.pageinfo.page = 1;
   };
 </script>
