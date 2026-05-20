@@ -102,13 +102,7 @@ All routes are prefixed with `/api/v1/`.
 | POST | `/planning/budget` | Create budget |
 | PUT | `/planning/budget/{id}` | Update budget |
 | DELETE | `/planning/budget/{id}` | Delete budget |
-| GET | `/planning/contributions` | List contributions |
-| GET | `/planning/contrib-rules` | List contribution rules |
 | GET | `/planning/graph` | Planning graph data |
-| GET | `/planning/retirement` | Retirement projection data |
-| GET | `/planning/calculator` | Financial calculator |
-| GET | `/planning/notes` | List notes |
-| POST | `/planning/notes` | Create note |
 
 ### Reports
 

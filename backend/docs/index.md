@@ -17,8 +17,7 @@ LenoreFin began as a simple spreadsheet and grew into a full-featured finance tr
 | **Transactions** | Full CRUD, bulk editing, CSV import, file attachments, tag-based categorization, filtering |
 | **Credit Cards** | Statement cycle tracking, due dates, minimum payment calculation, rewards tracking |
 | **Forecasting** | Balance forecast chart per account; configurable time window |
-| **Budgeting** | Tag-based budget, contribution rules, savings goal tracking |
-| **Planning** | Retirement forecasting, financial calculator, notes |
+| **Budgeting** | Tag-based budget, savings goal tracking |
 | **Reminders** | Recurring bill reminders with customizable repeat schedules |
 | **Reporting** | Totals and year-over-year comparison reports; filterable by account, tag, and status |
 | **Logging** | Structured log viewer with level filtering and downloadable log bundle |

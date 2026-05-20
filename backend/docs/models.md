@@ -192,26 +192,6 @@ A spending limit for transactions matching specific tags.
 | `active` | BooleanField | |
 | `widget` | BooleanField | Show on dashboard widget |
 
-### Contribution
-
-A recurring paycheck contribution rule.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `contribution` | CharField | Unique name |
-| `per_paycheck` | DecimalField | Amount per paycheck |
-| `cap` | DecimalField | Annual contribution cap |
-| `active` | BooleanField | |
-
-### Note
-
-A free-form planning note.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `note_text` | CharField | |
-| `note_date` | DateField | |
-
 ---
 
 ## Reminders

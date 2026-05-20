@@ -87,7 +87,7 @@ Designed for self-hosting, LenoreFin keeps your financial data completely local,
 - **Account tracking** — checking, savings, credit cards, investments, and loans with real-time balance forecasting
 - **Transaction management** — full CRUD, bulk editing, CSV import, file attachments, and tag-based categorization
 - **Credit card tools** — statement cycle tracking, due dates, minimum payment calculation, rewards tracking
-- **Budgeting & planning** — tag-based budgets, contribution rules, retirement forecasting, calculator
+- **Budgeting & planning** — tag-based budgets, savings goal tracking
 - **Bill reminders** — recurring reminder engine with customizable repeat schedules
 - **Custom reports** — totals and year-over-year comparison reports, filterable by account, tag, and status
 - **Logging & diagnostics** — structured log viewer with level filtering and downloadable log bundle
