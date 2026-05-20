@@ -49,6 +49,7 @@ class Bank(models.Model):
     """
 
     bank_name = models.CharField(max_length=254, unique=True)
+    logo_url = models.CharField(max_length=500, null=True, blank=True)
 
     def __str__(self):
         return self.bank_name

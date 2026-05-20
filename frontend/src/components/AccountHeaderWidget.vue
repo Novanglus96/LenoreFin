@@ -5,7 +5,22 @@
       :elevation="4"
       :class="account && account.active ? 'bg-primary' : 'bg-primary-darken-2'"
       v-if="account"
+      style="position: relative; overflow: hidden;"
     >
+      <!-- Bank logo watermark -->
+      <img
+        v-if="account.bank && account.bank.logo_url"
+        :src="account.bank.logo_url"
+        alt=""
+        class="bank-watermark"
+        aria-hidden="true"
+      />
+      <v-icon
+        v-else
+        icon="mdi-bank"
+        class="bank-watermark bank-watermark--icon"
+        aria-hidden="true"
+      />
       <template v-slot:text>
         <v-container fluid>
           <v-row density="compact" class="">
@@ -428,3 +443,23 @@
     showRewardGraph.value = true;
   };
 </script>
+<style scoped>
+  .bank-watermark {
+    position: absolute;
+    right: -16px;
+    top: -16px;
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    opacity: 0.08;
+    transform: rotate(20deg);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .bank-watermark--icon {
+    font-size: 160px !important;
+    width: 160px;
+    height: 160px;
+  }
+</style>
