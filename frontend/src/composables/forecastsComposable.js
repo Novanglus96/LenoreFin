@@ -1,3 +1,4 @@
+import { isRef } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
@@ -45,9 +46,13 @@ export function useAccountForecasts(account_id, start_integer, end_integer) {
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: ["account_forecast", { account: account_id }],
+    queryKey: ["account_forecast", { account: account_id, end: end_integer }],
     queryFn: () =>
-      getAccountForecastFunction(account_id, start_integer, end_integer),
+      getAccountForecastFunction(
+        account_id,
+        start_integer,
+        isRef(end_integer) ? end_integer.value : end_integer,
+      ),
     select: response => response,
     client: queryClient,
   });

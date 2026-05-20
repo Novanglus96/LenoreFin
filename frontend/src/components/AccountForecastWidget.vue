@@ -100,7 +100,7 @@
   const { isLoading, account_forecast, isFetching } = useAccountForecasts(
     props.account,
     props.start_integer,
-    props.end_integer,
+    chips,
   );
   const isActive = computed(
     () => !(isLoading.value === false && isFetching.value === false),
