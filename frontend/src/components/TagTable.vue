@@ -21,7 +21,7 @@
           <v-autocomplete
             clearable
             label="Tag"
-            :items="tags_data"
+            :items="filteredTags"
             variant="outlined"
             :loading="tags_isLoading"
             item-title="tag_name"
@@ -131,7 +131,7 @@
   </v-sheet>
 </template>
 <script setup>
-  import { ref, defineEmits, defineProps, onMounted, watchEffect } from "vue";
+  import { ref, computed, defineEmits, defineProps, onMounted, watchEffect } from "vue";
   import { useTags } from "@/composables/tagsComposable";
   import { useAuthStore } from "@/stores/auth";
   import Vue3Datatable from "@bhplugin/vue3-datatable";
@@ -151,6 +151,10 @@
     transID: {
       type: Number,
       default: 0,
+    },
+    tagTypeFilter: {
+      type: Number,
+      default: null,
     },
   });
 
@@ -183,6 +187,14 @@
 
   // API calls and data retrieval...
   const { tags: tags_data, isLoading: tags_isLoading } = useTags();
+
+  const filteredTags = computed(() => {
+    if (!tags_data.value) return [];
+    if (props.tagTypeFilter === null || props.tagTypeFilter === 3) return tags_data.value;
+    if (props.tagTypeFilter === 1) return tags_data.value.filter(t => t.tag_type.id === 1 || t.tag_type.id === 3);
+    if (props.tagTypeFilter === 2) return tags_data.value.filter(t => t.tag_type.id === 2 || t.tag_type.id === 3);
+    return tags_data.value;
+  });
 
   // Define functions...
 

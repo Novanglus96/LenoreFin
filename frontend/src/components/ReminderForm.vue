@@ -48,7 +48,7 @@
                 <v-autocomplete
                   clearable
                   label="Tag*"
-                  :items="tags"
+                  :items="filteredTags"
                   variant="outlined"
                   :loading="tags_isLoading"
                   item-title="tag_name"
@@ -217,7 +217,7 @@
   </v-dialog>
 </template>
 <script setup>
-  import { defineEmits, defineProps, onMounted, watchEffect, watch } from "vue";
+  import { computed, defineEmits, defineProps, onMounted, watchEffect, watch } from "vue";
   import { useDisplay } from "vuetify";
   import { useTransactionTypes } from "@/composables/transactionTypesComposable";
   import { useAccounts } from "@/composables/accountsComposable";
@@ -304,6 +304,15 @@
   const { transaction_types, isLoading: transaction_types_isLoading } =
     useTransactionTypes();
   const { tags, isLoading: tags_isLoading } = useTags();
+
+  const filteredTags = computed(() => {
+    if (!tags.value) return [];
+    const typeId = transaction_type_id.value.value;
+    if (typeId === null || typeId === 3) return tags.value;
+    if (typeId === 1) return tags.value.filter(t => t.tag_type.id === 1 || t.tag_type.id === 3);
+    if (typeId === 2) return tags.value.filter(t => t.tag_type.id === 2 || t.tag_type.id === 3);
+    return tags.value;
+  });
 
   const emit = defineEmits(["updateDialog"]);
   const props = defineProps({
