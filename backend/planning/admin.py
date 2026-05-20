@@ -1,40 +1,39 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin
-from import_export.admin import ImportExportModelAdmin
+from core.admin import UnfoldImportExportModelAdmin
 from .models import ChristmasGift, ContribRule, Contribution, Note, CalculationRule, Budget
 
 
-class ChristmasGiftAdmin(ModelAdmin, ImportExportModelAdmin):
+class ChristmasGiftAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "budget", "tag"]
     list_display_links = ["id", "tag"]
     ordering = ["tag"]
 
 
-class ContribRuleAdmin(ModelAdmin, ImportExportModelAdmin):
+class ContribRuleAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "rule", "cap"]
     list_display_links = ["id", "rule"]
     ordering = ["id"]
 
 
-class ContributionAdmin(ModelAdmin, ImportExportModelAdmin):
+class ContributionAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "contribution", "per_paycheck", "emergency_amt", "emergency_diff", "cap", "active"]
     list_display_links = ["contribution"]
     ordering = ["id"]
 
 
-class NoteAdmin(ModelAdmin, ImportExportModelAdmin):
+class NoteAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "note_date", "note_text"]
     list_display_links = ["note_date"]
     ordering = ["-note_date", "-id"]
 
 
-class CalculationRuleAdmin(ModelAdmin, ImportExportModelAdmin):
+class CalculationRuleAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "name"]
     list_display_links = ["name"]
     ordering = ["id"]
 
 
-class BudgetAdmin(ModelAdmin, ImportExportModelAdmin):
+class BudgetAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "name", "amount", "start_day"]
     list_display_links = ["name"]
     ordering = ["name"]

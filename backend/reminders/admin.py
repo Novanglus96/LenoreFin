@@ -1,16 +1,15 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin
-from import_export.admin import ImportExportModelAdmin
+from core.admin import UnfoldImportExportModelAdmin
 from .models import Reminder, Repeat, ReminderExclusion
 
 
-class ReminderExclusionAdmin(ModelAdmin, ImportExportModelAdmin):
+class ReminderExclusionAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "reminder", "exclude_date"]
     list_display_links = ["id", "reminder"]
     ordering = ["reminder", "exclude_date"]
 
 
-class RepeatAdmin(ModelAdmin, ImportExportModelAdmin):
+class RepeatAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "repeat_name", "days", "weeks", "months", "years", "is_system", "slug"]
     list_display_links = ["repeat_name"]
     ordering = ["id"]
@@ -25,7 +24,7 @@ class RepeatAdmin(ModelAdmin, ImportExportModelAdmin):
         queryset.filter(is_system=False).delete()
 
 
-class ReminderAdmin(ModelAdmin, ImportExportModelAdmin):
+class ReminderAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "description", "amount", "next_date", "start_date", "end_date", "auto_add"]
     list_display_links = ["id", "description"]
     ordering = ["next_date", "description", "id"]

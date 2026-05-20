@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from unfold.admin import ModelAdmin
-from import_export.admin import ImportExportModelAdmin
+from core.admin import UnfoldImportExportModelAdmin
 from .models import GraphType, Option, Message, Payee, Version, DescriptionHistory
 
 
@@ -24,7 +24,7 @@ class OptionAdmin(ModelAdmin):
     list_display_links = ["alert_balance", "alert_period", "auto_archive", "archive_length"]
 
 
-class PayeeAdmin(ModelAdmin, ImportExportModelAdmin):
+class PayeeAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "payee_name"]
     list_display_links = ["payee_name"]
     ordering = ["payee_name"]
@@ -60,7 +60,7 @@ class VersionAdmin(ModelAdmin):
         return False
 
 
-class DescriptionHistoryAdmin(ModelAdmin, ImportExportModelAdmin):
+class DescriptionHistoryAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "description_pretty", "tag"]
     list_display_links = ["description_pretty"]
     ordering = ["id"]
@@ -102,7 +102,7 @@ class RestrictedUserAdmin(ModelAdmin, UserAdmin):
         return list(readonly) + ["is_superuser", "is_staff", "groups", "user_permissions"]
 
 
-class GraphTypeAdmin(ModelAdmin, ImportExportModelAdmin):
+class GraphTypeAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "graph_type", "is_system", "slug"]
     list_display_links = ["graph_type"]
     ordering = ["id"]

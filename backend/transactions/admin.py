@@ -1,6 +1,6 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin, TabularInline
-from import_export.admin import ImportExportModelAdmin
+from unfold.admin import TabularInline
+from core.admin import UnfoldImportExportModelAdmin
 from .models import (
     TransactionType, TransactionStatus, Transaction, TransactionDetail,
     Paycheck, TransactionImage, ReminderCacheTransaction, ForecastCacheTransaction,
@@ -28,7 +28,7 @@ class ForecastCacheTransactionDetailInline(TabularInline):
     extra = 1
 
 
-class TransactionDetailAdmin(ModelAdmin, ImportExportModelAdmin):
+class TransactionDetailAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "transaction", "tag", "detail_amt"]
     list_display_links = ["id"]
     ordering = ["-transaction__transaction_date"]
@@ -36,7 +36,7 @@ class TransactionDetailAdmin(ModelAdmin, ImportExportModelAdmin):
     list_filter = ["tag"]
 
 
-class ReminderCacheTransactionDetailAdmin(ModelAdmin, ImportExportModelAdmin):
+class ReminderCacheTransactionDetailAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "transaction", "tag", "detail_amt"]
     list_display_links = ["id"]
     ordering = ["-transaction__transaction_date"]
@@ -44,7 +44,7 @@ class ReminderCacheTransactionDetailAdmin(ModelAdmin, ImportExportModelAdmin):
     list_filter = ["tag"]
 
 
-class ForecastCacheTransactionDetailAdmin(ModelAdmin, ImportExportModelAdmin):
+class ForecastCacheTransactionDetailAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "transaction", "tag", "detail_amt"]
     list_display_links = ["id"]
     ordering = ["-transaction__transaction_date"]
@@ -52,7 +52,7 @@ class ForecastCacheTransactionDetailAdmin(ModelAdmin, ImportExportModelAdmin):
     list_filter = ["tag"]
 
 
-class TransactionTypeAdmin(ModelAdmin, ImportExportModelAdmin):
+class TransactionTypeAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "transaction_type", "is_system", "slug"]
     list_display_links = ["transaction_type"]
     ordering = ["id"]
@@ -67,7 +67,7 @@ class TransactionTypeAdmin(ModelAdmin, ImportExportModelAdmin):
         queryset.filter(is_system=False).delete()
 
 
-class TransactionStatusAdmin(ModelAdmin, ImportExportModelAdmin):
+class TransactionStatusAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "transaction_status", "is_system", "slug"]
     list_display_links = ["transaction_status"]
     ordering = ["id"]
@@ -82,7 +82,7 @@ class TransactionStatusAdmin(ModelAdmin, ImportExportModelAdmin):
         queryset.filter(is_system=False).delete()
 
 
-class TransactionAdmin(ModelAdmin, ImportExportModelAdmin):
+class TransactionAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "transaction_date", "status", "checkNumber", "total_amount",
                     "description", "transaction_type", "edit_date", "add_date", "memo",
                     "paycheck", "source_account", "destination_account"]
@@ -92,7 +92,7 @@ class TransactionAdmin(ModelAdmin, ImportExportModelAdmin):
     inlines = [TransactionDetailInline, TransactionImageInLine]
 
 
-class ReminderCacheTransactionAdmin(ModelAdmin, ImportExportModelAdmin):
+class ReminderCacheTransactionAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "transaction_date", "status", "checkNumber", "total_amount",
                     "description", "transaction_type", "edit_date", "add_date", "memo",
                     "paycheck", "source_account", "destination_account", "reminder"]
@@ -102,7 +102,7 @@ class ReminderCacheTransactionAdmin(ModelAdmin, ImportExportModelAdmin):
     inlines = [ReminderCacheTransactionDetailInline]
 
 
-class ForecastCacheTransactionAdmin(ModelAdmin, ImportExportModelAdmin):
+class ForecastCacheTransactionAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "transaction_date", "status", "checkNumber", "total_amount",
                     "description", "transaction_type", "edit_date", "add_date", "memo",
                     "paycheck", "source_account", "destination_account"]
@@ -112,7 +112,7 @@ class ForecastCacheTransactionAdmin(ModelAdmin, ImportExportModelAdmin):
     inlines = [ForecastCacheTransactionDetailInline]
 
 
-class PaycheckAdmin(ModelAdmin, ImportExportModelAdmin):
+class PaycheckAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "payee", "gross", "net", "taxes", "health", "pension",
                     "fsa", "dca", "union_dues", "four_fifty_seven_b"]
     list_display_links = ["id", "payee"]

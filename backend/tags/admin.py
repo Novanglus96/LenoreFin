@@ -1,10 +1,9 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin
-from import_export.admin import ImportExportModelAdmin
+from core.admin import UnfoldImportExportModelAdmin
 from .models import Tag, TagType, MainTag, SubTag
 
 
-class MainTagAdmin(ModelAdmin, ImportExportModelAdmin):
+class MainTagAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "tag_name", "tag_type", "is_system", "slug"]
     list_display_links = ["tag_name"]
     ordering = ["tag_name"]
@@ -21,7 +20,7 @@ class MainTagAdmin(ModelAdmin, ImportExportModelAdmin):
         queryset.filter(is_system=False).delete()
 
 
-class SubTagAdmin(ModelAdmin, ImportExportModelAdmin):
+class SubTagAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "tag_name", "tag_type", "is_system", "slug"]
     list_display_links = ["tag_name"]
     ordering = ["tag_name"]
@@ -38,7 +37,7 @@ class SubTagAdmin(ModelAdmin, ImportExportModelAdmin):
         queryset.filter(is_system=False).delete()
 
 
-class TagAdmin(ModelAdmin, ImportExportModelAdmin):
+class TagAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "tag_name", "parent", "child", "tag_type", "is_system", "slug"]
     list_display_links = ["id", "tag_name"]
     ordering = ["parent__tag_name", "child__tag_name"]
@@ -55,7 +54,7 @@ class TagAdmin(ModelAdmin, ImportExportModelAdmin):
         queryset.filter(is_system=False).delete()
 
 
-class TagTypeAdmin(ModelAdmin, ImportExportModelAdmin):
+class TagTypeAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "tag_type", "is_system", "slug"]
     list_display_links = ["tag_type"]
     ordering = ["id"]
