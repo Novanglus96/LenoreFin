@@ -63,6 +63,9 @@
           v-else
           :class="account.parent_account_id ? 'pl-6' : ''"
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+          </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
@@ -127,6 +130,9 @@
           v-else
           :class="account.parent_account_id ? 'pl-6' : ''"
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+          </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
@@ -191,6 +197,9 @@
           v-else
           :class="account.parent_account_id ? 'pl-6' : ''"
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+          </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
@@ -255,6 +264,9 @@
           v-else
           :class="account.parent_account_id ? 'pl-6' : ''"
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+          </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
@@ -319,6 +331,9 @@
           v-else
           :class="account.parent_account_id ? 'pl-6' : ''"
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+          </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
@@ -382,6 +397,9 @@
           @click="setAccount(account.id, False)"
           v-else
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+          </template>
           <v-list-item-title>
             <span class="font-italic">
               <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
@@ -403,6 +421,7 @@
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  import BankLogo from "@/components/BankLogo.vue";
   const { isOnline } = useOnlineStatus();
 
   const { smAndDown } = useDisplay();

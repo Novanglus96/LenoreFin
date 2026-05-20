@@ -34,7 +34,7 @@
                   @click="toggle"
                 >
                   <template v-slot:prepend>
-                    <v-icon :icon="account.account_type.icon"></v-icon>
+                    <BankLogo :logo-url="account.bank?.logo_url" :size="36" />
                   </template>
                   <template v-slot:title>
                     <span class="text-subtitle-1 font-weight-bold">
@@ -70,7 +70,7 @@
                 :subtitle="item.raw.bank.bank_name"
               >
                 <template v-slot:prepend>
-                  <v-icon :icon="item.raw.account_type.icon"></v-icon>
+                  <BankLogo :logo-url="item.raw.bank?.logo_url" :size="28" class="mr-2" />
                 </template>
               </v-list-item>
             </template>
@@ -95,6 +95,7 @@
   import { useAccounts } from "@/composables/accountsComposable";
   import { ref, defineEmits } from "vue";
   import { useDisplay } from "vuetify";
+  import BankLogo from "@/components/BankLogo.vue";
 
   const emit = defineEmits(["updateAccount"]);
   const account_selected = ref(null);

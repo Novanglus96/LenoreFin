@@ -5,7 +5,22 @@
       :elevation="4"
       :class="account && account.active ? 'bg-primary' : 'bg-primary-darken-2'"
       v-if="account"
+      style="position: relative; overflow: hidden;"
     >
+      <!-- Bank logo watermark -->
+      <img
+        v-if="account.bank && account.bank.logo_url"
+        :src="account.bank.logo_url"
+        alt=""
+        class="bank-watermark"
+        aria-hidden="true"
+      />
+      <v-icon
+        v-else
+        icon="mdi-bank"
+        class="bank-watermark bank-watermark--icon"
+        aria-hidden="true"
+      />
       <template v-slot:text>
         <v-container fluid>
           <v-row density="compact" class="">
@@ -17,6 +32,20 @@
                 class="d-flex align-center justify-center mx-1 px-1 gx-1 bg-primary-lighten-1"
                 variant="outlined"
               >
+                <img
+                  v-if="smAndDown && account.bank && account.bank.logo_url"
+                  :src="account.bank.logo_url"
+                  alt=""
+                  aria-hidden="true"
+                  class="inline-bank-logo mr-1"
+                />
+                <v-icon
+                  v-else-if="smAndDown && account.bank"
+                  icon="mdi-bank"
+                  size="small"
+                  class="mr-1"
+                  aria-hidden="true"
+                />
                 <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="mr-1">combined</v-chip>
                 <v-tooltip text="Edit Account" location="top" v-if="authStore.isFullAccess">
                   <template v-slot:activator="{ props }">
@@ -428,3 +457,38 @@
     showRewardGraph.value = true;
   };
 </script>
+<style scoped>
+  .bank-watermark {
+    position: absolute;
+    right: -16px;
+    top: -16px;
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    opacity: 0.15;
+    transform: rotate(20deg);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .bank-watermark--icon {
+    font-size: 160px !important;
+    width: 160px;
+    height: 160px;
+  }
+
+  .inline-bank-logo {
+    height: 20px;
+    width: auto;
+    max-width: 48px;
+    object-fit: contain;
+    opacity: 0.8;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 600px) {
+    .bank-watermark {
+      display: none;
+    }
+  }
+</style>

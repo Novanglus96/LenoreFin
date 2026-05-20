@@ -27,7 +27,7 @@ class AccountAdmin(UnfoldImportExportModelAdmin):
 
 
 class BankAdmin(UnfoldImportExportModelAdmin):
-    list_display = ["id", "bank_name"]
+    list_display = ["id", "bank_name", "logo_url"]
     list_display_links = ["bank_name"]
     search_fields = ["bank_name"]
     ordering = ["bank_name"]

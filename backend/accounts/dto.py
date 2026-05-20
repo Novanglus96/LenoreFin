@@ -19,6 +19,7 @@ class DomainAccountType:
 class DomainBank:
     id: int
     bank_name: str
+    logo_url: Optional[str] = None
 
 
 @dataclass

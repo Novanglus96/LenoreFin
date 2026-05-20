@@ -24,7 +24,7 @@ def domain_bank_to_schema(
     bank: DomainBank,
 ) -> BankOut:
     if bank is not None:
-        return BankOut(id=bank.id, bank_name=bank.bank_name)
+        return BankOut(id=bank.id, bank_name=bank.bank_name, logo_url=bank.logo_url)
     else:
         return None
 
