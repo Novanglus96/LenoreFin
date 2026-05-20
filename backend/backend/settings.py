@@ -274,6 +274,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "LenoreFin",
     "site_brand": "LenoreFin",
     "site_logo": "logov2.png",
+    "custom_css": "admin_custom.css",
     "login_logo": None,
     "login_logo_dark": None,
     "site_logo_classes": "img-fluid",
