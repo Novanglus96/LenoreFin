@@ -1,3 +1,10 @@
+# [1.4.0-alpha.29](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.28...v1.4.0-alpha.29) (2026-05-20)
+
+
+### Bug Fixes
+
+* Phase 7b cleanup — nav, tag filtering, and admin polish ([#122](https://github.com/Novanglus96/LenoreFin/issues/122)) ([2a2548b](https://github.com/Novanglus96/LenoreFin/commit/2a2548bc4aea5157e5222d00ff1e9d6a8b691e2c))
+
 # [1.4.0-alpha.28](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.27...v1.4.0-alpha.28) (2026-05-19)
 
 
