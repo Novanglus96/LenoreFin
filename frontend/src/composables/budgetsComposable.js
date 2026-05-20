@@ -112,7 +112,6 @@ export function useBudgets(widget) {
   const createBudgetMutation = useMutation({
     mutationFn: createBudgetFunction,
     onSuccess: () => {
-      console.log("Success adding budget");
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
     },
   });
@@ -120,7 +119,6 @@ export function useBudgets(widget) {
   const deleteBudgetMutation = useMutation({
     mutationFn: deleteBudgetFunction,
     onSuccess: () => {
-      console.log("Success deleting budget");
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
     },
   });
@@ -128,7 +126,6 @@ export function useBudgets(widget) {
   const updateBudgetMutation = useMutation({
     mutationFn: updateBudgetFunction,
     onSuccess: () => {
-      console.log("Success updating budget");
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
     },
   });

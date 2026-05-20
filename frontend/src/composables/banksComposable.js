@@ -50,7 +50,6 @@ export function useBanks() {
   const createBankMutation = useMutation({
     mutationFn: createBankFunction,
     onSuccess: () => {
-      console.log("Success adding bank");
       queryClient.invalidateQueries({ queryKey: ["banks"] });
     },
   });

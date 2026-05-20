@@ -77,7 +77,6 @@ export function useNotes() {
   const createNoteMutation = useMutation({
     mutationFn: createNoteFunction,
     onSuccess: () => {
-      console.log("Success adding note");
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
@@ -85,7 +84,6 @@ export function useNotes() {
   const deleteNoteMutation = useMutation({
     mutationFn: deleteNoteFunction,
     onSuccess: () => {
-      console.log("Success deleting note");
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
@@ -93,7 +91,6 @@ export function useNotes() {
   const updateNoteMutation = useMutation({
     mutationFn: updateNoteFunction,
     onSuccess: () => {
-      console.log("Success updating note");
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });

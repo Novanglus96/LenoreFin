@@ -199,8 +199,7 @@ export function useTransactions() {
 
   const createTransactionMutation = useMutation({
     mutationFn: createTransactionFunction,
-    onSuccess: data => {
-      console.log("Success adding transaction", data);
+    onSuccess: () => {
       invalidateTransactionDependencies(queryClient, [["description-history"]]);
       scheduleForecastRefetch(queryClient);
     },
@@ -209,7 +208,6 @@ export function useTransactions() {
   const deleteTransactionMutation = useMutation({
     mutationFn: deleteTransactionFunction,
     onSuccess: () => {
-      console.log("Success deleting transaction");
       invalidateTransactionDependencies(queryClient);
       scheduleForecastRefetch(queryClient);
     },
@@ -218,7 +216,6 @@ export function useTransactions() {
   const clearTransactionMutation = useMutation({
     mutationFn: clearTransactionFunction,
     onSuccess: () => {
-      console.log("Success clearing transaction");
       invalidateTransactionDependencies(queryClient);
       scheduleForecastRefetch(queryClient);
     },
@@ -227,7 +224,6 @@ export function useTransactions() {
   const multiEditTransactionsMutation = useMutation({
     mutationFn: multiEditTransactionsFunction,
     onSuccess: () => {
-      console.log("Success editing dates of transactions");
       invalidateTransactionDependencies(queryClient);
       scheduleForecastRefetch(queryClient);
     },
@@ -236,7 +232,6 @@ export function useTransactions() {
   const updateTransactionMutation = useMutation({
     mutationFn: updateTransactionFunction,
     onSuccess: () => {
-      console.log("Success updating transaction");
       invalidateTransactionDependencies(queryClient, [["description-history"]]);
       scheduleForecastRefetch(queryClient);
     },
