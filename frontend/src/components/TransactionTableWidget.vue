@@ -102,6 +102,33 @@
                 @update:model-value="applyFilters"
               />
             </v-col>
+            <v-col cols="12" sm="6" md="2">
+              <v-text-field
+                v-model="filterDateFrom"
+                label="From"
+                type="date"
+                density="compact"
+                variant="outlined"
+                hide-details
+                clearable
+                :error="dateRangeError"
+                @update:model-value="applyFilters"
+              />
+            </v-col>
+            <v-col cols="12" sm="6" md="2">
+              <v-text-field
+                v-model="filterDateTo"
+                label="To"
+                type="date"
+                density="compact"
+                variant="outlined"
+                :hide-details="!dateRangeError"
+                clearable
+                :error="dateRangeError"
+                :error-messages="dateRangeError ? '\"From\" must not be after \"To\"' : []"
+                @update:model-value="applyFilters"
+              />
+            </v-col>
             <v-col cols="12" md="1" class="d-flex align-center">
               <v-btn
                 variant="text"
@@ -733,16 +760,32 @@
   const filterStatusId = ref(null);
   const filterTypeId = ref(null);
   const filterTagId = ref(null);
+  const filterDateFrom = ref(null);
+  const filterDateTo = ref(null);
+
+  const dateRangeError = computed(
+    () => !!(filterDateFrom.value && filterDateTo.value && filterDateFrom.value > filterDateTo.value)
+  );
 
   const hasActiveFilters = computed(
-    () => !!(filterSearch.value || filterStatusId.value || filterTypeId.value || filterTagId.value)
+    () => !!(
+      filterSearch.value ||
+      filterStatusId.value ||
+      filterTypeId.value ||
+      filterTagId.value ||
+      filterDateFrom.value ||
+      filterDateTo.value
+    )
   );
 
   function applyFilters() {
+    if (dateRangeError.value) return;
     transactions_store.pageinfo.search = filterSearch.value || null;
     transactions_store.pageinfo.status_id = filterStatusId.value || null;
     transactions_store.pageinfo.transaction_type_id = filterTypeId.value || null;
     transactions_store.pageinfo.tag_id = filterTagId.value || null;
+    transactions_store.pageinfo.date_from = filterDateFrom.value || null;
+    transactions_store.pageinfo.date_to = filterDateTo.value || null;
     transactions_store.pageinfo.page = 1;
   }
 
@@ -751,6 +794,8 @@
     filterStatusId.value = null;
     filterTypeId.value = null;
     filterTagId.value = null;
+    filterDateFrom.value = null;
+    filterDateTo.value = null;
     applyFilters();
   }
   const today = new Date();

@@ -113,3 +113,5 @@ class TransactionQuery(Schema):
     status_id: Optional[int] = None
     transaction_type_id: Optional[int] = None
     tag_id: Optional[int] = None
+    date_from: Optional[date] = None
+    date_to: Optional[date] = None

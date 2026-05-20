@@ -58,6 +58,12 @@ async function getTransactionsFunction(querydata) {
       if (querydata.tag_id) {
         querytext = querytext + "&tag_id=" + querydata.tag_id;
       }
+      if (querydata.date_from) {
+        querytext = querytext + "&date_from=" + querydata.date_from;
+      }
+      if (querydata.date_to) {
+        querytext = querytext + "&date_to=" + querydata.date_to;
+      }
       const response = await apiClient.get("/transactions/list" + querytext);
       return response.data;
     } else {

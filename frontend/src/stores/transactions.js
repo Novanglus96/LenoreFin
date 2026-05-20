@@ -14,6 +14,8 @@ export const useTransactionsStore = defineStore("transactions", {
       status_id: null,
       transaction_type_id: null,
       tag_id: null,
+      date_from: null,
+      date_to: null,
     },
   }),
   getters: {},
@@ -23,6 +25,8 @@ export const useTransactionsStore = defineStore("transactions", {
       this.pageinfo.status_id = null;
       this.pageinfo.transaction_type_id = null;
       this.pageinfo.tag_id = null;
+      this.pageinfo.date_from = null;
+      this.pageinfo.date_to = null;
       this.pageinfo.page = 1;
     },
   },

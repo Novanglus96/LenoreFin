@@ -376,6 +376,16 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
                     ]
                 except Tag.DoesNotExist:
                     all_transactions_list = []
+            if query.date_from:
+                all_transactions_list = [
+                    t for t in all_transactions_list
+                    if t.transaction_date and t.transaction_date >= query.date_from
+                ]
+            if query.date_to:
+                all_transactions_list = [
+                    t for t in all_transactions_list
+                    if t.transaction_date and t.transaction_date <= query.date_to
+                ]
 
             # Reverse transactions if not forecast
             if not query.forecast:
