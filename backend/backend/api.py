@@ -1,4 +1,5 @@
 from ninja import NinjaAPI
+from ninja.openapi.docs import Redoc
 from administration.api.dependencies.auth import SessionAuth
 from administration.api.dependencies.version import get_version
 from administration.api.routers.auth import auth_router
@@ -46,7 +47,16 @@ from administration.api.routers.backup import backup_router
 from administration.api.routers.logs import router as logs_router
 from reports.api.routers.report import report_router
 
-api = NinjaAPI(auth=SessionAuth())
+api = NinjaAPI(
+    auth=SessionAuth(),
+    docs=Redoc(settings={
+        "theme": {
+            "colors": {
+                "primary": {"main": "#06966A"}
+            }
+        }
+    }),
+)
 api.title = "LenoreFin API"
 api.version = get_version()
 api.description = "API documentation for LenoreFin"
