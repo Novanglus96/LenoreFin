@@ -16,6 +16,7 @@
               v-bind="props"
               @click="showFilters = !showFilters"
               :color="hasActiveFilters ? 'primary' : undefined"
+              :disabled="isActive"
             ></v-btn>
           </template>
         </v-tooltip>
@@ -1021,24 +1022,25 @@
   const clickRemoveTransaction = async transactions => {
     removeTransaction(transactions);
     selected_all.value = [];
+    clearFilters();
   };
 
   const clickClearTransaction = async (transactions, reminderTransactions) => {
     clearTransaction(transactions);
-    console.log("emitting clear transaction", transactions);
     open.value = false;
     selected_all.value = [];
     reminderTransactions.forEach(transaction => {
       addReminderTransaction(transaction);
-      console.log("emitting add reminder transaction", transaction);
     });
     selected_transactions.value = [];
     selected_reminders.value = [];
     clearDisable.value = true;
+    clearFilters();
   };
 
   const updateAddDialog = () => {
     transactionAddFormDialog.value = false;
+    clearFilters();
   };
 
   const updateImportFileDialog = () => {
@@ -1048,9 +1050,11 @@
   const updateEditDialog = () => {
     transactionEditFormDialog.value = false;
     uncheck_all();
+    clearFilters();
   };
   const updateMultipleEditDialog = () => {
     showMultipleTransactionEditDialog.value = false;
+    clearFilters();
   };
   const formatCurrency = value => {
     return new Intl.NumberFormat("en-US", {
