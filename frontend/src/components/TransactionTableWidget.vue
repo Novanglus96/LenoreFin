@@ -126,7 +126,7 @@
                 clearable
                 :max="maxDateTo"
                 :error="dateRangeError"
-                :error-messages="dateRangeError ? '\"From\" must not be after \"To\"' : []"
+                :error-messages="dateRangeError ? ['From must not be after To'] : []"
                 @update:model-value="applyFilters"
               />
             </v-col>
