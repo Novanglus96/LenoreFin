@@ -109,3 +109,7 @@ class TransactionQuery(Schema):
     page: Optional[int] = 1
     page_size: Optional[int] = 60
     rule_id: Optional[int] = None
+    search: Optional[str] = None
+    status_id: Optional[int] = None
+    transaction_type_id: Optional[int] = None
+    tag_id: Optional[int] = None

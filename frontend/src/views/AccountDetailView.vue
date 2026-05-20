@@ -52,6 +52,7 @@
     () => route.params.accountID,
     newAccountID => {
       account_id.value = parseInt(newAccountID);
+      transactions_store.resetFilters();
       transactions_store.pageinfo.account_id = parseInt(newAccountID);
       transactions_store.pageinfo.forecast = false;
     },

@@ -2,6 +2,7 @@ from ninja import Router, Query
 from ninja.errors import HttpError
 from transactions.models import Transaction, TransactionDetail, TransactionStatus
 from accounts.models import Account
+from tags.models import Tag
 from transactions.api.schemas.transaction import (
     TransactionIn,
     TransactionList,
@@ -343,6 +344,38 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
                     end_date, query.account, False, query.forecast
                 )
             )
+
+            # Apply optional filters to the assembled list
+            if query.search:
+                s = query.search.lower()
+                all_transactions_list = [
+                    t for t in all_transactions_list
+                    if t.description and s in t.description.lower()
+                ]
+            if query.status_id:
+                all_transactions_list = [
+                    t for t in all_transactions_list
+                    if t.status and t.status.id == query.status_id
+                ]
+            if query.transaction_type_id:
+                all_transactions_list = [
+                    t for t in all_transactions_list
+                    if t.transaction_type and t.transaction_type.id == query.transaction_type_id
+                ]
+            if query.tag_id:
+                try:
+                    tag = Tag.objects.select_related("parent", "child").get(id=query.tag_id)
+                    tag_display = (
+                        f"{tag.parent.tag_name} / {tag.child.tag_name}"
+                        if tag.child
+                        else tag.parent.tag_name
+                    )
+                    all_transactions_list = [
+                        t for t in all_transactions_list
+                        if tag_display in (t.tags or [])
+                    ]
+                except Tag.DoesNotExist:
+                    all_transactions_list = []
 
             # Reverse transactions if not forecast
             if not query.forecast:

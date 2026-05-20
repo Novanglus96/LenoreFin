@@ -46,6 +46,18 @@ async function getTransactionsFunction(querydata) {
       if (querydata.rule_id) {
         querytext = querytext + "&rule_id=" + querydata.rule_id;
       }
+      if (querydata.search) {
+        querytext = querytext + "&search=" + encodeURIComponent(querydata.search);
+      }
+      if (querydata.status_id) {
+        querytext = querytext + "&status_id=" + querydata.status_id;
+      }
+      if (querydata.transaction_type_id) {
+        querytext = querytext + "&transaction_type_id=" + querydata.transaction_type_id;
+      }
+      if (querydata.tag_id) {
+        querytext = querytext + "&tag_id=" + querydata.tag_id;
+      }
       const response = await apiClient.get("/transactions/list" + querytext);
       return response.data;
     } else {
