@@ -86,7 +86,6 @@ export function useMessages() {
   const createMessageMutation = useMutation({
     mutationFn: createMessageFunction,
     onSuccess: () => {
-      console.log("Success adding message");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
   });
@@ -94,7 +93,6 @@ export function useMessages() {
   const markMessagesReadMutation = useMutation({
     mutationFn: readAllMessagesFunction,
     onSuccess: () => {
-      console.log("Success marking messages read");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
   });
@@ -102,7 +100,6 @@ export function useMessages() {
   const deleteAllMessagesMutation = useMutation({
     mutationFn: deleteAllMessagesFunction,
     onSuccess: () => {
-      console.log("Success deleting all messages");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
   });

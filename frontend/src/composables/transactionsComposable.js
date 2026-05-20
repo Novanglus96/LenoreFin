@@ -46,6 +46,24 @@ async function getTransactionsFunction(querydata) {
       if (querydata.rule_id) {
         querytext = querytext + "&rule_id=" + querydata.rule_id;
       }
+      if (querydata.search) {
+        querytext = querytext + "&search=" + encodeURIComponent(querydata.search);
+      }
+      if (querydata.status_id) {
+        querytext = querytext + "&status_id=" + querydata.status_id;
+      }
+      if (querydata.transaction_type_id) {
+        querytext = querytext + "&transaction_type_id=" + querydata.transaction_type_id;
+      }
+      if (querydata.tag_id) {
+        querytext = querytext + "&tag_id=" + querydata.tag_id;
+      }
+      if (querydata.date_from) {
+        querytext = querytext + "&date_from=" + querydata.date_from;
+      }
+      if (querydata.date_to) {
+        querytext = querytext + "&date_to=" + querydata.date_to;
+      }
       const response = await apiClient.get("/transactions/list" + querytext);
       return response.data;
     } else {
@@ -181,8 +199,7 @@ export function useTransactions() {
 
   const createTransactionMutation = useMutation({
     mutationFn: createTransactionFunction,
-    onSuccess: data => {
-      console.log("Success adding transaction", data);
+    onSuccess: () => {
       invalidateTransactionDependencies(queryClient, [["description-history"]]);
       scheduleForecastRefetch(queryClient);
     },
@@ -191,7 +208,6 @@ export function useTransactions() {
   const deleteTransactionMutation = useMutation({
     mutationFn: deleteTransactionFunction,
     onSuccess: () => {
-      console.log("Success deleting transaction");
       invalidateTransactionDependencies(queryClient);
       scheduleForecastRefetch(queryClient);
     },
@@ -200,7 +216,6 @@ export function useTransactions() {
   const clearTransactionMutation = useMutation({
     mutationFn: clearTransactionFunction,
     onSuccess: () => {
-      console.log("Success clearing transaction");
       invalidateTransactionDependencies(queryClient);
       scheduleForecastRefetch(queryClient);
     },
@@ -209,7 +224,6 @@ export function useTransactions() {
   const multiEditTransactionsMutation = useMutation({
     mutationFn: multiEditTransactionsFunction,
     onSuccess: () => {
-      console.log("Success editing dates of transactions");
       invalidateTransactionDependencies(queryClient);
       scheduleForecastRefetch(queryClient);
     },
@@ -218,7 +232,6 @@ export function useTransactions() {
   const updateTransactionMutation = useMutation({
     mutationFn: updateTransactionFunction,
     onSuccess: () => {
-      console.log("Success updating transaction");
       invalidateTransactionDependencies(queryClient, [["description-history"]]);
       scheduleForecastRefetch(queryClient);
     },

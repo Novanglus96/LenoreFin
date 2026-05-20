@@ -55,9 +55,9 @@
 
   const updateAccount = account => {
     account_id.value = account;
+    transactions_store.resetFilters();
     transactions_store.pageinfo.account_id = account;
     transactions_store.pageinfo.forecast = true;
-    transactions_store.pageinfo.page = 1;
     transactions_store.pageinfo.maxdays = 90;
     transactions_store.pageinfo.view_type = 1;
   };

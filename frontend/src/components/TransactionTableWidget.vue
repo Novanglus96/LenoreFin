@@ -4,6 +4,23 @@
       <span class="text-subtitle-2 text-primary">
         {{ title[props.variant] }}
         <v-tooltip
+          text="Filter"
+          location="top"
+          v-if="props.variant === 'account'"
+        >
+          <template v-slot:activator="{ props }">
+            <v-btn
+              :icon="hasActiveFilters ? 'mdi-filter' : 'mdi-filter-outline'"
+              flat
+              variant="plain"
+              v-bind="props"
+              @click="showFilters = !showFilters"
+              :color="hasActiveFilters ? 'primary' : undefined"
+              :disabled="isActive"
+            ></v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip
           text="File Import"
           location="top"
           v-if="!smAndDown && props.variant === 'account' && authStore.isFullAccess"
@@ -28,6 +45,107 @@
       </span>
     </v-card-title>
     <v-card-text class="ma-0 pa-0 ga-0">
+      <!-- Filter bar (account variant only) -->
+      <v-expand-transition>
+        <div v-if="showFilters && props.variant === 'account'" class="pa-2 bg-surface">
+          <v-row dense>
+            <v-col cols="12" sm="6" md="4">
+              <v-text-field
+                v-model="filterSearch"
+                label="Search description"
+                prepend-inner-icon="mdi-magnify"
+                clearable
+                density="compact"
+                variant="outlined"
+                hide-details
+                @update:model-value="applyFilters"
+              />
+            </v-col>
+            <v-col cols="12" sm="6" md="2">
+              <v-select
+                v-model="filterStatusId"
+                :items="statuses_data"
+                item-title="transaction_status"
+                item-value="id"
+                label="Status"
+                clearable
+                density="compact"
+                variant="outlined"
+                hide-details
+                @update:model-value="applyFilters"
+              />
+            </v-col>
+            <v-col cols="12" sm="6" md="2">
+              <v-select
+                v-model="filterTypeId"
+                :items="types_data"
+                item-title="transaction_type"
+                item-value="id"
+                label="Type"
+                clearable
+                density="compact"
+                variant="outlined"
+                hide-details
+                @update:model-value="applyFilters"
+              />
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+              <v-select
+                v-model="filterTagId"
+                :items="tags_data"
+                item-title="tag_name"
+                item-value="id"
+                label="Tag"
+                clearable
+                density="compact"
+                variant="outlined"
+                hide-details
+                @update:model-value="applyFilters"
+              />
+            </v-col>
+            <v-col cols="12" sm="6" md="2">
+              <v-text-field
+                v-model="filterDateFrom"
+                label="From"
+                type="date"
+                density="compact"
+                variant="outlined"
+                hide-details
+                clearable
+                :min="minDateFrom"
+                :error="dateRangeError"
+                @update:model-value="applyFilters"
+              />
+            </v-col>
+            <v-col cols="12" sm="6" md="2">
+              <v-text-field
+                v-model="filterDateTo"
+                label="To"
+                type="date"
+                density="compact"
+                variant="outlined"
+                :hide-details="!dateRangeError"
+                clearable
+                :max="maxDateTo"
+                :error="dateRangeError"
+                :error-messages="dateRangeError ? ['From must not be after To'] : []"
+                @update:model-value="applyFilters"
+              />
+            </v-col>
+            <v-col cols="12" md="1" class="d-flex align-center">
+              <v-btn
+                variant="text"
+                size="small"
+                color="error"
+                @click="clearFilters"
+                :disabled="!hasActiveFilters"
+              >
+                Clear
+              </v-btn>
+            </v-col>
+          </v-row>
+        </div>
+      </v-expand-transition>
       <!-- Large Display View -->
       <v-data-table-server
         :headers="displayHeaders"
@@ -626,6 +744,9 @@
   import { useAuthStore } from "@/stores/auth";
   import { useAccountByID } from "@/composables/accountsComposable";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  import { useTransactionStatuses } from "@/composables/transactionStatusesComposable";
+  import { useTransactionTypes } from "@/composables/transactionTypesComposable";
+  import { useTags } from "@/composables/tagsComposable";
   const { isOnline } = useOnlineStatus();
 
   const { removeTransaction, clearTransaction } = useTransactions();
@@ -633,6 +754,63 @@
   const authStore = useAuthStore();
   const { smAndDown, mdAndUp } = useDisplay();
   const transactions_store = useTransactionsStore();
+  const { transaction_statuses: statuses_data } = useTransactionStatuses();
+  const { transaction_types: types_data } = useTransactionTypes();
+  const { tags: tags_data } = useTags(null);  // null = all tag types
+
+  const maxDateTo = computed(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + (transactions_store.pageinfo.maxdays || 14));
+    return d.toISOString().slice(0, 10);
+  });
+
+  const minDateFrom = computed(() =>
+    transactions_store.pageinfo.forecast ? new Date().toISOString().slice(0, 10) : undefined
+  );
+
+  const showFilters = ref(false);
+  const filterSearch = ref(null);
+  const filterStatusId = ref(null);
+  const filterTypeId = ref(null);
+  const filterTagId = ref(null);
+  const filterDateFrom = ref(null);
+  const filterDateTo = ref(null);
+
+  const dateRangeError = computed(
+    () => !!(filterDateFrom.value && filterDateTo.value && filterDateFrom.value > filterDateTo.value)
+  );
+
+  const hasActiveFilters = computed(
+    () => !!(
+      filterSearch.value ||
+      filterStatusId.value ||
+      filterTypeId.value ||
+      filterTagId.value ||
+      filterDateFrom.value ||
+      filterDateTo.value
+    )
+  );
+
+  function applyFilters() {
+    if (dateRangeError.value) return;
+    transactions_store.pageinfo.search = filterSearch.value || null;
+    transactions_store.pageinfo.status_id = filterStatusId.value || null;
+    transactions_store.pageinfo.transaction_type_id = filterTypeId.value || null;
+    transactions_store.pageinfo.tag_id = filterTagId.value || null;
+    transactions_store.pageinfo.date_from = filterDateFrom.value || null;
+    transactions_store.pageinfo.date_to = filterDateTo.value || null;
+    transactions_store.pageinfo.page = 1;
+  }
+
+  function clearFilters() {
+    filterSearch.value = null;
+    filterStatusId.value = null;
+    filterTypeId.value = null;
+    filterTagId.value = null;
+    filterDateFrom.value = null;
+    filterDateTo.value = null;
+    applyFilters();
+  }
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -849,24 +1027,25 @@
   const clickRemoveTransaction = async transactions => {
     removeTransaction(transactions);
     selected_all.value = [];
+    clearFilters();
   };
 
   const clickClearTransaction = async (transactions, reminderTransactions) => {
     clearTransaction(transactions);
-    console.log("emitting clear transaction", transactions);
     open.value = false;
     selected_all.value = [];
     reminderTransactions.forEach(transaction => {
       addReminderTransaction(transaction);
-      console.log("emitting add reminder transaction", transaction);
     });
     selected_transactions.value = [];
     selected_reminders.value = [];
     clearDisable.value = true;
+    clearFilters();
   };
 
   const updateAddDialog = () => {
     transactionAddFormDialog.value = false;
+    clearFilters();
   };
 
   const updateImportFileDialog = () => {
@@ -876,9 +1055,11 @@
   const updateEditDialog = () => {
     transactionEditFormDialog.value = false;
     uncheck_all();
+    clearFilters();
   };
   const updateMultipleEditDialog = () => {
     showMultipleTransactionEditDialog.value = false;
+    clearFilters();
   };
   const formatCurrency = value => {
     return new Intl.NumberFormat("en-US", {

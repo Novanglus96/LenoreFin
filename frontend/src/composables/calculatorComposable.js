@@ -109,7 +109,6 @@ export function useCalculationRule() {
   const createCalculationRuleMutation = useMutation({
     mutationFn: createCalculationRuleFunction,
     onSuccess: () => {
-      console.log("Success adding calculation rule");
       queryClient.invalidateQueries({ queryKey: ["calculation_rules"] });
     },
   });
@@ -117,7 +116,6 @@ export function useCalculationRule() {
   const deleteCalculationRuleMutation = useMutation({
     mutationFn: deleteCalculationRuleFunction,
     onSuccess: () => {
-      console.log("Success deleteing calculation rule");
       queryClient.invalidateQueries({ queryKey: ["calculation_rules"] });
     },
   });
@@ -125,7 +123,6 @@ export function useCalculationRule() {
   const updateCalculationRuleMutation = useMutation({
     mutationFn: updateCalculationRuleFunction,
     onSuccess: () => {
-      console.log("Success updating calculation rule");
       queryClient.invalidateQueries({ queryKey: ["calculation_rules"] });
     },
   });

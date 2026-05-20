@@ -136,7 +136,6 @@ export function useContributions() {
   const createContributionMutation = useMutation({
     mutationFn: createContributionFunction,
     onSuccess: () => {
-      console.log("Success adding contribution");
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
     },
   });
@@ -144,7 +143,6 @@ export function useContributions() {
   const deleteContributionMutation = useMutation({
     mutationFn: deleteContributionFunction,
     onSuccess: () => {
-      console.log("Success deleting contribution");
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
     },
   });
@@ -152,7 +150,6 @@ export function useContributions() {
   const updateContributionMutation = useMutation({
     mutationFn: updateContributionFunction,
     onSuccess: () => {
-      console.log("Success updating contribution");
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
     },
   });
@@ -190,7 +187,6 @@ export function useContributionRules() {
   const createContributionRuleMutation = useMutation({
     mutationFn: createContributionRuleFunction,
     onSuccess: () => {
-      console.log("Success adding contribution rule");
       queryClient.invalidateQueries({ queryKey: ["contributionRules"] });
     },
   });
@@ -198,7 +194,6 @@ export function useContributionRules() {
   const deleteContributionRuleMutation = useMutation({
     mutationFn: deleteContributionRuleFunction,
     onSuccess: () => {
-      console.log("Success deleting contribution rule");
       queryClient.invalidateQueries({ queryKey: ["contributionRules"] });
     },
   });
@@ -206,7 +201,6 @@ export function useContributionRules() {
   const updateContributionRuleMutation = useMutation({
     mutationFn: updateContributionRuleFunction,
     onSuccess: () => {
-      console.log("Success updating contribution rule");
       queryClient.invalidateQueries({ queryKey: ["contributionRules"] });
     },
   });
