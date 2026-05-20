@@ -39,7 +39,6 @@ These variables create the initial admin user on first startup. They are only us
 |----------|----------|---------|-------------|
 | `VITE_API_KEY` | Yes | — | API key embedded into the frontend at build time. Must match the key you create in the admin panel under **Auth → API Keys**. |
 | `TIMEZONE` | No | `UTC` | Server timezone (e.g. `America/New_York`). Affects scheduled tasks and date display. |
-| `VITE_OPT_FEATURES` | No | `false` | Set to `true` to enable optional Planning features: Contributions, Notes, and Calculator. |
 
 ## Networking
 

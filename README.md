@@ -143,8 +143,6 @@ DJANGO_SUPERUSER_EMAIL=someone@somewhere.com
 DJANGO_SUPERUSER_USERNAME=supervisor
 VITE_API_KEY=someapikey
 TIMEZONE=America/New_York
-# Optional: set to "true" to enable Contributions, Notes, and Calculator in the Planning menu
-VITE_OPT_FEATURES=false
 ```
 
 Adjust these values according to your environment and application requirements.
@@ -256,12 +254,6 @@ Replace your existing `docker-compose.yml` with the new 3-service format shown i
 
 ### 4. Update your `.env` file
 
-Add the new optional variable (it defaults to `false` if omitted):
-
-```env
-VITE_OPT_FEATURES=false
-```
-
 ### 5. Rename volumes (if using named volumes from the old setup)
 
 The old setup used volumes named `lenorefin_static_volume`, `lenorefin_media_volume`, and `lenorefin_postgres_data`. The new setup uses `lenorefin_static`, `lenorefin_media`, and `lenorefin_postgres`.
@@ -304,7 +296,7 @@ See the full <a href="https://novanglus96.github.io/LenoreFin"><strong>documenta
 <!-- ROADMAP -->
 ## Roadmap
 
-### Shipped in v1.4 (current alpha)
+### Shipped in v1.4
 - [x] Django 5.2 LTS migration
 - [x] Consolidated single-container deployment (nginx + gunicorn + worker in one image)
 - [x] Parent accounts (combined balance view across child accounts)

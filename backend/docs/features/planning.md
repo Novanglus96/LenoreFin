@@ -31,7 +31,7 @@ Budget calculations use the date range you select and the cleared/pending status
 ## Contributions
 
 !!! note "Optional Feature"
-    Contributions require `VITE_OPT_FEATURES=true` in your `.env` file.
+    Contributions are an optional feature that can be enabled in the admin settings.
 
 Contribution rules define automatic recurring transfers between accounts — typically a paycheck-driven savings or investment contribution.
 
@@ -57,7 +57,7 @@ Set a goal amount and target date. The goal widget shows:
 ## Retirement Forecasting
 
 !!! note "Optional Feature"
-    Retirement forecasting requires `VITE_OPT_FEATURES=true` in your `.env` file.
+    Retirement forecasting is an optional feature that can be enabled in the admin settings.
 
 The retirement calculator projects your investment portfolio value at retirement based on:
 
@@ -71,7 +71,7 @@ The chart shows a growth curve over time.
 ## Financial Calculator
 
 !!! note "Optional Feature"
-    The calculator requires `VITE_OPT_FEATURES=true` in your `.env` file.
+    The financial calculator is an optional feature that can be enabled in the admin settings.
 
 A general-purpose financial calculator with common formulas:
 
@@ -82,7 +82,7 @@ A general-purpose financial calculator with common formulas:
 ## Notes
 
 !!! note "Optional Feature"
-    Notes require `VITE_OPT_FEATURES=true` in your `.env` file.
+    Notes are an optional feature that can be enabled in the admin settings.
 
 Free-form notes attached to the Planning section. Use this for budget commentary, financial goals, or any reference text you want alongside your plan.
 

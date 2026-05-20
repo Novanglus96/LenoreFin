@@ -32,8 +32,6 @@ DJANGO_SUPERUSER_USERNAME=supervisor
 VITE_API_KEY=someapikey
 TIMEZONE=America/New_York
 
-# Set to "true" to enable Contributions, Notes, and Calculator in the Planning menu
-VITE_OPT_FEATURES=false
 ```
 
 See [Configuration](configuration.md) for a full reference of all available variables.
@@ -130,11 +128,7 @@ Use the new 3-service format above. Remove the old `frontend`, `backend`, `worke
 
 ### 4. Update `.env`
 
-Add the new variable if it isn't already present:
-
-```env
-VITE_OPT_FEATURES=false
-```
+Review your `.env` file and remove any variables that are no longer needed. The new setup does not require any additional variables beyond those listed in [Configuration](configuration.md).
 
 ### 5. Rename volumes (if needed)
 
