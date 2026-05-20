@@ -41,22 +41,6 @@ export const useMainStore = defineStore("main", {
         days: 365,
         title: "1 Year",
       },
-      {
-        days: 730,
-        title: "2 Years",
-      },
-      {
-        days: 1095,
-        title: "3 Years",
-      },
-      {
-        days: 1825,
-        title: "5 Years",
-      },
-      {
-        days: 3650,
-        title: "10 Years",
-      },
     ],
     intervals: [
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
