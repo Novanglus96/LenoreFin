@@ -124,6 +124,7 @@
                 variant="outlined"
                 :hide-details="!dateRangeError"
                 clearable
+                :max="maxDateTo"
                 :error="dateRangeError"
                 :error-messages="dateRangeError ? '\"From\" must not be after \"To\"' : []"
                 @update:model-value="applyFilters"
@@ -754,6 +755,12 @@
   const { transaction_statuses: statuses_data } = useTransactionStatuses();
   const { transaction_types: types_data } = useTransactionTypes();
   const { tags: tags_data } = useTags(null);  // null = all tag types
+
+  const maxDateTo = computed(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return d.toISOString().slice(0, 10);
+  });
 
   const showFilters = ref(false);
   const filterSearch = ref(null);
