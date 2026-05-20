@@ -1,3 +1,10 @@
+# [1.4.0-alpha.32](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.31...v1.4.0-alpha.32) (2026-05-20)
+
+
+### Features
+
+* add transaction filtering by description, status, type, and tag ([#126](https://github.com/Novanglus96/LenoreFin/issues/126)) ([2cf54df](https://github.com/Novanglus96/LenoreFin/commit/2cf54df871125f3f98188d3f5147f151ef466d01))
+
 # [1.4.0-alpha.31](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.30...v1.4.0-alpha.31) (2026-05-20)
 
 
