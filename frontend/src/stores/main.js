@@ -97,5 +97,5 @@ export const useMainStore = defineStore("main", {
       this.snackbar = true;
     },
   },
-  persist: true,
+  persist: false,
 });
