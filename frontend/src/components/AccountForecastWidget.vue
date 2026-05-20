@@ -83,12 +83,10 @@
   import annotationPlugin from "chartjs-plugin-annotation";
   import { useAccountForecasts } from "@/composables/forecastsComposable";
   import { useMainStore } from "@/stores/main";
-  import { useTransactionsStore } from "@/stores/transactions";
   import { useDisplay } from "vuetify";
 
   const { smAndDown } = useDisplay();
 
-  const transactions_store = useTransactionsStore();
   const mainstore = useMainStore();
   const props = defineProps({
     account: Array,
@@ -190,7 +188,6 @@
   });
 
   const clickChangeTime = () => {
-    transactions_store.pageinfo.maxdays = chips.value;
     emit("changeTime", chips.value);
   };
 
