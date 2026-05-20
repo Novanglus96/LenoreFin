@@ -112,6 +112,7 @@
                 variant="outlined"
                 hide-details
                 clearable
+                :min="minDateFrom"
                 :error="dateRangeError"
                 @update:model-value="applyFilters"
               />
@@ -762,6 +763,10 @@
     d.setDate(d.getDate() + (transactions_store.pageinfo.maxdays || 14));
     return d.toISOString().slice(0, 10);
   });
+
+  const minDateFrom = computed(() =>
+    transactions_store.pageinfo.forecast ? new Date().toISOString().slice(0, 10) : undefined
+  );
 
   const showFilters = ref(false);
   const filterSearch = ref(null);
