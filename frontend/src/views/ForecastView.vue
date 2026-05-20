@@ -22,6 +22,7 @@
         <TransactionTableWidget
           :key="account_id + ':' + timeframe"
           variant="account"
+          :accountID="account_id"
           :data="transactions"
           :loading="isLoading"
           :fetching="isFetching"

@@ -7,6 +7,7 @@ mediafiles
 backend/logs/
 *.DS_Store
 static
+!backend/administration/static/
 media
 staticfiles
 *.code-workspace

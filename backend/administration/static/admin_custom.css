@@ -1,0 +1,21 @@
+/* Navbar — force text and icons to white for contrast against teal background */
+.main-header.navbar .nav-link,
+.main-header.navbar .navbar-brand,
+.main-header.navbar .navbar-toggler,
+.main-header.navbar .navbar-toggler-icon,
+.main-header.navbar .topmenu a {
+    color: #fff !important;
+}
+.main-header.navbar .nav-link:hover,
+.main-header.navbar .topmenu a:hover {
+    color: #e0e0e0 !important;
+}
+
+/* Breadcrumb — left-align immediately after page title */
+.content-header .breadcrumb {
+    float: left !important;
+    margin-left: 1rem;
+    margin-top: 0.3rem;
+    padding: 0;
+    background: transparent;
+}

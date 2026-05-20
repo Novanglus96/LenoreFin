@@ -197,6 +197,7 @@
                     <TagTable
                       :tags="details"
                       :totalAmount="parseFloat(amount.value.value)"
+                      :tagTypeFilter="transaction_type_id.value.value"
                       @tag-table-updated="tagsUpdated"
                     />
                   </v-col>
