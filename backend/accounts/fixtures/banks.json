@@ -3,700 +3,800 @@
     "model": "accounts.Bank",
     "pk": 1,
     "fields": {
-        "bank_name": "Ally Financial"
+        "bank_name": "Ally Financial",
+        "logo_url": "https://logo.clearbit.com/ally.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 2,
     "fields": {
-        "bank_name": "American Express"
+        "bank_name": "American Express",
+        "logo_url": "https://logo.clearbit.com/americanexpress.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 3,
     "fields": {
-        "bank_name": "Ameriprise"
+        "bank_name": "Ameriprise",
+        "logo_url": "https://logo.clearbit.com/ameriprise.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 4,
     "fields": {
-        "bank_name": "Ameris Bancorp"
+        "bank_name": "Ameris Bancorp",
+        "logo_url": "https://logo.clearbit.com/amerisbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 5,
     "fields": {
-        "bank_name": "Arvest Bank"
+        "bank_name": "Arvest Bank",
+        "logo_url": "https://logo.clearbit.com/arvest.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 6,
     "fields": {
-        "bank_name": "Associated Banc-Corp"
+        "bank_name": "Associated Banc-Corp",
+        "logo_url": "https://logo.clearbit.com/associatedbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 7,
     "fields": {
-        "bank_name": "Atlantic Union Bank"
+        "bank_name": "Atlantic Union Bank",
+        "logo_url": "https://logo.clearbit.com/atlanticunionbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 8,
     "fields": {
-        "bank_name": "Axos Financial"
+        "bank_name": "Axos Financial",
+        "logo_url": "https://logo.clearbit.com/axosbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 9,
     "fields": {
-        "bank_name": "Bank of America"
+        "bank_name": "Bank of America",
+        "logo_url": "https://logo.clearbit.com/bankofamerica.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 10,
     "fields": {
-        "bank_name": "Bank of Hawaii"
+        "bank_name": "Bank of Hawaii",
+        "logo_url": "https://logo.clearbit.com/boh.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 11,
     "fields": {
-        "bank_name": "BankUnited"
+        "bank_name": "BankUnited",
+        "logo_url": "https://logo.clearbit.com/bankunited.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 12,
     "fields": {
-        "bank_name": "Barclays"
+        "bank_name": "Barclays",
+        "logo_url": "https://logo.clearbit.com/barclays.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 13,
     "fields": {
-        "bank_name": "BCI Financial Group"
+        "bank_name": "BCI Financial Group",
+        "logo_url": null
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 14,
     "fields": {
-        "bank_name": "Beal Bank"
+        "bank_name": "Beal Bank",
+        "logo_url": "https://logo.clearbit.com/bealbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 15,
     "fields": {
-        "bank_name": "BMO USA"
+        "bank_name": "BMO USA",
+        "logo_url": "https://logo.clearbit.com/bmo.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 16,
     "fields": {
-        "bank_name": "BNP Paribas"
+        "bank_name": "BNP Paribas",
+        "logo_url": "https://logo.clearbit.com/bnpparibas.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 17,
     "fields": {
-        "bank_name": "BOK Financial Corporation"
+        "bank_name": "BOK Financial Corporation",
+        "logo_url": "https://logo.clearbit.com/bokfinancial.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 18,
     "fields": {
-        "bank_name": "Capital One"
+        "bank_name": "Capital One",
+        "logo_url": "https://logo.clearbit.com/capitalone.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 19,
     "fields": {
-        "bank_name": "Cathay Bank"
+        "bank_name": "Cathay Bank",
+        "logo_url": "https://logo.clearbit.com/cathaybank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 20,
     "fields": {
-        "bank_name": "Central Bancompany"
+        "bank_name": "Central Bancompany",
+        "logo_url": "https://logo.clearbit.com/centralbank.net"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 21,
     "fields": {
-        "bank_name": "Charles Schwab Corporation"
+        "bank_name": "Charles Schwab Corporation",
+        "logo_url": "https://logo.clearbit.com/schwab.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 22,
     "fields": {
-        "bank_name": "CIBC Bank USA"
+        "bank_name": "CIBC Bank USA",
+        "logo_url": "https://logo.clearbit.com/cibc.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 23,
     "fields": {
-        "bank_name": "Citigroup"
+        "bank_name": "Citigroup",
+        "logo_url": "https://logo.clearbit.com/citi.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 24,
     "fields": {
-        "bank_name": "Citizens Financial Group"
+        "bank_name": "Citizens Financial Group",
+        "logo_url": "https://logo.clearbit.com/citizensbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 25,
     "fields": {
-        "bank_name": "Columbia Bank"
+        "bank_name": "Columbia Bank",
+        "logo_url": "https://logo.clearbit.com/columbiabank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 26,
     "fields": {
-        "bank_name": "Comerica"
+        "bank_name": "Comerica",
+        "logo_url": "https://logo.clearbit.com/comerica.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 27,
     "fields": {
-        "bank_name": "Commerce Bancshares"
+        "bank_name": "Commerce Bancshares",
+        "logo_url": "https://logo.clearbit.com/commercebank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 28,
     "fields": {
-        "bank_name": "Credit Suisse"
+        "bank_name": "Credit Suisse",
+        "logo_url": "https://logo.clearbit.com/credit-suisse.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 29,
     "fields": {
-        "bank_name": "Cullen/Frost Bankers, Inc."
+        "bank_name": "Cullen/Frost Bankers, Inc.",
+        "logo_url": "https://logo.clearbit.com/frostbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 30,
     "fields": {
-        "bank_name": "Customers Bancorp"
+        "bank_name": "Customers Bancorp",
+        "logo_url": "https://logo.clearbit.com/customersbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 31,
     "fields": {
-        "bank_name": "Deutsche Bank"
+        "bank_name": "Deutsche Bank",
+        "logo_url": "https://logo.clearbit.com/db.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 32,
     "fields": {
-        "bank_name": "Discover Financial"
+        "bank_name": "Discover Financial",
+        "logo_url": "https://logo.clearbit.com/discover.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 33,
     "fields": {
-        "bank_name": "East West Bank"
+        "bank_name": "East West Bank",
+        "logo_url": "https://logo.clearbit.com/eastwestbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 34,
     "fields": {
-        "bank_name": "Eastern Bank"
+        "bank_name": "Eastern Bank",
+        "logo_url": "https://logo.clearbit.com/easternbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 35,
     "fields": {
-        "bank_name": "Fifth Third Bank"
+        "bank_name": "Fifth Third Bank",
+        "logo_url": "https://logo.clearbit.com/53.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 36,
     "fields": {
-        "bank_name": "First BanCorp"
+        "bank_name": "First BanCorp",
+        "logo_url": "https://logo.clearbit.com/firstbancorp.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 37,
     "fields": {
-        "bank_name": "First Citizens BancShares"
+        "bank_name": "First Citizens BancShares",
+        "logo_url": "https://logo.clearbit.com/firstcitizens.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 38,
     "fields": {
-        "bank_name": "First Hawaiian Bank"
+        "bank_name": "First Hawaiian Bank",
+        "logo_url": "https://logo.clearbit.com/fhb.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 39,
     "fields": {
-        "bank_name": "First Horizon National Corporation"
+        "bank_name": "First Horizon National Corporation",
+        "logo_url": "https://logo.clearbit.com/firsthorizon.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 40,
     "fields": {
-        "bank_name": "First Interstate BancSystem"
+        "bank_name": "First Interstate BancSystem",
+        "logo_url": "https://logo.clearbit.com/firstinterstatebank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 41,
     "fields": {
-        "bank_name": "First National of Nebraska"
+        "bank_name": "First National of Nebraska",
+        "logo_url": "https://logo.clearbit.com/fnni.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 42,
     "fields": {
-        "bank_name": "FirstBank Holding Co"
+        "bank_name": "FirstBank Holding Co",
+        "logo_url": "https://logo.clearbit.com/efirstbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 43,
     "fields": {
-        "bank_name": "FNB Corporation"
+        "bank_name": "FNB Corporation",
+        "logo_url": "https://logo.clearbit.com/fnbcorporation.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 44,
     "fields": {
-        "bank_name": "Fulton Financial Corporation"
+        "bank_name": "Fulton Financial Corporation",
+        "logo_url": "https://logo.clearbit.com/fultonbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 45,
     "fields": {
-        "bank_name": "Glacier Bancorp"
+        "bank_name": "Glacier Bancorp",
+        "logo_url": "https://logo.clearbit.com/glacierbancorp.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 46,
     "fields": {
-        "bank_name": "Goldman Sachs"
+        "bank_name": "Goldman Sachs",
+        "logo_url": "https://logo.clearbit.com/goldmansachs.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 47,
     "fields": {
-        "bank_name": "Hancock Whitney"
+        "bank_name": "Hancock Whitney",
+        "logo_url": "https://logo.clearbit.com/hancockwhitney.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 48,
     "fields": {
-        "bank_name": "Heartland Financial"
+        "bank_name": "Heartland Financial",
+        "logo_url": "https://logo.clearbit.com/htlf.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 49,
     "fields": {
-        "bank_name": "Home BancShares"
+        "bank_name": "Home BancShares",
+        "logo_url": "https://logo.clearbit.com/homebancshares.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 50,
     "fields": {
-        "bank_name": "Hope Bancorp"
+        "bank_name": "Hope Bancorp",
+        "logo_url": "https://logo.clearbit.com/bankofhope.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 51,
     "fields": {
-        "bank_name": "HSBC Bank USA"
+        "bank_name": "HSBC Bank USA",
+        "logo_url": "https://logo.clearbit.com/hsbc.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 52,
     "fields": {
-        "bank_name": "Huntington Bancshares"
+        "bank_name": "Huntington Bancshares",
+        "logo_url": "https://logo.clearbit.com/huntington.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 53,
     "fields": {
-        "bank_name": "Independent Bank"
+        "bank_name": "Independent Bank",
+        "logo_url": "https://logo.clearbit.com/independentbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 54,
     "fields": {
-        "bank_name": "John Deere"
+        "bank_name": "John Deere",
+        "logo_url": "https://logo.clearbit.com/deere.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 55,
     "fields": {
-        "bank_name": "JPMorgan Chase"
+        "bank_name": "JPMorgan Chase",
+        "logo_url": "https://logo.clearbit.com/jpmorganchase.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 56,
     "fields": {
-        "bank_name": "KeyCorp"
+        "bank_name": "KeyCorp",
+        "logo_url": "https://logo.clearbit.com/key.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 57,
     "fields": {
-        "bank_name": "M&T Bank"
+        "bank_name": "M&T Bank",
+        "logo_url": "https://logo.clearbit.com/mtb.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 58,
     "fields": {
-        "bank_name": "MidFirst Bank"
+        "bank_name": "MidFirst Bank",
+        "logo_url": "https://logo.clearbit.com/midfirst.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 59,
     "fields": {
-        "bank_name": "Mizuho Financial Group"
+        "bank_name": "Mizuho Financial Group",
+        "logo_url": "https://logo.clearbit.com/mizuhogroup.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 60,
     "fields": {
-        "bank_name": "Morgan Stanley"
+        "bank_name": "Morgan Stanley",
+        "logo_url": "https://logo.clearbit.com/morganstanley.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 61,
     "fields": {
-        "bank_name": "MUFG Americas Holdings Corporation"
+        "bank_name": "MUFG Americas Holdings Corporation",
+        "logo_url": "https://logo.clearbit.com/mufg.jp"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 62,
     "fields": {
-        "bank_name": "New York Community Bank"
+        "bank_name": "New York Community Bank",
+        "logo_url": "https://logo.clearbit.com/nycb.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 63,
     "fields": {
-        "bank_name": "Northern Trust"
+        "bank_name": "Northern Trust",
+        "logo_url": "https://logo.clearbit.com/northerntrust.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 64,
     "fields": {
-        "bank_name": "Old National Bank"
+        "bank_name": "Old National Bank",
+        "logo_url": "https://logo.clearbit.com/oldnational.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 65,
     "fields": {
-        "bank_name": "Pacific Premier Bancorp"
+        "bank_name": "Pacific Premier Bancorp",
+        "logo_url": "https://logo.clearbit.com/ppbi.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 66,
     "fields": {
-        "bank_name": "PacWest Bancorp"
+        "bank_name": "PacWest Bancorp",
+        "logo_url": "https://logo.clearbit.com/pacwestbancorp.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 67,
     "fields": {
-        "bank_name": "Pinnacle Financial Partners"
+        "bank_name": "Pinnacle Financial Partners",
+        "logo_url": "https://logo.clearbit.com/pnfp.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 68,
     "fields": {
-        "bank_name": "PNC Financial Services"
+        "bank_name": "PNC Financial Services",
+        "logo_url": "https://logo.clearbit.com/pnc.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 69,
     "fields": {
-        "bank_name": "Popular, Inc."
+        "bank_name": "Popular, Inc.",
+        "logo_url": "https://logo.clearbit.com/popular.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 70,
     "fields": {
-        "bank_name": "Prosperity Bancshares"
+        "bank_name": "Prosperity Bancshares",
+        "logo_url": "https://logo.clearbit.com/prosperitybanktx.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 71,
     "fields": {
-        "bank_name": "Raymond James Financial"
+        "bank_name": "Raymond James Financial",
+        "logo_url": "https://logo.clearbit.com/raymondjames.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 72,
     "fields": {
-        "bank_name": "RBC Bank"
+        "bank_name": "RBC Bank",
+        "logo_url": "https://logo.clearbit.com/rbc.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 73,
     "fields": {
-        "bank_name": "Regions Financial Corporation"
+        "bank_name": "Regions Financial Corporation",
+        "logo_url": "https://logo.clearbit.com/regions.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 74,
     "fields": {
-        "bank_name": "Santander Bank"
+        "bank_name": "Santander Bank",
+        "logo_url": "https://logo.clearbit.com/santanderbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 75,
     "fields": {
-        "bank_name": "Simmons Bank"
+        "bank_name": "Simmons Bank",
+        "logo_url": "https://logo.clearbit.com/simmonsbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 76,
     "fields": {
-        "bank_name": "SoFi"
+        "bank_name": "SoFi",
+        "logo_url": "https://logo.clearbit.com/sofi.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 77,
     "fields": {
-        "bank_name": "South State Bank"
+        "bank_name": "South State Bank",
+        "logo_url": "https://logo.clearbit.com/southstatebank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 78,
     "fields": {
-        "bank_name": "State Street Corporation"
+        "bank_name": "State Street Corporation",
+        "logo_url": "https://logo.clearbit.com/statestreet.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 79,
     "fields": {
-        "bank_name": "Stifel"
+        "bank_name": "Stifel",
+        "logo_url": "https://logo.clearbit.com/stifel.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 80,
     "fields": {
-        "bank_name": "Sumitomo Mitsui Banking Corporation"
+        "bank_name": "Sumitomo Mitsui Banking Corporation",
+        "logo_url": "https://logo.clearbit.com/smbc.co.jp"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 81,
     "fields": {
-        "bank_name": "Synchrony Financial"
+        "bank_name": "Synchrony Financial",
+        "logo_url": "https://logo.clearbit.com/synchrony.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 82,
     "fields": {
-        "bank_name": "Synovus"
+        "bank_name": "Synovus",
+        "logo_url": "https://logo.clearbit.com/synovus.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 83,
     "fields": {
-        "bank_name": "TD Bank, N.A."
+        "bank_name": "TD Bank, N.A.",
+        "logo_url": "https://logo.clearbit.com/td.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 84,
     "fields": {
-        "bank_name": "Texas Capital Bank"
+        "bank_name": "Texas Capital Bank",
+        "logo_url": "https://logo.clearbit.com/texascapitalbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 85,
     "fields": {
-        "bank_name": "The Bank of New York Mellon"
+        "bank_name": "The Bank of New York Mellon",
+        "logo_url": "https://logo.clearbit.com/bnymellon.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 86,
     "fields": {
-        "bank_name": "TIA"
+        "bank_name": "TIA",
+        "logo_url": "https://logo.clearbit.com/tiaa.org"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 87,
     "fields": {
-        "bank_name": "Truist Financial"
+        "bank_name": "Truist Financial",
+        "logo_url": "https://logo.clearbit.com/truist.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 88,
     "fields": {
-        "bank_name": "U.S. Bancorp"
+        "bank_name": "U.S. Bancorp",
+        "logo_url": "https://logo.clearbit.com/usbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 89,
     "fields": {
-        "bank_name": "UBS"
+        "bank_name": "UBS",
+        "logo_url": "https://logo.clearbit.com/ubs.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 90,
     "fields": {
-        "bank_name": "UMB Financial Corporation"
+        "bank_name": "UMB Financial Corporation",
+        "logo_url": "https://logo.clearbit.com/umb.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 91,
     "fields": {
-        "bank_name": "United Bank (West Virginia)"
+        "bank_name": "United Bank (West Virginia)",
+        "logo_url": "https://logo.clearbit.com/ubsh.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 92,
     "fields": {
-        "bank_name": "United Community Bank"
+        "bank_name": "United Community Bank",
+        "logo_url": "https://logo.clearbit.com/ucbi.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 93,
     "fields": {
-        "bank_name": "USAA"
+        "bank_name": "USAA",
+        "logo_url": "https://logo.clearbit.com/usaa.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 94,
     "fields": {
-        "bank_name": "Valley Bank"
+        "bank_name": "Valley Bank",
+        "logo_url": "https://logo.clearbit.com/valley.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 95,
     "fields": {
-        "bank_name": "Washington Federal"
+        "bank_name": "Washington Federal",
+        "logo_url": "https://logo.clearbit.com/wafd.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 96,
     "fields": {
-        "bank_name": "Webster Bank"
+        "bank_name": "Webster Bank",
+        "logo_url": "https://logo.clearbit.com/websterbank.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 97,
     "fields": {
-        "bank_name": "Wells Fargo"
+        "bank_name": "Wells Fargo",
+        "logo_url": "https://logo.clearbit.com/wellsfargo.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 98,
     "fields": {
-        "bank_name": "Western Alliance Bancorporation"
+        "bank_name": "Western Alliance Bancorporation",
+        "logo_url": "https://logo.clearbit.com/westernalliancebancorporation.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 99,
     "fields": {
-        "bank_name": "Wintrust Financial"
+        "bank_name": "Wintrust Financial",
+        "logo_url": "https://logo.clearbit.com/wintrust.com"
     }
   },
   {
     "model": "accounts.Bank",
     "pk": 100,
     "fields": {
-        "bank_name": "WSFS Bank"
+        "bank_name": "WSFS Bank",
+        "logo_url": "https://logo.clearbit.com/wsfsbank.com"
     }
   }
 ]
