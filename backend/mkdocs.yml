@@ -1,11 +1,20 @@
 site_name: LenoreFin
-site_description: An advanced financial tracker.
+site_description: A self-hosted personal finance tracker.
 site_author: John Adams
 site_url: https://novanglus96.github.io/LenoreFin/
 repo_url: https://github.com/Novanglus96/LenoreFin
 copyright: 2026 John Adams
 nav:
   - Home: index.md
+  - Getting Started:
+      - Installation: getting-started.md
+      - Configuration: configuration.md
+  - Features:
+      - Accounts: features/accounts.md
+      - Transactions: features/transactions.md
+      - Budgeting & Planning: features/planning.md
+      - Reporting: features/reporting.md
+      - Administration: features/administration.md
   - Reference:
       - Models: models.md
       - API: api.md
@@ -13,24 +22,28 @@ theme:
   name: material
   palette:
     - scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
-    - scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: teal
+      accent: teal
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
   custom_dir: docs/overrides
 plugins:
   - search
   - mkdocstrings:
       handlers:
         python:
-          #docstring_style: google
           options:
             show_root_heading: true
             show_root_full_path: false
@@ -39,13 +52,15 @@ plugins:
             show_defaults: true
             members:
               - __str__
-          #rendering:
-          #  show_defaults: true
 markdown_extensions:
   - attr_list
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
 extra:
   version:
     provider: mike

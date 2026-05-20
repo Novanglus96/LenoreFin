@@ -79,12 +79,21 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-Screenshots - COMING SOON
-<!--[![Product Name Screen Shot][product-screenshot]]-->
-
 LenoreFin began as a simple Excel spreadsheet I used to manage my family's budget. But over time, I realized no existing tools gave me the control, flexibility, and privacy I wanted. So I built LenoreFin—a personal finance tracker that puts you in charge.
 
-Designed for self-hosting, LenoreFin keeps your financial data completely local, with no third-party syncing or hidden services. It includes tools for tracking cash flow, setting up custom budgets, tagging transactions, planning for retirement or big purchases, getting bill reminders, and even forecasting account balances. Whether you're budgeting for groceries or planning a 10-year savings goal, LenoreFin helps you see the full picture—on your terms.
+Designed for self-hosting, LenoreFin keeps your financial data completely local, with no third-party syncing or hidden services.
+
+**Key features:**
+- **Account tracking** — checking, savings, credit cards, investments, and loans with real-time balance forecasting
+- **Transaction management** — full CRUD, bulk editing, CSV import, file attachments, and tag-based categorization
+- **Credit card tools** — statement cycle tracking, due dates, minimum payment calculation, rewards tracking
+- **Budgeting & planning** — tag-based budgets, contribution rules, retirement forecasting, calculator
+- **Bill reminders** — recurring reminder engine with customizable repeat schedules
+- **Custom reports** — totals and year-over-year comparison reports, filterable by account, tag, and status
+- **Logging & diagnostics** — structured log viewer with level filtering and downloadable log bundle
+- **PWA / offline mode** — installable as a PWA; read-only access and graceful degradation when offline
+- **Multi-user auth** — Full Access and Readonly permission groups
+- **Self-hosted** — single Docker image, no telemetry, no third-party data sharing
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -295,13 +304,26 @@ See the full <a href="https://novanglus96.github.io/LenoreFin"><strong>documenta
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] v1.2 Release
-  - [ ] Credit Card Bill Calculations
-  - [ ] Loading Screen on app load
-  - [ ] Interest Tracking On Loans 
-- [ ] Financial Wizard
+### Shipped in v1.4 (current alpha)
+- [x] Django 5.2 LTS migration
+- [x] Consolidated single-container deployment (nginx + gunicorn + worker in one image)
+- [x] Parent accounts (combined balance view across child accounts)
+- [x] Interest earned on savings / investment accounts
+- [x] Custom report builder (totals & year-over-year comparison)
+- [x] File attachments on transactions
+- [x] Backup & restore system
+- [x] PWA packaging + offline read-only mode
+- [x] Multi-user auth (Full Access / Readonly groups)
+- [x] Structured log viewer with bundle download
+- [x] Bank logos on account header and navigation
+- [x] Transaction filtering (search, status, type, tag, date range)
 
-See the [open issues](https://github.com/Novanglus96/LenoreFin/issues) for a full list of proposed features (and known issues).
+### Planned
+- [ ] Scheduled reports (run a saved report on a schedule, deliver to inbox)
+- [ ] WebSocket real-time sync (live updates across multiple connected clients)
+- [ ] Vuetify 4 migration (planned for later 2026)
+
+See the [open issues](https://github.com/Novanglus96/LenoreFin/issues) for a full list of proposed features and known issues.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
