@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog" width="300">
+  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event); emit('updateDialog', $event)" width="300">
     <v-card color="secondary" variant="elevated" border="md" rounded="lg">
       <v-card-text>
         <v-container>
@@ -184,12 +184,15 @@
   </v-dialog>
 </template>
 <script setup>
-  import { ref, defineEmits, defineProps, onMounted, watchEffect } from "vue";
+  import { ref, defineEmits, defineProps, onMounted, watchEffect, watch } from "vue";
 
-  // Define emits
   const emit = defineEmits(["updateDialog", "updateAmount"]);
 
   const props = defineProps({
+    modelValue: {
+      type: Boolean,
+      default: false,
+    },
     amount: {
       type: Number,
       default: 0,
@@ -203,10 +206,11 @@
   const operand = ref(null);
   const operationInProgress = ref(false);
   const newEquation = ref(true);
-  const resetTriggeredByEquals = ref(false); // New flag
+  const resetTriggeredByEquals = ref(false);
 
   const clickUpdateAmount = () => {
     emit("updateDialog", false);
+    emit("update:modelValue", false);
     emit("updateAmount", parseFloat(displayAmount.value));
   };
 
@@ -227,23 +231,22 @@
     operand.value = null;
     operationInProgress.value = false;
     newEquation.value = true;
-    resetTriggeredByEquals.value = false; // Reset the flag
+    resetTriggeredByEquals.value = false;
   };
 
   const formatMoney = value => {
-    // Format value to ensure two decimal places
     return parseFloat(value).toFixed(2);
   };
 
   const appendNumber = number => {
     if (newEquation.value) {
       if (resetTriggeredByEquals.value) {
-        memoryText.value = ""; // Clear memory text only if '=' was pressed
+        memoryText.value = "";
       }
       displayAmount.value = String(number);
       newEquation.value = false;
       operationInProgress.value = false;
-      resetTriggeredByEquals.value = false; // Reset the flag after use
+      resetTriggeredByEquals.value = false;
     } else if (operationInProgress.value) {
       displayAmount.value = String(number);
       operationInProgress.value = false;
@@ -279,13 +282,12 @@
     operand.value = operation;
     memoryText.value = `$${runningTotal.value} ${operation}`;
     operationInProgress.value = true;
-    resetTriggeredByEquals.value = false; // Operation button doesn't trigger '=' behavior
+    resetTriggeredByEquals.value = false;
   };
 
   const performOperation = () => {
     const currentValue = parseFloat(displayAmount.value);
 
-    // Build equation string for memory text
     let equation = `$${runningTotal.value} ${
       operand.value || ""
     } $${currentValue}`;
@@ -315,17 +317,60 @@
       }
     }
 
-    // Fix JavaScript precision and format result
     runningTotal.value = parseFloat(runningTotal.value.toFixed(2));
-
-    // Update display and memory text
     displayAmount.value = formatMoney(runningTotal.value);
-    memoryText.value = `${equation} =`; // Show full equation
+    memoryText.value = `${equation} =`;
     operand.value = null;
     operationInProgress.value = false;
     newEquation.value = true;
-    resetTriggeredByEquals.value = true; // '=' was pressed
+    resetTriggeredByEquals.value = true;
   };
+
+  const handleKeydown = event => {
+    if (!props.modelValue) return;
+
+    const key = event.key;
+
+    if (key >= "0" && key <= "9") {
+      event.preventDefault();
+      appendNumber(parseInt(key));
+    } else if (key === ".") {
+      event.preventDefault();
+      appendPeriod();
+    } else if (key === "+") {
+      event.preventDefault();
+      clickOperation("+");
+    } else if (key === "-") {
+      event.preventDefault();
+      clickOperation("-");
+    } else if (key === "*") {
+      event.preventDefault();
+      clickOperation("*");
+    } else if (key === "/") {
+      event.preventDefault();
+      clickOperation("/");
+    } else if (key === "Enter" || key === "=") {
+      event.preventDefault();
+      performOperation();
+    } else if (key === "Backspace") {
+      event.preventDefault();
+      backspace();
+    } else if (key === "Delete" || key === "Escape") {
+      event.preventDefault();
+      clickClear();
+    }
+  };
+
+  watch(
+    () => props.modelValue,
+    open => {
+      if (open) {
+        document.addEventListener("keydown", handleKeydown);
+      } else {
+        document.removeEventListener("keydown", handleKeydown);
+      }
+    },
+  );
 
   onMounted(() => {
     watchPassedAmount();
