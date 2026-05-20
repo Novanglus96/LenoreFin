@@ -1,3 +1,10 @@
+# [1.4.0-alpha.31](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.30...v1.4.0-alpha.31) (2026-05-20)
+
+
+### Bug Fixes
+
+* remove forecast timeframe options beyond 1 year ([#125](https://github.com/Novanglus96/LenoreFin/issues/125)) ([b3cc9d9](https://github.com/Novanglus96/LenoreFin/commit/b3cc9d9e31bddd39d1c57d5d2f81eb98269f6743))
+
 # [1.4.0-alpha.30](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.29...v1.4.0-alpha.30) (2026-05-20)
 
 
