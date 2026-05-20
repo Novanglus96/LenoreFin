@@ -679,8 +679,10 @@
     val => {
       if (!val) return;
       localTransactions.value = val.transactions;
-      localPage.value = val.current_page;
       localPageTotal.value = val.total_pages;
+      if (localPage.value > val.total_pages) {
+        localPage.value = val.total_pages;
+      }
     },
   );
 
