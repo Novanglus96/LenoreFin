@@ -83,12 +83,10 @@
   import annotationPlugin from "chartjs-plugin-annotation";
   import { useAccountForecasts } from "@/composables/forecastsComposable";
   import { useMainStore } from "@/stores/main";
-  import { useTransactionsStore } from "@/stores/transactions";
   import { useDisplay } from "vuetify";
 
   const { smAndDown } = useDisplay();
 
-  const transactions_store = useTransactionsStore();
   const mainstore = useMainStore();
   const props = defineProps({
     account: Array,
@@ -100,7 +98,7 @@
   const { isLoading, account_forecast, isFetching } = useAccountForecasts(
     props.account,
     props.start_integer,
-    props.end_integer,
+    chips,
   );
   const isActive = computed(
     () => !(isLoading.value === false && isFetching.value === false),
@@ -190,7 +188,6 @@
   });
 
   const clickChangeTime = () => {
-    transactions_store.pageinfo.maxdays = chips.value;
     emit("changeTime", chips.value);
   };
 

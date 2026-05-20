@@ -36,7 +36,7 @@
         :loading="isActive"
         item-value="id"
         v-model:items-per-page="transactions_store.pageinfo.page_size"
-        v-model:page="localPage"
+        :page="localPage"
         :items-per-page-options="[
           {
             value: 5,
@@ -58,7 +58,6 @@
         @update:options="pageTurned"
         return-object
         v-model="selected_all"
-        :page="localPage"
         :row-props="getRowProps"
         :header-props="{ class: 'font-weight-bold bg-secondary' }"
         class="bg-background"
@@ -146,6 +145,7 @@
             <v-pagination
               v-model="localPage"
               :length="localPageTotal"
+              @update:model-value="onPageChange"
             ></v-pagination>
           </div>
         </template>
@@ -679,8 +679,10 @@
     val => {
       if (!val) return;
       localTransactions.value = val.transactions;
-      localPage.value = val.current_page;
       localPageTotal.value = val.total_pages;
+      if (localPage.value > val.total_pages) {
+        localPage.value = val.total_pages;
+      }
     },
   );
 
@@ -911,9 +913,12 @@
     return `${month}-${padDay ? String(day).padStart(2, "0") : day}`;
   };
 
-  function pageTurned({ page }) {
+  function onPageChange(page) {
+    localPage.value = page;
     transactions_store.pageinfo.page = page;
   }
+
+  function pageTurned() {}
   function getStatusFormat(status) {
     if (status == 1 && props.variant != "upcoming") {
       return "font-weight-regular font-italic text-textPending text-body-2";
