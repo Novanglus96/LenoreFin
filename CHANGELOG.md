@@ -1,3 +1,10 @@
+# [1.4.0-alpha.34](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.33...v1.4.0-alpha.34) (2026-05-20)
+
+
+### Features
+
+* add bank logos to account header, menu, and forecast selector ([#128](https://github.com/Novanglus96/LenoreFin/issues/128)) ([7fe0448](https://github.com/Novanglus96/LenoreFin/commit/7fe0448ccd6f19b3e7c5ebad967a17b3088513ff))
+
 # [1.4.0-alpha.33](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.32...v1.4.0-alpha.33) (2026-05-20)
 
 
