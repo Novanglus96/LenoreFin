@@ -2,6 +2,7 @@ import gzip
 import json
 import os
 from django.core.management.base import BaseCommand, CommandError
+from django.core.management import call_command
 from django.db import transaction as db_transaction
 
 
@@ -29,6 +30,7 @@ class Command(BaseCommand):
             self._clear_user_data()
             self._restore_data(data)
 
+        call_command("load_caches")
         self.stdout.write(self.style.SUCCESS("Restore completed successfully."))
 
     def _clear_user_data(self):
@@ -116,7 +118,10 @@ class Command(BaseCommand):
 
         # --- 2. Banks ---
         for item in data.get("banks", []):
-            Bank.objects.get_or_create(bank_name=item["bank_name"])
+            bank, created = Bank.objects.get_or_create(bank_name=item["bank_name"])
+            if item.get("logo_url") and (created or not bank.logo_url):
+                bank.logo_url = item["logo_url"]
+                bank.save()
         bank_by_name = {b.bank_name: b for b in Bank.objects.all()}
 
         # --- 3. MainTags (user-created) ---
@@ -380,8 +385,9 @@ class Command(BaseCommand):
             option.auto_archive = opt.get("auto_archive", True)
             option.archive_length = opt.get("archive_length", 2)
             option.enable_cc_bill_calculation = opt.get("enable_cc_bill_calculation", True)
-            option.report_main = opt.get("report_main")
-            option.report_individual = opt.get("report_individual")
+            main_tag_slug_to_pk = {slug: mt.pk for slug, mt in main_tag_by_slug.items()}
+            option.report_main = convert_slug_json_array(opt.get("report_main"), main_tag_slug_to_pk)
+            option.report_individual = convert_slug_json_array(opt.get("report_individual"), main_tag_slug_to_pk)
             option.retirement_accounts = convert_slug_json_array(opt.get("retirement_accounts"), account_name_to_pk)
             option.christmas_accounts = convert_slug_json_array(opt.get("christmas_accounts"), account_name_to_pk)
             option.christmas_rewards = convert_slug_json_array(opt.get("christmas_rewards"), account_name_to_pk)

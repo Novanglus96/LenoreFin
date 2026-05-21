@@ -48,6 +48,7 @@ class Command(BaseCommand):
         all_tags = list(Tag.objects.all().select_related("parent", "child", "tag_type"))
         tag_pk_to_slug = {t.pk: t.slug for t in all_tags}
         account_pk_to_name = {a.pk: a.account_name for a in Account.objects.all()}
+        main_tag_pk_to_slug = {mt.pk: mt.slug for mt in MainTag.objects.all()}
 
         def convert_id_json_array(id_str, pk_to_key):
             """Convert a JSON array of PKs stored as a string to a JSON array of natural keys."""
@@ -69,7 +70,7 @@ class Command(BaseCommand):
 
         # 2. Banks
         data["banks"] = [
-            {"bank_name": b.bank_name}
+            {"bank_name": b.bank_name, "logo_url": b.logo_url}
             for b in Bank.objects.all()
         ]
 
@@ -321,8 +322,8 @@ class Command(BaseCommand):
                 "auto_archive": option.auto_archive,
                 "archive_length": option.archive_length,
                 "enable_cc_bill_calculation": option.enable_cc_bill_calculation,
-                "report_main": option.report_main,
-                "report_individual": option.report_individual,
+                "report_main": convert_id_json_array(option.report_main, main_tag_pk_to_slug),
+                "report_individual": convert_id_json_array(option.report_individual, main_tag_pk_to_slug),
                 "retirement_accounts": convert_id_json_array(option.retirement_accounts, account_pk_to_name),
                 "christmas_accounts": convert_id_json_array(option.christmas_accounts, account_pk_to_name),
                 "christmas_rewards": convert_id_json_array(option.christmas_rewards, account_pk_to_name),
