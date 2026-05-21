@@ -194,7 +194,7 @@
   </v-dialog>
 </template>
 <script setup>
-  import { ref, defineEmits, defineProps, onMounted, watchEffect, watch } from "vue";
+  import { ref, defineEmits, defineProps, watch } from "vue";
 
   const emit = defineEmits(["updateDialog", "updateAmount"]);
 
@@ -225,18 +225,8 @@
   };
 
   const clickCancel = () => {
-    resetCalculator();
     emit("updateDialog", false);
     emit("update:modelValue", false);
-  };
-
-  const watchPassedAmount = () => {
-    watchEffect(() => {
-      if (props.amount) {
-        resetCalculator();
-        displayAmount.value = formatMoney(props.amount);
-      }
-    });
   };
 
   const resetCalculator = () => {
@@ -384,14 +374,14 @@
     () => props.modelValue,
     open => {
       if (open) {
+        resetCalculator();
+        if (props.amount) {
+          displayAmount.value = formatMoney(props.amount);
+        }
         document.addEventListener("keydown", handleKeydown);
       } else {
         document.removeEventListener("keydown", handleKeydown);
       }
     },
   );
-
-  onMounted(() => {
-    watchPassedAmount();
-  });
 </script>
