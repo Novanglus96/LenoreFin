@@ -1,3 +1,10 @@
+# [1.4.0-alpha.39](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.38...v1.4.0-alpha.39) (2026-05-21)
+
+
+### Bug Fixes
+
+* suppress signals during restore and deepen tag select_related ([#135](https://github.com/Novanglus96/LenoreFin/issues/135)) ([38a0b9f](https://github.com/Novanglus96/LenoreFin/commit/38a0b9f8f21d6e8926026fb7294160b7e973f2d6))
+
 # [1.4.0-alpha.38](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.37...v1.4.0-alpha.38) (2026-05-21)
 
 
