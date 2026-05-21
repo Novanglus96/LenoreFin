@@ -232,10 +232,10 @@
 
     return color;
   };
-  watch(props.ruleID, newValue => {
+  watch(() => props.ruleID, newValue => {
     local_rule_id.value = newValue;
   });
-  watch(props.timeframe, newValue => {
+  watch(() => props.timeframe, newValue => {
     local_timeframe.value = newValue;
   });
   const formatCurrency = value => {

@@ -140,11 +140,14 @@
             <v-row>
               <v-col>
                 <v-data-table
-                  :headers="headers"
+                  :headers="tableHeaders"
                   :items="databaseBackups"
                   :loading="filesLoading"
                   density="compact"
                   no-data-text="No backups found"
+                  :show-expand="smAndDown"
+                  item-value="filename"
+                  class="backup-table"
                 >
                   <template v-slot:item.created_at="{ item }">
                     {{ formatDate(item.created_at) }}
@@ -173,6 +176,34 @@
                       color="error"
                       @click="confirmDelete(item.filename)"
                     ></v-btn>
+                  </template>
+                  <template v-slot:expanded-row="{ columns, item }">
+                    <tr>
+                      <td :colspan="columns.length" class="pa-2">
+                        <v-btn
+                          prepend-icon="mdi-download"
+                          size="small"
+                          variant="tonal"
+                          class="mr-2"
+                          @click="downloadBackup(item.filename)"
+                        >Download</v-btn>
+                        <v-btn
+                          prepend-icon="mdi-database-import"
+                          size="small"
+                          variant="tonal"
+                          color="warning"
+                          class="mr-2"
+                          @click="confirmRestore(item.filename)"
+                        >Restore</v-btn>
+                        <v-btn
+                          prepend-icon="mdi-delete"
+                          size="small"
+                          variant="tonal"
+                          color="error"
+                          @click="confirmDelete(item.filename)"
+                        >Delete</v-btn>
+                      </td>
+                    </tr>
                   </template>
                 </v-data-table>
               </v-col>
@@ -227,6 +258,9 @@
     downloadBackup,
   } from "@/composables/backupComposable";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  import { useDisplay } from "vuetify";
+
+  const { smAndDown } = useDisplay();
 
   const { backupConfig, editBackupConfig } = useBackupConfig();
   const { isOnline } = useOnlineStatus();
@@ -262,12 +296,21 @@
     { label: "Weekly", value: "WEEKLY" },
   ];
 
-  const headers = [
-    { title: "Filename", key: "filename" },
-    { title: "Date", key: "created_at" },
-    { title: "Size", key: "size" },
-    { title: "Actions", key: "actions", sortable: false },
-  ];
+  const tableHeaders = computed(() => {
+    if (smAndDown.value) {
+      return [
+        { title: "Filename", key: "filename" },
+        { title: "Date", key: "created_at", width: 105 },
+        { title: "Size", key: "size", width: 55 },
+      ];
+    }
+    return [
+      { title: "Filename", key: "filename" },
+      { title: "Date", key: "created_at" },
+      { title: "Size", key: "size" },
+      { title: "Actions", key: "actions", sortable: false },
+    ];
+  });
 
   const databaseBackups = computed(() =>
     (backupFiles.value ?? []).filter(f => f.backup_type === "database"),
@@ -331,3 +374,16 @@
     return (bytes / 1048576).toFixed(1) + " MB";
   }
 </script>
+
+<style>
+.backup-table table {
+  table-layout: fixed;
+  width: 100%;
+}
+.backup-table th:first-child,
+.backup-table td:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

@@ -33,8 +33,6 @@
           </v-col>
           <v-col cols="12" class="ma-0 pa-0 ga-0">
             <CalculatorTransfersWidget
-              :transfers="calculator ? calculator.transfers : []"
-              :isLoading="calculator_isLoading"
               :key="selected_rule"
               :ruleID="selected_rule"
               :timeframe="selectedTimeframe"
@@ -42,8 +40,6 @@
           </v-col>
           <v-col cols="12" class="ma-0 pa-0 ga-0">
             <CalculatorTransactionsWidget
-              :transactions="calculator ? calculator.transactions : []"
-              :isLoading="calculator_isLoading"
               :key="selected_rule"
               :ruleID="selected_rule"
               :timeframe="selectedTimeframe"
