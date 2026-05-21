@@ -12,7 +12,7 @@
             <v-container>
               <v-row dense>
                 <v-col>
-                  <Bar :data="props.data.data" :options="options" />
+                  <Bar :data="safeChartData" :options="options" />
                 </v-col>
               </v-row>
               <v-row>
@@ -42,7 +42,7 @@
   </div>
 </template>
 <script setup>
-  import { ref, computed, defineProps } from "vue";
+  import { ref, computed, defineProps, markRaw } from "vue";
   import {
     Chart as ChartJS,
     Title,
@@ -73,6 +73,16 @@
     isLoading: Boolean,
   });
   const { smAndDown } = useDisplay();
+
+  const safeChartData = computed(() => {
+    const raw = props.data?.data;
+    if (!raw) return { labels: [], datasets: [] };
+    return markRaw({
+      labels: Array.from(raw.labels ?? []),
+      datasets: (raw.datasets ?? []).map(ds => markRaw({ ...ds, data: Array.from(ds.data ?? []) })),
+    });
+  });
+
   const this_year_avg = computed(() => (props.data ? props.data.year1_avg : 0));
   const show_year1 = computed(() =>
     props.data.year1_avg !== 0 ? true : false,

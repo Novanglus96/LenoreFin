@@ -55,9 +55,9 @@
         Loading...
       </v-progress-circular>
       <Line
-        :data="account_forecast"
+        :data="safeChartData"
         :options="options"
-        v-if="!isActive && account_forecast"
+        v-if="!isActive && safeChartData"
         ref="Forecast"
         aria-label="Account Forecast"
       >
@@ -67,7 +67,7 @@
   </v-card>
 </template>
 <script setup>
-  import { ref, defineProps, defineEmits, computed } from "vue";
+  import { ref, defineProps, defineEmits, computed, markRaw } from "vue";
   import {
     Chart as ChartJS,
     CategoryScale,
@@ -103,6 +103,27 @@
   const isActive = computed(
     () => !(isLoading.value === false && isFetching.value === false),
   );
+
+  const POSITIVE_COLOR = '#4caf50';
+  const NEGATIVE_COLOR = '#f44336';
+
+  const safeChartData = computed(() => {
+    const raw = account_forecast.value;
+    if (!raw) return null;
+    return markRaw({
+      labels: Array.from(raw.labels ?? []),
+      datasets: (raw.datasets ?? []).map(ds => markRaw({
+        ...ds,
+        data: Array.from(ds.data ?? []),
+        segment: {
+          borderColor: ctx => ctx.p0.parsed.y >= 0 ? POSITIVE_COLOR : NEGATIVE_COLOR,
+          backgroundColor: ctx => ctx.p0.parsed.y >= 0 ? 'rgba(76,175,80,0.3)' : 'rgba(244,67,54,0.3)',
+        },
+        pointBackgroundColor: ctx => (ctx.parsed?.y ?? 0) < 0 ? NEGATIVE_COLOR : POSITIVE_COLOR,
+        pointBorderColor: ctx => (ctx.parsed?.y ?? 0) < 0 ? NEGATIVE_COLOR : POSITIVE_COLOR,
+      })),
+    });
+  });
   ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -155,6 +176,10 @@
       },
       tooltip: {
         callbacks: {
+          labelColor: function (context) {
+            const color = context.parsed.y >= 0 ? '#4caf50' : '#f44336';
+            return { borderColor: color, backgroundColor: color };
+          },
           label: function (context) {
             let label = context.dataset.label || "";
 

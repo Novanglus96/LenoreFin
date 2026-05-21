@@ -15,7 +15,7 @@
             <v-container>
               <v-row dense>
                 <v-col>
-                  <Bar :data="tag_transactions.data" :options="options" />
+                  <Bar :data="safeChartData" :options="options" />
                 </v-col>
               </v-row>
               <v-row>
@@ -52,7 +52,7 @@
   </div>
 </template>
 <script setup>
-  import { defineProps, ref, computed } from "vue";
+  import { defineProps, ref, computed, markRaw } from "vue";
   import { useGraphTransactions } from "@/composables/tagsComposable";
   import TransactionTableWidget from "./TransactionTableWidget.vue";
   import {
@@ -86,6 +86,16 @@
   const { tag_transactions, isLoading, isFetching } = useGraphTransactions(
     props.tagID,
   );
+
+  const safeChartData = computed(() => {
+    const raw = tag_transactions.value?.data;
+    if (!raw) return { labels: [], datasets: [] };
+    return markRaw({
+      labels: Array.from(raw.labels ?? []),
+      datasets: (raw.datasets ?? []).map(ds => markRaw({ ...ds, data: Array.from(ds.data ?? []) })),
+    });
+  });
+
   const this_year_avg = computed(() =>
     tag_transactions.value?.year1_avg ?? 0,
   );
