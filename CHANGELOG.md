@@ -1,3 +1,10 @@
+# [1.4.0-alpha.35](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.34...v1.4.0-alpha.35) (2026-05-21)
+
+
+### Bug Fixes
+
+* calculator cancel button and inline docstrings ([#131](https://github.com/Novanglus96/LenoreFin/issues/131)) ([82c9e3e](https://github.com/Novanglus96/LenoreFin/commit/82c9e3e5237a19ea57692cd77a1995e7327e84b3))
+
 # [1.4.0-alpha.34](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.33...v1.4.0-alpha.34) (2026-05-20)
 
 
