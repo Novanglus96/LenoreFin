@@ -29,7 +29,12 @@ class AccountNotFound(Exception):
 
 def get_account_financials(account_id: int, today: date | None = None):
     """
-    Returns an Account annotated with all calculated financial fields.
+    Returns a DomainAccount with all calculated financial fields, served from cache when available.
+
+    Due and statement dates are computed relative to today: if the day-of-month hasn't
+    passed yet this month, the date lands this month; otherwise it rolls to next month.
+    Parent accounts sum cleared and pending balances across all children instead of
+    querying their own (empty) transaction set.
     """
     # Check Cache
     key = account_financials(account_id)
@@ -124,6 +129,13 @@ def get_account_financials(account_id: int, today: date | None = None):
 
 
 def last_six_month_reward_amounts(account_id: int):
+    """
+    Returns the most-recent reward balance for each of the past 5 months plus the
+    current month, ordered oldest → newest (for charting left-to-right).
+
+    Uses a Subquery/OuterRef to find the latest reward entry per month rather than
+    a simple Max(amount), because reward_amount is cumulative — not per-month earned.
+    """
     today = get_todays_date_timezone_adjusted()
     first_of_current_month = today.replace(day=1)
 
@@ -159,6 +171,10 @@ def last_six_month_reward_amounts(account_id: int):
 
 
 def last_year_six_month_reward_amounts(account_id: int):
+    """
+    Same as last_six_month_reward_amounts but anchored to the same 6-month window
+    one year ago, for year-over-year comparison charting.
+    """
     today = get_todays_date_timezone_adjusted()
 
     # Move 1 year back
