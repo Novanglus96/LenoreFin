@@ -46,7 +46,7 @@ export function useAccountForecasts(account_id, start_integer, end_integer) {
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: ["account_forecast", { account: account_id, end: end_integer }],
+    queryKey: ["account_forecast", { account: account_id, start: start_integer, end: end_integer }],
     queryFn: () =>
       getAccountForecastFunction(
         account_id,
