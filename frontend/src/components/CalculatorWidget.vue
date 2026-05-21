@@ -19,8 +19,7 @@
             </v-col>
             <v-col
               cols="2"
-              class="d-flex justify-end align-center"
-              style="align-items: center"
+              class="d-flex flex-column justify-center align-center ga-1"
             >
               <v-tooltip text="Send Amount to Form" location="top">
                 <template v-slot:activator="{ props }">
@@ -28,9 +27,20 @@
                     icon="mdi-check-bold"
                     rounded="xl"
                     color="success"
-                    block
                     size="x-small"
                     @click="clickUpdateAmount"
+                    v-bind="props"
+                  ></v-btn>
+                </template>
+              </v-tooltip>
+              <v-tooltip text="Cancel" location="top">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    icon="mdi-close"
+                    rounded="xl"
+                    color="error"
+                    size="x-small"
+                    @click="clickCancel"
                     v-bind="props"
                   ></v-btn>
                 </template>
@@ -214,6 +224,12 @@
     emit("updateAmount", parseFloat(displayAmount.value));
   };
 
+  const clickCancel = () => {
+    resetCalculator();
+    emit("updateDialog", false);
+    emit("update:modelValue", false);
+  };
+
   const watchPassedAmount = () => {
     watchEffect(() => {
       if (props.amount) {
@@ -355,9 +371,12 @@
     } else if (key === "Backspace") {
       event.preventDefault();
       backspace();
-    } else if (key === "Delete" || key === "Escape") {
+    } else if (key === "Delete") {
       event.preventDefault();
       clickClear();
+    } else if (key === "Escape") {
+      event.preventDefault();
+      clickCancel();
     }
   };
 
