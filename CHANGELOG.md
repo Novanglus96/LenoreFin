@@ -1,3 +1,10 @@
+# [1.4.0-alpha.37](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.36...v1.4.0-alpha.37) (2026-05-21)
+
+
+### Features
+
+* version check on backup/restore with warning on mismatch ([b331a3c](https://github.com/Novanglus96/LenoreFin/commit/b331a3c9934d2bf3e619420f4d02549346987d8a))
+
 # [1.4.0-alpha.36](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.35...v1.4.0-alpha.36) (2026-05-21)
 
 
