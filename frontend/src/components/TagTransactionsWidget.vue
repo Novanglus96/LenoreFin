@@ -15,18 +15,24 @@
             <v-container>
               <v-row dense>
                 <v-col>
-                  <Bar :data="safeChartData" :options="options" />
+                  <ApexChart
+                    type="bar"
+                    :height="250"
+                    :options="chartOptions"
+                    :series="chartSeries"
+                    aria-label="Tag Totals"
+                  />
                 </v-col>
               </v-row>
               <v-row>
                 <v-col class="text-right">
-                  <span class="text-subtitle-2">
+                  <span class="text-subtitle-2" style="color: #034a45;">
                     {{ tag_transactions.year1 }} Avg:
                     {{ formatCurrency(tag_transactions.year1_avg) }}
                   </span>
                 </v-col>
                 <v-col class="text-left">
-                  <span class="text-subtitle-2">
+                  <span class="text-subtitle-2" style="color: #88b3b0;">
                     {{ tag_transactions.year2 }} Avg:
                     {{ formatCurrency(tag_transactions.year2_avg) }}
                   </span>
@@ -52,30 +58,10 @@
   </div>
 </template>
 <script setup>
-  import { defineProps, ref, computed, markRaw } from "vue";
+  import { defineProps, computed } from "vue";
+  import ApexChart from "vue3-apexcharts";
   import { useGraphTransactions } from "@/composables/tagsComposable";
   import TransactionTableWidget from "./TransactionTableWidget.vue";
-  import {
-    Chart as ChartJS,
-    Title,
-    Tooltip,
-    Legend,
-    BarElement,
-    CategoryScale,
-    LinearScale,
-  } from "chart.js";
-  import { Bar } from "vue-chartjs";
-  import annotationPlugin from "chartjs-plugin-annotation";
-
-  ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend,
-    annotationPlugin,
-  );
 
   const props = defineProps({
     tagID: {
@@ -87,86 +73,73 @@
     props.tagID,
   );
 
-  const safeChartData = computed(() => {
+  const chartSeries = computed(() => {
     const raw = tag_transactions.value?.data;
-    if (!raw) return { labels: [], datasets: [] };
-    return markRaw({
-      labels: Array.from(raw.labels ?? []),
-      datasets: (raw.datasets ?? []).map(ds => markRaw({ ...ds, data: Array.from(ds.data ?? []) })),
-    });
+    if (!raw?.datasets?.length) return [];
+    return raw.datasets.map(ds => ({
+      name: ds.label ?? "",
+      data: (ds.data ?? []).map(Number),
+    }));
   });
 
-  const this_year_avg = computed(() =>
-    tag_transactions.value?.year1_avg ?? 0,
-  );
-  const show_year1 = computed(() =>
-    (tag_transactions.value?.year1_avg ?? 0) !== 0,
-  );
-  const last_year_avg = computed(() =>
-    tag_transactions.value?.year2_avg ?? 0,
-  );
-  const show_year2 = computed(() =>
-    (tag_transactions.value?.year2_avg ?? 0) !== 0,
-  );
-  const options = ref({
-    responsive: true,
-    maintainAspectRatio: false,
-    aspectRatio: 1,
-    plugins: {
-      annotation: {
-        annotations: [
-          {
-            type: "line",
-            display: show_year1,
-            mode: "horizontal",
-            scaleID: "y",
-            value: this_year_avg,
-            borderColor: "#034a45",
-            borderWidth: 1,
-            borderDash: [3, 3],
-          },
-          {
-            type: "line",
-            display: show_year2,
-            mode: "horizontal",
-            scaleID: "y",
-            value: last_year_avg,
-            borderColor: "#88b3b0",
-            borderWidth: 1,
-            borderDash: [3, 3],
-          },
-        ],
+  const chartOptions = computed(() => {
+    const raw = tag_transactions.value?.data;
+    const YEAR_COLORS = ["#034a45", "#88b3b0"];
+    const seriesColors = (raw?.datasets ?? []).map((_, i) => YEAR_COLORS[i % YEAR_COLORS.length]);
+    const year1Avg = tag_transactions.value?.year1_avg ?? 0;
+    const year2Avg = tag_transactions.value?.year2_avg ?? 0;
+
+    const avgAnnotations = [];
+    if (year1Avg !== 0) avgAnnotations.push({ y: year1Avg, borderColor: "#034a45", borderWidth: 1, strokeDashArray: 3 });
+    if (year2Avg !== 0) avgAnnotations.push({ y: year2Avg, borderColor: "#88b3b0", borderWidth: 1, strokeDashArray: 3 });
+
+    return {
+      chart: {
+        type: "bar",
+        toolbar: { show: false },
+        animations: { enabled: false },
       },
+      colors: seriesColors,
+      plotOptions: {
+        bar: { columnWidth: "60%", borderRadius: 2 },
+      },
+      dataLabels: { enabled: false },
+      xaxis: {
+        categories: raw?.labels ?? [],
+        labels: { style: { fontSize: "10px" } },
+        tooltip: { enabled: false },
+      },
+      yaxis: {
+        labels: {
+          formatter: val => val != null ? "$" + Math.round(val).toLocaleString("en-US") : "",
+        },
+      },
+      annotations: { yaxis: avgAnnotations },
       tooltip: {
-        enabled: true,
-        callbacks: {
-          label: function (context) {
-            let label = context.dataset.label || "";
-            if (label) {
-              label += ": ";
-            }
-            if (context.parsed.y !== null) {
-              label += new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-              }).format(context.parsed.y);
-            }
-            return label;
-          },
+        shared: false,
+        custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+          const val = series[seriesIndex]?.[dataPointIndex];
+          const color = seriesColors[seriesIndex] ?? "#034a45";
+          const seriesName = w.config.series[seriesIndex]?.name ?? "";
+          const xLabel = w.globals.labels?.[dataPointIndex] ?? "";
+          const formatted =
+            val != null
+              ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val)
+              : "N/A";
+          return `<div style="padding:8px 10px;font-family:inherit;">
+            <div style="color:#888;font-size:11px;margin-bottom:4px;">${xLabel}</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></span>
+              <span style="font-size:11px;color:#aaa;">${seriesName}</span>
+              <span style="font-weight:600;color:${color};font-size:12px;">${formatted}</span>
+            </div>
+          </div>`;
         },
       },
-    },
-    scales: {
-      y: {
-        ticks: {
-          // Include a dollar sign in the ticks
-          callback: function (value) {
-            return "$" + value;
-          },
-        },
-      },
-    },
+      legend: { show: true },
+    };
   });
+
   const formatCurrency = value => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -176,21 +149,3 @@
     }).format(value);
   };
 </script>
-<style>
-  /* alt-pagination */
-  .alt-pagination .bh-pagination .bh-page-item {
-    width: auto; /* equivalent to w-max */
-    min-width: 32px;
-    border-radius: 0.25rem; /* equivalent to rounded */
-  }
-  /* Customize the color of the selected page number */
-  .alt-pagination .bh-pagination .bh-page-item.bh-active {
-    background-color: #06966a; /* Change this to your desired color */
-    border-color: black;
-    font-weight: bold; /* Optional: Make the text bold */
-  }
-  .alt-pagination .bh-pagination .bh-page-item:not(.bh-active):hover {
-    background-color: #ff5900;
-    border-color: black;
-  }
-</style>
