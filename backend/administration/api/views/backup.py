@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.http import FileResponse
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 from io import StringIO
 import os
 import logging
@@ -39,7 +39,7 @@ def _list_backup_files():
             BackupFileOut(
                 filename=filename,
                 size=stat.st_size,
-                created_at=datetime.fromtimestamp(stat.st_mtime),
+                created_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
                 backup_type="database",
             )
         )
