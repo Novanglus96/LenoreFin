@@ -14,7 +14,7 @@ class SubTagIn(Schema):
 class SubTagOut(Schema):
     id: int
     tag_name: str
-    tag_type: TagTypeOut
+    tag_type: Optional[TagTypeOut] = None
     slug: str
     is_system: bool
 

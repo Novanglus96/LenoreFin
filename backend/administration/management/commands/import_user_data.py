@@ -66,7 +66,7 @@ class Command(BaseCommand):
         )
         from accounts.models import Account, Bank, Reward
         from administration.models import Payee, DescriptionHistory
-        from reminders.models import Reminder, ReminderExclusion
+        from reminders.models import Reminder, ReminderExclusion, Repeat
         from tags.models import Tag, MainTag, SubTag
         from planning.models import (
             ContribRule, Contribution, Note, ChristmasGift,
@@ -86,6 +86,7 @@ class Command(BaseCommand):
         DescriptionHistory.objects.all().delete()
         ReminderExclusion.objects.all().delete()
         Reminder.objects.all().delete()
+        Repeat.objects.filter(is_system=False).delete()
 
         ReportConfig.objects.all().delete()
 
@@ -155,30 +156,27 @@ class Command(BaseCommand):
         bank_by_name = {b.bank_name: b for b in Bank.objects.all()}
 
         # --- 3. MainTags (user-created) ---
-        main_tag_by_slug = {}
+        # System tags loaded first; user tags added second so their old slugs
+        # take precedence over system slugs when both share the same string.
+        main_tag_by_slug = {mt.slug: mt for mt in MainTag.objects.filter(is_system=True)}
         for item in data.get("main_tags", []):
             mt = MainTag.objects.create(
                 tag_name=item["tag_name"],
                 tag_type=tag_type_by_slug.get(item["tag_type_slug"]) if item.get("tag_type_slug") else None,
             )
             main_tag_by_slug[item["slug"]] = mt
-        # Include system main tags so their slugs resolve correctly in tag lookups
-        for mt in MainTag.objects.filter(is_system=True):
-            main_tag_by_slug[mt.slug] = mt
 
         # --- 4. SubTags (user-created) ---
-        sub_tag_by_slug = {}
+        sub_tag_by_slug = {st.slug: st for st in SubTag.objects.filter(is_system=True)}
         for item in data.get("sub_tags", []):
             st = SubTag.objects.create(
                 tag_name=item["tag_name"],
                 tag_type=tag_type_by_slug.get(item["tag_type_slug"]) if item.get("tag_type_slug") else None,
             )
             sub_tag_by_slug[item["slug"]] = st
-        for st in SubTag.objects.filter(is_system=True):
-            sub_tag_by_slug[st.slug] = st
 
         # --- 5. Tags (user-created) ---
-        tag_by_slug = {}
+        tag_by_slug = {t.slug: t for t in Tag.objects.filter(is_system=True).select_related("parent", "child")}
         for item in data.get("tags", []):
             t = Tag.objects.create(
                 parent=main_tag_by_slug.get(item["parent_slug"]) if item.get("parent_slug") else None,
@@ -186,8 +184,6 @@ class Command(BaseCommand):
                 tag_type=tag_type_by_slug.get(item["tag_type_slug"]) if item.get("tag_type_slug") else None,
             )
             tag_by_slug[item["slug"]] = t
-        for t in Tag.objects.filter(is_system=True).select_related("parent", "child"):
-            tag_by_slug[t.slug] = t
 
         tag_slug_to_pk = {slug: t.pk for slug, t in tag_by_slug.items()}
 
@@ -320,7 +316,21 @@ class Command(BaseCommand):
         if detail_batch:
             TransactionDetail.objects.bulk_create(detail_batch)
 
-        # --- 12. Reminders ---
+        # --- 12. Custom Repeats (user-created only) ---
+        for item in data.get("custom_repeats", []):
+            repeat, _ = Repeat.objects.get_or_create(
+                slug=item["slug"],
+                defaults={
+                    "repeat_name": item["repeat_name"],
+                    "days": item.get("days", 0),
+                    "weeks": item.get("weeks", 0),
+                    "months": item.get("months", 0),
+                    "years": item.get("years", 0),
+                },
+            )
+            repeat_by_slug[item["slug"]] = repeat
+
+        # --- 13. Reminders ---
         reminder_id_map = {}
         for item in data.get("reminders", []):
             r = Reminder.objects.create(

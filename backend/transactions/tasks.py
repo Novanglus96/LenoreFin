@@ -1039,6 +1039,12 @@ def update_cc_forecast_cache(account_id):
         statement_cycle_length = account.statement_cycle_length
         statement_cycle_period = account.statement_cycle_period
         funding_account = account.funding_account
+        if not funding_account:
+            ForecastCacheTransaction.objects.filter(
+                Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+            ).delete()
+            delete_pattern(account_all(account_id))
+            return
         annual_rate = account.annual_rate
         payment_strategy = account.payment_strategy
         payment_amount = account.payment_amount
