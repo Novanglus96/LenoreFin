@@ -1,3 +1,10 @@
+# [1.4.0-alpha.40](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.39...v1.4.0-alpha.40) (2026-05-21)
+
+
+### Bug Fixes
+
+* forecast graph cache collision and backup timestamp timezone ([#136](https://github.com/Novanglus96/LenoreFin/issues/136)) ([2944d1a](https://github.com/Novanglus96/LenoreFin/commit/2944d1a6f460cae781d8da590c04d72b0c369efe))
+
 # [1.4.0-alpha.39](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.38...v1.4.0-alpha.39) (2026-05-21)
 
 
