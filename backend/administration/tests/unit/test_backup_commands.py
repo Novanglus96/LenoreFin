@@ -513,3 +513,33 @@ def test_roundtrip_report_config(
     main_slugs = {s.main_tag.slug for s in selections if s.main_tag_id}
     assert test_tag.slug in tag_slugs
     assert test_main_tag.slug in main_slugs
+
+
+@pytest.mark.django_db
+def test_roundtrip_custom_repeat(tmp_path):
+    """User-created (non-system) Repeat is exported, cleared, and re-created on import."""
+    from reminders.models import Repeat
+
+    custom = Repeat.objects.create(
+        repeat_name="Bi-weekly",
+        days=0,
+        weeks=2,
+        months=0,
+        years=0,
+    )
+    slug = custom.slug
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+
+    # Verify the export contains the custom repeat
+    with gzip.open(output, "rb") as f:
+        exported = json.loads(f.read())
+    assert any(r["slug"] == slug for r in exported.get("custom_repeats", []))
+
+    call_command("import_user_data", output)
+
+    restored = Repeat.objects.get(slug=slug)
+    assert restored.repeat_name == "Bi-weekly"
+    assert restored.weeks == 2
+    assert restored.is_system is False

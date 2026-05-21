@@ -212,7 +212,21 @@ class Command(BaseCommand):
             for td in TransactionDetail.objects.all().select_related("tag")
         ]
 
-        # 12. Reminders
+        # 12. Custom Repeats (user-created only; system repeats are fixture-seeded)
+        from reminders.models import Repeat as RepeatModel
+        data["custom_repeats"] = [
+            {
+                "slug": r.slug,
+                "repeat_name": r.repeat_name,
+                "days": r.days,
+                "weeks": r.weeks,
+                "months": r.months,
+                "years": r.years,
+            }
+            for r in RepeatModel.objects.filter(is_system=False)
+        ]
+
+        # 13. Reminders
         data["reminders"] = [
             {
                 "_id": r.id,
@@ -235,7 +249,7 @@ class Command(BaseCommand):
             )
         ]
 
-        # 13. ReminderExclusions
+        # 14. ReminderExclusions
         data["reminder_exclusions"] = [
             {
                 "reminder_id": re.reminder_id,
