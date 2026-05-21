@@ -28,12 +28,36 @@ class Command(BaseCommand):
 
         self._check_version(data)
 
-        self.stdout.write("Starting restore (atomic)...")
-        with db_transaction.atomic():
-            self._clear_user_data()
-            self._restore_data(data)
+        # Disconnect signals that queue async cache tasks — they race with
+        # load_caches and produce double forecast/reminder entries.
+        from django.db.models.signals import post_save, post_delete
+        from reminders.models import Reminder as ReminderModel
+        from reminders.signals import (
+            update_and_invalidate_cache_on_save as reminder_on_save,
+            update_and_invalidate_cache_on_delete as reminder_on_delete,
+        )
+        from transactions.models import Transaction as TransactionModel
+        from transactions.signals import (
+            update_forecast_cache_on_save as txn_on_save,
+            update_forecast_cache_on_delete as txn_on_delete,
+        )
+        post_save.disconnect(reminder_on_save, sender=ReminderModel)
+        post_delete.disconnect(reminder_on_delete, sender=ReminderModel)
+        post_save.disconnect(txn_on_save, sender=TransactionModel)
+        post_delete.disconnect(txn_on_delete, sender=TransactionModel)
 
-        call_command("load_caches")
+        try:
+            self.stdout.write("Starting restore (atomic)...")
+            with db_transaction.atomic():
+                self._clear_user_data()
+                self._restore_data(data)
+            call_command("load_caches")
+        finally:
+            post_save.connect(reminder_on_save, sender=ReminderModel)
+            post_delete.connect(reminder_on_delete, sender=ReminderModel)
+            post_save.connect(txn_on_save, sender=TransactionModel)
+            post_delete.connect(txn_on_delete, sender=TransactionModel)
+
         self.stdout.write(self.style.SUCCESS("Restore completed successfully."))
 
     def _check_version(self, data):
