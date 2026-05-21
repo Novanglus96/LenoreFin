@@ -41,6 +41,7 @@ class Command(BaseCommand):
         from transactions.models import Transaction, Paycheck, TransactionDetail
         from reminders.models import Reminder, ReminderExclusion
         from planning.models import ContribRule, Contribution, Note, ChristmasGift, Budget, CalculationRule
+        from reports.models import ReportConfig
 
         data = {}
 
@@ -121,6 +122,8 @@ class Command(BaseCommand):
                 "statement_balance": str(a.statement_balance) if a.statement_balance is not None else None,
                 "archive_balance": str(a.archive_balance) if a.archive_balance is not None else None,
                 "funding_account_name": a.funding_account.account_name if a.funding_account else None,
+                "parent_account_name": a.parent_account.account_name if a.parent_account else None,
+                "interest_child_account_name": a.interest_child_account.account_name if a.interest_child_account else None,
                 "calculate_payments": a.calculate_payments,
                 "calculate_interest": a.calculate_interest,
                 "payment_strategy": a.payment_strategy,
@@ -131,7 +134,9 @@ class Command(BaseCommand):
                 "pay_day": a.pay_day,
                 "interest_deposit_day": a.interest_deposit_day,
             }
-            for a in Account.objects.all().select_related("account_type", "bank", "funding_account")
+            for a in Account.objects.all().select_related(
+                "account_type", "bank", "funding_account", "parent_account", "interest_child_account"
+            )
         ]
 
         # 7. DescriptionHistory
@@ -201,6 +206,7 @@ class Command(BaseCommand):
                 "transaction_id": td.transaction_id,
                 "detail_amt": str(td.detail_amt),
                 "tag_slug": td.tag.slug if td.tag else None,
+                "full_toggle": td.full_toggle,
             }
             for td in TransactionDetail.objects.all().select_related("tag")
         ]
@@ -298,7 +304,34 @@ class Command(BaseCommand):
                 "destination_account_name": account_pk_to_name.get(cr.destination_account_id),
             })
 
-        # 20. Option singleton
+        # 20. ReportConfigs
+        data["report_configs"] = []
+        for rc in ReportConfig.objects.prefetch_related("accounts", "tag_selections__tag", "tag_selections__sub_tag", "tag_selections__main_tag"):
+            data["report_configs"].append({
+                "name": rc.name,
+                "description": rc.description,
+                "report_type": rc.report_type,
+                "date_range_type": rc.date_range_type,
+                "date_from": str(rc.date_from) if rc.date_from else None,
+                "date_to": str(rc.date_to) if rc.date_to else None,
+                "period2_date_from": str(rc.period2_date_from) if rc.period2_date_from else None,
+                "period2_date_to": str(rc.period2_date_to) if rc.period2_date_to else None,
+                "account_names": [a.account_name for a in rc.accounts.all()],
+                "group_by": rc.group_by,
+                "show_transactions": rc.show_transactions,
+                "show_subtotal": rc.show_subtotal,
+                "include_pending": rc.include_pending,
+                "tag_selections": [
+                    {
+                        "tag_slug": sel.tag.slug if sel.tag else None,
+                        "sub_tag_slug": sel.sub_tag.slug if sel.sub_tag else None,
+                        "main_tag_slug": sel.main_tag.slug if sel.main_tag else None,
+                    }
+                    for sel in rc.tag_selections.all()
+                ],
+            })
+
+        # 21. Option singleton
         option = Option.load()
         if option:
             data["option"] = {
@@ -329,7 +362,7 @@ class Command(BaseCommand):
                 "christmas_rewards": convert_id_json_array(option.christmas_rewards, account_pk_to_name),
             }
 
-        # 21. BackupConfig singleton
+        # 22. BackupConfig singleton
         config = BackupConfig.load()
         data["backup_config"] = {
             "backup_enabled": config.backup_enabled,

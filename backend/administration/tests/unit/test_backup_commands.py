@@ -297,3 +297,147 @@ def test_import_rollback_on_restore_failure(tmp_path, test_checking_account):
 
     # Clear was rolled back — accounts are still present
     assert Account.objects.count() == original_count
+
+
+# ---------------------------------------------------------------------------
+# Round-trip: fields added after initial backup/restore implementation
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+def test_roundtrip_bank_logo_url(tmp_path, bank):
+    """Bank.logo_url is exported and restored."""
+    bank.logo_url = "https://icon.horse/icon/example.com"
+    bank.save()
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    call_command("import_user_data", output)
+
+    from accounts.models import Bank
+    restored = Bank.objects.get(bank_name=bank.bank_name)
+    assert restored.logo_url == "https://icon.horse/icon/example.com"
+
+
+@pytest.mark.django_db
+def test_roundtrip_parent_account(tmp_path, bank, checking_account_type, savings_account_type):
+    """Account.parent_account self-referential FK is correctly restored."""
+    from accounts.models import Account
+
+    parent = Account.objects.create(
+        account_name="Parent Savings",
+        account_type=savings_account_type,
+        bank=bank,
+        opening_balance="1000.00",
+    )
+    Account.objects.create(
+        account_name="Child Savings",
+        account_type=savings_account_type,
+        bank=bank,
+        opening_balance="500.00",
+        parent_account=parent,
+    )
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    call_command("import_user_data", output)
+
+    restored_child = Account.objects.get(account_name="Child Savings")
+    assert restored_child.parent_account is not None
+    assert restored_child.parent_account.account_name == "Parent Savings"
+
+
+@pytest.mark.django_db
+def test_roundtrip_interest_child_account(tmp_path, bank, checking_account_type, savings_account_type):
+    """Account.interest_child_account FK is correctly restored."""
+    from accounts.models import Account
+
+    parent = Account.objects.create(
+        account_name="Interest Parent",
+        account_type=savings_account_type,
+        bank=bank,
+        opening_balance="5000.00",
+    )
+    child = Account.objects.create(
+        account_name="Interest Child",
+        account_type=savings_account_type,
+        bank=bank,
+        opening_balance="0.00",
+        parent_account=parent,
+    )
+    parent.interest_child_account = child
+    parent.save()
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    call_command("import_user_data", output)
+
+    restored_parent = Account.objects.get(account_name="Interest Parent")
+    assert restored_parent.interest_child_account is not None
+    assert restored_parent.interest_child_account.account_name == "Interest Child"
+
+
+@pytest.mark.django_db
+def test_roundtrip_transaction_detail_full_toggle(
+    tmp_path, test_checking_account, test_tag,
+    test_pending_transaction_status, test_expense_transaction_type,
+):
+    """TransactionDetail.full_toggle is preserved through export/import."""
+    from transactions.models import Transaction, TransactionDetail
+
+    txn = Transaction.objects.create(
+        description="Full Toggle Expense",
+        status=test_pending_transaction_status,
+        transaction_type=test_expense_transaction_type,
+        source_account=test_checking_account,
+        total_amount="200.00",
+    )
+    TransactionDetail.objects.create(
+        transaction=txn, detail_amt="200.00", tag=test_tag, full_toggle=True
+    )
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    call_command("import_user_data", output)
+
+    restored_txn = Transaction.objects.get(description="Full Toggle Expense")
+    detail = TransactionDetail.objects.get(transaction=restored_txn)
+    assert detail.full_toggle is True
+
+
+@pytest.mark.django_db
+def test_roundtrip_report_config(
+    tmp_path, test_checking_account, test_tag, test_main_tag, test_sub_tag,
+):
+    """ReportConfig with tag selections and account filters is fully restored."""
+    from reports.models import ReportConfig, ReportConfigTag
+
+    rc = ReportConfig.objects.create(
+        name="My Annual Report",
+        description="Year over year comparison",
+        report_type="COMPARISON",
+        date_range_type="THIS_YEAR",
+        group_by="TAG",
+        show_transactions=True,
+        show_subtotal=True,
+        include_pending=False,
+    )
+    rc.accounts.add(test_checking_account)
+    ReportConfigTag.objects.create(report=rc, tag=test_tag)
+    ReportConfigTag.objects.create(report=rc, main_tag=test_main_tag)
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    call_command("import_user_data", output)
+
+    restored = ReportConfig.objects.get(name="My Annual Report")
+    assert restored.report_type == "COMPARISON"
+    assert restored.group_by == "TAG"
+    assert restored.show_transactions is True
+    assert restored.accounts.filter(account_name=test_checking_account.account_name).exists()
+
+    selections = list(restored.tag_selections.all())
+    assert len(selections) == 2
+    tag_slugs = {s.tag.slug for s in selections if s.tag_id}
+    main_slugs = {s.main_tag.slug for s in selections if s.main_tag_id}
+    assert test_tag.slug in tag_slugs
+    assert test_main_tag.slug in main_slugs

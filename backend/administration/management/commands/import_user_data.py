@@ -46,6 +46,7 @@ class Command(BaseCommand):
             ContribRule, Contribution, Note, ChristmasGift,
             Budget, CalculationRule,
         )
+        from reports.models import ReportConfig
 
         # Cache tables first (generated data, not user data)
         ForecastCacheTransaction.objects.all().delete()
@@ -60,8 +61,10 @@ class Command(BaseCommand):
         ReminderExclusion.objects.all().delete()
         Reminder.objects.all().delete()
 
-        # Accounts: clear self-referential FK before delete
-        Account.objects.update(funding_account=None)
+        ReportConfig.objects.all().delete()
+
+        # Accounts: clear self-referential FKs before delete
+        Account.objects.update(funding_account=None, parent_account=None, interest_child_account=None)
         Account.objects.all().delete()
         Bank.objects.all().delete()
 
@@ -90,6 +93,7 @@ class Command(BaseCommand):
         )
         from reminders.models import Repeat, Reminder, ReminderExclusion
         from planning.models import ContribRule, Contribution, Note, ChristmasGift, Budget, CalculationRule
+        from reports.models import ReportConfig, ReportConfigTag
 
         # --- System lookup tables (slug → object) ---
         account_type_by_slug = {o.slug: o for o in AccountType.objects.all()}
@@ -191,14 +195,27 @@ class Command(BaseCommand):
             a.save()
             account_by_name[a.account_name] = a
 
-        # Second pass: set funding_account
+        # Second pass: set self-referential FKs (funding_account, parent_account, interest_child_account)
         for item in data.get("accounts", []):
+            acct = account_by_name[item["account_name"]]
+            changed = False
             if item.get("funding_account_name"):
                 funding = account_by_name.get(item["funding_account_name"])
                 if funding:
-                    acct = account_by_name[item["account_name"]]
                     acct.funding_account = funding
-                    acct.save()
+                    changed = True
+            if item.get("parent_account_name"):
+                parent = account_by_name.get(item["parent_account_name"])
+                if parent:
+                    acct.parent_account = parent
+                    changed = True
+            if item.get("interest_child_account_name"):
+                child = account_by_name.get(item["interest_child_account_name"])
+                if child:
+                    acct.interest_child_account = child
+                    changed = True
+            if changed:
+                acct.save()
 
         account_name_to_pk = {name: a.pk for name, a in account_by_name.items()}
 
@@ -272,6 +289,7 @@ class Command(BaseCommand):
                     transaction=t,
                     detail_amt=item["detail_amt"],
                     tag=tag_by_slug.get(item["tag_slug"]) if item.get("tag_slug") else None,
+                    full_toggle=item.get("full_toggle", False),
                 ))
         if detail_batch:
             TransactionDetail.objects.bulk_create(detail_batch)
@@ -358,7 +376,35 @@ class Command(BaseCommand):
                 destination_account_id=account_name_to_pk.get(item.get("destination_account_name"), 0),
             )
 
-        # --- 20. Option singleton (update in place) ---
+        # --- 20. ReportConfigs ---
+        for item in data.get("report_configs", []):
+            rc = ReportConfig.objects.create(
+                name=item["name"],
+                description=item.get("description", ""),
+                report_type=item["report_type"],
+                date_range_type=item["date_range_type"],
+                date_from=item.get("date_from"),
+                date_to=item.get("date_to"),
+                period2_date_from=item.get("period2_date_from"),
+                period2_date_to=item.get("period2_date_to"),
+                group_by=item["group_by"],
+                show_transactions=item.get("show_transactions", False),
+                show_subtotal=item.get("show_subtotal", True),
+                include_pending=item.get("include_pending", False),
+            )
+            for account_name in item.get("account_names", []):
+                acct = account_by_name.get(account_name)
+                if acct:
+                    rc.accounts.add(acct)
+            for sel in item.get("tag_selections", []):
+                ReportConfigTag.objects.create(
+                    report=rc,
+                    tag=tag_by_slug.get(sel["tag_slug"]) if sel.get("tag_slug") else None,
+                    sub_tag=sub_tag_by_slug.get(sel["sub_tag_slug"]) if sel.get("sub_tag_slug") else None,
+                    main_tag=main_tag_by_slug.get(sel["main_tag_slug"]) if sel.get("main_tag_slug") else None,
+                )
+
+        # --- 21. Option singleton (update in place) ---
         if "option" in data:
             opt = data["option"]
             option = Option.load()
@@ -393,7 +439,7 @@ class Command(BaseCommand):
             option.christmas_rewards = convert_slug_json_array(opt.get("christmas_rewards"), account_name_to_pk)
             option.save()
 
-        # --- 21. BackupConfig singleton (update in place) ---
+        # --- 22. BackupConfig singleton (update in place) ---
         if "backup_config" in data:
             bc = data["backup_config"]
             config = BackupConfig.load()
