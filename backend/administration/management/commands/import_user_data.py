@@ -1,6 +1,7 @@
 import gzip
 import json
 import os
+import re
 from django.core.management.base import BaseCommand, CommandError
 from django.core.management import call_command
 from django.db import transaction as db_transaction
@@ -25,6 +26,8 @@ class Command(BaseCommand):
             with open(filepath, "r") as f:
                 data = json.load(f)
 
+        self._check_version(data)
+
         self.stdout.write("Starting restore (atomic)...")
         with db_transaction.atomic():
             self._clear_user_data()
@@ -32,6 +35,29 @@ class Command(BaseCommand):
 
         call_command("load_caches")
         self.stdout.write(self.style.SUCCESS("Restore completed successfully."))
+
+    def _check_version(self, data):
+        from administration.api.dependencies.version import get_version
+
+        backup_version = data.get("app_version")
+        current_version = get_version()
+
+        if not backup_version:
+            self.stdout.write(
+                "VERSION_WARNING: Backup has no version information (created before v1.4.0-alpha.37). "
+                "Verify all data restored correctly."
+            )
+            return
+
+        def minor(v):
+            m = re.match(r"(\d+\.\d+)", v)
+            return m.group(1) if m else v
+
+        if minor(backup_version) != minor(current_version):
+            self.stdout.write(
+                f"VERSION_WARNING: Backup was created on v{backup_version} but the app is "
+                f"v{current_version}. Features added between versions may not be fully restored."
+            )
 
     def _clear_user_data(self):
         from transactions.models import (

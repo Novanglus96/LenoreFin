@@ -134,15 +134,21 @@ export function useBackupFiles() {
 
   const restoreMutation = useMutation({
     mutationFn: restoreDatabaseFunction,
-    onSuccess: () => {
+    onSuccess: data => {
       mainstore.showSnackbar("Database restored successfully", "success");
+      if (data?.warning) {
+        setTimeout(() => mainstore.showSnackbar(`Version warning: ${data.warning}`, "warning"), 400);
+      }
     },
   });
 
   const restoreUploadMutation = useMutation({
     mutationFn: restoreFromUploadFunction,
-    onSuccess: () => {
+    onSuccess: data => {
       mainstore.showSnackbar("Database restored from uploaded file", "success");
+      if (data?.warning) {
+        setTimeout(() => mainstore.showSnackbar(`Version warning: ${data.warning}`, "warning"), 400);
+      }
     },
   });
 

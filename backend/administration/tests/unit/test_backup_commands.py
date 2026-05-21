@@ -263,6 +263,78 @@ def test_roundtrip_reminder_maps(
 
 
 # ---------------------------------------------------------------------------
+# Version check
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+def test_export_includes_app_version(tmp_path):
+    """Exported backup includes the current app version."""
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+
+    with gzip.open(output, "rb") as f:
+        data = json.loads(f.read())
+
+    assert "app_version" in data
+    assert data["app_version"]  # non-empty string
+
+
+@pytest.mark.django_db
+def test_import_no_version_warning_when_versions_match(tmp_path, test_checking_account):
+    """No VERSION_WARNING is written when backup and app share the same major.minor."""
+    from io import StringIO
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+
+    out = StringIO()
+    call_command("import_user_data", output, stdout=out)
+    assert "VERSION_WARNING" not in out.getvalue()
+
+
+@pytest.mark.django_db
+def test_import_version_warning_on_minor_mismatch(tmp_path, test_checking_account):
+    """VERSION_WARNING is written when the backup major.minor differs from the current app."""
+    from io import StringIO
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+
+    # Patch the backup version to a different minor
+    with gzip.open(output, "rb") as f:
+        data = json.loads(f.read())
+    data["app_version"] = "0.9.0"
+    patched = str(tmp_path / "old.json.gz")
+    with gzip.open(patched, "wb") as f:
+        f.write(json.dumps(data).encode())
+
+    out = StringIO()
+    call_command("import_user_data", patched, stdout=out)
+    assert "VERSION_WARNING" in out.getvalue()
+    assert "0.9.0" in out.getvalue()
+
+
+@pytest.mark.django_db
+def test_import_version_warning_on_missing_version(tmp_path, test_checking_account):
+    """VERSION_WARNING is written when the backup has no app_version field (pre-v1.4.0-alpha.37)."""
+    from io import StringIO
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+
+    with gzip.open(output, "rb") as f:
+        data = json.loads(f.read())
+    del data["app_version"]
+    patched = str(tmp_path / "no_version.json.gz")
+    with gzip.open(patched, "wb") as f:
+        f.write(json.dumps(data).encode())
+
+    out = StringIO()
+    call_command("import_user_data", patched, stdout=out)
+    assert "VERSION_WARNING" in out.getvalue()
+
+
+# ---------------------------------------------------------------------------
 # Atomic rollback
 # ---------------------------------------------------------------------------
 

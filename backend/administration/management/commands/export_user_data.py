@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from administration.api.dependencies.version import get_version
 
 
 class Command(BaseCommand):
@@ -43,7 +44,7 @@ class Command(BaseCommand):
         from planning.models import ContribRule, Contribution, Note, ChristmasGift, Budget, CalculationRule
         from reports.models import ReportConfig
 
-        data = {}
+        data = {"app_version": get_version()}
 
         # Build helper maps for converting PKs to natural keys
         all_tags = list(Tag.objects.all().select_related("parent", "child", "tag_type"))
