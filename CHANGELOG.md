@@ -1,3 +1,10 @@
+# [1.4.0-alpha.41](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.40...v1.4.0-alpha.41) (2026-05-21)
+
+
+### Features
+
+* migrate all charts from Chart.js to ApexCharts ([#137](https://github.com/Novanglus96/LenoreFin/issues/137)) ([4fe9056](https://github.com/Novanglus96/LenoreFin/commit/4fe9056fede87364ca600ce769b3e71434fc8592)), closes [#034a45](https://github.com/Novanglus96/LenoreFin/issues/034a45) [#88b3b0](https://github.com/Novanglus96/LenoreFin/issues/88b3b0)
+
 # [1.4.0-alpha.40](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.39...v1.4.0-alpha.40) (2026-05-21)
 
 
