@@ -514,13 +514,12 @@ def prune_task_history():
 
 def archive_transactions():
     """
-    The function `archive_transactions` archives older transactions based on the
-    options set.
+    Marks old transactions as archived and updates each account's archive_balance.
 
-    Args:
-
-    Returns:
-
+    Two correlated subqueries compute the signed sum of all archived transactions
+    for each account as source and as destination separately, then combine them.
+    This avoids a single GROUP BY that would conflate the two perspectives for
+    transfer transactions.
     """
     try:
         # Load archive options
@@ -686,13 +685,13 @@ def archive_transactions():
 
 def update_reminder_cache(reminder_id):
     """
-    The function `archive_transactions` archives older transactions based on the
-    options set.
+    Rebuilds the ReminderCacheTransaction entries for a single reminder, projecting
+    occurrences up to 1 year out.
 
-    Args:
-
-    Returns:
-
+    A zero-delta Repeat (no recurrence) emits exactly one future transaction.
+    The loop guards against a non-advancing date to prevent infinite loops when a
+    Repeat is misconfigured. After rebuild, invalidates the forecast cache for both
+    source and destination accounts.
     """
     try:
         # Set up variables
@@ -1008,13 +1007,14 @@ def update_interest_forecast_cache(account_id):
 
 def update_cc_forecast_cache(account_id):
     """
-    The function `archive_transactions` archives older transactions based on the
-    options set.
+    Rebuilds ForecastCacheTransactions for a credit card account: estimated interest
+    charges and payment transactions for each statement cycle over the next year.
 
-    Args:
-
-    Returns:
-
+    Payment strategy controls the cycle_payment amount: F = full balance,
+    M = minimum payment, C = custom fixed amount. Existing payments within a
+    cycle's payment window (statement_end → next statement_end) are summed from
+    real and reminder transactions so the forecast payment is only the remainder.
+    The first cycle's payment is also written back to account.statement_balance.
     """
     try:
         account = Account.objects.get(id=account_id)
@@ -1246,20 +1246,14 @@ def generate_statement_cycles(
     non_trans_bal: Decimal,
 ):
     """
-    The function `generate_statement_cycle` generates a list of dictionaries of statement
-    information.
+    Generates one dict per statement cycle from the most-recently-closed period
+    through forecast_end_date, each containing credits, debits, due/pay dates,
+    and the running previous_balance used by update_cc_forecast_cache.
 
-    Args:
-        last_statement_end_date (date): Last statement end date.
-        last_statment_due_date (date): Last statement due date.
-        forecast_end_date (date): Forecast end date.
-        statement_cycle_length (int): Statement cycle length.
-        statement_cycle_period (str): Statement cycle period.
-        transactions (List[TransactionOut]): Transactions for the account for the forecast
-        period.
-
-    Returns:
-        (List[dict]): A list of dictionaries of statement information
+    Always anchors to one_month_prior so the just-closed cycle (with its upcoming
+    payment due date) is included. Due/pay dates are pushed forward one month when
+    their day-of-month would land before the statement closes (e.g. due on the 15th
+    for a card that closes on the 18th).
     """
     statement_cycles = []
     today = get_todays_date_timezone_adjusted()
@@ -1386,9 +1380,9 @@ def annotate_transaction_total(
     transactions: QuerySet[Transaction], account_id: Optional[int] = 0
 ) -> QuerySet[Transaction]:
     """
-    annotate_transaction_total
-
-    _extended_summary_
+    Annotates each transaction with a signed `pretty_total` from the perspective
+    of account_id: income is always positive, expense always negative, and transfers
+    are negative when account_id is the source and positive when it is the destination.
     """
     # Check we received a QuerySet
     if not isinstance(transactions, QuerySet):

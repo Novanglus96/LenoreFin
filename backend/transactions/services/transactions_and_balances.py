@@ -49,16 +49,13 @@ def get_account_transactions_and_balances(
     cleared_only: Optional[bool] = False,
 ) -> Tuple[List[TransactionOut], Decimal]:
     """
-    The function `get_transactions_by_account` returns a list of
-    transactions, temporary reminder transactions, etc.
+    Returns transactions and running balance for a single account up to end_date.
 
-    Args:
-        start_date (Date): The first date of the transactions.
-        end_date (Date): The last date of the transactions.
-        account (Int): The ID of the account to get transactions for.
-
-    Returns:
-        transactions: List of transaction objects
+    Delegates to get_parent_account_transactions_and_balances when account_id
+    belongs to a parent account. Skips the Redis cache when forecast=True so
+    simulated forecast transactions are never served stale. Simulated transaction
+    IDs are negated (and offset by -10000 for forecast) to avoid colliding with
+    real transaction PKs when merging lists.
     """
     # Delegate to the parent-account handler when this account has children
     if Account.objects.filter(parent_account_id=account_id).exists():
