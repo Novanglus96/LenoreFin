@@ -1,3 +1,10 @@
+# [1.4.0-alpha.42](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.41...v1.4.0-alpha.42) (2026-05-21)
+
+
+### Bug Fixes
+
+* raise Workbox precache limit to 3 MiB for ApexCharts bundle ([#138](https://github.com/Novanglus96/LenoreFin/issues/138)) ([5921a86](https://github.com/Novanglus96/LenoreFin/commit/5921a863d76d4db9e2c6adc308481fe14948a9b2))
+
 # [1.4.0-alpha.41](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.40...v1.4.0-alpha.41) (2026-05-21)
 
 
