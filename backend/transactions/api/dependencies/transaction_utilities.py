@@ -279,7 +279,15 @@ def add_tags_to_transactions(
 
     all_details = list(
         detail_model.objects.filter(transaction_id__in=txn_ids)
-        .select_related("transaction", "tag")
+        .select_related(
+            "transaction",
+            "tag",
+            "tag__parent",
+            "tag__parent__tag_type",
+            "tag__child",
+            "tag__child__tag_type",
+            "tag__tag_type",
+        )
         .annotate(
             parent_tag=F("tag__parent__tag_name"),
             child_tag=F("tag__child__tag_name"),
