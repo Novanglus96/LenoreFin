@@ -8,6 +8,7 @@ from django.core.management import call_command
 from django.http import FileResponse
 from typing import List
 from datetime import datetime
+from io import StringIO
 import os
 import logging
 import tempfile
@@ -137,9 +138,11 @@ def restore_database(request, filename: str):
             raise HttpError(404, "Backup file not found")
         if not os.path.abspath(filepath).startswith(os.path.abspath(location)):
             raise HttpError(400, "Invalid filename")
-        call_command("import_user_data", filepath)
+        result = _run_restore(filepath)
         api_logger.info(f"Database restored from: {filename}")
-        return {"success": True}
+        if result["warning"]:
+            api_logger.warning(f"Version mismatch on restore of {filename}: {result['warning']}")
+        return result
     except HttpError:
         raise
     except Exception as e:
@@ -157,9 +160,11 @@ def restore_from_upload(request, file: UploadedFile = File(...)):
                 tmp.write(chunk)
             tmp_path = tmp.name
         try:
-            call_command("import_user_data", tmp_path)
+            result = _run_restore(tmp_path)
             api_logger.info(f"Database restored from uploaded file: {file.name}")
-            return {"success": True}
+            if result["warning"]:
+                api_logger.warning(f"Version mismatch on upload restore of {file.name}: {result['warning']}")
+            return result
         finally:
             os.unlink(tmp_path)
     except HttpError:
@@ -167,6 +172,18 @@ def restore_from_upload(request, file: UploadedFile = File(...)):
     except Exception as e:
         error_logger.exception(f"Error restoring from upload: {e}")
         raise HttpError(500, f"Restore failed: {str(e)}")
+
+
+def _run_restore(filepath: str) -> dict:
+    """Run import_user_data and return {success, warning}."""
+    out = StringIO()
+    call_command("import_user_data", filepath, stdout=out)
+    warning = None
+    for line in out.getvalue().splitlines():
+        if line.startswith("VERSION_WARNING:"):
+            warning = line[len("VERSION_WARNING:"):].strip()
+            break
+    return {"success": True, "warning": warning}
 
 
 def _reschedule_backup(config):
