@@ -1,3 +1,10 @@
+# [1.4.0-alpha.38](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.37...v1.4.0-alpha.38) (2026-05-21)
+
+
+### Bug Fixes
+
+* post-restore discrepancies — schema nullability, custom repeats, CC forecast ([#134](https://github.com/Novanglus96/LenoreFin/issues/134)) ([4007efb](https://github.com/Novanglus96/LenoreFin/commit/4007efb8fbe3453d41b99096939441f918ec9f24))
+
 # [1.4.0-alpha.37](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.36...v1.4.0-alpha.37) (2026-05-21)
 
 
