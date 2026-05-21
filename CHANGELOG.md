@@ -1,3 +1,10 @@
+# [1.4.0-alpha.36](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.35...v1.4.0-alpha.36) (2026-05-21)
+
+
+### Bug Fixes
+
+* backup restore — reminders 500, bank logos, expense graph, cache rebuild ([#132](https://github.com/Novanglus96/LenoreFin/issues/132)) ([5a3ea71](https://github.com/Novanglus96/LenoreFin/commit/5a3ea71c7cab357a44524a7264aafae4f8a32087)), closes [#92](https://github.com/Novanglus96/LenoreFin/issues/92)
+
 # [1.4.0-alpha.35](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.34...v1.4.0-alpha.35) (2026-05-21)
 
 
