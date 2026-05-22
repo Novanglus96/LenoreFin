@@ -12,11 +12,13 @@
         <meta name="author" content="John Adams">
       
       
-        <link rel="canonical" href="https://novanglus96.github.io/LenoreFin/dev/api/">
+        <link rel="canonical" href="https://novanglus96.github.io/LenoreFin/dev/getting-started/">
       
       
-        <link rel="prev" href="../models/">
+        <link rel="prev" href="..">
       
+      
+        <link rel="next" href="../configuration/">
       
       
         
@@ -27,7 +29,7 @@
     
     
       
-        <title>API - LenoreFin</title>
+        <title>Installation - LenoreFin</title>
       
     
     
@@ -80,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#api-reference" class="md-skip">
+        <a href="#installation" class="md-skip">
           Skip to content
         </a>
       
@@ -130,7 +132,7 @@ version.
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              API
+              Installation
             
           </span>
         </div>
@@ -258,11 +260,13 @@ version.
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../getting-started/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -298,12 +302,10 @@ version.
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../models/" class="md-tabs__link">
           
   
@@ -392,26 +394,31 @@ version.
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
             
   
   
@@ -429,7 +436,7 @@ version.
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -444,10 +451,37 @@ version.
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -463,6 +497,164 @@ version.
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-create-a-env-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1 — Create a .env file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-create-a-docker-composeyml-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2 — Create a docker-compose.yml file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-start-the-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 — Start the application
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migrating-from-pre-v14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migrating from pre-v1.4
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migrating from pre-v1.4">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-back-up-your-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Back up your data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-stop-old-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Stop old containers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-replace-your-docker-composeyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Replace your docker-compose.yml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-update-env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Update .env
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-rename-volumes-if-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Rename volumes (if needed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-pull-and-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Pull and start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -706,31 +898,26 @@ version.
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   
@@ -748,7 +935,7 @@ version.
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -791,37 +978,10 @@ version.
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
         
   
   
@@ -837,175 +997,6 @@ version.
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#interactive-docs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Interactive Docs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Endpoints
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Endpoints">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#accounts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Accounts
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#transactions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Transactions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tags" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tags
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reminders" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reminders
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#planning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Planning
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reports" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reports
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#administration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Administration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#imports" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Imports
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#auth" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Auth
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#transaction-filters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Transaction Filters
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1045,10 +1036,10 @@ version.
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#interactive-docs" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Interactive Docs
+        Prerequisites
       
     </span>
   </a>
@@ -1056,10 +1047,10 @@ version.
 </li>
       
         <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
+  <a href="#step-1-create-a-env-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication
+        Step 1 — Create a .env file
       
     </span>
   </a>
@@ -1067,22 +1058,44 @@ version.
 </li>
       
         <li class="md-nav__item">
-  <a href="#endpoints" class="md-nav__link">
+  <a href="#step-2-create-a-docker-composeyml-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Endpoints
+        Step 2 — Create a docker-compose.yml file
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Endpoints">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-start-the-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 — Start the application
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migrating-from-pre-v14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migrating from pre-v1.4
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migrating from pre-v1.4">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#accounts" class="md-nav__link">
+  <a href="#1-back-up-your-data" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Accounts
+        1. Back up your data
       
     </span>
   </a>
@@ -1090,10 +1103,10 @@ version.
 </li>
         
           <li class="md-nav__item">
-  <a href="#transactions" class="md-nav__link">
+  <a href="#2-stop-old-containers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Transactions
+        2. Stop old containers
       
     </span>
   </a>
@@ -1101,10 +1114,10 @@ version.
 </li>
         
           <li class="md-nav__item">
-  <a href="#tags" class="md-nav__link">
+  <a href="#3-replace-your-docker-composeyml" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tags
+        3. Replace your docker-compose.yml
       
     </span>
   </a>
@@ -1112,10 +1125,10 @@ version.
 </li>
         
           <li class="md-nav__item">
-  <a href="#reminders" class="md-nav__link">
+  <a href="#4-update-env" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reminders
+        4. Update .env
       
     </span>
   </a>
@@ -1123,10 +1136,10 @@ version.
 </li>
         
           <li class="md-nav__item">
-  <a href="#planning" class="md-nav__link">
+  <a href="#5-rename-volumes-if-needed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Planning
+        5. Rename volumes (if needed)
       
     </span>
   </a>
@@ -1134,10 +1147,10 @@ version.
 </li>
         
           <li class="md-nav__item">
-  <a href="#reports" class="md-nav__link">
+  <a href="#6-pull-and-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reports
+        6. Pull and start
       
     </span>
   </a>
@@ -1145,32 +1158,10 @@ version.
 </li>
         
           <li class="md-nav__item">
-  <a href="#administration" class="md-nav__link">
+  <a href="#7-verify" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Administration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#imports" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Imports
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#auth" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Auth
+        7. Verify
       
     </span>
   </a>
@@ -1179,17 +1170,6 @@ version.
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#transaction-filters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Transaction Filters
-      
-    </span>
-  </a>
   
 </li>
       
@@ -1213,515 +1193,124 @@ version.
   
 
 
-<h1 id="api-reference">API Reference</h1>
-<p>LenoreFin exposes a REST API built with <a href="https://django-ninja.dev/">Django Ninja</a>. All endpoints are under <code>/api/v1/</code> and require authentication.</p>
-<h2 id="interactive-docs">Interactive Docs</h2>
-<p>The full interactive API documentation (ReDoc) is available at:</p>
-<div class="highlight"><pre><span></span><code>http://&lt;your-host&gt;/api/v1/docs
+<h1 id="installation">Installation</h1>
+<p>LenoreFin runs as a single Docker image bundling the frontend, backend, nginx, and task worker. You need Docker, Docker Compose, a PostgreSQL database, and a Redis instance — all provided by the included Compose file.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li><a href="https://www.docker.com/get-started">Docker</a></li>
+<li><a href="https://docs.docker.com/compose/install/">Docker Compose</a></li>
+</ul>
+<h2 id="step-1-create-a-env-file">Step 1 — Create a <code>.env</code> file</h2>
+<p>Create a <code>.env</code> file in the directory where you'll run Compose. Adjust all values for your environment:</p>
+<div class="highlight"><pre><span></span><code>DEBUG=0
+SECRET_KEY=change-me-to-a-long-random-string
+DJANGO_ALLOWED_HOSTS=localhost
+CSRF_TRUSTED_ORIGINS=http://localhost
+
+SQL_ENGINE=django.db.backends.postgresql
+SQL_DATABASE=lenorefin
+SQL_USER=lenorefinuser
+SQL_PASSWORD=somepassword
+SQL_HOST=db
+SQL_PORT=5432
+DATABASE=postgres
+
+DJANGO_SUPERUSER_PASSWORD=supervisorpassword
+DJANGO_SUPERUSER_EMAIL=someone@somewhere.com
+DJANGO_SUPERUSER_USERNAME=supervisor
+
+VITE_API_KEY=someapikey
+TIMEZONE=America/New_York
 </code></pre></div>
-<p>Use this page to browse all endpoints, view request/response schemas, and try requests directly.</p>
-<h2 id="authentication">Authentication</h2>
-<p>All API requests require an API key passed as a query parameter or header.</p>
-<p><strong>Query parameter:</strong>
-<div class="highlight"><pre><span></span><code>GET /api/v1/accounts?api_key=&lt;your-key&gt;
-</code></pre></div></p>
-<p><strong>Header:</strong>
-<div class="highlight"><pre><span></span><code>Authorization: Bearer &lt;your-key&gt;
-</code></pre></div></p>
-<p>Generate API keys in <strong>Django Admin → Authentication → API Keys</strong>. The key used by the frontend is configured via <code>VITE_API_KEY</code> in your <code>.env</code> file.</p>
-<h2 id="endpoints">Endpoints</h2>
-<p>All routes are prefixed with <code>/api/v1/</code>.</p>
-<h3 id="accounts">Accounts</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GET</td>
-<td><code>/accounts</code></td>
-<td>List all accounts</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/accounts</code></td>
-<td>Create an account</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/accounts/{id}</code></td>
-<td>Get account by ID</td>
-</tr>
-<tr>
-<td>PUT</td>
-<td><code>/accounts/{id}</code></td>
-<td>Update account</td>
-</tr>
-<tr>
-<td>DELETE</td>
-<td><code>/accounts/{id}</code></td>
-<td>Delete account</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/accounts/account-types</code></td>
-<td>List account types</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/accounts/banks</code></td>
-<td>List banks</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/accounts/banks</code></td>
-<td>Create bank</td>
-</tr>
-<tr>
-<td>PUT</td>
-<td><code>/accounts/banks/{id}</code></td>
-<td>Update bank</td>
-</tr>
-<tr>
-<td>DELETE</td>
-<td><code>/accounts/banks/{id}</code></td>
-<td>Delete bank</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/accounts/forecast</code></td>
-<td>Get forecast data for an account</td>
-</tr>
-</tbody>
-</table>
-<h3 id="transactions">Transactions</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GET</td>
-<td><code>/transactions</code></td>
-<td>List transactions (supports filtering)</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/transactions</code></td>
-<td>Create a transaction</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/transactions/{id}</code></td>
-<td>Get transaction by ID</td>
-</tr>
-<tr>
-<td>PUT</td>
-<td><code>/transactions/{id}</code></td>
-<td>Update transaction</td>
-</tr>
-<tr>
-<td>DELETE</td>
-<td><code>/transactions/{id}</code></td>
-<td>Delete transaction</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/transactions/transaction-types</code></td>
-<td>List transaction types</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/transactions/transaction-statuses</code></td>
-<td>List transaction statuses</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/transactions/transaction-details</code></td>
-<td>List transaction details (tag splits)</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/transactions/transaction-details</code></td>
-<td>Create transaction detail</td>
-</tr>
-<tr>
-<td>PUT</td>
-<td><code>/transactions/transaction-details/{id}</code></td>
-<td>Update transaction detail</td>
-</tr>
-<tr>
-<td>DELETE</td>
-<td><code>/transactions/transaction-details/{id}</code></td>
-<td>Delete transaction detail</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/transactions/attachments</code></td>
-<td>List attachments</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/transactions/attachments</code></td>
-<td>Upload an attachment</td>
-</tr>
-<tr>
-<td>DELETE</td>
-<td><code>/transactions/attachments/{id}</code></td>
-<td>Delete an attachment</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/transactions/paychecks</code></td>
-<td>List paychecks</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/transactions/paychecks</code></td>
-<td>Create paycheck</td>
-</tr>
-</tbody>
-</table>
-<h3 id="tags">Tags</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GET</td>
-<td><code>/tags</code></td>
-<td>List tags</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/tags</code></td>
-<td>Create tag</td>
-</tr>
-<tr>
-<td>DELETE</td>
-<td><code>/tags/{id}</code></td>
-<td>Delete tag</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/tags/tag-types</code></td>
-<td>List tag types</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/tags/main-tags</code></td>
-<td>List main tags</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/tags/main-tags</code></td>
-<td>Create main tag</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/tags/sub-tags</code></td>
-<td>List sub-tags</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/tags/sub-tags</code></td>
-<td>Create sub-tag</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/tags/graph-by-tags</code></td>
-<td>Tag spending graph data</td>
-</tr>
-</tbody>
-</table>
-<h3 id="reminders">Reminders</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GET</td>
-<td><code>/reminders</code></td>
-<td>List reminders</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/reminders</code></td>
-<td>Create reminder</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/reminders/{id}</code></td>
-<td>Get reminder by ID</td>
-</tr>
-<tr>
-<td>PUT</td>
-<td><code>/reminders/{id}</code></td>
-<td>Update reminder</td>
-</tr>
-<tr>
-<td>DELETE</td>
-<td><code>/reminders/{id}</code></td>
-<td>Delete reminder</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/reminders/repeat</code></td>
-<td>List repeat types</td>
-</tr>
-</tbody>
-</table>
-<h3 id="planning">Planning</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GET</td>
-<td><code>/planning/budget</code></td>
-<td>List budgets</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/planning/budget</code></td>
-<td>Create budget</td>
-</tr>
-<tr>
-<td>PUT</td>
-<td><code>/planning/budget/{id}</code></td>
-<td>Update budget</td>
-</tr>
-<tr>
-<td>DELETE</td>
-<td><code>/planning/budget/{id}</code></td>
-<td>Delete budget</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/planning/graph</code></td>
-<td>Planning graph data</td>
-</tr>
-</tbody>
-</table>
-<h3 id="reports">Reports</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GET</td>
-<td><code>/reports</code></td>
-<td>List saved reports</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/reports</code></td>
-<td>Run a report</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/reports/{id}</code></td>
-<td>Get report by ID</td>
-</tr>
-</tbody>
-</table>
-<h3 id="administration">Administration</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GET</td>
-<td><code>/administration/options</code></td>
-<td>Get application options</td>
-</tr>
-<tr>
-<td>PUT</td>
-<td><code>/administration/options/{id}</code></td>
-<td>Update application options</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/administration/version</code></td>
-<td>Get current version</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/administration/health</code></td>
-<td>Health check</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/administration/payees</code></td>
-<td>List payees</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/administration/payees</code></td>
-<td>Create payee</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/administration/messages</code></td>
-<td>List system messages</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/administration/backups</code></td>
-<td>List backups</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/administration/backups</code></td>
-<td>Create a backup</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/administration/logs</code></td>
-<td>Retrieve application logs</td>
-</tr>
-</tbody>
-</table>
-<h3 id="imports">Imports</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>POST</td>
-<td><code>/file-imports</code></td>
-<td>Upload and process a CSV import</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/file-imports</code></td>
-<td>List import records</td>
-</tr>
-</tbody>
-</table>
-<h3 id="auth">Auth</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>POST</td>
-<td><code>/auth/login</code></td>
-<td>Log in and obtain session</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/auth/logout</code></td>
-<td>Log out</td>
-</tr>
-<tr>
-<td>GET</td>
-<td><code>/auth/me</code></td>
-<td>Get current user info</td>
-</tr>
-</tbody>
-</table>
-<h2 id="transaction-filters">Transaction Filters</h2>
-<p>The <code>GET /transactions</code> endpoint supports the following query parameters:</p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>account_id</code></td>
-<td>int</td>
-<td>Filter by account</td>
-</tr>
-<tr>
-<td><code>search</code></td>
-<td>string</td>
-<td>Search description field</td>
-</tr>
-<tr>
-<td><code>status_id</code></td>
-<td>int</td>
-<td>Filter by status</td>
-</tr>
-<tr>
-<td><code>transaction_type_id</code></td>
-<td>int</td>
-<td>Filter by transaction type</td>
-</tr>
-<tr>
-<td><code>tag_id</code></td>
-<td>int</td>
-<td>Filter by tag</td>
-</tr>
-<tr>
-<td><code>date_from</code></td>
-<td>date</td>
-<td>Start of date range (<code>YYYY-MM-DD</code>)</td>
-</tr>
-<tr>
-<td><code>date_to</code></td>
-<td>date</td>
-<td>End of date range (<code>YYYY-MM-DD</code>)</td>
-</tr>
-<tr>
-<td><code>page</code></td>
-<td>int</td>
-<td>Page number for pagination</td>
-</tr>
-<tr>
-<td><code>page_size</code></td>
-<td>int</td>
-<td>Results per page</td>
-</tr>
-</tbody>
-</table>
+<p>See <a href="../configuration/">Configuration</a> for a full reference of all available variables.</p>
+<h2 id="step-2-create-a-docker-composeyml-file">Step 2 — Create a <code>docker-compose.yml</code> file</h2>
+<div class="highlight"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">app</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">novanglus96/lenorefin:latest</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/home/app/web/start.app.sh</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin_static:/home/app/web/staticfiles</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin_media:/home/app/web/mediafiles</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin_bkp:/backups/</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;8080:80&quot;</span>
+<span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">db</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis</span>
+<span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin</span>
+<span class="w">    </span><span class="nt">env_file</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./.env</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DEBUG=0</span>
+
+<span class="w">  </span><span class="nt">db</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgres:15</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin_db</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin_postgres:/var/lib/postgresql/data/</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin_bkp:/backups/</span>
+<span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin</span>
+<span class="w">    </span><span class="nt">env_file</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./.env</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TZ=UTC</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">POSTGRES_USER=${SQL_USER}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">POSTGRES_PASSWORD=${SQL_PASSWORD}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">POSTGRES_DB=${SQL_DATABASE}</span>
+
+<span class="w">  </span><span class="nt">redis</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis:7-alpine</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin_redis</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;redis-server&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;--appendonly&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;yes&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin</span>
+<span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
+
+<span class="nt">networks</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lenorefin</span><span class="p">:</span>
+
+<span class="nt">volumes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lenorefin_postgres</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lenorefin_static</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lenorefin_media</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lenorefin_bkp</span><span class="p">:</span>
+</code></pre></div>
+<h2 id="step-3-start-the-application">Step 3 — Start the application</h2>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p>Open your browser at <code>http://localhost:8080</code>. Log in with the superuser credentials you set in <code>.env</code>.</p>
+<hr />
+<h2 id="migrating-from-pre-v14">Migrating from pre-v1.4</h2>
+<p>Version 1.4 consolidates the old multi-container setup (<code>frontend</code>, <code>backend</code>, <code>worker</code>, <code>nginx</code>) into a single <code>app</code> container.</p>
+<h3 id="1-back-up-your-data">1. Back up your data</h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>lenorefin_backend<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>export_user_data
+</code></pre></div>
+<p>Copy the backup file to a safe location before proceeding.</p>
+<h3 id="2-stop-old-containers">2. Stop old containers</h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>down
+</code></pre></div>
+<h3 id="3-replace-your-docker-composeyml">3. Replace your <code>docker-compose.yml</code></h3>
+<p>Use the new 3-service format above. Remove the old <code>frontend</code>, <code>backend</code>, <code>worker</code>, and <code>nginx</code> service definitions.</p>
+<h3 id="4-update-env">4. Update <code>.env</code></h3>
+<p>Review your <code>.env</code> file and remove any variables that are no longer needed. The new setup does not require any additional variables beyond those listed in <a href="../configuration/">Configuration</a>.</p>
+<h3 id="5-rename-volumes-if-needed">5. Rename volumes (if needed)</h3>
+<p>The old setup used volume names ending in <code>_volume</code> (e.g. <code>lenorefin_postgres_data</code>). The new names drop that suffix. Migrate data if you want to preserve it:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>lenorefin_postgres_data:/from<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>lenorefin_postgres:/to<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>alpine<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;cp -av /from/. /to/&quot;</span>
+</code></pre></div>
+<p>Repeat for <code>lenorefin_static_volume</code> → <code>lenorefin_static</code> and <code>lenorefin_media_volume</code> → <code>lenorefin_media</code>.</p>
+<p>Alternatively, restore from the backup you took in step 1 via <strong>Admin → Backup &amp; Restore</strong> after the new stack is running.</p>
+<h3 id="6-pull-and-start">6. Pull and start</h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>pull
+docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<h3 id="7-verify">7. Verify</h3>
+<p>Open the app. Check <strong>Admin → Version</strong> to confirm you are on v1.4 or later.</p>
 
 
 
