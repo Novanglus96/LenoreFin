@@ -1,3 +1,10 @@
+# [1.4.0-alpha.45](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.44...v1.4.0-alpha.45) (2026-05-22)
+
+
+### Bug Fixes
+
+* coordinate version banner reload with service worker lifecycle ([#143](https://github.com/Novanglus96/LenoreFin/issues/143)) ([0cf1624](https://github.com/Novanglus96/LenoreFin/commit/0cf1624772be1830275426387b50cf0811e733f8))
+
 # [1.4.0-alpha.44](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.43...v1.4.0-alpha.44) (2026-05-22)
 
 
