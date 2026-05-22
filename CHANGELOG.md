@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0...v1.4.1) (2026-05-22)
+
+
+### Bug Fixes
+
+* restore UserAdmin fieldsets by correcting MRO in RestrictedUserAdmin ([#147](https://github.com/Novanglus96/LenoreFin/issues/147)) ([fb1b165](https://github.com/Novanglus96/LenoreFin/commit/fb1b1658b45887be2287b6889b31bcf6b9f40737))
+
 # [1.4.0](https://github.com/Novanglus96/LenoreFin/compare/v1.3.1...v1.4.0) (2026-05-22)
 
 
