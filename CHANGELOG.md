@@ -1,3 +1,11 @@
+## [1.4.2](https://github.com/Novanglus96/LenoreFin/compare/v1.4.1...v1.4.2) (2026-05-22)
+
+
+### Bug Fixes
+
+* anchor account forecast y-axis to $0 for consistent scale ([a306226](https://github.com/Novanglus96/LenoreFin/commit/a30622601d4a9b739b3bbbf4bfe2289a7d8de7ed))
+* combined chip display and reminder conversion race condition ([b9507de](https://github.com/Novanglus96/LenoreFin/commit/b9507deb1d25e83cea5ef8d33b01922df97cc9c2))
+
 ## [1.4.1](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0...v1.4.1) (2026-05-22)
 
 
