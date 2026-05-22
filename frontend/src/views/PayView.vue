@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="!isLoading">
+    <div v-if="pay_graph">
       <v-row class="pa-1 ga-1" no-gutters>
         <v-col class="rounded text-center">
           <v-tabs v-model="tab" color="accent" center-active show-arrows>

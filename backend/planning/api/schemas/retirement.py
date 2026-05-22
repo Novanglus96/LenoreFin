@@ -1,6 +1,8 @@
 from ninja import Schema
 from typing import List, Optional
 from pydantic import condecimal
+from datetime import date
+from decimal import Decimal
 
 TensionDecimal = condecimal(max_digits=2, decimal_places=1)
 DataDecimal = condecimal(max_digits=12, decimal_places=2)
@@ -31,6 +33,7 @@ class DatasetObject(Schema):
     label: Optional[str] = None
     hoverBackgroundColor: Optional[str] = "rgba(75,192,192,0.6)"
     hoverBorderColor: Optional[str] = "rgba(75,192,192,1)"
+    fill: Optional[bool] = None
 
 
 # The class GraphData is a schema representing a graph data object.
@@ -43,3 +46,15 @@ class GraphData(Schema):
 class ForecastOut(Schema):
     labels: List[str]
     datasets: List[DatasetObject]
+
+
+class RetirementTransactionOut(Schema):
+    transaction_date: date
+    account_name: str
+    description: str
+    total_amount: Decimal
+    balance: Optional[Decimal] = None
+    status_name: str
+    transaction_type_name: str
+
+    model_config = {"from_attributes": True}

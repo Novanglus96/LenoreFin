@@ -29,7 +29,7 @@ def get_graph_new(request, widget_id: int):
         return result
     except Exception as e:
         api_logger.error("Graph data not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -51,5 +51,5 @@ def get_graph(request, widget_id: int):
         return result
     except Exception as e:
         api_logger.error("Graph data not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

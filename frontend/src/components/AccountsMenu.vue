@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="accounts-menu">
     <v-list
       density="compact"
       nav
@@ -10,6 +10,7 @@
         base-color="primary"
         :to="add_account_link"
         v-if="authStore.isFullAccess"
+        :disabled="!isOnline"
       >
         <v-list-item-title>
           <span :class="isMobile ? 'text-h6' : ''">Add Account</span>
@@ -32,7 +33,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-checkbook"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -55,15 +56,20 @@
           v-if="checking_accounts && checking_accounts.length == 0"
         ></v-list-item>
         <v-list-item
-          v-for="(account, i) in checking_accounts"
+          v-for="(account, i) in sortForMenu(checking_accounts)"
           :key="i"
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
+          :style="account.parent_account_id ? { '--child-indent': '44px' } : {}"
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
+          </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
+              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
             </span>
           </v-list-item-title>
           <v-list-item-subtitle>
@@ -94,7 +100,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-piggy-bank"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -117,15 +123,20 @@
           v-if="savings_accounts && savings_accounts.length == 0"
         ></v-list-item>
         <v-list-item
-          v-for="(account, i) in savings_accounts"
+          v-for="(account, i) in sortForMenu(savings_accounts)"
           :key="i"
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
+          :style="account.parent_account_id ? { '--child-indent': '44px' } : {}"
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
+          </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
+              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
             </span>
           </v-list-item-title>
           <v-list-item-subtitle>
@@ -156,7 +167,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-credit-card"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -179,15 +190,20 @@
           v-if="cc_accounts && cc_accounts.length == 0"
         ></v-list-item>
         <v-list-item
-          v-for="(account, i) in cc_accounts"
+          v-for="(account, i) in sortForMenu(cc_accounts)"
           :key="i"
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
+          :style="account.parent_account_id ? { '--child-indent': '44px' } : {}"
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
+          </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
+              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
             </span>
           </v-list-item-title>
           <v-list-item-subtitle>
@@ -218,7 +234,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-finance"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -241,15 +257,20 @@
           v-if="investment_accounts && investment_accounts.length == 0"
         ></v-list-item>
         <v-list-item
-          v-for="(account, i) in investment_accounts"
+          v-for="(account, i) in sortForMenu(investment_accounts)"
           :key="i"
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
+          :style="account.parent_account_id ? { '--child-indent': '44px' } : {}"
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
+          </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
+              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
             </span>
           </v-list-item-title>
           <v-list-item-subtitle>
@@ -280,7 +301,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-car-back"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -303,15 +324,20 @@
           v-if="loan_accounts && loan_accounts.length == 0"
         ></v-list-item>
         <v-list-item
-          v-for="(account, i) in loan_accounts"
+          v-for="(account, i) in sortForMenu(loan_accounts)"
           :key="i"
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
+          :style="account.parent_account_id ? { '--child-indent': '44px' } : {}"
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
+          </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
               {{ account.account_name }}
+              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
             </span>
           </v-list-item-title>
           <v-list-item-subtitle>
@@ -342,7 +368,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-bank-off"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -371,6 +397,9 @@
           @click="setAccount(account.id, False)"
           v-else
         >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
+          </template>
           <v-list-item-title>
             <span class="font-italic">
               <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
@@ -391,6 +420,9 @@
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  import BankLogo from "@/components/BankLogo.vue";
+  const { isOnline } = useOnlineStatus();
 
   const { smAndDown } = useDisplay();
   const authStore = useAuthStore();
@@ -400,10 +432,24 @@
   const router = useRouter();
   const groupActive = ref(null);
 
+  const sortForMenu = accounts => {
+    if (!accounts) return []
+    const parents = accounts.filter(a => a.is_parent_account)
+    const children = accounts.filter(a => a.parent_account_id !== null)
+    const standalone = accounts.filter(a => !a.is_parent_account && a.parent_account_id === null)
+    const result = []
+    for (const parent of parents) {
+      result.push(parent)
+      result.push(...children.filter(c => c.parent_account_id === parent.id))
+    }
+    result.push(...standalone)
+    return result
+  }
+
   const setAccount = (account, forecast) => {
+    transactions_store.resetFilters();
     transactions_store.pageinfo.account_id = account;
     transactions_store.pageinfo.forecast = forecast;
-    transactions_store.pageinfo.page = 1;
     transactions_store.pageinfo.maxdays = 14;
     transactions_store.pageinfo.view_type = 1;
     router.push("/accounts/" + account);
@@ -419,3 +465,12 @@
   } = useAccounts();
   const add_account_link = ref("/accounts/add");
 </script>
+
+<style>
+.accounts-menu .v-list-item__prepend .v-list-item__spacer {
+  width: 8px !important;
+}
+.accounts-menu .v-list-group__items .v-list-item {
+  padding-inline-start: calc(14px + var(--child-indent, 0px)) !important;
+}
+</style>

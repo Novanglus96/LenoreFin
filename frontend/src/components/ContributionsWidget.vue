@@ -13,6 +13,7 @@
             v-bind="props"
             @click="addContributionDialog = true"
             size="small"
+            :disabled="!isOnline"
           ></v-btn>
         </template>
       </v-tooltip>
@@ -159,7 +160,7 @@
                 variant="plain"
                 icon
                 @click="editContributionDialog = true"
-                :disabled="selectedContribution.length === 0"
+                :disabled="selectedContribution.length === 0 || !isOnline"
               >
                 <v-icon icon="mdi-pencil"></v-icon>
               </v-btn>
@@ -174,7 +175,7 @@
               <v-btn
                 variant="plain"
                 icon
-                :disabled="selectedContribution.length === 0"
+                :disabled="selectedContribution.length === 0 || !isOnline"
               >
                 <v-icon
                   icon="mdi-delete"
@@ -194,7 +195,7 @@
                   </v-card-text>
                   <v-card-actions>
                     <v-btn @click="deleteContributionDialog = false">Close</v-btn>
-                    <v-btn @click="clickDeleteContribution(editContrib)">
+                    <v-btn @click="clickDeleteContribution(editContrib)" :disabled="!isOnline">
                       Delete
                     </v-btn>
                   </v-card-actions>
@@ -332,6 +333,8 @@
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const page = ref(1);
   const itemsPerPage = ref(5);

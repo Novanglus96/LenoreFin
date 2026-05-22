@@ -38,5 +38,5 @@ def get_forecast(
         return domain_forecast_to_schema(domain_forecast)
     except Exception as e:
         api_logger.error("Forecast not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error : {str(e)}")

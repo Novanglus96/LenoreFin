@@ -1,5 +1,6 @@
 module.exports = {
   root: true,
+  ignorePatterns: ["dist/"],
   env: {
     node: true, // Enable Node.js global variables and scope
     browser: true, // Enable browser global variables
@@ -13,6 +14,9 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2021, // Support for ES2021 features
     sourceType: "module", // Use ECMAScript modules
+  },
+  globals: {
+    __OPT_FEATURES__: "readonly",
   },
   rules: {
     "no-console": process.env.NODE_ENV === "production" ? "warn" : "off", // Warn on console in production

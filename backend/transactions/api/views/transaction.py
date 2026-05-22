@@ -2,6 +2,7 @@ from ninja import Router, Query
 from ninja.errors import HttpError
 from transactions.models import Transaction, TransactionDetail, TransactionStatus
 from accounts.models import Account
+from tags.models import Tag
 from transactions.api.schemas.transaction import (
     TransactionIn,
     TransactionList,
@@ -21,6 +22,7 @@ from django.db.models import (
     Subquery,
     OuterRef,
     DecimalField,
+    Count,
 )
 from django.db.models.functions import Concat, Coalesce, Abs
 from transactions.services.transaction import (
@@ -51,6 +53,30 @@ task_logger = logging.getLogger("task")
 transaction_router = Router(tags=["Transactions"])
 
 
+def _invalidate_accounts(*account_ids):
+    """Invalidate cache for each account and its parent (if any)."""
+    parent_ids = set(
+        Account.objects.filter(id__in=account_ids, parent_account_id__isnull=False)
+        .values_list('parent_account_id', flat=True)
+    )
+    for account_id in account_ids:
+        delete_pattern(account_all(account_id))
+    for parent_id in parent_ids:
+        delete_pattern(account_all(parent_id))
+
+
+def _assert_not_parent(*account_ids):
+    """Raise 400 if any of the given account IDs belong to a parent account."""
+    parent_ids = set(
+        Account.objects.filter(id__in=account_ids)
+        .filter(child_accounts__isnull=False)
+        .distinct()
+        .values_list('id', flat=True)
+    )
+    if parent_ids:
+        raise HttpError(400, "Cannot add transactions directly to a parent account.")
+
+
 @transaction_router.post("/create", auth=FullAccessAuth())
 def create_transaction(request, payload: TransactionIn):
     """
@@ -65,13 +91,16 @@ def create_transaction(request, payload: TransactionIn):
     """
 
     try:
+        affected = list(filter(None, [payload.source_account_id, payload.destination_account_id]))
+        _assert_not_parent(*affected)
         create_transaction_service(payload)
-        for account_id in filter(None, [payload.source_account_id, payload.destination_account_id]):
-            delete_pattern(account_all(account_id))
+        _invalidate_accounts(*affected)
         return {"id": None}
+    except HttpError:
+        raise
     except Exception as e:
         api_logger.error("Transaction not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record creation error : {str(e)}")
 
 
@@ -103,8 +132,7 @@ def multiedit_transactions(request, payload: MultiTranscationDate):
 
         transactions.update(transaction_date=payload.new_date, edit_date=edit_date)
 
-        for account_id in account_ids:
-            delete_pattern(account_all(account_id))
+        _invalidate_accounts(*account_ids)
 
         api_logger.info(f"Transaction dates updated: #{payload.transaction_ids}")
 
@@ -112,7 +140,7 @@ def multiedit_transactions(request, payload: MultiTranscationDate):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Tranasction dates not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Transaction dates error: {str(e)}")
 
 
@@ -163,13 +191,12 @@ def clear_transaction(request, payload: TransactionList):
                 transactions_to_update, ["status_id", "edit_date"]
             )
         unique_accounts = list(set(accounts_effected))
-        for account in unique_accounts:
-            delete_pattern(account_all(account))
+        _invalidate_accounts(*unique_accounts)
         return {"success": True}
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction clear error")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Transaction clear error: {str(e)}")
 
 
@@ -190,7 +217,13 @@ def get_transaction(request, transaction_id: int):
     """
 
     try:
-        transaction = get_object_or_404(Transaction, id=transaction_id)
+        transaction = (
+            Transaction.objects.annotate(
+                attachment_count=Count("transactionimage", distinct=True)
+            ).filter(id=transaction_id).first()
+        )
+        if transaction is None:
+            raise Http404
         api_logger.debug(f"Transaction retrieved : #{transaction.id}")
         return transaction
     except Http404:
@@ -198,7 +231,7 @@ def get_transaction(request, transaction_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -228,7 +261,7 @@ def delete_transaction(request, payload: TransactionList):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -254,21 +287,21 @@ def update_transaction(request, transaction_id: int, payload: TransactionIn):
         old_source_id = existing.source_account_id
         old_destination_id = existing.destination_account_id
 
+        new_ids = {payload.source_account_id, payload.destination_account_id} - {None}
+        _assert_not_parent(*new_ids)
         update_transaction_service(transaction_id, payload)
 
-        # Bust all affected accounts explicitly — don't rely solely on signals.
         old_ids = {old_source_id, old_destination_id} - {None}
-        new_ids = {payload.source_account_id, payload.destination_account_id} - {None}
-        all_affected = old_ids | new_ids
-        for account_id in all_affected:
-            delete_pattern(account_all(account_id))
+        _invalidate_accounts(*(old_ids | new_ids))
 
         return {"success": True}
+    except HttpError:
+        raise
     except Http404:
         raise HttpError(404, "Transaction not found")
     except Exception as e:
         api_logger.error("Transaction not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
@@ -311,6 +344,48 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
                     end_date, query.account, False, query.forecast
                 )
             )
+
+            # Apply optional filters to the assembled list
+            if query.search:
+                s = query.search.lower()
+                all_transactions_list = [
+                    t for t in all_transactions_list
+                    if t.description and s in t.description.lower()
+                ]
+            if query.status_id:
+                all_transactions_list = [
+                    t for t in all_transactions_list
+                    if t.status and t.status.id == query.status_id
+                ]
+            if query.transaction_type_id:
+                all_transactions_list = [
+                    t for t in all_transactions_list
+                    if t.transaction_type and t.transaction_type.id == query.transaction_type_id
+                ]
+            if query.tag_id:
+                try:
+                    tag = Tag.objects.select_related("parent", "child").get(id=query.tag_id)
+                    tag_display = (
+                        f"{tag.parent.tag_name} / {tag.child.tag_name}"
+                        if tag.child
+                        else tag.parent.tag_name
+                    )
+                    all_transactions_list = [
+                        t for t in all_transactions_list
+                        if tag_display in (t.tags or [])
+                    ]
+                except Tag.DoesNotExist:
+                    all_transactions_list = []
+            if query.date_from:
+                all_transactions_list = [
+                    t for t in all_transactions_list
+                    if t.transaction_date and t.transaction_date >= query.date_from
+                ]
+            if query.date_to:
+                all_transactions_list = [
+                    t for t in all_transactions_list
+                    if t.transaction_date and t.transaction_date <= query.date_to
+                ]
 
             # Reverse transactions if not forecast
             if not query.forecast:
@@ -463,5 +538,5 @@ def list_transactions(request, query: TransactionQuery = Query(...)):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

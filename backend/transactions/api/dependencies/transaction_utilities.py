@@ -1,6 +1,7 @@
 from transactions.models import (
     Transaction,
     TransactionDetail,
+    TransactionImage,
     ReminderCacheTransactionDetail,
     ForecastCacheTransactionDetail,
 )
@@ -18,6 +19,7 @@ from django.db.models import (
     Window,
     Sum,
     ExpressionWrapper,
+    Count,
 )
 from django.db.models.functions import Concat, Coalesce
 from accounts.models import Account
@@ -77,6 +79,22 @@ def annotate_transaction_display_info(
             output_field=CharField(),
         )
     )
+    if transactions.model is Transaction:
+        image_subquery = (
+            TransactionImage.objects.filter(transaction=OuterRef("pk"))
+            .values("transaction")
+            .annotate(c=Count("id"))
+            .values("c")
+        )
+        all_transactions = all_transactions.annotate(
+            attachment_count=Coalesce(
+                Subquery(image_subquery), Value(0, output_field=IntegerField())
+            )
+        )
+    else:
+        all_transactions = all_transactions.annotate(
+            attachment_count=Value(0, output_field=IntegerField())
+        )
     return all_transactions
 
 
@@ -118,6 +136,39 @@ def annotate_transaction_total(
                 0,
                 output_field=DecimalField(max_digits=12, decimal_places=2),
             ),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+    )
+    return all_transactions
+
+
+def annotate_transaction_total_for_parent(
+    transactions: QuerySet,
+    child_ids: list,
+) -> QuerySet:
+    """
+    Like annotate_transaction_total but for a combined parent account view.
+    Transfers where the child account is the source are negative; destination is positive.
+    Internal transfers (both sides are children) must be excluded before calling this.
+    """
+    if not isinstance(transactions, QuerySet):
+        raise TypeError("Expected a QuerySet")
+
+    all_transactions = transactions.annotate(
+        pretty_total=Case(
+            When(transaction_type__slug='income', then=Abs(F("total_amount"))),
+            When(transaction_type__slug='expense', then=-Abs(F("total_amount"))),
+            When(
+                transaction_type__slug='transfer',
+                source_account_id__in=child_ids,
+                then=-Abs(F("total_amount")),
+            ),
+            When(
+                transaction_type__slug='transfer',
+                destination_account_id__in=child_ids,
+                then=Abs(F("total_amount")),
+            ),
+            default=Value(0, output_field=DecimalField(max_digits=12, decimal_places=2)),
             output_field=DecimalField(max_digits=12, decimal_places=2),
         )
     )
@@ -213,40 +264,56 @@ def add_tags_to_transactions(
 
     _extended_summary_
     """
-    # Add tags to transactions
-    for transaction in transactions:
-        transaction_details = None
-        if type == "t":
-            transaction_details = TransactionDetail.objects.filter(
-                transaction_id=transaction.id
-            )
-        if type == "r":
-            transaction_details = ReminderCacheTransactionDetail.objects.filter(
-                transaction_id=transaction.id
-            )
-        if type == "f":
-            transaction_details = ForecastCacheTransactionDetail.objects.filter(
-                transaction_id=transaction.id
-            )
-        details = list(transaction_details)
-        tag_list = list(
-            transaction_details.annotate(
-                parent_tag=F("tag__parent__tag_name"),
-                child_tag=F("tag__child__tag_name"),
-                tag_name_combined=Case(
-                    When(child_tag__isnull=True, then=F("parent_tag")),
-                    default=Concat(
-                        F("parent_tag"), Value(" / "), F("child_tag")
-                    ),
-                    output_field=CharField(),
-                ),
-            )
-            .exclude(tag_name_combined__isnull=True)
-            .values_list("tag_name_combined", flat=True)
+    transaction_list = list(transactions)
+    if not transaction_list:
+        return transactions
+
+    txn_ids = [t.id for t in transaction_list]
+
+    if type == "t":
+        detail_model = TransactionDetail
+    elif type == "r":
+        detail_model = ReminderCacheTransactionDetail
+    else:
+        detail_model = ForecastCacheTransactionDetail
+
+    all_details = list(
+        detail_model.objects.filter(transaction_id__in=txn_ids)
+        .select_related(
+            "transaction",
+            "tag",
+            "tag__parent",
+            "tag__parent__tag_type",
+            "tag__child",
+            "tag__child__tag_type",
+            "tag__tag_type",
         )
-        transaction.tags = tag_list
-        transaction.details = details
-    return transactions
+        .annotate(
+            parent_tag=F("tag__parent__tag_name"),
+            child_tag=F("tag__child__tag_name"),
+            tag_name_combined=Case(
+                When(child_tag__isnull=True, then=F("parent_tag")),
+                default=Concat(
+                    F("parent_tag"), Value(" / "), F("child_tag")
+                ),
+                output_field=CharField(),
+            ),
+        )
+    )
+
+    details_by_txn: dict = {}
+    tags_by_txn: dict = {}
+    for detail in all_details:
+        tid = detail.transaction_id
+        details_by_txn.setdefault(tid, []).append(detail)
+        if detail.tag_name_combined:
+            tags_by_txn.setdefault(tid, []).append(detail.tag_name_combined)
+
+    for transaction in transaction_list:
+        transaction.tags = tags_by_txn.get(transaction.id, [])
+        transaction.details = details_by_txn.get(transaction.id, [])
+
+    return transaction_list
 
 
 def sort_transaction_list(

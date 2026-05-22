@@ -1,4 +1,4 @@
-Django==4.2.3
+Django==5.2
 gunicorn==26.0.0
 psycopg2-binary==2.9.12
 markdown==3.10.2
@@ -10,7 +10,7 @@ django-dbbackup==4.2.1
 django-ninja==1.6.2
 python-decouple==3.8
 django-q2==1.10.0
-django-jazzmin==3.0.4
+django-unfold
 django-import-export==4.4.1
 arrow==1.4.0
 pytz==2026.2

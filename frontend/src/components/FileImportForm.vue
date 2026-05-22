@@ -356,7 +356,7 @@
                                   >
                                     <template v-slot:prepend>
                                       <v-icon
-                                        icon="mdi-tag"
+                                        :icon="item.raw.is_system ? 'mdi-tag' : 'mdi-tag-outline'"
                                         :color="tagColor(item.raw.tag_type.id)"
                                       ></v-icon>
                                     </template>

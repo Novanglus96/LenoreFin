@@ -3,9 +3,24 @@
     <v-card
       variant="outlined"
       :elevation="4"
-      :class="account.active ? 'bg-primary' : 'bg-primary-darken-2'"
-      v-if="!isLoading"
+      :class="account && account.active ? 'bg-primary' : 'bg-primary-darken-2'"
+      v-if="account"
+      style="position: relative; overflow: hidden;"
     >
+      <!-- Bank logo watermark -->
+      <img
+        v-if="account.bank && account.bank.logo_url"
+        :src="account.bank.logo_url"
+        alt=""
+        class="bank-watermark"
+        aria-hidden="true"
+      />
+      <v-icon
+        v-else
+        icon="mdi-bank"
+        class="bank-watermark bank-watermark--icon"
+        aria-hidden="true"
+      />
       <template v-slot:text>
         <v-container fluid>
           <v-row density="compact" class="">
@@ -17,6 +32,21 @@
                 class="d-flex align-center justify-center mx-1 px-1 gx-1 bg-primary-lighten-1"
                 variant="outlined"
               >
+                <img
+                  v-if="smAndDown && account.bank && account.bank.logo_url"
+                  :src="account.bank.logo_url"
+                  alt=""
+                  aria-hidden="true"
+                  class="inline-bank-logo mr-1"
+                />
+                <v-icon
+                  v-else-if="smAndDown && account.bank"
+                  icon="mdi-bank"
+                  size="small"
+                  class="mr-1"
+                  aria-hidden="true"
+                />
+                <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="mr-1">combined</v-chip>
                 <v-tooltip text="Edit Account" location="top" v-if="authStore.isFullAccess">
                   <template v-slot:activator="{ props }">
                     <span
@@ -64,6 +94,7 @@
                       v-bind="props"
                       size="small"
                       class="mx-0"
+                      :disabled="!isOnline"
                     />
                   </template>
                 </v-tooltip>
@@ -79,7 +110,7 @@
           <!-- Large Display View -->
           <v-row density="compact" v-if="!smAndDown">
             <v-col class="text-center align-content-end">
-              <v-tooltip text="Adjust Balance" location="top" v-if="authStore.isFullAccess">
+              <v-tooltip text="Adjust Balance" location="top" v-if="authStore.isFullAccess && !account.is_parent_account">
                 <template v-slot:activator="{ props }">
                   <div
                     class="text-accent font-weight-bold text-h4 d-inline-block"
@@ -100,7 +131,7 @@
               </v-tooltip>
               <div
                 class="text-accent font-weight-bold text-h4 d-inline-block"
-                v-if="!authStore.isFullAccess"
+                v-if="!authStore.isFullAccess || account.is_parent_account"
               >
                 <NumberFlow
                   :value="account.balance"
@@ -112,7 +143,7 @@
                 :account="account"
                 @update-dialog="updateAdjBalDialog"
               />
-              <div class="text-primary-lighten-2">current balance</div>
+              <div class="text-primary-lighten-2">{{ account.is_parent_account ? 'combined balance' : 'current balance' }}</div>
             </v-col>
             <v-col
               v-if="account.account_type.id == 1"
@@ -196,7 +227,7 @@
           <!-- Small Display View -->
           <v-row density="compact" v-if="smAndDown">
             <v-col class="text-center align-content-end">
-              <v-tooltip text="Adjust Balance" location="top" v-if="authStore.isFullAccess">
+              <v-tooltip text="Adjust Balance" location="top" v-if="authStore.isFullAccess && !account.is_parent_account">
                 <template v-slot:activator="{ props }">
                   <div
                     class="text-accent-lighten-1 font-weight-bold text-h4 d-inline-block"
@@ -217,7 +248,7 @@
               </v-tooltip>
               <div
                 class="text-accent-lighten-1 font-weight-bold text-h4 d-inline-block"
-                v-if="!authStore.isFullAccess"
+                v-if="!authStore.isFullAccess || account.is_parent_account"
               >
                 <NumberFlow
                   :value="account.balance"
@@ -229,7 +260,7 @@
                 :account="account"
                 @update-dialog="updateAdjBalDialog"
               />
-              <div class="text-primary-lighten-2">current balance</div>
+              <div class="text-primary-lighten-2">{{ account.is_parent_account ? 'combined balance' : 'current balance' }}</div>
             </v-col>
           </v-row>
           <v-row density="compact" v-if="smAndDown">
@@ -354,6 +385,8 @@
   import { useDisplay } from "vuetify";
   import RewardsGraphs from "./RewardsGraphs.vue";
   import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const { smAndDown } = useDisplay();
   const authStore = useAuthStore();
@@ -367,7 +400,7 @@
     account: Array,
   });
 
-  const { account, isLoading } = useAccountByID(props.account);
+  const { account } = useAccountByID(props.account);
 
   const updateAdjBalDialog = value => {
     adjBalDialog.value = value;
@@ -424,3 +457,38 @@
     showRewardGraph.value = true;
   };
 </script>
+<style scoped>
+  .bank-watermark {
+    position: absolute;
+    right: -16px;
+    top: -16px;
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    opacity: 0.15;
+    transform: rotate(20deg);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .bank-watermark--icon {
+    font-size: 160px !important;
+    width: 160px;
+    height: 160px;
+  }
+
+  .inline-bank-logo {
+    height: 20px;
+    width: auto;
+    max-width: 48px;
+    object-fit: contain;
+    opacity: 0.8;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 600px) {
+    .bank-watermark {
+      display: none;
+    }
+  }
+</style>

@@ -51,16 +51,23 @@ def test_transaction_delete_triggers_both_account_refreshes(
 
 
 @pytest.mark.django_db
-@patch("transactions.tasks.update_cc_forecast_cache")
+@patch("transactions.signals.async_task")
 @patch("transactions.signals.delete_pattern")
 def test_refresh_account_clears_cache_then_recalculates(
-    mock_delete, mock_forecast, test_transaction
+    mock_delete, mock_async_task, test_transaction
 ):
     from transactions.signals import _refresh_account
     _refresh_account(test_transaction.source_account_id)
 
     mock_delete.assert_called_once_with(account_all(test_transaction.source_account_id))
-    mock_forecast.assert_called_once_with(test_transaction.source_account_id)
+    mock_async_task.assert_any_call(
+        "transactions.tasks.update_cc_forecast_cache",
+        test_transaction.source_account_id,
+    )
+    mock_async_task.assert_any_call(
+        "transactions.tasks.update_interest_forecast_cache",
+        test_transaction.source_account_id,
+    )
 
 
 @pytest.mark.django_db
@@ -77,4 +84,35 @@ def test_transaction_image_file_is_deleted_on_model_delete(test_transaction, tmp
         transaction=test_transaction,
     )
 
+    path = tmp_path / image.image.name
+    assert path.exists()
+
     image.delete()
+
+    assert not path.exists()
+
+
+@pytest.mark.django_db
+def test_transaction_image_file_is_deleted_on_transaction_cascade(
+    test_transaction, tmp_path, settings
+):
+    """post_delete signal fires during CASCADE, cleaning up the file on disk."""
+    settings.MEDIA_ROOT = tmp_path
+    image_file = SimpleUploadedFile(
+        name="cascade.jpg",
+        content=b"fake image data",
+        content_type="image/jpeg",
+    )
+
+    image = TransactionImage.objects.create(
+        image=image_file,
+        transaction=test_transaction,
+    )
+
+    path = tmp_path / image.image.name
+    assert path.exists()
+
+    # Deleting the transaction triggers CASCADE which fires the post_delete signal
+    test_transaction.delete()
+
+    assert not path.exists()

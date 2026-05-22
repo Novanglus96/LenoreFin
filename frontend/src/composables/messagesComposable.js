@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
 import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
-import { onUnmounted } from "vue";
 
 function handleApiError(error, message) {
   if (error.response?.status === 401) throw error;
@@ -74,23 +73,19 @@ async function readAllMessagesFunction() {
 
 export function useMessages() {
   const queryClient = useQueryClient();
-  const {
-    data: messages,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: messages, isLoading } = useQuery({
     queryKey: ["messages"],
     queryFn: () => getMessagesFunction(),
     select: response => response,
     client: queryClient,
-    refetchInterval: 180000,
+    staleTime: 0,
+    refetchInterval: 60000,
     refetchIntervalInBackground: true,
   });
 
   const createMessageMutation = useMutation({
     mutationFn: createMessageFunction,
     onSuccess: () => {
-      console.log("Success adding message");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
   });
@@ -98,7 +93,6 @@ export function useMessages() {
   const markMessagesReadMutation = useMutation({
     mutationFn: readAllMessagesFunction,
     onSuccess: () => {
-      console.log("Success marking messages read");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
   });
@@ -106,19 +100,8 @@ export function useMessages() {
   const deleteAllMessagesMutation = useMutation({
     mutationFn: deleteAllMessagesFunction,
     onSuccess: () => {
-      console.log("Success deleting all messages");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
-  });
-
-  const refetchMessages = async () => {
-    await refetch();
-  };
-
-  const intervalId = setInterval(refetchMessages, 1 * 60 * 1000);
-
-  onUnmounted(() => {
-    clearInterval(intervalId);
   });
 
   async function addMessage(newMessage) {

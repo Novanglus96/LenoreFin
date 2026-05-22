@@ -87,7 +87,6 @@ export function useReminders() {
   const deleteReminderMutation = useMutation({
     mutationFn: deleteReminderFunction,
     onSuccess: () => {
-      console.log("Success deleting reminder");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
@@ -99,7 +98,6 @@ export function useReminders() {
   const createReminderMutation = useMutation({
     mutationFn: createReminderFunction,
     onSuccess: () => {
-      console.log("Success creating reminder");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
@@ -111,7 +109,6 @@ export function useReminders() {
   const updateReminderMutation = useMutation({
     mutationFn: updateReminderFunction,
     onSuccess: () => {
-      console.log("Success updating reminder");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
@@ -123,7 +120,6 @@ export function useReminders() {
   const addReminderTransMutation = useMutation({
     mutationFn: addReminderTrans,
     onSuccess: () => {
-      console.log("Success adding reminder transaction");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });

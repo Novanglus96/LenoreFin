@@ -41,7 +41,7 @@ def create_message(request, payload: MessageIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -75,7 +75,7 @@ def update_message(request, message_id: int, payload: MessageIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -103,7 +103,7 @@ def update_messages(request, message_id: int, payload: AllMessage):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Messages not marked as read")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Messages not marked read error")
 
 
@@ -132,7 +132,7 @@ def get_message(request, message_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -162,7 +162,7 @@ def delete_message(request, message_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -188,7 +188,7 @@ def delete_messages(request, message_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("All messages not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -212,5 +212,5 @@ def list_messages(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

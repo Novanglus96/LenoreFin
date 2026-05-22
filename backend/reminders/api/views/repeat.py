@@ -39,19 +39,19 @@ def create_repeat(request, payload: RepeatIn):
             api_logger.error(
                 f"Repeat not created : repeat exists ({payload.repeat_name})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Repeat not created : repeat exists ({payload.repeat_name})"
             )
             raise HttpError(400, "Repeat already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Repeat not created : db integrity error")
-            error_logger.error("Repeat not created : db integrity error")
+            error_logger.exception("Repeat not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -88,19 +88,19 @@ def update_repeat(request, repeat_id: int, payload: RepeatIn):
             api_logger.error(
                 f"Repeat not updated : repeat exists ({payload.repeat_name})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Repeat not updated : repeat exists ({payload.repeat_name})"
             )
             raise HttpError(400, "Repeat already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Repeat not updated : db integrity error")
-            error_logger.error("Repeat not updated : db integrity error")
+            error_logger.exception("Repeat not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -127,7 +127,7 @@ def get_repeat(request, repeat_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -151,7 +151,7 @@ def list_repeats(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -184,5 +184,5 @@ def delete_repeat(request, repeat_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

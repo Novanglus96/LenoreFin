@@ -1,3 +1,148 @@
+# [1.4.0-alpha.45](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.44...v1.4.0-alpha.45) (2026-05-22)
+
+
+### Bug Fixes
+
+* coordinate version banner reload with service worker lifecycle ([#143](https://github.com/Novanglus96/LenoreFin/issues/143)) ([0cf1624](https://github.com/Novanglus96/LenoreFin/commit/0cf1624772be1830275426387b50cf0811e733f8))
+
+# [1.4.0-alpha.44](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.43...v1.4.0-alpha.44) (2026-05-22)
+
+
+### Bug Fixes
+
+* test branch protection bypass for semantic-release version commit ([4d635d5](https://github.com/Novanglus96/LenoreFin/commit/4d635d51f72d214c617507df9d27f818fbc1ed1a))
+
+
+### Features
+
+* highlight lowest post-today balance on account forecast chart ([#142](https://github.com/Novanglus96/LenoreFin/issues/142)) ([a3c22bc](https://github.com/Novanglus96/LenoreFin/commit/a3c22bcb28854c7cf6a92591721169991aa513ab))
+
+# [1.4.0-alpha.43](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.42...v1.4.0-alpha.43) (2026-05-22)
+
+
+### Bug Fixes
+
+* mobile overflow, nav icon sizing, and logs polish ([f7f5db2](https://github.com/Novanglus96/LenoreFin/commit/f7f5db27e61295c2309360dc0b44f17a69ea2367))
+
+# [1.4.0-alpha.42](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.41...v1.4.0-alpha.42) (2026-05-21)
+
+
+### Bug Fixes
+
+* raise Workbox precache limit to 3 MiB for ApexCharts bundle ([#138](https://github.com/Novanglus96/LenoreFin/issues/138)) ([5921a86](https://github.com/Novanglus96/LenoreFin/commit/5921a863d76d4db9e2c6adc308481fe14948a9b2))
+
+# [1.4.0-alpha.41](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.40...v1.4.0-alpha.41) (2026-05-21)
+
+
+### Features
+
+* migrate all charts from Chart.js to ApexCharts ([#137](https://github.com/Novanglus96/LenoreFin/issues/137)) ([4fe9056](https://github.com/Novanglus96/LenoreFin/commit/4fe9056fede87364ca600ce769b3e71434fc8592)), closes [#034a45](https://github.com/Novanglus96/LenoreFin/issues/034a45) [#88b3b0](https://github.com/Novanglus96/LenoreFin/issues/88b3b0)
+
+# [1.4.0-alpha.40](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.39...v1.4.0-alpha.40) (2026-05-21)
+
+
+### Bug Fixes
+
+* forecast graph cache collision and backup timestamp timezone ([#136](https://github.com/Novanglus96/LenoreFin/issues/136)) ([2944d1a](https://github.com/Novanglus96/LenoreFin/commit/2944d1a6f460cae781d8da590c04d72b0c369efe))
+
+# [1.4.0-alpha.39](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.38...v1.4.0-alpha.39) (2026-05-21)
+
+
+### Bug Fixes
+
+* suppress signals during restore and deepen tag select_related ([#135](https://github.com/Novanglus96/LenoreFin/issues/135)) ([38a0b9f](https://github.com/Novanglus96/LenoreFin/commit/38a0b9f8f21d6e8926026fb7294160b7e973f2d6))
+
+# [1.4.0-alpha.38](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.37...v1.4.0-alpha.38) (2026-05-21)
+
+
+### Bug Fixes
+
+* post-restore discrepancies — schema nullability, custom repeats, CC forecast ([#134](https://github.com/Novanglus96/LenoreFin/issues/134)) ([4007efb](https://github.com/Novanglus96/LenoreFin/commit/4007efb8fbe3453d41b99096939441f918ec9f24))
+
+# [1.4.0-alpha.37](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.36...v1.4.0-alpha.37) (2026-05-21)
+
+
+### Features
+
+* version check on backup/restore with warning on mismatch ([b331a3c](https://github.com/Novanglus96/LenoreFin/commit/b331a3c9934d2bf3e619420f4d02549346987d8a))
+
+# [1.4.0-alpha.36](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.35...v1.4.0-alpha.36) (2026-05-21)
+
+
+### Bug Fixes
+
+* backup restore — reminders 500, bank logos, expense graph, cache rebuild ([#132](https://github.com/Novanglus96/LenoreFin/issues/132)) ([5a3ea71](https://github.com/Novanglus96/LenoreFin/commit/5a3ea71c7cab357a44524a7264aafae4f8a32087)), closes [#92](https://github.com/Novanglus96/LenoreFin/issues/92)
+
+# [1.4.0-alpha.35](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.34...v1.4.0-alpha.35) (2026-05-21)
+
+
+### Bug Fixes
+
+* calculator cancel button and inline docstrings ([#131](https://github.com/Novanglus96/LenoreFin/issues/131)) ([82c9e3e](https://github.com/Novanglus96/LenoreFin/commit/82c9e3e5237a19ea57692cd77a1995e7327e84b3))
+
+# [1.4.0-alpha.34](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.33...v1.4.0-alpha.34) (2026-05-20)
+
+
+### Features
+
+* add bank logos to account header, menu, and forecast selector ([#128](https://github.com/Novanglus96/LenoreFin/issues/128)) ([7fe0448](https://github.com/Novanglus96/LenoreFin/commit/7fe0448ccd6f19b3e7c5ebad967a17b3088513ff))
+
+# [1.4.0-alpha.33](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.32...v1.4.0-alpha.33) (2026-05-20)
+
+
+### Features
+
+* add bank logos to account menu and header ([#127](https://github.com/Novanglus96/LenoreFin/issues/127)) ([66148cc](https://github.com/Novanglus96/LenoreFin/commit/66148cc284230022c29bd27dd8533e977fba8413))
+
+# [1.4.0-alpha.32](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.31...v1.4.0-alpha.32) (2026-05-20)
+
+
+### Features
+
+* add transaction filtering by description, status, type, and tag ([#126](https://github.com/Novanglus96/LenoreFin/issues/126)) ([2cf54df](https://github.com/Novanglus96/LenoreFin/commit/2cf54df871125f3f98188d3f5147f151ef466d01))
+
+# [1.4.0-alpha.31](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.30...v1.4.0-alpha.31) (2026-05-20)
+
+
+### Bug Fixes
+
+* remove forecast timeframe options beyond 1 year ([#125](https://github.com/Novanglus96/LenoreFin/issues/125)) ([b3cc9d9](https://github.com/Novanglus96/LenoreFin/commit/b3cc9d9e31bddd39d1c57d5d2f81eb98269f6743))
+
+# [1.4.0-alpha.30](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.29...v1.4.0-alpha.30) (2026-05-20)
+
+
+### Bug Fixes
+
+* replace django-jazzmin with django-unfold for admin theming ([#124](https://github.com/Novanglus96/LenoreFin/issues/124)) ([db90547](https://github.com/Novanglus96/LenoreFin/commit/db905470708264418571c70cfc00fe75f77837b7)), closes [#06966](https://github.com/Novanglus96/LenoreFin/issues/06966)
+
+# [1.4.0-alpha.29](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.28...v1.4.0-alpha.29) (2026-05-20)
+
+
+### Bug Fixes
+
+* Phase 7b cleanup — nav, tag filtering, and admin polish ([#122](https://github.com/Novanglus96/LenoreFin/issues/122)) ([2a2548b](https://github.com/Novanglus96/LenoreFin/commit/2a2548bc4aea5157e5222d00ff1e9d6a8b691e2c))
+
+# [1.4.0-alpha.28](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.27...v1.4.0-alpha.28) (2026-05-19)
+
+
+### Features
+
+* PWA offline mode — readonly when offline, service worker, install support ([#121](https://github.com/Novanglus96/LenoreFin/issues/121)) ([168c9b7](https://github.com/Novanglus96/LenoreFin/commit/168c9b746f09b8423bd77e400f8097f4eb573125)), closes [#06966](https://github.com/Novanglus96/LenoreFin/issues/06966)
+
+# [1.4.0-alpha.27](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.26...v1.4.0-alpha.27) (2026-05-19)
+
+
+### Features
+
+* consolidate production containers into single app image ([#120](https://github.com/Novanglus96/LenoreFin/issues/120)) ([66a5e75](https://github.com/Novanglus96/LenoreFin/commit/66a5e7564655a13c907bc51def1ba6e79b1884e9))
+
+# [1.4.0-alpha.26](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.25...v1.4.0-alpha.26) (2026-05-19)
+
+
+### Bug Fixes
+
+* correct CC statement cycle start date and due/pay date sequencing ([#119](https://github.com/Novanglus96/LenoreFin/issues/119)) ([cc2e531](https://github.com/Novanglus96/LenoreFin/commit/cc2e53188378fe202a3dabd7c4d531b45beaf5ed))
+
 ## [1.3.1](https://github.com/Novanglus96/LenoreFin/compare/v1.3.0...v1.3.1) (2026-05-19)
 
 

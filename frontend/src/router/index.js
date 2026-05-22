@@ -8,6 +8,7 @@ import AddAccount from "@/views/AddAccount.vue";
 import ForecastView from "@/views/ForecastView.vue";
 import RemindersView from "@/views/RemindersView.vue";
 import TagsView from "@/views/TagsView.vue";
+import PayeesView from "@/views/PayeesView.vue";
 import DocumentView from "@/views/DocumentView.vue";
 import CalculatorView from "@/views/CalculatorView.vue";
 import PayView from "@/views/PayView.vue";
@@ -16,6 +17,9 @@ import ExpensesView from "@/views/ExpensesView.vue";
 import NotesView from "@/views/NotesView.vue";
 import RetirementView from "@/views/RetirementView.vue";
 import BudgetsView from "@/views/BudgetsView.vue";
+import BackupView from "@/views/BackupView.vue";
+import LogsView from "@/views/LogsView.vue";
+import ReportsView from "@/views/ReportsView.vue";
 import LoginView from "@/views/LoginView.vue";
 
 const routes = [
@@ -71,6 +75,11 @@ const routes = [
     component: TagsView,
   },
   {
+    path: "/payees",
+    name: "payees",
+    component: PayeesView,
+  },
+  {
     path: "/planning/calculator",
     name: "calculator",
     component: CalculatorView,
@@ -104,6 +113,21 @@ const routes = [
     path: "/planning/retirement",
     name: "retirement",
     component: RetirementView,
+  },
+  {
+    path: "/backup",
+    name: "backup",
+    component: BackupView,
+  },
+  {
+    path: "/logs",
+    name: "logs",
+    component: LogsView,
+  },
+  {
+    path: "/reports",
+    name: "reports",
+    component: ReportsView,
   },
   {
     path: "/:catchAll(.*)",

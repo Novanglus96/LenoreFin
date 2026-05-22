@@ -29,16 +29,16 @@ class ReminderIn(Schema):
 # The class ReminderOut is a schema for representing Reminders.
 class ReminderOut(Schema):
     id: int
-    tag: TagOut
+    tag: Optional[TagOut] = None
     amount: AmountDecimal
-    reminder_source_account: AccountOut
+    reminder_source_account: Optional[AccountOut] = None
     reminder_destination_account: Optional[AccountOut] = None
     description: str
-    transaction_type: TransactionTypeOut
+    transaction_type: Optional[TransactionTypeOut] = None
     start_date: date
     next_date: Optional[date] = None
     end_date: Optional[date] = None
-    repeat: RepeatOut
+    repeat: Optional[RepeatOut] = None
     auto_add: bool
     memo: Optional[str] = None
 

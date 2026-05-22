@@ -183,18 +183,20 @@ class TransactionImage(models.Model):
     Model representing a transaction image.
 
     Fields:
-    - image (ImageField): The image.
-    - transaction (ForeignKey): A reference to the Transaction model, associating the
-    transaction with this image.
+    - image (FileField): The uploaded file.
+    - transaction (ForeignKey): A reference to the Transaction model.
     """
 
     image = models.FileField(upload_to=transaction_image_name)
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
 
-    def delete(self, *args, **kwargs):
-        # Delete the associated file when the instance is deleted
-        self.image.delete()
-        super().delete(*args, **kwargs)
+    @property
+    def url(self):
+        return self.image.url if self.image else None
+
+    @property
+    def filename(self):
+        return os.path.basename(self.image.name) if self.image else None
 
 
 class TransactionDetail(models.Model):

@@ -180,13 +180,13 @@ export function useAccountByID(account_id) {
     queryKey: ["accounts", { id: account_id }],
     queryFn: () => getAccountByIDFunction(account_id),
     select: response => response,
+    enabled: !!account_id,
     client: queryClient,
   });
 
   const deleteAccountMutation = useMutation({
     mutationFn: deleteAccountFunction,
     onSuccess: () => {
-      console.log("Success deleting account");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
@@ -198,7 +198,6 @@ export function useAccountByID(account_id) {
   const updateAccountMutation = useMutation({
     mutationFn: updateAccountFunction,
     onSuccess: () => {
-      console.log("Success updating account");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });

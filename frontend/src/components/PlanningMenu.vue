@@ -1,5 +1,6 @@
 <template>
   <v-list
+    class="planning-menu"
     density="compact"
     nav
     :bg-color="smAndDown ? 'background' : 'surface'"
@@ -19,7 +20,7 @@
       <template v-slot:prepend>
         <v-icon
           :icon="planning_item.icon"
-          :size="!isMobile ? 'large' : 'x-large'"
+          :size="!isMobile ? 'default' : 'x-large'"
         ></v-icon>
       </template>
       <v-list-item-title>
@@ -30,6 +31,12 @@
     </v-list-item>
   </v-list>
 </template>
+
+<style>
+.planning-menu .v-list-item__prepend .v-list-item__spacer {
+  width: 8px !important;
+}
+</style>
 <script setup>
   import { ref, computed } from "vue";
   import { useRouter } from "vue-router";
@@ -43,50 +50,59 @@
   const transactions_store = useTransactionsStore();
   const authStore = useAuthStore();
   const router = useRouter();
-  const app_personal = computed(() => process.env.VUE_APP_PERSONAL === "true");
+  const runtimeOpt = window.__APP_CONFIG__?.VITE_OPT_FEATURES;
+  const optFeatures = (runtimeOpt && runtimeOpt !== "__VITE_OPT_FEATURES__")
+    ? runtimeOpt === "true"
+    : __OPT_FEATURES__;
 
   const planning_menu = ref([
     {
       title: "Pay",
       link: "/planning/pay",
       icon: "mdi-checkbook",
-      personal: false,
+      optional: false,
     },
     {
       title: "Expenses",
       link: "/planning/expenses",
       icon: "mdi-cash",
-      personal: false,
+      optional: false,
     },
     {
       title: "Budgets",
       link: "/planning/budgets",
       icon: "mdi-pail",
-      personal: false,
+      optional: false,
     },
     {
       title: "Contributions",
       link: "/planning/contributions",
       icon: "mdi-pail",
-      personal: true,
+      optional: true,
     },
     {
       title: "Retirement",
       link: "/planning/retirement",
       icon: "mdi-piggy-bank",
-      personal: false,
+      optional: false,
     },
     {
       title: "Notes",
       link: "/planning/notes",
       icon: "mdi-note",
-      personal: true,
+      optional: true,
     },
     {
       title: "Calculator",
       link: "/planning/calculator",
       icon: "mdi-calculator",
-      personal: true,
+      optional: true,
+    },
+    {
+      title: "Reports",
+      link: "/reports",
+      icon: "mdi-chart-pie",
+      optional: false,
     },
   ]);
 
@@ -105,7 +121,8 @@
   const filteredPlanningMenu = computed(() =>
     planning_menu.value.filter(item => {
       if (item.link === "/planning/calculator" && !authStore.isFullAccess) return false;
-      return (item.personal && app_personal) || !item.personal;
+      if (item.optional && !optFeatures) return false;
+      return true;
     }),
   );
 </script>

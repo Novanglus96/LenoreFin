@@ -40,19 +40,19 @@ def create_account_type(request, payload: AccountTypeIn):
             api_logger.error(
                 f"Account type not created : type exists ({payload.account_type})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Account type not created : type exists ({payload.account_type})"
             )
             raise HttpError(400, "Account type already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Account type not created : db integrity error")
-            error_logger.error("Account type not created : db integrity error")
+            error_logger.exception("Account type not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account type not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -81,7 +81,7 @@ def get_account_type(request, accounttype_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Record retrieval error")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -105,7 +105,7 @@ def list_account_types(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account type list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -140,19 +140,19 @@ def update_account_type(request, accounttype_id: int, payload: AccountTypeIn):
             api_logger.error(
                 f"Account type not updated : account type exists ({payload.account_type})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Account type not updated : account type exists ({payload.account_type})"
             )
             raise HttpError(400, "Account type already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Account type not updated : db integrity error")
-            error_logger.error("Account type not updated : db integrity error")
+            error_logger.exception("Account type not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account type not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -185,5 +185,5 @@ def delete_account_type(request, accounttype_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account type not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

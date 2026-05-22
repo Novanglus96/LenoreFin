@@ -10,6 +10,7 @@ from utils.dates import (
     get_todays_date_timezone_adjusted,
 )
 from planning.dto import DomainForecast, DomainDataSetObject
+from planning.api.schemas.retirement import RetirementTransactionOut
 
 COLORS = [
     "#7fb1b1", "#597c7c", "#7f8cb1", "#7fb17f", "#597c59",
@@ -20,18 +21,26 @@ COLORS = [
 ]
 
 
-def get_retirement_forecast() -> DomainForecast:
+def _hex_to_rgba(hex_color: str, alpha: float = 0.5) -> str:
+    hex_color = hex_color.lstrip("#")
+    r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
+def _get_retirement_account_ids() -> list:
     try:
         option = Option.load()
         retirement_accounts_string = option.retirement_accounts if option else None
         if not retirement_accounts_string:
-            retirement_array = []
-        else:
-            retirement_array = ast.literal_eval(retirement_accounts_string)
-            if not isinstance(retirement_array, list):
-                retirement_array = []
+            return []
+        retirement_array = ast.literal_eval(retirement_accounts_string)
+        return retirement_array if isinstance(retirement_array, list) else []
     except (Option.DoesNotExist, ValueError, SyntaxError):
-        retirement_array = []
+        return []
+
+
+def get_retirement_forecast() -> DomainForecast:
+    retirement_array = _get_retirement_account_ids()
 
     today = get_todays_date_timezone_adjusted()
     jan_1st = date(today.year, 1, 1)
@@ -88,13 +97,15 @@ def get_retirement_forecast() -> DomainForecast:
             hitRadius=5,
             hoverRadius=5,
             label="Total",
+            fill=False,
         )
     ]
     for index, account in enumerate(account_info):
-        color = COLORS[index % len(COLORS)]
+        border_color = COLORS[index % len(COLORS)]
+        bg_color = _hex_to_rgba(border_color, 0.5)
         datasets.append(DomainDataSetObject(
-            borderColor=color,
-            backgroundColor=color,
+            borderColor=border_color,
+            backgroundColor=bg_color,
             tension=0.1,
             data=account["data"],
             pointStyle="line",
@@ -102,6 +113,58 @@ def get_retirement_forecast() -> DomainForecast:
             hitRadius=5,
             hoverRadius=5,
             label=account["name"],
+            fill=True,
         ))
 
     return DomainForecast(labels=labels, datasets=datasets)
+
+
+def get_retirement_transactions() -> list:
+    retirement_array = _get_retirement_account_ids()
+    if not retirement_array:
+        return []
+
+    today = get_todays_date_timezone_adjusted()
+    jan_1st = date(today.year, 1, 1)
+    dec_31st = date(today.year, 12, 31)
+    start_interval = (today - jan_1st).days
+    end_interval = (dec_31st - today).days
+    start_date = get_forecast_start_date(start_interval)
+    end_date = get_forecast_end_date(end_interval)
+
+    results = []
+    for account_id in retirement_array:
+        try:
+            account_obj = Account.objects.get(id=account_id)
+        except Account.DoesNotExist:
+            continue
+
+        transactions_list, _ = get_account_transactions_and_balances(
+            end_date, account_id, False, True, start_date, False
+        )
+        for t in transactions_list:
+            if isinstance(t, dict):
+                status = t.get("status") or {}
+                txn_type = t.get("transaction_type") or {}
+                results.append(RetirementTransactionOut(
+                    transaction_date=t["transaction_date"],
+                    account_name=account_obj.account_name,
+                    description=t.get("description", ""),
+                    total_amount=t.get("total_amount", 0),
+                    balance=t.get("balance"),
+                    status_name=status.get("transaction_status", "") if isinstance(status, dict) else getattr(status, "transaction_status", ""),
+                    transaction_type_name=txn_type.get("transaction_type", "") if isinstance(txn_type, dict) else getattr(txn_type, "transaction_type", ""),
+                ))
+            else:
+                results.append(RetirementTransactionOut(
+                    transaction_date=t.transaction_date,
+                    account_name=account_obj.account_name,
+                    description=t.description,
+                    total_amount=t.total_amount,
+                    balance=t.balance,
+                    status_name=t.status.transaction_status if t.status else "",
+                    transaction_type_name=t.transaction_type.transaction_type if t.transaction_type else "",
+                ))
+
+    results.sort(key=lambda x: x.transaction_date)
+    return results

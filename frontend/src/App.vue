@@ -25,6 +25,16 @@
         <router-view />
       </v-container>
       <v-snackbar
+        v-model="showOfflineBanner"
+        color="warning"
+        location="top"
+        timeout="-1"
+        content-class="centered-text"
+      >
+        <v-icon icon="mdi-wifi-off" class="mr-2"></v-icon>
+        You're offline. Showing cached data where available — editing is disabled.
+      </v-snackbar>
+      <v-snackbar
         v-model="mainstore.snackbar"
         :color="mainstore.snackbarColor"
         :timeout="mainstore.snackbarTimeout"
@@ -62,14 +72,42 @@
   import { useVersion } from "@/composables/versionComposable";
   import { VueQueryDevtools } from "@tanstack/vue-query-devtools";
   import { useBackendReady } from "@/composables/useBackendReady";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  import { useQueryClient } from "@tanstack/vue-query";
   import LogoLoader from "./components/LogoLoader.vue";
 
   const { backendReady } = useBackendReady();
+  const queryClient = useQueryClient();
+  const { isOnline } = useOnlineStatus();
+  const showOfflineBanner = computed(() => !isOnline.value);
+
+  watch(isOnline, online => {
+    if (online) {
+      queryClient.invalidateQueries();
+    }
+  });
   const route = useRoute();
   const showNav = computed(() => route.name !== "login");
 
-  const reloadPage = () => {
-    window.location.reload();
+  const reloadPage = async () => {
+    if (!("serviceWorker" in navigator)) {
+      window.location.reload();
+      return;
+    }
+    const registration = await navigator.serviceWorker.getRegistration();
+    const pending = registration?.waiting || registration?.installing;
+    if (pending) {
+      // New SW is ready but hasn't taken control yet — activate it then reload
+      navigator.serviceWorker.addEventListener(
+        "controllerchange",
+        () => window.location.reload(),
+        { once: true },
+      );
+      pending.postMessage({ type: "SKIP_WAITING" });
+    } else {
+      // SW already up to date, just reload
+      window.location.reload();
+    }
   };
   const mainstore = useMainStore();
   const { prefetchOptions } = useOptions();

@@ -66,7 +66,8 @@ from transactions.api.dependencies.get_transactions_by_tag import (
 from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP
 from core.cache.helpers import delete_pattern
-from core.cache.keys import account_all_transactions
+from core.cache.keys import account_all, account_all_transactions
+from django.db import transaction as db_transaction
 import logging
 
 api_logger = logging.getLogger("api")
@@ -75,15 +76,36 @@ error_logger = logging.getLogger("error")
 task_logger = logging.getLogger("task")
 
 
-def create_backup(clean=True, keep=0):
+def create_backup(*args, **kwargs):
     """
-    The function `create_backup` creates a database backup and optionally
-    keeps only the last x backups, default is 1.
+    Creates a user-data JSON backup and prunes old backups according to
+    BackupConfig.copies_to_keep.
+    """
+    call_command("export_user_data")
+    cleanup_old_backups()
 
-    Args:
+
+def cleanup_old_backups():
     """
-    call_command("dbbackup", "--clean", "--compress")
-    call_command("mediabackup", "--clean", "--compress")
+    Prunes backup files beyond BackupConfig.copies_to_keep.
+    """
+    from administration.models import BackupConfig
+    from django.conf import settings
+    config = BackupConfig.load()
+    keep = config.copies_to_keep
+    location = settings.DBBACKUP_STORAGE_OPTIONS.get("location", "/backups/")
+    if not os.path.exists(location):
+        return
+    backup_files = sorted(
+        [f for f in os.listdir(location) if f.endswith(".json.gz") or f.endswith(".json")],
+        key=lambda f: os.path.getmtime(os.path.join(location, f)),
+    )
+    for f in backup_files[:-keep] if len(backup_files) > keep else []:
+        try:
+            os.remove(os.path.join(location, f))
+            task_logger.info(f"Deleted old backup: {f}")
+        except OSError as e:
+            error_logger.exception(f"Failed to delete backup {f}: {e}")
 
 
 def create_message(message_text):
@@ -230,7 +252,7 @@ def roll_over_budgets():
     except Exception as e:
         # Log other types of exceptions
         task_logger.error("Budget roll overs not calculated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
 
 
 def calculate_repeat_window(start_date: datetime, repeat: Repeat) -> tuple:
@@ -492,13 +514,12 @@ def prune_task_history():
 
 def archive_transactions():
     """
-    The function `archive_transactions` archives older transactions based on the
-    options set.
+    Marks old transactions as archived and updates each account's archive_balance.
 
-    Args:
-
-    Returns:
-
+    Two correlated subqueries compute the signed sum of all archived transactions
+    for each account as source and as destination separately, then combine them.
+    This avoids a single GROUP BY that would conflate the two perspectives for
+    transfer transactions.
     """
     try:
         # Load archive options
@@ -658,19 +679,19 @@ def archive_transactions():
         task_logger.info("Transactions successfully archived.")
     except Exception as e:
         task_logger.error("Transactions not archived")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         return f"Error archiving transactions: {str(e)}"
 
 
 def update_reminder_cache(reminder_id):
     """
-    The function `archive_transactions` archives older transactions based on the
-    options set.
+    Rebuilds the ReminderCacheTransaction entries for a single reminder, projecting
+    occurrences up to 1 year out.
 
-    Args:
-
-    Returns:
-
+    A zero-delta Repeat (no recurrence) emits exactly one future transaction.
+    The loop guards against a non-advancing date to prevent infinite loops when a
+    Repeat is misconfigured. After rebuild, invalidates the forecast cache for both
+    source and destination accounts.
     """
     try:
         # Set up variables
@@ -782,30 +803,171 @@ def update_reminder_cache(reminder_id):
         error_logger.warning(f"{str(e)}")
 
 
+def _build_interest_transactions(
+    balance, reminder_qs_list, annual_rate, interest_deposit_day,
+    source_account_id, description_name, status, income_type_id, today, end_date
+):
+    """
+    Shared monthly-compounding loop for both standalone and parent-group interest.
+    Returns a list of FullTransaction objects.
+    """
+    transactions_to_create = []
+    period_start = today
+
+    while period_start < end_date:
+        period_end = increment_date(period_start, 'm', 1)
+
+        for reminder_qs in reminder_qs_list:
+            balance += (
+                reminder_qs.filter(
+                    transaction_date__gt=period_start,
+                    transaction_date__lte=period_end,
+                ).aggregate(sum=Sum('pretty_total'))['sum'] or Decimal(0)
+            )
+
+        if balance > 0:
+            interest = calculate_interest(balance, annual_rate, period_start, period_end)
+            if interest > 0:
+                if interest_deposit_day:
+                    try:
+                        transaction_date = period_end.replace(day=interest_deposit_day)
+                    except ValueError:
+                        transaction_date = period_end
+                else:
+                    transaction_date = period_end
+                transactions_to_create.append(
+                    FullTransaction(
+                        transaction_date=transaction_date,
+                        total_amount=interest,
+                        status_id=status.id,
+                        memo="Interest",
+                        description=f"({description_name} Estimated Interest)",
+                        edit_date=today,
+                        add_date=today,
+                        transaction_type_id=income_type_id,
+                        paycheck_id=None,
+                        source_account_id=source_account_id,
+                        destination_account_id=None,
+                        tags=[],
+                        checkNumber=None,
+                    )
+                )
+                balance += interest
+
+        period_start = period_end
+
+    return transactions_to_create
+
+
+def _update_parent_group_interest_forecast(parent):
+    """
+    Compute interest on the combined balance of all child accounts and write
+    ForecastCacheTransactions to parent.interest_child_account.
+    """
+    try:
+        interest_child = parent.interest_child_account
+        children = list(Account.objects.filter(parent_account_id=parent.id))
+
+        if not children or not interest_child:
+            return
+
+        if not parent.calculate_interest or not parent.annual_rate:
+            ForecastCacheTransaction.objects.filter(
+                Q(source_account_id=interest_child.id) | Q(destination_account_id=interest_child.id)
+            ).delete()
+            delete_pattern(account_all(interest_child.id))
+            delete_pattern(account_all(parent.id))
+            return
+
+        today = get_todays_date_timezone_adjusted()
+        end_date = today + relativedelta(years=1)
+        income_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='income')
+        status = TransactionStatus.objects.get(slug='pending')
+
+        # Sum balance and reminder querysets across all children.
+        # Internal transfers between children cancel out naturally when each
+        # child's annotated total is computed from its own perspective.
+        combined_balance = Decimal(0)
+        reminder_qs_list = []
+        for child in children:
+            txns = Transaction.objects.filter(
+                Q(source_account_id=child.id) | Q(destination_account_id=child.id)
+            ).exclude(status__slug='archived')
+            txns = annotate_transaction_total(txns, child.id)
+            combined_balance += (
+                Decimal(child.opening_balance or 0)
+                + Decimal(child.archive_balance or 0)
+                + (txns.aggregate(sum=Sum('pretty_total'))['sum'] or Decimal(0))
+            )
+
+            reminders = ReminderCacheTransaction.objects.filter(
+                Q(source_account_id=child.id) | Q(destination_account_id=child.id)
+            ).exclude(status__slug='archived')
+            reminders = annotate_transaction_total(reminders, child.id)
+            reminder_qs_list.append(reminders)
+
+        transactions_to_create = _build_interest_transactions(
+            combined_balance, reminder_qs_list, parent.annual_rate,
+            parent.interest_deposit_day, interest_child.id, parent.account_name,
+            status, income_type_id, today, end_date,
+        )
+
+        with db_transaction.atomic():
+            ForecastCacheTransaction.objects.filter(
+                Q(source_account_id=interest_child.id) | Q(destination_account_id=interest_child.id)
+            ).delete()
+            create_transactions(transactions_to_create, 'forecast')
+        delete_pattern(account_all(interest_child.id))
+        delete_pattern(account_all(parent.id))
+    except Exception as e:
+        error_logger.exception(
+            f"Error calculating parent group interest forecast for parent {parent.id}: {e}"
+        )
+
+
 def update_interest_forecast_cache(account_id):
     """
     Generate estimated monthly interest income transactions for savings and
     investment accounts. Compounds monthly over a 1-year window.
+
+    For child accounts under a parent: delegates to the parent group calculation.
+    For parent accounts: uses combined child balance, writes to interest_child_account.
+    For standalone accounts: existing single-account behavior.
     """
     try:
-        account = Account.objects.get(id=account_id)
+        account = Account.objects.select_related(
+            'parent_account', 'interest_child_account'
+        ).get(id=account_id)
     except Account.DoesNotExist:
         return
 
+    # Child account — delegate to parent group processing
+    if account.parent_account_id:
+        parent = account.parent_account
+        if parent and parent.calculate_interest and parent.interest_child_account_id:
+            _update_parent_group_interest_forecast(parent)
+        return
+
+    # Parent account — use combined child balance
+    if account.child_accounts.exists():
+        if account.calculate_interest and account.interest_child_account_id:
+            _update_parent_group_interest_forecast(account)
+        return
+
+    # Standalone account — existing behavior
     if account.account_type.slug not in {'savings', 'investment'}:
         return
 
-    ForecastCacheTransaction.objects.filter(
-        Q(source_account_id=account_id) | Q(destination_account_id=account_id)
-    ).delete()
-
     if not account.calculate_interest or not account.annual_rate:
+        ForecastCacheTransaction.objects.filter(
+            Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+        ).delete()
+        delete_pattern(account_all(account_id))
         return
 
     try:
         today = get_todays_date_timezone_adjusted()
         end_date = today + relativedelta(years=1)
-
         income_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='income')
         status = TransactionStatus.objects.get(slug='pending')
 
@@ -825,56 +987,18 @@ def update_interest_forecast_cache(account_id):
             + (transactions_qs.aggregate(sum=Sum('pretty_total'))['sum'] or Decimal(0))
         )
 
-        transactions_to_create = []
-        period_start = today
+        transactions_to_create = _build_interest_transactions(
+            balance, [reminder_qs], account.annual_rate,
+            account.interest_deposit_day, account_id, account.account_name,
+            status, income_type_id, today, end_date,
+        )
 
-        while period_start < end_date:
-            period_end = increment_date(period_start, 'm', 1)
-
-            period_reminder_sum = (
-                reminder_qs.filter(
-                    transaction_date__gt=period_start,
-                    transaction_date__lte=period_end,
-                ).aggregate(sum=Sum('pretty_total'))['sum'] or Decimal(0)
-            )
-            balance += period_reminder_sum
-
-            if balance > 0:
-                interest = calculate_interest(
-                    balance, account.annual_rate, period_start, period_end
-                )
-                if interest > 0:
-                    deposit_day = account.interest_deposit_day
-                    if deposit_day:
-                        try:
-                            transaction_date = period_end.replace(day=deposit_day)
-                        except ValueError:
-                            transaction_date = period_end
-                    else:
-                        transaction_date = period_end
-                    transactions_to_create.append(
-                        FullTransaction(
-                            transaction_date=transaction_date,
-                            total_amount=interest,
-                            status_id=status.id,
-                            memo="Interest",
-                            description=f"({account.account_name} Estimated Interest)",
-                            edit_date=today,
-                            add_date=today,
-                            transaction_type_id=income_type_id,
-                            paycheck_id=None,
-                            source_account_id=account_id,
-                            destination_account_id=None,
-                            tags=[],
-                            checkNumber=None,
-                        )
-                    )
-                    balance += interest
-
-            period_start = period_end
-
-        create_transactions(transactions_to_create, 'forecast')
-        delete_pattern(account_all_transactions(account_id))
+        with db_transaction.atomic():
+            ForecastCacheTransaction.objects.filter(
+                Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+            ).delete()
+            create_transactions(transactions_to_create, 'forecast')
+        delete_pattern(account_all(account_id))
     except Exception as e:
         error_logger.exception(
             f"Error calculating interest forecast for account {account_id}: {e}"
@@ -883,13 +1007,14 @@ def update_interest_forecast_cache(account_id):
 
 def update_cc_forecast_cache(account_id):
     """
-    The function `archive_transactions` archives older transactions based on the
-    options set.
+    Rebuilds ForecastCacheTransactions for a credit card account: estimated interest
+    charges and payment transactions for each statement cycle over the next year.
 
-    Args:
-
-    Returns:
-
+    Payment strategy controls the cycle_payment amount: F = full balance,
+    M = minimum payment, C = custom fixed amount. Existing payments within a
+    cycle's payment window (statement_end → next statement_end) are summed from
+    real and reminder transactions so the forecast payment is only the remainder.
+    The first cycle's payment is also written back to account.statement_balance.
     """
     try:
         account = Account.objects.get(id=account_id)
@@ -900,14 +1025,13 @@ def update_cc_forecast_cache(account_id):
     if account.account_type.slug != 'credit-card':
         return
 
-    # Delete any existing cache entries for this account
-    ForecastCacheTransaction.objects.filter(
-        Q(source_account_id=account_id)
-        | Q(destination_account_id=account_id)
-    ).delete()
-
-    # Exit if cc calculations are turned off
+    # Exit if cc calculations are turned off — clear any stale records and bail
     if not account.calculate_payments:
+        ForecastCacheTransaction.objects.filter(
+            Q(source_account_id=account_id)
+            | Q(destination_account_id=account_id)
+        ).delete()
+        delete_pattern(account_all(account_id))
         return
 
     try:
@@ -915,6 +1039,12 @@ def update_cc_forecast_cache(account_id):
         statement_cycle_length = account.statement_cycle_length
         statement_cycle_period = account.statement_cycle_period
         funding_account = account.funding_account
+        if not funding_account:
+            ForecastCacheTransaction.objects.filter(
+                Q(source_account_id=account_id) | Q(destination_account_id=account_id)
+            ).delete()
+            delete_pattern(account_all(account_id))
+            return
         annual_rate = account.annual_rate
         payment_strategy = account.payment_strategy
         payment_amount = account.payment_amount
@@ -1096,8 +1226,15 @@ def update_cc_forecast_cache(account_id):
                 account.save()
             x += 1
 
-        create_transactions(transactions_to_create, "forecast")
-        delete_pattern(account_all_transactions(account_id))
+        with db_transaction.atomic():
+            ForecastCacheTransaction.objects.filter(
+                Q(source_account_id=account_id)
+                | Q(destination_account_id=account_id)
+            ).delete()
+            create_transactions(transactions_to_create, "forecast")
+        delete_pattern(account_all(account_id))
+        if funding_account:
+            delete_pattern(account_all(funding_account.id))
     except Exception as e:
         error_logger.exception(f"Error calculating CC forecast for account {account_id}: {e}")
 
@@ -1115,20 +1252,14 @@ def generate_statement_cycles(
     non_trans_bal: Decimal,
 ):
     """
-    The function `generate_statement_cycle` generates a list of dictionaries of statement
-    information.
+    Generates one dict per statement cycle from the most-recently-closed period
+    through forecast_end_date, each containing credits, debits, due/pay dates,
+    and the running previous_balance used by update_cc_forecast_cache.
 
-    Args:
-        last_statement_end_date (date): Last statement end date.
-        last_statment_due_date (date): Last statement due date.
-        forecast_end_date (date): Forecast end date.
-        statement_cycle_length (int): Statement cycle length.
-        statement_cycle_period (str): Statement cycle period.
-        transactions (List[TransactionOut]): Transactions for the account for the forecast
-        period.
-
-    Returns:
-        (List[dict]): A list of dictionaries of statement information
+    Always anchors to one_month_prior so the just-closed cycle (with its upcoming
+    payment due date) is included. Due/pay dates are pushed forward one month when
+    their day-of-month would land before the statement closes (e.g. due on the 15th
+    for a card that closes on the 18th).
     """
     statement_cycles = []
     today = get_todays_date_timezone_adjusted()
@@ -1255,9 +1386,9 @@ def annotate_transaction_total(
     transactions: QuerySet[Transaction], account_id: Optional[int] = 0
 ) -> QuerySet[Transaction]:
     """
-    annotate_transaction_total
-
-    _extended_summary_
+    Annotates each transaction with a signed `pretty_total` from the perspective
+    of account_id: income is always positive, expense always negative, and transfers
+    are negative when account_id is the source and positive when it is the destination.
     """
     # Check we received a QuerySet
     if not isinstance(transactions, QuerySet):

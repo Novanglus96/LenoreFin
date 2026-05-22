@@ -23,6 +23,7 @@ from decimal import Decimal
 from django.db.models import Q
 from django.core.cache import cache
 from core.cache.keys import account_combined_transactions
+from transactions.services.transactions_and_balances import get_parent_account_transactions_and_balances
 
 
 def get_transactions_by_account(
@@ -45,11 +46,21 @@ def get_transactions_by_account(
     Returns:
         transactions: List of transaction objects
     """
-    # Check Cache
+    # Delegate to the parent-account handler when this account has children
+    if Account.objects.filter(parent_account_id=account_id).exists():
+        return get_parent_account_transactions_and_balances(
+            end_date, account_id, totals_only, forecast, start_date
+        )
+
+    # Forecast results depend on async task completion — skip cache to ensure freshness.
+    # Non-forecast results are safe to cache since they only change via mutations which
+    # clear the cache immediately.
+    use_cache = not forecast
     key = f"{account_combined_transactions(account_id)}:{end_date}:{totals_only}:{forecast}:{start_date}:{cleared_only}"
-    data = cache.get(key)
-    if data:
-        return data
+    if use_cache:
+        data = cache.get(key)
+        if data:
+            return data
 
     # Setup variables
     today = get_todays_date_timezone_adjusted()
@@ -220,9 +231,9 @@ def get_transactions_by_account(
             else:
                 previous_balance = previous_transactions[-1].balance
         my_tuple = (filtered_transactions, previous_balance)
-        cache.set(key, my_tuple, timeout=60 * 60)
         return my_tuple
     else:
         my_tuple = (transactions, Decimal(0.00))
-        cache.set(key, my_tuple, timeout=60 * 60)
+        if use_cache:
+            cache.set(key, my_tuple, timeout=60 * 60)
         return my_tuple

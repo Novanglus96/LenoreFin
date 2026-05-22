@@ -204,6 +204,26 @@ class Version(SingletonModel):
         return self.version_number
 
 
+class BackupConfig(SingletonModel):
+    FREQUENCY_CHOICES = [
+        ("HOURLY", "Hourly"),
+        ("DAILY", "Daily"),
+        ("WEEKLY", "Weekly"),
+    ]
+
+    backup_enabled = models.BooleanField(default=True)
+    frequency = models.CharField(
+        max_length=10, choices=FREQUENCY_CHOICES, default="DAILY"
+    )
+    backup_time = models.CharField(max_length=5, default="02:00")
+    copies_to_keep = models.IntegerField(default=2)
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
 class DescriptionHistory(models.Model):
     """
     Model representing a history of transaction descriptions.

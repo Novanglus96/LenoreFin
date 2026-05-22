@@ -2,11 +2,11 @@ import {
   useQuery,
   useQueryClient,
   useMutation,
-  keepPreviousData,
 } from "@tanstack/vue-query";
 import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
 import { useTransactionsStore } from "@/stores/transactions";
+import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
 function handleApiError(error, message) {
   if (error.response?.status === 401) throw error;
@@ -45,6 +45,24 @@ async function getTransactionsFunction(querydata) {
       }
       if (querydata.rule_id) {
         querytext = querytext + "&rule_id=" + querydata.rule_id;
+      }
+      if (querydata.search) {
+        querytext = querytext + "&search=" + encodeURIComponent(querydata.search);
+      }
+      if (querydata.status_id) {
+        querytext = querytext + "&status_id=" + querydata.status_id;
+      }
+      if (querydata.transaction_type_id) {
+        querytext = querytext + "&transaction_type_id=" + querydata.transaction_type_id;
+      }
+      if (querydata.tag_id) {
+        querytext = querytext + "&tag_id=" + querydata.tag_id;
+      }
+      if (querydata.date_from) {
+        querytext = querytext + "&date_from=" + querydata.date_from;
+      }
+      if (querydata.date_to) {
+        querytext = querytext + "&date_to=" + querydata.date_to;
       }
       const response = await apiClient.get("/transactions/list" + querytext);
       return response.data;
@@ -135,10 +153,13 @@ const TRANSACTION_DEPENDENT_KEYS = [
   ["accounts"],
   ["account_forecast"],
   ["tag_graph"],
+  ["tag_graph_items"],
   ["calculator"],
   ["expense_graph"],
   ["pay_graph"],
+  ["budgets"],
   ["retirement_forecast"],
+  ["retirement_transactions"],
 ];
 
 function invalidateTransactionDependencies(queryClient, extra = []) {
@@ -147,9 +168,21 @@ function invalidateTransactionDependencies(queryClient, extra = []) {
   );
 }
 
+// Forecast results are not cached on the backend, so this delayed invalidation
+// reliably gets fresh DB data once the async forecast task completes (~1-2s with
+// poll:1). The 3.5s window gives comfortable margin over the task execution time.
+function scheduleForecastRefetch(queryClient) {
+  setTimeout(() => {
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
+    queryClient.invalidateQueries({ queryKey: ["accounts"] });
+  }, 3500);
+}
+
 export function useTransactions() {
   const queryClient = useQueryClient();
   const transcation_store = useTransactionsStore();
+  const { isOnline } = useOnlineStatus();
   const {
     data: transactions,
     isLoading,
@@ -157,48 +190,50 @@ export function useTransactions() {
   } = useQuery({
     queryKey: ["transactions", transcation_store.pageinfo],
     queryFn: () => getTransactionsFunction(transcation_store.pageinfo),
-    placeholderData: keepPreviousData,
+    // When online: keep previous account's data visible while new data loads (smooth switching).
+    // When offline: return undefined so stale data from a different account is never shown.
+    placeholderData: previousData => (isOnline.value ? previousData : undefined),
     select: response => response,
     client: queryClient,
   });
 
   const createTransactionMutation = useMutation({
     mutationFn: createTransactionFunction,
-    onSuccess: data => {
-      console.log("Success adding transaction", data);
+    onSuccess: () => {
       invalidateTransactionDependencies(queryClient, [["description-history"]]);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
   const deleteTransactionMutation = useMutation({
     mutationFn: deleteTransactionFunction,
     onSuccess: () => {
-      console.log("Success deleting transaction");
       invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
   const clearTransactionMutation = useMutation({
     mutationFn: clearTransactionFunction,
     onSuccess: () => {
-      console.log("Success clearing transaction");
       invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
   const multiEditTransactionsMutation = useMutation({
     mutationFn: multiEditTransactionsFunction,
     onSuccess: () => {
-      console.log("Success editing dates of transactions");
       invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
     },
   });
 
   const updateTransactionMutation = useMutation({
     mutationFn: updateTransactionFunction,
     onSuccess: () => {
-      console.log("Success updating transaction");
       invalidateTransactionDependencies(queryClient, [["description-history"]]);
+      scheduleForecastRefetch(queryClient);
     },
   });
 

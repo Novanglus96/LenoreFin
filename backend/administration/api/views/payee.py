@@ -40,19 +40,19 @@ def create_payee(request, payload: PayeeIn):
             api_logger.error(
                 f"Payee not created : payee exists ({payload.payee_name})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Payee not created : payee exists ({payload.payee_name})"
             )
             raise HttpError(400, "Payee already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Payee not created : db integrity error")
-            error_logger.error("Payee not created : db integrity error")
+            error_logger.exception("Payee not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Payee not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
@@ -87,19 +87,19 @@ def update_payee(request, payee_id: int, payload: PayeeIn):
             api_logger.error(
                 f"Payee not updated : payee exists ({payload.payee_name})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Payee not updated : payee exists ({payload.payee_name})"
             )
             raise HttpError(400, "Payee already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Payee not updated : db integrity error")
-            error_logger.error("Payee not updated : db integrity error")
+            error_logger.exception("Payee not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Payee not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -128,7 +128,7 @@ def get_payee(request, payee_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Payee not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -152,7 +152,7 @@ def list_payees(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Payee list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -174,14 +174,21 @@ def delete_payee(request, payee_id: int):
 
     try:
         payee = get_object_or_404(Payee, id=payee_id)
+        if payee.paycheck_set.exists():
+            api_logger.error(
+                f"Payee not deleted : linked to paychecks ({payee.payee_name})"
+            )
+            raise HttpError(400, "Payee is linked to existing paychecks and cannot be deleted")
         payee_name = payee.payee_name
         payee.delete()
         api_logger.info(f"Payee deleted : {payee_name}")
         return {"success": True}
     except Http404:
         raise HttpError(404, "Payee not found")
+    except HttpError:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Payee not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
