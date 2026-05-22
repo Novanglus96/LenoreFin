@@ -10,6 +10,20 @@
       <span class="text-subtitle-2 text-primary" v-else>
         Cash Flow (Last 14 Days + {{ timeFrame.title }})
       </span>
+      <v-tooltip location="bottom" text="Highlight lowest balance after today">
+        <template v-slot:activator="{ props: tipProps }">
+          <v-btn
+            :icon="showMinHighlight ? 'mdi-flag' : 'mdi-flag-outline'"
+            flat
+            size="small"
+            :color="showMinHighlight ? 'error' : undefined"
+            variant="plain"
+            :disabled="isActive"
+            v-bind="tipProps"
+            @click="toggleMinHighlight"
+          ></v-btn>
+        </template>
+      </v-tooltip>
       <v-menu location="right">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -82,6 +96,13 @@
   const emit = defineEmits(["changeTime"]);
   const chips = ref(props.end_integer);
 
+  const lsKey = `forecast_min_highlight_${props.account?.[0] ?? "default"}`;
+  const showMinHighlight = ref(localStorage.getItem(lsKey) === "true");
+  function toggleMinHighlight() {
+    showMinHighlight.value = !showMinHighlight.value;
+    localStorage.setItem(lsKey, showMinHighlight.value);
+  }
+
   const { isLoading, account_forecast, isFetching } = useAccountForecasts(
     props.account,
     props.start_integer,
@@ -105,6 +126,35 @@
         y: ds.data?.[i] != null ? Number(ds.data[i]) : null,
       })),
     }));
+  });
+
+  const minPostTodayPoint = computed(() => {
+    if (!showMinHighlight.value) return null;
+    const raw = account_forecast.value;
+    if (!raw?.labels?.length || !raw?.datasets?.[0]?.data?.length) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const labels = raw.labels;
+    const data = raw.datasets[0].data;
+
+    let minVal = Infinity;
+    let minLabel = null;
+
+    labels.forEach((label, i) => {
+      // Labels are formatted as e.g. "May 21, '26" — parse by replacing abbreviated year
+      const d = new Date(label.replace(/'/g, "20"));
+      if (d > today && data[i] != null) {
+        const val = Number(data[i]);
+        if (val < minVal) {
+          minVal = val;
+          minLabel = label;
+        }
+      }
+    });
+
+    return minLabel !== null ? { x: minLabel, y: minVal } : null;
   });
 
   const chartOptions = computed(() => {
@@ -179,6 +229,27 @@
           borderWidth: 1,
           strokeDashArray: 0,
         }],
+        points: minPostTodayPoint.value ? [{
+          x: minPostTodayPoint.value.x,
+          y: minPostTodayPoint.value.y,
+          marker: {
+            size: 6,
+            fillColor: "#f44336",
+            strokeColor: "#fff",
+            strokeWidth: 2,
+          },
+          label: {
+            text: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(minPostTodayPoint.value.y),
+            borderColor: "#f44336",
+            offsetY: -12,
+            style: {
+              color: "#fff",
+              background: "#f44336",
+              fontSize: "10px",
+              padding: { top: 3, bottom: 3, left: 5, right: 5 },
+            },
+          },
+        }] : [],
       },
       xaxis: {
         type: "category",
