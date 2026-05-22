@@ -66,7 +66,7 @@ class DescriptionHistoryAdmin(UnfoldImportExportModelAdmin):
     ordering = ["id"]
 
 
-class RestrictedUserAdmin(ModelAdmin, UserAdmin):
+class RestrictedUserAdmin(UserAdmin, ModelAdmin):
     """
     Readonly-group users can only view and change their own profile.
     Full Access users and superusers retain normal UserAdmin behaviour.
