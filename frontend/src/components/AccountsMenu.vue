@@ -67,10 +67,8 @@
             <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
-            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
-              {{ account.account_name }}
-              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
-            </span>
+            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
+            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -134,10 +132,8 @@
             <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
-            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
-              {{ account.account_name }}
-              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
-            </span>
+            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
+            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -201,10 +197,8 @@
             <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
-            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
-              {{ account.account_name }}
-              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
-            </span>
+            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
+            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -268,10 +262,8 @@
             <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
-            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
-              {{ account.account_name }}
-              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
-            </span>
+            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
+            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -335,10 +327,8 @@
             <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
-            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
-              {{ account.account_name }}
-              <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="ml-1">combined</v-chip>
-            </span>
+            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
+            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -472,5 +462,8 @@
 }
 .accounts-menu .v-list-group__items .v-list-item {
   padding-inline-start: calc(14px + var(--child-indent, 0px)) !important;
+}
+.accounts-menu .v-list-item-title {
+  overflow: visible;
 }
 </style>

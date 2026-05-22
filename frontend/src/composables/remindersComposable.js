@@ -125,6 +125,13 @@ export function useReminders() {
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      // Delayed refetch ensures the async reminder cache rebuild (django-q2 worker)
+      // has completed before the UI shows the final state.
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      }, 3500);
     },
   });
 

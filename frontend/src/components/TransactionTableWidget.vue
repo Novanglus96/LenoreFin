@@ -1032,7 +1032,9 @@
   };
 
   const clickClearTransaction = async (transactions, reminderTransactions) => {
-    clearTransaction(transactions);
+    if (transactions.length > 0) {
+      clearTransaction(transactions);
+    }
     open.value = false;
     selected_all.value = [];
     reminderTransactions.forEach(transaction => {
