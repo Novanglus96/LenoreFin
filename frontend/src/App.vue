@@ -89,8 +89,25 @@
   const route = useRoute();
   const showNav = computed(() => route.name !== "login");
 
-  const reloadPage = () => {
-    window.location.reload();
+  const reloadPage = async () => {
+    if (!("serviceWorker" in navigator)) {
+      window.location.reload();
+      return;
+    }
+    const registration = await navigator.serviceWorker.getRegistration();
+    const pending = registration?.waiting || registration?.installing;
+    if (pending) {
+      // New SW is ready but hasn't taken control yet — activate it then reload
+      navigator.serviceWorker.addEventListener(
+        "controllerchange",
+        () => window.location.reload(),
+        { once: true },
+      );
+      pending.postMessage({ type: "SKIP_WAITING" });
+    } else {
+      // SW already up to date, just reload
+      window.location.reload();
+    }
   };
   const mainstore = useMainStore();
   const { prefetchOptions } = useOptions();
