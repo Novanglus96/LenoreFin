@@ -1,3 +1,15 @@
+# [1.4.0-alpha.44](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.43...v1.4.0-alpha.44) (2026-05-22)
+
+
+### Bug Fixes
+
+* test branch protection bypass for semantic-release version commit ([4d635d5](https://github.com/Novanglus96/LenoreFin/commit/4d635d51f72d214c617507df9d27f818fbc1ed1a))
+
+
+### Features
+
+* highlight lowest post-today balance on account forecast chart ([#142](https://github.com/Novanglus96/LenoreFin/issues/142)) ([a3c22bc](https://github.com/Novanglus96/LenoreFin/commit/a3c22bcb28854c7cf6a92591721169991aa513ab))
+
 # [1.4.0-alpha.43](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.42...v1.4.0-alpha.43) (2026-05-22)
 
 
