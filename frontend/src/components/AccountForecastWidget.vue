@@ -145,7 +145,7 @@
     labels.forEach((label, i) => {
       // Labels are formatted as e.g. "May 21, '26" — parse by replacing abbreviated year
       const d = new Date(label.replace(/'/g, "20"));
-      if (d >= today && data[i] != null) {
+      if (d > today && data[i] != null) {
         const val = Number(data[i]);
         if (val < minVal) {
           minVal = val;
