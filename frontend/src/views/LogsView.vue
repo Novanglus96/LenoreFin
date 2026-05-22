@@ -70,18 +70,22 @@
 
     <!-- Log table -->
     <v-sheet border rounded>
-      <v-data-table
+      <v-data-table-server
         :headers="headers"
         :items="entries"
+        :items-length="logPage?.total ?? 0"
         :loading="isLoading"
+        v-model:page="currentPage"
+        :items-per-page="100"
+        :items-per-page-options="[]"
         density="compact"
+        striped="odd"
+        :header-props="{ class: 'font-weight-bold bg-secondary' }"
         no-data-text="No log entries found"
-        :items-per-page="-1"
-        hide-default-footer
         @click:row="(_, { item }) => openDetail(item)"
       >
         <template v-slot:item.timestamp="{ item }">
-          <span class="text-caption text-no-wrap">{{ item.timestamp }}</span>
+          <span class="text-caption text-no-wrap">{{ formatLogTimestamp(item.timestamp) }}</span>
         </template>
         <template v-slot:item.level="{ item }">
           <v-chip :color="levelColor(item.level)" size="x-small" label>
@@ -93,23 +97,8 @@
             truncate(item.message)
           }}</span>
         </template>
-      </v-data-table>
+      </v-data-table-server>
     </v-sheet>
-
-    <!-- Pagination -->
-    <v-row class="mt-2" v-if="logPage">
-      <v-col class="d-flex justify-center">
-        <v-pagination
-          v-model="currentPage"
-          :length="logPage.pages"
-          :total-visible="7"
-          density="compact"
-        ></v-pagination>
-      </v-col>
-      <v-col cols="auto" class="d-flex align-center text-caption text-medium-emphasis">
-        {{ logPage.total }} entries
-      </v-col>
-    </v-row>
 
     <!-- Detail dialog -->
     <v-dialog v-model="detailDialog" max-width="800">
@@ -118,7 +107,7 @@
           <v-chip :color="levelColor(selectedEntry.level)" size="small" label>
             {{ selectedEntry.level }}
           </v-chip>
-          <span class="text-caption text-medium-emphasis">{{ selectedEntry.timestamp }}</span>
+          <span class="text-caption text-medium-emphasis">{{ formatLogTimestamp(selectedEntry.timestamp) }}</span>
         </v-card-title>
         <v-card-text>
           <pre class="text-caption pa-3 bg-surface-variant rounded" style="white-space: pre-wrap; overflow-x: auto">{{
@@ -126,6 +115,12 @@
           }}</pre>
         </v-card-text>
         <v-card-actions>
+          <v-btn
+            :prepend-icon="copied ? 'mdi-check' : 'mdi-content-copy'"
+            :color="copied ? 'success' : undefined"
+            variant="text"
+            @click="copyEntry"
+          >{{ copied ? 'Copied!' : 'Copy' }}</v-btn>
           <v-spacer></v-spacer>
           <v-btn @click="detailDialog = false">Close</v-btn>
         </v-card-actions>
@@ -148,6 +143,7 @@
   const isDownloading = ref(false);
   const detailDialog = ref(false);
   const selectedEntry = ref(null);
+  const copied = ref(false);
 
   const levelOptions = [
     { label: "DEBUG", value: "DEBUG" },
@@ -197,7 +193,40 @@
 
   function openDetail(entry) {
     selectedEntry.value = entry;
+    copied.value = false;
     detailDialog.value = true;
+  }
+
+  function formatLogTimestamp(ts) {
+    if (!ts) return ts;
+    // Backend format: "2026-05-21 14:32:45,123" — not directly parseable by Date
+    const normalized = ts.replace(" ", "T").replace(",", ".") + "Z";
+    const d = new Date(normalized);
+    return isNaN(d) ? ts : d.toLocaleString();
+  }
+
+  async function copyEntry() {
+    if (!selectedEntry.value) return;
+    const text = `[${formatLogTimestamp(selectedEntry.value.timestamp)}] ${selectedEntry.value.level}\n${selectedEntry.value.message}`;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for non-secure contexts (HTTP)
+        const el = document.createElement("textarea");
+        el.value = text;
+        el.style.position = "fixed";
+        el.style.opacity = "0";
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+      }
+      copied.value = true;
+      setTimeout(() => (copied.value = false), 2000);
+    } catch {
+      // copy failed silently
+    }
   }
 
   async function handleDownloadBundle() {

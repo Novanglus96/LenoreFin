@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="overflow-x: hidden">
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded">
         <AccountHeaderWidget
