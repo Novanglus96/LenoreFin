@@ -1,3 +1,12 @@
+## [1.4.3-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.4.2...v1.4.3-alpha.1) (2026-05-22)
+
+
+### Bug Fixes
+
+* anchor account forecast y-axis to $0 for consistent scale ([0c2efe9](https://github.com/Novanglus96/LenoreFin/commit/0c2efe9bc0795a90a784eddd7ceaf6460be66311))
+* combined chip display and reminder conversion race condition ([5cb92f1](https://github.com/Novanglus96/LenoreFin/commit/5cb92f125fca04a276284b1de29fdcd90cd6ae85))
+* parse version tag to determine release type for Reddit announcements ([#145](https://github.com/Novanglus96/LenoreFin/issues/145)) ([f60a690](https://github.com/Novanglus96/LenoreFin/commit/f60a6900dc6e0af2ee99a1b2adc27ad2af237094))
+
 # [1.4.0-alpha.47](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.46...v1.4.0-alpha.47) (2026-05-22)
 ## [1.4.2](https://github.com/Novanglus96/LenoreFin/compare/v1.4.1...v1.4.2) (2026-05-22)
 
