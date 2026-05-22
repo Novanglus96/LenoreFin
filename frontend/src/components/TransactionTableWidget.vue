@@ -165,7 +165,7 @@
         no-data-text="No transactions!"
         loading-text="Loading transactions..."
         disable-sort
-        :show-select="props.variant === 'account' && authStore.isFullAccess"
+        :show-select="props.variant === 'account' && authStore.isFullAccess && mdAndUp"
         fixed-footer
         striped="odd"
         density="compact"
@@ -263,6 +263,7 @@
             <v-pagination
               v-model="localPage"
               :length="localPageTotal"
+              :total-visible="smAndDown ? 5 : 7"
               @update:model-value="onPageChange"
             ></v-pagination>
           </div>

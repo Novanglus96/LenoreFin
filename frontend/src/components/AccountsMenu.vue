@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="accounts-menu">
     <v-list
       density="compact"
       nav
@@ -33,7 +33,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-checkbook"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -61,10 +61,10 @@
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
-          :class="account.parent_account_id ? 'pl-6' : ''"
+          :style="account.parent_account_id ? { '--child-indent': '44px' } : {}"
         >
           <template v-slot:prepend>
-            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
@@ -100,7 +100,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-piggy-bank"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -128,10 +128,10 @@
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
-          :class="account.parent_account_id ? 'pl-6' : ''"
+          :style="account.parent_account_id ? { '--child-indent': '44px' } : {}"
         >
           <template v-slot:prepend>
-            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
@@ -167,7 +167,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-credit-card"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -195,10 +195,10 @@
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
-          :class="account.parent_account_id ? 'pl-6' : ''"
+          :style="account.parent_account_id ? { '--child-indent': '44px' } : {}"
         >
           <template v-slot:prepend>
-            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
@@ -234,7 +234,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-finance"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -262,10 +262,10 @@
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
-          :class="account.parent_account_id ? 'pl-6' : ''"
+          :style="account.parent_account_id ? { '--child-indent': '44px' } : {}"
         >
           <template v-slot:prepend>
-            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
@@ -301,7 +301,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-car-back"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -329,10 +329,10 @@
           color="accent"
           @click="setAccount(account.id, False)"
           v-else
-          :class="account.parent_account_id ? 'pl-6' : ''"
+          :style="account.parent_account_id ? { '--child-indent': '44px' } : {}"
         >
           <template v-slot:prepend>
-            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">
@@ -368,7 +368,7 @@
             <template v-slot:prepend>
               <v-icon
                 icon="mdi-bank-off"
-                :size="!isMobile ? 'large' : 'x-large'"
+                :size="!isMobile ? 'default' : 'x-large'"
               ></v-icon>
             </template>
             <v-list-item-title>
@@ -398,7 +398,7 @@
           v-else
         >
           <template v-slot:prepend>
-            <BankLogo :logo-url="account.bank?.logo_url" class="mr-2" />
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
           </template>
           <v-list-item-title>
             <span class="font-italic">
@@ -465,3 +465,12 @@
   } = useAccounts();
   const add_account_link = ref("/accounts/add");
 </script>
+
+<style>
+.accounts-menu .v-list-item__prepend .v-list-item__spacer {
+  width: 8px !important;
+}
+.accounts-menu .v-list-group__items .v-list-item {
+  padding-inline-start: calc(14px + var(--child-indent, 0px)) !important;
+}
+</style>

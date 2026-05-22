@@ -1,5 +1,6 @@
 <template>
   <v-list
+    class="planning-menu"
     density="compact"
     nav
     :bg-color="smAndDown ? 'background' : 'surface'"
@@ -19,7 +20,7 @@
       <template v-slot:prepend>
         <v-icon
           :icon="planning_item.icon"
-          :size="!isMobile ? 'large' : 'x-large'"
+          :size="!isMobile ? 'default' : 'x-large'"
         ></v-icon>
       </template>
       <v-list-item-title>
@@ -30,6 +31,12 @@
     </v-list-item>
   </v-list>
 </template>
+
+<style>
+.planning-menu .v-list-item__prepend .v-list-item__spacer {
+  width: 8px !important;
+}
+</style>
 <script setup>
   import { ref, computed } from "vue";
   import { useRouter } from "vue-router";
