@@ -261,6 +261,7 @@
         tooltip: { enabled: false },
       },
       yaxis: {
+        min: min,
         labels: {
           formatter: val =>
             val != null
