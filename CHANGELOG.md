@@ -1,3 +1,10 @@
+# [1.4.0-alpha.46](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.45...v1.4.0-alpha.46) (2026-05-22)
+
+
+### Bug Fixes
+
+* parse version tag to determine release type for Reddit announcements ([#145](https://github.com/Novanglus96/LenoreFin/issues/145)) ([f60a690](https://github.com/Novanglus96/LenoreFin/commit/f60a6900dc6e0af2ee99a1b2adc27ad2af237094))
+
 # [1.4.0-alpha.45](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.44...v1.4.0-alpha.45) (2026-05-22)
 
 
