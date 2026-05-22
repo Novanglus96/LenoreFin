@@ -1,21 +1,9 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
-import axios from "axios";
+import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
-import { useApiKey } from "./ueApiKey";
-
-const apiKey = useApiKey();
-
-const apiClient = axios.create({
-  baseURL: "/api/v1",
-  withCredentials: false,
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-});
 
 function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   if (error.response) {
     console.error("Response error:", error.response.data);
@@ -148,7 +136,6 @@ export function useContributions() {
   const createContributionMutation = useMutation({
     mutationFn: createContributionFunction,
     onSuccess: () => {
-      console.log("Success adding contribution");
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
     },
   });
@@ -156,7 +143,6 @@ export function useContributions() {
   const deleteContributionMutation = useMutation({
     mutationFn: deleteContributionFunction,
     onSuccess: () => {
-      console.log("Success deleting contribution");
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
     },
   });
@@ -164,7 +150,6 @@ export function useContributions() {
   const updateContributionMutation = useMutation({
     mutationFn: updateContributionFunction,
     onSuccess: () => {
-      console.log("Success updating contribution");
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
     },
   });
@@ -202,7 +187,6 @@ export function useContributionRules() {
   const createContributionRuleMutation = useMutation({
     mutationFn: createContributionRuleFunction,
     onSuccess: () => {
-      console.log("Success adding contribution rule");
       queryClient.invalidateQueries({ queryKey: ["contributionRules"] });
     },
   });
@@ -210,7 +194,6 @@ export function useContributionRules() {
   const deleteContributionRuleMutation = useMutation({
     mutationFn: deleteContributionRuleFunction,
     onSuccess: () => {
-      console.log("Success deleting contribution rule");
       queryClient.invalidateQueries({ queryKey: ["contributionRules"] });
     },
   });
@@ -218,7 +201,6 @@ export function useContributionRules() {
   const updateContributionRuleMutation = useMutation({
     mutationFn: updateContributionRuleFunction,
     onSuccess: () => {
-      console.log("Success updating contribution rule");
       queryClient.invalidateQueries({ queryKey: ["contributionRules"] });
     },
   });

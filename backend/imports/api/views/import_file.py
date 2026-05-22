@@ -4,6 +4,7 @@ from ninja.errors import HttpError
 from imports.api.schemas.import_file import MappingDefinition
 from imports.services import process_file_import
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 error_logger = logging.getLogger("error")
@@ -12,7 +13,7 @@ task_logger = logging.getLogger("task")
 import_file_router = Router(tags=["File Imports"])
 
 
-@import_file_router.post("/create")
+@import_file_router.post("/create", auth=FullAccessAuth())
 def import_file(
     request,
     payload: MappingDefinition,
@@ -35,5 +36,5 @@ def import_file(
         return {"id": file_import_id}
     except Exception as e:
         task_logger.error("File import failed")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "File import error")

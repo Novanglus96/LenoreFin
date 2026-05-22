@@ -34,14 +34,14 @@ def get_transfers(
     all_transactions = Transaction.objects.filter(
         Q(source_account_id=account_id) | Q(destination_account_id=account_id),
         transaction_date__lt=end_date,
-    ).exclude(status_id=4)
+    ).exclude(status__slug='archived')
 
     # Filter for transactions and source/destination for transfers
     transfers = all_transactions.filter(
-        transaction_type_id=3,
+        transaction_type__slug='transfer',
         source_account_id=transfer_ids[0],
         destination_account_id=transfer_ids[1],
-        status_id=1,
+        status__slug='pending',
     )
 
     # Annotate transfers with details

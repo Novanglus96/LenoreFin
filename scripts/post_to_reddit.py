@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 import praw
 
@@ -8,14 +9,25 @@ FLAIR_ID_MAP = {
 }
 
 
+def get_release_type(tag):
+    match = re.match(r"v?(\d+)\.(\d+)\.(\d+)", tag)
+    if not match:
+        return None
+    minor, patch = int(match.group(2)), int(match.group(3))
+    if patch != 0:
+        return None
+    return "major" if minor == 0 else "minor"
+
+
 def main():
-    tag = os.environ["COMMIT_TAG"].lower()
-    version = Path("scripts/version.txt").read_text().strip()
+    tag = os.environ["COMMIT_TAG"]
+    version = tag.lstrip("v")
     changelog = os.environ["RELEASE_NOTES"]
 
-    flair_id = FLAIR_ID_MAP.get(tag)
+    release_type = get_release_type(tag)
+    flair_id = FLAIR_ID_MAP.get(release_type) if release_type else None
     if not flair_id:
-        print(f"⚠️ Unknown tag '{tag}', skipping Reddit post.")
+        print(f"⚠️ '{tag}' is a patch release or unrecognized format, skipping Reddit post.")
         return
 
     reddit = praw.Reddit(

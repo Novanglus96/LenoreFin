@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from django.templatetags.static import static
 import os
 import logging
 
@@ -37,7 +38,10 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
 
 INSTALLED_APPS = [
     "import_export",
-    "jazzmin",
+    "unfold",
+    "unfold.contrib.filters",
+    "unfold.contrib.forms",
+    "unfold.contrib.import_export",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -51,6 +55,7 @@ INSTALLED_APPS = [
     "reminders",
     "planning",
     "administration",
+    "reports",
     "corsheaders",
     "django_filters",
     "dbbackup",
@@ -60,13 +65,13 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -155,9 +160,10 @@ CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(" ")
 CORS_ORIGIN_WHITELIST = os.environ.get("CSRF_TRUSTED_ORIGINS").split(" ")
 
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 DBBACKUP_STORAGE = "django.core.files.storage.FileSystemStorage"
-DBBACKUP_STORAGE_OPTIONS = {"location": "/backups/"}
+DBBACKUP_STORAGE_OPTIONS = {"location": os.environ.get("BACKUP_LOCATION", "/backups/")}
 DBBACKUP_CLEANUP_KEEP = 2
 DBBACKUP_CLEANUP_KEEP_MEDIA = 2
 
@@ -190,31 +196,32 @@ LOGGING = {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": str(LOG_DIR / "db.log"),
             "maxBytes": 1024 * 1024 * 5,  # 5MB
-            "backupCount": 5,
+            "backupCount": 2,
             "formatter": "standard",
             "level": DB_LOG_LEVEL,
         },
         "api_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": str(LOG_DIR / "api.log"),
-            "maxBytes": 1024 * 1024 * 5,
-            "backupCount": 5,
+            "maxBytes": 1024 * 1024 * 5,  # 5MB, 2 backups (~10MB max)
+            "backupCount": 2,
             "formatter": "standard",
             "level": DB_LOG_LEVEL,
         },
         "error_file_handler": {
-            "class": "logging.handlers.RotatingFileHandler",
+            "class": "logging.handlers.TimedRotatingFileHandler",
             "filename": str(LOG_DIR / "error.log"),
-            "maxBytes": 1024 * 1024 * 5,
-            "backupCount": 5,
+            "when": "midnight",
+            "interval": 1,
+            "backupCount": 30,  # 30 days of error history
             "formatter": "detailed",
             "level": DB_LOG_LEVEL,
         },
         "task_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": str(LOG_DIR / "task.log"),
-            "maxBytes": 1024 * 1024 * 5,
-            "backupCount": 5,
+            "maxBytes": 1024 * 1024 * 5,  # 5MB, 2 backups (~10MB max)
+            "backupCount": 2,
             "formatter": "standard",
             "level": DB_LOG_LEVEL,
         },
@@ -262,140 +269,132 @@ Q_CLUSTER = {
     "max_attempts": 1,
     "label": "Tasks",
     "catch_up": False,
+    "poll": 1,
 }
 
-JAZZMIN_SETTINGS = {
-    "show_ui_builder": bool(int(os.environ.get("DEBUG"))),
-    # title of the window (Will default to current_admin_site.site_title if absent or None)
-    "site_title": "Admin",
-    # Title on the login screen (19 chars max) (defaults to current_admin_site.site_header if absent or None)
-    "site_header": "Admin",
-    # Title on the brand (19 chars max) (defaults to current_admin_site.site_header if absent or None)
-    "site_brand": "Admin",
-    # Logo to use for your site, must be present in static files, used for brand on top left
-    "site_logo": "logov2.png",
-    # Logo to use for your site, must be present in static files, used for login form logo (defaults to site_logo)
-    "login_logo": None,
-    # Logo to use for login form in dark themes (defaults to login_logo)
-    "login_logo_dark": None,
-    # CSS classes that are applied to the logo above
-    "site_logo_classes": "img-fluid",
-    # Relative path to a favicon for your site, will default to site_logo if absent (ideally 32x32 px)
-    "site_icon": "favicon.ico",
-    # Welcome text on the login screen
-    "welcome_sign": "Please log in",
-    # Copyright on the footer
-    "copyright": "John Adams",
-    # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
-    "user_avatar": None,
-    ############
-    # Top Menu #
-    ############
-    # Links to put along the top menu
-    "topmenu_links": [
-        # external url that opens in a new window (Permissions can be added)
-        {
-            "name": "Back to Site",
-            "url": "/",
-            "new_window": False,
+UNFOLD = {
+    "SITE_TITLE": "LenoreFin",
+    "SITE_HEADER": "LenoreFin",
+    "SITE_URL": "/",
+    "SITE_LOGO": lambda request: static("logov2.png"),
+    "SITE_ICON": lambda request: static("favicon.ico"),
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+    "COLORS": {
+        "primary": {
+            "50": "138 247 213",
+            "100": "118 237 200",
+            "200": "83 216 176",
+            "300": "48 178 138",
+            "400": "21 140 104",
+            "500": "6 150 106",
+            "600": "4 120 84",
+            "700": "3 94 66",
+            "800": "3 75 53",
+            "900": "2 60 42",
+            "950": "1 42 29",
         },
-    ],
-    #############
-    # User Menu #
-    #############
-    # Additional links to include in the user menu on the top right ("app" url type is not allowed)
-    "usermenu_links": [
-        {
-            "name": "Back to Site",
-            "url": "/",
-            "new_window": False,
-        },
-    ],
-    "icons": {
-        "accounts.AccountType": "fas fa-university",
-        "accounts.Account": "fas fa-university",
-        "accounts.Bank": "fas fa-university",
-        "accounts.Reward": "fas fa-university",
-        "administration.ErrorLevel": "fas fa-exclamation-triangle",
-        "administration.LogEntry": "fas fa-clipboard-list",
-        "administration.Message": "fas fa-comment",
-        "administration.Option": "fas fa-cog",
-        "administration.Payee": "fas fa-user-circle",
-        "administration.Version": "fas fa-info",
-        "administration.DescriptionHistory": "fas fa-clipboard-list",
-        "auth.user": "fas fa-user",
-        "auth.Group": "fas fa-users",
-        "planning.CalculationRule": "fas fa-folder",
-        "planning.ChristmasGift": "fas fa-folder",
-        "planning.ContribRule": "fas fa-folder",
-        "planning.Contribution": "fas fa-folder",
-        "planning.Note": "fas fa-folder",
-        "planning.Budget": "fas fa-folder",
-        "reminders.ReminderExclusion": "fas fa-bell-slash",
-        "reminders.Reminder": "fas fa-bell",
-        "reminders.Repeat": "fas fa-redo",
-        "tags.TagType": "fas fa-tags",
-        "tags.Tag": "fas fa-tags",
-        "tags.MainTag": "fas fa-tags",
-        "tags.SubTag": "fas fa-tags",
-        "transactions.Paycheck": "fas fa-money-check",
-        "transactions.TransactionStatus": "fas fa-money-check",
-        "transactions.TransactionType": "fas fa-money-check",
-        "transactions.Transaction": "fas fa-money-check",
-        "transactions.TransactionDetail": "fas fa-money-check",
     },
-    # Icons that are used when one is not manually specified
-    "default_icon_parents": "fas fa-chevron-circle-right",
-    "default_icon_children": "fas fa-chevron-right",
-    "order_with_respect_to": [
-        "accounts",
-        "accounts.Bank",
-        "accounts.Account",
-        "accounts.AccountType",
-        "transactions",
-        "transactions.Transaction",
-        "reminders",
-        "tags",
-        "tags.Tag",
-        "tags.TagType",
-        "planning",
-        "administration.Option",
-        "imports.FileImport",
-    ],
-    "changeform_format": "collapsible",
-}
-
-JAZZMIN_UI_TWEAKS = {
-    "navbar_small_text": False,
-    "footer_small_text": False,
-    "body_small_text": True,
-    "brand_small_text": True,
-    "brand_colour": "navbar-teal",
-    "accent": "accent-success",
-    "navbar": "navbar-teal navbar-dark",
-    "no_navbar_border": False,
-    "navbar_fixed": False,
-    "layout_boxed": False,
-    "footer_fixed": False,
-    "sidebar_fixed": True,
-    "sidebar": "sidebar-light-teal",
-    "sidebar_nav_small_text": False,
-    "sidebar_disable_expand": False,
-    "sidebar_nav_child_indent": False,
-    "sidebar_nav_compact_style": True,
-    "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": True,
-    "theme": "minty",
-    "dark_mode_theme": "darkly",
-    "button_classes": {
-        "primary": "btn-outline-primary",
-        "secondary": "btn-outline-secondary",
-        "info": "btn-info",
-        "warning": "btn-warning",
-        "danger": "btn-danger",
-        "success": "btn-success",
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "Accounts",
+                "items": [
+                    {"title": "Banks", "link": "/admin/accounts/bank/"},
+                    {"title": "Accounts", "link": "/admin/accounts/account/"},
+                    {"title": "Account Types", "link": "/admin/accounts/accounttype/"},
+                    {"title": "Rewards", "link": "/admin/accounts/reward/"},
+                ],
+            },
+            {
+                "title": "Transactions",
+                "items": [
+                    {"title": "Transactions", "link": "/admin/transactions/transaction/"},
+                    {"title": "Paychecks", "link": "/admin/transactions/paycheck/"},
+                    {"title": "Transaction Types", "link": "/admin/transactions/transactiontype/"},
+                    {"title": "Transaction Statuses", "link": "/admin/transactions/transactionstatus/"},
+                    {"title": "Transaction Details", "link": "/admin/transactions/transactiondetail/"},
+                    {"title": "Reminder Cache", "link": "/admin/transactions/remindercachetransaction/"},
+                    {"title": "Forecast Cache", "link": "/admin/transactions/forecastcachetransaction/"},
+                ],
+            },
+            {
+                "title": "Reminders",
+                "items": [
+                    {"title": "Reminders", "link": "/admin/reminders/reminder/"},
+                    {"title": "Repeats", "link": "/admin/reminders/repeat/"},
+                    {"title": "Exclusions", "link": "/admin/reminders/reminderexclusion/"},
+                ],
+            },
+            {
+                "title": "Tags",
+                "items": [
+                    {"title": "Tags", "link": "/admin/tags/tag/"},
+                    {"title": "Main Tags", "link": "/admin/tags/maintag/"},
+                    {"title": "Sub Tags", "link": "/admin/tags/subtag/"},
+                    {"title": "Tag Types", "link": "/admin/tags/tagtype/"},
+                ],
+            },
+            {
+                "title": "Planning",
+                "items": [
+                    {"title": "Budgets", "link": "/admin/planning/budget/"},
+                    {"title": "Contributions", "link": "/admin/planning/contribution/"},
+                    {"title": "Contribution Rules", "link": "/admin/planning/contribrule/"},
+                    {"title": "Notes", "link": "/admin/planning/note/"},
+                    {"title": "Calculation Rules", "link": "/admin/planning/calculationrule/"},
+                    {"title": "Christmas Gifts", "link": "/admin/planning/christmasgift/"},
+                ],
+            },
+            {
+                "title": "Administration",
+                "items": [
+                    {"title": "Options", "link": "/admin/administration/option/"},
+                    {"title": "Payees", "link": "/admin/administration/payee/"},
+                    {"title": "Version", "link": "/admin/administration/version/"},
+                    {"title": "Messages", "link": "/admin/administration/message/"},
+                    {"title": "Description History", "link": "/admin/administration/descriptionhistory/"},
+                    {"title": "Graph Types", "link": "/admin/administration/graphtype/"},
+                ],
+            },
+            {
+                "title": "Users & Groups",
+                "items": [
+                    {"title": "Users", "link": "/admin/auth/user/"},
+                    {"title": "Groups", "link": "/admin/auth/group/"},
+                ],
+            },
+            {
+                "title": "Reports",
+                "items": [
+                    {"title": "Report Configs", "link": "/admin/reports/reportconfig/"},
+                ],
+            },
+            {
+                "title": "Imports",
+                "items": [
+                    {"title": "File Imports", "link": "/admin/imports/fileimport/"},
+                    {"title": "Transaction Imports", "link": "/admin/imports/transactionimport/"},
+                    {"title": "Import Errors", "link": "/admin/imports/transactionimporterror/"},
+                    {"title": "Type Mappings", "link": "/admin/imports/typemapping/"},
+                    {"title": "Status Mappings", "link": "/admin/imports/statusmapping/"},
+                    {"title": "Account Mappings", "link": "/admin/imports/accountmapping/"},
+                    {"title": "Tag Mappings", "link": "/admin/imports/tagmapping/"},
+                ],
+            },
+            {
+                "title": "Task Queue",
+                "items": [
+                    {"title": "Schedules", "link": "/admin/django_q/schedule/"},
+                    {"title": "Successful Tasks", "link": "/admin/django_q/success/"},
+                    {"title": "Failed Tasks", "link": "/admin/django_q/failure/"},
+                    {"title": "Queued Tasks", "link": "/admin/django_q/ormq/"},
+                ],
+            },
+        ],
     },
-    "actions_sticky_top": False,
 }
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB

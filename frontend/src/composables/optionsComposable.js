@@ -1,21 +1,9 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
-import axios from "axios";
+import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
-import { useApiKey } from "./ueApiKey";
-
-const apiKey = useApiKey();
-
-const apiClient = axios.create({
-  baseURL: "/api/v1",
-  withCredentials: false,
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-});
 
 async function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   const backendHealthy = await isBackendHealthy();
 
@@ -47,7 +35,6 @@ async function getOptionsFunction() {
 
 async function updateOptionsFunction(updatedOptions) {
   try {
-    console.log("update_options:", updatedOptions);
     const response = await apiClient.patch(
       "/administration/options/update/1",
       updatedOptions,
@@ -81,9 +68,9 @@ export function useOptions() {
   const updateOptionsMutation = useMutation({
     mutationFn: updateOptionsFunction,
     onSuccess: () => {
-      console.log("Success updating options");
       queryClient.invalidateQueries({ queryKey: ["options"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
+      queryClient.invalidateQueries({ queryKey: ["tag_graph_items"] });
       queryClient.invalidateQueries({ queryKey: ["retirement_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["expense_graph"] });
     },

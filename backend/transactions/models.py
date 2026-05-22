@@ -13,6 +13,7 @@ from tags.models import Tag
 import pytz
 import os
 from reminders.models import Reminder
+from core.mixins import SystemObjectMixin
 
 
 def transaction_image_name(instance, filename):
@@ -30,7 +31,7 @@ def current_date():
 # Create your models here.
 
 
-class TransactionType(models.Model):
+class TransactionType(SystemObjectMixin, models.Model):
     """
     Model representing a transaction type to determine the type of transaction.
 
@@ -39,19 +40,23 @@ class TransactionType(models.Model):
     and must be unique.
     """
 
+    _slug_source_field = "transaction_type"
+
     transaction_type = models.CharField(max_length=254, unique=True)
 
     def __str__(self):
         return self.transaction_type
 
 
-class TransactionStatus(models.Model):
+class TransactionStatus(SystemObjectMixin, models.Model):
     """
     Model representing a transactions status.
 
     Fields:
     - transaction_status (CharField): The transaction status, limited to 254 characters
     """
+
+    _slug_source_field = "transaction_status"
 
     transaction_status = models.CharField(max_length=254, unique=True)
 
@@ -178,18 +183,20 @@ class TransactionImage(models.Model):
     Model representing a transaction image.
 
     Fields:
-    - image (ImageField): The image.
-    - transaction (ForeignKey): A reference to the Transaction model, associating the
-    transaction with this image.
+    - image (FileField): The uploaded file.
+    - transaction (ForeignKey): A reference to the Transaction model.
     """
 
     image = models.FileField(upload_to=transaction_image_name)
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
 
-    def delete(self, *args, **kwargs):
-        # Delete the associated file when the instance is deleted
-        self.image.delete()
-        super().delete(*args, **kwargs)
+    @property
+    def url(self):
+        return self.image.url if self.image else None
+
+    @property
+    def filename(self):
+        return os.path.basename(self.image.name) if self.image else None
 
 
 class TransactionDetail(models.Model):

@@ -71,6 +71,7 @@ class TransactionOut(Schema):
     reminder_id: Optional[int] = None
     tag_total: Optional[AmountDecimal] = None
     simulated: Optional[bool] = False
+    attachment_count: Optional[int] = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -108,3 +109,9 @@ class TransactionQuery(Schema):
     page: Optional[int] = 1
     page_size: Optional[int] = 60
     rule_id: Optional[int] = None
+    search: Optional[str] = None
+    status_id: Optional[int] = None
+    transaction_type_id: Optional[int] = None
+    tag_id: Optional[int] = None
+    date_from: Optional[date] = None
+    date_to: Optional[date] = None

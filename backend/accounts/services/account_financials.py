@@ -29,7 +29,12 @@ class AccountNotFound(Exception):
 
 def get_account_financials(account_id: int, today: date | None = None):
     """
-    Returns an Account annotated with all calculated financial fields.
+    Returns a DomainAccount with all calculated financial fields, served from cache when available.
+
+    Due and statement dates are computed relative to today: if the day-of-month hasn't
+    passed yet this month, the date lands this month; otherwise it rolls to next month.
+    Parent accounts sum cleared and pending balances across all children instead of
+    querying their own (empty) transaction set.
     """
     # Check Cache
     key = account_financials(account_id)
@@ -71,11 +76,15 @@ def get_account_financials(account_id: int, today: date | None = None):
         else Decimal("0.00")
     )
 
-    # Cleared Balance
-    cleared_balance = get_account_cleared_balance(account_id)
-
-    # Pending Balance
-    pending_balance = get_account_pending_balance(account_id)
+    # For parent accounts, sum balances across all children
+    is_parent = account.child_accounts.exists()
+    if is_parent:
+        child_ids = list(account.child_accounts.values_list('id', flat=True))
+        cleared_balance = sum(get_account_cleared_balance(cid) for cid in child_ids)
+        pending_balance = sum(get_account_pending_balance(cid) for cid in child_ids)
+    else:
+        cleared_balance = get_account_cleared_balance(account_id)
+        pending_balance = get_account_pending_balance(account_id)
 
     # Available Credit
     available_credit = account.credit_limit - abs(pending_balance)
@@ -99,7 +108,7 @@ def get_account_financials(account_id: int, today: date | None = None):
         rewards_amount=rewards_amount,
         available_credit=available_credit,
         balance=cleared_balance,
-        last_statement_amount=account.last_statement_amount,
+        statement_balance=account.statement_balance,
         funding_account=dto_from_model(DomainAccount, account.funding_account),
         calculate_payments=account.calculate_payments,
         calculate_interest=account.calculate_interest,
@@ -109,6 +118,10 @@ def get_account_financials(account_id: int, today: date | None = None):
         statement_day=account.statement_day,
         due_day=account.due_day,
         pay_day=account.pay_day,
+        interest_deposit_day=account.interest_deposit_day,
+        is_parent_account=is_parent,
+        parent_account_id=account.parent_account_id,
+        interest_child_account_id=account.interest_child_account_id,
     )
 
     cache.set(key, financials, timeout=60 * 60)
@@ -116,6 +129,13 @@ def get_account_financials(account_id: int, today: date | None = None):
 
 
 def last_six_month_reward_amounts(account_id: int):
+    """
+    Returns the most-recent reward balance for each of the past 5 months plus the
+    current month, ordered oldest → newest (for charting left-to-right).
+
+    Uses a Subquery/OuterRef to find the latest reward entry per month rather than
+    a simple Max(amount), because reward_amount is cumulative — not per-month earned.
+    """
     today = get_todays_date_timezone_adjusted()
     first_of_current_month = today.replace(day=1)
 
@@ -151,6 +171,10 @@ def last_six_month_reward_amounts(account_id: int):
 
 
 def last_year_six_month_reward_amounts(account_id: int):
+    """
+    Same as last_six_month_reward_amounts but anchored to the same 6-month window
+    one year ago, for year-over-year comparison charting.
+    """
     today = get_todays_date_timezone_adjusted()
 
     # Move 1 year back

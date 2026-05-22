@@ -6,6 +6,7 @@ from reminders.api.schemas.repeat import RepeatIn, RepeatOut
 from django.shortcuts import get_object_or_404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -15,7 +16,7 @@ task_logger = logging.getLogger("task")
 repeat_router = Router(tags=["Repeats"])
 
 
-@repeat_router.post("/create")
+@repeat_router.post("/create", auth=FullAccessAuth())
 def create_repeat(request, payload: RepeatIn):
     """
     The function `create_repeat` creates a repeat
@@ -38,23 +39,23 @@ def create_repeat(request, payload: RepeatIn):
             api_logger.error(
                 f"Repeat not created : repeat exists ({payload.repeat_name})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Repeat not created : repeat exists ({payload.repeat_name})"
             )
             raise HttpError(400, "Repeat already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Repeat not created : db integrity error")
-            error_logger.error("Repeat not created : db integrity error")
+            error_logger.exception("Repeat not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
-@repeat_router.put("/update/{repeat_id}")
+@repeat_router.put("/update/{repeat_id}", auth=FullAccessAuth())
 def update_repeat(request, repeat_id: int, payload: RepeatIn):
     """
     The function `update_repeat` updates the repeat specified by id.
@@ -87,19 +88,19 @@ def update_repeat(request, repeat_id: int, payload: RepeatIn):
             api_logger.error(
                 f"Repeat not updated : repeat exists ({payload.repeat_name})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Repeat not updated : repeat exists ({payload.repeat_name})"
             )
             raise HttpError(400, "Repeat already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Repeat not updated : db integrity error")
-            error_logger.error("Repeat not updated : db integrity error")
+            error_logger.exception("Repeat not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -126,7 +127,7 @@ def get_repeat(request, repeat_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -150,11 +151,11 @@ def list_repeats(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
-@repeat_router.delete("/delete/{repeat_id}")
+@repeat_router.delete("/delete/{repeat_id}", auth=FullAccessAuth())
 def delete_repeat(request, repeat_id: int):
     """
     The function `delete_repeat` deletes the repeat specified by id.
@@ -172,12 +173,16 @@ def delete_repeat(request, repeat_id: int):
 
     try:
         repeat = get_object_or_404(Repeat, id=repeat_id)
+        if repeat.is_system:
+            raise HttpError(403, "Cannot delete a system object")
         repeat_name = repeat.repeat_name
         repeat.delete()
         api_logger.info(f"Repeat deleted : {repeat_name}")
         return {"success": True}
+    except HttpError:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Repeat not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

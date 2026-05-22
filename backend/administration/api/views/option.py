@@ -7,6 +7,7 @@ from django.http import Http404
 from typing import List
 from utils.apply_patch import apply_patch
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -16,7 +17,7 @@ task_logger = logging.getLogger("task")
 option_router = Router(tags=["Options"])
 
 
-@option_router.patch("/update/{option_id}")
+@option_router.patch("/update/{option_id}", auth=FullAccessAuth())
 def update_option(request, option_id: int, payload: OptionIn):
     """
     The function `update_option` updates the option specified by id,
@@ -46,7 +47,7 @@ def update_option(request, option_id: int, payload: OptionIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -75,7 +76,7 @@ def get_option(request, option_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -99,11 +100,11 @@ def list_options(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
-@option_router.delete("/delete/{option_id}")
+@option_router.delete("/delete/{option_id}", auth=FullAccessAuth())
 def delete_option(request, option_id: int):
     """
     The function `delete_option` deletes the option specified by id.
@@ -129,5 +130,5 @@ def delete_option(request, option_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Option not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

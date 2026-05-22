@@ -14,6 +14,7 @@ from django.db.models.functions import Concat
 from typing import List
 from tags.services import create_tag, update_tag, TagAlreadyExists, TagNotFound, InvalidTagData
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 error_logger = logging.getLogger("error")
@@ -21,7 +22,7 @@ error_logger = logging.getLogger("error")
 tag_router = Router(tags=["Tags"])
 
 
-@tag_router.post("/create")
+@tag_router.post("/create", auth=FullAccessAuth())
 def create_tag_view(request, payload: TagIn):
     try:
         tag_id = create_tag(
@@ -35,19 +36,19 @@ def create_tag_view(request, payload: TagIn):
         return {"id": tag_id}
     except TagAlreadyExists as e:
         api_logger.error(f"Tag not created : {e}")
-        error_logger.error(str(e))
+        error_logger.exception(str(e))
         raise HttpError(400, "Tag already exists")
     except InvalidTagData as e:
         api_logger.error(f"Tag not created : {e}")
-        error_logger.error(str(e))
+        error_logger.exception(str(e))
         raise HttpError(500, "Invalid tag data")
     except Exception as e:
         api_logger.error("Tag not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record creation error : {str(e)}")
 
 
-@tag_router.put("/update/{tag_id}")
+@tag_router.put("/update/{tag_id}", auth=FullAccessAuth())
 def update_tag_view(request, tag_id: int, payload: TagIn):
     try:
         update_tag(
@@ -64,11 +65,11 @@ def update_tag_view(request, tag_id: int, payload: TagIn):
         raise HttpError(404, "Tag not found")
     except TagAlreadyExists as e:
         api_logger.error(f"Tag not updated : {e}")
-        error_logger.error(str(e))
+        error_logger.exception(str(e))
         raise HttpError(400, "Tag already exists")
     except Exception as e:
         api_logger.error("Tag not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
@@ -80,7 +81,7 @@ def get_tag(request, tag_id: int):
         return tag
     except Exception as e:
         api_logger.error("Tag not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -112,19 +113,23 @@ def list_tags(request, query: TagQuery = Query(...)):
         return qs
     except Exception as e:
         api_logger.error("Tag list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@tag_router.delete("/delete/{tag_id}")
+@tag_router.delete("/delete/{tag_id}", auth=FullAccessAuth())
 def delete_tag(request, tag_id: int):
     try:
         tag = get_object_or_404(Tag, id=tag_id)
+        if tag.is_system:
+            raise HttpError(403, "Cannot delete a system object")
         tag_name = tag.tag_name
         tag.delete()
         api_logger.info(f"Tag deleted : {tag_name}")
         return {"success": True}
+    except HttpError:
+        raise
     except Exception as e:
         api_logger.error("Tag not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

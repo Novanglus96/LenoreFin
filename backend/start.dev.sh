@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir -p /backups
+
 python manage.py makemigrations --no-input
 python manage.py migrate --no-input
 python manage.py collectstatic --no-input
@@ -8,9 +10,10 @@ python manage.py collectstatic --no-input
 if [ "$DJANGO_SUPERUSER_USERNAME" ]; then
     (python manage.py createsuperuser \
         --noinput \
-        --username $DJANGO_SUPERUSER_USERNAME \
-        --email $DJANGO_SUPERUSER_EMAIL) ||
+        --username "$DJANGO_SUPERUSER_USERNAME" \
+        --email "$DJANGO_SUPERUSER_EMAIL") ||
         true
+    python manage.py assign_superuser_group
 fi
 
 python manage.py loaddata accounts/fixtures/account_types
@@ -26,6 +29,7 @@ python manage.py scheduletasks
 python manage.py load_version_fixture
 python manage.py loaddata administration/fixtures/graph_types
 python manage.py load_options
+python manage.py load_backup_config
 python manage.py load_caches
 
 python manage.py runserver 0.0.0.0:8001 &

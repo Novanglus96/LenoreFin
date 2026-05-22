@@ -1,21 +1,10 @@
+import { isRef } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
-import axios from "axios";
+import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
-import { useApiKey } from "./ueApiKey";
-
-const apiKey = useApiKey();
-
-const apiClient = axios.create({
-  baseURL: "/api/v1",
-  withCredentials: false,
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-});
 
 function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   if (error.response) {
     console.error("Response error:", error.response.data);
@@ -57,9 +46,13 @@ export function useAccountForecasts(account_id, start_integer, end_integer) {
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: ["account_forecast", { account: account_id }],
+    queryKey: ["account_forecast", { account: account_id, start: start_integer, end: end_integer }],
     queryFn: () =>
-      getAccountForecastFunction(account_id, start_integer, end_integer),
+      getAccountForecastFunction(
+        account_id,
+        start_integer,
+        isRef(end_integer) ? end_integer.value : end_integer,
+      ),
     select: response => response,
     client: queryClient,
   });

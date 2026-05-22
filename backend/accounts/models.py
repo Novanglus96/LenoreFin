@@ -4,6 +4,7 @@ import pytz
 import os
 from django.core.exceptions import ValidationError
 from model_utils import FieldTracker
+from core.mixins import SystemObjectMixin
 
 
 def current_date():
@@ -16,7 +17,7 @@ def current_date():
 # Create your models here.
 
 
-class AccountType(models.Model):
+class AccountType(SystemObjectMixin, models.Model):
     """
     Model representing an account type for categorizing accounts.
 
@@ -27,6 +28,8 @@ class AccountType(models.Model):
     - icon (CharField): The icon associciated with accounts of this type, limited to 25
     characters.
     """
+
+    _slug_source_field = "account_type"
 
     account_type = models.CharField(max_length=254, unique=True)
     color = models.CharField(max_length=7, default="#059669")
@@ -46,6 +49,7 @@ class Bank(models.Model):
     """
 
     bank_name = models.CharField(max_length=254, unique=True)
+    logo_url = models.CharField(max_length=500, null=True, blank=True)
 
     def __str__(self):
         return self.bank_name
@@ -69,7 +73,7 @@ class Account(models.Model):
     - rewards_amount (DecimalField): The amount of rewards associated with the account, defaulting to 0.00.
     - credit_limit (DecimalField): The credit limit of the account, defaulting to 0.00.
     - bank (ForeignKey): A reference to the Bank model representing the bank associated with the account.
-    - last_statement_amount (DecimalField): The amount of the last statement for the account, defaulting to 0.00.
+    - statement_balance (DecimalField): The calculated payment amount for the current billing cycle, defaulting to 0.00.
     - funding_account (ForeignKey): A reference to another Account that funds this account, can be null.
     - calculate_payments (BooleanField): Enable/Disable payment calculations.  Default=False.
     - calcualte_interest (BooleanField): Enable/Disable interest calculations. Default==False.
@@ -100,7 +104,7 @@ class Account(models.Model):
         max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE)
-    last_statement_amount = models.DecimalField(
+    statement_balance = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00, null=True, blank=True
     )
     archive_balance = models.DecimalField(
@@ -132,7 +136,28 @@ class Account(models.Model):
     statement_day = models.IntegerField(default=15)
     due_day = models.IntegerField(default=15)
     pay_day = models.IntegerField(default=15)
+    interest_deposit_day = models.IntegerField(null=True, blank=True, default=None)
+    parent_account = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        related_name="child_accounts",
+    )
+    interest_child_account = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
     tracker = FieldTracker()
+
+    @property
+    def is_parent_account(self):
+        return self.child_accounts.exists()
 
     def clean(self):
         # Ensure an account cannot fund itself
@@ -156,6 +181,35 @@ class Account(models.Model):
             raise ValidationError(
                 "A funding account can only be set for Credit Card accounts"
             )
+        # Child accounts cannot manage their own interest — the parent handles it
+        if self.parent_account_id:
+            if self.calculate_interest:
+                raise ValidationError(
+                    "A child account cannot have interest calculations enabled. Set this on the parent account instead."
+                )
+            if self.annual_rate and self.annual_rate != 0:
+                raise ValidationError(
+                    "A child account cannot have an APY set. Set this on the parent account instead."
+                )
+        # Ensure an account cannot be its own parent
+        if self.parent_account and self.parent_account == self:
+            raise ValidationError("An account cannot be its own parent.")
+        # Enforce flat hierarchy: a parent cannot itself have a parent
+        if self.parent_account and self.parent_account.parent_account_id is not None:
+            raise ValidationError(
+                "Cannot set a parent account that already has a parent (only one level of hierarchy allowed)."
+            )
+        # Enforce flat hierarchy: an account with children cannot become a child
+        if self.parent_account_id and self.pk and self.child_accounts.exists():
+            raise ValidationError(
+                "An account with child accounts cannot itself be assigned a parent."
+            )
+        # Ensure interest_child_account is a direct child of this account
+        if self.interest_child_account and self.pk:
+            if self.interest_child_account.parent_account_id != self.pk:
+                raise ValidationError(
+                    "The interest child account must be a direct child of this account."
+                )
 
     def __str__(self):
         return self.account_name

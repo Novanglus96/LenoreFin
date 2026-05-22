@@ -7,7 +7,9 @@
         "days": 0,
         "weeks": 0,
         "months": 1,
-        "years": 0
+        "years": 0,
+        "is_system": true,
+        "slug": "every-month"
     }
   },
   {
@@ -18,7 +20,9 @@
         "days": 0,
         "weeks": 2,
         "months": 0,
-        "years": 0
+        "years": 0,
+        "is_system": true,
+        "slug": "every-2-weeks"
     }
   },
   {
@@ -29,7 +33,9 @@
         "days": 0,
         "weeks": 1,
         "months": 0,
-        "years": 0
+        "years": 0,
+        "is_system": true,
+        "slug": "every-week"
     }
   },
   {
@@ -40,7 +46,9 @@
         "days": 0,
         "weeks": 0,
         "months": 0,
-        "years": 1
+        "years": 1,
+        "is_system": true,
+        "slug": "every-year"
     }
   },
   {
@@ -51,7 +59,9 @@
         "days": 1,
         "weeks": 0,
         "months": 0,
-        "years": 0
+        "years": 0,
+        "is_system": true,
+        "slug": "every-day"
     }
   },
   {
@@ -62,7 +72,9 @@
         "days": 0,
         "weeks": 0,
         "months": 0,
-        "years": 0
+        "years": 0,
+        "is_system": true,
+        "slug": "never"
     }
   },
   {
@@ -73,7 +85,9 @@
         "days": 0,
         "weeks": 0,
         "months": 2,
-        "years": 0
+        "years": 0,
+        "is_system": true,
+        "slug": "every-2-months"
     }
   },
   {
@@ -84,7 +98,9 @@
         "days": 0,
         "weeks": 0,
         "months": 3,
-        "years": 0
+        "years": 0,
+        "is_system": true,
+        "slug": "quarterly"
     }
   }
 ]

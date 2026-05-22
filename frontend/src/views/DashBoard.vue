@@ -27,7 +27,23 @@
   import RemindersWidget from "@/components/RemindersWidget.vue";
   import TransactionTableWidget from "@/components/TransactionTableWidget.vue";
   import BudgetsWidget from "@/components/BudgetsWidget.vue";
+  import { onMounted } from "vue";
   import { useTransactions } from "@/composables/transactionsComposable";
+  import { useTransactionsStore } from "@/stores/transactions";
+
+  const transactions_store = useTransactionsStore();
+
+  // Reset pageinfo to dashboard defaults every time the dashboard mounts.
+  // AccountDetailView mutates pageinfo when you visit an account; without this
+  // reset, navigating back via the browser back button leaves the wrong
+  // account_id in the query key and the dashboard shows a blank/wrong state.
+  onMounted(() => {
+    transactions_store.pageinfo.account_id = null;
+    transactions_store.pageinfo.forecast = true;
+    transactions_store.pageinfo.view_type = 2;
+    transactions_store.pageinfo.page = 1;
+    transactions_store.pageinfo.maxdays = 14;
+  });
 
   const { isLoading, transactions, isFetching } = useTransactions();
 </script>

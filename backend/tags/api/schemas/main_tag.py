@@ -14,7 +14,9 @@ class MainTagIn(Schema):
 class MainTagOut(Schema):
     id: int
     tag_name: str
-    tag_type: TagTypeOut
+    tag_type: Optional[TagTypeOut] = None
+    slug: str
+    is_system: bool
 
     model_config = ConfigDict(from_attributes=True)
 

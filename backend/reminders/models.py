@@ -4,6 +4,7 @@ from tags.models import Tag
 from accounts.models import Account
 import pytz
 import os
+from core.mixins import SystemObjectMixin
 
 
 def current_date():
@@ -16,7 +17,7 @@ def current_date():
 # Create your models here.
 
 
-class Repeat(models.Model):
+class Repeat(SystemObjectMixin, models.Model):
     """
     Model representing a repeat period for reminders. Defined by setting how many
     days, weeks, months and years are in the repeat period.  Can be combined to create
@@ -30,6 +31,8 @@ class Repeat(models.Model):
     - months (IntegerField): The amount of months in this repeat period.
     - years (IntegerField): The amount of years in this repeat period.
     """
+
+    _slug_source_field = "repeat_name"
 
     repeat_name = models.CharField(max_length=254, unique=True)
     days = models.IntegerField(default=0)

@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -19,7 +20,7 @@ task_logger = logging.getLogger("task")
 transaction_type_router = Router(tags=["Transaction Types"])
 
 
-@transaction_type_router.put("/update/{transaction_type_id}")
+@transaction_type_router.put("/update/{transaction_type_id}", auth=FullAccessAuth())
 def update_transaction_type(
     request, transaction_type_id: int, payload: TransactionTypeIn
 ):
@@ -56,7 +57,7 @@ def update_transaction_type(
             api_logger.error(
                 f"Transaction type not updated : transaction type exists ({payload.transaction_type})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Transaction type not updated : transaction type exists ({payload.transaction_type})"
             )
             raise HttpError(400, "Transaction type already exists")
@@ -65,14 +66,14 @@ def update_transaction_type(
             api_logger.error(
                 "Transaction type not updated : db integrity error"
             )
-            error_logger.error(
+            error_logger.exception(
                 "Transaction type not updated : db integrity error"
             )
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction type not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -107,7 +108,7 @@ def get_transaction_type(request, transaction_type_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction type not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -131,11 +132,11 @@ def list_transaction_types(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction type list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
-@transaction_type_router.delete("/delete/{transaction_type_id}")
+@transaction_type_router.delete("/delete/{transaction_type_id}", auth=FullAccessAuth())
 def delete_transaction_type(request, transaction_type_id: int):
     """
     The function `delete_transaction_type` deletes the transaction type specified by id.
@@ -155,14 +156,18 @@ def delete_transaction_type(request, transaction_type_id: int):
         transaction_type = get_object_or_404(
             TransactionType, id=transaction_type_id
         )
+        if transaction_type.is_system:
+            raise HttpError(403, "Cannot delete a system object")
         transaction_type_name = transaction_type.transaction_type
         transaction_type.delete()
         api_logger.info(f"Transaction type deleted : {transaction_type_name}")
         return {"success": True}
     except Http404:
         raise HttpError(404, "Transaction type not found")
+    except HttpError:
+        raise
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Transaction type not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

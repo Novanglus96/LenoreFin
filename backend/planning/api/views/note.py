@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from typing import List
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -15,7 +16,7 @@ task_logger = logging.getLogger("task")
 note_router = Router(tags=["Notes"])
 
 
-@note_router.post("/create")
+@note_router.post("/create", auth=FullAccessAuth())
 def create_note(request, payload: NoteIn):
     """
     The function `create_note` creates a note
@@ -35,11 +36,11 @@ def create_note(request, payload: NoteIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
-@note_router.put("/update/{note_id}")
+@note_router.put("/update/{note_id}", auth=FullAccessAuth())
 def update_note(request, note_id: int, payload: NoteIn):
     """
     The function `update_note` updates the note specified by id.
@@ -68,7 +69,7 @@ def update_note(request, note_id: int, payload: NoteIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -97,7 +98,7 @@ def get_note(request, note_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -121,11 +122,11 @@ def list_notes(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
-@note_router.delete("/delete/{note_id}")
+@note_router.delete("/delete/{note_id}", auth=FullAccessAuth())
 def delete_note(request, note_id: int):
     """
     The function `delete_note` deletes the note specified by id.
@@ -152,5 +153,5 @@ def delete_note(request, note_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Note not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

@@ -114,6 +114,7 @@ class DomainDataSetObject:
     label: Optional[str] = None
     hoverBackgroundColor: Optional[str] = "rgba(75,192,192,0.6)"
     hoverBorderColor: Optional[str] = "rgba(75,192,192,1)"
+    fill: Optional[bool] = None
 
 
 @dataclass

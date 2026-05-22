@@ -43,19 +43,55 @@
               color="selected"
               title="Tags"
             ></v-list-item>
+            <v-list-item
+              prepend-icon="mdi-account-tie"
+              to="/payees"
+              color="selected"
+              title="Payees"
+            ></v-list-item>
+            <template v-if="authStore.isFullAccess">
+              <v-divider class="my-1"></v-divider>
+              <v-list-item
+                prepend-icon="mdi-database-arrow-up"
+                to="/backup"
+                color="selected"
+                title="Backup & Restore"
+              ></v-list-item>
+              <v-list-item
+                prepend-icon="mdi-file-document-outline"
+                to="/logs"
+                color="selected"
+                title="Logs"
+              ></v-list-item>
+              <v-list-item
+                prepend-icon="mdi-cog"
+                href="/admin"
+                color="selected"
+                title="Settings"
+                :disabled="!isOnline"
+              ></v-list-item>
+            </template>
+            <v-divider class="my-1"></v-divider>
+            <div class="text-center text-caption text-medium-emphasis py-2">v{{ version }}</div>
           </v-list>
         </v-menu>
         <v-img :width="132" aspect-ratio="1/1" cover src="logov2.png"></v-img>
       </template>
-      <v-app-bar-title>
+      <v-app-bar-title v-if="!isMobile">
         <span class="text-caption font-weight-bold">v{{ version }}</span>
       </v-app-bar-title>
+      <v-tooltip text="You're offline — editing disabled" v-if="!isOnline">
+        <template v-slot:activator="{ props }">
+          <v-icon icon="mdi-wifi-off" color="warning" class="mx-2" v-bind="props"></v-icon>
+        </template>
+      </v-tooltip>
       <v-btn
         icon="mdi-theme-light-dark"
         @click="handleToggle"
         :color="isDark ? '#F5F5F5' : '#121212'"
         size="small"
       ></v-btn>
+      <v-btn icon="mdi-logout" size="small" @click="handleLogout"></v-btn>
       <v-menu location="start">
         <template v-slot:activator="{ props }">
           <v-btn class="text-none" stacked v-bind="props">
@@ -99,8 +135,8 @@
           </v-card-text>
           <v-card-actions v-if="messages.total_count > 0">
             <v-spacer></v-spacer>
-            <v-btn color="primary" @click="markRead">Mark All Read</v-btn>
-            <v-btn color="primary" @click="deleteAll">Delete All</v-btn>
+            <v-btn color="primary" @click="markRead" :disabled="!isOnline">Mark All Read</v-btn>
+            <v-btn color="primary" @click="deleteAll" :disabled="!isOnline">Delete All</v-btn>
           </v-card-actions>
         </v-card>
       </v-menu>
@@ -171,7 +207,37 @@
             ></v-list-item>
           </template>
         </v-tooltip>
-        <v-tooltip text="Settings">
+        <v-tooltip text="Payees">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              prepend-icon="mdi-account-tie"
+              to="/payees"
+              v-bind="props"
+              color="selected"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="Backup & Restore" v-if="authStore.isFullAccess">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              prepend-icon="mdi-database-arrow-up"
+              to="/backup"
+              v-bind="props"
+              color="selected"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="Logs" v-if="authStore.isFullAccess">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              prepend-icon="mdi-file-document-outline"
+              to="/logs"
+              v-bind="props"
+              color="selected"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="Settings" v-if="authStore.isFullAccess">
           <template v-slot:activator="{ props }">
             <v-list-item
               prepend-icon="mdi-cog"
@@ -179,6 +245,7 @@
               href="/admin"
               v-bind="props"
               color="selected"
+              :disabled="!isOnline"
             ></v-list-item>
           </template>
         </v-tooltip>
@@ -200,6 +267,8 @@
   import { useRouter } from "vue-router";
   import { useTransactionsStore } from "@/stores/transactions";
   import { useThemeStore } from "@/stores/themeStore";
+  import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const theme = useTheme();
   const themeStore = useThemeStore();
@@ -220,12 +289,14 @@
   const { messages, markRead, deleteAll } = useMessages();
   const { mdAndUp, smAndDown } = useDisplay();
   const isMobile = smAndDown;
+  const authStore = useAuthStore();
   const nav_toggle = ref(true);
+  const { isOnline } = useOnlineStatus();
 
   const setAccount = (account, forecast) => {
+    transactions_store.resetFilters();
     transactions_store.pageinfo.account_id = account;
     transactions_store.pageinfo.forecast = forecast;
-    transactions_store.pageinfo.page = 1;
     transactions_store.pageinfo.maxdays = 14;
     transactions_store.pageinfo.view_type = 2;
     router.push({ name: "dashboard" });
@@ -246,5 +317,12 @@
 
   function handleToggle() {
     themeStore.toggleTheme();
+  }
+
+  async function handleLogout() {
+    await authStore.logout();
+    // Full page reload clears all SPA state and bfcache — ensures
+    // the back button cannot restore an authenticated page after logout.
+    window.location.href = "/login";
   }
 </script>

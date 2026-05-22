@@ -3,28 +3,36 @@
     "model": "transactions.TransactionStatus",
     "pk": 1,
     "fields": {
-        "transaction_status": "Pending"
+        "transaction_status": "Pending",
+        "is_system": true,
+        "slug": "pending"
     }
   },
   {
     "model": "transactions.TransactionStatus",
     "pk": 2,
     "fields": {
-        "transaction_status": "Cleared"
+        "transaction_status": "Cleared",
+        "is_system": true,
+        "slug": "cleared"
     }
   },
   {
     "model": "transactions.TransactionStatus",
     "pk": 3,
     "fields": {
-        "transaction_status": "Reconciled"
+        "transaction_status": "Reconciled",
+        "is_system": true,
+        "slug": "reconciled"
     }
   },
   {
     "model": "transactions.TransactionStatus",
     "pk": 4,
     "fields": {
-        "transaction_status": "Archived"
+        "transaction_status": "Archived",
+        "is_system": true,
+        "slug": "archived"
     }
   }
 ]

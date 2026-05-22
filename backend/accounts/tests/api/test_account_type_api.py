@@ -128,3 +128,20 @@ def test_get_account_type_not_found(api_client):
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_account_type_schema_has_slug_and_is_system(api_client, checking_account_type):
+    AUTH = {"Authorization": "Bearer test-api-key"}
+    response = api_client.get(
+        f"/accounts/account-types/get/{checking_account_type.id}",
+        headers=AUTH,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "slug" in data
+    assert "is_system" in data
+    assert data["slug"] == checking_account_type.slug
+    assert data["is_system"] == checking_account_type.is_system

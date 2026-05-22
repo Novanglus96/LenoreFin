@@ -11,12 +11,15 @@ class DomainAccountType:
     account_type: str
     color: str
     icon: str
+    slug: str = ""
+    is_system: bool = False
 
 
 @dataclass
 class DomainBank:
     id: int
     bank_name: str
+    logo_url: Optional[str] = None
 
 
 @dataclass
@@ -39,7 +42,7 @@ class DomainAccount:
     rewards_amount: Optional[Decimal] = None
     available_credit: Optional[Decimal] = None
     balance: Optional[Decimal] = None
-    last_statement_amount: Optional[Decimal] = None
+    statement_balance: Optional[Decimal] = None
     funding_account: Optional[DomainAccount] = None
     calculate_payments: Optional[bool] = False
     calculate_interest: Optional[bool] = False
@@ -49,6 +52,10 @@ class DomainAccount:
     statement_day: Optional[int] = 15
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
+    interest_deposit_day: Optional[int] = None
+    is_parent_account: bool = False
+    parent_account_id: Optional[int] = None
+    interest_child_account_id: Optional[int] = None
 
 
 @dataclass

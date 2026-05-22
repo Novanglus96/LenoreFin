@@ -37,7 +37,7 @@
         <v-btn
           @click="clickRemoveAccount()"
           color="primary"
-          :disabled="deleteSubmit"
+          :disabled="deleteSubmit || !isOnline"
         >
           {{ displayButtonText() }}
         </v-btn>
@@ -49,6 +49,8 @@
   import { useRouter } from "vue-router";
   import { useAccountByID } from "@/composables/accountsComposable";
   import { ref, defineEmits, defineProps } from "vue";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const props = defineProps({
     account: Object,

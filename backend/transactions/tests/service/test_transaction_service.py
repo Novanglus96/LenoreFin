@@ -82,6 +82,7 @@ def test_create_transaction_service_creates_transaction(
     test_checking_account,
     test_pending_transaction_status,
     test_expense_transaction_type,
+    test_income_transaction_type,
     test_tag,
 ):
     """create_transaction_service persists a Transaction row to the database."""

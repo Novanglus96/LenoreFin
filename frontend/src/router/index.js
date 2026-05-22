@@ -8,6 +8,7 @@ import AddAccount from "@/views/AddAccount.vue";
 import ForecastView from "@/views/ForecastView.vue";
 import RemindersView from "@/views/RemindersView.vue";
 import TagsView from "@/views/TagsView.vue";
+import PayeesView from "@/views/PayeesView.vue";
 import DocumentView from "@/views/DocumentView.vue";
 import CalculatorView from "@/views/CalculatorView.vue";
 import PayView from "@/views/PayView.vue";
@@ -16,8 +17,18 @@ import ExpensesView from "@/views/ExpensesView.vue";
 import NotesView from "@/views/NotesView.vue";
 import RetirementView from "@/views/RetirementView.vue";
 import BudgetsView from "@/views/BudgetsView.vue";
+import BackupView from "@/views/BackupView.vue";
+import LogsView from "@/views/LogsView.vue";
+import ReportsView from "@/views/ReportsView.vue";
+import LoginView from "@/views/LoginView.vue";
 
 const routes = [
+  {
+    path: "/login",
+    name: "login",
+    component: LoginView,
+    meta: { public: true },
+  },
   {
     path: "/",
     name: "dashboard",
@@ -64,6 +75,11 @@ const routes = [
     component: TagsView,
   },
   {
+    path: "/payees",
+    name: "payees",
+    component: PayeesView,
+  },
+  {
     path: "/planning/calculator",
     name: "calculator",
     component: CalculatorView,
@@ -99,6 +115,21 @@ const routes = [
     component: RetirementView,
   },
   {
+    path: "/backup",
+    name: "backup",
+    component: BackupView,
+  },
+  {
+    path: "/logs",
+    name: "logs",
+    component: LogsView,
+  },
+  {
+    path: "/reports",
+    name: "reports",
+    component: ReportsView,
+  },
+  {
     path: "/:catchAll(.*)",
     component: FourView,
     name: "NotFound",
@@ -110,16 +141,41 @@ const router = createRouter({
   routes,
 });
 
-// Add a global beforeEach guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const isPageReload = sessionStorage.getItem("isPageReload");
   sessionStorage.removeItem("isPageReload");
 
-  if (isPageReload && to.fullPath !== "/") {
-    next("/");
-  } else {
-    next();
+  if (isPageReload && to.fullPath !== "/" && !to.meta.public) {
+    return next("/");
   }
+
+  if (to.meta.public) {
+    if (to.name === "login") {
+      const { useAuthStore } = await import("@/stores/auth");
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) {
+        await authStore.fetchCurrentUser();
+      }
+      if (authStore.isAuthenticated) {
+        return next(to.query.redirect || "/");
+      }
+    }
+    return next();
+  }
+
+  // Lazy import to avoid circular dependency at module load time
+  const { useAuthStore } = await import("@/stores/auth");
+  const authStore = useAuthStore();
+
+  if (!authStore.isAuthenticated) {
+    await authStore.fetchCurrentUser();
+  }
+
+  if (!authStore.isAuthenticated) {
+    return next({ name: "login", query: { redirect: to.fullPath } });
+  }
+
+  next();
 });
 
 // Set a flag to detect page reload

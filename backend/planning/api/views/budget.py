@@ -17,6 +17,7 @@ from transactions.api.dependencies.get_transactions_by_tag import (
     get_transactions_by_tag,
 )
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -26,7 +27,7 @@ task_logger = logging.getLogger("task")
 budget_router = Router(tags=["Budgets"])
 
 
-@budget_router.post("/create")
+@budget_router.post("/create", auth=FullAccessAuth())
 def create_budget(request, payload: BudgetIn):
     """
     The function `create_budget` creates a budget
@@ -54,16 +55,16 @@ def create_budget(request, payload: BudgetIn):
         else:
             # Log other types of integry errors
             api_logger.error("Budget not created : db integrity error")
-            error_logger.error("Budget not created : db integrity error")
+            error_logger.exception("Budget not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
-@budget_router.put("/update/{budget_id}")
+@budget_router.put("/update/{budget_id}", auth=FullAccessAuth())
 def update_budget(request, budget_id: int, payload: BudgetIn):
     """
     The function `update_budget` updates the budget specified by id.
@@ -104,19 +105,19 @@ def update_budget(request, budget_id: int, payload: BudgetIn):
             api_logger.error(
                 f"Budget not updated : budget exists ({payload.budget})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Budget not updated : budget exists ({payload.budget})"
             )
             raise HttpError(400, "Budget already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Budget not updated : db integrity error")
-            error_logger.error("Budget not updated : db integrity error")
+            error_logger.exception("Budget not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -145,7 +146,7 @@ def get_budget(request, budget_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
@@ -193,9 +194,12 @@ def list_budgets(
             budget_total = budget.amount
             if budget.roll_over:
                 budget_total += budget.roll_over_amt
-            if total:
+            if budget_total <= 0:
+                # Negative rollover already exceeds the budget for this period
+                used_percentage = 100
+            elif total:
                 used_percentage = min(
-                    100, round(abs(total) / abs(budget_total) * 100)
+                    100, round(abs(total) / budget_total * 100)
                 )
             else:
                 used_percentage = 0
@@ -212,11 +216,11 @@ def list_budgets(
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
 
-@budget_router.delete("/delete/{budget_id}")
+@budget_router.delete("/delete/{budget_id}", auth=FullAccessAuth())
 def delete_budget(request, budget_id: int):
     """
     The function `delete_budget` deletes the budget specified by id.
@@ -243,7 +247,7 @@ def delete_budget(request, budget_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Budget not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 

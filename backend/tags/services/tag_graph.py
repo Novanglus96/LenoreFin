@@ -6,7 +6,6 @@ from typing import List, Tuple
 import pytz
 from dateutil.relativedelta import relativedelta
 from django.db.models import Count, F, Sum
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from administration.models import Option
@@ -89,25 +88,25 @@ def _get_tags_and_result(
 
     if type_id == 1:
         tags = (
-            Tag.objects.filter(tag_type__id=1)
+            Tag.objects.filter(tag_type__slug='expense')
             .exclude(id__in=exclude_list)
             .exclude(child__isnull=False)
         )
         result = Transaction.objects.filter(
             transaction_date__month=target_month,
             transaction_date__year=target_year,
-            transaction_type_id=1,
+            transaction_type__slug='expense',
         )
     elif type_id == 2:
         tags = (
-            Tag.objects.filter(tag_type__id=2)
+            Tag.objects.filter(tag_type__slug='income')
             .exclude(id__in=exclude_list)
             .exclude(child__isnull=False)
         )
         result = Transaction.objects.filter(
             transaction_date__month=target_month,
             transaction_date__year=target_year,
-            transaction_type_id=2,
+            transaction_type__slug='income',
         )
     elif type_id == 3:
         tags = []
@@ -210,7 +209,7 @@ def get_graph_new_data(widget_id: int) -> List[PieGraphItem]:
 
     Returns a list of PieGraphItem objects for the given widget.
     """
-    options = get_object_or_404(Option, id=1)
+    options = Option.load()
     widget_opts = _resolve_widget_options(options, widget_id)
 
     exclude_list = json.loads(widget_opts["exclude"])
@@ -258,7 +257,7 @@ def get_graph_data(widget_id: int) -> GraphOut:
 
     Returns a GraphOut object for the given widget.
     """
-    options = get_object_or_404(Option, id=1)
+    options = Option.load()
     widget_opts = _resolve_widget_options(options, widget_id)
 
     exclude_list = json.loads(widget_opts["exclude"])

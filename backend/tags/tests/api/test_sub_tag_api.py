@@ -61,3 +61,18 @@ def test_list_sub_tags_ordered_by_name(api_client, tag_type_expense):
     assert response.status_code == 200
     names = [item["tag_name"] for item in response.json()]
     assert names == sorted(names)
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_sub_tag_schema_has_slug_and_is_system(api_client, test_sub_tag):
+    response = api_client.get(
+        f"/tags/sub-tags/get/{test_sub_tag.id}", headers=AUTH
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "slug" in data
+    assert "is_system" in data
+    assert data["slug"] == test_sub_tag.slug
+    assert data["is_system"] == test_sub_tag.is_system

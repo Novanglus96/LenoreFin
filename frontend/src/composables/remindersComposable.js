@@ -1,21 +1,9 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
-import axios from "axios";
+import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
-import { useApiKey } from "./ueApiKey";
-
-const apiKey = useApiKey();
-
-const apiClient = axios.create({
-  baseURL: "/api/v1",
-  withCredentials: false,
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-});
 
 function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   if (error.response) {
     console.error("Response error:", error.response.data);
@@ -99,7 +87,6 @@ export function useReminders() {
   const deleteReminderMutation = useMutation({
     mutationFn: deleteReminderFunction,
     onSuccess: () => {
-      console.log("Success deleting reminder");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
@@ -111,7 +98,6 @@ export function useReminders() {
   const createReminderMutation = useMutation({
     mutationFn: createReminderFunction,
     onSuccess: () => {
-      console.log("Success creating reminder");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
@@ -123,7 +109,6 @@ export function useReminders() {
   const updateReminderMutation = useMutation({
     mutationFn: updateReminderFunction,
     onSuccess: () => {
-      console.log("Success updating reminder");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
@@ -135,12 +120,18 @@ export function useReminders() {
   const addReminderTransMutation = useMutation({
     mutationFn: addReminderTrans,
     onSuccess: () => {
-      console.log("Success adding reminder transaction");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      // Delayed refetch ensures the async reminder cache rebuild (django-q2 worker)
+      // has completed before the UI shows the final state.
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      }, 3500);
     },
   });
 

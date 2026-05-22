@@ -13,10 +13,11 @@
           <v-btn
             color="error"
             prepend-icon="mdi-delete"
-            :disabled="canEdit || !props.budget"
+            :disabled="canEdit || !props.budget || !isOnline"
             @click="showConfirmDelete = true"
             size="small"
             variant="text"
+            v-if="authStore.isFullAccess"
           >
             delete
           </v-btn>
@@ -37,17 +38,18 @@
                 <v-btn color="primary" @click="showConfirmDelete = false">
                   Cancel
                 </v-btn>
-                <v-btn color="primary" @click="deleteClicked">Delete</v-btn>
+                <v-btn color="primary" @click="deleteClicked" :disabled="!isOnline">Delete</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
           <v-btn
             color="primary"
             prepend-icon="mdi-pencil"
-            :disabled="canEdit || !props.budget"
+            :disabled="canEdit || !props.budget || !isOnline"
             @click="canEdit = true"
             size="small"
             variant="text"
+            v-if="authStore.isFullAccess"
           >
             edit
           </v-btn>
@@ -128,7 +130,7 @@
                     >
                       <template v-slot:prepend>
                         <v-icon
-                          icon="mdi-tag"
+                          :icon="item.raw.is_system ? 'mdi-tag' : 'mdi-tag-outline'"
                           :color="tagColor(item.raw.tag_type.id)"
                         ></v-icon>
                       </template>
@@ -200,7 +202,7 @@
         <v-btn color="primary" :disabled="!canEdit" @click="resetForm">
           {{ props.edit ? "Cancel" : "Close" }}
         </v-btn>
-        <v-btn color="primary" type="submit" :disabled="!canEdit">
+        <v-btn color="primary" type="submit" :disabled="!canEdit || !isOnline">
           {{ props.edit ? "Save Changes" : "Add Budget" }}
         </v-btn>
       </v-card-actions>
@@ -210,11 +212,15 @@
 <script setup>
   import { defineProps, watchEffect, onMounted, ref, defineEmits } from "vue";
   import { useField, useForm } from "vee-validate";
+  import { useAuthStore } from "@/stores/auth";
   import { useTags } from "@/composables/tagsComposable";
   import { useRepeats } from "@/composables/repeatsComposable";
   import { useBudgets } from "@/composables/budgetsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const emit = defineEmits(["updateDialog"]);
+  const authStore = useAuthStore();
   const { tags: tag_items, isLoading: tags_isLoading } = useTags();
   const { repeats, isLoading: repeats_isLoading } = useRepeats();
   const { addBudget, removeBudget, editBudget } = useBudgets();

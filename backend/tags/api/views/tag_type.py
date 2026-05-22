@@ -28,11 +28,11 @@ def list_tag_types(request):
     """
 
     try:
-        qs = TagType.objects.exclude(id=3).order_by("id")
+        qs = TagType.objects.exclude(slug='misc').order_by("id")
         api_logger.debug("Tag type list retrieved")
         return qs
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Tag type list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

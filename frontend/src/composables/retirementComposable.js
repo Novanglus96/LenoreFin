@@ -1,21 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
-import axios from "axios";
+import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
-import { useApiKey } from "./ueApiKey";
-
-const apiKey = useApiKey();
-
-const apiClient = axios.create({
-  baseURL: "/api/v1",
-  withCredentials: false,
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-});
 
 function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   if (error.response) {
     console.error("Response error:", error.response.data);
@@ -39,6 +27,15 @@ async function getRetirementForecastFunction() {
   }
 }
 
+async function getRetirementTransactionsFunction() {
+  try {
+    const response = await apiClient.get("/planning/retirement/transactions");
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Retirement transactions not fetched: ");
+  }
+}
+
 export function useRetirementForecast() {
   const queryClient = useQueryClient();
   const {
@@ -56,5 +53,20 @@ export function useRetirementForecast() {
     isLoading,
     isFetching,
     retirement_forecast,
+  };
+}
+
+export function useRetirementTransactions() {
+  const queryClient = useQueryClient();
+  const { data: retirement_transactions, isLoading } = useQuery({
+    queryKey: ["retirement_transactions"],
+    queryFn: () => getRetirementTransactionsFunction(),
+    select: response => response,
+    client: queryClient,
+  });
+
+  return {
+    retirement_transactions,
+    isLoading,
   };
 }

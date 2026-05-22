@@ -1,21 +1,9 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
-import axios from "axios";
+import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
-import { useApiKey } from "./ueApiKey";
-
-const apiKey = useApiKey();
-
-const apiClient = axios.create({
-  baseURL: "/api/v1",
-  withCredentials: false,
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-});
 
 function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   if (error.response) {
     console.error("Response error:", error.response.data);
@@ -120,6 +108,41 @@ async function createTagFunction(newTag) {
   }
 }
 
+async function updateTagFunction({ tagId, tag }) {
+  const mainstore = useMainStore();
+  try {
+    let data = {};
+    if (tag.parent_id == null) {
+      data = {
+        parent_name: tag.tag_name,
+        tag_type_id: tag.tag_type_id,
+      };
+    } else {
+      data = {
+        child_name: tag.tag_name,
+        tag_type_id: tag.tag_type_id,
+        parent_id: tag.parent_id,
+      };
+    }
+    const response = await apiClient.put(`/tags/update/${tagId}`, data);
+    mainstore.showSnackbar("Tag updated successfully!", "success");
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Tag not updated: ");
+  }
+}
+
+async function deleteTagFunction(tagId) {
+  const mainstore = useMainStore();
+  try {
+    const response = await apiClient.delete(`/tags/delete/${tagId}`);
+    mainstore.showSnackbar("Tag deleted successfully!", "success");
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Tag not deleted: ");
+  }
+}
+
 export function useTags(tag_type) {
   const queryClient = useQueryClient();
   const {
@@ -136,7 +159,20 @@ export function useTags(tag_type) {
   const createTagMutation = useMutation({
     mutationFn: createTagFunction,
     onSuccess: () => {
-      console.log("Success adding tag");
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+
+  const updateTagMutation = useMutation({
+    mutationFn: updateTagFunction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+
+  const deleteTagMutation = useMutation({
+    mutationFn: deleteTagFunction,
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
   });
@@ -145,10 +181,20 @@ export function useTags(tag_type) {
     createTagMutation.mutate(newTag);
   }
 
+  async function editTag(tagId, tag) {
+    updateTagMutation.mutate({ tagId, tag });
+  }
+
+  async function removeTag(tagId) {
+    deleteTagMutation.mutate(tagId);
+  }
+
   return {
     isLoading,
     tags,
     addTag,
+    editTag,
+    removeTag,
     isFetching,
   };
 }
@@ -181,6 +227,20 @@ export function useMainTags() {
     isLoading,
     main_tags,
   };
+}
+
+export function useSubTags() {
+  const queryClient = useQueryClient();
+  const { data: sub_tags, isLoading } = useQuery({
+    queryKey: ["sub_tags"],
+    queryFn: async () => {
+      const response = await apiClient.get("/tags/sub-tags/list");
+      return response.data;
+    },
+    select: response => response,
+    client: queryClient,
+  });
+  return { isLoading, sub_tags };
 }
 
 export function useGraphs(widget_id) {

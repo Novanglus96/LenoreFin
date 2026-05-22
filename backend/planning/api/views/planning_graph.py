@@ -1056,7 +1056,7 @@ def list_graph_totals(request, graph_type: str):
             except Exception as e:
                 # Log other types of exceptions
                 api_logger.error(f"{graph_type} graph details not retrieved")
-                error_logger.error(f"{str(e)}")
+                error_logger.exception(f"{str(e)}")
                 raise HttpError(
                     500, f"{graph_type} graph details retrieval error: {str(e)}"
                 )
@@ -1489,7 +1489,7 @@ def list_graph_totals(request, graph_type: str):
                 api_logger.error(
                     f"{graph_type} graph details not retrieved(Pay)"
                 )
-                error_logger.error(f"{str(e)}")
+                error_logger.exception(f"{str(e)}")
                 raise HttpError(
                     500,
                     f"{graph_type} graph details retrieval error(Pay): {str(e)}",
@@ -1499,7 +1499,7 @@ def list_graph_totals(request, graph_type: str):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error(f"{graph_type} planning graph not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(
             500, f"{graph_type} planning graph retrieval error: {str(e)}"
         )
@@ -1583,5 +1583,5 @@ def prepare_planning_graph(
     except Exception as e:
         # Log other types of exceptions
         api_logger.error(f"Planning graph not prepared({pretty_name})")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Planning graph preperation error: {str(e)}")

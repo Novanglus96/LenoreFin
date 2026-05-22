@@ -117,3 +117,19 @@ def test_delete_transaction_status_not_found(api_client):
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_transaction_status_schema_has_slug_and_is_system(api_client, test_pending_transaction_status):
+    response = api_client.get(
+        f"/transactions/transaction-statuses/get/{test_pending_transaction_status.id}",
+        headers=AUTH,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "slug" in data
+    assert "is_system" in data
+    assert data["slug"] == test_pending_transaction_status.slug
+    assert data["is_system"] == test_pending_transaction_status.is_system

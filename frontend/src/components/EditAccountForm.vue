@@ -1,5 +1,5 @@
 <template>
-  <v-dialog width="800">
+  <v-dialog :fullscreen="smAndDown" :width="smAndDown ? undefined : '800'">
     <form @submit.prevent="submit">
       <v-card min-height="550px">
         <v-card-text>
@@ -11,7 +11,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="account_name.value.value"
                     variant="outlined"
@@ -20,7 +20,7 @@
                     :error-messages="account_name.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-autocomplete
                     clearable
                     label="Bank Name*"
@@ -51,7 +51,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="opening_balance.value.value"
                     variant="outlined"
@@ -61,8 +61,61 @@
                     :error-messages="opening_balance.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col v-if="!smAndDown">
                   <v-spacer></v-spacer>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-sheet>
+          <v-sheet border rounded v-if="!props.account.is_parent_account">
+            <v-container>
+              <v-row dense>
+                <v-col>
+                  <h4 class="text-h6 font-weight-bold mb-2">Parent Account</h4>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-autocomplete
+                    clearable
+                    label="Parent Account"
+                    :items="sameTypeAccounts"
+                    variant="outlined"
+                    :loading="accounts_isLoading"
+                    item-title="account_name"
+                    item-value="id"
+                    v-model="parent_account_id.value.value"
+                    density="comfortable"
+                    :error-messages="parent_account_id.errorMessage.value"
+                    hint="Roll this account up under a parent. Interest is calculated at the parent level."
+                    persistent-hint
+                  ></v-autocomplete>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-sheet>
+          <v-sheet border rounded v-if="props.account.is_parent_account">
+            <v-container>
+              <v-row dense>
+                <v-col>
+                  <h4 class="text-h6 font-weight-bold mb-2">Child Accounts</h4>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-autocomplete
+                    clearable
+                    label="Interest Child Account"
+                    :items="childAccounts"
+                    variant="outlined"
+                    item-title="account_name"
+                    item-value="id"
+                    v-model="interest_child_account_id.value.value"
+                    density="comfortable"
+                    :error-messages="interest_child_account_id.errorMessage.value"
+                    hint="Interest forecast deposits will be posted to this child account."
+                    persistent-hint
+                  ></v-autocomplete>
                 </v-col>
               </v-row>
             </v-container>
@@ -77,14 +130,14 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-checkbox
                     v-model="calculate_payments.value.value"
                     label="Calculate Payments"
                     :error-messages="calculate_payments.errorMessage.value"
                   ></v-checkbox>
                 </v-col>
-                <v-col v-if="calculate_payments.value.value">
+                <v-col :cols="smAndDown ? 12 : undefined" v-if="calculate_payments.value.value">
                   <v-checkbox
                     v-model="calculate_interest.value.value"
                     label="Calculate Interest"
@@ -93,7 +146,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="credit_limit.value.value"
                     variant="outlined"
@@ -103,7 +156,7 @@
                     :error-messages="credit_limit.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="annual_rate.value.value"
                     variant="outlined"
@@ -115,7 +168,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Statement End Day"
                     :items="intervals"
@@ -125,7 +178,7 @@
                     :error-messages="statement_day.errorMessage.value"
                   ></v-select>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Statement Due Day"
                     :items="intervals"
@@ -135,7 +188,7 @@
                     :error-messages="due_day.errorMessage.value"
                   ></v-select>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Statement Pay Day"
                     :items="intervals"
@@ -147,7 +200,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Statement Cycle Length"
                     :items="intervals"
@@ -157,7 +210,7 @@
                     :error-messages="statement_cycle_length.errorMessage.value"
                   ></v-select>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
                     label="Statment Cycle Period"
                     :items="units"
@@ -171,18 +224,18 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
-                    v-model="last_statement_amount.value.value"
+                    v-model="statement_balance.value.value"
                     variant="outlined"
-                    label="Last Statement Amount"
+                    label="Statement Balance"
                     prefix="$"
                     density="comfortable"
                     clearable
-                    :error-messages="last_statement_amount.errorMessage.value"
+                    :error-messages="statement_balance.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="rewards_amount.value.value"
                     variant="outlined"
@@ -195,7 +248,7 @@
                 </v-col>
               </v-row>
               <v-row dense v-if="calculate_payments.value.value">
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-autocomplete
                     label="Payment Strategy"
                     :items="payment_strategies"
@@ -208,7 +261,7 @@
                     clearable
                   ></v-autocomplete>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-autocomplete
                     clearable
                     label="Funding Account"
@@ -237,7 +290,7 @@
                 </v-col>
               </v-row>
               <v-row dense v-if="calculate_payments.value.value">
-                <v-col v-if="payment_strategy.value.value == 'C'">
+                <v-col :cols="smAndDown ? 12 : undefined" v-if="payment_strategy.value.value == 'C'">
                   <v-text-field
                     v-model="payment_amount.value.value"
                     variant="outlined"
@@ -248,7 +301,7 @@
                     :error-messages="payment_amount.errorMessage.value"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
                   <v-text-field
                     v-model="minimum_payment_amount.value.value"
                     variant="outlined"
@@ -262,11 +315,53 @@
               </v-row>
             </v-container>
           </v-sheet>
+          <v-sheet border rounded v-if="['savings', 'investment'].includes(props.account.account_type.slug) && !parent_account_id.value.value">
+            <v-container>
+              <v-row dense>
+                <v-col>
+                  <h4 class="text-h6 font-weight-bold mb-2">
+                    Savings / Investment Info
+                  </h4>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-checkbox
+                    v-model="calculate_interest.value.value"
+                    label="Calculate Interest"
+                    :error-messages="calculate_interest.errorMessage.value"
+                  ></v-checkbox>
+                </v-col>
+              </v-row>
+              <v-row dense v-if="calculate_interest.value.value">
+                <v-col :cols="smAndDown ? 12 : undefined">
+                  <v-text-field
+                    v-model="annual_rate.value.value"
+                    variant="outlined"
+                    label="Annual Rate (APY)"
+                    suffix="%"
+                    density="comfortable"
+                    :error-messages="annual_rate.errorMessage.value"
+                  ></v-text-field>
+                </v-col>
+                <v-col :cols="smAndDown ? 12 : undefined">
+                  <v-select
+                    label="Interest Deposit Day"
+                    :items="intervals"
+                    v-model="interest_deposit_day.value.value"
+                    density="comfortable"
+                    clearable
+                    :error-messages="interest_deposit_day.errorMessage.value"
+                  ></v-select>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-sheet>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="closeForm()" color="primary">Close</v-btn>
-          <v-btn color="primary" type="submit">Save</v-btn>
+          <v-btn color="primary" type="submit" :disabled="!isOnline">Save</v-btn>
         </v-card-actions>
       </v-card>
     </form>
@@ -281,10 +376,13 @@
     watchEffect,
     ref,
   } from "vue";
+  import { useDisplay } from "vuetify";
   import { useBanks } from "@/composables/banksComposable";
   import { useAccountByID } from "@/composables/accountsComposable";
   import { useMainStore } from "@/stores/main";
   import { useAccounts } from "@/composables/accountsComposable";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
   import { useField, useForm } from "vee-validate";
   import * as yup from "yup";
 
@@ -292,11 +390,12 @@
     account_name: yup.string().required("Must provide an account name."),
     account_type_id: yup.number().required("Must select an account type."),
     opening_balance: yup.number().required("Must provide opening balance."),
-    annual_rate: yup.number().when("account_type_id", {
-      is: 1,
+    annual_rate: yup.number().when(["account_type_id", "calculate_interest"], {
+      is: (type, calc) => type === 1 || ((type === 3 || type === 4) && calc === true),
       then: schema => schema.required("Must provide annual rate (APR/APY)."),
       otherwise: schema => schema.notRequired(),
     }),
+    interest_deposit_day: yup.number().nullable().notRequired(),
     active: yup.boolean().required("Must mark active/inactive."),
     open_date: yup.string().required("Must provide opening date."),
     statement_cycle_length: yup
@@ -343,7 +442,7 @@
         otherwise: schema => schema.notRequired(),
       }),
     bank_id: yup.number().required("Must select a bank."),
-    last_statement_amount: yup
+    statement_balance: yup
       .number()
       .when(["account_type_id", "calculate_payments"], {
         is: (type, calc) => type === 1 && calc === true,
@@ -380,6 +479,7 @@
       }),
   });
 
+  const { smAndDown } = useDisplay();
   const { handleSubmit } = useForm({
     validationSchema: schema,
   });
@@ -396,7 +496,7 @@
   const rewards_amount = useField("rewards_amount");
   const credit_limit = useField("credit_limit");
   const bank_id = useField("bank_id");
-  const last_statement_amount = useField("last_statement_amount");
+  const statement_balance = useField("statement_balance");
   const funding_account_id = useField("funding_account_id");
   const calculate_payments = useField("calculate_payments");
   const calculate_interest = useField("calculate_interest");
@@ -406,9 +506,27 @@
   const statement_day = useField("statement_day");
   const due_day = useField("due_day");
   const pay_day = useField("pay_day");
+  const interest_deposit_day = useField("interest_deposit_day");
+  const parent_account_id = useField("parent_account_id");
+  const interest_child_account_id = useField("interest_child_account_id");
 
   const { accounts, isLoading: accounts_isLoading } = useAccounts();
   const { banks, isLoading } = useBanks();
+
+  const sameTypeAccounts = computed(() => {
+    if (!accounts.value) return []
+    return accounts.value.filter(
+      a =>
+        a.id !== props.account.id &&
+        a.account_type.id === props.account.account_type.id &&
+        a.parent_account_id === null,
+    )
+  })
+
+  const childAccounts = computed(() => {
+    if (!accounts.value) return []
+    return accounts.value.filter(a => a.parent_account_id === props.account.id)
+  })
   const mainstore = useMainStore();
   const emit = defineEmits(["updateDialog"]);
   const props = defineProps({
@@ -424,10 +542,8 @@
       editAccount(values);
       closeForm();
     },
-    errors => {
-      // Validation failed
+    () => {
       generalError.value = "Please fix the errors below before saving.";
-      console.log(errors);
     },
   );
 
@@ -474,7 +590,7 @@
     rewards_amount.value.value = props.account.rewards_amount;
     credit_limit.value.value = props.account.credit_limit;
     bank_id.value.value = props.account.bank.id;
-    last_statement_amount.value.value = props.account.last_statement_amount;
+    statement_balance.value.value = props.account.statement_balance;
     funding_account_id.value.value = props.account.funding_account
       ? props.account.funding_account.id
       : null;
@@ -486,6 +602,9 @@
     statement_day.value.value = props.account.statement_day;
     due_day.value.value = props.account.due_day;
     pay_day.value.value = props.account.pay_day;
+    interest_deposit_day.value.value = props.account.interest_deposit_day;
+    parent_account_id.value.value = props.account.parent_account_id ?? null;
+    interest_child_account_id.value.value = props.account.interest_child_account_id ?? null;
   };
 
   function parseDateAsLocal(dateString) {

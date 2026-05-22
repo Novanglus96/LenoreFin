@@ -11,6 +11,7 @@ from administration.services import get_message_list
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -20,7 +21,7 @@ task_logger = logging.getLogger("task")
 message_router = Router(tags=["Messages"])
 
 
-@message_router.post("/create")
+@message_router.post("/create", auth=FullAccessAuth())
 def create_message(request, payload: MessageIn):
     """
     The function `create_transaction_detail` creates a transaction detail
@@ -40,11 +41,11 @@ def create_message(request, payload: MessageIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
-@message_router.put("/update/{message_id}")
+@message_router.put("/update/{message_id}", auth=FullAccessAuth())
 def update_message(request, message_id: int, payload: MessageIn):
     """
     The function `update_message` updates the message specified by id.
@@ -74,11 +75,11 @@ def update_message(request, message_id: int, payload: MessageIn):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
-@message_router.patch("/readall/{message_id}")
+@message_router.patch("/readall/{message_id}", auth=FullAccessAuth())
 def update_messages(request, message_id: int, payload: AllMessage):
     """
     The function `update_messages` marks all messages as read.
@@ -102,7 +103,7 @@ def update_messages(request, message_id: int, payload: AllMessage):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Messages not marked as read")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Messages not marked read error")
 
 
@@ -131,11 +132,11 @@ def get_message(request, message_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
-@message_router.delete("/delete/{message_id}")
+@message_router.delete("/delete/{message_id}", auth=FullAccessAuth())
 def delete_message(request, message_id: int):
     """
     The function `delete_message` deletes the message specified by id.
@@ -161,11 +162,11 @@ def delete_message(request, message_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
-@message_router.delete("/deleteall/{message_id}")
+@message_router.delete("/deleteall/{message_id}", auth=FullAccessAuth())
 def delete_messages(request, message_id: int):
     """
     The function `delete_messages` deletes all messages.
@@ -187,7 +188,7 @@ def delete_messages(request, message_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("All messages not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -211,5 +212,5 @@ def list_messages(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Message list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

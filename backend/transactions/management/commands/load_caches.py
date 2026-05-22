@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from reminders.models import Reminder
 from accounts.models import Account
-from transactions.tasks import update_reminder_cache, update_cc_forecast_cache
+from transactions.tasks import update_reminder_cache, update_cc_forecast_cache, update_interest_forecast_cache
 from transactions.models import (
     ReminderCacheTransaction,
     ReminderCacheTransactionDetail,
@@ -9,8 +9,6 @@ from transactions.models import (
     ForecastCacheTransactionDetail,
 )
 from django.db import connection
-from django.core.management import call_command
-from io import StringIO
 import logging
 
 api_logger = logging.getLogger("api")
@@ -43,15 +41,24 @@ class Command(BaseCommand):
 
         # Recreate Forecast Cache for all CC Accounts
         task_logger.info("Recreating forecast cache for all CC accounts")
-        for account in Account.objects.filter(account_type_id=1):
+        for account in Account.objects.filter(account_type__slug='credit-card'):
             task_logger.debug(f"Loading cache for account #{account.id}")
             update_cc_forecast_cache(account.id)
 
+        # Recreate Forecast Cache for all savings/investment accounts.
+        # Skip child accounts — the parent path in update_interest_forecast_cache handles them.
+        task_logger.info("Recreating forecast cache for all savings/investment accounts")
+        for account in Account.objects.filter(
+            account_type__slug__in=['savings', 'investment'],
+            parent_account__isnull=True,
+        ):
+            task_logger.debug(f"Loading cache for account #{account.id}")
+            update_interest_forecast_cache(account.id)
+
 
 def reset_ids_for_model(app_label, model_label):
-    out = StringIO()
-    call_command("sqlsequencereset", app_label, stdout=out)
-    sql = out.getvalue()
-
+    if connection.vendor != "postgresql":
+        return
+    table = f"{app_label}_{model_label}"
     with connection.cursor() as cursor:
-        cursor.execute(sql)
+        cursor.execute(f"ALTER SEQUENCE {table}_id_seq RESTART WITH 1")

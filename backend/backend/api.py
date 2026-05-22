@@ -1,6 +1,8 @@
 from ninja import NinjaAPI
-from administration.api.dependencies.auth import GlobalAuth
+from ninja.openapi.docs import Redoc
+from administration.api.dependencies.auth import SessionAuth
 from administration.api.dependencies.version import get_version
+from administration.api.routers.auth import auth_router
 
 # Import routers from apps
 from accounts.api.routers.account_type import account_type_router
@@ -28,6 +30,7 @@ from administration.api.routers.message import message_router
 from transactions.api.routers.transaction_detail import (
     transaction_detail_router,
 )
+from transactions.api.routers.transaction_image import router as transaction_image_router
 from tags.api.routers.tag_graph import tag_graph_router
 from tags.api.routers.graph_by_tags import graph_by_tags_router
 from imports.api.routers.import_file import import_file_router
@@ -40,8 +43,20 @@ from planning.api.routers.planning_graph import planning_graph_router
 from planning.api.routers.budget import budget_router
 from planning.api.routers.retirement import retirement_router
 from administration.api.routers.health import health_router
+from administration.api.routers.backup import backup_router
+from administration.api.routers.logs import router as logs_router
+from reports.api.routers.report import report_router
 
-api = NinjaAPI(auth=GlobalAuth())
+api = NinjaAPI(
+    auth=SessionAuth(),
+    docs=Redoc(settings={
+        "theme": {
+            "colors": {
+                "primary": {"main": "#06966A"}
+            }
+        }
+    }),
+)
 api.title = "LenoreFin API"
 api.version = get_version()
 api.description = "API documentation for LenoreFin"
@@ -68,6 +83,7 @@ api.add_router("/transactions/paychecks", paycheck_router)
 api.add_router("/transactions", transaction_router)
 api.add_router("/administration/messages", message_router)
 api.add_router("/transactions/transaction-details", transaction_detail_router)
+api.add_router("/transactions/attachments", transaction_image_router)
 api.add_router("/tags/tag-graphs", tag_graph_router)
 api.add_router("/tags/graph-by-tags", graph_by_tags_router)
 api.add_router("/file-imports", import_file_router)
@@ -80,3 +96,7 @@ api.add_router("/planning/graph", planning_graph_router)
 api.add_router("/planning/budget", budget_router)
 api.add_router("/planning/retirement", retirement_router)
 api.add_router("/administration/health", health_router)
+api.add_router("/administration/backups", backup_router)
+api.add_router("/administration/logs", logs_router)
+api.add_router("/reports", report_router)
+api.add_router("/auth", auth_router)

@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from typing import List
 import logging
 from django.http import Http404
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -16,7 +17,7 @@ task_logger = logging.getLogger("task")
 bank_router = Router(tags=["Banks"])
 
 
-@bank_router.post("/create")
+@bank_router.post("/create", auth=FullAccessAuth())
 def create_bank(request, payload: BankIn):
     """
     The function `create_bank` creates a bank
@@ -39,23 +40,23 @@ def create_bank(request, payload: BankIn):
             api_logger.error(
                 f"Bank not created : bank exists ({payload.bank_name})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Bank not created : bank exists ({payload.bank_name})"
             )
             raise HttpError(400, "Bank already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Bank not created : db integrity error")
-            error_logger.error("Bank not created : db integrity error")
+            error_logger.exception("Bank not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Bank not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record creation error")
 
 
-@bank_router.put("/update/{bank_id}")
+@bank_router.put("/update/{bank_id}", auth=FullAccessAuth())
 def update_bank(request, bank_id: int, payload: BankIn):
     """
     The function `update_bank` updates the bank specified by id.
@@ -75,6 +76,7 @@ def update_bank(request, bank_id: int, payload: BankIn):
     try:
         bank = get_object_or_404(Bank, id=bank_id)
         bank.bank_name = payload.bank_name
+        bank.logo_url = payload.logo_url
         bank.save()
         api_logger.info(f"Bank updated : {bank.bank_name}")
         return {"success": True}
@@ -84,19 +86,19 @@ def update_bank(request, bank_id: int, payload: BankIn):
             api_logger.error(
                 f"Bank not updated : bank exists ({payload.bank_name})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Bank not updated : bank exists ({payload.bank_name})"
             )
             raise HttpError(400, "Bank already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Bank not updated : db integrity error")
-            error_logger.error("Bank not updated : db integrity error")
+            error_logger.exception("Bank not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Bank not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record update error")
 
 
@@ -125,7 +127,7 @@ def get_bank(request, bank_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Bank not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
@@ -149,11 +151,11 @@ def list_banks(request):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Bank list not retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")
 
 
-@bank_router.delete("/delete/{bank_id}")
+@bank_router.delete("/delete/{bank_id}", auth=FullAccessAuth())
 def delete_bank(request, bank_id: int):
     """
     The function `delete_bank` deletes the bank specified by id.
@@ -178,5 +180,5 @@ def delete_bank(request, bank_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Bank not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, "Record retrieval error")

@@ -19,6 +19,7 @@ from accounts.services import (
 )
 from accounts.mappers import domain_account_to_schema
 import logging
+from administration.api.dependencies.auth import FullAccessAuth
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -29,7 +30,7 @@ task_logger = logging.getLogger("task")
 account_router = Router(tags=["Accounts"])
 
 
-@account_router.post("/create")
+@account_router.post("/create", auth=FullAccessAuth())
 def create_account(request, payload: AccountIn):
     """
     The function `create_account` creates an account
@@ -52,19 +53,19 @@ def create_account(request, payload: AccountIn):
             api_logger.error(
                 f"Account not created : name exists ({payload.account_name})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Account not created : name exists ({payload.account_name})"
             )
             raise HttpError(400, "Account name already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Account not created : db integrity error")
-            error_logger.error("Account not created : db integrity error")
+            error_logger.exception("Account not created : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account not created")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record creation error: {str(e)}")
 
 
@@ -124,11 +125,11 @@ def list_accounts(request, query: AccountQuery = Query(...)):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account list retrieved")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error : {str(e)}")
 
 
-@account_router.patch("/update/{account_id}")
+@account_router.patch("/update/{account_id}", auth=FullAccessAuth())
 def update_account(request, account_id: int, payload: AccountUpdate):
     """
     The function `update_account` updates the account specified by id,
@@ -163,6 +164,12 @@ def update_account(request, account_id: int, payload: AccountUpdate):
             account.minimum_payment_amount = 0.00
             account.funding_account = None
 
+        if account.parent_account_id:
+            if account.calculate_interest:
+                raise HttpError(400, "A child account cannot have interest calculations enabled.")
+            if account.annual_rate and account.annual_rate != 0:
+                raise HttpError(400, "A child account cannot have an APY set.")
+
         account.save()
         api_logger.info(f"Account updated : {account.account_name}")
         return {"success": True}
@@ -172,23 +179,23 @@ def update_account(request, account_id: int, payload: AccountUpdate):
             api_logger.error(
                 f"Account not updated : account exists ({payload.account_name})"
             )
-            error_logger.error(
+            error_logger.exception(
                 f"Account not updated : account exists ({payload.account_name})"
             )
             raise HttpError(400, "Account already exists")
         else:
             # Log other types of integry errors
             api_logger.error("Account not updated : db integrity error")
-            error_logger.error("Account not updated : db integrity error")
+            error_logger.exception("Account not updated : db integrity error")
             raise HttpError(400, "DB integrity error")
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account not updated")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
-@account_router.delete("/delete/{account_id}")
+@account_router.delete("/delete/{account_id}", auth=FullAccessAuth())
 def delete_account(request, account_id: int):
     """
     The function `delete_account` deletes the account specified by id,
@@ -226,5 +233,5 @@ def delete_account(request, account_id: int):
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Account not deleted")
-        error_logger.error(f"{str(e)}")
+        error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")

@@ -27,7 +27,7 @@ def test_create_account(api_client, bank, checking_account_type):
             "statement_cycle_period": "m",
             "credit_limit": 55555,
             "bank_id": bank.id,
-            "last_statement_amount": 555.55,
+            "statement_balance": 555.55,
             "archive_balance": 555.55,
             "funding_account": None,
             "calculate_payments": False,
@@ -68,7 +68,7 @@ def test_create_account_duplicate(
             "statement_cycle_period": "m",
             "credit_limit": 55555,
             "bank_id": bank.id,
-            "last_statement_amount": 555.55,
+            "statement_balance": 555.55,
             "archive_balance": 555.55,
             "funding_account": None,
             "calculate_payments": False,
@@ -219,3 +219,21 @@ def test_get_account_not_found(api_client):
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_account_type_in_account_response_has_slug_and_is_system(
+    api_client, test_checking_account
+):
+    AUTH = {"Authorization": "Bearer test-api-key"}
+    response = api_client.get(
+        f"/accounts/get/{test_checking_account.id}", headers=AUTH
+    )
+
+    assert response.status_code == 200
+    account_type = response.json()["account_type"]
+    assert "slug" in account_type
+    assert "is_system" in account_type
+    assert account_type["slug"] == test_checking_account.account_type.slug
+    assert account_type["is_system"] == test_checking_account.account_type.is_system

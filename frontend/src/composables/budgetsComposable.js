@@ -1,21 +1,9 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
-import axios from "axios";
+import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
-import { useApiKey } from "./ueApiKey";
-
-const apiKey = useApiKey();
-
-const apiClient = axios.create({
-  baseURL: "/api/v1",
-  withCredentials: false,
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-});
 
 function handleApiError(error, message) {
+  if (error.response?.status === 401) throw error;
   const mainstore = useMainStore();
   if (error.response) {
     console.error("Response error:", error.response.data);
@@ -124,7 +112,6 @@ export function useBudgets(widget) {
   const createBudgetMutation = useMutation({
     mutationFn: createBudgetFunction,
     onSuccess: () => {
-      console.log("Success adding budget");
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
     },
   });
@@ -132,7 +119,6 @@ export function useBudgets(widget) {
   const deleteBudgetMutation = useMutation({
     mutationFn: deleteBudgetFunction,
     onSuccess: () => {
-      console.log("Success deleting budget");
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
     },
   });
@@ -140,7 +126,6 @@ export function useBudgets(widget) {
   const updateBudgetMutation = useMutation({
     mutationFn: updateBudgetFunction,
     onSuccess: () => {
-      console.log("Success updating budget");
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
     },
   });

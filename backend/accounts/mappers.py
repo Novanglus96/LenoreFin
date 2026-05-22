@@ -24,7 +24,7 @@ def domain_bank_to_schema(
     bank: DomainBank,
 ) -> BankOut:
     if bank is not None:
-        return BankOut(id=bank.id, bank_name=bank.bank_name)
+        return BankOut(id=bank.id, bank_name=bank.bank_name, logo_url=bank.logo_url)
     else:
         return None
 
@@ -38,6 +38,8 @@ def domain_account_type_to_schema(
             account_type=account_type.account_type,
             color=account_type.color,
             icon=account_type.icon,
+            slug=account_type.slug,
+            is_system=account_type.is_system,
         )
     else:
         return None
@@ -64,7 +66,7 @@ def domain_account_to_schema(
             available_credit=account.available_credit,
             balance=account.balance,
             bank=domain_bank_to_schema(account.bank),
-            last_statement_amount=account.last_statement_amount,
+            statement_balance=account.statement_balance,
             funding_account=domain_account_to_schema(account.funding_account),
             calculate_payments=account.calculate_payments,
             calculate_interest=account.calculate_interest,
@@ -74,6 +76,10 @@ def domain_account_to_schema(
             statement_day=account.statement_day,
             due_day=account.due_day,
             pay_day=account.pay_day,
+            interest_deposit_day=account.interest_deposit_day,
+            is_parent_account=account.is_parent_account,
+            parent_account_id=account.parent_account_id,
+            interest_child_account_id=account.interest_child_account_id,
             current_yr_rewards=account.current_yr_rewards,
             last_yr_rewards=account.last_yr_rewards,
         )

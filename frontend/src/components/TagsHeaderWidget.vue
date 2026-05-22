@@ -4,7 +4,7 @@
       variant="outlined"
       :elevation="4"
       class="bg-primary"
-      v-if="!isLoading"
+      v-if="tags"
     >
       <template v-slot:text>
         <v-row desnity="compact">
@@ -15,12 +15,37 @@
                 size="small"
                 variant="text"
                 @click="tagAddFormDialog = true"
+                v-if="authStore.isFullAccess"
+                :disabled="!isOnline"
               >
                 Add Tag
               </v-btn>
+              <v-btn
+                icon="mdi-pencil"
+                size="small"
+                variant="text"
+                @click="openEditDialog"
+                v-if="authStore.isFullAccess && selectedTag && !selectedTag.is_system"
+                :disabled="!isOnline"
+              ></v-btn>
+              <v-btn
+                icon="mdi-delete"
+                size="small"
+                variant="text"
+                color="error"
+                @click="deleteDialog = true"
+                v-if="authStore.isFullAccess && selectedTag && !selectedTag.is_system"
+                :disabled="!isOnline"
+              ></v-btn>
               <TagForm
                 v-model="tagAddFormDialog"
                 @update-dialog="updateAddDialog"
+              />
+              <TagForm
+                v-model="tagEditFormDialog"
+                :is-edit="true"
+                :tag-data="selectedTag"
+                @update-dialog="updateEditDialog"
               />
             </div>
             <v-slide-group
@@ -47,7 +72,7 @@
                 >
                   <template v-slot:prepend>
                     <v-icon
-                      icon="mdi-tag"
+                      :icon="tag.is_system ? 'mdi-tag' : 'mdi-tag-outline'"
                       :color="tagColor(tag.tag_type.id)"
                     ></v-icon>
                   </template>
@@ -96,7 +121,7 @@
                 >
                   <template v-slot:prepend>
                     <v-icon
-                      icon="mdi-tag"
+                      :icon="item.raw.is_system ? 'mdi-tag' : 'mdi-tag-outline'"
                       :color="tagColor(item.raw.tag_type.id)"
                     ></v-icon>
                   </template>
@@ -107,26 +132,70 @@
         </v-row>
       </template>
     </v-card>
-    <v-skeleton-loader type="card" v-if="isLoading"></v-skeleton-loader>
+    <v-skeleton-loader type="card" v-if="!tags"></v-skeleton-loader>
+
+    <v-dialog v-model="deleteDialog" max-width="400" persistent>
+      <v-card>
+        <v-card-title class="text-h6">Delete Tag</v-card-title>
+        <v-card-text>
+          Are you sure you want to delete
+          <strong>{{ selectedTag ? selectedTag.tag_name : "" }}</strong>?
+          This cannot be undone.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="deleteDialog = false">Cancel</v-btn>
+          <v-btn color="error" variant="text" @click="confirmDelete" :disabled="!isOnline">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup>
-  import { ref, defineEmits } from "vue";
+  import { ref, computed, defineEmits } from "vue";
   import { useTags } from "@/composables/tagsComposable";
   import TagForm from "@/components/TagForm.vue";
   import { useDisplay } from "vuetify";
+  import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
+  const { isOnline } = useOnlineStatus();
 
   const tagAddFormDialog = ref(false);
+  const tagEditFormDialog = ref(false);
+  const deleteDialog = ref(false);
   const emit = defineEmits(["tagSelected"]);
+  const authStore = useAuthStore();
   const tag_selected = ref(null);
-  const { tags, isLoading } = useTags();
+  const { tags, isLoading, removeTag } = useTags();
   const { smAndDown } = useDisplay();
+
+  const selectedTag = computed(() =>
+    tags.value ? tags.value.find(t => t.id === tag_selected.value) ?? null : null,
+  );
+
   const clickSelectTag = () => {
     emit("tagSelected", tag_selected.value);
   };
 
   const updateAddDialog = () => {
     tagAddFormDialog.value = false;
+  };
+
+  const updateEditDialog = () => {
+    tagEditFormDialog.value = false;
+  };
+
+  const openEditDialog = () => {
+    tagEditFormDialog.value = true;
+  };
+
+  const confirmDelete = () => {
+    if (selectedTag.value) {
+      removeTag(selectedTag.value.id);
+      tag_selected.value = null;
+      emit("tagSelected", null);
+    }
+    deleteDialog.value = false;
   };
 
   const tagColor = typeID => {

@@ -1,5 +1,5 @@
 <template>
-  <v-dialog width="800">
+  <v-dialog :fullscreen="smAndDown" :width="smAndDown ? undefined : '800'">
     <form @submit.prevent="submit">
       <v-card min-height="550px">
         <v-card-text>
@@ -25,7 +25,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col cols="3">
+                <v-col :cols="smAndDown ? 6 : 3">
                   <v-text-field
                     v-model="per_paycheck.value.value"
                     variant="outlined"
@@ -38,7 +38,7 @@
                     @update:modelValue="updateDifference"
                   ></v-text-field>
                 </v-col>
-                <v-col cols="3">
+                <v-col :cols="smAndDown ? 6 : 3">
                   <v-text-field
                     v-model="emergency_amt.value.value"
                     variant="outlined"
@@ -51,7 +51,7 @@
                     @update:modelValue="updateDifference"
                   ></v-text-field>
                 </v-col>
-                <v-col cols="3">
+                <v-col :cols="smAndDown ? 6 : 3">
                   <v-text-field
                     v-model="emergency_diff.value.value"
                     variant="outlined"
@@ -64,7 +64,7 @@
                     disabled
                   ></v-text-field>
                 </v-col>
-                <v-col cols="3">
+                <v-col :cols="smAndDown ? 6 : 3">
                   <v-text-field
                     v-model="cap.value.value"
                     variant="outlined"
@@ -94,7 +94,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="clickClose" color="primary">Close</v-btn>
-          <v-btn color="primary" type="submit">
+          <v-btn color="primary" type="submit" :disabled="!isOnline">
             {{ props.isEdit ? "Save Changes" : "Add Contribution" }}
           </v-btn>
         </v-card-actions>
@@ -104,8 +104,12 @@
 </template>
 <script setup>
   import { defineEmits, defineProps, watchEffect, onMounted } from "vue";
+  import { useDisplay } from "vuetify";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import { useField, useForm } from "vee-validate";
+  const { isOnline } = useOnlineStatus();
 
+  const { smAndDown } = useDisplay();
   const { handleSubmit } = useForm({
     validationSchema: {
       contribution(value) {
