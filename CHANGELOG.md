@@ -1,3 +1,10 @@
+# [1.4.0-alpha.43](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.42...v1.4.0-alpha.43) (2026-05-22)
+
+
+### Bug Fixes
+
+* mobile overflow, nav icon sizing, and logs polish ([f7f5db2](https://github.com/Novanglus96/LenoreFin/commit/f7f5db27e61295c2309360dc0b44f17a69ea2367))
+
 # [1.4.0-alpha.42](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.41...v1.4.0-alpha.42) (2026-05-21)
 
 
