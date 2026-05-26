@@ -67,7 +67,7 @@
                 :color="graphColor(budget.used_percentage)"
                 :bg-color="graphBGColor(budget.used_percentage)"
               >
-                <span :class="ringTextColor(budget.used_percentage)">
+                <span style="color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity))">
                   {{
                     formatCurrency(
                       parseFloat(budget.budget.amount) +
@@ -231,11 +231,6 @@
     }
 
     return "error";
-  };
-
-  const ringTextColor = value => {
-    if (value > 50 && value <= 99) return "text-grey-darken-4";
-    return "";
   };
 
   const graphBGColor = value => {
