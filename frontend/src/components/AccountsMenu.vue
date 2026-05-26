@@ -21,12 +21,13 @@
       density="compact"
       nav
       :bg-color="smAndDown ? 'background' : 'surface'"
+      v-model:opened="openedGroups"
     >
       <!-- Favorites section -->
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="favorites"
         v-if="favoriteAccounts.length > 0"
       >
@@ -82,7 +83,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="checking"
       >
         <template v-slot:activator="{ props }">
@@ -147,7 +148,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="savings"
       >
         <template v-slot:activator="{ props }">
@@ -212,7 +213,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="cc"
       >
         <template v-slot:activator="{ props }">
@@ -277,7 +278,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="investment"
       >
         <template v-slot:activator="{ props }">
@@ -342,7 +343,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="loan"
       >
         <template v-slot:activator="{ props }">
@@ -407,7 +408,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="inactive"
       >
         <template v-slot:activator="{ props }">
@@ -477,7 +478,7 @@
 
   const transactions_store = useTransactionsStore();
   const router = useRouter();
-  const groupActive = ref(null);
+  const openedGroups = ref([]);
 
   const sortForMenu = accounts => {
     if (!accounts) return []
@@ -517,8 +518,8 @@
   );
 
   watch(favoriteAccounts, val => {
-    if (val && val.length > 0 && groupActive.value === null) {
-      groupActive.value = "favorites";
+    if (val && val.length > 0 && !openedGroups.value.includes("favorites")) {
+      openedGroups.value = ["favorites"];
     }
   }, { immediate: true });
 
