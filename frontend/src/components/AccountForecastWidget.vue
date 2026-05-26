@@ -24,6 +24,20 @@
           ></v-btn>
         </template>
       </v-tooltip>
+      <v-tooltip location="bottom" text="Show trend line">
+        <template v-slot:activator="{ props: tipProps }">
+          <v-btn
+            icon="mdi-trending-up"
+            flat
+            size="small"
+            :color="showTrendLine ? 'primary' : undefined"
+            variant="plain"
+            :disabled="isActive"
+            v-bind="tipProps"
+            @click="toggleTrendLine"
+          ></v-btn>
+        </template>
+      </v-tooltip>
       <v-menu location="right">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -103,6 +117,13 @@
     localStorage.setItem(lsKey, showMinHighlight.value);
   }
 
+  const lsTrendKey = `forecast_trend_line_${props.account?.[0] ?? "default"}`;
+  const showTrendLine = ref(localStorage.getItem(lsTrendKey) === "true");
+  function toggleTrendLine() {
+    showTrendLine.value = !showTrendLine.value;
+    localStorage.setItem(lsTrendKey, showTrendLine.value);
+  }
+
   const { isLoading, account_forecast, isFetching } = useAccountForecasts(
     props.account,
     props.start_integer,
@@ -115,18 +136,54 @@
 
   const POSITIVE_COLOR = "#4caf50";
   const NEGATIVE_COLOR = "#f44336";
+  const TREND_COLOR = "#888888";
+
+  function computeTrendLine(labels, data) {
+    const points = data
+      .map((v, i) => ({ i, v: v != null ? Number(v) : null }))
+      .filter(p => p.v != null);
+    if (points.length < 2) return null;
+    const n = points.length;
+    const sumX = points.reduce((a, p) => a + p.i, 0);
+    const sumY = points.reduce((a, p) => a + p.v, 0);
+    const sumXY = points.reduce((a, p) => a + p.i * p.v, 0);
+    const sumX2 = points.reduce((a, p) => a + p.i * p.i, 0);
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    return labels.map((label, i) => ({
+      x: label,
+      y: Math.round(slope * i + intercept),
+    }));
+  }
 
   const chartSeries = computed(() => {
     const raw = account_forecast.value;
     if (!raw?.datasets?.length) return [];
-    return raw.datasets.map(ds => ({
+
+    const baseSeries = raw.datasets.map(ds => ({
       name: ds.label ?? "Balance",
       data: (raw.labels ?? []).map((label, i) => ({
         x: label,
         y: ds.data?.[i] != null ? Number(ds.data[i]) : null,
       })),
     }));
+
+    if (!showTrendLine.value) return baseSeries;
+
+    const trendData = computeTrendLine(
+      raw.labels ?? [],
+      raw.datasets[0].data ?? [],
+    );
+    if (!trendData) return baseSeries;
+
+    return [...baseSeries, { name: "Trend", data: trendData }];
   });
+
+  const hasTrend = computed(
+    () =>
+      showTrendLine.value &&
+      chartSeries.value.length > (account_forecast.value?.datasets?.length ?? 0),
+  );
 
   const minPostTodayPoint = computed(() => {
     if (!showMinHighlight.value) return null;
@@ -171,6 +228,8 @@
 
     const hasPositive = max > 0;
     const hasNegative = min < 0;
+    const forecastColor = hasNegative && !hasPositive ? NEGATIVE_COLOR : POSITIVE_COLOR;
+
     const colorStops = hasPositive && hasNegative
       ? [
           { offset: 0, color: POSITIVE_COLOR, opacity: 0.4 },
@@ -188,6 +247,9 @@
       day: "2-digit",
     });
 
+    const trend = hasTrend.value;
+    const datasetCount = raw?.datasets?.length ?? 1;
+
     return {
       chart: {
         type: "area",
@@ -195,15 +257,33 @@
         zoom: { enabled: false },
         animations: { enabled: false },
       },
-      colors: [hasNegative && !hasPositive ? NEGATIVE_COLOR : POSITIVE_COLOR],
+      colors: [
+        ...Array(datasetCount).fill(forecastColor),
+        ...(trend ? [TREND_COLOR] : []),
+      ],
       dataLabels: { enabled: false },
-      stroke: { curve: "smooth", width: 2 },
+      stroke: {
+        curve: trend
+          ? [...Array(datasetCount).fill("smooth"), "straight"]
+          : "smooth",
+        width: trend
+          ? [...Array(datasetCount).fill(2), 1.5]
+          : 2,
+        dashArray: trend
+          ? [...Array(datasetCount).fill(0), 5]
+          : 0,
+      },
       fill: {
-        type: "gradient",
+        type: trend
+          ? [...Array(datasetCount).fill("gradient"), "solid"]
+          : "gradient",
         gradient: {
           type: "vertical",
           colorStops: raw.datasets.map(() => colorStops),
         },
+        opacity: trend
+          ? [...Array(datasetCount).fill(1), 0]
+          : 1,
       },
       markers: { size: 0 },
       annotations: {
@@ -272,6 +352,21 @@
       tooltip: {
         shared: false,
         custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+          if (trend && seriesIndex === w.config.series.length - 1) {
+            const val = series[seriesIndex]?.[dataPointIndex];
+            const xLabel = w.config.series[seriesIndex]?.data?.[dataPointIndex]?.x ?? "";
+            const formatted = val != null
+              ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val)
+              : "N/A";
+            return `<div style="padding:8px 10px;font-family:inherit;">
+              <div style="color:#888;font-size:11px;margin-bottom:4px;">${xLabel}</div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${TREND_COLOR};flex-shrink:0;"></span>
+                <span style="color:#888;font-size:11px;">Trend</span>
+                <span style="font-weight:600;color:${TREND_COLOR};font-size:12px;">${formatted}</span>
+              </div>
+            </div>`;
+          }
           const val = series[seriesIndex]?.[dataPointIndex];
           const color = (val ?? 0) >= 0 ? POSITIVE_COLOR : NEGATIVE_COLOR;
           const xLabel = w.config.series[seriesIndex]?.data?.[dataPointIndex]?.x ?? "";
