@@ -19,9 +19,23 @@ def _get_or_create_config(user):
         user=user,
         defaults={"layout": DEFAULT_DASHBOARD_LAYOUT, "graph_widgets": DEFAULT_GRAPH_WIDGETS},
     )
+
+    dirty = False
+
     if not config.graph_widgets:
         config.graph_widgets = DEFAULT_GRAPH_WIDGETS
+        dirty = True
+
+    # Add any new widget slots that don't exist in the user's saved layout
+    existing_ids = {w["id"] for w in config.layout}
+    for default_widget in DEFAULT_DASHBOARD_LAYOUT:
+        if default_widget["id"] not in existing_ids:
+            config.layout.append(default_widget)
+            dirty = True
+
+    if dirty:
         config.save()
+
     return config
 
 
