@@ -67,22 +67,24 @@
                 :color="graphColor(budget.used_percentage)"
                 :bg-color="graphBGColor(budget.used_percentage)"
               >
-                {{
-                  formatCurrency(
+                <span class="text-on-surface text-caption">
+                  {{
+                    formatCurrency(
+                      parseFloat(budget.budget.amount) +
+                        parseFloat(budget.budget.roll_over_amt) -
+                        parseFloat(Math.abs(budget.used_total)),
+                    )
+                  }}
+                  <br />
+                  {{
                     parseFloat(budget.budget.amount) +
                       parseFloat(budget.budget.roll_over_amt) -
-                      parseFloat(Math.abs(budget.used_total)),
-                  )
-                }}
-                <br />
-                {{
-                  parseFloat(budget.budget.amount) +
-                    parseFloat(budget.budget.roll_over_amt) -
-                    parseFloat(Math.abs(budget.used_total)) <
-                  0
-                    ? "over"
-                    : "left"
-                }}
+                      parseFloat(Math.abs(budget.used_total)) <
+                    0
+                      ? "over"
+                      : "left"
+                  }}
+                </span>
               </v-progress-circular>
               <div class="text-subtitle-2 text-center">
                 Budget:
