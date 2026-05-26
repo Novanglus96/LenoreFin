@@ -61,37 +61,40 @@
                 {{ budget.budget.name }}
               </div>
               <v-progress-circular
-                :model-value="budget.remaining_percentage"
+                :model-value="100 - budget.used_percentage"
                 :size="100"
                 :width="12"
                 :color="graphColor(budget.used_percentage)"
                 :bg-color="graphBGColor(budget.used_percentage)"
               >
-                {{
-                  formatCurrency(
-                    parseFloat(budget.budget.amount) +
-                      parseFloat(budget.budget.roll_over_amt) -
-                      parseFloat(Math.abs(budget.used_total)),
-                  )
-                }}
-                <br />
-                {{
-                  parseFloat(budget.budget.amount) +
-                    parseFloat(budget.budget.roll_over_amt) -
-                    parseFloat(Math.abs(budget.used_total)) <
-                  0
-                    ? "over"
-                    : "left"
-                }}
+                <span
+                  :style="
+                    remainingAmt(budget) < 0
+                      ? 'color: rgba(var(--v-theme-error), var(--v-high-emphasis-opacity))'
+                      : 'color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity))'
+                  "
+                >
+                  {{ formatCurrency(remainingAmt(budget)) }}
+                  <br />
+                  {{ remainingAmt(budget) < 0 ? "over" : "left" }}
+                </span>
               </v-progress-circular>
               <div class="text-subtitle-2 text-center">
                 Budget:
-                {{
-                  formatCurrency(
-                    parseFloat(budget.budget.amount) +
-                      parseFloat(budget.budget.roll_over_amt),
-                  )
-                }}
+                <span
+                  :style="
+                    remainingAmt(budget) < 0
+                      ? 'color: rgba(var(--v-theme-error), var(--v-high-emphasis-opacity))'
+                      : 'color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity))'
+                  "
+                >
+                  {{
+                    formatCurrency(
+                      parseFloat(budget.budget.amount) +
+                        parseFloat(budget.budget.roll_over_amt),
+                    )
+                  }}
+                </span>
                 <span
                   :class="
                     budget.budget.roll_over_amt < 0
@@ -210,6 +213,11 @@
       maximumFractionDigits: 2,
     }).format(value);
   };
+  const remainingAmt = budget =>
+    parseFloat(budget.budget.amount) +
+    parseFloat(budget.budget.roll_over_amt) -
+    parseFloat(Math.abs(budget.used_total));
+
   const graphColor = value => {
     const thresholds = [
       { limit: 10, color: "green" },
@@ -238,11 +246,11 @@
       { limit: 30, color: "green-lighten-3" },
       { limit: 40, color: "green-lighten-3" },
       { limit: 50, color: "green-lighten-3" },
-      { limit: 60, color: "yellow" },
-      { limit: 70, color: "yellow-lighten-3" },
-      { limit: 80, color: "yellow-lighten-3" },
-      { limit: 90, color: "yellow-lighten-3" },
-      { limit: 99, color: "yellow-lighten-3" },
+      { limit: 60, color: "yellow-lighten-4" },
+      { limit: 70, color: "yellow-lighten-4" },
+      { limit: 80, color: "yellow-lighten-4" },
+      { limit: 90, color: "yellow-lighten-4" },
+      { limit: 99, color: "yellow-lighten-4" },
     ];
 
     for (const { limit, color } of thresholds) {
