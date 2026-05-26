@@ -238,11 +238,11 @@
       { limit: 30, color: "green-lighten-3" },
       { limit: 40, color: "green-lighten-3" },
       { limit: 50, color: "green-lighten-3" },
-      { limit: 60, color: "yellow-lighten-2" },
-      { limit: 70, color: "yellow-lighten-3" },
-      { limit: 80, color: "yellow-lighten-3" },
-      { limit: 90, color: "yellow-lighten-3" },
-      { limit: 99, color: "yellow-lighten-3" },
+      { limit: 60, color: "yellow-lighten-4" },
+      { limit: 70, color: "yellow-lighten-4" },
+      { limit: 80, color: "yellow-lighten-4" },
+      { limit: 90, color: "yellow-lighten-4" },
+      { limit: 99, color: "yellow-lighten-4" },
     ];
 
     for (const { limit, color } of thresholds) {
