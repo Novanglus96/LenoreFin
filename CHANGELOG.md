@@ -1,3 +1,10 @@
+# [1.5.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.3...v1.5.0-alpha.4) (2026-05-26)
+
+
+### Features
+
+* add days remaining until budget reset to budget widget ([#154](https://github.com/Novanglus96/LenoreFin/issues/154)) ([9d03371](https://github.com/Novanglus96/LenoreFin/commit/9d03371e1d116a81f496e088dd2a9674bd26cdb1))
+
 # [1.5.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.2...v1.5.0-alpha.3) (2026-05-26)
 
 
