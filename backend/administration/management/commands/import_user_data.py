@@ -451,6 +451,7 @@ class Command(BaseCommand):
                 show_transactions=item.get("show_transactions", False),
                 show_subtotal=item.get("show_subtotal", True),
                 include_pending=item.get("include_pending", False),
+                is_shared=item.get("is_shared", False),
             )
             for account_name in item.get("account_names", []):
                 acct = account_by_name.get(account_name)

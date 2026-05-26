@@ -37,6 +37,7 @@ class ReportConfig(models.Model):
     show_transactions = models.BooleanField(default=False)
     show_subtotal = models.BooleanField(default=True)
     include_pending = models.BooleanField(default=False)
+    is_shared = models.BooleanField(default=False)
     created_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True
     )

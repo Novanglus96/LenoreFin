@@ -2,10 +2,10 @@ from ninja import Router
 from ninja.errors import HttpError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from typing import List
 import logging
 
-from administration.api.dependencies.auth import FullAccessAuth
 from reports.models import ReportConfig, ReportConfigTag
 from reports.api.schemas.report import (
     ReportConfigIn,
@@ -21,7 +21,12 @@ error_logger = logging.getLogger("error")
 report_router = Router(tags=["Reports"])
 
 
-def _serialize_config(config: ReportConfig) -> dict:
+def _serialize_config(config: ReportConfig, requesting_user=None) -> dict:
+    is_owner = (
+        requesting_user is not None
+        and config.created_by_id is not None
+        and config.created_by_id == requesting_user.pk
+    )
     return {
         "id": config.id,
         "name": config.name,
@@ -37,6 +42,8 @@ def _serialize_config(config: ReportConfig) -> dict:
         "show_transactions": config.show_transactions,
         "show_subtotal": config.show_subtotal,
         "include_pending": config.include_pending,
+        "is_shared": config.is_shared,
+        "is_owner": is_owner,
         "tag_selections": [
             {
                 "id": sel.id,
@@ -66,6 +73,12 @@ def _apply_tag_selections(config: ReportConfig, selections: list):
             sub_tag_id=sub_tag_id,
             main_tag_id=main_tag_id,
         )
+
+
+def _can_modify(config: ReportConfig, user) -> bool:
+    is_owner = config.created_by_id is not None and config.created_by_id == user.pk
+    is_full_access = user.groups.filter(name="Full Access").exists()
+    return is_owner or is_full_access
 
 
 def _run_from_params(
@@ -124,11 +137,14 @@ def _safe_user(request):
 
 @report_router.get("", response=List[ReportConfigOut])
 def list_reports(request):
-    configs = ReportConfig.objects.prefetch_related("tag_selections", "accounts").all()
-    return [_serialize_config(c) for c in configs]
+    user = request.user
+    configs = ReportConfig.objects.prefetch_related("tag_selections", "accounts").filter(
+        Q(created_by=user) | Q(is_shared=True)
+    )
+    return [_serialize_config(c, user) for c in configs]
 
 
-@report_router.post("", response=ReportConfigOut, auth=FullAccessAuth())
+@report_router.post("", response=ReportConfigOut)
 def create_report(request, payload: ReportConfigIn):
     try:
         config = ReportConfig.objects.create(
@@ -144,13 +160,14 @@ def create_report(request, payload: ReportConfigIn):
             show_transactions=payload.show_transactions,
             show_subtotal=payload.show_subtotal,
             include_pending=payload.include_pending,
+            is_shared=payload.is_shared,
             created_by=_safe_user(request),
         )
         if payload.account_ids:
             config.accounts.set(payload.account_ids)
         _apply_tag_selections(config, payload.tag_selections)
         api_logger.info(f"Report config created: {config.name}")
-        return _serialize_config(config)
+        return _serialize_config(config, request.user)
     except HttpError:
         raise
     except Exception as e:
@@ -185,17 +202,22 @@ def run_adhoc_report(request, payload: ReportRunIn):
 
 @report_router.get("/{report_id}", response=ReportConfigOut)
 def get_report(request, report_id: int):
+    user = request.user
     config = get_object_or_404(
         ReportConfig.objects.prefetch_related("tag_selections", "accounts"),
         id=report_id,
     )
-    return _serialize_config(config)
+    if not (config.created_by_id == user.pk or config.is_shared):
+        raise HttpError(404, "Report not found")
+    return _serialize_config(config, user)
 
 
-@report_router.put("/{report_id}", response=ReportConfigOut, auth=FullAccessAuth())
+@report_router.put("/{report_id}", response=ReportConfigOut)
 def update_report(request, report_id: int, payload: ReportConfigIn):
     try:
         config = get_object_or_404(ReportConfig, id=report_id)
+        if not _can_modify(config, request.user):
+            raise HttpError(403, "You do not have permission to modify this report")
         config.name = payload.name
         config.description = payload.description
         config.report_type = payload.report_type
@@ -208,11 +230,12 @@ def update_report(request, report_id: int, payload: ReportConfigIn):
         config.show_transactions = payload.show_transactions
         config.show_subtotal = payload.show_subtotal
         config.include_pending = payload.include_pending
+        config.is_shared = payload.is_shared
         config.save()
         config.accounts.set(payload.account_ids)
         _apply_tag_selections(config, payload.tag_selections)
         api_logger.info(f"Report config updated: {config.name}")
-        return _serialize_config(config)
+        return _serialize_config(config, request.user)
     except (HttpError, Http404):
         raise
     except Exception as e:
@@ -220,10 +243,12 @@ def update_report(request, report_id: int, payload: ReportConfigIn):
         raise HttpError(500, "Failed to update report config")
 
 
-@report_router.delete("/{report_id}", auth=FullAccessAuth())
+@report_router.delete("/{report_id}")
 def delete_report(request, report_id: int):
     try:
         config = get_object_or_404(ReportConfig, id=report_id)
+        if not _can_modify(config, request.user):
+            raise HttpError(403, "You do not have permission to delete this report")
         name = config.name
         config.delete()
         api_logger.info(f"Report config deleted: {name}")
@@ -238,10 +263,13 @@ def delete_report(request, report_id: int):
 @report_router.post("/{report_id}/run", response=ReportResultOut)
 def run_saved_report(request, report_id: int):
     try:
+        user = request.user
         config = get_object_or_404(
             ReportConfig.objects.prefetch_related("tag_selections", "accounts"),
             id=report_id,
         )
+        if not (config.created_by_id == user.pk or config.is_shared):
+            raise HttpError(404, "Report not found")
         tag_selections_raw = list(config.tag_selections.all())
         result = _run_from_params(
             report_type=config.report_type,
