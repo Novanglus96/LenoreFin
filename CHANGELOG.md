@@ -1,3 +1,10 @@
+# [1.5.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.6...v1.5.0-alpha.7) (2026-05-26)
+
+
+### Features
+
+* per-user reports with optional sharing ([#157](https://github.com/Novanglus96/LenoreFin/issues/157)) ([991b3e4](https://github.com/Novanglus96/LenoreFin/commit/991b3e4506b2ca6162244323ecc9cff2aeb38ad2))
+
 # [1.5.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.5...v1.5.0-alpha.6) (2026-05-26)
 
 
