@@ -1,14 +1,5 @@
 <template>
   <div>
-    <div class="d-flex justify-end px-1 pt-1">
-      <v-btn
-        icon="mdi-view-dashboard-edit"
-        size="small"
-        variant="text"
-        color="primary"
-        @click="editorOpen = true"
-      />
-    </div>
     <template v-for="widget in visibleWidgets" :key="widget.id">
       <GraphAreaWidget v-if="widget.id === 'graphs'" />
       <v-row
@@ -44,23 +35,20 @@
         </v-col>
       </v-row>
     </template>
-    <DashboardEditor v-model="editorOpen" />
   </div>
 </template>
 <script setup>
-  import { ref, computed, onMounted } from "vue";
+  import { computed, onMounted } from "vue";
   import GraphAreaWidget from "@/components/GraphAreaWidget.vue";
   import RemindersWidget from "@/components/RemindersWidget.vue";
   import TransactionTableWidget from "@/components/TransactionTableWidget.vue";
   import BudgetsWidget from "@/components/BudgetsWidget.vue";
-  import DashboardEditor from "@/components/DashboardEditor.vue";
   import FavoriteAccountsWidget from "@/components/FavoriteAccountsWidget.vue";
   import { useTransactions } from "@/composables/transactionsComposable";
   import { useTransactionsStore } from "@/stores/transactions";
   import { useDashboardConfig } from "@/composables/dashboardComposable";
 
   const transactions_store = useTransactionsStore();
-  const editorOpen = ref(false);
 
   onMounted(() => {
     transactions_store.pageinfo.account_id = null;
