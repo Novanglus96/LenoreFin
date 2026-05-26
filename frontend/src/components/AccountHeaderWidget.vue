@@ -79,6 +79,25 @@
                   @update-dialog="updateEditDialog"
                 />
                 <v-tooltip
+                  :text="account.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'"
+                  location="top"
+                  v-if="authStore.isFullAccess"
+                >
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
+                      :color="account.is_favorite ? 'amber' : undefined"
+                      flat
+                      variant="text"
+                      @click="toggleFavorite(account.id)"
+                      v-bind="props"
+                      size="small"
+                      class="mx-0"
+                      :disabled="!isOnline"
+                    />
+                  </template>
+                </v-tooltip>
+                <v-tooltip
                   :text="account.active ? 'Delete Account' : 'Enable Account'"
                   location="top"
                   v-if="authStore.isFullAccess"
@@ -377,7 +396,7 @@
 </template>
 <script setup>
   import { defineProps, ref } from "vue";
-  import { useAccountByID } from "@/composables/accountsComposable";
+  import { useAccountByID, useAccounts } from "@/composables/accountsComposable";
   import EditAccountForm from "./EditAccountForm.vue";
   import AdjustBalanceForm from "./AdjustBalanceForm.vue";
   import DeleteAccountForm from "./DeleteAccountForm.vue";
@@ -401,6 +420,7 @@
   });
 
   const { account } = useAccountByID(props.account);
+  const { toggleFavorite } = useAccounts();
 
   const updateAdjBalDialog = value => {
     adjBalDialog.value = value;

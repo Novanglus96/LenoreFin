@@ -22,6 +22,63 @@
       nav
       :bg-color="smAndDown ? 'background' : 'surface'"
     >
+      <!-- Favorites section -->
+      <v-list-group
+        collapse-icon="mdi-chevron-up"
+        expand-icon="mdi-chevron-down"
+        v-model="groupActive"
+        value="favorites"
+        v-if="favoriteAccounts.length > 0"
+      >
+        <template v-slot:activator="{ props }">
+          <v-list-item color="amber" base-color="amber" v-bind="props">
+            <template v-slot:prepend>
+              <v-icon
+                icon="mdi-star"
+                :size="!isMobile ? 'default' : 'x-large'"
+              ></v-icon>
+            </template>
+            <v-list-item-title>
+              <span :class="isMobile ? 'text-h6' : ''">FAVORITES</span>
+            </v-list-item-title>
+            <v-list-item-subtitle>
+              <span :class="isMobile ? 'text-subtitle-1' : ''">
+                {{ favoriteAccounts.length }}
+                {{ favoriteAccounts.length == 1 ? "account" : "accounts" }}
+              </span>
+            </v-list-item-subtitle>
+          </v-list-item>
+        </template>
+        <v-list-item
+          v-for="(account, i) in favoriteAccounts"
+          :key="i"
+          color="accent"
+          @click="setAccount(account.id, False)"
+        >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
+          </template>
+          <v-list-item-title>
+            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
+            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            <span
+              :class="
+                account.balance >= 0
+                  ? 'text-success font-weight-bold'
+                  : 'text-error font-weight-bold'
+              "
+            >
+              <NumberFlow
+                :value="account.balance"
+                :format="{ style: 'currency', currency: 'USD' }"
+              />
+            </span>
+          </v-list-item-subtitle>
+        </v-list-item>
+      </v-list-group>
+      <v-divider v-if="favoriteAccounts.length > 0"></v-divider>
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
@@ -84,14 +141,6 @@
               />
             </span>
           </v-list-item-subtitle>
-          <template v-slot:append v-if="authStore.isFullAccess">
-            <v-icon
-              :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
-              :color="account.is_favorite ? 'amber' : undefined"
-              size="small"
-              @click.stop="toggleFavorite(account.id)"
-            ></v-icon>
-          </template>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -157,14 +206,6 @@
               />
             </span>
           </v-list-item-subtitle>
-          <template v-slot:append v-if="authStore.isFullAccess">
-            <v-icon
-              :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
-              :color="account.is_favorite ? 'amber' : undefined"
-              size="small"
-              @click.stop="toggleFavorite(account.id)"
-            ></v-icon>
-          </template>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -230,14 +271,6 @@
               />
             </span>
           </v-list-item-subtitle>
-          <template v-slot:append v-if="authStore.isFullAccess">
-            <v-icon
-              :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
-              :color="account.is_favorite ? 'amber' : undefined"
-              size="small"
-              @click.stop="toggleFavorite(account.id)"
-            ></v-icon>
-          </template>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -303,14 +336,6 @@
               />
             </span>
           </v-list-item-subtitle>
-          <template v-slot:append v-if="authStore.isFullAccess">
-            <v-icon
-              :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
-              :color="account.is_favorite ? 'amber' : undefined"
-              size="small"
-              @click.stop="toggleFavorite(account.id)"
-            ></v-icon>
-          </template>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -376,14 +401,6 @@
               />
             </span>
           </v-list-item-subtitle>
-          <template v-slot:append v-if="authStore.isFullAccess">
-            <v-icon
-              :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
-              :color="account.is_favorite ? 'amber' : undefined"
-              size="small"
-              @click.stop="toggleFavorite(account.id)"
-            ></v-icon>
-          </template>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -444,7 +461,7 @@
 </template>
 <script setup>
   import { useAccounts } from "@/composables/accountsComposable";
-  import { ref } from "vue";
+  import { ref, computed } from "vue";
   import { useRouter } from "vue-router";
   import { useTransactionsStore } from "@/stores/transactions";
   import NumberFlow from "@number-flow/vue";
@@ -467,20 +484,13 @@
     const parents = accounts.filter(a => a.is_parent_account)
     const children = accounts.filter(a => a.parent_account_id !== null)
     const standalone = accounts.filter(a => !a.is_parent_account && a.parent_account_id === null)
-    const addGroup = (parentList) => {
-      const result = []
-      for (const parent of parentList) {
-        result.push(parent)
-        result.push(...children.filter(c => c.parent_account_id === parent.id))
-      }
-      return result
+    const result = []
+    for (const parent of parents) {
+      result.push(parent)
+      result.push(...children.filter(c => c.parent_account_id === parent.id))
     }
-    return [
-      ...addGroup(parents.filter(a => a.is_favorite)),
-      ...standalone.filter(a => a.is_favorite),
-      ...addGroup(parents.filter(a => !a.is_favorite)),
-      ...standalone.filter(a => !a.is_favorite),
-    ]
+    result.push(...standalone)
+    return result
   }
 
   const setAccount = (account, forecast) => {
@@ -493,14 +503,19 @@
   };
 
   const {
+    accounts,
     checking_accounts,
     cc_accounts,
     savings_accounts,
     investment_accounts,
     loan_accounts,
     inactive_accounts,
-    toggleFavorite,
   } = useAccounts();
+
+  const favoriteAccounts = computed(() =>
+    (accounts.value ?? []).filter(a => a.is_favorite)
+  );
+
   const add_account_link = ref("/accounts/add");
 </script>
 
