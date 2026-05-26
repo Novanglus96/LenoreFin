@@ -1,3 +1,10 @@
+# [1.5.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.4.3-alpha.1...v1.5.0-alpha.1) (2026-05-26)
+
+
+### Features
+
+* add toggleable trend line to account forecast widget ([#151](https://github.com/Novanglus96/LenoreFin/issues/151)) ([b1d4c97](https://github.com/Novanglus96/LenoreFin/commit/b1d4c978a9b01275fdc3bb70e9a64f9a75a42713))
+
 ## [1.4.3-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.4.2...v1.4.3-alpha.1) (2026-05-22)
 
 
