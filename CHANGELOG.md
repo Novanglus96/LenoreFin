@@ -1,3 +1,10 @@
+# [1.5.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.1...v1.5.0-alpha.2) (2026-05-26)
+
+
+### Features
+
+* add 1st-of-month balance flag to account forecast widget ([#152](https://github.com/Novanglus96/LenoreFin/issues/152)) ([b64f9ce](https://github.com/Novanglus96/LenoreFin/commit/b64f9cec29f2e3e681924fc9ef4b148bae5966c1))
+
 # [1.5.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.4.3-alpha.1...v1.5.0-alpha.1) (2026-05-26)
 
 
