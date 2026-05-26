@@ -461,7 +461,7 @@
 </template>
 <script setup>
   import { useAccounts } from "@/composables/accountsComposable";
-  import { ref, computed } from "vue";
+  import { ref, computed, watch } from "vue";
   import { useRouter } from "vue-router";
   import { useTransactionsStore } from "@/stores/transactions";
   import NumberFlow from "@number-flow/vue";
@@ -515,6 +515,12 @@
   const favoriteAccounts = computed(() =>
     (accounts.value ?? []).filter(a => a.is_favorite)
   );
+
+  watch(favoriteAccounts, val => {
+    if (val && val.length > 0 && groupActive.value === null) {
+      groupActive.value = "favorites";
+    }
+  }, { immediate: true });
 
   const add_account_link = ref("/accounts/add");
 </script>
