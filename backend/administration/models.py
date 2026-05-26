@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from tags.models import Tag
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 import pytz
 import os
 from core.mixins import SystemObjectMixin
@@ -222,6 +223,32 @@ class BackupConfig(SingletonModel):
     def load(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+DEFAULT_DASHBOARD_LAYOUT = [
+    {"id": "graphs", "visible": True},
+    {"id": "budgets", "visible": True},
+    {"id": "reminders", "visible": True},
+    {"id": "transactions", "visible": True},
+]
+
+
+class UserDashboardConfig(models.Model):
+    """
+    Stores per-user dashboard widget ordering and visibility.
+
+    Fields:
+    - user (OneToOneField): The owning user.
+    - layout (JSONField): Ordered list of widget configs, each with 'id' and 'visible'.
+    """
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="dashboard_config"
+    )
+    layout = models.JSONField(default=list)
+
+    def __str__(self):
+        return f"Dashboard config for {self.user.username}"
 
 
 class DescriptionHistory(models.Model):
