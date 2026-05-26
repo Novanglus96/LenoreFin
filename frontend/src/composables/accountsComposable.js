@@ -72,6 +72,17 @@ async function deleteAccountFunction(deletedAccount) {
   }
 }
 
+async function toggleFavoriteFunction(account_id) {
+  try {
+    const response = await apiClient.post(
+      "/accounts/toggle-favorite/" + account_id,
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Favorite not toggled: ");
+  }
+}
+
 async function updateAccountFunction(updatedAccount) {
   const updated = { ...updatedAccount };
   if ("open_date" in updatedAccount)
@@ -151,8 +162,19 @@ export function useAccounts(inactive) {
     },
   });
 
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: toggleFavoriteFunction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    },
+  });
+
   async function addAccount(newAccount) {
     createAccountMutation.mutate(newAccount);
+  }
+
+  async function toggleFavorite(account_id) {
+    toggleFavoriteMutation.mutate(account_id);
   }
 
   return {
@@ -171,6 +193,7 @@ export function useAccounts(inactive) {
     inactive_accounts,
     inactive_isLoading,
     addAccount,
+    toggleFavorite,
   };
 }
 

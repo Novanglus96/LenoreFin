@@ -137,6 +137,7 @@ class Account(models.Model):
     due_day = models.IntegerField(default=15)
     pay_day = models.IntegerField(default=15)
     interest_deposit_day = models.IntegerField(null=True, blank=True, default=None)
+    is_favorite = models.BooleanField(default=False)
     parent_account = models.ForeignKey(
         "self",
         null=True,

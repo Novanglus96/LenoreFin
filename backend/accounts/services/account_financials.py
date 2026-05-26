@@ -119,6 +119,7 @@ def get_account_financials(account_id: int, today: date | None = None):
         due_day=account.due_day,
         pay_day=account.pay_day,
         interest_deposit_day=account.interest_deposit_day,
+        is_favorite=account.is_favorite,
         is_parent_account=is_parent,
         parent_account_id=account.parent_account_id,
         interest_child_account_id=account.interest_child_account_id,
