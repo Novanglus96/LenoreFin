@@ -70,7 +70,7 @@
                 <span
                   :style="
                     remainingAmt(budget) < 0
-                      ? 'color: rgba(var(--v-theme-warning), var(--v-high-emphasis-opacity))'
+                      ? 'color: rgba(var(--v-theme-error), var(--v-high-emphasis-opacity))'
                       : 'color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity))'
                   "
                 >
@@ -80,14 +80,14 @@
                 </span>
               </v-progress-circular>
               <div class="text-subtitle-2 text-center">
+                Budget:
                 <span
                   :style="
                     remainingAmt(budget) < 0
-                      ? 'color: rgba(var(--v-theme-warning), var(--v-high-emphasis-opacity))'
+                      ? 'color: rgba(var(--v-theme-error), var(--v-high-emphasis-opacity))'
                       : 'color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity))'
                   "
                 >
-                  Budget:
                   {{
                     formatCurrency(
                       parseFloat(budget.budget.amount) +
