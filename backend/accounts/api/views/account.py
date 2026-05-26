@@ -195,6 +195,32 @@ def update_account(request, account_id: int, payload: AccountUpdate):
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
+@account_router.post("/toggle-favorite/{account_id}", auth=FullAccessAuth())
+def toggle_favorite(request, account_id: int):
+    """
+    The function `toggle_favorite` flips the is_favorite flag on an account.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        account_id (int): the id of the account to toggle.
+
+    Returns:
+        is_favorite: the new value of is_favorite
+    """
+    try:
+        account = get_object_or_404(Account, id=account_id)
+        account.is_favorite = not account.is_favorite
+        account.save()
+        api_logger.info(
+            f"Account favorite toggled : {account.account_name} -> {account.is_favorite}"
+        )
+        return {"is_favorite": account.is_favorite}
+    except Exception as e:
+        api_logger.error("Account favorite not toggled")
+        error_logger.exception(f"{str(e)}")
+        raise HttpError(500, f"Toggle error: {str(e)}")
+
+
 @account_router.delete("/delete/{account_id}", auth=FullAccessAuth())
 def delete_account(request, account_id: int):
     """

@@ -84,6 +84,14 @@
               />
             </span>
           </v-list-item-subtitle>
+          <template v-slot:append v-if="authStore.isFullAccess">
+            <v-icon
+              :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
+              :color="account.is_favorite ? 'amber' : undefined"
+              size="small"
+              @click.stop="toggleFavorite(account.id)"
+            ></v-icon>
+          </template>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -149,6 +157,14 @@
               />
             </span>
           </v-list-item-subtitle>
+          <template v-slot:append v-if="authStore.isFullAccess">
+            <v-icon
+              :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
+              :color="account.is_favorite ? 'amber' : undefined"
+              size="small"
+              @click.stop="toggleFavorite(account.id)"
+            ></v-icon>
+          </template>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -214,6 +230,14 @@
               />
             </span>
           </v-list-item-subtitle>
+          <template v-slot:append v-if="authStore.isFullAccess">
+            <v-icon
+              :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
+              :color="account.is_favorite ? 'amber' : undefined"
+              size="small"
+              @click.stop="toggleFavorite(account.id)"
+            ></v-icon>
+          </template>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -279,6 +303,14 @@
               />
             </span>
           </v-list-item-subtitle>
+          <template v-slot:append v-if="authStore.isFullAccess">
+            <v-icon
+              :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
+              :color="account.is_favorite ? 'amber' : undefined"
+              size="small"
+              @click.stop="toggleFavorite(account.id)"
+            ></v-icon>
+          </template>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -344,6 +376,14 @@
               />
             </span>
           </v-list-item-subtitle>
+          <template v-slot:append v-if="authStore.isFullAccess">
+            <v-icon
+              :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
+              :color="account.is_favorite ? 'amber' : undefined"
+              size="small"
+              @click.stop="toggleFavorite(account.id)"
+            ></v-icon>
+          </template>
         </v-list-item>
       </v-list-group>
       <v-divider></v-divider>
@@ -427,13 +467,20 @@
     const parents = accounts.filter(a => a.is_parent_account)
     const children = accounts.filter(a => a.parent_account_id !== null)
     const standalone = accounts.filter(a => !a.is_parent_account && a.parent_account_id === null)
-    const result = []
-    for (const parent of parents) {
-      result.push(parent)
-      result.push(...children.filter(c => c.parent_account_id === parent.id))
+    const addGroup = (parentList) => {
+      const result = []
+      for (const parent of parentList) {
+        result.push(parent)
+        result.push(...children.filter(c => c.parent_account_id === parent.id))
+      }
+      return result
     }
-    result.push(...standalone)
-    return result
+    return [
+      ...addGroup(parents.filter(a => a.is_favorite)),
+      ...standalone.filter(a => a.is_favorite),
+      ...addGroup(parents.filter(a => !a.is_favorite)),
+      ...standalone.filter(a => !a.is_favorite),
+    ]
   }
 
   const setAccount = (account, forecast) => {
@@ -452,6 +499,7 @@
     investment_accounts,
     loan_accounts,
     inactive_accounts,
+    toggleFavorite,
   } = useAccounts();
   const add_account_link = ref("/accounts/add");
 </script>
