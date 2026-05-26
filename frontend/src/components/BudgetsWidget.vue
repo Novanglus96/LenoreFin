@@ -196,7 +196,8 @@
     today.setHours(0, 0, 0, 0);
     const reset = new Date(nextStart + "T00:00:00");
     const days = Math.ceil((reset - today) / (1000 * 60 * 60 * 24));
-    if (days <= 0) return "today";
+    if (days < 0) return "N/A";
+    if (days === 0) return "today";
     if (days === 1) return "1 day";
     return `${days} days`;
   };
