@@ -110,7 +110,12 @@
   import { useFavoriteBalances } from "@/composables/accountsComposable";
   import { useTransactionsStore } from "@/stores/transactions";
 
-  const { favoriteBalances, isLoading } = useFavoriteBalances();
+  const { favoriteBalances: rawFavoriteBalances, isLoading } = useFavoriteBalances();
+  const favoriteBalances = computed(() =>
+    [...(rawFavoriteBalances.value ?? [])].sort((a, b) =>
+      a.account_name.localeCompare(b.account_name),
+    ),
+  );
   const router = useRouter();
   const transactions_store = useTransactionsStore();
 

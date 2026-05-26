@@ -61,7 +61,7 @@
                 {{ budget.budget.name }}
               </div>
               <v-progress-circular
-                :model-value="budget.remaining_percentage"
+                :model-value="100 - budget.used_percentage"
                 :size="100"
                 :width="12"
                 :color="graphColor(budget.used_percentage)"
