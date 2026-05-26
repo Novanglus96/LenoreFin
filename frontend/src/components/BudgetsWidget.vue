@@ -67,33 +67,34 @@
                 :color="graphColor(budget.used_percentage)"
                 :bg-color="graphBGColor(budget.used_percentage)"
               >
-                <span style="color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity))">
-                  {{
-                    formatCurrency(
-                      parseFloat(budget.budget.amount) +
-                        parseFloat(budget.budget.roll_over_amt) -
-                        parseFloat(Math.abs(budget.used_total)),
-                    )
-                  }}
+                <span
+                  :style="
+                    remainingAmt(budget) < 0
+                      ? 'color: rgba(var(--v-theme-warning), var(--v-high-emphasis-opacity))'
+                      : 'color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity))'
+                  "
+                >
+                  {{ formatCurrency(remainingAmt(budget)) }}
                   <br />
-                  {{
-                    parseFloat(budget.budget.amount) +
-                      parseFloat(budget.budget.roll_over_amt) -
-                      parseFloat(Math.abs(budget.used_total)) <
-                    0
-                      ? "over"
-                      : "left"
-                  }}
+                  {{ remainingAmt(budget) < 0 ? "over" : "left" }}
                 </span>
               </v-progress-circular>
               <div class="text-subtitle-2 text-center">
-                Budget:
-                {{
-                  formatCurrency(
-                    parseFloat(budget.budget.amount) +
-                      parseFloat(budget.budget.roll_over_amt),
-                  )
-                }}
+                <span
+                  :style="
+                    remainingAmt(budget) < 0
+                      ? 'color: rgba(var(--v-theme-warning), var(--v-high-emphasis-opacity))'
+                      : 'color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity))'
+                  "
+                >
+                  Budget:
+                  {{
+                    formatCurrency(
+                      parseFloat(budget.budget.amount) +
+                        parseFloat(budget.budget.roll_over_amt),
+                    )
+                  }}
+                </span>
                 <span
                   :class="
                     budget.budget.roll_over_amt < 0
@@ -212,6 +213,11 @@
       maximumFractionDigits: 2,
     }).format(value);
   };
+  const remainingAmt = budget =>
+    parseFloat(budget.budget.amount) +
+    parseFloat(budget.budget.roll_over_amt) -
+    parseFloat(Math.abs(budget.used_total));
+
   const graphColor = value => {
     const thresholds = [
       { limit: 10, color: "green" },
