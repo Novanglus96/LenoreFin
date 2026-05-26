@@ -232,20 +232,28 @@ DEFAULT_DASHBOARD_LAYOUT = [
     {"id": "transactions", "visible": True},
 ]
 
+DEFAULT_GRAPH_WIDGETS = [
+    {"widget_id": 1, "graph_name": "Expenses", "type_id": 1, "tag_id": None, "month": 0, "exclude": "[0]"},
+    {"widget_id": 2, "graph_name": "Income", "type_id": 2, "tag_id": None, "month": 0, "exclude": "[0]"},
+    {"widget_id": 3, "graph_name": "Untagged", "type_id": 3, "tag_id": None, "month": 0, "exclude": "[0]"},
+]
+
 
 class UserDashboardConfig(models.Model):
     """
-    Stores per-user dashboard widget ordering and visibility.
+    Stores per-user dashboard widget ordering, visibility, and graph widget configs.
 
     Fields:
     - user (OneToOneField): The owning user.
     - layout (JSONField): Ordered list of widget configs, each with 'id' and 'visible'.
+    - graph_widgets (JSONField): Per-user config for each of the 3 pie chart widgets.
     """
 
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="dashboard_config"
     )
     layout = models.JSONField(default=list)
+    graph_widgets = models.JSONField(default=list)
 
     def __str__(self):
         return f"Dashboard config for {self.user.username}"

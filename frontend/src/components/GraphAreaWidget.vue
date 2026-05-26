@@ -59,12 +59,12 @@
   import WidgetForm from "@/components/WidgetForm.vue";
   import { useDisplay } from "vuetify";
   import { useGraphsNew } from "@/composables/tagsComposable";
-  import { useOptions } from "@/composables/optionsComposable";
+  import { useDashboardConfig } from "@/composables/dashboardComposable";
   import { ref } from "vue";
   import { useAuthStore } from "@/stores/auth";
 
   const authStore = useAuthStore();
-  const { options: appOptions } = useOptions();
+  const { graphWidgets } = useDashboardConfig();
   const { lgAndUp } = useDisplay();
   const page = ref(1);
 
@@ -76,9 +76,10 @@
     useGraphsNew(3);
 
   function getGraphTitle(widget) {
-    return appOptions.value
-      ? appOptions.value[`widget${widget}_graph_name`]
-      : `Graph ${widget}`;
+    return (
+      graphWidgets.value?.find(w => w.widget_id === widget)?.graph_name ??
+      `Graph ${widget}`
+    );
   }
 
   const graph_items_map = {
