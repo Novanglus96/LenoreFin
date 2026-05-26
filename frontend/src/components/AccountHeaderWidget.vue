@@ -47,7 +47,7 @@
                   aria-hidden="true"
                 />
                 <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="mr-1">combined</v-chip>
-                <!-- Desktop: tooltip + inline action buttons -->
+                <!-- Desktop: tooltip triggers edit on click -->
                 <v-tooltip text="Edit Account" location="top" v-if="authStore.isFullAccess && !smAndDown">
                   <template v-slot:activator="{ props }">
                     <span
@@ -67,16 +67,8 @@
                     </span>
                   </template>
                 </v-tooltip>
-                <!-- Mobile: tap name to open action drawer -->
-                <span
-                  class="mx-1"
-                  v-if="authStore.isFullAccess && smAndDown"
-                  @click="actionDrawer = true"
-                  tabindex="0"
-                  @keydown.enter="actionDrawer = true"
-                  role="button"
-                  aria-pressed="false"
-                >
+                <!-- Mobile full-access: plain name text (chevron is the toggle) -->
+                <span class="mx-1 flex-grow-1" v-if="authStore.isFullAccess && smAndDown">
                   {{
                     account.active
                       ? account.account_name
@@ -122,9 +114,7 @@
                 >
                   <template v-slot:activator="{ props }">
                     <v-btn
-                      :icon="
-                        account.active ? 'mdi-delete' : 'mdi-delete-restore'
-                      "
+                      :icon="account.active ? 'mdi-delete' : 'mdi-delete-restore'"
                       flat
                       variant="text"
                       @click="deleteDialog = true"
@@ -135,49 +125,64 @@
                     />
                   </template>
                 </v-tooltip>
+                <!-- Mobile chevron toggle -->
+                <v-btn
+                  v-if="authStore.isFullAccess && smAndDown"
+                  :icon="actionDrawer ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+                  flat
+                  variant="text"
+                  size="small"
+                  class="mx-0"
+                  @click="actionDrawer = !actionDrawer"
+                />
                 <DeleteAccountForm
                   v-model="deleteDialog"
                   :account="account"
                   @update-dialog="updateDeleteDialog"
                 />
-                <!-- Mobile action bottom sheet -->
-                <v-bottom-sheet v-model="actionDrawer" v-if="authStore.isFullAccess && smAndDown">
-                  <v-card>
-                    <v-card-title class="text-center text-body-1 pt-4 pb-2">
-                      {{ account.account_name }}
-                    </v-card-title>
-                    <v-card-text class="d-flex justify-center ga-4 pb-6">
-                      <v-btn
-                        variant="tonal"
-                        color="primary"
-                        prepend-icon="mdi-pencil"
-                        @click="actionDrawer = false; editDialog = true"
-                        :disabled="!isOnline"
-                      >
-                        Edit
-                      </v-btn>
-                      <v-btn
-                        variant="tonal"
-                        :color="account.is_favorite ? 'amber' : 'default'"
-                        :prepend-icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
-                        @click="toggleFavorite(account.id); actionDrawer = false"
-                        :disabled="!isOnline"
-                      >
-                        {{ account.is_favorite ? 'Unfavorite' : 'Favorite' }}
-                      </v-btn>
-                      <v-btn
-                        variant="tonal"
-                        color="error"
-                        :prepend-icon="account.active ? 'mdi-delete' : 'mdi-delete-restore'"
-                        @click="actionDrawer = false; deleteDialog = true"
-                        :disabled="!isOnline"
-                      >
-                        {{ account.active ? 'Delete' : 'Enable' }}
-                      </v-btn>
-                    </v-card-text>
-                  </v-card>
-                </v-bottom-sheet>
               </v-card>
+              <!-- Mobile inline action expand panel -->
+              <v-expand-transition>
+                <v-card
+                  v-if="actionDrawer && authStore.isFullAccess && smAndDown"
+                  class="mx-1 mt-0 bg-primary-lighten-1"
+                  variant="outlined"
+                  rounded="0 0 4 4"
+                >
+                  <v-card-text class="d-flex justify-center ga-3 py-2 px-2">
+                    <v-btn
+                      variant="tonal"
+                      color="primary"
+                      prepend-icon="mdi-pencil"
+                      size="small"
+                      @click="actionDrawer = false; editDialog = true"
+                      :disabled="!isOnline"
+                    >
+                      Edit
+                    </v-btn>
+                    <v-btn
+                      variant="tonal"
+                      :color="account.is_favorite ? 'amber' : undefined"
+                      :prepend-icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
+                      size="small"
+                      @click="toggleFavorite(account.id)"
+                      :disabled="!isOnline"
+                    >
+                      {{ account.is_favorite ? 'Unfavorite' : 'Favorite' }}
+                    </v-btn>
+                    <v-btn
+                      variant="tonal"
+                      color="error"
+                      :prepend-icon="account.active ? 'mdi-delete' : 'mdi-delete-restore'"
+                      size="small"
+                      @click="actionDrawer = false; deleteDialog = true"
+                      :disabled="!isOnline"
+                    >
+                      {{ account.active ? 'Delete' : 'Enable' }}
+                    </v-btn>
+                  </v-card-text>
+                </v-card>
+              </v-expand-transition>
             </v-col>
             <v-col cols="2" v-if="!smAndDown"></v-col>
           </v-row>
