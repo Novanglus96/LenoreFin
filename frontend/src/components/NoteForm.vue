@@ -34,7 +34,6 @@
                     :rows="11"
                     no-resize
                     :error-messages="note_text.errorMessage.value"
-                    :counter="254"
                   ></v-textarea>
                 </v-col>
               </v-row>
@@ -63,9 +62,9 @@
   const { handleSubmit } = useForm({
     validationSchema: {
       note_text(value) {
-        if (value?.length >= 2 && value?.length <= 254) return true;
+        if (value?.length >= 2) return true;
 
-        return "Note needs to be at least 2 characters, and less than 254.";
+        return "Note must be at least 2 characters.";
       },
       note_date(value) {
         if (value) return true;

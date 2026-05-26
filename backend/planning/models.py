@@ -88,11 +88,11 @@ class Note(models.Model):
     Model representing a note used to add notes relevant to planning.
 
     Fields:
-    - note_text (CharField): The text of the note, limited to 254 characters
+    - note_text (TextField): The text of the note, unlimited length.
     - note_date (DateField): the date this note was added, defaults to today.
     """
 
-    note_text = models.CharField(max_length=254)
+    note_text = models.TextField()
     note_date = models.DateField(default=current_date)
 
     def __str__(self):
