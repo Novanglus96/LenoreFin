@@ -336,6 +336,7 @@ class Command(BaseCommand):
                 "show_transactions": rc.show_transactions,
                 "show_subtotal": rc.show_subtotal,
                 "include_pending": rc.include_pending,
+                "is_shared": rc.is_shared,
                 "tag_selections": [
                     {
                         "tag_slug": sel.tag.slug if sel.tag else None,

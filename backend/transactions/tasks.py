@@ -230,6 +230,12 @@ def roll_over_budgets():
         )
         non_roll_over_budgets = budgets.filter(roll_over=False)
         non_roll_over_budgets.update(roll_over_amt=0)
+        for budget in budgets.filter(roll_over=False, next_start__lte=today):
+            _, _, _, next_start = calculate_repeat_window(
+                budget.start_day, budget.repeat
+            )
+            budget.next_start = next_start
+            budget.save()
         num_of_budgets = 0
         for budget in roll_over_budgets:
             transactions = []

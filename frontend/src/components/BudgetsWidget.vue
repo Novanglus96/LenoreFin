@@ -103,8 +103,8 @@
                   ({{ formatCurrency(budget.budget.roll_over_amt) }})
                 </span>
               </div>
-              <div class="text-subtitle-2 text-center">
-                Used: {{ formatCurrency(Math.abs(budget.used_total)) }}
+              <div class="text-caption text-center text-medium-emphasis mt-1">
+                Resets: {{ daysUntilReset(budget.budget.next_start) }}
               </div>
             </v-card-text>
           </v-card>
@@ -161,6 +161,9 @@
               }})
             </template>
           </v-progress-linear>
+          <div class="text-caption text-medium-emphasis mt-1 text-right">
+            Resets: {{ daysUntilReset(budget.budget.next_start) }}
+          </div>
         </v-list-item>
       </v-list>
     </v-card-text>
@@ -187,6 +190,17 @@
   const emit = defineEmits(["budgetSelected"]);
   const { budgets, isLoading } = useBudgets(props.widget);
   const showAddForm = ref(false);
+
+  const daysUntilReset = nextStart => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const reset = new Date(nextStart + "T00:00:00");
+    const days = Math.ceil((reset - today) / (1000 * 60 * 60 * 24));
+    if (days < 0) return "N/A";
+    if (days === 0) return "today";
+    if (days === 1) return "1 day";
+    return `${days} days`;
+  };
 
   const formatCurrency = value => {
     return new Intl.NumberFormat("en-US", {

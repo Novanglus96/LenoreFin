@@ -85,6 +85,18 @@
           <v-icon icon="mdi-wifi-off" color="warning" class="mx-2" v-bind="props"></v-icon>
         </template>
       </v-tooltip>
+      <v-tooltip text="Customize Dashboard" location="bottom" v-if="onDashboard">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            icon="mdi-view-dashboard-edit"
+            size="small"
+            color="primary"
+            @click="editorOpen = true"
+            v-bind="props"
+          />
+        </template>
+      </v-tooltip>
+      <DashboardEditor v-model="editorOpen" />
       <v-btn
         icon="mdi-theme-light-dark"
         @click="handleToggle"
@@ -263,12 +275,17 @@
   import { useDisplay, useTheme } from "vuetify";
   import AccountsMenu from "@/components/AccountsMenu.vue";
   import PlanningMenu from "@/components/PlanningMenu.vue";
+  import DashboardEditor from "@/components/DashboardEditor.vue";
   import { useMessages } from "@/composables/messagesComposable";
-  import { useRouter } from "vue-router";
+  import { useRouter, useRoute } from "vue-router";
   import { useTransactionsStore } from "@/stores/transactions";
   import { useThemeStore } from "@/stores/themeStore";
   import { useAuthStore } from "@/stores/auth";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
+
+  const route = useRoute();
+  const editorOpen = ref(false);
+  const onDashboard = computed(() => route.name === "dashboard");
 
   const theme = useTheme();
   const themeStore = useThemeStore();

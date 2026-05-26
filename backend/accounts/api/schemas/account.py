@@ -66,6 +66,7 @@ class AccountOut(Schema):
     due_day: Optional[int] = 15
     pay_day: Optional[int] = 15
     interest_deposit_day: Optional[int] = None
+    is_favorite: bool = False
     is_parent_account: bool = False
     parent_account_id: Optional[int] = None
     interest_child_account_id: Optional[int] = None
@@ -101,8 +102,19 @@ class AccountUpdate(Schema):
     interest_deposit_day: Optional[int] = None
     parent_account_id: Optional[int] = None
     interest_child_account_id: Optional[int] = None
+    is_favorite: Optional[bool] = None
 
 
 class AccountQuery(Schema):
     account_type: Optional[int] = None
     inactive: Optional[bool] = None
+
+
+class FavoriteBalanceSummary(Schema):
+    id: int
+    account_name: str
+    account_type_id: int
+    account_type_color: str
+    logo_url: Optional[str] = None
+    balance: Optional[BalanceDecimal] = None
+    projected_balance: Optional[BalanceDecimal] = None

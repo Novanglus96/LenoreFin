@@ -44,12 +44,21 @@
                 class="pa-1"
                 @click="loadSavedReport(report)"
               >
+                <template v-slot:prepend>
+                  <v-tooltip v-if="report.is_shared" location="right" text="Shared with all users">
+                    <template v-slot:activator="{ props }">
+                      <v-icon icon="mdi-share-variant" size="x-small" color="primary" class="mr-2" v-bind="props" />
+                    </template>
+                  </v-tooltip>
+                  <v-icon v-else icon="mdi-file-chart-outline" size="x-small" class="mr-2 text-medium-emphasis" />
+                </template>
                 <v-list-item-title class="text-body-2">{{ report.name }}</v-list-item-title>
                 <v-list-item-subtitle class="text-caption">
                   {{ report.report_type }} · {{ report.group_by }}
                 </v-list-item-subtitle>
                 <template v-slot:append>
                   <v-btn
+                    v-if="report.is_owner || authStore.isFullAccess"
                     icon="mdi-delete"
                     size="x-small"
                     variant="text"
@@ -270,7 +279,7 @@
                   :disabled="!isOnline"
                 >Run Report</v-btn>
               </v-col>
-              <v-col cols="auto" v-if="results">
+              <v-col cols="auto" v-if="results && (!activeSavedId || activeSavedIsOwner || authStore.isFullAccess)">
                 <v-btn
                   color="secondary"
                   variant="outlined"
@@ -437,6 +446,12 @@
             variant="outlined"
             rows="2"
           ></v-textarea>
+          <v-checkbox
+            v-model="saveIsShared"
+            label="Share with all users"
+            density="compact"
+            hide-details
+          ></v-checkbox>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -465,6 +480,12 @@
             variant="outlined"
             rows="2"
           ></v-textarea>
+          <v-checkbox
+            v-model="saveIsShared"
+            label="Share with all users"
+            density="compact"
+            hide-details
+          ></v-checkbox>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -497,9 +518,11 @@
   import { useAccounts } from "@/composables/accountsComposable";
   import { useTags } from "@/composables/tagsComposable";
   import { useMainStore } from "@/stores/main";
+  import { useAuthStore } from "@/stores/auth";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const mainStore = useMainStore();
+  const authStore = useAuthStore();
   const { isOnline } = useOnlineStatus();
   const reportsComposable = useReports();
   const { reports, isLoading, saveReport, updateReport, deleteReport, isSaving, isRunning } = reportsComposable;
@@ -531,12 +554,14 @@
   const activeSavedId = ref(null);
   const activeSavedName = ref("");
   const activeSavedDescription = ref("");
+  const activeSavedIsOwner = ref(false);
 
   const saveDialog = ref(false);
   const updateDialog = ref(false);
   const deleteDialog = ref(false);
   const saveName = ref("");
   const saveDescription = ref("");
+  const saveIsShared = ref(false);
   const pendingDelete = ref(null);
 
   // ---------------------------------------------------------------------------
@@ -624,6 +649,7 @@
     activeSavedId.value = null;
     activeSavedName.value = "";
     activeSavedDescription.value = "";
+    activeSavedIsOwner.value = false;
     form.value = defaultForm();
     results.value = null;
   }
@@ -632,6 +658,7 @@
     activeSavedId.value = report.id;
     activeSavedName.value = report.name;
     activeSavedDescription.value = report.description ?? "";
+    activeSavedIsOwner.value = report.is_owner ?? false;
 
     const selItems = (report.tag_selections ?? [])
       .filter(sel => sel.tag_id)
@@ -696,12 +723,15 @@
   function openSaveDialog() {
     saveName.value = "";
     saveDescription.value = "";
+    saveIsShared.value = false;
     saveDialog.value = true;
   }
 
   function openUpdateDialog() {
     saveName.value = activeSavedName.value;
     saveDescription.value = activeSavedDescription.value;
+    const active = (reports.value ?? []).find(r => r.id === activeSavedId.value);
+    saveIsShared.value = active?.is_shared ?? false;
     updateDialog.value = true;
   }
 
@@ -713,6 +743,7 @@
     const payload = {
       name: saveName.value.trim(),
       description: saveDescription.value.trim(),
+      is_shared: saveIsShared.value,
       ...buildPayload(),
     };
     saveReport(payload);
@@ -727,6 +758,7 @@
     const payload = {
       name: saveName.value.trim(),
       description: saveDescription.value.trim(),
+      is_shared: saveIsShared.value,
       ...buildPayload(),
     };
     updateReport(activeSavedId.value, payload);

@@ -8,6 +8,7 @@ from accounts.api.schemas.account import (
     AccountOut,
     AccountUpdate,
     AccountQuery,
+    FavoriteBalanceSummary,
 )
 from django.shortcuts import get_object_or_404
 from typing import List
@@ -20,6 +21,9 @@ from accounts.services import (
 from accounts.mappers import domain_account_to_schema
 import logging
 from administration.api.dependencies.auth import FullAccessAuth
+from transactions.services import get_account_transactions_and_balances
+from utils.dates import get_todays_date_timezone_adjusted
+from dateutil.relativedelta import relativedelta
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -195,6 +199,32 @@ def update_account(request, account_id: int, payload: AccountUpdate):
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
+@account_router.post("/toggle-favorite/{account_id}", auth=FullAccessAuth())
+def toggle_favorite(request, account_id: int):
+    """
+    The function `toggle_favorite` flips the is_favorite flag on an account.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        account_id (int): the id of the account to toggle.
+
+    Returns:
+        is_favorite: the new value of is_favorite
+    """
+    try:
+        account = get_object_or_404(Account, id=account_id)
+        account.is_favorite = not account.is_favorite
+        account.save()
+        api_logger.info(
+            f"Account favorite toggled : {account.account_name} -> {account.is_favorite}"
+        )
+        return {"is_favorite": account.is_favorite}
+    except Exception as e:
+        api_logger.error("Account favorite not toggled")
+        error_logger.exception(f"{str(e)}")
+        raise HttpError(500, f"Toggle error: {str(e)}")
+
+
 @account_router.delete("/delete/{account_id}", auth=FullAccessAuth())
 def delete_account(request, account_id: int):
     """
@@ -234,4 +264,56 @@ def delete_account(request, account_id: int):
         # Log other types of exceptions
         api_logger.error("Account not deleted")
         error_logger.exception(f"{str(e)}")
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
+
+
+@account_router.get("/favorite-balances", response=List[FavoriteBalanceSummary])
+def get_favorite_balances(request):
+    """
+    Returns current balance and projected 1st-of-next-month balance
+    for all active favorite accounts.
+    """
+    try:
+        today = get_todays_date_timezone_adjusted()
+        first_of_next_month = (today.replace(day=1) + relativedelta(months=1))
+
+        accounts = Account.objects.filter(is_favorite=True, active=True).select_related(
+            "account_type", "bank"
+        )
+
+        result = []
+        for account in accounts:
+            try:
+                financials = get_account_financials(account.id, today)
+                current_balance = financials.balance
+            except Exception:
+                current_balance = None
+
+            try:
+                _, projected_balance = get_account_transactions_and_balances(
+                    end_date=first_of_next_month,
+                    account_id=account.id,
+                    totals_only=True,
+                    forecast=True,
+                    start_date=today,
+                )
+            except Exception:
+                projected_balance = None
+
+            result.append(
+                FavoriteBalanceSummary(
+                    id=account.id,
+                    account_name=account.account_name,
+                    account_type_id=account.account_type_id,
+                    account_type_color=account.account_type.color,
+                    logo_url=account.bank.logo_url if account.bank else None,
+                    balance=current_balance,
+                    projected_balance=projected_balance,
+                )
+            )
+
+        api_logger.debug("Favorite balances retrieved")
+        return result
+    except Exception as e:
+        error_logger.exception(str(e))
         raise HttpError(500, f"Record retrieval error: {str(e)}")

@@ -72,6 +72,17 @@ async function deleteAccountFunction(deletedAccount) {
   }
 }
 
+async function toggleFavoriteFunction(account_id) {
+  try {
+    const response = await apiClient.post(
+      "/accounts/toggle-favorite/" + account_id,
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Favorite not toggled: ");
+  }
+}
+
 async function updateAccountFunction(updatedAccount) {
   const updated = { ...updatedAccount };
   if ("open_date" in updatedAccount)
@@ -151,8 +162,20 @@ export function useAccounts(inactive) {
     },
   });
 
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: toggleFavoriteFunction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts", "favorite_balances"] });
+    },
+  });
+
   async function addAccount(newAccount) {
     createAccountMutation.mutate(newAccount);
+  }
+
+  async function toggleFavorite(account_id) {
+    toggleFavoriteMutation.mutate(account_id);
   }
 
   return {
@@ -171,6 +194,7 @@ export function useAccounts(inactive) {
     inactive_accounts,
     inactive_isLoading,
     addAccount,
+    toggleFavorite,
   };
 }
 
@@ -220,6 +244,25 @@ export function useAccountByID(account_id) {
     removeAccount,
     editAccount,
   };
+}
+
+export function useFavoriteBalances() {
+  const queryClient = useQueryClient();
+  const { data: favoriteBalances, isLoading } = useQuery({
+    queryKey: ["accounts", "favorite_balances"],
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get("/accounts/favorite-balances");
+        return response.data;
+      } catch (error) {
+        handleApiError(error, "Favorite balances not fetched");
+      }
+    },
+    select: response => response,
+    client: queryClient,
+  });
+
+  return { favoriteBalances, isLoading };
 }
 
 function formatDateToYYYYMMDD(date) {
