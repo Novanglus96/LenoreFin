@@ -38,6 +38,20 @@
           ></v-btn>
         </template>
       </v-tooltip>
+      <v-tooltip location="bottom" text="Show 1st of month balance">
+        <template v-slot:activator="{ props: tipProps }">
+          <v-btn
+            icon="mdi-currency-usd"
+            flat
+            size="small"
+            :color="showMonthFlag ? 'primary' : undefined"
+            variant="plain"
+            :disabled="isActive"
+            v-bind="tipProps"
+            @click="toggleMonthFlag"
+          ></v-btn>
+        </template>
+      </v-tooltip>
       <v-menu location="right">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -122,6 +136,13 @@
   function toggleTrendLine() {
     showTrendLine.value = !showTrendLine.value;
     localStorage.setItem(lsTrendKey, showTrendLine.value);
+  }
+
+  const lsMonthFlagKey = `forecast_month_flag_${props.account?.[0] ?? "default"}`;
+  const showMonthFlag = ref(localStorage.getItem(lsMonthFlagKey) === "true");
+  function toggleMonthFlag() {
+    showMonthFlag.value = !showMonthFlag.value;
+    localStorage.setItem(lsMonthFlagKey, showMonthFlag.value);
   }
 
   const { isLoading, account_forecast, isFetching } = useAccountForecasts(
@@ -212,6 +233,31 @@
     });
 
     return minLabel !== null ? { x: minLabel, y: minVal } : null;
+  });
+
+  const monthFirstPoint = computed(() => {
+    if (!showMonthFlag.value) return null;
+    const raw = account_forecast.value;
+    if (!raw?.labels?.length || !raw?.datasets?.[0]?.data?.length) return null;
+
+    const today = new Date();
+    const firstOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+
+    const labels = raw.labels;
+    const data = raw.datasets[0].data;
+
+    for (let i = 0; i < labels.length; i++) {
+      const d = new Date(labels[i].replace(/'/g, "20"));
+      if (
+        d.getFullYear() === firstOfNextMonth.getFullYear() &&
+        d.getMonth() === firstOfNextMonth.getMonth() &&
+        d.getDate() === 1 &&
+        data[i] != null
+      ) {
+        return { x: labels[i], y: Number(data[i]) };
+      }
+    }
+    return null;
   });
 
   const chartOptions = computed(() => {
@@ -309,27 +355,50 @@
           borderWidth: 1,
           strokeDashArray: 0,
         }],
-        points: minPostTodayPoint.value ? [{
-          x: minPostTodayPoint.value.x,
-          y: minPostTodayPoint.value.y,
-          marker: {
-            size: 6,
-            fillColor: "#f44336",
-            strokeColor: "#fff",
-            strokeWidth: 2,
-          },
-          label: {
-            text: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(minPostTodayPoint.value.y),
-            borderColor: "#f44336",
-            offsetY: -12,
-            style: {
-              color: "#fff",
-              background: "#f44336",
-              fontSize: "10px",
-              padding: { top: 3, bottom: 3, left: 5, right: 5 },
+        points: [
+          ...(minPostTodayPoint.value ? [{
+            x: minPostTodayPoint.value.x,
+            y: minPostTodayPoint.value.y,
+            marker: {
+              size: 6,
+              fillColor: "#f44336",
+              strokeColor: "#fff",
+              strokeWidth: 2,
             },
-          },
-        }] : [],
+            label: {
+              text: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(minPostTodayPoint.value.y),
+              borderColor: "#f44336",
+              offsetY: -12,
+              style: {
+                color: "#fff",
+                background: "#f44336",
+                fontSize: "10px",
+                padding: { top: 3, bottom: 3, left: 5, right: 5 },
+              },
+            },
+          }] : []),
+          ...(monthFirstPoint.value ? [{
+            x: monthFirstPoint.value.x,
+            y: monthFirstPoint.value.y,
+            marker: {
+              size: 6,
+              fillColor: "#06966a",
+              strokeColor: "#fff",
+              strokeWidth: 2,
+            },
+            label: {
+              text: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(monthFirstPoint.value.y),
+              borderColor: "#06966a",
+              offsetY: -12,
+              style: {
+                color: "#fff",
+                background: "#06966a",
+                fontSize: "10px",
+                padding: { top: 3, bottom: 3, left: 5, right: 5 },
+              },
+            },
+          }] : []),
+        ],
       },
       xaxis: {
         type: "category",
