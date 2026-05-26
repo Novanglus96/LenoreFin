@@ -18,6 +18,7 @@
       >
         <v-col class="rounded"><BudgetsWidget :widget="true" /></v-col>
       </v-row>
+      <FavoriteAccountsWidget v-else-if="widget.id === 'account_balances'" />
       <v-row
         v-else-if="widget.id === 'reminders'"
         class="pa-1 ga-1 rounded"
@@ -53,6 +54,7 @@
   import TransactionTableWidget from "@/components/TransactionTableWidget.vue";
   import BudgetsWidget from "@/components/BudgetsWidget.vue";
   import DashboardEditor from "@/components/DashboardEditor.vue";
+  import FavoriteAccountsWidget from "@/components/FavoriteAccountsWidget.vue";
   import { useTransactions } from "@/composables/transactionsComposable";
   import { useTransactionsStore } from "@/stores/transactions";
   import { useDashboardConfig } from "@/composables/dashboardComposable";

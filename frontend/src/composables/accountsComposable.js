@@ -166,6 +166,7 @@ export function useAccounts(inactive) {
     mutationFn: toggleFavoriteFunction,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts", "favorite_balances"] });
     },
   });
 
@@ -243,6 +244,25 @@ export function useAccountByID(account_id) {
     removeAccount,
     editAccount,
   };
+}
+
+export function useFavoriteBalances() {
+  const queryClient = useQueryClient();
+  const { data: favoriteBalances, isLoading } = useQuery({
+    queryKey: ["accounts", "favorite_balances"],
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get("/accounts/favorite-balances");
+        return response.data;
+      } catch (error) {
+        handleApiError(error, "Favorite balances not fetched");
+      }
+    },
+    select: response => response,
+    client: queryClient,
+  });
+
+  return { favoriteBalances, isLoading };
 }
 
 function formatDateToYYYYMMDD(date) {

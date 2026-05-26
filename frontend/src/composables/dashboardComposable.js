@@ -6,6 +6,7 @@ import { useMainStore } from "@/stores/main";
 export const DEFAULT_LAYOUT = [
   { id: "graphs", visible: true },
   { id: "budgets", visible: true },
+  { id: "account_balances", visible: true },
   { id: "reminders", visible: true },
   { id: "transactions", visible: true },
 ];

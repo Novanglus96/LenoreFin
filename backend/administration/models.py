@@ -228,6 +228,7 @@ class BackupConfig(SingletonModel):
 DEFAULT_DASHBOARD_LAYOUT = [
     {"id": "graphs", "visible": True},
     {"id": "budgets", "visible": True},
+    {"id": "account_balances", "visible": True},
     {"id": "reminders", "visible": True},
     {"id": "transactions", "visible": True},
 ]

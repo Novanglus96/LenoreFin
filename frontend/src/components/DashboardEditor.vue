@@ -80,6 +80,7 @@
   const widgetMeta = {
     graphs: { label: "Graphs", icon: "mdi-chart-pie" },
     budgets: { label: "Budgets", icon: "mdi-wallet" },
+    account_balances: { label: "Account Balances", icon: "mdi-star" },
     reminders: { label: "Reminders", icon: "mdi-bell" },
     transactions: { label: "Transactions", icon: "mdi-bank-transfer" },
   };
