@@ -1,3 +1,10 @@
+# [1.5.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.2...v1.5.0-alpha.3) (2026-05-26)
+
+
+### Bug Fixes
+
+* convert note_text to TextField and remove frontend 254-char limit ([#153](https://github.com/Novanglus96/LenoreFin/issues/153)) ([6527395](https://github.com/Novanglus96/LenoreFin/commit/6527395e745401f9a119fe6cbf1ad8eb0186d8ec))
+
 # [1.5.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.1...v1.5.0-alpha.2) (2026-05-26)
 
 
