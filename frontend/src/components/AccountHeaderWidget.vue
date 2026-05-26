@@ -145,7 +145,7 @@
               <v-expand-transition>
                 <v-card
                   v-if="actionDrawer && authStore.isFullAccess && smAndDown"
-                  class="mx-1 mt-0 bg-primary-lighten-1"
+                  class="mx-1 mt-0 bg-primary-darken-2"
                   variant="outlined"
                   rounded="0 0 4 4"
                 >
