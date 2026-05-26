@@ -290,12 +290,15 @@ def get_favorite_balances(request):
                 current_balance = None
 
             try:
-                _, projected_balance = get_account_transactions_and_balances(
+                transactions, previous_balance = get_account_transactions_and_balances(
                     end_date=first_of_next_month,
                     account_id=account.id,
                     totals_only=True,
                     forecast=True,
                     start_date=today,
+                )
+                projected_balance = (
+                    transactions[-1].balance if transactions else previous_balance
                 )
             except Exception:
                 projected_balance = None
