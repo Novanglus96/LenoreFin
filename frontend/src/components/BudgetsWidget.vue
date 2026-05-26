@@ -60,30 +60,47 @@
               <div class="text-subtitle-2 text-center font-weight-bold">
                 {{ budget.budget.name }}
               </div>
-              <v-progress-circular
-                :model-value="100 - budget.used_percentage"
-                :size="100"
-                :width="12"
-                :color="graphColor(budget.used_percentage)"
-                :bg-color="graphBGColor(budget.used_percentage)"
-              >
-                {{
-                  formatCurrency(
-                    parseFloat(budget.budget.amount) +
-                      parseFloat(budget.budget.roll_over_amt) -
-                      parseFloat(Math.abs(budget.used_total)),
-                  )
-                }}
-                <br />
-                {{
-                  parseFloat(budget.budget.amount) +
-                    parseFloat(budget.budget.roll_over_amt) -
-                    parseFloat(Math.abs(budget.used_total)) <
-                  0
-                    ? "over"
-                    : "left"
-                }}
-              </v-progress-circular>
+              <div class="d-flex justify-center">
+                <div style="position: relative; width: 100px; height: 100px;">
+                  <svg viewBox="0 0 100 100" width="100" height="100">
+                    <circle
+                      cx="50" cy="50" r="44"
+                      fill="none"
+                      :class="`text-${graphBGColor(budget.used_percentage)}`"
+                      stroke="currentColor"
+                      stroke-width="12"
+                    />
+                    <circle
+                      cx="50" cy="50" r="44"
+                      fill="none"
+                      :class="`text-${graphColor(budget.used_percentage)}`"
+                      stroke="currentColor"
+                      stroke-width="12"
+                      :stroke-dasharray="`${(100 - budget.used_percentage) / 100 * 276.46} 276.46`"
+                      transform="rotate(-90 50 50)"
+                    />
+                  </svg>
+                  <div
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;"
+                    class="text-caption text-center"
+                  >
+                    {{
+                      formatCurrency(
+                        parseFloat(budget.budget.amount) +
+                          parseFloat(budget.budget.roll_over_amt) -
+                          parseFloat(Math.abs(budget.used_total)),
+                      )
+                    }}<br />
+                    {{
+                      parseFloat(budget.budget.amount) +
+                        parseFloat(budget.budget.roll_over_amt) -
+                        parseFloat(Math.abs(budget.used_total)) < 0
+                        ? "over"
+                        : "left"
+                    }}
+                  </div>
+                </div>
+              </div>
               <div class="text-subtitle-2 text-center">
                 Budget:
                 {{
