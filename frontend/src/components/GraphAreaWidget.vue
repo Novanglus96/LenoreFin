@@ -12,7 +12,7 @@
               {{ getGraphTitle(i) }}
             </span>
 
-            <WidgetForm v-if="authStore.isFullAccess" :widget="i" />
+            <WidgetForm :widget="i" />
           </v-card-title>
           <v-card-text
             class="d-flex justify-center align-center pa-0 ga-0 ma-0 w-100"
@@ -37,7 +37,7 @@
             <span class="text-subtitle-2 text-primary">
               {{ getGraphTitle(page) }}
             </span>
-            <WidgetForm v-if="authStore.isFullAccess" :widget="page" />
+            <WidgetForm :widget="page" />
           </v-card-title>
           <v-card-text
             class="d-flex justify-center align-center pa-0 ga-0 ma-0 w-100"
@@ -61,9 +61,7 @@
   import { useGraphsNew } from "@/composables/tagsComposable";
   import { useDashboardConfig } from "@/composables/dashboardComposable";
   import { ref } from "vue";
-  import { useAuthStore } from "@/stores/auth";
 
-  const authStore = useAuthStore();
   const { graphWidgets } = useDashboardConfig();
   const { lgAndUp } = useDisplay();
   const page = ref(1);
