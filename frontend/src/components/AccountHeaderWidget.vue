@@ -47,7 +47,8 @@
                   aria-hidden="true"
                 />
                 <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="mr-1">combined</v-chip>
-                <v-tooltip text="Edit Account" location="top" v-if="authStore.isFullAccess">
+                <!-- Desktop: tooltip + inline action buttons -->
+                <v-tooltip text="Edit Account" location="top" v-if="authStore.isFullAccess && !smAndDown">
                   <template v-slot:activator="{ props }">
                     <span
                       class="mx-1"
@@ -66,7 +67,23 @@
                     </span>
                   </template>
                 </v-tooltip>
-                <span class="mx-1" v-else>
+                <!-- Mobile: tap name to open action drawer -->
+                <span
+                  class="mx-1"
+                  v-if="authStore.isFullAccess && smAndDown"
+                  @click="actionDrawer = true"
+                  tabindex="0"
+                  @keydown.enter="actionDrawer = true"
+                  role="button"
+                  aria-pressed="false"
+                >
+                  {{
+                    account.active
+                      ? account.account_name
+                      : account.account_name + " (Inactive)"
+                  }}
+                </span>
+                <span class="mx-1" v-if="!authStore.isFullAccess">
                   {{
                     account.active
                       ? account.account_name
@@ -78,10 +95,11 @@
                   :account="account"
                   @update-dialog="updateEditDialog"
                 />
+                <!-- Desktop inline action buttons -->
                 <v-tooltip
                   :text="account.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'"
                   location="top"
-                  v-if="authStore.isFullAccess"
+                  v-if="authStore.isFullAccess && !smAndDown"
                 >
                   <template v-slot:activator="{ props }">
                     <v-btn
@@ -100,7 +118,7 @@
                 <v-tooltip
                   :text="account.active ? 'Delete Account' : 'Enable Account'"
                   location="top"
-                  v-if="authStore.isFullAccess"
+                  v-if="authStore.isFullAccess && !smAndDown"
                 >
                   <template v-slot:activator="{ props }">
                     <v-btn
@@ -122,6 +140,43 @@
                   :account="account"
                   @update-dialog="updateDeleteDialog"
                 />
+                <!-- Mobile action bottom sheet -->
+                <v-bottom-sheet v-model="actionDrawer" v-if="authStore.isFullAccess && smAndDown">
+                  <v-card>
+                    <v-card-title class="text-center text-body-1 pt-4 pb-2">
+                      {{ account.account_name }}
+                    </v-card-title>
+                    <v-card-text class="d-flex justify-center ga-4 pb-6">
+                      <v-btn
+                        variant="tonal"
+                        color="primary"
+                        prepend-icon="mdi-pencil"
+                        @click="actionDrawer = false; editDialog = true"
+                        :disabled="!isOnline"
+                      >
+                        Edit
+                      </v-btn>
+                      <v-btn
+                        variant="tonal"
+                        :color="account.is_favorite ? 'amber' : 'default'"
+                        :prepend-icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
+                        @click="toggleFavorite(account.id); actionDrawer = false"
+                        :disabled="!isOnline"
+                      >
+                        {{ account.is_favorite ? 'Unfavorite' : 'Favorite' }}
+                      </v-btn>
+                      <v-btn
+                        variant="tonal"
+                        color="error"
+                        :prepend-icon="account.active ? 'mdi-delete' : 'mdi-delete-restore'"
+                        @click="actionDrawer = false; deleteDialog = true"
+                        :disabled="!isOnline"
+                      >
+                        {{ account.active ? 'Delete' : 'Enable' }}
+                      </v-btn>
+                    </v-card-text>
+                  </v-card>
+                </v-bottom-sheet>
               </v-card>
             </v-col>
             <v-col cols="2" v-if="!smAndDown"></v-col>
@@ -412,6 +467,7 @@
   const adjBalDialog = ref(false);
   const editDialog = ref(false);
   const deleteDialog = ref(false);
+  const actionDrawer = ref(false);
   const showMore = ref(false);
   const showRewardGraph = ref(false);
 
