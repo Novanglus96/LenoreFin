@@ -61,7 +61,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -126,7 +130,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -191,7 +199,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -256,7 +268,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -321,7 +337,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -386,7 +406,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span

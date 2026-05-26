@@ -46,7 +46,11 @@
                   class="mr-1"
                   aria-hidden="true"
                 />
-                <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="mr-1">combined</v-chip>
+                <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-icon icon="mdi-layers" color="secondary" size="small" class="mr-1" v-bind="props" />
+                  </template>
+                </v-tooltip>
                 <!-- Desktop: tooltip triggers edit on click -->
                 <v-tooltip text="Edit Account" location="top" v-if="authStore.isFullAccess && !smAndDown">
                   <template v-slot:activator="{ props }">
