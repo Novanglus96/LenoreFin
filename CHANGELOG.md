@@ -1,3 +1,20 @@
+# [1.5.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.5...v1.5.0-alpha.6) (2026-05-26)
+
+
+### Bug Fixes
+
+* auto-add new widget slots to existing user dashboard configs on GET ([84b6e4d](https://github.com/Novanglus96/LenoreFin/commit/84b6e4dbd2b896390b84c8c0fd56a3567f861a1c))
+* import computed from vue not tanstack in dashboardComposable ([507c73e](https://github.com/Novanglus96/LenoreFin/commit/507c73e07a37f6fc5f1d41b80c525f91ef89a9fb))
+
+
+### Features
+
+* add favorite accounts balance widget to dashboard ([8123cc0](https://github.com/Novanglus96/LenoreFin/commit/8123cc0567167d82fb35b2aa3cc39620d6848039))
+* allow all authenticated users to edit dashboard and graph widgets ([2da0999](https://github.com/Novanglus96/LenoreFin/commit/2da09991953db7877d30aed49ffd9d3090ffc6e3))
+* move dashboard edit button to app bar, visible only on dashboard route ([46ca5b6](https://github.com/Novanglus96/LenoreFin/commit/46ca5b6fe559254d68ec7f85b58ea78e83b11fc8))
+* per-user dashboard widget ordering and visibility ([980b6f2](https://github.com/Novanglus96/LenoreFin/commit/980b6f2f25198d6fd1c13e3696e5479f0b19d115))
+* per-user graph widget config (name, type, tag, filters) ([eb2645a](https://github.com/Novanglus96/LenoreFin/commit/eb2645a031375260327aaa6299d9207213e46205))
+
 # [1.5.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.4...v1.5.0-alpha.5) (2026-05-26)
 
 
