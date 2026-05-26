@@ -1,3 +1,22 @@
+# [1.5.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.4...v1.5.0-alpha.5) (2026-05-26)
+
+
+### Bug Fixes
+
+* darken mobile action panel background for better contrast ([22ee69f](https://github.com/Novanglus96/LenoreFin/commit/22ee69fe6cc35432a36da9daad040ee2721343c0))
+* propagate is_favorite through DTO, service, and mapper layers ([60ef26a](https://github.com/Novanglus96/LenoreFin/commit/60ef26a3448285bd184dd68f4183e5bcc70be939))
+* replace combined chip with mdi-layers icon for parent accounts ([8083ec7](https://github.com/Novanglus96/LenoreFin/commit/8083ec7733c02708c7bed09520590ae6f8c0f8a5))
+* use v-model:opened on v-list to correctly auto-expand FAVORITES group ([4d6cba2](https://github.com/Novanglus96/LenoreFin/commit/4d6cba290a0cc8927408f4d574df2d73e2e3d38b))
+
+
+### Features
+
+* add account favorites with FAVORITES menu section and header toggle ([98126c0](https://github.com/Novanglus96/LenoreFin/commit/98126c0ed1ce45136f984545003041bcc7b0cd3c))
+* add account favorites with star icon and priority sort in menu ([9c8e1bd](https://github.com/Novanglus96/LenoreFin/commit/9c8e1bde47f604006b8c96a51997712773570003))
+* add mobile action bottom sheet on account header name tap ([3143a38](https://github.com/Novanglus96/LenoreFin/commit/3143a38ffac11a1277cefdfccf61530aae751061))
+* auto-expand FAVORITES group on menu load when favorites exist ([3678d69](https://github.com/Novanglus96/LenoreFin/commit/3678d6972ea51f26e8e5fe6c4824146c00c0eb3e))
+* replace bottom sheet with inline expand panel for mobile account actions ([3e13222](https://github.com/Novanglus96/LenoreFin/commit/3e13222d0272a3d0a3cde276c165ec469d7fe45c))
+
 # [1.5.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.3...v1.5.0-alpha.4) (2026-05-26)
 
 
