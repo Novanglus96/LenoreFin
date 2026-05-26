@@ -46,6 +46,7 @@ from administration.api.routers.health import health_router
 from administration.api.routers.backup import backup_router
 from administration.api.routers.logs import router as logs_router
 from reports.api.routers.report import report_router
+from administration.api.routers.dashboard_config import router as dashboard_config_router
 
 api = NinjaAPI(
     auth=SessionAuth(),
@@ -99,4 +100,5 @@ api.add_router("/administration/health", health_router)
 api.add_router("/administration/backups", backup_router)
 api.add_router("/administration/logs", logs_router)
 api.add_router("/reports", report_router)
+api.add_router("/administration/dashboard-config", dashboard_config_router)
 api.add_router("/auth", auth_router)

@@ -89,7 +89,7 @@
 </template>
 <script setup>
   import { ref, reactive, computed } from "vue";
-  import { useOptions } from "@/composables/optionsComposable";
+  import { useDashboardConfig } from "@/composables/dashboardComposable";
   import { useTags, useParentTags } from "@/composables/tagsComposable";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
@@ -105,7 +105,7 @@
   const { smAndDown } = useDisplay();
   const isMobile = smAndDown;
 
-  const { options, isLoading, editOptions } = useOptions();
+  const { graphWidgets, isLoading, saveGraphWidget } = useDashboardConfig();
   const { tags, isLoading: tags_isLoading } = useTags();
   const { parent_tags, isLoading: parent_tags_isLoading } = useParentTags();
 
@@ -127,26 +127,26 @@
   });
 
   const onMenuStateChange = val => {
-    if (!val || !options.value) return;
-    const w = props.widget;
-    formData.graph_name = options.value[`widget${w}_graph_name`] ?? "";
-    formData.graph_type = options.value[`widget${w}_type`]?.id ?? 1;
-    formData.tag_id = options.value[`widget${w}_tag_id`] ?? null;
-    const excludeStr = options.value[`widget${w}_exclude`];
+    if (!val || !graphWidgets.value) return;
+    const widgetCfg = graphWidgets.value.find(w => w.widget_id === props.widget);
+    formData.graph_name = widgetCfg?.graph_name ?? "";
+    formData.graph_type = widgetCfg?.type_id ?? 1;
+    formData.tag_id = widgetCfg?.tag_id ?? null;
     try {
-      formData.exclude = excludeStr ? JSON.parse(excludeStr).filter(Boolean) : [];
+      formData.exclude = widgetCfg?.exclude
+        ? JSON.parse(widgetCfg.exclude).filter(Boolean)
+        : [];
     } catch {
       formData.exclude = [];
     }
   };
 
   const submitForm = () => {
-    const w = props.widget;
-    editOptions({
-      [`widget${w}_graph_name`]: formData.graph_name,
-      [`widget${w}_tag_id`]: formData.tag_id ?? null,
-      [`widget${w}_type_id`]: formData.graph_type,
-      [`widget${w}_exclude`]: JSON.stringify(formData.exclude ?? []),
+    saveGraphWidget(props.widget, {
+      graph_name: formData.graph_name,
+      type_id: formData.graph_type,
+      tag_id: formData.tag_id ?? null,
+      exclude: JSON.stringify(formData.exclude ?? []),
     });
     menu.value = false;
   };

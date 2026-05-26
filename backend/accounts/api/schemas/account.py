@@ -108,3 +108,13 @@ class AccountUpdate(Schema):
 class AccountQuery(Schema):
     account_type: Optional[int] = None
     inactive: Optional[bool] = None
+
+
+class FavoriteBalanceSummary(Schema):
+    id: int
+    account_name: str
+    account_type_id: int
+    account_type_color: str
+    logo_url: Optional[str] = None
+    balance: Optional[BalanceDecimal] = None
+    projected_balance: Optional[BalanceDecimal] = None
