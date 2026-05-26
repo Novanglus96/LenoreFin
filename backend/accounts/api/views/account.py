@@ -297,10 +297,13 @@ def get_favorite_balances(request):
                     forecast=True,
                     start_date=today,
                 )
-                projected_balance = (
-                    transactions[-1].balance if transactions else previous_balance
-                )
-            except Exception:
+                projected_balance = previous_balance
+                for t in transactions:
+                    pt = t["pretty_total"] if isinstance(t, dict) else t.pretty_total
+                    if pt is not None:
+                        projected_balance += pt
+            except Exception as e:
+                error_logger.exception(f"Projected balance error for account {account.id}: {e}")
                 projected_balance = None
 
             result.append(
