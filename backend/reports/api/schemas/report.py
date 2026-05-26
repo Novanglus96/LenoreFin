@@ -31,6 +31,7 @@ class ReportConfigIn(Schema):
     show_transactions: bool = False
     show_subtotal: bool = True
     include_pending: bool = False
+    is_shared: bool = False
     tag_selections: List[TagSelectionIn] = []
 
 
@@ -49,6 +50,8 @@ class ReportConfigOut(Schema):
     show_transactions: bool
     show_subtotal: bool
     include_pending: bool
+    is_shared: bool
+    is_owner: bool
     tag_selections: List[TagSelectionOut]
     created_at: datetime
     updated_at: datetime
