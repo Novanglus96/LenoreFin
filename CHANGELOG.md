@@ -1,3 +1,17 @@
+## [1.5.1-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0...v1.5.1-alpha.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* improve ring text readability in yellow budget range ([452eaab](https://github.com/Novanglus96/LenoreFin/commit/452eaab15120dd371573be1a905f1029f26e3edf))
+* replace v-progress-circular with inline SVG ring for desktop budget widget ([b6f1ed7](https://github.com/Novanglus96/LenoreFin/commit/b6f1ed79885dcbe4956ab3ae1a0a904ca728ac24))
+* restore v-progress-circular and fix color/bg-color collision at yellow threshold ([940a69b](https://github.com/Novanglus96/LenoreFin/commit/940a69bd80794a15a6f732746b6d53a53b1048d4))
+* ring and budget text use warning color when over budget ([fa439d0](https://github.com/Novanglus96/LenoreFin/commit/fa439d0ef728f5aab1fbf306a11a4f8b806cb807))
+* sort favorite accounts by name and fix desktop budget ring percentage ([2fbaddb](https://github.com/Novanglus96/LenoreFin/commit/2fbaddb53ed1892cc079a85ea42b63d84dc0e1c0))
+* use error color for over-budget amounts, label text unchanged ([97fe88e](https://github.com/Novanglus96/LenoreFin/commit/97fe88e23731b6c935f6d5561e435eb3478b9e3b))
+* use theme on-surface color for budget ring text ([d9a212d](https://github.com/Novanglus96/LenoreFin/commit/d9a212d87f386f7f2e21b0662d2759dc5031b575))
+* use yellow-lighten-4 for budget ring bg track in yellow range for contrast ([63a0113](https://github.com/Novanglus96/LenoreFin/commit/63a01131c2506f0cb3b9583cb12e6513b8dafd46))
+
 # [1.5.0](https://github.com/Novanglus96/LenoreFin/compare/v1.4.2...v1.5.0) (2026-05-26)
 
 
