@@ -1,3 +1,10 @@
+# [1.6.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.3...v1.6.0-alpha.4) (2026-05-27)
+
+
+### Bug Fixes
+
+* suppress flake8 E402 on deferred imports in asgi.py ([#167](https://github.com/Novanglus96/LenoreFin/issues/167)) ([f658edb](https://github.com/Novanglus96/LenoreFin/commit/f658edbb7b350aaa2799ad6552e314fb8829e7b5))
+
 # [1.6.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.2...v1.6.0-alpha.3) (2026-05-27)
 
 
