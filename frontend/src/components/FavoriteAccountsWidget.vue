@@ -128,6 +128,9 @@
   function navigateTo(accountId) {
     transactions_store.resetFilters();
     transactions_store.pageinfo.account_id = accountId;
+    transactions_store.pageinfo.forecast = false;
+    transactions_store.pageinfo.maxdays = 14;
+    transactions_store.pageinfo.view_type = 1;
     router.push(`/accounts/${accountId}`);
   }
 </script>

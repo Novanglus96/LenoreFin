@@ -37,7 +37,7 @@ class Command(BaseCommand):
 
     def _collect_data(self):
         from administration.models import Payee, DescriptionHistory, Option, BackupConfig
-        from accounts.models import Bank, Account, Reward
+        from accounts.models import Bank, Account, AccountFavorite, Reward
         from tags.models import Tag, MainTag, SubTag
         from transactions.models import Transaction, Paycheck, TransactionDetail
         from reminders.models import Reminder, ReminderExclusion
@@ -347,7 +347,16 @@ class Command(BaseCommand):
                 ],
             })
 
-        # 21. Option singleton
+        # 21. AccountFavorites (per-user; export username + account name)
+        data["account_favorites"] = [
+            {
+                "username": af.user.username,
+                "account_name": af.account.account_name,
+            }
+            for af in AccountFavorite.objects.select_related("user", "account").all()
+        ]
+
+        # 22. Option singleton
         option = Option.load()
         if option:
             data["option"] = {

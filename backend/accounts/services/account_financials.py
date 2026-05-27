@@ -1,5 +1,5 @@
 from datetime import date
-from accounts.models import Account, Reward
+from accounts.models import Account, AccountFavorite, Reward
 from utils.dates import get_todays_date_timezone_adjusted
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
@@ -27,7 +27,7 @@ class AccountNotFound(Exception):
     pass
 
 
-def get_account_financials(account_id: int, today: date | None = None):
+def get_account_financials(account_id: int, today: date | None = None, user=None):
     """
     Returns a DomainAccount with all calculated financial fields, served from cache when available.
 
@@ -36,8 +36,9 @@ def get_account_financials(account_id: int, today: date | None = None):
     Parent accounts sum cleared and pending balances across all children instead of
     querying their own (empty) transaction set.
     """
-    # Check Cache
-    key = account_financials(account_id)
+    # Cache key is per-user since is_favorite is per-user
+    user_pk = user.pk if user and isinstance(getattr(user, "pk", None), int) else None
+    key = f"{account_financials(account_id)}:{user_pk}"
     data = cache.get(key)
     if data:
         return data
@@ -119,7 +120,7 @@ def get_account_financials(account_id: int, today: date | None = None):
         due_day=account.due_day,
         pay_day=account.pay_day,
         interest_deposit_day=account.interest_deposit_day,
-        is_favorite=account.is_favorite,
+        is_favorite=AccountFavorite.objects.filter(account_id=account_id, user_id=user_pk).exists() if user_pk else False,
         is_parent_account=is_parent,
         parent_account_id=account.parent_account_id,
         interest_child_account_id=account.interest_child_account_id,
@@ -215,31 +216,24 @@ def last_year_six_month_reward_amounts(account_id: int):
     return oldest_to_newest
 
 
-def list_accounts_with_financials(query: AccountQuery) -> list[DomainAccount]:
+def list_accounts_with_financials(query: AccountQuery, user=None) -> list[DomainAccount]:
     account_list = []
 
-    # Retrieve all accounts
     qs = Account.objects.all()
 
-    # If inactive argument is provided, filter by active/inactive
     if not query.inactive:
         qs = qs.filter(active=True)
 
-    # If account type argument is provided, filter by account type
     if query.account_type is not None and query.account_type != 0:
         qs = qs.filter(account_type__id=query.account_type)
 
     if query.account_type is not None and query.account_type == 0:
         qs = qs.filter(active=False)
 
-    # Order accounts by account type id ascending, bank name ascending, and account
-    # name ascending
     qs = qs.order_by("account_type__id", "bank__bank_name", "account_name")
 
-    # Get Account financials
     for account in qs:
-        result = get_account_financials(account.id)
-
+        result = get_account_financials(account.id, user=user)
         account_list.append(result)
 
     return account_list
