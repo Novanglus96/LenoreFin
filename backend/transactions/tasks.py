@@ -1579,7 +1579,7 @@ def detect_recurring_transactions():
     from decimal import Decimal as D
 
     today = date.today()
-    window_start = today - timedelta(days=120)
+    window_start = today - timedelta(days=400)
 
     status_ids = list(
         TransactionStatus.objects.filter(slug__in=["cleared", "reconciled", "archived"])
@@ -1608,7 +1608,8 @@ def detect_recurring_transactions():
         if total_days > 0:
             repeat_by_days[total_days] = r
 
-    TARGET_PERIODS = [7, 14, 30]
+    # (period_days, tolerance_days, min_occurrences)
+    TARGET_PERIODS = [(7, 5, 3), (14, 5, 3), (30, 5, 3), (365, 14, 2)]
 
     groups = defaultdict(list)
     for tx in txs:
@@ -1618,20 +1619,27 @@ def detect_recurring_transactions():
     for description, group in groups.items():
         if description in existing_descriptions or description in ignored_descriptions:
             continue
-        if len(group) < 3:
-            continue
 
         group = sorted(group, key=lambda t: t["transaction_date"])
         dates = [t["transaction_date"] for t in group]
         amounts = [abs(float(t["total_amount"])) for t in group]
 
+        if len(group) < 2:
+            continue
+
         intervals = [(dates[i + 1] - dates[i]).days for i in range(len(dates) - 1)]
         avg_interval = sum(intervals) / len(intervals)
 
-        target = next((p for p in TARGET_PERIODS if abs(avg_interval - p) <= 5), None)
-        if target is None:
+        match = next(
+            ((p, tol, min_occ) for p, tol, min_occ in TARGET_PERIODS if abs(avg_interval - p) <= tol),
+            None,
+        )
+        if match is None:
             continue
-        if any(abs(iv - avg_interval) > 5 for iv in intervals):
+        target, tolerance, min_occurrences = match
+        if len(group) < min_occurrences:
+            continue
+        if any(abs(iv - avg_interval) > tolerance for iv in intervals):
             continue
 
         avg_amount = sum(amounts) / len(amounts)
