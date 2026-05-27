@@ -1569,6 +1569,103 @@ def run_scheduled_reports():
         broadcast_invalidate(["report_results"])
 
 
+def detect_recurring_transactions():
+    """Scan transaction history for recurring patterns and create DetectedRecurring records."""
+    from planning.models import DetectedRecurring
+    from reminders.models import Repeat, Reminder
+    from transactions.models import Transaction, TransactionStatus
+    from collections import defaultdict
+    from datetime import timedelta
+    from decimal import Decimal as D
+
+    today = date.today()
+    window_start = today - timedelta(days=120)
+
+    status_ids = list(
+        TransactionStatus.objects.filter(slug__in=["cleared", "reconciled", "archived"])
+        .values_list("id", flat=True)
+    )
+
+    txs = list(
+        Transaction.objects.filter(
+            transaction_date__gte=window_start,
+            status_id__in=status_ids,
+        )
+        .exclude(description__isnull=True)
+        .exclude(description="")
+        .values("id", "description", "transaction_date", "total_amount")
+        .order_by("description", "transaction_date")
+    )
+
+    existing_descriptions = set(Reminder.objects.values_list("description", flat=True))
+    ignored_descriptions = set(
+        DetectedRecurring.objects.filter(is_ignored=True).values_list("description", flat=True)
+    )
+
+    repeat_by_days = {}
+    for r in Repeat.objects.all():
+        total_days = r.days + r.weeks * 7 + r.months * 30 + r.years * 365
+        if total_days > 0:
+            repeat_by_days[total_days] = r
+
+    TARGET_PERIODS = [7, 14, 30]
+
+    groups = defaultdict(list)
+    for tx in txs:
+        groups[tx["description"]].append(tx)
+
+    new_detections = []
+    for description, group in groups.items():
+        if description in existing_descriptions or description in ignored_descriptions:
+            continue
+        if len(group) < 3:
+            continue
+
+        group = sorted(group, key=lambda t: t["transaction_date"])
+        dates = [t["transaction_date"] for t in group]
+        amounts = [abs(float(t["total_amount"])) for t in group]
+
+        intervals = [(dates[i + 1] - dates[i]).days for i in range(len(dates) - 1)]
+        avg_interval = sum(intervals) / len(intervals)
+
+        target = next((p for p in TARGET_PERIODS if abs(avg_interval - p) <= 5), None)
+        if target is None:
+            continue
+        if any(abs(iv - avg_interval) > 5 for iv in intervals):
+            continue
+
+        avg_amount = sum(amounts) / len(amounts)
+        if avg_amount == 0:
+            continue
+        if any(abs(a - avg_amount) / avg_amount > 0.20 for a in amounts):
+            continue
+
+        next_date = dates[-1] + timedelta(days=target)
+        repeat = repeat_by_days.get(target)
+
+        new_detections.append(
+            DetectedRecurring(
+                description=description,
+                estimated_amount=D(str(round(avg_amount, 2))),
+                repeat=repeat,
+                next_estimated_date=next_date,
+                transaction_ids=[t["id"] for t in group],
+            )
+        )
+
+    DetectedRecurring.objects.filter(is_ignored=False).delete()
+
+    if new_detections:
+        DetectedRecurring.objects.bulk_create(new_detections)
+        create_message(
+            f"{len(new_detections)} recurring transaction pattern(s) detected. "
+            "View suggestions under Planning → Detections."
+        )
+        task_logger.info(f"detect_recurring_transactions: {len(new_detections)} patterns found.")
+    else:
+        task_logger.info("detect_recurring_transactions: no new patterns found.")
+
+
 # TODO: Task to look for negative dips
 # TODO: Task to look for under threshold
 # TODO: Task to update Credit Card specific information

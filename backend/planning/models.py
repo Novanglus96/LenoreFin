@@ -116,6 +116,24 @@ class CalculationRule(models.Model):
     destination_account_id = models.IntegerField()
 
 
+class DetectedRecurring(models.Model):
+    description = models.CharField(max_length=254)
+    estimated_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    repeat = models.ForeignKey(
+        Repeat, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    next_estimated_date = models.DateField()
+    transaction_ids = models.JSONField(default=list)
+    is_ignored = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.description
+
+
 class Budget(models.Model):
     """
     Model representing a budget.
