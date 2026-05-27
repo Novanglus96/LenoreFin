@@ -1,3 +1,10 @@
+# [1.6.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.2...v1.6.0-alpha.3) (2026-05-27)
+
+
+### Features
+
+* add WebSocket real-time sync via Django Channels ([#166](https://github.com/Novanglus96/LenoreFin/issues/166)) ([310194e](https://github.com/Novanglus96/LenoreFin/commit/310194e5aa331e1eaede824419cf8d28af2d64c3))
+
 # [1.6.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.1...v1.6.0-alpha.2) (2026-05-27)
 
 
