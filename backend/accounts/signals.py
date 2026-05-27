@@ -12,6 +12,7 @@ from core.cache.keys import (
     account_combined_transactions,
     account_all,
 )
+from core.broadcast import broadcast_invalidate
 
 
 @receiver(post_save, sender=Account)
@@ -36,6 +37,7 @@ def update_cache_on_save(sender, instance, **kwargs):
     if instance.parent_account_id:
         delete_pattern(account_financials(instance.parent_account_id))
         delete_pattern(account_combined_transactions(instance.parent_account_id))
+    broadcast_invalidate(["accounts"])
 
 
 @receiver(post_delete, sender=Account)
@@ -47,6 +49,7 @@ def update_cache_on_delete(sender, instance, **kwargs):
         Q(source_account_id=instance.id) | Q(destination_account_id=instance.id)
     ).delete()
     delete_pattern(account_all(instance.id))
+    broadcast_invalidate(["accounts"])
 
 
 @receiver(pre_save, sender=Account)

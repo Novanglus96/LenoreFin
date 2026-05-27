@@ -61,6 +61,8 @@ INSTALLED_APPS = [
     "dbbackup",
     "ninja",
     "django_q",
+    "daphne",
+    "channels",
 ]
 
 MIDDLEWARE = [
@@ -93,6 +95,18 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
+ASGI_APPLICATION = "backend.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", int(os.environ.get("REDIS_PORT", 6379)))],
+            "capacity": 100,
+            "expiry": 60,
+        },
+    }
+}
 
 
 # Database
