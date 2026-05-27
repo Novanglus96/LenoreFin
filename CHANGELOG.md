@@ -1,3 +1,10 @@
+# [1.6.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.4...v1.6.0-alpha.5) (2026-05-27)
+
+
+### Bug Fixes
+
+* move daphne to first position in INSTALLED_APPS ([#168](https://github.com/Novanglus96/LenoreFin/issues/168)) ([c2c1ebc](https://github.com/Novanglus96/LenoreFin/commit/c2c1ebc6fc742d1149eec33b7bfb6a22aae6ac4e))
+
 # [1.6.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.3...v1.6.0-alpha.4) (2026-05-27)
 
 
