@@ -1,3 +1,10 @@
+# [1.6.0-alpha.9](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.8...v1.6.0-alpha.9) (2026-05-27)
+
+
+### Bug Fixes
+
+* show fetching state on reminders table during background refetch ([#172](https://github.com/Novanglus96/LenoreFin/issues/172)) ([869a1e4](https://github.com/Novanglus96/LenoreFin/commit/869a1e48cabdb7eb778c38b48eebc32de823cf89))
+
 # [1.6.0-alpha.8](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.7...v1.6.0-alpha.8) (2026-05-27)
 
 
