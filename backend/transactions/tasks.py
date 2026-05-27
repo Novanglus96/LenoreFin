@@ -1674,6 +1674,7 @@ def detect_recurring_transactions():
         task_logger.info(f"detect_recurring_transactions: {len(new_detections)} patterns found.")
     else:
         task_logger.info("detect_recurring_transactions: no new patterns found.")
+    broadcast_invalidate(["detected_recurring"])
 
 
 # TODO: Task to look for negative dips
