@@ -1650,6 +1650,9 @@ def detect_recurring_transactions():
         if any(abs(a - avg_amount) / avg_amount > 0.20 for a in amounts):
             continue
 
+        if (today - dates[-1]).days > target + tolerance:
+            continue
+
         next_date = dates[-1] + timedelta(days=target)
         repeat = repeat_by_days.get(target)
 
