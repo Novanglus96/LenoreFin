@@ -181,11 +181,15 @@ class Message(models.Model):
     - message_date (DateTimeField): The date of the message, defaults to today.
     - message (CharField): The text of the messsage, limited to 254 characters.
     - unread (BooleanField): Whether or not this message is unread, default is True.
+    - user (ForeignKey): Optional owner — null means visible to all users.
     """
 
     message_date = models.DateTimeField(default=current_date_time)
     message = models.CharField(max_length=254)
     unread = models.BooleanField(default=True)
+    user = models.ForeignKey(
+        "auth.User", on_delete=models.CASCADE, null=True, blank=True, related_name="messages"
+    )
 
     def __str__(self):
         return self.message

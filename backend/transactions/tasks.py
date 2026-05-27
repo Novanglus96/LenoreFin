@@ -109,21 +109,25 @@ def cleanup_old_backups():
             error_logger.exception(f"Failed to delete backup {f}: {e}")
 
 
-def create_message(message_text):
+def create_message(message_text, user=None):
     """
     The function `create_message` creates a Message object for
     displaying a message alert in the app inbox.
 
     Args:
         message_text (str): The text of the message
+        user: Optional User instance — if set, message is private to that user
+              and the WebSocket notification targets only their channel group.
     """
 
     Message.objects.create(
         message_date=get_todays_date_timezone_adjusted(True),
         message=message_text,
         unread=True,
+        user=user,
     )
-    broadcast_invalidate(["messages"])
+    group = f"user_{user.pk}" if user else "global"
+    broadcast_invalidate(["messages"], group=group)
 
 
 def convert_reminder():
@@ -1546,7 +1550,7 @@ def run_scheduled_reports():
                 result_data=_result_dict_for_json(result),
                 status="success",
             )
-            create_message(f"Scheduled report '{config.name}' completed successfully.")
+            create_message(f"Scheduled report '{config.name}' completed successfully.", user=config.created_by)
             task_logger.info(f"Scheduled report '{config.name}' (id={config.id}) ran successfully.")
         except Exception as e:
             ReportResult.objects.create(
@@ -1555,11 +1559,14 @@ def run_scheduled_reports():
                 status="error",
                 error_message=str(e),
             )
-            create_message(f"Scheduled report '{config.name}' failed: {e}")
+            create_message(f"Scheduled report '{config.name}' failed: {e}", user=config.created_by)
             error_logger.exception(f"Scheduled report '{config.name}' (id={config.id}) failed: {e}")
 
         config.next_run_at = _compute_next_run(config.schedule_frequency, config.schedule_day)
         config.save(update_fields=["next_run_at"])
+
+    if due:
+        broadcast_invalidate(["report_results"])
 
 
 # TODO: Task to look for negative dips

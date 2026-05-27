@@ -663,6 +663,7 @@
 
 <script setup>
   import { ref, computed } from "vue";
+  import { useQuery } from "@tanstack/vue-query";
   import { useReports } from "@/composables/reportsComposable";
   import { useAccounts } from "@/composables/accountsComposable";
   import { useTags } from "@/composables/tagsComposable";
@@ -719,8 +720,12 @@
   const saveScheduleDay = ref(null);
   const pendingDelete = ref(null);
 
-  const historyItems = ref([]);
-  const historyLoading = ref(false);
+  const { data: historyItems, isFetching: historyLoading } = useQuery({
+    queryKey: computed(() => ["report_results", activeSavedId.value]),
+    queryFn: () => activeSavedId.value ? fetchResults(activeSavedId.value) : Promise.resolve([]),
+    enabled: computed(() => !!activeSavedId.value),
+    initialData: [],
+  });
 
   // ---------------------------------------------------------------------------
   // Dropdown options
@@ -828,7 +833,6 @@
     activeSavedIsOwner.value = false;
     form.value = defaultForm();
     results.value = null;
-    historyItems.value = [];
   }
 
   function loadSavedReport(report) {
@@ -865,18 +869,6 @@
       schedule_day: report.schedule_day ?? null,
     };
     results.value = null;
-    loadHistory(report.id);
-  }
-
-  async function loadHistory(reportId) {
-    historyLoading.value = true;
-    try {
-      historyItems.value = await fetchResults(reportId);
-    } catch {
-      historyItems.value = [];
-    } finally {
-      historyLoading.value = false;
-    }
   }
 
   async function loadHistoryResult(resultId) {
