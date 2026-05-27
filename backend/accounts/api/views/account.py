@@ -24,6 +24,7 @@ from administration.api.dependencies.auth import FullAccessAuth
 from transactions.services import get_account_transactions_and_balances
 from utils.dates import get_todays_date_timezone_adjusted
 from dateutil.relativedelta import relativedelta
+from datetime import timedelta
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -275,7 +276,10 @@ def get_favorite_balances(request):
     """
     try:
         today = get_todays_date_timezone_adjusted()
-        first_of_next_month = (today.replace(day=1) + relativedelta(months=1))
+        first_of_next_month = today.replace(day=1) + relativedelta(months=1)
+        # Query through the 2nd so transactions dated ON the 1st are included
+        # (the service filter is transaction_date__lt=end_date)
+        end_date = first_of_next_month + timedelta(days=1)
 
         accounts = Account.objects.filter(is_favorite=True, active=True).select_related(
             "account_type", "bank"
@@ -290,14 +294,20 @@ def get_favorite_balances(request):
                 current_balance = None
 
             try:
-                _, projected_balance = get_account_transactions_and_balances(
-                    end_date=first_of_next_month,
+                transactions, previous_balance = get_account_transactions_and_balances(
+                    end_date=end_date,
                     account_id=account.id,
                     totals_only=True,
                     forecast=True,
                     start_date=today,
                 )
-            except Exception:
+                projected_balance = previous_balance
+                for t in transactions:
+                    pt = t["pretty_total"] if isinstance(t, dict) else t.pretty_total
+                    if pt is not None:
+                        projected_balance += pt
+            except Exception as e:
+                error_logger.exception(f"Projected balance error for account {account.id}: {e}")
                 projected_balance = None
 
             result.append(
