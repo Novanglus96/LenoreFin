@@ -1,5 +1,6 @@
 from ninja import Router, Query
 from django.db import IntegrityError
+from django.core.cache import cache
 from ninja.errors import HttpError
 from accounts.models import Account, AccountFavorite, Reward
 from transactions.models import Transaction
@@ -19,6 +20,7 @@ from accounts.services import (
     list_accounts_with_financials,
 )
 from accounts.mappers import domain_account_to_schema
+from core.cache.keys import account_financials as account_financials_key
 import logging
 from administration.api.dependencies.auth import FullAccessAuth
 from transactions.services import get_account_transactions_and_balances
@@ -217,6 +219,7 @@ def toggle_favorite(request, account_id: int):
             is_fav = False
         else:
             is_fav = True
+        cache.delete(f"{account_financials_key(account_id)}:{user.pk}")
         api_logger.info(f"Account favorite toggled : {account.account_name} -> {is_fav} (user {user.pk})")
         return {"is_favorite": is_fav}
     except HttpError:
