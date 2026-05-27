@@ -1,3 +1,10 @@
+# [1.6.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.1...v1.6.0-alpha.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* update PWA icons to use elephant favicon with transparency ([#165](https://github.com/Novanglus96/LenoreFin/issues/165)) ([8aa1fe6](https://github.com/Novanglus96/LenoreFin/commit/8aa1fe69ac1519a6837d32c98c6b172eaeb71064))
+
 # [1.6.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.2-alpha.1...v1.6.0-alpha.1) (2026-05-27)
 
 
