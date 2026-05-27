@@ -1613,11 +1613,13 @@ def detect_recurring_transactions():
 
     groups = defaultdict(list)
     for tx in txs:
-        groups[tx["description"]].append(tx)
+        key = tx["description"].strip().lower()
+        groups[key].append(tx)
 
     new_detections = []
-    for description, group in groups.items():
-        if description in existing_descriptions or description in ignored_descriptions:
+    for key, group in groups.items():
+        description = group[0]["description"].strip()
+        if description.lower() in {d.lower() for d in existing_descriptions} or key in {d.strip().lower() for d in ignored_descriptions}:
             continue
 
         group = sorted(group, key=lambda t: t["transaction_date"])
