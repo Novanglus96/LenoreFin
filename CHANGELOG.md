@@ -1,3 +1,10 @@
+# [1.6.0-alpha.11](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.10...v1.6.0-alpha.11) (2026-05-27)
+
+
+### Features
+
+* scheduled reports with inbox WebSocket broadcast ([#174](https://github.com/Novanglus96/LenoreFin/issues/174)) ([8479dca](https://github.com/Novanglus96/LenoreFin/commit/8479dca568b9fb461bd736dfe99b93a85ea04d94))
+
 # [1.6.0-alpha.10](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.9...v1.6.0-alpha.10) (2026-05-27)
 
 
