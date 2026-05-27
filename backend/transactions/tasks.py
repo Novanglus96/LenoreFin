@@ -109,20 +109,25 @@ def cleanup_old_backups():
             error_logger.exception(f"Failed to delete backup {f}: {e}")
 
 
-def create_message(message_text):
+def create_message(message_text, user=None):
     """
     The function `create_message` creates a Message object for
     displaying a message alert in the app inbox.
 
     Args:
         message_text (str): The text of the message
+        user: Optional User instance — if set, message is private to that user
+              and the WebSocket notification targets only their channel group.
     """
 
     Message.objects.create(
         message_date=get_todays_date_timezone_adjusted(True),
         message=message_text,
         unread=True,
+        user=user,
     )
+    group = f"user_{user.pk}" if user else "global"
+    broadcast_invalidate(["messages"], group=group)
 
 
 def convert_reminder():
@@ -1458,6 +1463,110 @@ def calculate_interest(
     daily_rate = annual_rate / 365 / 100
     interest = amount * daily_rate * days
     return interest.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def _result_dict_for_json(result: dict) -> dict:
+    """Convert run_report() output (with date/Decimal values) to JSON-safe dict."""
+    from decimal import Decimal as D
+
+    def _d(v):
+        return str(v) if isinstance(v, D) else v
+
+    def _date(v):
+        return v.isoformat() if v and hasattr(v, "isoformat") else v
+
+    rows = []
+    for row in result.get("rows", []):
+        serialized_row = {
+            "label": row.get("label"),
+            "total": _d(row.get("total")),
+            "period1_total": _d(row.get("period1_total")),
+            "period2_total": _d(row.get("period2_total")),
+            "difference": _d(row.get("difference")),
+        }
+        if "transactions" in row and row["transactions"] is not None:
+            serialized_row["transactions"] = [
+                {
+                    "id": tx["id"],
+                    "date": _date(tx["date"]),
+                    "description": tx["description"],
+                    "amount": _d(tx["amount"]),
+                    "account": tx["account"],
+                }
+                for tx in row["transactions"]
+            ]
+        rows.append(serialized_row)
+
+    return {
+        "report_type": result.get("report_type"),
+        "group_by": result.get("group_by"),
+        "date_from": _date(result.get("date_from")),
+        "date_to": _date(result.get("date_to")),
+        "period2_from": _date(result.get("period2_from")),
+        "period2_to": _date(result.get("period2_to")),
+        "rows": rows,
+        "subtotal": _d(result.get("subtotal")),
+        "subtotal2": _d(result.get("subtotal2")),
+    }
+
+
+def run_scheduled_reports():
+    """Run all ReportConfigs that are due for their scheduled execution."""
+    from reports.models import ReportConfig, ReportResult
+    from reports.services.execution import run_report
+    from reports.api.views.report import _compute_next_run
+
+    now = timezone.now()
+    due = ReportConfig.objects.filter(
+        is_scheduled=True, next_run_at__lte=now
+    ).prefetch_related("tag_selections", "accounts")
+
+    for config in due:
+        try:
+            tag_dicts = [
+                {
+                    "tag_id": sel.tag_id,
+                    "sub_tag_id": sel.sub_tag_id,
+                    "main_tag_id": sel.main_tag_id,
+                }
+                for sel in config.tag_selections.all()
+            ]
+            result = run_report(
+                report_type=config.report_type,
+                date_range_type=config.date_range_type,
+                group_by=config.group_by,
+                date_from=config.date_from,
+                date_to=config.date_to,
+                account_ids=list(config.accounts.values_list("id", flat=True)),
+                tag_selections=tag_dicts,
+                show_transactions=config.show_transactions,
+                show_subtotal=config.show_subtotal,
+                include_pending=config.include_pending,
+                period2_date_from=config.period2_date_from,
+                period2_date_to=config.period2_date_to,
+            )
+            ReportResult.objects.create(
+                config=config,
+                result_data=_result_dict_for_json(result),
+                status="success",
+            )
+            create_message(f"Scheduled report '{config.name}' completed successfully.", user=config.created_by)
+            task_logger.info(f"Scheduled report '{config.name}' (id={config.id}) ran successfully.")
+        except Exception as e:
+            ReportResult.objects.create(
+                config=config,
+                result_data={},
+                status="error",
+                error_message=str(e),
+            )
+            create_message(f"Scheduled report '{config.name}' failed: {e}", user=config.created_by)
+            error_logger.exception(f"Scheduled report '{config.name}' (id={config.id}) failed: {e}")
+
+        config.next_run_at = _compute_next_run(config.schedule_frequency, config.schedule_day)
+        config.save(update_fields=["next_run_at"])
+
+    if due:
+        broadcast_invalidate(["report_results"])
 
 
 # TODO: Task to look for negative dips

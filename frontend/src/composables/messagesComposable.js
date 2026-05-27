@@ -79,7 +79,7 @@ export function useMessages() {
     select: response => response,
     client: queryClient,
     staleTime: 0,
-    refetchInterval: 60000,
+    refetchInterval: 300000,
     refetchIntervalInBackground: true,
   });
 

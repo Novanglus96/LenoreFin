@@ -116,6 +116,15 @@ class Command(BaseCommand):
                 "start_today": False,
                 "delete": False,
             },
+            {
+                "task_name": "Run Scheduled Reports",
+                "function": "transactions.tasks.run_scheduled_reports",
+                "time": "00:00",
+                "arguments": "",
+                "type": "HOURLY",
+                "start_today": True,
+                "delete": False,
+            },
         ]
 
         # Schedule or modify tasks

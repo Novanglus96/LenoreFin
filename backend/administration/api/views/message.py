@@ -1,5 +1,6 @@
 from ninja import Router
 from ninja.errors import HttpError
+from django.db.models import Q
 from administration.models import Message
 from administration.api.schemas.message import (
     MessageIn,
@@ -93,7 +94,7 @@ def update_messages(request, message_id: int, payload: AllMessage):
         success: True
     """
     try:
-        messages = Message.objects.all()
+        messages = Message.objects.filter(Q(user__isnull=True) | Q(user=request.user))
 
         for message in messages:
             message.unread = payload.unread
@@ -180,9 +181,7 @@ def delete_messages(request, message_id: int):
     """
 
     try:
-        messages = Message.objects.all()
-        for message in messages:
-            message.delete()
+        Message.objects.filter(Q(user__isnull=True) | Q(user=request.user)).delete()
         api_logger.info("All Messages deleted")
         return {"success": True}
     except Exception as e:
@@ -206,7 +205,7 @@ def list_messages(request):
     """
 
     try:
-        message_list_object = get_message_list()
+        message_list_object = get_message_list(user=request.user)
         api_logger.debug("Message list retrieved")
         return message_list_object
     except Exception as e:
