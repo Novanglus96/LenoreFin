@@ -1,3 +1,10 @@
+# [1.6.0-alpha.10](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.9...v1.6.0-alpha.10) (2026-05-27)
+
+
+### Bug Fixes
+
+* remove unused isLoading from RemindersWidget destructure ([#173](https://github.com/Novanglus96/LenoreFin/issues/173)) ([b656f2e](https://github.com/Novanglus96/LenoreFin/commit/b656f2efebc1a5c2363ab203b19102d8fddf1b6d))
+
 # [1.6.0-alpha.9](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.8...v1.6.0-alpha.9) (2026-05-27)
 
 
