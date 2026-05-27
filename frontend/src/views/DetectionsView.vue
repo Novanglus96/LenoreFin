@@ -128,9 +128,9 @@
     activeDetectionId.value = detection.id;
     reminderFormData.value = {
       id: 0,
-      tag: { id: null },
+      tag: { id: detection.suggested_tag_id ?? null },
       amount: detection.estimated_amount,
-      reminder_source_account: { id: null },
+      reminder_source_account: { id: detection.suggested_account_id ?? null },
       reminder_destination_account: { id: null },
       description: detection.description,
       transaction_type: { id: 1 },
@@ -143,9 +143,9 @@
     reminderDialog.value = true;
   }
 
-  function onReminderSaved() {
+  function onReminderSaved(saved) {
     reminderDialog.value = false;
-    if (activeDetectionId.value) {
+    if (saved && activeDetectionId.value) {
       deleteDetection(activeDetectionId.value);
       activeDetectionId.value = null;
     }

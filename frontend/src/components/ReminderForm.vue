@@ -209,7 +209,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="closeDialog">Close</v-btn>
+          <v-btn color="primary" variant="text" @click="closeDialog()">Close</v-btn>
           <v-btn color="primary" variant="text" type="submit" :disabled="!isOnline">Save</v-btn>
         </v-card-actions>
       </v-card>
@@ -350,11 +350,11 @@
     } else {
       addReminder(payload);
     }
-    closeDialog();
+    closeDialog(true);
   });
 
-  const closeDialog = () => {
-    emit("updateDialog", false);
+  const closeDialog = (saved = false) => {
+    emit("updateDialog", saved);
   };
 
   const initializeFormData = () => {

@@ -13,3 +13,5 @@ class DetectedRecurringOut(Schema):
     next_estimated_date: date
     transaction_ids: List[int]
     created_at: datetime
+    suggested_tag_id: Optional[int] = None
+    suggested_account_id: Optional[int] = None

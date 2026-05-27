@@ -126,6 +126,8 @@ class DetectedRecurring(models.Model):
     transaction_ids = models.JSONField(default=list)
     is_ignored = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    suggested_tag_id = models.IntegerField(null=True, blank=True)
+    suggested_account_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]

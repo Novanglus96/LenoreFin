@@ -24,6 +24,8 @@ def _serialize(d: DetectedRecurring) -> dict:
         "next_estimated_date": d.next_estimated_date,
         "transaction_ids": d.transaction_ids,
         "created_at": d.created_at,
+        "suggested_tag_id": d.suggested_tag_id,
+        "suggested_account_id": d.suggested_account_id,
     }
 
 

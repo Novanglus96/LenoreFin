@@ -1573,8 +1573,9 @@ def detect_recurring_transactions():
     """Scan transaction history for recurring patterns and create DetectedRecurring records."""
     from planning.models import DetectedRecurring
     from reminders.models import Repeat, Reminder
-    from transactions.models import Transaction, TransactionStatus
-    from collections import defaultdict
+    from transactions.models import Transaction, TransactionStatus, TransactionDetail
+    from django.db.models import Count as _Count
+    from collections import defaultdict, Counter
     from datetime import timedelta
     from decimal import Decimal as D
 
@@ -1593,7 +1594,7 @@ def detect_recurring_transactions():
         )
         .exclude(description__isnull=True)
         .exclude(description="")
-        .values("id", "description", "transaction_date", "total_amount")
+        .values("id", "description", "transaction_date", "total_amount", "source_account_id")
         .order_by("description", "transaction_date")
     )
 
@@ -1619,7 +1620,10 @@ def detect_recurring_transactions():
     new_detections = []
     for key, group in groups.items():
         description = group[0]["description"].strip()
-        if description.lower() in {d.lower() for d in existing_descriptions} or key in {d.strip().lower() for d in ignored_descriptions}:
+        desc_lower = description.lower()
+        if any(desc_lower in d.lower() or d.lower() in desc_lower for d in existing_descriptions):
+            continue
+        if key in {d.strip().lower() for d in ignored_descriptions}:
             continue
 
         group = sorted(group, key=lambda t: t["transaction_date"])
@@ -1649,6 +1653,7 @@ def detect_recurring_transactions():
             continue
         if any(abs(a - avg_amount) / avg_amount > 0.20 for a in amounts):
             continue
+        recent_amount = amounts[-1]
 
         if (today - dates[-1]).days > target + tolerance:
             continue
@@ -1656,13 +1661,29 @@ def detect_recurring_transactions():
         next_date = dates[-1] + timedelta(days=target)
         repeat = repeat_by_days.get(target)
 
+        tx_ids = [t["id"] for t in group]
+        tag_row = (
+            TransactionDetail.objects.filter(transaction_id__in=tx_ids)
+            .exclude(tag_id__isnull=True)
+            .values("tag_id")
+            .annotate(n=_Count("id"))
+            .order_by("-n")
+            .first()
+        )
+        suggested_tag_id = tag_row["tag_id"] if tag_row else None
+
+        account_counts = Counter(t["source_account_id"] for t in group if t["source_account_id"] is not None)
+        suggested_account_id = account_counts.most_common(1)[0][0] if account_counts else None
+
         new_detections.append(
             DetectedRecurring(
                 description=description,
-                estimated_amount=D(str(round(avg_amount, 2))),
+                estimated_amount=D(str(round(recent_amount, 2))),
                 repeat=repeat,
                 next_estimated_date=next_date,
                 transaction_ids=[t["id"] for t in group],
+                suggested_tag_id=suggested_tag_id,
+                suggested_account_id=suggested_account_id,
             )
         )
 
