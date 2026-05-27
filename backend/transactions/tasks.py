@@ -805,7 +805,7 @@ def update_reminder_cache(reminder_id):
         if reminder.reminder_destination_account is not None:
             delete_pattern(account_all_transactions(reminder.reminder_destination_account.id))
             update_cc_forecast_cache(reminder.reminder_destination_account.id)
-        broadcast_invalidate(["reminders", "accounts"])
+        broadcast_invalidate(["reminders", "accounts", "account_forecast", "tag_graph"])
     except Exception as e:
         task_logger.warning("There was an error creating cache")
         error_logger.warning(f"{str(e)}")
