@@ -1,3 +1,10 @@
+# [1.6.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.2-alpha.1...v1.6.0-alpha.1) (2026-05-27)
+
+
+### Features
+
+* add Patreon announcement workflow and script ([#164](https://github.com/Novanglus96/LenoreFin/issues/164)) ([1e84262](https://github.com/Novanglus96/LenoreFin/commit/1e84262527faea8a245c13c2a46be05b61a2accf))
+
 ## [1.5.2-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1...v1.5.2-alpha.1) (2026-05-27)
 
 
