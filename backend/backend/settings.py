@@ -37,6 +37,7 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "import_export",
     "unfold",
     "unfold.contrib.filters",
@@ -61,7 +62,6 @@ INSTALLED_APPS = [
     "dbbackup",
     "ninja",
     "django_q",
-    "daphne",
     "channels",
 ]
 
