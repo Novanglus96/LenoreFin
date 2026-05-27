@@ -1,3 +1,10 @@
+# [1.6.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.6...v1.6.0-alpha.7) (2026-05-27)
+
+
+### Bug Fixes
+
+* add websockets explicitly for uvicorn WebSocket support ([#170](https://github.com/Novanglus96/LenoreFin/issues/170)) ([608350e](https://github.com/Novanglus96/LenoreFin/commit/608350e23c2379f67ab74ad831131ecb4f596b47))
+
 # [1.6.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.5...v1.6.0-alpha.6) (2026-05-27)
 
 
