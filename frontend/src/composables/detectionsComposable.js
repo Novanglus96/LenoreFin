@@ -42,7 +42,6 @@ export function useDetections() {
   const { data: detections, isLoading, isFetching } = useQuery({
     queryKey: ["detected_recurring"],
     queryFn: listDetectionsFunction,
-    initialData: [],
   });
 
   const ignoreMutation = useMutation({

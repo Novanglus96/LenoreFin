@@ -11,7 +11,7 @@
 
     <v-progress-linear indeterminate v-if="isFetching" color="primary" class="mb-4"></v-progress-linear>
 
-    <v-row v-if="!isLoading && detections.length === 0">
+    <v-row v-if="!isLoading && (!detections || detections.length === 0)">
       <v-col>
         <v-sheet border rounded class="pa-6 text-center text-medium-emphasis">
           <v-icon icon="mdi-check-circle-outline" size="48" class="mb-2"></v-icon>
@@ -26,7 +26,7 @@
         cols="12"
         md="6"
         lg="4"
-        v-for="detection in detections"
+        v-for="detection in (detections ?? [])"
         :key="detection.id"
       >
         <v-card variant="outlined" :elevation="2" class="bg-surface h-100">
