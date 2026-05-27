@@ -1,3 +1,10 @@
+## [1.5.1-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1-alpha.2...v1.5.1-alpha.3) (2026-05-27)
+
+
+### Bug Fixes
+
+* per-user favorite accounts and fix widget navigation ([#162](https://github.com/Novanglus96/LenoreFin/issues/162)) ([1207c3c](https://github.com/Novanglus96/LenoreFin/commit/1207c3c54a4671c7e1c65af6a7f7989bbdc4ae5f))
+
 ## [1.5.1-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1-alpha.1...v1.5.1-alpha.2) (2026-05-27)
 
 
