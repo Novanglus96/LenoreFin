@@ -1,3 +1,10 @@
+## [1.5.1-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1-alpha.1...v1.5.1-alpha.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* favorite accounts projected balance includes reminders and forecasts ([#161](https://github.com/Novanglus96/LenoreFin/issues/161)) ([fa2f61e](https://github.com/Novanglus96/LenoreFin/commit/fa2f61ecd689f16aa7f646567f0c5687c5a1b567))
+
 ## [1.5.1-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0...v1.5.1-alpha.1) (2026-05-26)
 
 
