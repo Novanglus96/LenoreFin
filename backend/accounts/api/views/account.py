@@ -1,7 +1,8 @@
 from ninja import Router, Query
 from django.db import IntegrityError
+from django.core.cache import cache
 from ninja.errors import HttpError
-from accounts.models import Account, Reward
+from accounts.models import Account, AccountFavorite, Reward
 from transactions.models import Transaction
 from accounts.api.schemas.account import (
     AccountIn,
@@ -19,11 +20,13 @@ from accounts.services import (
     list_accounts_with_financials,
 )
 from accounts.mappers import domain_account_to_schema
+from core.cache.keys import account_financials as account_financials_key
 import logging
 from administration.api.dependencies.auth import FullAccessAuth
 from transactions.services import get_account_transactions_and_balances
 from utils.dates import get_todays_date_timezone_adjusted
 from dateutil.relativedelta import relativedelta
+from datetime import timedelta
 
 api_logger = logging.getLogger("api")
 db_logger = logging.getLogger("db")
@@ -32,6 +35,14 @@ task_logger = logging.getLogger("task")
 
 
 account_router = Router(tags=["Accounts"])
+
+
+def _safe_user(request):
+    try:
+        user = request.user
+        return user if isinstance(getattr(user, "pk", None), int) else None
+    except AttributeError:
+        return None
 
 
 @account_router.post("/create", auth=FullAccessAuth())
@@ -90,13 +101,10 @@ def get_account(request, account_id: int):
     """
 
     try:
-        result = get_account_financials(account_id)
-
+        result = get_account_financials(account_id, user=_safe_user(request))
         return domain_account_to_schema(result)
-
     except AccountNotFound:
         raise HttpError(404, "Account not found")
-
     except Exception as e:
         raise HttpError(500, f"Record retrieval error: {str(e)}")
 
@@ -117,18 +125,13 @@ def list_accounts(request, query: AccountQuery = Query(...)):
     """
 
     try:
-        domain_accounts = list_accounts_with_financials(query)
-        schema_accounts = []
-
-        # Get Account financials
-        for account in domain_accounts:
-            schema_accounts.append(domain_account_to_schema(account))
-
+        user = _safe_user(request)
+        domain_accounts = list_accounts_with_financials(query, user=user)
+        schema_accounts = [domain_account_to_schema(a) for a in domain_accounts]
         api_logger.debug("Account list retrieved")
         return schema_accounts
     except Exception as e:
-        # Log other types of exceptions
-        api_logger.error("Account list retrieved")
+        api_logger.error("Account list not retrieved")
         error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error : {str(e)}")
 
@@ -199,26 +202,28 @@ def update_account(request, account_id: int, payload: AccountUpdate):
         raise HttpError(500, f"Record update error: {str(e)}")
 
 
-@account_router.post("/toggle-favorite/{account_id}", auth=FullAccessAuth())
+@account_router.post("/toggle-favorite/{account_id}")
 def toggle_favorite(request, account_id: int):
     """
-    The function `toggle_favorite` flips the is_favorite flag on an account.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        account_id (int): the id of the account to toggle.
-
-    Returns:
-        is_favorite: the new value of is_favorite
+    Toggles this account as a favorite for the requesting user.
+    Each user has their own independent set of favorites.
     """
     try:
+        user = _safe_user(request)
+        if not user:
+            raise HttpError(401, "Authentication required")
         account = get_object_or_404(Account, id=account_id)
-        account.is_favorite = not account.is_favorite
-        account.save()
-        api_logger.info(
-            f"Account favorite toggled : {account.account_name} -> {account.is_favorite}"
-        )
-        return {"is_favorite": account.is_favorite}
+        fav, created = AccountFavorite.objects.get_or_create(user=user, account=account)
+        if not created:
+            fav.delete()
+            is_fav = False
+        else:
+            is_fav = True
+        cache.delete(f"{account_financials_key(account_id)}:{user.pk}")
+        api_logger.info(f"Account favorite toggled : {account.account_name} -> {is_fav} (user {user.pk})")
+        return {"is_favorite": is_fav}
+    except HttpError:
+        raise
     except Exception as e:
         api_logger.error("Account favorite not toggled")
         error_logger.exception(f"{str(e)}")
@@ -274,10 +279,18 @@ def get_favorite_balances(request):
     for all active favorite accounts.
     """
     try:
-        today = get_todays_date_timezone_adjusted()
-        first_of_next_month = (today.replace(day=1) + relativedelta(months=1))
+        user = _safe_user(request)
+        if not user:
+            return []
 
-        accounts = Account.objects.filter(is_favorite=True, active=True).select_related(
+        today = get_todays_date_timezone_adjusted()
+        first_of_next_month = today.replace(day=1) + relativedelta(months=1)
+        # Query through the 2nd so transactions dated ON the 1st are included
+        # (the service filter is transaction_date__lt=end_date)
+        end_date = first_of_next_month + timedelta(days=1)
+
+        favorite_ids = AccountFavorite.objects.filter(user=user).values_list("account_id", flat=True)
+        accounts = Account.objects.filter(id__in=favorite_ids, active=True).select_related(
             "account_type", "bank"
         )
 
@@ -290,14 +303,20 @@ def get_favorite_balances(request):
                 current_balance = None
 
             try:
-                _, projected_balance = get_account_transactions_and_balances(
-                    end_date=first_of_next_month,
+                transactions, previous_balance = get_account_transactions_and_balances(
+                    end_date=end_date,
                     account_id=account.id,
                     totals_only=True,
                     forecast=True,
                     start_date=today,
                 )
-            except Exception:
+                projected_balance = previous_balance
+                for t in transactions:
+                    pt = t["pretty_total"] if isinstance(t, dict) else t.pretty_total
+                    if pt is not None:
+                        projected_balance += pt
+            except Exception as e:
+                error_logger.exception(f"Projected balance error for account {account.id}: {e}")
                 projected_balance = None
 
             result.append(
@@ -306,6 +325,7 @@ def get_favorite_balances(request):
                     account_name=account.account_name,
                     account_type_id=account.account_type_id,
                     account_type_color=account.account_type.color,
+                    account_type_slug=account.account_type.slug,
                     logo_url=account.bank.logo_url if account.bank else None,
                     balance=current_balance,
                     projected_balance=projected_balance,

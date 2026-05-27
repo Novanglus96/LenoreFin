@@ -537,8 +537,14 @@
     inactive_accounts,
   } = useAccounts();
 
+  const FAVORITE_TYPE_ORDER = { checking: 0, savings: 1, 'credit-card': 2, investment: 3, loan: 4 };
+
   const favoriteAccounts = computed(() =>
-    (accounts.value ?? []).filter(a => a.is_favorite)
+    [...(accounts.value ?? []).filter(a => a.is_favorite)].sort((a, b) => {
+      const ta = FAVORITE_TYPE_ORDER[a.account_type?.slug] ?? 99;
+      const tb = FAVORITE_TYPE_ORDER[b.account_type?.slug] ?? 99;
+      return ta !== tb ? ta - tb : a.account_name.localeCompare(b.account_name);
+    })
   );
 
   watch(favoriteAccounts, val => {

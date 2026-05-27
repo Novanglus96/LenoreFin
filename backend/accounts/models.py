@@ -5,6 +5,7 @@ import os
 from django.core.exceptions import ValidationError
 from model_utils import FieldTracker
 from core.mixins import SystemObjectMixin
+from django.conf import settings
 
 
 def current_date():
@@ -137,7 +138,7 @@ class Account(models.Model):
     due_day = models.IntegerField(default=15)
     pay_day = models.IntegerField(default=15)
     interest_deposit_day = models.IntegerField(null=True, blank=True, default=None)
-    is_favorite = models.BooleanField(default=False)
+    is_favorite = models.BooleanField(default=False)  # deprecated — use AccountFavorite
     parent_account = models.ForeignKey(
         "self",
         null=True,
@@ -214,6 +215,25 @@ class Account(models.Model):
 
     def __str__(self):
         return self.account_name
+
+
+class AccountFavorite(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="favorite_accounts",
+    )
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        related_name="favorited_by",
+    )
+
+    class Meta:
+        unique_together = ("user", "account")
+
+    def __str__(self):
+        return f"{self.user} → {self.account.account_name}"
 
 
 class Reward(models.Model):
