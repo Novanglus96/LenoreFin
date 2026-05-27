@@ -1,3 +1,10 @@
+# [1.6.0-alpha.8](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.7...v1.6.0-alpha.8) (2026-05-27)
+
+
+### Bug Fixes
+
+* align WebSocket broadcast keys with full frontend invalidation set ([#171](https://github.com/Novanglus96/LenoreFin/issues/171)) ([57944bd](https://github.com/Novanglus96/LenoreFin/commit/57944bd231a9b4d8caa459c1ab7ab4f343f1747a))
+
 # [1.6.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.6...v1.6.0-alpha.7) (2026-05-27)
 
 
