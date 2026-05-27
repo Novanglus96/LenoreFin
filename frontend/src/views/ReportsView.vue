@@ -45,12 +45,17 @@
                 @click="loadSavedReport(report)"
               >
                 <template v-slot:prepend>
+                  <v-tooltip v-if="report.is_scheduled" location="right" text="Scheduled report">
+                    <template v-slot:activator="{ props }">
+                      <v-icon icon="mdi-clock-outline" size="x-small" color="warning" class="mr-1" v-bind="props" />
+                    </template>
+                  </v-tooltip>
                   <v-tooltip v-if="report.is_shared" location="right" text="Shared with all users">
                     <template v-slot:activator="{ props }">
                       <v-icon icon="mdi-share-variant" size="x-small" color="primary" class="mr-2" v-bind="props" />
                     </template>
                   </v-tooltip>
-                  <v-icon v-else icon="mdi-file-chart-outline" size="x-small" class="mr-2 text-medium-emphasis" />
+                  <v-icon v-if="!report.is_shared && !report.is_scheduled" icon="mdi-file-chart-outline" size="x-small" class="mr-2 text-medium-emphasis" />
                 </template>
                 <v-list-item-title class="text-body-2">{{ report.name }}</v-list-item-title>
                 <v-list-item-subtitle class="text-caption">
@@ -301,6 +306,51 @@
           </v-container>
         </v-sheet>
 
+        <!-- Scheduled History -->
+        <v-sheet border rounded class="mb-4" v-if="activeSavedId">
+          <v-container>
+            <v-row dense align="center">
+              <v-col>
+                <span class="text-subtitle-1 font-weight-bold">Scheduled History</span>
+              </v-col>
+            </v-row>
+            <v-progress-linear indeterminate v-if="historyLoading" color="primary" class="mb-2"></v-progress-linear>
+            <div v-if="!historyLoading && historyItems.length === 0" class="text-body-2 text-medium-emphasis">
+              No scheduled runs yet.
+            </div>
+            <v-list density="compact" v-if="historyItems.length > 0">
+              <v-list-item
+                v-for="item in historyItems"
+                :key="item.id"
+                class="pa-1"
+              >
+                <template v-slot:prepend>
+                  <v-chip
+                    :color="item.status === 'success' ? 'success' : 'error'"
+                    size="x-small"
+                    class="mr-2"
+                  >{{ item.status }}</v-chip>
+                </template>
+                <v-list-item-title class="text-body-2">
+                  {{ formatHistoryDate(item.run_at) }}
+                </v-list-item-title>
+                <v-list-item-subtitle v-if="item.status === 'error'" class="text-caption text-error">
+                  {{ item.error_message }}
+                </v-list-item-subtitle>
+                <template v-slot:append>
+                  <v-btn
+                    v-if="item.status === 'success'"
+                    size="x-small"
+                    variant="text"
+                    color="primary"
+                    @click="loadHistoryResult(item.id)"
+                  >Load</v-btn>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-container>
+        </v-sheet>
+
         <!-- Results -->
         <v-sheet border rounded v-if="results" id="report-results">
           <v-container>
@@ -428,7 +478,7 @@
     </v-row>
 
     <!-- Save dialog -->
-    <v-dialog v-model="saveDialog" max-width="420">
+    <v-dialog v-model="saveDialog" max-width="480">
       <v-card>
         <v-card-title class="text-h6">Save Report</v-card-title>
         <v-card-text>
@@ -451,7 +501,53 @@
             label="Share with all users"
             density="compact"
             hide-details
+            class="mb-2"
           ></v-checkbox>
+          <v-divider class="mb-3"></v-divider>
+          <v-checkbox
+            v-model="saveIsScheduled"
+            label="Run on a schedule"
+            density="compact"
+            hide-details
+            class="mb-2"
+          ></v-checkbox>
+          <template v-if="saveIsScheduled">
+            <v-select
+              label="Frequency"
+              v-model="saveScheduleFrequency"
+              :items="scheduleFrequencyOptions"
+              item-title="label"
+              item-value="value"
+              density="comfortable"
+              variant="outlined"
+              hide-details
+              class="mb-2"
+            ></v-select>
+            <v-select
+              v-if="saveScheduleFrequency === 'WEEKLY'"
+              label="Day of Week"
+              v-model="saveScheduleDay"
+              :items="weekdayOptions"
+              item-title="label"
+              item-value="value"
+              density="comfortable"
+              variant="outlined"
+              hide-details
+              class="mb-2"
+            ></v-select>
+            <v-select
+              v-if="saveScheduleFrequency === 'MONTHLY'"
+              label="Day of Month"
+              v-model="saveScheduleDay"
+              :items="monthdayOptions"
+              item-title="label"
+              item-value="value"
+              density="comfortable"
+              variant="outlined"
+              hide-details
+              class="mb-2"
+            ></v-select>
+          </template>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -462,7 +558,7 @@
     </v-dialog>
 
     <!-- Update name dialog -->
-    <v-dialog v-model="updateDialog" max-width="420">
+    <v-dialog v-model="updateDialog" max-width="480">
       <v-card>
         <v-card-title class="text-h6">Update Report</v-card-title>
         <v-card-text>
@@ -485,7 +581,53 @@
             label="Share with all users"
             density="compact"
             hide-details
+            class="mb-2"
           ></v-checkbox>
+          <v-divider class="mb-3"></v-divider>
+          <v-checkbox
+            v-model="saveIsScheduled"
+            label="Run on a schedule"
+            density="compact"
+            hide-details
+            class="mb-2"
+          ></v-checkbox>
+          <template v-if="saveIsScheduled">
+            <v-select
+              label="Frequency"
+              v-model="saveScheduleFrequency"
+              :items="scheduleFrequencyOptions"
+              item-title="label"
+              item-value="value"
+              density="comfortable"
+              variant="outlined"
+              hide-details
+              class="mb-2"
+            ></v-select>
+            <v-select
+              v-if="saveScheduleFrequency === 'WEEKLY'"
+              label="Day of Week"
+              v-model="saveScheduleDay"
+              :items="weekdayOptions"
+              item-title="label"
+              item-value="value"
+              density="comfortable"
+              variant="outlined"
+              hide-details
+              class="mb-2"
+            ></v-select>
+            <v-select
+              v-if="saveScheduleFrequency === 'MONTHLY'"
+              label="Day of Month"
+              v-model="saveScheduleDay"
+              :items="monthdayOptions"
+              item-title="label"
+              item-value="value"
+              density="comfortable"
+              variant="outlined"
+              hide-details
+              class="mb-2"
+            ></v-select>
+          </template>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -525,7 +667,7 @@
   const authStore = useAuthStore();
   const { isOnline } = useOnlineStatus();
   const reportsComposable = useReports();
-  const { reports, isLoading, saveReport, updateReport, deleteReport, isSaving, isRunning } = reportsComposable;
+  const { reports, isLoading, saveReport, updateReport, deleteReport, isSaving, isRunning, fetchResults, fetchResult } = reportsComposable;
   const { accounts } = useAccounts(false);
   const { tags } = useTags();
 
@@ -547,6 +689,9 @@
     show_subtotal: true,
     include_pending: false,
     show_transactions: false,
+    is_scheduled: false,
+    schedule_frequency: "DAILY",
+    schedule_day: null,
   });
 
   const form = ref(defaultForm());
@@ -562,7 +707,13 @@
   const saveName = ref("");
   const saveDescription = ref("");
   const saveIsShared = ref(false);
+  const saveIsScheduled = ref(false);
+  const saveScheduleFrequency = ref("DAILY");
+  const saveScheduleDay = ref(null);
   const pendingDelete = ref(null);
+
+  const historyItems = ref([]);
+  const historyLoading = ref(false);
 
   // ---------------------------------------------------------------------------
   // Dropdown options
@@ -571,6 +722,24 @@
     { label: "Totals", value: "TOTALS" },
     { label: "Comparison", value: "COMPARISON" },
   ];
+
+  const scheduleFrequencyOptions = [
+    { label: "Daily", value: "DAILY" },
+    { label: "Weekly", value: "WEEKLY" },
+    { label: "Monthly", value: "MONTHLY" },
+  ];
+
+  const weekdayOptions = [
+    { label: "Monday", value: 0 },
+    { label: "Tuesday", value: 1 },
+    { label: "Wednesday", value: 2 },
+    { label: "Thursday", value: 3 },
+    { label: "Friday", value: 4 },
+    { label: "Saturday", value: 5 },
+    { label: "Sunday", value: 6 },
+  ];
+
+  const monthdayOptions = Array.from({ length: 28 }, (_, i) => ({ label: String(i + 1), value: i + 1 }));
 
   const dateRangeOptions = [
     { label: "This Year", value: "THIS_YEAR" },
@@ -652,6 +821,7 @@
     activeSavedIsOwner.value = false;
     form.value = defaultForm();
     results.value = null;
+    historyItems.value = [];
   }
 
   function loadSavedReport(report) {
@@ -683,8 +853,34 @@
       show_subtotal: report.show_subtotal,
       include_pending: report.include_pending,
       show_transactions: report.show_transactions,
+      is_scheduled: report.is_scheduled ?? false,
+      schedule_frequency: report.schedule_frequency ?? "DAILY",
+      schedule_day: report.schedule_day ?? null,
     };
     results.value = null;
+    loadHistory(report.id);
+  }
+
+  async function loadHistory(reportId) {
+    historyLoading.value = true;
+    try {
+      historyItems.value = await fetchResults(reportId);
+    } catch {
+      historyItems.value = [];
+    } finally {
+      historyLoading.value = false;
+    }
+  }
+
+  async function loadHistoryResult(resultId) {
+    try {
+      const record = await fetchResult(activeSavedId.value, resultId);
+      if (record.result_data && record.result_data.report_type) {
+        results.value = record.result_data;
+      }
+    } catch {
+      mainStore.showSnackbar("Failed to load historical result", "error");
+    }
   }
 
   function buildPayload() {
@@ -724,6 +920,9 @@
     saveName.value = "";
     saveDescription.value = "";
     saveIsShared.value = false;
+    saveIsScheduled.value = form.value.is_scheduled;
+    saveScheduleFrequency.value = form.value.schedule_frequency ?? "DAILY";
+    saveScheduleDay.value = form.value.schedule_day ?? null;
     saveDialog.value = true;
   }
 
@@ -732,7 +931,18 @@
     saveDescription.value = activeSavedDescription.value;
     const active = (reports.value ?? []).find(r => r.id === activeSavedId.value);
     saveIsShared.value = active?.is_shared ?? false;
+    saveIsScheduled.value = active?.is_scheduled ?? false;
+    saveScheduleFrequency.value = active?.schedule_frequency ?? "DAILY";
+    saveScheduleDay.value = active?.schedule_day ?? null;
     updateDialog.value = true;
+  }
+
+  function _schedulePayload() {
+    return {
+      is_scheduled: saveIsScheduled.value,
+      schedule_frequency: saveIsScheduled.value ? saveScheduleFrequency.value : null,
+      schedule_day: saveIsScheduled.value ? saveScheduleDay.value : null,
+    };
   }
 
   function doSave() {
@@ -744,6 +954,7 @@
       name: saveName.value.trim(),
       description: saveDescription.value.trim(),
       is_shared: saveIsShared.value,
+      ..._schedulePayload(),
       ...buildPayload(),
     };
     saveReport(payload);
@@ -759,11 +970,15 @@
       name: saveName.value.trim(),
       description: saveDescription.value.trim(),
       is_shared: saveIsShared.value,
+      ..._schedulePayload(),
       ...buildPayload(),
     };
     updateReport(activeSavedId.value, payload);
     activeSavedName.value = saveName.value.trim();
     activeSavedDescription.value = saveDescription.value.trim();
+    form.value.is_scheduled = saveIsScheduled.value;
+    form.value.schedule_frequency = saveScheduleFrequency.value;
+    form.value.schedule_day = saveScheduleDay.value;
     updateDialog.value = false;
   }
 
@@ -805,6 +1020,15 @@
       return `${p1}  vs  ${result.period2_from} – ${result.period2_to}`;
     }
     return p1;
+  }
+
+  function formatHistoryDate(isoString) {
+    if (!isoString) return "";
+    const d = new Date(isoString);
+    return d.toLocaleString("en-US", {
+      month: "short", day: "numeric", year: "numeric",
+      hour: "numeric", minute: "2-digit",
+    });
   }
 </script>
 
