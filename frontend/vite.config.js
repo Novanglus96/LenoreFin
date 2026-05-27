@@ -66,6 +66,11 @@ export default defineConfig({
         target: "https://back-dev.danielleandjohn.love", // Serve media files from backend in dev
         changeOrigin: true,
       },
+      "/ws": {
+        target: "wss://back-dev.danielleandjohn.love",
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
   define: {
