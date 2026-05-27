@@ -281,7 +281,7 @@
   const showDeleteDialog = ref(false);
   const reminderAddFormDialog = ref(false);
   const reminderEditFormDialog = ref(false);
-  const { reminders, isLoading, isFetching, removeReminder } = useReminders();
+  const { reminders, isFetching, removeReminder } = useReminders();
   const page = ref(1);
   const itemsPerPage = computed(() => {
     if (props.variant === "full") {
