@@ -5,6 +5,7 @@ Description: Contains task definitions to be scheduuled.
 Author: John Adams <johnmadams96@gmail.com>
 Date: February 15, 2024
 """
+from core.broadcast import broadcast_invalidate
 
 from transactions.models import (
     Transaction,
@@ -804,6 +805,7 @@ def update_reminder_cache(reminder_id):
         if reminder.reminder_destination_account is not None:
             delete_pattern(account_all_transactions(reminder.reminder_destination_account.id))
             update_cc_forecast_cache(reminder.reminder_destination_account.id)
+        broadcast_invalidate(["reminders", "accounts"])
     except Exception as e:
         task_logger.warning("There was an error creating cache")
         error_logger.warning(f"{str(e)}")
@@ -1005,6 +1007,7 @@ def update_interest_forecast_cache(account_id):
             ).delete()
             create_transactions(transactions_to_create, 'forecast')
         delete_pattern(account_all(account_id))
+        broadcast_invalidate(["accounts"])
     except Exception as e:
         error_logger.exception(
             f"Error calculating interest forecast for account {account_id}: {e}"
@@ -1241,6 +1244,7 @@ def update_cc_forecast_cache(account_id):
         delete_pattern(account_all(account_id))
         if funding_account:
             delete_pattern(account_all(funding_account.id))
+        broadcast_invalidate(["accounts"])
     except Exception as e:
         error_logger.exception(f"Error calculating CC forecast for account {account_id}: {e}")
 

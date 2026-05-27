@@ -82,7 +82,6 @@ def test_clear_transaction(api_client, test_transaction, test_cleared_transactio
 # --- Transaction filter tests ---
 
 def _list(api_client, account_id, **extra):
-    today = current_date()
     params = (
         f"view_type=1&account={account_id}&maxdays=14&forecast=false"
         f"&page=1&page_size=60"

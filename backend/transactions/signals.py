@@ -4,6 +4,7 @@ from transactions.models import Transaction, TransactionImage
 from django_q.tasks import async_task
 from core.cache.helpers import delete_pattern
 from core.cache.keys import account_all
+from core.broadcast import broadcast_invalidate
 
 
 def _refresh_account(account_id):
@@ -17,6 +18,7 @@ def update_forecast_cache_on_save(sender, instance, **kwargs):
     _refresh_account(instance.source_account_id)
     if instance.destination_account_id is not None:
         _refresh_account(instance.destination_account_id)
+    broadcast_invalidate(["transactions"])
 
 
 @receiver(post_delete, sender=Transaction)
@@ -24,6 +26,7 @@ def update_forecast_cache_on_delete(sender, instance, **kwargs):
     _refresh_account(instance.source_account_id)
     if instance.destination_account_id is not None:
         _refresh_account(instance.destination_account_id)
+    broadcast_invalidate(["transactions"])
 
 
 @receiver(post_delete, sender=TransactionImage)
