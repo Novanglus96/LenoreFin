@@ -110,11 +110,15 @@
   import { useFavoriteBalances } from "@/composables/accountsComposable";
   import { useTransactionsStore } from "@/stores/transactions";
 
+  const TYPE_ORDER = { checking: 0, savings: 1, 'credit-card': 2, investment: 3, loan: 4 };
+
   const { favoriteBalances: rawFavoriteBalances, isLoading } = useFavoriteBalances();
   const favoriteBalances = computed(() =>
-    [...(rawFavoriteBalances.value ?? [])].sort((a, b) =>
-      a.account_name.localeCompare(b.account_name),
-    ),
+    [...(rawFavoriteBalances.value ?? [])].sort((a, b) => {
+      const ta = TYPE_ORDER[a.account_type_slug] ?? 99;
+      const tb = TYPE_ORDER[b.account_type_slug] ?? 99;
+      return ta !== tb ? ta - tb : a.account_name.localeCompare(b.account_name);
+    }),
   );
   const router = useRouter();
   const transactions_store = useTransactionsStore();

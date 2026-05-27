@@ -115,6 +115,7 @@ class FavoriteBalanceSummary(Schema):
     account_name: str
     account_type_id: int
     account_type_color: str
+    account_type_slug: str = ""
     logo_url: Optional[str] = None
     balance: Optional[BalanceDecimal] = None
     projected_balance: Optional[BalanceDecimal] = None

@@ -322,6 +322,7 @@ def get_favorite_balances(request):
                     account_name=account.account_name,
                     account_type_id=account.account_type_id,
                     account_type_color=account.account_type.color,
+                    account_type_slug=account.account_type.slug,
                     logo_url=account.bank.logo_url if account.bank else None,
                     balance=current_balance,
                     projected_balance=projected_balance,
