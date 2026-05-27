@@ -284,16 +284,23 @@
                   :disabled="!isOnline"
                 >Run Report</v-btn>
               </v-col>
-              <v-col cols="auto" v-if="results && (!activeSavedId || activeSavedIsOwner || authStore.isFullAccess)">
+              <v-col cols="auto" v-if="results && !activeSavedId">
                 <v-btn
                   color="secondary"
                   variant="outlined"
-                  :prepend-icon="activeSavedId ? 'mdi-content-save-edit' : 'mdi-content-save'"
+                  prepend-icon="mdi-content-save"
                   :loading="isSaving"
-                  @click="activeSavedId ? openUpdateDialog() : openSaveDialog()"
-                >
-                  {{ activeSavedId ? 'Update Report' : 'Save Report' }}
-                </v-btn>
+                  @click="openSaveDialog()"
+                >Save Report</v-btn>
+              </v-col>
+              <v-col cols="auto" v-if="activeSavedId && (activeSavedIsOwner || authStore.isFullAccess)">
+                <v-btn
+                  color="secondary"
+                  variant="outlined"
+                  prepend-icon="mdi-content-save-edit"
+                  :loading="isSaving"
+                  @click="openUpdateDialog()"
+                >Update Report</v-btn>
               </v-col>
               <v-col cols="auto" v-if="results">
                 <v-btn
