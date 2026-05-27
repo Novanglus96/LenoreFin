@@ -1,3 +1,12 @@
+# [1.6.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.5...v1.6.0-alpha.6) (2026-05-27)
+
+
+### Bug Fixes
+
+* make fixture loaddata calls idempotent with || true ([5224825](https://github.com/Novanglus96/LenoreFin/commit/52248255fe3e10180f3955d57a19a05b0fc05bc6))
+* move daphne to first position in INSTALLED_APPS ([4442f61](https://github.com/Novanglus96/LenoreFin/commit/4442f61843ee906cd70b6bb3f275931099a35917))
+* switch to gunicorn+uvicorn workers for ASGI serving ([e2f0040](https://github.com/Novanglus96/LenoreFin/commit/e2f0040ebd758f3e930c43f7c7d872b7a66bc00c))
+
 # [1.6.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.4...v1.6.0-alpha.5) (2026-05-27)
 
 
