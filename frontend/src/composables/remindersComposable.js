@@ -77,7 +77,7 @@ async function addReminderTrans(reminderTransObject) {
 
 export function useReminders() {
   const queryClient = useQueryClient();
-  const { data: reminders, isLoading } = useQuery({
+  const { data: reminders, isLoading, isFetching } = useQuery({
     queryKey: ["reminders"],
     queryFn: () => getRemindersFunction(),
     select: response => response,
@@ -153,6 +153,7 @@ export function useReminders() {
 
   return {
     isLoading,
+    isFetching,
     reminders,
     removeReminder,
     addReminder,
