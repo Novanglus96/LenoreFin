@@ -131,7 +131,7 @@ class Command(BaseCommand):
                 "time": "08:00",
                 "arguments": "",
                 "type": "WEEKLY",
-                "start_today": False,
+                "start_today": True,
                 "delete": False,
             },
         ]
