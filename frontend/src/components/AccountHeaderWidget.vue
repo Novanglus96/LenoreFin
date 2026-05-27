@@ -95,7 +95,7 @@
                 <v-tooltip
                   :text="account.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'"
                   location="top"
-                  v-if="authStore.isFullAccess && !smAndDown"
+                  v-if="!smAndDown"
                 >
                   <template v-slot:activator="{ props }">
                     <v-btn
@@ -131,7 +131,7 @@
                 </v-tooltip>
                 <!-- Mobile chevron toggle -->
                 <v-btn
-                  v-if="authStore.isFullAccess && smAndDown"
+                  v-if="smAndDown"
                   :icon="actionDrawer ? 'mdi-chevron-up' : 'mdi-chevron-down'"
                   flat
                   variant="text"
@@ -148,13 +148,14 @@
               <!-- Mobile inline action expand panel -->
               <v-expand-transition>
                 <v-card
-                  v-if="actionDrawer && authStore.isFullAccess && smAndDown"
+                  v-if="actionDrawer && smAndDown"
                   class="mx-1 mt-0 bg-primary-darken-2"
                   variant="outlined"
                   rounded="0 0 4 4"
                 >
                   <v-card-text class="d-flex justify-center ga-3 py-2 px-2">
                     <v-btn
+                      v-if="authStore.isFullAccess"
                       variant="tonal"
                       color="primary"
                       prepend-icon="mdi-pencil"
@@ -175,6 +176,7 @@
                       {{ account.is_favorite ? 'Unfavorite' : 'Favorite' }}
                     </v-btn>
                     <v-btn
+                      v-if="authStore.isFullAccess"
                       variant="tonal"
                       color="error"
                       :prepend-icon="account.active ? 'mdi-delete' : 'mdi-delete-restore'"
