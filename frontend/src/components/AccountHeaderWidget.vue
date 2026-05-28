@@ -316,6 +316,22 @@
               <div class="text-white font-weight-bold text-body">
                 <span v-if="investmentReturn && investmentReturn.sufficient_data">
                   {{ investmentReturn.rate > 0 ? '+' : '' }}{{ investmentReturn.rate.toFixed(2) }}%
+                  <v-tooltip
+                    v-if="account.calculate_interest && authStore.isFullAccess && isOnline"
+                    location="bottom"
+                    text="Apply to forecast APY"
+                  >
+                    <template v-slot:activator="{ props: tipProps }">
+                      <v-icon
+                        size="x-small"
+                        icon="mdi-chart-line-variant"
+                        color="accent"
+                        class="cursor-pointer"
+                        v-bind="tipProps"
+                        @click="applyReturnToForecast()"
+                      />
+                    </template>
+                  </v-tooltip>
                 </span>
                 <span v-else class="text-primary-lighten-2">—</span>
               </div>
@@ -330,26 +346,6 @@
                   </template>
                 </v-tooltip>
               </div>
-            </v-col>
-            <v-col
-              v-if="account.account_type.slug === 'investment' && account.calculate_interest && authStore.isFullAccess && investmentReturn && investmentReturn.sufficient_data"
-              class="text-center align-content-end"
-            >
-              <v-tooltip location="bottom" text="Set this rate as the forecast APY">
-                <template v-slot:activator="{ props: tipProps }">
-                  <v-btn
-                    size="small"
-                    variant="tonal"
-                    color="accent"
-                    prepend-icon="mdi-chart-line-variant"
-                    v-bind="tipProps"
-                    :disabled="!isOnline"
-                    @click="applyReturnToForecast()"
-                  >
-                    Apply to Forecast
-                  </v-btn>
-                </template>
-              </v-tooltip>
             </v-col>
           </v-row>
           <!-- Small Display View -->
@@ -412,25 +408,26 @@
                 <div class="text-white font-weight-bold text-body">
                   <span v-if="investmentReturn && investmentReturn.sufficient_data">
                     {{ investmentReturn.rate > 0 ? '+' : '' }}{{ investmentReturn.rate.toFixed(2) }}%
+                    <v-tooltip
+                      v-if="account.calculate_interest && authStore.isFullAccess && isOnline"
+                      location="bottom"
+                      text="Apply to forecast APY"
+                    >
+                      <template v-slot:activator="{ props: tipProps }">
+                        <v-icon
+                          size="x-small"
+                          icon="mdi-chart-line-variant"
+                          color="accent"
+                          class="cursor-pointer"
+                          v-bind="tipProps"
+                          @click="applyReturnToForecast()"
+                        />
+                      </template>
+                    </v-tooltip>
                   </span>
                   <span v-else class="text-primary-lighten-2">—</span>
                 </div>
                 <div class="text-primary-lighten-2">est. annual return</div>
-              </v-col>
-              <v-col
-                v-if="account.calculate_interest && authStore.isFullAccess && investmentReturn && investmentReturn.sufficient_data"
-                class="text-center align-content-end"
-              >
-                <v-btn
-                  size="small"
-                  variant="tonal"
-                  color="accent"
-                  prepend-icon="mdi-chart-line-variant"
-                  :disabled="!isOnline"
-                  @click="applyReturnToForecast()"
-                >
-                  Apply to Forecast
-                </v-btn>
               </v-col>
             </v-row>
           </v-container>
