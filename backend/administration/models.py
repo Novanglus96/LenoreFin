@@ -190,6 +190,7 @@ class Message(models.Model):
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, null=True, blank=True, related_name="messages"
     )
+    link = models.CharField(max_length=254, null=True, blank=True)
 
     def __str__(self):
         return self.message

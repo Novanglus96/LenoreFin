@@ -99,6 +99,12 @@
       optional: true,
     },
     {
+      title: "Detections",
+      link: "/planning/detections",
+      icon: "mdi-radar",
+      optional: false,
+    },
+    {
       title: "Reports",
       link: "/reports",
       icon: "mdi-chart-pie",

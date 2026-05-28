@@ -109,7 +109,7 @@ def cleanup_old_backups():
             error_logger.exception(f"Failed to delete backup {f}: {e}")
 
 
-def create_message(message_text, user=None):
+def create_message(message_text, user=None, link=None):
     """
     The function `create_message` creates a Message object for
     displaying a message alert in the app inbox.
@@ -118,6 +118,8 @@ def create_message(message_text, user=None):
         message_text (str): The text of the message
         user: Optional User instance — if set, message is private to that user
               and the WebSocket notification targets only their channel group.
+        link (str): Optional frontend route (e.g. '/planning/detections') —
+                    clicking the message navigates there.
     """
 
     Message.objects.create(
@@ -125,6 +127,7 @@ def create_message(message_text, user=None):
         message=message_text,
         unread=True,
         user=user,
+        link=link,
     )
     group = f"user_{user.pk}" if user else "global"
     broadcast_invalidate(["messages"], group=group)
@@ -1567,6 +1570,139 @@ def run_scheduled_reports():
 
     if due:
         broadcast_invalidate(["report_results"])
+
+
+def detect_recurring_transactions():
+    """Scan transaction history for recurring patterns and create DetectedRecurring records."""
+    from planning.models import DetectedRecurring
+    from reminders.models import Repeat, Reminder
+    from transactions.models import Transaction, TransactionStatus, TransactionDetail
+    from django.db.models import Count as _Count
+    from collections import defaultdict, Counter
+    from datetime import timedelta
+    from decimal import Decimal as D
+
+    today = date.today()
+    window_start = today - timedelta(days=400)
+
+    status_ids = list(
+        TransactionStatus.objects.filter(slug__in=["cleared", "reconciled", "archived"])
+        .values_list("id", flat=True)
+    )
+
+    txs = list(
+        Transaction.objects.filter(
+            transaction_date__gte=window_start,
+            status_id__in=status_ids,
+        )
+        .exclude(description__isnull=True)
+        .exclude(description="")
+        .values("id", "description", "transaction_date", "total_amount", "source_account_id")
+        .order_by("description", "transaction_date")
+    )
+
+    existing_descriptions = set(Reminder.objects.values_list("description", flat=True))
+    ignored_descriptions = set(
+        DetectedRecurring.objects.filter(is_ignored=True).values_list("description", flat=True)
+    )
+
+    repeat_by_days = {}
+    for r in Repeat.objects.all():
+        total_days = r.days + r.weeks * 7 + r.months * 30 + r.years * 365
+        if total_days > 0:
+            repeat_by_days[total_days] = r
+
+    # (period_days, tolerance_days, min_occurrences)
+    TARGET_PERIODS = [(7, 5, 3), (14, 5, 3), (30, 5, 3), (365, 14, 2)]
+
+    groups = defaultdict(list)
+    for tx in txs:
+        key = tx["description"].strip().lower()
+        groups[key].append(tx)
+
+    new_detections = []
+    for key, group in groups.items():
+        description = group[0]["description"].strip()
+        desc_lower = description.lower()
+        if any(desc_lower in d.lower() or d.lower() in desc_lower for d in existing_descriptions):
+            continue
+        if key in {d.strip().lower() for d in ignored_descriptions}:
+            continue
+
+        group = sorted(group, key=lambda t: t["transaction_date"])
+        dates = [t["transaction_date"] for t in group]
+        amounts = [abs(float(t["total_amount"])) for t in group]
+
+        if len(group) < 2:
+            continue
+
+        intervals = [(dates[i + 1] - dates[i]).days for i in range(len(dates) - 1)]
+        avg_interval = sum(intervals) / len(intervals)
+
+        match = next(
+            ((p, tol, min_occ) for p, tol, min_occ in TARGET_PERIODS if abs(avg_interval - p) <= tol),
+            None,
+        )
+        if match is None:
+            continue
+        target, tolerance, min_occurrences = match
+        if len(group) < min_occurrences:
+            continue
+        if any(abs(iv - avg_interval) > tolerance for iv in intervals):
+            continue
+
+        avg_amount = sum(amounts) / len(amounts)
+        if avg_amount == 0:
+            continue
+        if any(abs(a - avg_amount) / avg_amount > 0.20 for a in amounts):
+            continue
+        recent_amount = amounts[-1]
+
+        if (today - dates[-1]).days > target + tolerance:
+            continue
+
+        next_date = dates[-1] + timedelta(days=target)
+        repeat = repeat_by_days.get(target)
+
+        tx_ids = [t["id"] for t in group]
+        tag_row = (
+            TransactionDetail.objects.filter(transaction_id__in=tx_ids)
+            .exclude(tag_id__isnull=True)
+            .values("tag_id")
+            .annotate(n=_Count("id"))
+            .order_by("-n")
+            .first()
+        )
+        suggested_tag_id = tag_row["tag_id"] if tag_row else None
+
+        account_counts = Counter(t["source_account_id"] for t in group if t["source_account_id"] is not None)
+        suggested_account_id = account_counts.most_common(1)[0][0] if account_counts else None
+
+        new_detections.append(
+            DetectedRecurring(
+                description=description,
+                estimated_amount=D(str(round(recent_amount, 2))),
+                repeat=repeat,
+                next_estimated_date=next_date,
+                transaction_ids=[t["id"] for t in group],
+                suggested_tag_id=suggested_tag_id,
+                suggested_account_id=suggested_account_id,
+            )
+        )
+
+    DetectedRecurring.objects.filter(is_ignored=False).delete()
+
+    if new_detections:
+        DetectedRecurring.objects.bulk_create(new_detections)
+        create_message(
+            f"{len(new_detections)} recurring transaction pattern(s) detected. "
+            "View suggestions under Planning → Detections.",
+            link="/planning/detections",
+        )
+        task_logger.info(f"detect_recurring_transactions: {len(new_detections)} patterns found.")
+    else:
+        task_logger.info("detect_recurring_transactions: no new patterns found.")
+    broadcast_invalidate(["detected_recurring"])
 
 
 # TODO: Task to look for negative dips
