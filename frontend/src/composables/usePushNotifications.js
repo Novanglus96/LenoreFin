@@ -1,7 +1,8 @@
 import { ref } from "vue";
 import apiClient from "./apiClient";
 
-const isSupported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const browserSupported =
+  "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -11,21 +12,26 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 export function usePushNotifications() {
+  const isSupported = ref(false);
   const isSubscribed = ref(false);
   const permissionDenied = ref(false);
 
   async function checkStatus() {
-    if (!isSupported) return;
+    if (!browserSupported) return;
     try {
-      const { data } = await apiClient.get("/administration/push/status");
-      isSubscribed.value = data.subscribed ?? false;
+      const [keyRes, statusRes] = await Promise.all([
+        apiClient.get("/administration/push/vapid-public-key"),
+        apiClient.get("/administration/push/status"),
+      ]);
+      isSupported.value = !!keyRes.data.public_key;
+      isSubscribed.value = statusRes.data.subscribed ?? false;
     } catch {
-      // non-fatal
+      // non-fatal — feature stays hidden
     }
   }
 
   async function subscribe() {
-    if (!isSupported) return;
+    if (!isSupported.value) return;
 
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
@@ -59,7 +65,7 @@ export function usePushNotifications() {
   }
 
   async function unsubscribe() {
-    if (!isSupported) return;
+    if (!isSupported.value) return;
     try {
       const reg = await navigator.serviceWorker.ready;
       const pushSub = await reg.pushManager.getSubscription();
