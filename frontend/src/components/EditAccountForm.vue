@@ -343,6 +343,17 @@
                     density="comfortable"
                     :error-messages="annual_rate.errorMessage.value"
                   ></v-text-field>
+                  <v-chip
+                    v-if="props.account.account_type.slug === 'investment' && investmentReturn?.sufficient_data"
+                    size="small"
+                    color="accent"
+                    variant="tonal"
+                    prepend-icon="mdi-calculator"
+                    class="mt-1"
+                    @click="annual_rate.value.value = investmentReturn.rate"
+                  >
+                    Calculated from history: {{ investmentReturn.rate > 0 ? '+' : '' }}{{ investmentReturn.rate.toFixed(2) }}% — click to use
+                  </v-chip>
                 </v-col>
                 <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
@@ -378,7 +389,7 @@
   } from "vue";
   import { useDisplay } from "vuetify";
   import { useBanks } from "@/composables/banksComposable";
-  import { useAccountByID } from "@/composables/accountsComposable";
+  import { useAccountByID, useInvestmentReturn } from "@/composables/accountsComposable";
   import { useMainStore } from "@/stores/main";
   import { useAccounts } from "@/composables/accountsComposable";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
@@ -534,6 +545,10 @@
   });
   const { editAccount } = useAccountByID(props.account.id);
   const generalError = ref("");
+
+  const { investmentReturn } = useInvestmentReturn(
+    props.account.account_type.slug === "investment" ? props.account.id : null,
+  );
 
   const submit = handleSubmit(
     values => {
