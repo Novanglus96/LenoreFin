@@ -1,3 +1,10 @@
+## [1.6.1-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1-alpha.1...v1.6.1-alpha.2) (2026-05-28)
+
+
+### Bug Fixes
+
+* broadcast WebSocket invalidation on all Message creation paths ([#182](https://github.com/Novanglus96/LenoreFin/issues/182)) ([7623fec](https://github.com/Novanglus96/LenoreFin/commit/7623fec2c6ba631ae6e5823a3ceceb1a0e44d594))
+
 ## [1.6.1-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0...v1.6.1-alpha.1) (2026-05-28)
 
 
