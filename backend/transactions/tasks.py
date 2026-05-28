@@ -131,6 +131,8 @@ def create_message(message_text, user=None, link=None):
     )
     group = f"user_{user.pk}" if user else "global"
     broadcast_invalidate(["messages"], group=group)
+    from administration.push import send_push_notifications
+    send_push_notifications(message_text, link=link, user=user)
 
 
 def convert_reminder():

@@ -196,6 +196,21 @@ class Message(models.Model):
         return self.message
 
 
+class PushSubscription(models.Model):
+    """Stores a browser Web Push subscription for a user."""
+
+    user = models.ForeignKey(
+        "auth.User", on_delete=models.CASCADE, related_name="push_subscriptions"
+    )
+    endpoint = models.TextField(unique=True)
+    p256dh = models.TextField()
+    auth = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} — {self.endpoint[:60]}"
+
+
 class Version(SingletonModel):
     """
     Model representing app version.
