@@ -87,10 +87,13 @@ Designed for self-hosting, LenoreFin keeps your financial data completely local,
 - **Account tracking** — checking, savings, credit cards, investments, and loans with real-time balance forecasting
 - **Transaction management** — full CRUD, bulk editing, CSV import, file attachments, and tag-based categorization
 - **Credit card tools** — statement cycle tracking, due dates, minimum payment calculation, rewards tracking
+- **Investment return estimation** — Modified Dietz annualized return calculated from transaction history; apply directly to APY forecast
 - **Budgeting & planning** — tag-based budgets, savings goal tracking
+- **Recurring detection** — automatic detection of recurring payments with one-click reminder creation
 - **Bill reminders** — recurring reminder engine with customizable repeat schedules
-- **Custom reports** — totals and year-over-year comparison reports, filterable by account, tag, and status
+- **Custom reports** — totals and year-over-year comparison reports, filterable by account, tag, and status; scheduled execution with history
 - **Logging & diagnostics** — structured log viewer with level filtering and downloadable log bundle
+- **Push notifications** — browser Web Push for new inbox messages (VAPID, opt-in)
 - **PWA / offline mode** — installable as a PWA; read-only access and graceful degradation when offline
 - **Multi-user auth** — Full Access and Readonly permission groups
 - **Self-hosted** — single Docker image, no telemetry, no third-party data sharing

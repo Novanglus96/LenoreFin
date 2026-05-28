@@ -1,6 +1,6 @@
 from ninja import Schema
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from pydantic import ConfigDict
 
 
@@ -17,6 +17,7 @@ class MessageOut(Schema):
     message_date: datetime
     message: str
     unread: bool
+    link: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

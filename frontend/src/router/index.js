@@ -16,6 +16,7 @@ import ContributionsView from "@/views/ContributionsView.vue";
 import ExpensesView from "@/views/ExpensesView.vue";
 import NotesView from "@/views/NotesView.vue";
 import RetirementView from "@/views/RetirementView.vue";
+import DetectionsView from "@/views/DetectionsView.vue";
 import BudgetsView from "@/views/BudgetsView.vue";
 import BackupView from "@/views/BackupView.vue";
 import LogsView from "@/views/LogsView.vue";
@@ -113,6 +114,11 @@ const routes = [
     path: "/planning/retirement",
     name: "retirement",
     component: RetirementView,
+  },
+  {
+    path: "/planning/detections",
+    name: "detections",
+    component: DetectionsView,
   },
   {
     path: "/backup",

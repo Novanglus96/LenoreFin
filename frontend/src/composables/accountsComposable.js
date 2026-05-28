@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
+import { toValue, computed } from "vue";
 import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
 
@@ -263,6 +264,29 @@ export function useFavoriteBalances() {
   });
 
   return { favoriteBalances, isLoading };
+}
+
+export function useInvestmentReturn(account_id) {
+  const queryClient = useQueryClient();
+  const { data: investmentReturn, isLoading } = useQuery({
+    queryKey: ["accounts", "investment_return", account_id],
+    queryFn: async () => {
+      try {
+        const id = toValue(account_id);
+        const response = await apiClient.get(
+          `/accounts/${id}/investment-return`,
+        );
+        return response.data;
+      } catch (error) {
+        handleApiError(error, "Investment return not fetched");
+      }
+    },
+    select: response => response,
+    enabled: computed(() => !!toValue(account_id)),
+    client: queryClient,
+  });
+
+  return { investmentReturn, isLoading };
 }
 
 function formatDateToYYYYMMDD(date) {

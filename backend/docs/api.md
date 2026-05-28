@@ -47,6 +47,7 @@ All routes are prefixed with `/api/v1/`.
 | PUT | `/accounts/banks/{id}` | Update bank |
 | DELETE | `/accounts/banks/{id}` | Delete bank |
 | GET | `/accounts/forecast` | Get forecast data for an account |
+| GET | `/accounts/{id}/investment-return` | Get estimated annual return for an investment account |
 
 ### Transactions
 
@@ -103,14 +104,21 @@ All routes are prefixed with `/api/v1/`.
 | PUT | `/planning/budget/{id}` | Update budget |
 | DELETE | `/planning/budget/{id}` | Delete budget |
 | GET | `/planning/graph` | Planning graph data |
+| GET | `/planning/detected-recurring/` | List non-ignored detected recurring patterns |
+| POST | `/planning/detected-recurring/{id}/ignore` | Mark a detection as ignored |
+| DELETE | `/planning/detected-recurring/{id}` | Delete a detection |
 
 ### Reports
 
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/reports` | List saved reports |
-| POST | `/reports` | Run a report |
+| POST | `/reports` | Create/save a report |
 | GET | `/reports/{id}` | Get report by ID |
+| PUT | `/reports/{id}` | Update a saved report |
+| DELETE | `/reports/{id}` | Delete a saved report |
+| POST | `/reports/{id}/run` | Run a saved report and return results |
+| GET | `/reports/{id}/results` | List historical run results for a report |
 
 ### Administration
 
@@ -122,10 +130,16 @@ All routes are prefixed with `/api/v1/`.
 | GET | `/administration/health` | Health check |
 | GET | `/administration/payees` | List payees |
 | POST | `/administration/payees` | Create payee |
-| GET | `/administration/messages` | List system messages |
+| GET | `/administration/messages` | List inbox messages |
+| POST | `/administration/messages` | Create a system message |
+| DELETE | `/administration/messages/{id}` | Delete a message |
 | GET | `/administration/backups` | List backups |
 | POST | `/administration/backups` | Create a backup |
 | GET | `/administration/logs` | Retrieve application logs |
+| GET | `/administration/push/vapid-public-key` | Get the VAPID public key |
+| POST | `/administration/push/subscribe` | Register a push subscription for the current user |
+| DELETE | `/administration/push/unsubscribe` | Remove the current user's push subscription |
+| GET | `/administration/push/status` | Check if the current user has an active push subscription |
 
 ### Imports
 
@@ -141,6 +155,17 @@ All routes are prefixed with `/api/v1/`.
 | POST | `/auth/login` | Log in and obtain session |
 | POST | `/auth/logout` | Log out |
 | GET | `/auth/me` | Get current user info |
+
+## Investment Return Response
+
+`GET /accounts/{id}/investment-return` returns:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `rate` | float \| null | Annualized return rate as a percentage (e.g. `7.42` = 7.42%). `null` when insufficient data. |
+| `period_months` | int | Look-back window in months (always `12`) |
+| `data_points` | int | Number of cleared transactions used in the calculation |
+| `sufficient_data` | bool | `false` when the account is not an investment account, does not exist, or has no cleared transaction history |
 
 ## Transaction Filters
 

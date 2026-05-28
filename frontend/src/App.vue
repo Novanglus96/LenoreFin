@@ -74,11 +74,13 @@
   import { useBackendReady } from "@/composables/useBackendReady";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import { useQueryClient } from "@tanstack/vue-query";
+  import { useRealtimeSync } from "@/composables/useRealtimeSync";
   import LogoLoader from "./components/LogoLoader.vue";
 
   const { backendReady } = useBackendReady();
   const queryClient = useQueryClient();
   const { isOnline } = useOnlineStatus();
+  useRealtimeSync();
   const showOfflineBanner = computed(() => !isOnline.value);
 
   watch(isOnline, online => {

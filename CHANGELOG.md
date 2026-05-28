@@ -1,3 +1,110 @@
+# [1.6.0-alpha.15](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.14...v1.6.0-alpha.15) (2026-05-28)
+
+
+### Bug Fixes
+
+* resolve pre-existing test failures in reports and graph_by_tags ([834a8fa](https://github.com/Novanglus96/LenoreFin/commit/834a8fa459278f72b9a7b2bbe9fb3e5cfab227c1))
+
+# [1.6.0-alpha.14](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.13...v1.6.0-alpha.14) (2026-05-28)
+
+
+### Features
+
+* investment performance estimation ([#177](https://github.com/Novanglus96/LenoreFin/issues/177)) ([6e5eba0](https://github.com/Novanglus96/LenoreFin/commit/6e5eba0d2367cad474f8c31c8f06e18d8ba87b9b))
+
+# [1.6.0-alpha.13](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.12...v1.6.0-alpha.13) (2026-05-28)
+
+
+### Features
+
+* web push notifications for inbox messages ([#176](https://github.com/Novanglus96/LenoreFin/issues/176)) ([6c85448](https://github.com/Novanglus96/LenoreFin/commit/6c854482b49dc0d41d61ec980b9a3cc175b67489))
+
+# [1.6.0-alpha.12](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.11...v1.6.0-alpha.12) (2026-05-28)
+
+
+### Features
+
+* recurring transaction detection with weekly scan and inbox alerts ([#175](https://github.com/Novanglus96/LenoreFin/issues/175)) ([66030fb](https://github.com/Novanglus96/LenoreFin/commit/66030fb45bf2dd819891093fe79258b37859dc3d))
+
+# [1.6.0-alpha.11](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.10...v1.6.0-alpha.11) (2026-05-27)
+
+
+### Features
+
+* scheduled reports with inbox WebSocket broadcast ([#174](https://github.com/Novanglus96/LenoreFin/issues/174)) ([8479dca](https://github.com/Novanglus96/LenoreFin/commit/8479dca568b9fb461bd736dfe99b93a85ea04d94))
+
+# [1.6.0-alpha.10](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.9...v1.6.0-alpha.10) (2026-05-27)
+
+
+### Bug Fixes
+
+* remove unused isLoading from RemindersWidget destructure ([#173](https://github.com/Novanglus96/LenoreFin/issues/173)) ([b656f2e](https://github.com/Novanglus96/LenoreFin/commit/b656f2efebc1a5c2363ab203b19102d8fddf1b6d))
+
+# [1.6.0-alpha.9](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.8...v1.6.0-alpha.9) (2026-05-27)
+
+
+### Bug Fixes
+
+* show fetching state on reminders table during background refetch ([#172](https://github.com/Novanglus96/LenoreFin/issues/172)) ([869a1e4](https://github.com/Novanglus96/LenoreFin/commit/869a1e48cabdb7eb778c38b48eebc32de823cf89))
+
+# [1.6.0-alpha.8](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.7...v1.6.0-alpha.8) (2026-05-27)
+
+
+### Bug Fixes
+
+* align WebSocket broadcast keys with full frontend invalidation set ([#171](https://github.com/Novanglus96/LenoreFin/issues/171)) ([57944bd](https://github.com/Novanglus96/LenoreFin/commit/57944bd231a9b4d8caa459c1ab7ab4f343f1747a))
+
+# [1.6.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.6...v1.6.0-alpha.7) (2026-05-27)
+
+
+### Bug Fixes
+
+* add websockets explicitly for uvicorn WebSocket support ([#170](https://github.com/Novanglus96/LenoreFin/issues/170)) ([608350e](https://github.com/Novanglus96/LenoreFin/commit/608350e23c2379f67ab74ad831131ecb4f596b47))
+
+# [1.6.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.5...v1.6.0-alpha.6) (2026-05-27)
+
+
+### Bug Fixes
+
+* make fixture loaddata calls idempotent with || true ([5224825](https://github.com/Novanglus96/LenoreFin/commit/52248255fe3e10180f3955d57a19a05b0fc05bc6))
+* move daphne to first position in INSTALLED_APPS ([4442f61](https://github.com/Novanglus96/LenoreFin/commit/4442f61843ee906cd70b6bb3f275931099a35917))
+* switch to gunicorn+uvicorn workers for ASGI serving ([e2f0040](https://github.com/Novanglus96/LenoreFin/commit/e2f0040ebd758f3e930c43f7c7d872b7a66bc00c))
+
+# [1.6.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.4...v1.6.0-alpha.5) (2026-05-27)
+
+
+### Bug Fixes
+
+* move daphne to first position in INSTALLED_APPS ([#168](https://github.com/Novanglus96/LenoreFin/issues/168)) ([c2c1ebc](https://github.com/Novanglus96/LenoreFin/commit/c2c1ebc6fc742d1149eec33b7bfb6a22aae6ac4e))
+
+# [1.6.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.3...v1.6.0-alpha.4) (2026-05-27)
+
+
+### Bug Fixes
+
+* suppress flake8 E402 on deferred imports in asgi.py ([#167](https://github.com/Novanglus96/LenoreFin/issues/167)) ([f658edb](https://github.com/Novanglus96/LenoreFin/commit/f658edbb7b350aaa2799ad6552e314fb8829e7b5))
+
+# [1.6.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.2...v1.6.0-alpha.3) (2026-05-27)
+
+
+### Features
+
+* add WebSocket real-time sync via Django Channels ([#166](https://github.com/Novanglus96/LenoreFin/issues/166)) ([310194e](https://github.com/Novanglus96/LenoreFin/commit/310194e5aa331e1eaede824419cf8d28af2d64c3))
+
+# [1.6.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.1...v1.6.0-alpha.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* update PWA icons to use elephant favicon with transparency ([#165](https://github.com/Novanglus96/LenoreFin/issues/165)) ([8aa1fe6](https://github.com/Novanglus96/LenoreFin/commit/8aa1fe69ac1519a6837d32c98c6b172eaeb71064))
+
+# [1.6.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.2-alpha.1...v1.6.0-alpha.1) (2026-05-27)
+
+
+### Features
+
+* add Patreon announcement workflow and script ([#164](https://github.com/Novanglus96/LenoreFin/issues/164)) ([1e84262](https://github.com/Novanglus96/LenoreFin/commit/1e84262527faea8a245c13c2a46be05b61a2accf))
+
 ## [1.5.2](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1...v1.5.2) (2026-05-27)
 
 

@@ -14,7 +14,7 @@
         :headers="displayHeaders"
         :items="reminders ? reminders : []"
         :items-length="reminders ? reminders.length : 0"
-        :loading="isLoading"
+        :loading="isFetching"
         item-value="id"
         v-model:items-per-page="itemsPerPage"
         :items-per-page-options="[
@@ -281,7 +281,7 @@
   const showDeleteDialog = ref(false);
   const reminderAddFormDialog = ref(false);
   const reminderEditFormDialog = ref(false);
-  const { reminders, isLoading, removeReminder } = useReminders();
+  const { reminders, isFetching, removeReminder } = useReminders();
   const page = ref(1);
   const itemsPerPage = computed(() => {
     if (props.variant === "full") {

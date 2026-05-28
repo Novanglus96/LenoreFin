@@ -63,6 +63,24 @@ async function runSavedReportFunction(id) {
   }
 }
 
+async function listResultsFunction(reportId) {
+  try {
+    const response = await apiClient.get(`/reports/${reportId}/results`);
+    return response.data;
+  } catch (error) {
+    return await handleApiError(error, "Failed to load report history");
+  }
+}
+
+async function getResultFunction({ reportId, resultId }) {
+  try {
+    const response = await apiClient.get(`/reports/${reportId}/results/${resultId}`);
+    return response.data;
+  } catch (error) {
+    return await handleApiError(error, "Failed to load report result");
+  }
+}
+
 export function useReports() {
   const queryClient = useQueryClient();
   const mainstore = useMainStore();
@@ -124,6 +142,14 @@ export function useReports() {
     return runSavedMutation.mutateAsync(id);
   }
 
+  async function fetchResults(reportId) {
+    return listResultsFunction(reportId);
+  }
+
+  async function fetchResult(reportId, resultId) {
+    return getResultFunction({ reportId, resultId });
+  }
+
   return {
     reports,
     isLoading,
@@ -133,6 +159,8 @@ export function useReports() {
     deleteReport,
     runReport,
     runSavedReport,
+    fetchResults,
+    fetchResult,
     isSaving: createMutation.isPending || updateMutation.isPending,
     isRunning: runMutation.isPending || runSavedMutation.isPending,
   };
