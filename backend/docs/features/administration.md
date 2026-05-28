@@ -81,11 +81,51 @@ Payees are reusable payee records linked to transactions. Navigate to **Admin �
 
 Payees are optional — transactions can have a free-text description without a linked payee. Linking a payee enables paycheck splitting and payee-level filtering.
 
+## Push Notifications
+
+LenoreFin supports browser Web Push notifications via the [Web Push Protocol](https://www.rfc-editor.org/rfc/rfc8030). When enabled, new inbox messages trigger a push notification to all subscribed browsers, even when the tab is closed.
+
+### Enabling Push Notifications
+
+Push requires three environment variables (see [Configuration](../configuration.md#push-notifications)):
+
+```
+VAPID_PRIVATE_KEY=...
+VAPID_PUBLIC_KEY=...
+VAPID_EMAIL=admin@example.com
+```
+
+If `VAPID_PRIVATE_KEY` is not set, push silently skips — the rest of the app is unaffected.
+
+### Subscribing
+
+Click the bell icon in the app header to subscribe the current browser. The browser will prompt for notification permission. Once granted, the subscription is stored server-side and associated with the logged-in user.
+
+Click the bell icon again to unsubscribe.
+
+### Targeting
+
+- Messages scoped to a specific user (`user` field set) send a push only to that user's subscriptions.
+- Global messages (`user` field null) push to all subscribed browsers.
+
+### Subscription Management
+
+Subscriptions are visible in **Django Admin → Administration → Push Subscriptions** (read-only). Expired subscriptions (HTTP 410 response from the push service) are removed automatically.
+
+---
+
 ## System Messages
 
 System messages are admin-authored notices displayed to all users on the dashboard. Use these to communicate maintenance windows, upgrade notices, or other system-wide alerts.
 
 Manage system messages at **Admin → System Messages**.
+
+Messages support two optional fields:
+
+| Field | Description |
+|-------|-------------|
+| **User** | If set, the message is shown only to that user. Leave blank to show to all users. |
+| **Link** | An internal URL the user can follow from the message (e.g. `/planning/detections`). |
 
 ## Banks
 

@@ -57,3 +57,49 @@ For accurate historical reporting, filter to Cleared + Reconciled and exclude Pe
 ## Printing Reports
 
 Use your browser's **Print** function (`Ctrl+P` / `Cmd+P`) to print or save a report as PDF. The report table is formatted for print with a clean layout.
+
+---
+
+## Saving Reports
+
+Reports can be saved for later reuse. After configuring your report, click **Save** before or after running it.
+
+Saved reports appear in the **Reports** list. Click any saved report to restore its configuration and run it again with one click.
+
+Reports can optionally be marked **Shared**, making them visible to all users.
+
+---
+
+## Scheduled Reports
+
+Saved reports can run automatically on a recurring schedule.
+
+To schedule a report:
+
+1. Save the report.
+2. Open the report and enable the **Schedule** toggle.
+3. Choose a frequency:
+
+| Frequency | Schedule Day | Description |
+|-----------|-------------|-------------|
+| **Daily** | — | Runs once per day |
+| **Weekly** | Day of week (0 = Monday … 6 = Sunday) | Runs on the specified weekday |
+| **Monthly** | Day of month (1–31) | Runs on the specified day each month |
+
+The task worker executes scheduled reports automatically. After each run, a result is saved to the report history.
+
+---
+
+## Report History
+
+Each saved report maintains a run history. Click **History** on any saved report to view past runs.
+
+The history panel shows:
+
+| Column | Description |
+|--------|-------------|
+| **Run At** | Date and time the report was executed |
+| **Status** | `success` or `error` |
+| **View** | Expand to see the full result data from that run |
+
+History entries are stored indefinitely until manually deleted alongside the report.
