@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
+import { toValue, computed } from "vue";
 import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
 
@@ -271,8 +272,9 @@ export function useInvestmentReturn(account_id) {
     queryKey: ["accounts", "investment_return", account_id],
     queryFn: async () => {
       try {
+        const id = toValue(account_id);
         const response = await apiClient.get(
-          `/accounts/${account_id}/investment-return`,
+          `/accounts/${id}/investment-return`,
         );
         return response.data;
       } catch (error) {
@@ -280,7 +282,7 @@ export function useInvestmentReturn(account_id) {
       }
     },
     select: response => response,
-    enabled: !!account_id,
+    enabled: computed(() => !!toValue(account_id)),
     client: queryClient,
   });
 
