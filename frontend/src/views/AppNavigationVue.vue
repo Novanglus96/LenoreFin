@@ -118,7 +118,27 @@
           </v-btn>
         </template>
         <v-card width="500" density="compact">
+          <v-card-title class="d-flex align-center pa-3 pb-0">
+            <span class="text-subtitle-1">Inbox</span>
+            <v-spacer></v-spacer>
+            <v-tooltip v-if="pushSupported" :text="pushSubscribed ? 'Disable push notifications' : 'Enable push notifications'">
+              <template v-slot:activator="{ props: tipProps }">
+                <v-btn
+                  v-bind="tipProps"
+                  :icon="pushSubscribed ? 'mdi-bell' : 'mdi-bell-outline'"
+                  :color="pushSubscribed ? 'primary' : 'default'"
+                  size="small"
+                  variant="text"
+                  @click.stop="togglePush"
+                  :disabled="!isOnline"
+                ></v-btn>
+              </template>
+            </v-tooltip>
+          </v-card-title>
           <v-card-text>
+            <v-alert v-if="pushDenied" type="warning" density="compact" class="mb-2 text-body-2">
+              Notifications blocked — enable them in your browser settings.
+            </v-alert>
             <v-list density="compact" nav>
               <v-list-item
                 :prepend-icon="
@@ -275,6 +295,7 @@
   import PlanningMenu from "@/components/PlanningMenu.vue";
   import DashboardEditor from "@/components/DashboardEditor.vue";
   import { useMessages } from "@/composables/messagesComposable";
+  import { usePushNotifications } from "@/composables/usePushNotifications";
   import { useRouter, useRoute } from "vue-router";
   import { useTransactionsStore } from "@/stores/transactions";
   import { useThemeStore } from "@/stores/themeStore";
@@ -307,6 +328,25 @@
   const authStore = useAuthStore();
   const nav_toggle = ref(true);
   const { isOnline } = useOnlineStatus();
+
+  const {
+    isSupported: pushSupported,
+    isSubscribed: pushSubscribed,
+    permissionDenied: pushDenied,
+    checkStatus: checkPushStatus,
+    subscribe: subscribePush,
+    unsubscribe: unsubscribePush,
+  } = usePushNotifications();
+
+  checkPushStatus();
+
+  async function togglePush() {
+    if (pushSubscribed.value) {
+      await unsubscribePush();
+    } else {
+      await subscribePush();
+    }
+  }
 
   const setAccount = (account, forecast) => {
     transactions_store.resetFilters();
