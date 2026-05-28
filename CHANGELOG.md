@@ -1,3 +1,10 @@
+## [1.6.1-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1-alpha.2...v1.6.1-alpha.3) (2026-05-28)
+
+
+### Bug Fixes
+
+* allow creating messages from Django admin ([#183](https://github.com/Novanglus96/LenoreFin/issues/183)) ([8fd51ab](https://github.com/Novanglus96/LenoreFin/commit/8fd51ab0e67087d0478d8cc8cf7dde498d97bf41))
+
 ## [1.6.1-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1-alpha.1...v1.6.1-alpha.2) (2026-05-28)
 
 
