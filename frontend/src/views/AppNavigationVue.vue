@@ -104,7 +104,8 @@
         size="small"
       ></v-btn>
       <v-btn icon="mdi-logout" size="small" @click="handleLogout"></v-btn>
-      <v-menu location="start">
+      <!-- Desktop: dropdown menu anchored to app bar -->
+      <v-menu v-if="mdAndUp" location="start">
         <template v-slot:activator="{ props }">
           <v-btn class="text-none" stacked v-bind="props">
             <v-badge
@@ -141,11 +142,7 @@
             </v-alert>
             <v-list density="compact" nav>
               <v-list-item
-                :prepend-icon="
-                  message.unread
-                    ? 'mdi-message-text'
-                    : 'mdi-message-text-outline'
-                "
+                :prepend-icon="message.unread ? 'mdi-message-text' : 'mdi-message-text-outline'"
                 v-for="message in messages.messages"
                 :key="message.id"
                 :to="message.link || undefined"
@@ -170,6 +167,70 @@
           </v-card-actions>
         </v-card>
       </v-menu>
+      <!-- Mobile: dialog avoids activator-relative positioning issues -->
+      <template v-else>
+        <v-btn class="text-none" stacked @click="inboxOpen = true">
+          <v-badge
+            :content="messages ? messages.unread_count : 0"
+            color="error"
+            v-if="messages && messages.unread_count > 0"
+          >
+            <v-icon icon="mdi-inbox-full"></v-icon>
+          </v-badge>
+          <v-icon icon="mdi-inbox" v-else></v-icon>
+        </v-btn>
+        <v-dialog v-model="inboxOpen" max-width="500">
+          <v-card density="compact">
+            <v-card-title class="d-flex align-center pa-3 pb-0">
+              <span class="text-subtitle-1">Inbox</span>
+              <v-spacer></v-spacer>
+              <v-tooltip v-if="pushSupported" :text="pushSubscribed ? 'Disable push notifications' : 'Enable push notifications'">
+                <template v-slot:activator="{ props: tipProps }">
+                  <v-btn
+                    v-bind="tipProps"
+                    :icon="pushSubscribed ? 'mdi-bell' : 'mdi-bell-outline'"
+                    :color="pushSubscribed ? 'primary' : 'default'"
+                    size="small"
+                    variant="text"
+                    @click.stop="togglePush"
+                    :disabled="!isOnline"
+                  ></v-btn>
+                </template>
+              </v-tooltip>
+            </v-card-title>
+            <v-card-text>
+              <v-alert v-if="pushDenied" type="warning" density="compact" class="mb-2 text-body-2">
+                Notifications blocked — enable them in your browser settings.
+              </v-alert>
+              <v-list density="compact" nav>
+                <v-list-item
+                  :prepend-icon="message.unread ? 'mdi-message-text' : 'mdi-message-text-outline'"
+                  v-for="message in messages.messages"
+                  :key="message.id"
+                  :to="message.link || undefined"
+                  :style="message.link ? 'cursor: pointer' : ''"
+                  @click="inboxOpen = false"
+                >
+                  <div :class="['text-body-2 text-wrap', message.unread ? 'font-weight-bold' : '']">
+                    {{ message.message }}
+                  </div>
+                  <div :class="['text-caption text-medium-emphasis', message.unread ? 'font-weight-bold' : '']">
+                    {{ getPrettyDate(message.message_date) }}
+                  </div>
+                </v-list-item>
+                <v-list-item v-if="messages.total_count == 0">
+                  No messages : You're all caught up!
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+            <v-card-actions v-if="messages.total_count > 0">
+              <v-spacer></v-spacer>
+              <v-btn color="primary" @click="markRead" :disabled="!isOnline">Mark All Read</v-btn>
+              <v-btn color="primary" @click="deleteAll" :disabled="!isOnline">Delete All</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </template>
     </v-app-bar>
     <v-navigation-drawer color="primary" rail permanent v-if="mdAndUp">
       <v-list density="compact" nav>
@@ -304,6 +365,7 @@
 
   const route = useRoute();
   const editorOpen = ref(false);
+  const inboxOpen = ref(false);
   const onDashboard = computed(() => route.name === "dashboard");
 
   const theme = useTheme();
