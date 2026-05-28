@@ -104,7 +104,7 @@
         size="small"
       ></v-btn>
       <v-btn icon="mdi-logout" size="small" @click="handleLogout"></v-btn>
-      <v-menu location="start">
+      <v-menu :location="smAndDown ? 'bottom' : 'start'" :max-width="smAndDown ? '100vw' : 500">
         <template v-slot:activator="{ props }">
           <v-btn class="text-none" stacked v-bind="props">
             <v-badge
@@ -117,7 +117,7 @@
             <v-icon icon="mdi-inbox" v-else></v-icon>
           </v-btn>
         </template>
-        <v-card width="500" density="compact">
+        <v-card :width="smAndDown ? '100vw' : 500" density="compact">
           <v-card-title class="d-flex align-center pa-3 pb-0">
             <span class="text-subtitle-1">Inbox</span>
             <v-spacer></v-spacer>
