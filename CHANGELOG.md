@@ -1,3 +1,10 @@
+## [1.6.1-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0...v1.6.1-alpha.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* constrain inbox menu to viewport width on mobile ([#181](https://github.com/Novanglus96/LenoreFin/issues/181)) ([bbb2fa2](https://github.com/Novanglus96/LenoreFin/commit/bbb2fa2faf202097c270918cf91c7f7dd37157ff))
+
 # [1.6.0](https://github.com/Novanglus96/LenoreFin/compare/v1.5.2...v1.6.0) (2026-05-28)
 
 
