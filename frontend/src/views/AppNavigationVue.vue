@@ -197,7 +197,6 @@
                   ></v-btn>
                 </template>
               </v-tooltip>
-              <v-btn icon="mdi-close" size="small" variant="text" @click="inboxOpen = false"></v-btn>
             </v-card-title>
             <v-card-text>
               <v-alert v-if="pushDenied" type="warning" density="compact" class="mb-2 text-body-2">
