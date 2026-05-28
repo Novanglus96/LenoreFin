@@ -332,7 +332,7 @@
               </div>
             </v-col>
             <v-col
-              v-if="account.account_type.slug === 'investment' && authStore.isFullAccess && investmentReturn && investmentReturn.sufficient_data"
+              v-if="account.account_type.slug === 'investment' && account.calculate_interest && authStore.isFullAccess && investmentReturn && investmentReturn.sufficient_data"
               class="text-center align-content-end"
             >
               <v-tooltip location="bottom" text="Set this rate as the forecast APY">
@@ -418,7 +418,7 @@
                 <div class="text-primary-lighten-2">est. annual return</div>
               </v-col>
               <v-col
-                v-if="authStore.isFullAccess && investmentReturn && investmentReturn.sufficient_data"
+                v-if="account.calculate_interest && authStore.isFullAccess && investmentReturn && investmentReturn.sufficient_data"
                 class="text-center align-content-end"
               >
                 <v-btn
