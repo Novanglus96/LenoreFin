@@ -168,7 +168,7 @@ def _safe_user(request):
 
 @report_router.get("", response=List[ReportConfigOut])
 def list_reports(request):
-    user = request.user
+    user = _safe_user(request)
     configs = ReportConfig.objects.prefetch_related("tag_selections", "accounts").filter(
         Q(created_by=user) | Q(is_shared=True)
     )
@@ -242,12 +242,13 @@ def run_adhoc_report(request, payload: ReportRunIn):
 
 @report_router.get("/{report_id}", response=ReportConfigOut)
 def get_report(request, report_id: int):
-    user = request.user
+    user = _safe_user(request)
+    user_pk = user.pk if user else None
     config = get_object_or_404(
         ReportConfig.objects.prefetch_related("tag_selections", "accounts"),
         id=report_id,
     )
-    if not (config.created_by_id == user.pk or config.is_shared):
+    if not (config.created_by_id == user_pk or config.is_shared):
         raise HttpError(404, "Report not found")
     return _serialize_config(config, user)
 
@@ -312,12 +313,13 @@ def delete_report(request, report_id: int):
 @report_router.post("/{report_id}/run", response=ReportResultOut)
 def run_saved_report(request, report_id: int):
     try:
-        user = request.user
+        user = _safe_user(request)
+        user_pk = user.pk if user else None
         config = get_object_or_404(
             ReportConfig.objects.prefetch_related("tag_selections", "accounts"),
             id=report_id,
         )
-        if not (config.created_by_id == user.pk or config.is_shared):
+        if not (config.created_by_id == user_pk or config.is_shared):
             raise HttpError(404, "Report not found")
         tag_selections_raw = list(config.tag_selections.all())
         result = _run_from_params(
@@ -344,9 +346,10 @@ def run_saved_report(request, report_id: int):
 
 @report_router.get("/{report_id}/results", response=List[ReportResultRecordOut])
 def list_report_results(request, report_id: int):
-    user = request.user
+    user = _safe_user(request)
+    user_pk = user.pk if user else None
     config = get_object_or_404(ReportConfig, id=report_id)
-    if not (config.created_by_id == user.pk or config.is_shared):
+    if not (config.created_by_id == user_pk or config.is_shared):
         raise HttpError(404, "Report not found")
     results = ReportResult.objects.filter(config=config).only(
         "id", "run_at", "status", "error_message"
@@ -365,9 +368,10 @@ def list_report_results(request, report_id: int):
 
 @report_router.get("/{report_id}/results/{result_id}", response=ReportResultRecordOut)
 def get_report_result(request, report_id: int, result_id: int):
-    user = request.user
+    user = _safe_user(request)
+    user_pk = user.pk if user else None
     config = get_object_or_404(ReportConfig, id=report_id)
-    if not (config.created_by_id == user.pk or config.is_shared):
+    if not (config.created_by_id == user_pk or config.is_shared):
         raise HttpError(404, "Report not found")
     result = get_object_or_404(ReportResult, id=result_id, config=config)
     return {
