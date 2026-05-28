@@ -34,17 +34,23 @@ self.addEventListener("message", (event) => {
   }
 });
 
-// Web Push — show a native notification
+// Web Push — show a native notification only when the app isn't already focused
 self.addEventListener("push", (event) => {
   if (!event.data) return;
   const data = event.data.json();
   event.waitUntil(
-    self.registration.showNotification(data.title ?? "LenoreFin", {
-      body: data.body ?? "",
-      icon: "/android-chrome-192x192.png",
-      badge: "/android-chrome-192x192.png",
-      data: { link: data.link ?? "/" },
-    })
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        const appFocused = clientList.some((c) => c.focused);
+        if (appFocused) return;
+        return self.registration.showNotification(data.title ?? "LenoreFin", {
+          body: data.body ?? "",
+          icon: "/android-chrome-192x192.png",
+          badge: "/android-chrome-192x192.png",
+          data: { link: data.link ?? "/" },
+        });
+      })
   );
 });
 
