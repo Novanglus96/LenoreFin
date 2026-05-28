@@ -1,3 +1,10 @@
+# [1.6.0-alpha.13](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.12...v1.6.0-alpha.13) (2026-05-28)
+
+
+### Features
+
+* web push notifications for inbox messages ([#176](https://github.com/Novanglus96/LenoreFin/issues/176)) ([6c85448](https://github.com/Novanglus96/LenoreFin/commit/6c854482b49dc0d41d61ec980b9a3cc175b67489))
+
 # [1.6.0-alpha.12](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.11...v1.6.0-alpha.12) (2026-05-28)
 
 
