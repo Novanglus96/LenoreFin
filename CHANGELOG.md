@@ -1,3 +1,10 @@
+# [1.6.0-alpha.14](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.13...v1.6.0-alpha.14) (2026-05-28)
+
+
+### Features
+
+* investment performance estimation ([#177](https://github.com/Novanglus96/LenoreFin/issues/177)) ([6e5eba0](https://github.com/Novanglus96/LenoreFin/commit/6e5eba0d2367cad474f8c31c8f06e18d8ba87b9b))
+
 # [1.6.0-alpha.13](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.12...v1.6.0-alpha.13) (2026-05-28)
 
 
