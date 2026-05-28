@@ -756,6 +756,45 @@ version.
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#recurring-transaction-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recurring Transaction Detection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recurring Transaction Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-detection-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Detection Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acting-on-detections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acting on Detections
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1041,6 +1080,45 @@ version.
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#recurring-transaction-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recurring Transaction Detection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recurring Transaction Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-detection-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Detection Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acting-on-detections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acting on Detections
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1142,6 +1220,53 @@ version.
 <li><strong>Day of month</strong> — e.g. the 15th of every month</li>
 <li><strong>Last day of month</strong> — handles months of different lengths correctly</li>
 </ul>
+<hr />
+<h2 id="recurring-transaction-detection">Recurring Transaction Detection</h2>
+<p>LenoreFin automatically analyzes your cleared transaction history and identifies recurring payment patterns. Detected patterns appear under <strong>Planning → Detections</strong>.</p>
+<h3 id="how-detection-works">How Detection Works</h3>
+<p>The detection engine scans cleared transactions and looks for descriptions that appear multiple times with roughly consistent amounts and intervals. Each detected pattern includes:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Description</strong></td>
+<td>Payee name or transaction description</td>
+</tr>
+<tr>
+<td><strong>Estimated Amount</strong></td>
+<td>Median amount across matching transactions</td>
+</tr>
+<tr>
+<td><strong>Repeat</strong></td>
+<td>Suggested recurrence interval (if determinable)</td>
+</tr>
+<tr>
+<td><strong>Next Estimated Date</strong></td>
+<td>Predicted next occurrence</td>
+</tr>
+<tr>
+<td><strong>Suggested Tag</strong></td>
+<td>Tag suggestion based on prior transactions</td>
+</tr>
+<tr>
+<td><strong>Suggested Account</strong></td>
+<td>Account suggestion based on prior transactions</td>
+</tr>
+</tbody>
+</table>
+<h3 id="acting-on-detections">Acting on Detections</h3>
+<p>For each detected pattern you can:</p>
+<ul>
+<li><strong>Create Reminder</strong> — Opens the Add Reminder form pre-filled with the detection's suggested values. Confirm and save to start tracking the bill.</li>
+<li><strong>Ignore</strong> — Hides the detection permanently. Useful for one-off patterns that won't recur.</li>
+<li><strong>Delete</strong> — Removes the record entirely.</li>
+</ul>
+<p>Ignored detections are filtered out of the list automatically. They are not re-detected on subsequent scans.</p>
 
 
 

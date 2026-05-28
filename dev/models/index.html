@@ -1033,6 +1033,45 @@ version.
 </li>
       
         <li class="md-nav__item">
+  <a href="#administration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Administration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Administration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#message" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pushsubscription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PushSubscription
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#planning" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1043,6 +1082,17 @@ version.
   
     <nav class="md-nav" aria-label="Planning">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detectedrecurring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DetectedRecurring
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#budget" class="md-nav__link">
@@ -1099,6 +1149,56 @@ version.
     <span class="md-ellipsis">
       
         ReminderExclusion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reports
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reports">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reportconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReportConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reportresult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReportResult
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reportconfigtag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReportConfigTag
       
     </span>
   </a>
@@ -1386,6 +1486,45 @@ version.
 </li>
       
         <li class="md-nav__item">
+  <a href="#administration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Administration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Administration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#message" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pushsubscription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PushSubscription
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#planning" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1396,6 +1535,17 @@ version.
   
     <nav class="md-nav" aria-label="Planning">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detectedrecurring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DetectedRecurring
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#budget" class="md-nav__link">
@@ -1452,6 +1602,56 @@ version.
     <span class="md-ellipsis">
       
         ReminderExclusion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reports
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reports">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reportconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReportConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reportresult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReportResult
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reportconfigtag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReportConfigTag
       
     </span>
   </a>
@@ -1978,7 +2178,143 @@ version.
 </tbody>
 </table>
 <hr />
+<h2 id="administration">Administration</h2>
+<h3 id="message">Message</h3>
+<p>An in-app inbox message displayed to users on the dashboard.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>message_date</code></td>
+<td>DateTimeField</td>
+<td>Defaults to current time</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>CharField</td>
+<td>Message text (max 254 chars)</td>
+</tr>
+<tr>
+<td><code>unread</code></td>
+<td>BooleanField</td>
+<td>Defaults to <code>True</code></td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>FK → User</td>
+<td>Optional; <code>null</code> means visible to all users</td>
+</tr>
+<tr>
+<td><code>link</code></td>
+<td>CharField</td>
+<td>Optional internal URL (e.g. <code>/planning/detections</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pushsubscription">PushSubscription</h3>
+<p>A browser Web Push subscription registered by a user. Each endpoint is unique.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user</code></td>
+<td>FK → User</td>
+<td>Owner; cascade-deleted when user is removed</td>
+</tr>
+<tr>
+<td><code>endpoint</code></td>
+<td>TextField</td>
+<td>Push service endpoint URL (unique)</td>
+</tr>
+<tr>
+<td><code>p256dh</code></td>
+<td>TextField</td>
+<td>Browser-generated public key</td>
+</tr>
+<tr>
+<td><code>auth</code></td>
+<td>TextField</td>
+<td>Browser-generated auth secret</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>DateTimeField</td>
+<td>Auto-set on creation</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="planning">Planning</h2>
+<h3 id="detectedrecurring">DetectedRecurring</h3>
+<p>A recurring payment pattern detected automatically from transaction history.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>description</code></td>
+<td>CharField</td>
+<td>Payee name or description</td>
+</tr>
+<tr>
+<td><code>estimated_amount</code></td>
+<td>DecimalField</td>
+<td>Estimated payment amount</td>
+</tr>
+<tr>
+<td><code>repeat</code></td>
+<td>FK → Repeat</td>
+<td>Optional; suggested recurrence interval</td>
+</tr>
+<tr>
+<td><code>next_estimated_date</code></td>
+<td>DateField</td>
+<td>Next predicted occurrence</td>
+</tr>
+<tr>
+<td><code>transaction_ids</code></td>
+<td>JSONField</td>
+<td>List of source transaction IDs</td>
+</tr>
+<tr>
+<td><code>is_ignored</code></td>
+<td>BooleanField</td>
+<td>Defaults to <code>False</code>; ignored records are hidden</td>
+</tr>
+<tr>
+<td><code>suggested_tag_id</code></td>
+<td>IntegerField</td>
+<td>Optional tag suggestion</td>
+</tr>
+<tr>
+<td><code>suggested_account_id</code></td>
+<td>IntegerField</td>
+<td>Optional account suggestion</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>DateTimeField</td>
+<td>Auto-set on creation</td>
+</tr>
+</tbody>
+</table>
 <h3 id="budget">Budget</h3>
 <p>A spending limit for transactions matching specific tags.</p>
 <table>
@@ -2175,6 +2511,187 @@ version.
 <td><code>exclude_date</code></td>
 <td>DateField</td>
 <td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="reports">Reports</h2>
+<h3 id="reportconfig">ReportConfig</h3>
+<p>A saved report configuration. Can be run on-demand or on a schedule.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>CharField</td>
+<td>Display name</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>TextField</td>
+<td>Optional notes</td>
+</tr>
+<tr>
+<td><code>report_type</code></td>
+<td>CharField</td>
+<td><code>TOTALS</code> or <code>COMPARISON</code></td>
+</tr>
+<tr>
+<td><code>date_range_type</code></td>
+<td>CharField</td>
+<td><code>CUSTOM</code>, <code>THIS_MONTH</code>, <code>LAST_MONTH</code>, <code>YTD</code>, etc.</td>
+</tr>
+<tr>
+<td><code>date_from</code></td>
+<td>DateField</td>
+<td>Period 1 start (custom range)</td>
+</tr>
+<tr>
+<td><code>date_to</code></td>
+<td>DateField</td>
+<td>Period 1 end (custom range)</td>
+</tr>
+<tr>
+<td><code>period2_date_from</code></td>
+<td>DateField</td>
+<td>Period 2 start (comparison only)</td>
+</tr>
+<tr>
+<td><code>period2_date_to</code></td>
+<td>DateField</td>
+<td>Period 2 end (comparison only)</td>
+</tr>
+<tr>
+<td><code>accounts</code></td>
+<td>M2M → Account</td>
+<td>Optional account filter; empty = all accounts</td>
+</tr>
+<tr>
+<td><code>group_by</code></td>
+<td>CharField</td>
+<td><code>TAG</code> or <code>MONTH</code></td>
+</tr>
+<tr>
+<td><code>show_transactions</code></td>
+<td>BooleanField</td>
+<td>Expand transaction-level detail in results</td>
+</tr>
+<tr>
+<td><code>show_subtotal</code></td>
+<td>BooleanField</td>
+<td>Show subtotal rows</td>
+</tr>
+<tr>
+<td><code>include_pending</code></td>
+<td>BooleanField</td>
+<td>Include pending transactions</td>
+</tr>
+<tr>
+<td><code>is_shared</code></td>
+<td>BooleanField</td>
+<td>Visible to all users</td>
+</tr>
+<tr>
+<td><code>is_scheduled</code></td>
+<td>BooleanField</td>
+<td>Run automatically on a schedule</td>
+</tr>
+<tr>
+<td><code>schedule_frequency</code></td>
+<td>CharField</td>
+<td><code>DAILY</code>, <code>WEEKLY</code>, or <code>MONTHLY</code> (scheduled only)</td>
+</tr>
+<tr>
+<td><code>schedule_day</code></td>
+<td>IntegerField</td>
+<td>Day of week (0–6) or day of month (1–31) for scheduled runs</td>
+</tr>
+<tr>
+<td><code>next_run_at</code></td>
+<td>DateTimeField</td>
+<td>Next scheduled execution time</td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td>FK → User</td>
+<td>Report owner</td>
+</tr>
+</tbody>
+</table>
+<h3 id="reportresult">ReportResult</h3>
+<p>A historical run of a <code>ReportConfig</code>. Stores the output data for the report history panel.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config</code></td>
+<td>FK → ReportConfig</td>
+<td>Parent report; cascade-deleted</td>
+</tr>
+<tr>
+<td><code>run_at</code></td>
+<td>DateTimeField</td>
+<td>Auto-set when the run completes</td>
+</tr>
+<tr>
+<td><code>result_data</code></td>
+<td>JSONField</td>
+<td>Full serialized report output</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>CharField</td>
+<td><code>success</code> or <code>error</code></td>
+</tr>
+<tr>
+<td><code>error_message</code></td>
+<td>TextField</td>
+<td>Populated only when <code>status = error</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="reportconfigtag">ReportConfigTag</h3>
+<p>Through-table linking a <code>ReportConfig</code> to specific tag selections. Exactly one of <code>tag</code>, <code>sub_tag</code>, or <code>main_tag</code> is set per row.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>report</code></td>
+<td>FK → ReportConfig</td>
+<td></td>
+</tr>
+<tr>
+<td><code>tag</code></td>
+<td>FK → Tag</td>
+<td>Leaf-level tag filter</td>
+</tr>
+<tr>
+<td><code>sub_tag</code></td>
+<td>FK → SubTag</td>
+<td>Sub-tag level filter</td>
+</tr>
+<tr>
+<td><code>main_tag</code></td>
+<td>FK → MainTag</td>
+<td>Top-level tag filter</td>
 </tr>
 </tbody>
 </table>
