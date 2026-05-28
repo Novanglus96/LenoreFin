@@ -1,3 +1,10 @@
+# [1.6.0-alpha.12](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.11...v1.6.0-alpha.12) (2026-05-28)
+
+
+### Features
+
+* recurring transaction detection with weekly scan and inbox alerts ([#175](https://github.com/Novanglus96/LenoreFin/issues/175)) ([66030fb](https://github.com/Novanglus96/LenoreFin/commit/66030fb45bf2dd819891093fe79258b37859dc3d))
+
 # [1.6.0-alpha.11](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.10...v1.6.0-alpha.11) (2026-05-27)
 
 
