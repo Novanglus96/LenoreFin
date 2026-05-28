@@ -308,6 +308,45 @@
               </div>
               <div class="text-primary-lighten-2">available credit</div>
             </v-col>
+            <!-- Investment: estimated annual return -->
+            <v-col
+              v-if="account.account_type.slug === 'investment'"
+              class="text-center align-content-end"
+            >
+              <div class="text-white font-weight-bold text-body">
+                <span v-if="investmentReturn && investmentReturn.sufficient_data">
+                  {{ investmentReturn.rate > 0 ? '+' : '' }}{{ investmentReturn.rate.toFixed(2) }}%
+                  <v-tooltip
+                    v-if="account.calculate_interest && authStore.isFullAccess && isOnline"
+                    location="bottom"
+                    text="Apply to forecast APY"
+                  >
+                    <template v-slot:activator="{ props: tipProps }">
+                      <v-icon
+                        size="x-small"
+                        icon="mdi-chart-line-variant"
+                        color="accent"
+                        class="cursor-pointer"
+                        v-bind="tipProps"
+                        @click="applyReturnToForecast()"
+                      />
+                    </template>
+                  </v-tooltip>
+                </span>
+                <span v-else class="text-primary-lighten-2">—</span>
+              </div>
+              <div class="text-primary-lighten-2">
+                est. annual return
+                <v-tooltip
+                  location="bottom"
+                  :text="`Based on last ${investmentReturn?.period_months ?? 12} months (${investmentReturn?.data_points ?? 0} transactions)`"
+                >
+                  <template v-slot:activator="{ props: tipProps }">
+                    <v-icon size="x-small" icon="mdi-information-outline" v-bind="tipProps" />
+                  </template>
+                </v-tooltip>
+              </div>
+            </v-col>
           </v-row>
           <!-- Small Display View -->
           <v-row density="compact" v-if="smAndDown">
@@ -355,13 +394,44 @@
                 variant="text"
                 :append-icon="!showMore ? 'mdi-chevron-down' : 'mdi-chevron-up'"
                 @click="toggleMore"
-                v-if="account.account_type.id == 1"
+                v-if="account.account_type.id == 1 || account.account_type.slug === 'investment'"
               >
                 {{ !showMore ? "more" : "less" }}
               </v-btn>
             </v-col>
           </v-row>
         </v-container>
+        <v-expand-transition>
+          <v-container fluid v-if="account.account_type.slug === 'investment' && showMore">
+            <v-row density="compact">
+              <v-col class="text-center align-content-end">
+                <div class="text-white font-weight-bold text-body">
+                  <span v-if="investmentReturn && investmentReturn.sufficient_data">
+                    {{ investmentReturn.rate > 0 ? '+' : '' }}{{ investmentReturn.rate.toFixed(2) }}%
+                    <v-tooltip
+                      v-if="account.calculate_interest && authStore.isFullAccess && isOnline"
+                      location="bottom"
+                      text="Apply to forecast APY"
+                    >
+                      <template v-slot:activator="{ props: tipProps }">
+                        <v-icon
+                          size="x-small"
+                          icon="mdi-chart-line-variant"
+                          color="accent"
+                          class="cursor-pointer"
+                          v-bind="tipProps"
+                          @click="applyReturnToForecast()"
+                        />
+                      </template>
+                    </v-tooltip>
+                  </span>
+                  <span v-else class="text-primary-lighten-2">—</span>
+                </div>
+                <div class="text-primary-lighten-2">est. annual return</div>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-expand-transition>
         <v-expand-transition>
           <v-container fluid v-if="account.account_type.id == 1 && showMore">
             <v-row density="compact" class="">
@@ -461,8 +531,8 @@
   </div>
 </template>
 <script setup>
-  import { defineProps, ref } from "vue";
-  import { useAccountByID, useAccounts } from "@/composables/accountsComposable";
+  import { defineProps, ref, computed } from "vue";
+  import { useAccountByID, useAccounts, useInvestmentReturn } from "@/composables/accountsComposable";
   import EditAccountForm from "./EditAccountForm.vue";
   import AdjustBalanceForm from "./AdjustBalanceForm.vue";
   import DeleteAccountForm from "./DeleteAccountForm.vue";
@@ -486,8 +556,26 @@
     account: Array,
   });
 
-  const { account } = useAccountByID(props.account);
+  const { account, editAccount } = useAccountByID(props.account);
   const { toggleFavorite } = useAccounts();
+
+  const accountId = computed(() =>
+    Array.isArray(props.account) ? props.account[0] : props.account,
+  );
+  const isInvestment = computed(
+    () => account.value?.account_type?.slug === "investment",
+  );
+  const { investmentReturn } = useInvestmentReturn(
+    computed(() => (isInvestment.value ? accountId.value : null)),
+  );
+
+  async function applyReturnToForecast() {
+    if (!investmentReturn.value?.sufficient_data) return;
+    await editAccount({
+      id: accountId.value,
+      annual_rate: investmentReturn.value.rate,
+    });
+  }
 
   const updateAdjBalDialog = value => {
     adjBalDialog.value = value;

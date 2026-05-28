@@ -4,6 +4,8 @@ from django.core.cache import cache
 from ninja.errors import HttpError
 from accounts.models import Account, AccountFavorite, Reward
 from transactions.models import Transaction
+from accounts.api.schemas.investment_return import InvestmentReturnOut
+from accounts.services import calculate_investment_return
 from accounts.api.schemas.account import (
     AccountIn,
     AccountOut,
@@ -334,6 +336,31 @@ def get_favorite_balances(request):
 
         api_logger.debug("Favorite balances retrieved")
         return result
+    except Exception as e:
+        error_logger.exception(str(e))
+        raise HttpError(500, f"Record retrieval error: {str(e)}")
+
+
+@account_router.get("/{account_id}/investment-return", response=InvestmentReturnOut)
+def get_investment_return(request, account_id: int):
+    """
+    Returns Modified Dietz annualised return for an investment account.
+    """
+    try:
+        result = calculate_investment_return(account_id)
+        if result is None:
+            return InvestmentReturnOut(
+                rate=None,
+                period_months=12,
+                data_points=0,
+                sufficient_data=False,
+            )
+        return InvestmentReturnOut(
+            rate=result["rate"],
+            period_months=result["period_months"],
+            data_points=result["data_points"],
+            sufficient_data=True,
+        )
     except Exception as e:
         error_logger.exception(str(e))
         raise HttpError(500, f"Record retrieval error: {str(e)}")
