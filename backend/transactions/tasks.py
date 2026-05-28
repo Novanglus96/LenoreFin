@@ -109,7 +109,7 @@ def cleanup_old_backups():
             error_logger.exception(f"Failed to delete backup {f}: {e}")
 
 
-def create_message(message_text, user=None):
+def create_message(message_text, user=None, link=None):
     """
     The function `create_message` creates a Message object for
     displaying a message alert in the app inbox.
@@ -118,6 +118,8 @@ def create_message(message_text, user=None):
         message_text (str): The text of the message
         user: Optional User instance — if set, message is private to that user
               and the WebSocket notification targets only their channel group.
+        link (str): Optional frontend route (e.g. '/planning/detections') —
+                    clicking the message navigates there.
     """
 
     Message.objects.create(
@@ -125,6 +127,7 @@ def create_message(message_text, user=None):
         message=message_text,
         unread=True,
         user=user,
+        link=link,
     )
     group = f"user_{user.pk}" if user else "global"
     broadcast_invalidate(["messages"], group=group)
@@ -1693,7 +1696,8 @@ def detect_recurring_transactions():
         DetectedRecurring.objects.bulk_create(new_detections)
         create_message(
             f"{len(new_detections)} recurring transaction pattern(s) detected. "
-            "View suggestions under Planning → Detections."
+            "View suggestions under Planning → Detections.",
+            link="/planning/detections",
         )
         task_logger.info(f"detect_recurring_transactions: {len(new_detections)} patterns found.")
     else:

@@ -128,17 +128,15 @@
                 "
                 v-for="message in messages.messages"
                 :key="message.id"
+                :to="message.link || undefined"
+                :style="message.link ? 'cursor: pointer' : ''"
               >
-                <v-list-item-title>
-                  <span :class="message.unread ? 'font-weight-bold' : ''">
-                    {{ message.message }}
-                  </span>
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <span :class="message.unread ? 'font-weight-bold' : ''">
-                    {{ getPrettyDate(message.message_date) }}
-                  </span>
-                </v-list-item-subtitle>
+                <div :class="['text-body-2 text-wrap', message.unread ? 'font-weight-bold' : '']">
+                  {{ message.message }}
+                </div>
+                <div :class="['text-caption text-medium-emphasis', message.unread ? 'font-weight-bold' : '']">
+                  {{ getPrettyDate(message.message_date) }}
+                </div>
               </v-list-item>
               <v-list-item v-if="messages.total_count == 0">
                 No messages : You're all caught up!
