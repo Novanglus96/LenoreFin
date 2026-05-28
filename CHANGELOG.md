@@ -105,6 +105,14 @@
 
 * add Patreon announcement workflow and script ([#164](https://github.com/Novanglus96/LenoreFin/issues/164)) ([1e84262](https://github.com/Novanglus96/LenoreFin/commit/1e84262527faea8a245c13c2a46be05b61a2accf))
 
+## [1.5.2](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1...v1.5.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* favorite accounts projected balance includes reminders and forecasts ([#161](https://github.com/Novanglus96/LenoreFin/issues/161)) ([fa2f61e](https://github.com/Novanglus96/LenoreFin/commit/fa2f61ecd689f16aa7f646567f0c5687c5a1b567))
+* per-user favorite accounts and fix widget navigation ([#162](https://github.com/Novanglus96/LenoreFin/issues/162)) ([1207c3c](https://github.com/Novanglus96/LenoreFin/commit/1207c3c54a4671c7e1c65af6a7f7989bbdc4ae5f))
+
 ## [1.5.2-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1...v1.5.2-alpha.1) (2026-05-27)
 
 
