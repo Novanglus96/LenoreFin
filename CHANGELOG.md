@@ -1,3 +1,10 @@
+# [1.6.0-alpha.15](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.14...v1.6.0-alpha.15) (2026-05-28)
+
+
+### Bug Fixes
+
+* resolve pre-existing test failures in reports and graph_by_tags ([834a8fa](https://github.com/Novanglus96/LenoreFin/commit/834a8fa459278f72b9a7b2bbe9fb3e5cfab227c1))
+
 # [1.6.0-alpha.14](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.13...v1.6.0-alpha.14) (2026-05-28)
 
 
