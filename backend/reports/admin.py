@@ -18,8 +18,8 @@ class ReportResultInline(TabularInline):
 
 @admin.register(ReportConfig)
 class ReportConfigAdmin(ModelAdmin):
-    list_display = ["name", "report_type", "date_range_type", "group_by", "is_scheduled", "next_run_at", "created_by", "updated_at"]
-    list_filter = ["report_type", "group_by", "date_range_type", "is_scheduled"]
+    list_display = ["name", "report_type", "date_range_type", "group_by", "is_scheduled", "schedule_frequency", "schedule_day", "next_run_at", "created_by", "updated_at"]
+    list_filter = ["report_type", "group_by", "date_range_type", "is_scheduled", "schedule_frequency"]
     search_fields = ["name", "description"]
     inlines = [ReportConfigTagInline, ReportResultInline]
 
