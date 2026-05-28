@@ -73,6 +73,39 @@ Banks are managed in the Django admin panel under **Administration → Banks**.
 
 The left sidebar lists all active accounts. Each entry shows the bank logo, account name, and current balance. Inactive accounts are hidden from the sidebar but remain accessible for reporting and history.
 
+## Investment Return Estimation
+
+For investment accounts (account type = Investment), LenoreFin estimates the historical annual return rate from your transaction history using the **Modified Dietz method**.
+
+### How It Works
+
+The engine looks back 12 months of cleared transactions and calculates:
+
+- **Beginning market value (BMV)** — account balance at the start of the period
+- **Ending market value (EMV)** — current balance
+- **Net cash flows** — external transfers in and out (contributions and withdrawals), weighted by the number of days remaining in the period
+- **Intrinsic returns** — income and expense transactions (dividends, interest, fees) that are excluded from cash flow weighting
+
+This approach isolates the account's investment performance from the effect of new contributions or withdrawals.
+
+The period return is then annualized:
+
+```
+annualized_rate = (1 + period_return) ^ (365 / days) - 1
+```
+
+### Viewing the Estimated Rate
+
+The estimated annual return appears in the account header widget next to the APY field (when `Calculate Interest` is enabled). A minimum of one cleared income transaction is required before a rate is displayed.
+
+### Applying to Forecast
+
+Click the chart icon next to the displayed rate to apply it as the account's APY. This updates `Annual Rate` and the forecast immediately uses the derived rate for future projections.
+
+You can also apply it from the **Edit Account** form — a chip below the Annual Rate field shows the calculated rate and can be clicked to fill the field.
+
+---
+
 ## Forecasting
 
 Each account has a **Forecast** tab showing a balance projection chart over a configurable time window. See [Budgeting & Planning](planning.md) for details.

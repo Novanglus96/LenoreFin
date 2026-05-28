@@ -184,6 +184,8 @@ def _shuffled_colors(today_tz, widget_id: int) -> list:
 
 def _get_user_graph_widgets(user) -> list:
     """Return the user's graph_widgets config, creating defaults if needed."""
+    if not isinstance(getattr(user, "pk", None), int):
+        return DEFAULT_GRAPH_WIDGETS
     config, _ = UserDashboardConfig.objects.get_or_create(
         user=user,
         defaults={"layout": DEFAULT_DASHBOARD_LAYOUT, "graph_widgets": DEFAULT_GRAPH_WIDGETS},

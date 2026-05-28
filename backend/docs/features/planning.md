@@ -64,3 +64,32 @@ The repeat engine supports:
 - **Fixed interval** — every N days, weeks, months
 - **Day of month** — e.g. the 15th of every month
 - **Last day of month** — handles months of different lengths correctly
+
+---
+
+## Recurring Transaction Detection
+
+LenoreFin automatically analyzes your cleared transaction history and identifies recurring payment patterns. Detected patterns appear under **Planning → Detections**.
+
+### How Detection Works
+
+The detection engine scans cleared transactions and looks for descriptions that appear multiple times with roughly consistent amounts and intervals. Each detected pattern includes:
+
+| Field | Description |
+|-------|-------------|
+| **Description** | Payee name or transaction description |
+| **Estimated Amount** | Median amount across matching transactions |
+| **Repeat** | Suggested recurrence interval (if determinable) |
+| **Next Estimated Date** | Predicted next occurrence |
+| **Suggested Tag** | Tag suggestion based on prior transactions |
+| **Suggested Account** | Account suggestion based on prior transactions |
+
+### Acting on Detections
+
+For each detected pattern you can:
+
+- **Create Reminder** — Opens the Add Reminder form pre-filled with the detection's suggested values. Confirm and save to start tracking the bill.
+- **Ignore** — Hides the detection permanently. Useful for one-off patterns that won't recur.
+- **Delete** — Removes the record entirely.
+
+Ignored detections are filtered out of the list automatically. They are not re-detected on subsequent scans.

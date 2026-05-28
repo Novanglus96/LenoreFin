@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from unfold.admin import ModelAdmin
 from core.admin import UnfoldImportExportModelAdmin
-from .models import GraphType, Option, Message, Payee, Version, DescriptionHistory
+from .models import GraphType, Option, Message, Payee, Version, DescriptionHistory, PushSubscription
 
 
 class OptionAdmin(ModelAdmin):
@@ -31,9 +31,10 @@ class PayeeAdmin(UnfoldImportExportModelAdmin):
 
 
 class MessageAdmin(ModelAdmin):
-    list_display = ["message_date", "message", "unread"]
+    list_display = ["message_date", "message", "user", "link", "unread"]
     list_display_links = ["message"]
     ordering = ["-message_date"]
+    list_filter = ["unread", "user"]
 
     def has_add_permission(self, request):
         return False
@@ -126,3 +127,23 @@ admin.site.register(Payee, PayeeAdmin)
 admin.site.register(Message, MessageAdmin)
 admin.site.register(Version, VersionAdmin)
 admin.site.register(DescriptionHistory, DescriptionHistoryAdmin)
+
+
+class PushSubscriptionAdmin(ModelAdmin):
+    list_display = ["user", "created_at", "endpoint_short"]
+    list_filter = ["user"]
+    ordering = ["-created_at"]
+    readonly_fields = ["user", "endpoint", "p256dh", "auth", "created_at"]
+
+    def endpoint_short(self, obj):
+        return obj.endpoint[:80] + "…" if len(obj.endpoint) > 80 else obj.endpoint
+    endpoint_short.short_description = "Endpoint"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+admin.site.register(PushSubscription, PushSubscriptionAdmin)
