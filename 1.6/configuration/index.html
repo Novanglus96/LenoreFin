@@ -586,6 +586,17 @@ version.
 </li>
       
         <li class="md-nav__item">
+  <a href="#push-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Push Notifications
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#networking" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1008,6 +1019,17 @@ version.
 </li>
       
         <li class="md-nav__item">
+  <a href="#push-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Push Notifications
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#networking" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1200,6 +1222,58 @@ version.
 </tr>
 </tbody>
 </table>
+<h2 id="push-notifications">Push Notifications</h2>
+<p>Browser Web Push is opt-in. Leave these unset to disable push entirely.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>VAPID_PRIVATE_KEY</code></td>
+<td>No</td>
+<td>—</td>
+<td>VAPID private key (URL-safe base64, no padding). Required to send push notifications.</td>
+</tr>
+<tr>
+<td><code>VAPID_PUBLIC_KEY</code></td>
+<td>No</td>
+<td>—</td>
+<td>VAPID public key served to browsers at subscription time.</td>
+</tr>
+<tr>
+<td><code>VAPID_EMAIL</code></td>
+<td>No</td>
+<td><code>admin@example.com</code></td>
+<td>Contact email included in the VAPID <code>sub</code> claim.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Generating VAPID keys:</strong></p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">from py_vapid import Vapid</span>
+<span class="s2">from cryptography.hazmat.primitives import serialization</span>
+<span class="s2">import base64</span>
+<span class="s2">v = Vapid()</span>
+<span class="s2">v.generate_keys()</span>
+<span class="s2">priv = base64.urlsafe_b64encode(v.private_key.private_bytes(</span>
+<span class="s2">    serialization.Encoding.DER,</span>
+<span class="s2">    serialization.PrivateFormat.PKCS8,</span>
+<span class="s2">    serialization.NoEncryption()</span>
+<span class="s2">)).rstrip(b&#39;=&#39;).decode()</span>
+<span class="s2">pub = base64.urlsafe_b64encode(v.private_key.public_key().public_bytes(</span>
+<span class="s2">    serialization.Encoding.X962,</span>
+<span class="s2">    serialization.PublicFormat.UncompressedPoint</span>
+<span class="s2">)).rstrip(b&#39;=&#39;).decode()</span>
+<span class="s2">print(&#39;VAPID_PRIVATE_KEY=&#39; + priv)</span>
+<span class="s2">print(&#39;VAPID_PUBLIC_KEY=&#39; + pub)</span>
+<span class="s2">&quot;</span>
+</code></pre></div>
 <h2 id="networking">Networking</h2>
 <p>The app listens on port <code>80</code> inside the container. Map it to any host port you like:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">ports</span><span class="p">:</span>

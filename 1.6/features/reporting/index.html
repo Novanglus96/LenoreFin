@@ -778,6 +778,39 @@ version.
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#saving-reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saving Reports
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scheduled-reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduled Reports
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#report-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Report History
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1029,6 +1062,39 @@ version.
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#saving-reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saving Reports
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scheduled-reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduled Reports
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#report-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Report History
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1130,6 +1196,74 @@ version.
 <p>For accurate historical reporting, filter to Cleared + Reconciled and exclude Pending.</p>
 <h2 id="printing-reports">Printing Reports</h2>
 <p>Use your browser's <strong>Print</strong> function (<code>Ctrl+P</code> / <code>Cmd+P</code>) to print or save a report as PDF. The report table is formatted for print with a clean layout.</p>
+<hr />
+<h2 id="saving-reports">Saving Reports</h2>
+<p>Reports can be saved for later reuse. After configuring your report, click <strong>Save</strong> before or after running it.</p>
+<p>Saved reports appear in the <strong>Reports</strong> list. Click any saved report to restore its configuration and run it again with one click.</p>
+<p>Reports can optionally be marked <strong>Shared</strong>, making them visible to all users.</p>
+<hr />
+<h2 id="scheduled-reports">Scheduled Reports</h2>
+<p>Saved reports can run automatically on a recurring schedule.</p>
+<p>To schedule a report:</p>
+<ol>
+<li>Save the report.</li>
+<li>Open the report and enable the <strong>Schedule</strong> toggle.</li>
+<li>Choose a frequency:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Frequency</th>
+<th>Schedule Day</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Daily</strong></td>
+<td>—</td>
+<td>Runs once per day</td>
+</tr>
+<tr>
+<td><strong>Weekly</strong></td>
+<td>Day of week (0 = Monday … 6 = Sunday)</td>
+<td>Runs on the specified weekday</td>
+</tr>
+<tr>
+<td><strong>Monthly</strong></td>
+<td>Day of month (1–31)</td>
+<td>Runs on the specified day each month</td>
+</tr>
+</tbody>
+</table>
+<p>The task worker executes scheduled reports automatically. After each run, a result is saved to the report history.</p>
+<hr />
+<h2 id="report-history">Report History</h2>
+<p>Each saved report maintains a run history. Click <strong>History</strong> on any saved report to view past runs.</p>
+<p>The history panel shows:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Run At</strong></td>
+<td>Date and time the report was executed</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td><code>success</code> or <code>error</code></td>
+</tr>
+<tr>
+<td><strong>View</strong></td>
+<td>Expand to see the full result data from that run</td>
+</tr>
+</tbody>
+</table>
+<p>History entries are stored indefinitely until manually deleted alongside the report.</p>
 
 
 

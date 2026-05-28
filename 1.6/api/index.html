@@ -992,6 +992,17 @@ version.
 </li>
       
         <li class="md-nav__item">
+  <a href="#investment-return-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Investment Return Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#transaction-filters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1183,6 +1194,17 @@ version.
 </li>
       
         <li class="md-nav__item">
+  <a href="#investment-return-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Investment Return Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#transaction-filters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1295,6 +1317,11 @@ version.
 <td>GET</td>
 <td><code>/accounts/forecast</code></td>
 <td>Get forecast data for an account</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/accounts/{id}/investment-return</code></td>
+<td>Get estimated annual return for an investment account</td>
 </tr>
 </tbody>
 </table>
@@ -1524,6 +1551,21 @@ version.
 <td><code>/planning/graph</code></td>
 <td>Planning graph data</td>
 </tr>
+<tr>
+<td>GET</td>
+<td><code>/planning/detected-recurring/</code></td>
+<td>List non-ignored detected recurring patterns</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/planning/detected-recurring/{id}/ignore</code></td>
+<td>Mark a detection as ignored</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/planning/detected-recurring/{id}</code></td>
+<td>Delete a detection</td>
+</tr>
 </tbody>
 </table>
 <h3 id="reports">Reports</h3>
@@ -1544,12 +1586,32 @@ version.
 <tr>
 <td>POST</td>
 <td><code>/reports</code></td>
-<td>Run a report</td>
+<td>Create/save a report</td>
 </tr>
 <tr>
 <td>GET</td>
 <td><code>/reports/{id}</code></td>
 <td>Get report by ID</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/reports/{id}</code></td>
+<td>Update a saved report</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/reports/{id}</code></td>
+<td>Delete a saved report</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/reports/{id}/run</code></td>
+<td>Run a saved report and return results</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/reports/{id}/results</code></td>
+<td>List historical run results for a report</td>
 </tr>
 </tbody>
 </table>
@@ -1596,7 +1658,17 @@ version.
 <tr>
 <td>GET</td>
 <td><code>/administration/messages</code></td>
-<td>List system messages</td>
+<td>List inbox messages</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/administration/messages</code></td>
+<td>Create a system message</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/administration/messages/{id}</code></td>
+<td>Delete a message</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -1612,6 +1684,26 @@ version.
 <td>GET</td>
 <td><code>/administration/logs</code></td>
 <td>Retrieve application logs</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/administration/push/vapid-public-key</code></td>
+<td>Get the VAPID public key</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/administration/push/subscribe</code></td>
+<td>Register a push subscription for the current user</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/administration/push/unsubscribe</code></td>
+<td>Remove the current user's push subscription</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/administration/push/status</code></td>
+<td>Check if the current user has an active push subscription</td>
 </tr>
 </tbody>
 </table>
@@ -1661,6 +1753,39 @@ version.
 <td>GET</td>
 <td><code>/auth/me</code></td>
 <td>Get current user info</td>
+</tr>
+</tbody>
+</table>
+<h2 id="investment-return-response">Investment Return Response</h2>
+<p><code>GET /accounts/{id}/investment-return</code> returns:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rate</code></td>
+<td>float | null</td>
+<td>Annualized return rate as a percentage (e.g. <code>7.42</code> = 7.42%). <code>null</code> when insufficient data.</td>
+</tr>
+<tr>
+<td><code>period_months</code></td>
+<td>int</td>
+<td>Look-back window in months (always <code>12</code>)</td>
+</tr>
+<tr>
+<td><code>data_points</code></td>
+<td>int</td>
+<td>Number of cleared transactions used in the calculation</td>
+</tr>
+<tr>
+<td><code>sufficient_data</code></td>
+<td>bool</td>
+<td><code>false</code> when the account is not an investment account, does not exist, or has no cleared transaction history</td>
 </tr>
 </tbody>
 </table>

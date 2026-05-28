@@ -885,6 +885,67 @@ version.
 </li>
       
         <li class="md-nav__item">
+  <a href="#push-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Push Notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Push Notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabling-push-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling Push Notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscribing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subscribing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#targeting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Targeting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscription-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subscription Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system-messages" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1208,6 +1269,67 @@ version.
 </li>
       
         <li class="md-nav__item">
+  <a href="#push-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Push Notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Push Notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabling-push-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling Push Notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscribing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subscribing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#targeting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Targeting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscription-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subscription Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system-messages" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1349,9 +1471,48 @@ version.
 <h2 id="payees">Payees</h2>
 <p>Payees are reusable payee records linked to transactions. Navigate to <strong>Admin → Payees</strong> to add, edit, or remove payees.</p>
 <p>Payees are optional — transactions can have a free-text description without a linked payee. Linking a payee enables paycheck splitting and payee-level filtering.</p>
+<h2 id="push-notifications">Push Notifications</h2>
+<p>LenoreFin supports browser Web Push notifications via the <a href="https://www.rfc-editor.org/rfc/rfc8030">Web Push Protocol</a>. When enabled, new inbox messages trigger a push notification to all subscribed browsers, even when the tab is closed.</p>
+<h3 id="enabling-push-notifications">Enabling Push Notifications</h3>
+<p>Push requires three environment variables (see <a href="../../configuration/#push-notifications">Configuration</a>):</p>
+<div class="highlight"><pre><span></span><code>VAPID_PRIVATE_KEY=...
+VAPID_PUBLIC_KEY=...
+VAPID_EMAIL=admin@example.com
+</code></pre></div>
+<p>If <code>VAPID_PRIVATE_KEY</code> is not set, push silently skips — the rest of the app is unaffected.</p>
+<h3 id="subscribing">Subscribing</h3>
+<p>Click the bell icon in the app header to subscribe the current browser. The browser will prompt for notification permission. Once granted, the subscription is stored server-side and associated with the logged-in user.</p>
+<p>Click the bell icon again to unsubscribe.</p>
+<h3 id="targeting">Targeting</h3>
+<ul>
+<li>Messages scoped to a specific user (<code>user</code> field set) send a push only to that user's subscriptions.</li>
+<li>Global messages (<code>user</code> field null) push to all subscribed browsers.</li>
+</ul>
+<h3 id="subscription-management">Subscription Management</h3>
+<p>Subscriptions are visible in <strong>Django Admin → Administration → Push Subscriptions</strong> (read-only). Expired subscriptions (HTTP 410 response from the push service) are removed automatically.</p>
+<hr />
 <h2 id="system-messages">System Messages</h2>
 <p>System messages are admin-authored notices displayed to all users on the dashboard. Use these to communicate maintenance windows, upgrade notices, or other system-wide alerts.</p>
 <p>Manage system messages at <strong>Admin → System Messages</strong>.</p>
+<p>Messages support two optional fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>User</strong></td>
+<td>If set, the message is shown only to that user. Leave blank to show to all users.</td>
+</tr>
+<tr>
+<td><strong>Link</strong></td>
+<td>An internal URL the user can follow from the message (e.g. <code>/planning/detections</code>).</td>
+</tr>
+</tbody>
+</table>
 <h2 id="banks">Banks</h2>
 <p>Banks are managed in <strong>Django Admin → Accounts → Banks</strong>. Each bank has:</p>
 <ul>

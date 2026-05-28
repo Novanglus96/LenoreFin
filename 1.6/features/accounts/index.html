@@ -723,6 +723,56 @@ version.
 </li>
       
         <li class="md-nav__item">
+  <a href="#investment-return-estimation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Investment Return Estimation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Investment Return Estimation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viewing-the-estimated-rate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing the Estimated Rate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#applying-to-forecast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Applying to Forecast
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#forecasting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1097,6 +1147,56 @@ version.
 </li>
       
         <li class="md-nav__item">
+  <a href="#investment-return-estimation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Investment Return Estimation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Investment Return Estimation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viewing-the-estimated-rate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing the Estimated Rate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#applying-to-forecast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Applying to Forecast
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#forecasting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1234,6 +1334,26 @@ version.
 <p>Banks are managed in the Django admin panel under <strong>Administration → Banks</strong>.</p>
 <h2 id="navigation">Navigation</h2>
 <p>The left sidebar lists all active accounts. Each entry shows the bank logo, account name, and current balance. Inactive accounts are hidden from the sidebar but remain accessible for reporting and history.</p>
+<h2 id="investment-return-estimation">Investment Return Estimation</h2>
+<p>For investment accounts (account type = Investment), LenoreFin estimates the historical annual return rate from your transaction history using the <strong>Modified Dietz method</strong>.</p>
+<h3 id="how-it-works">How It Works</h3>
+<p>The engine looks back 12 months of cleared transactions and calculates:</p>
+<ul>
+<li><strong>Beginning market value (BMV)</strong> — account balance at the start of the period</li>
+<li><strong>Ending market value (EMV)</strong> — current balance</li>
+<li><strong>Net cash flows</strong> — external transfers in and out (contributions and withdrawals), weighted by the number of days remaining in the period</li>
+<li><strong>Intrinsic returns</strong> — income and expense transactions (dividends, interest, fees) that are excluded from cash flow weighting</li>
+</ul>
+<p>This approach isolates the account's investment performance from the effect of new contributions or withdrawals.</p>
+<p>The period return is then annualized:</p>
+<div class="highlight"><pre><span></span><code>annualized_rate = (1 + period_return) ^ (365 / days) - 1
+</code></pre></div>
+<h3 id="viewing-the-estimated-rate">Viewing the Estimated Rate</h3>
+<p>The estimated annual return appears in the account header widget next to the APY field (when <code>Calculate Interest</code> is enabled). A minimum of one cleared income transaction is required before a rate is displayed.</p>
+<h3 id="applying-to-forecast">Applying to Forecast</h3>
+<p>Click the chart icon next to the displayed rate to apply it as the account's APY. This updates <code>Annual Rate</code> and the forecast immediately uses the derived rate for future projections.</p>
+<p>You can also apply it from the <strong>Edit Account</strong> form — a chip below the Annual Rate field shows the calculated rate and can be clicked to fill the field.</p>
+<hr />
 <h2 id="forecasting">Forecasting</h2>
 <p>Each account has a <strong>Forecast</strong> tab showing a balance projection chart over a configurable time window. See <a href="../planning/">Budgeting &amp; Planning</a> for details.</p>
 
