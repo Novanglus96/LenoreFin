@@ -707,6 +707,7 @@
                         clickClearTransaction(
                           selected_transactions,
                           selected_reminders,
+                          selected_forecasts,
                         )
                       "
                       v-bind="props"
@@ -750,7 +751,8 @@
   import { useTags } from "@/composables/tagsComposable";
   const { isOnline } = useOnlineStatus();
 
-  const { removeTransaction, clearTransaction } = useTransactions();
+  const { removeTransaction, clearTransaction, convertForecastTransactions } =
+    useTransactions();
   const { addReminderTransaction } = useReminders();
   const authStore = useAuthStore();
   const { smAndDown, mdAndUp } = useDisplay();
@@ -939,6 +941,9 @@
 
   const selected_transactions = ref([]);
   const selected_reminders = ref([]);
+  // Computed forecast rows (cc interest/payments, savings interest). Held apart
+  // from selected_reminders because they convert through a different endpoint.
+  const selected_forecasts = ref([]);
   const selected_all = ref([]);
   const isSelectable = item => item.id > -10000;
 
@@ -988,12 +993,19 @@
   const uncheck_all = () => {
     selected_transactions.value = [];
     selected_reminders.value = [];
+    selected_forecasts.value = [];
     selected_all.value = [];
     open.value = false;
   };
+  // Simulated rows are emitted with negated ids: reminder rows as -id, computed
+  // forecast rows as -id - 10000. This undoes the forecast offset to recover the
+  // ForecastCacheTransaction pk the convert endpoint expects.
+  const toForecastId = displayId => -displayId - 10000;
+
   const rowChanged = newSelection => {
     selected_transactions.value = [];
     selected_reminders.value = [];
+    selected_forecasts.value = [];
     for (const selectedrow of newSelection) {
       if (selectedrow.id > 0) {
         selected_transactions.value.push(selectedrow.id);
@@ -1004,9 +1016,14 @@
           transaction_date: selectedrow.transaction_date,
         };
         selected_reminders.value.push(reminder_trans_obj);
+      } else if (selectedrow.id <= -10000) {
+        selected_forecasts.value.push(toForecastId(selectedrow.id));
       }
     }
-    if (selected_reminders.value.length == 0) {
+    if (
+      selected_reminders.value.length == 0 &&
+      selected_forecasts.value.length == 0
+    ) {
       deleteDisable.value = false;
       editDisable.value = false;
     } else {
@@ -1015,7 +1032,8 @@
     }
     if (
       selected_transactions.value.length > 0 ||
-      selected_reminders.value.length > 0
+      selected_reminders.value.length > 0 ||
+      selected_forecasts.value.length > 0
     ) {
       clearDisable.value = false;
       open.value = true;
@@ -1031,7 +1049,11 @@
     clearFilters();
   };
 
-  const clickClearTransaction = async (transactions, reminderTransactions) => {
+  const clickClearTransaction = async (
+    transactions,
+    reminderTransactions,
+    forecastTransactions,
+  ) => {
     if (transactions.length > 0) {
       clearTransaction(transactions);
     }
@@ -1040,8 +1062,14 @@
     reminderTransactions.forEach(transaction => {
       addReminderTransaction(transaction);
     });
+    // Sent as one batch -- the endpoint takes a list, unlike the per-row
+    // reminder conversion above.
+    if (forecastTransactions.length > 0) {
+      convertForecastTransactions(forecastTransactions);
+    }
     selected_transactions.value = [];
     selected_reminders.value = [];
+    selected_forecasts.value = [];
     clearDisable.value = true;
     clearFilters();
   };

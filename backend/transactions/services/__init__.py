@@ -9,3 +9,7 @@ from transactions.services.transaction import (
     create_transaction_service as create_transaction_service,
     update_transaction_service as update_transaction_service,
 )
+from transactions.services.forecast_conversion import (
+    convert_forecast_transaction as convert_forecast_transaction,
+    ForecastTransactionNotFound as ForecastTransactionNotFound,
+)
