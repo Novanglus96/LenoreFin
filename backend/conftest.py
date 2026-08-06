@@ -244,6 +244,11 @@ def test_income_transaction_type():
 
 
 @pytest.fixture
+def test_transfer_transaction_type():
+    return TransactionType.objects.create(transaction_type="Transfer")
+
+
+@pytest.fixture
 def test_pending_transaction_status():
     return TransactionStatus.objects.create(transaction_status="Pending")
 

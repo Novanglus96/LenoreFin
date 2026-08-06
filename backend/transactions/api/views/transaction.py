@@ -33,6 +33,7 @@ from transactions.services.transaction import (
 from transactions.services.forecast_conversion import (
     convert_forecast_transaction,
     ForecastTransactionNotFound,
+    ForecastTransactionNotConvertible,
 )
 from utils.dates import (
     get_todays_date_timezone_adjusted,
@@ -273,12 +274,14 @@ def delete_transaction(request, payload: TransactionList):
 @transaction_router.patch("/convert-forecast", auth=FullAccessAuth())
 def convert_forecast_transactions(request, payload: ForecastTransactionList):
     """
-    The function `convert_forecast_transactions` turns computed forecast rows
-    (credit-card interest/payments, savings interest) into real pending
-    transactions, carrying them across as-is.
+    The function `convert_forecast_transactions` turns credit-card payment
+    forecasts into real pending transactions.
 
-    Reminder-derived rows are not handled here — those already convert through
-    /reminders/addtrans/{reminder_id}, which also advances the reminder.
+    Interest projections (savings, parent-group and credit-card statement
+    interest) are rejected — they do not reconcile on rebuild and would be
+    double counted. Reminder-derived rows are not handled here either; those
+    convert through /reminders/addtrans/{reminder_id}, which also advances the
+    reminder.
 
     Args:
         request (HttpRequest): The HTTP request object.
@@ -288,7 +291,8 @@ def convert_forecast_transactions(request, payload: ForecastTransactionList):
         dict: 'success' True, and 'converted' with the ids that were converted.
 
     Raises:
-        HttpError: 404 if any id does not exist, 500 on failure.
+        HttpError: 404 if an id does not exist, 400 if a row is an interest
+        projection, 500 on failure.
     """
 
     try:
@@ -301,6 +305,9 @@ def convert_forecast_transactions(request, payload: ForecastTransactionList):
     except ForecastTransactionNotFound as e:
         api_logger.error("Forecast transaction not converted")
         raise HttpError(404, str(e))
+    except ForecastTransactionNotConvertible as e:
+        api_logger.error("Forecast transaction not convertible")
+        raise HttpError(400, str(e))
     except Exception as e:
         # Log other types of exceptions
         api_logger.error("Forecast transaction not converted")
