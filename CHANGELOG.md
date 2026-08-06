@@ -1,3 +1,10 @@
+# [1.7.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.6...v1.7.0-alpha.7) (2026-08-06)
+
+
+### Features
+
+* animate icon state transitions ([#193](https://github.com/Novanglus96/LenoreFin/issues/193)) ([df7dd25](https://github.com/Novanglus96/LenoreFin/commit/df7dd25815de774b068dd3c6ac1551d7e7f23c7c))
+
 # [1.7.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.5...v1.7.0-alpha.6) (2026-08-06)
 
 
