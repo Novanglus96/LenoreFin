@@ -1,3 +1,15 @@
+# [1.7.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.2-alpha.1...v1.7.0-alpha.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* only require a payment amount for the custom cc strategy ([#187](https://github.com/Novanglus96/LenoreFin/issues/187)) ([3467cd4](https://github.com/Novanglus96/LenoreFin/commit/3467cd4a08de7ee6c509e5630fe3afa2f4ae7bdc))
+
+
+### Features
+
+* convert computed forecast transactions to real transactions ([#186](https://github.com/Novanglus96/LenoreFin/issues/186)) ([ea0178b](https://github.com/Novanglus96/LenoreFin/commit/ea0178b6a8ac3cb98519f26158369a4beb68b41f))
+
 ## [1.6.2-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1...v1.6.2-alpha.1) (2026-08-06)
 
 
