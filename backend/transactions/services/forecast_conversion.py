@@ -1,3 +1,5 @@
+import re
+
 from django.db import transaction as db_transaction
 from django.db.models import Q
 
@@ -19,6 +21,29 @@ class ForecastTransactionNotFound(Exception):
     pass
 
 
+def clean_forecast_description(description: str) -> str:
+    """
+    Turns a projected description into one that reads as a real transaction.
+
+    The forecast generators label their rows "({name} Estimated Payment)" and
+    "({name} Estimated Interest)" -- the brackets and the word "Estimated" mark
+    the row as a projection. Once converted the transaction is real, so both
+    markers are dropped: "(Visa Estimated Payment)" becomes "Visa Payment".
+
+    Leaves anything that does not carry those markers untouched.
+    """
+
+    if not description:
+        return description
+
+    text = description.strip()
+    if text.startswith("(") and text.endswith(")"):
+        text = text[1:-1]
+    text = re.sub(r"\bestimated\b", "", text, flags=re.IGNORECASE)
+    # Collapse the gap the removed word leaves behind.
+    return " ".join(text.split())
+
+
 def convert_forecast_transaction(forecast_id: int) -> None:
     """
     Materialises a computed forecast row into a real pending Transaction.
@@ -27,8 +52,10 @@ def convert_forecast_transaction(forecast_id: int) -> None:
     (credit-card statement interest/payments, savings interest) rather than
     instances of a Reminder, so unlike ReminderCacheTransaction they carry no
     reminder FK and cannot go through add_reminder_transaction. This copies the
-    row across as-is — amount, dates, accounts and tags — and drops the cache
-    entry so the table reflects the change immediately.
+    row across — amount, dates, accounts and tags — and drops the cache entry so
+    the table reflects the change immediately. The only field not carried
+    verbatim is the description, which loses its projection markers (see
+    clean_forecast_description).
 
     The cache row is safe to delete because the generators rebuild it: the
     credit-card payment forecast subtracts existing real and reminder
@@ -75,7 +102,7 @@ def convert_forecast_transaction(forecast_id: int) -> None:
         total_amount=forecast.total_amount,
         status_id=pending_status_id,
         memo=forecast.memo,
-        description=forecast.description,
+        description=clean_forecast_description(forecast.description),
         edit_date=today,
         add_date=today,
         transaction_type_id=forecast.transaction_type_id,

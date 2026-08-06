@@ -267,7 +267,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="toggleSelect(internalItem)"
           >
             <v-tooltip text="Image(s)" location="top">
               <template v-slot:activator="{ props }">
@@ -342,7 +342,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="toggleSelect(internalItem)"
           >
             {{ formatDate(item.transaction_date, true) }}
           </div>
@@ -354,7 +354,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="toggleSelect(internalItem)"
           >
             <span :class="getClassForMoney(item.pretty_total, item.status.id)">
               {{ formatCurrency(item.pretty_total) }}
@@ -368,7 +368,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="toggleSelect(internalItem)"
           >
             <span
               :class="getClassForMoney(item.balance, item.status.id)"
@@ -391,7 +391,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="toggleSelect(internalItem)"
           >
             <span>{{ item.description }}</span>
           </div>
@@ -403,7 +403,7 @@
           <div
             class="w-100 h-100 d-flex align-center text-primary text-subtitle-2"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="toggleSelect(internalItem)"
           >
             {{ processTags(item.tags) }}
           </div>
@@ -415,14 +415,14 @@
           <div
             class="w-100 h-100 d-flex align-center text-altAccent"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="toggleSelect(internalItem)"
           >
             <span>{{ item.pretty_account }}</span>
           </div>
         </template>
         <!-- Mobile View -->
         <template v-slot:[`item.mobile`]="{ item, internalItem, toggleSelect }">
-          <div @click="item.id > -10000 ? toggleSelect(internalItem) : null">
+          <div @click="toggleSelect(internalItem)">
             <v-container class="ma-0 pa-0 ga-0">
               <v-row dense class="ma-0 pa-0 ga-0">
                 <v-col class="ma-0 pa-0 ga-0" cols="3">
