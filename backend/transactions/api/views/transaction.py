@@ -5,6 +5,7 @@ from accounts.models import Account
 from tags.models import Tag
 from transactions.api.schemas.transaction import (
     TransactionIn,
+    TransactionBatchIn,
     TransactionList,
     TransactionOut,
     PaginatedTransactions,
@@ -28,6 +29,7 @@ from django.db.models import (
 from django.db.models.functions import Concat, Coalesce, Abs
 from transactions.services.transaction import (
     create_transaction_service,
+    create_transactions_service,
     update_transaction_service,
 )
 from transactions.services.forecast_conversion import (
@@ -106,6 +108,54 @@ def create_transaction(request, payload: TransactionIn):
         raise
     except Exception as e:
         api_logger.error("Transaction not created")
+        error_logger.exception(f"{str(e)}")
+        raise HttpError(500, f"Record creation error : {str(e)}")
+
+
+@transaction_router.post("/create-multiple", auth=FullAccessAuth())
+def create_multiple_transactions(request, payload: TransactionBatchIn):
+    """
+    The function `create_multiple_transactions` creates a batch of transactions
+    in a single atomic request.
+
+    Args:
+        request ():
+        payload (TransactionBatchIn): An object using schema of TransactionBatchIn.
+
+    Returns:
+        dict: The number of transactions created under the key 'created'.
+
+    Raises:
+        HttpError: 400 if the batch is empty or touches a parent account,
+            500 if creation fails.
+    """
+
+    if not payload.transactions:
+        raise HttpError(400, "At least one transaction is required.")
+
+    try:
+        affected = list(
+            filter(
+                None,
+                [
+                    account_id
+                    for item in payload.transactions
+                    for account_id in (
+                        item.source_account_id,
+                        item.destination_account_id,
+                    )
+                ],
+            )
+        )
+        _assert_not_parent(*affected)
+        created = create_transactions_service(payload.transactions)
+        _invalidate_accounts(*affected)
+        api_logger.info(f"{created} transactions created")
+        return {"created": created}
+    except HttpError:
+        raise
+    except Exception as e:
+        api_logger.error("Transactions not created")
         error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record creation error : {str(e)}")
 

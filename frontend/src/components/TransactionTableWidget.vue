@@ -37,6 +37,13 @@
             ></v-btn>
           </template>
         </v-tooltip>
+        <!-- Opened from the single Add Transaction form, not from this toolbar. -->
+        <MultipleTransactionAddForm
+          v-if="props.variant === 'account' && authStore.isFullAccess && !isParentAccount"
+          v-model="multipleAddDialog"
+          @update-dialog="updateMultipleAddDialog"
+          :account_id="props.accountID"
+        />
         <FileImportForm
           v-model="importFileDialog"
           @update-dialog="updateImportFileDialog"
@@ -591,6 +598,7 @@
             v-model="transactionAddFormDialog"
             :isEdit="false"
             @update-dialog="updateAddDialog"
+            @open-multiple="openMultipleAddForm"
             :account_id="props.account"
             :passedFormData="blankForm"
           />
@@ -737,6 +745,7 @@
 <script setup>
   import { ref, defineProps, computed, watch } from "vue";
   import TransactionForm from "@/components/TransactionForm.vue";
+  import MultipleTransactionAddForm from "@/components/MultipleTransactionAddForm.vue";
   import FileImportForm from "@/components/FileImportForm.vue";
   import { useTransactionsStore } from "@/stores/transactions";
   import MultipleTransactionEditForm from "@/components/MultipleTransactionEditForm.vue";
@@ -823,6 +832,7 @@
   const showMultipleTransactionEditDialog = ref(false);
   const transactionAddFormDialog = ref(false);
   const importFileDialog = ref(false);
+  const multipleAddDialog = ref(false);
   const transactionEditFormDialog = ref(false);
   const deleteDisable = ref(true);
   const editDisable = ref(true);
@@ -1090,6 +1100,16 @@
   const updateAddDialog = () => {
     transactionAddFormDialog.value = false;
     clearFilters();
+  };
+
+  const updateMultipleAddDialog = () => {
+    multipleAddDialog.value = false;
+  };
+
+  // TransactionForm closes itself before emitting, so this only has to open
+  // the batch form.
+  const openMultipleAddForm = () => {
+    multipleAddDialog.value = true;
   };
 
   const updateImportFileDialog = () => {
