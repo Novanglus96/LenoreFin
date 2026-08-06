@@ -99,7 +99,7 @@
                 >
                   <template v-slot:activator="{ props }">
                     <v-btn
-                      :icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
+                      icon
                       :color="account.is_favorite ? 'amber' : undefined"
                       flat
                       variant="text"
@@ -108,7 +108,14 @@
                       size="small"
                       class="mx-0"
                       :disabled="!isOnline"
-                    />
+                    >
+                      <AnimatedIcon
+                        transition="scale"
+                        :icon="
+                          account.is_favorite ? 'mdi-star' : 'mdi-star-outline'
+                        "
+                      />
+                    </v-btn>
                   </template>
                 </v-tooltip>
                 <v-tooltip
@@ -118,7 +125,7 @@
                 >
                   <template v-slot:activator="{ props }">
                     <v-btn
-                      :icon="account.active ? 'mdi-delete' : 'mdi-delete-restore'"
+                      icon
                       flat
                       variant="text"
                       @click="deleteDialog = true"
@@ -126,19 +133,35 @@
                       size="small"
                       class="mx-0"
                       :disabled="!isOnline"
-                    />
+                    >
+                      <AnimatedIcon
+                        transition="scale"
+                        :icon="
+                          account.active ? 'mdi-delete' : 'mdi-delete-restore'
+                        "
+                      />
+                    </v-btn>
                   </template>
                 </v-tooltip>
-                <!-- Mobile chevron toggle -->
+                <!-- Mobile chevron toggle. Up and down are the same glyph, so
+                     this rotates one icon rather than cross-fading two. -->
                 <v-btn
                   v-if="smAndDown"
-                  :icon="actionDrawer ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+                  icon
                   flat
                   variant="text"
                   size="small"
                   class="mx-0"
                   @click="actionDrawer = !actionDrawer"
-                />
+                >
+                  <v-icon
+                    icon="mdi-chevron-down"
+                    :class="[
+                      'chevron-toggle',
+                      { 'chevron-toggle--flipped': actionDrawer },
+                    ]"
+                  ></v-icon>
+                </v-btn>
                 <DeleteAccountForm
                   v-model="deleteDialog"
                   :account="account"
@@ -539,6 +562,7 @@
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
   import RewardsGraphs from "./RewardsGraphs.vue";
+  import AnimatedIcon from "./AnimatedIcon.vue";
   import { useAuthStore } from "@/stores/auth";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
@@ -664,6 +688,19 @@
   @media (max-width: 600px) {
     .bank-watermark {
       display: none;
+    }
+  }
+  .chevron-toggle {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .chevron-toggle--flipped {
+    transform: rotate(180deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chevron-toggle {
+      transition-duration: 0.01ms;
     }
   }
 </style>

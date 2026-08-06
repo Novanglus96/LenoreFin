@@ -7,11 +7,18 @@
   >
     <template v-slot:activator="{ props: activatorProps }">
       <v-btn
-        :icon="!open ? 'mdi-dots-vertical' : 'mdi-close'"
+        icon
         v-bind="activatorProps"
         :variant="!open ? 'plain' : 'outlined'"
         size="small"
-      ></v-btn>
+      >
+        <!-- A genuine change of shape rather than a fill state, so this scales
+             instead of cross-fading. -->
+        <AnimatedIcon
+          transition="scale"
+          :icon="!open ? 'mdi-dots-vertical' : 'mdi-close'"
+        />
+      </v-btn>
     </template>
     <v-btn
       icon="mdi-invoice-remove"
@@ -35,6 +42,7 @@
 </template>
 <script setup>
   import { ref } from "vue";
+  import AnimatedIcon from "@/components/AnimatedIcon.vue";
 
   const open = ref(false);
 </script>
