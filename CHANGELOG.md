@@ -1,3 +1,10 @@
+## [1.6.2-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1...v1.6.2-alpha.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* save edited note values instead of the original row ([#185](https://github.com/Novanglus96/LenoreFin/issues/185)) ([9993382](https://github.com/Novanglus96/LenoreFin/commit/9993382aef2ef8d5604fc0ba44dd00da2eb6a5ae))
+
 ## [1.6.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0...v1.6.1) (2026-05-28)
 
 
