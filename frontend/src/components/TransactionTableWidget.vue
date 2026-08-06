@@ -37,23 +37,7 @@
             ></v-btn>
           </template>
         </v-tooltip>
-        <v-tooltip
-          text="Add Multiple Transactions"
-          location="top"
-          v-if="props.variant === 'account' && authStore.isFullAccess && !isParentAccount"
-        >
-          <template v-slot:activator="{ props }">
-            <v-btn
-              icon="mdi-invoice-text-multiple"
-              flat
-              variant="plain"
-              v-bind="props"
-              @click="multipleAddDialog = true"
-              :disabled="isActive || !isOnline"
-              color="success"
-            ></v-btn>
-          </template>
-        </v-tooltip>
+        <!-- Opened from the single Add Transaction form, not from this toolbar. -->
         <MultipleTransactionAddForm
           v-if="props.variant === 'account' && authStore.isFullAccess && !isParentAccount"
           v-model="multipleAddDialog"
@@ -614,6 +598,7 @@
             v-model="transactionAddFormDialog"
             :isEdit="false"
             @update-dialog="updateAddDialog"
+            @open-multiple="openMultipleAddForm"
             :account_id="props.account"
             :passedFormData="blankForm"
           />
@@ -1119,6 +1104,12 @@
 
   const updateMultipleAddDialog = () => {
     multipleAddDialog.value = false;
+  };
+
+  // TransactionForm closes itself before emitting, so this only has to open
+  // the batch form.
+  const openMultipleAddForm = () => {
+    multipleAddDialog.value = true;
   };
 
   const updateImportFileDialog = () => {
