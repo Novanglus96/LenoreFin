@@ -190,33 +190,6 @@
           }"
         >
           <div class="text-center">
-            <v-btn
-              @click="toggleSelect(internalItem)"
-              variant="plain"
-              icon
-              block
-              :disabled="!isSelectable(internalItem.raw)"
-              v-if="!isSelectable(internalItem.raw)"
-            >
-              <v-icon
-                icon="mdi-alpha-p-circle"
-                color="textPending"
-                size="x-large"
-                v-if="internalItem.raw.status.id === 1"
-              ></v-icon>
-              <v-icon
-                icon="mdi-alpha-c-circle"
-                color="success"
-                v-if="internalItem.raw.status.id === 2"
-                size="large"
-              ></v-icon>
-              <v-icon
-                icon="mdi-alpha-r-circle"
-                color="error"
-                v-if="internalItem.raw.status.id === 3"
-                size="large"
-              ></v-icon>
-            </v-btn>
             <v-badge
               color="textPending-lighten-3"
               :icon="
@@ -227,14 +200,12 @@
               location="right top"
               :offset-x="6"
               :offset-y="10"
-              v-if="isSelectable(internalItem.raw)"
             >
               <v-btn
                 @click="toggleSelect(internalItem)"
                 variant="plain"
                 icon
                 block
-                :disabled="!isSelectable(internalItem.raw)"
               >
                 <v-icon
                   icon="mdi-alpha-p-circle"
@@ -945,7 +916,6 @@
   // from selected_reminders because they convert through a different endpoint.
   const selected_forecasts = ref([]);
   const selected_all = ref([]);
-  const isSelectable = item => item.id > -10000;
 
   const headers = ref([
     { title: "", key: "status", width: "72px" },
