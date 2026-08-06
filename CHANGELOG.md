@@ -1,3 +1,10 @@
+# [1.7.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.2...v1.7.0-alpha.3) (2026-08-06)
+
+
+### Bug Fixes
+
+* restrict forecast conversion to credit-card payments ([#189](https://github.com/Novanglus96/LenoreFin/issues/189)) ([4e23c87](https://github.com/Novanglus96/LenoreFin/commit/4e23c87df730d9509e3681c7f063de2b574cff6a))
+
 # [1.7.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.1...v1.7.0-alpha.2) (2026-08-06)
 
 
