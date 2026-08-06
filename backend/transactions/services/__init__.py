@@ -11,5 +11,6 @@ from transactions.services.transaction import (
 )
 from transactions.services.forecast_conversion import (
     convert_forecast_transaction as convert_forecast_transaction,
+    clean_forecast_description as clean_forecast_description,
     ForecastTransactionNotFound as ForecastTransactionNotFound,
 )

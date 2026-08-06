@@ -10,6 +10,7 @@ from transactions.models import (
 )
 from transactions.services import (
     ForecastTransactionNotFound,
+    clean_forecast_description,
     convert_forecast_transaction,
 )
 
@@ -51,7 +52,7 @@ def test_convert_creates_real_transaction(forecast_with_tag, test_checking_accou
     """The forecast row is carried across as-is into a real transaction."""
     convert_forecast_transaction(forecast_with_tag.id)
 
-    created = Transaction.objects.get(description="(Test Card Estimated Payment)")
+    created = Transaction.objects.get(description="Test Card Payment")
     assert created.total_amount == Decimal("-125.00")
     assert created.transaction_date == forecast_with_tag.transaction_date
     assert created.source_account_id == test_checking_account.id
@@ -80,7 +81,7 @@ def test_convert_carries_tags_across(forecast_with_tag, test_tag):
     """Detail rows are recreated against the real transaction, sign preserved."""
     convert_forecast_transaction(forecast_with_tag.id)
 
-    created = Transaction.objects.get(description="(Test Card Estimated Payment)")
+    created = Transaction.objects.get(description="Test Card Payment")
     details = TransactionDetail.objects.filter(transaction_id=created.id)
     assert details.count() == 1
     detail = details.first()
@@ -110,7 +111,7 @@ def test_convert_untagged_forecast(
 
     convert_forecast_transaction(forecast.id)
 
-    created = Transaction.objects.get(description="(Test Savings Interest)")
+    created = Transaction.objects.get(description="Test Savings Interest")
     assert created.total_amount == Decimal("-3.21")
     assert not TransactionDetail.objects.filter(transaction_id=created.id).exists()
 
@@ -143,9 +144,7 @@ def test_convert_leaves_other_forecasts_alone(
     convert_forecast_transaction(forecast_with_tag.id)
 
     assert ForecastCacheTransaction.objects.filter(id=other.id).exists()
-    assert not Transaction.objects.filter(
-        description="(Other Estimated Payment)"
-    ).exists()
+    assert not Transaction.objects.filter(description="Other Payment").exists()
 
 
 @pytest.mark.django_db
@@ -174,12 +173,8 @@ def test_convert_endpoint_converts_batch(
 
     assert response.status_code == 200
     assert response.json()["success"] is True
-    assert Transaction.objects.filter(
-        description="(Test Card Estimated Payment)"
-    ).exists()
-    assert Transaction.objects.filter(
-        description="(Second Estimated Payment)"
-    ).exists()
+    assert Transaction.objects.filter(description="Test Card Payment").exists()
+    assert Transaction.objects.filter(description="Second Payment").exists()
     assert ForecastCacheTransaction.objects.count() == 0
 
 
@@ -194,3 +189,27 @@ def test_convert_endpoint_missing_id_returns_404(
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        # The three formats the forecast generators actually emit.
+        ("(Visa Estimated Payment)", "Visa Payment"),
+        ("(Visa Estimated Interest)", "Visa Interest"),
+        ("(Emergency Fund Estimated Interest)", "Emergency Fund Interest"),
+        # Brackets without the word, and the word without brackets.
+        ("(Test Savings Interest)", "Test Savings Interest"),
+        ("Visa Estimated Payment", "Visa Payment"),
+        # Nothing to strip is left alone.
+        ("Groceries", "Groceries"),
+        # Account names containing brackets mid-string are not mangled.
+        ("(Visa (Joint) Estimated Payment)", "Visa (Joint) Payment"),
+        # Defensive: empty and whitespace-only.
+        ("", ""),
+        ("   ", ""),
+    ],
+)
+def test_clean_forecast_description(raw, expected):
+    assert clean_forecast_description(raw) == expected
