@@ -1,3 +1,10 @@
+# [1.7.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.3...v1.7.0-alpha.4) (2026-08-06)
+
+
+### Bug Fixes
+
+* anchor ordering tests to the real date instead of a literal ([#190](https://github.com/Novanglus96/LenoreFin/issues/190)) ([f6e621c](https://github.com/Novanglus96/LenoreFin/commit/f6e621c0511e9af9e4e4b832cb4f2a47326636fd))
+
 # [1.7.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.2...v1.7.0-alpha.3) (2026-08-06)
 
 
