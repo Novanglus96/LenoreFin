@@ -1,3 +1,10 @@
+# [1.7.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.4...v1.7.0-alpha.5) (2026-08-06)
+
+
+### Bug Fixes
+
+* inject today into balance accuracy tests instead of assuming it ([#191](https://github.com/Novanglus96/LenoreFin/issues/191)) ([b00d998](https://github.com/Novanglus96/LenoreFin/commit/b00d998abdf4624bb638188b9da32343d351133e)), closes [#190](https://github.com/Novanglus96/LenoreFin/issues/190) [#190](https://github.com/Novanglus96/LenoreFin/issues/190) [#190](https://github.com/Novanglus96/LenoreFin/issues/190) [#190](https://github.com/Novanglus96/LenoreFin/issues/190)
+
 # [1.7.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.3...v1.7.0-alpha.4) (2026-08-06)
 
 
