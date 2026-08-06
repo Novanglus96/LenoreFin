@@ -13,7 +13,7 @@
       <v-tooltip location="bottom" text="Highlight lowest balance after today">
         <template v-slot:activator="{ props: tipProps }">
           <v-btn
-            :icon="showMinHighlight ? 'mdi-flag' : 'mdi-flag-outline'"
+            icon
             flat
             size="small"
             :color="showMinHighlight ? 'error' : undefined"
@@ -21,6 +21,38 @@
             :disabled="isActive"
             v-bind="tipProps"
             @click="toggleMinHighlight"
+          >
+            <AnimatedIcon
+              :icon="showMinHighlight ? 'mdi-flag' : 'mdi-flag-outline'"
+            />
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip location="bottom" text="Show trend line">
+        <template v-slot:activator="{ props: tipProps }">
+          <v-btn
+            icon="mdi-trending-up"
+            flat
+            size="small"
+            :color="showTrendLine ? 'primary' : undefined"
+            variant="plain"
+            :disabled="isActive"
+            v-bind="tipProps"
+            @click="toggleTrendLine"
+          ></v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip location="bottom" text="Show 1st of month balance">
+        <template v-slot:activator="{ props: tipProps }">
+          <v-btn
+            icon="mdi-currency-usd"
+            flat
+            size="small"
+            :color="showMonthFlag ? 'primary' : undefined"
+            variant="plain"
+            :disabled="isActive"
+            v-bind="tipProps"
+            @click="toggleMonthFlag"
           ></v-btn>
         </template>
       </v-tooltip>
@@ -81,6 +113,7 @@
 <script setup>
   import { ref, defineProps, defineEmits, computed } from "vue";
   import ApexChart from "vue3-apexcharts";
+  import AnimatedIcon from "@/components/AnimatedIcon.vue";
   import { useAccountForecasts } from "@/composables/forecastsComposable";
   import { useMainStore } from "@/stores/main";
   import { useDisplay } from "vuetify";
@@ -103,6 +136,20 @@
     localStorage.setItem(lsKey, showMinHighlight.value);
   }
 
+  const lsTrendKey = `forecast_trend_line_${props.account?.[0] ?? "default"}`;
+  const showTrendLine = ref(localStorage.getItem(lsTrendKey) === "true");
+  function toggleTrendLine() {
+    showTrendLine.value = !showTrendLine.value;
+    localStorage.setItem(lsTrendKey, showTrendLine.value);
+  }
+
+  const lsMonthFlagKey = `forecast_month_flag_${props.account?.[0] ?? "default"}`;
+  const showMonthFlag = ref(localStorage.getItem(lsMonthFlagKey) === "true");
+  function toggleMonthFlag() {
+    showMonthFlag.value = !showMonthFlag.value;
+    localStorage.setItem(lsMonthFlagKey, showMonthFlag.value);
+  }
+
   const { isLoading, account_forecast, isFetching } = useAccountForecasts(
     props.account,
     props.start_integer,
@@ -115,18 +162,54 @@
 
   const POSITIVE_COLOR = "#4caf50";
   const NEGATIVE_COLOR = "#f44336";
+  const TREND_COLOR = "#888888";
+
+  function computeTrendLine(labels, data) {
+    const points = data
+      .map((v, i) => ({ i, v: v != null ? Number(v) : null }))
+      .filter(p => p.v != null);
+    if (points.length < 2) return null;
+    const n = points.length;
+    const sumX = points.reduce((a, p) => a + p.i, 0);
+    const sumY = points.reduce((a, p) => a + p.v, 0);
+    const sumXY = points.reduce((a, p) => a + p.i * p.v, 0);
+    const sumX2 = points.reduce((a, p) => a + p.i * p.i, 0);
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    return labels.map((label, i) => ({
+      x: label,
+      y: Math.round(slope * i + intercept),
+    }));
+  }
 
   const chartSeries = computed(() => {
     const raw = account_forecast.value;
     if (!raw?.datasets?.length) return [];
-    return raw.datasets.map(ds => ({
+
+    const baseSeries = raw.datasets.map(ds => ({
       name: ds.label ?? "Balance",
       data: (raw.labels ?? []).map((label, i) => ({
         x: label,
         y: ds.data?.[i] != null ? Number(ds.data[i]) : null,
       })),
     }));
+
+    if (!showTrendLine.value) return baseSeries;
+
+    const trendData = computeTrendLine(
+      raw.labels ?? [],
+      raw.datasets[0].data ?? [],
+    );
+    if (!trendData) return baseSeries;
+
+    return [...baseSeries, { name: "Trend", data: trendData }];
   });
+
+  const hasTrend = computed(
+    () =>
+      showTrendLine.value &&
+      chartSeries.value.length > (account_forecast.value?.datasets?.length ?? 0),
+  );
 
   const minPostTodayPoint = computed(() => {
     if (!showMinHighlight.value) return null;
@@ -157,6 +240,31 @@
     return minLabel !== null ? { x: minLabel, y: minVal } : null;
   });
 
+  const monthFirstPoint = computed(() => {
+    if (!showMonthFlag.value) return null;
+    const raw = account_forecast.value;
+    if (!raw?.labels?.length || !raw?.datasets?.[0]?.data?.length) return null;
+
+    const today = new Date();
+    const firstOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+
+    const labels = raw.labels;
+    const data = raw.datasets[0].data;
+
+    for (let i = 0; i < labels.length; i++) {
+      const d = new Date(labels[i].replace(/'/g, "20"));
+      if (
+        d.getFullYear() === firstOfNextMonth.getFullYear() &&
+        d.getMonth() === firstOfNextMonth.getMonth() &&
+        d.getDate() === 1 &&
+        data[i] != null
+      ) {
+        return { x: labels[i], y: Number(data[i]) };
+      }
+    }
+    return null;
+  });
+
   const chartOptions = computed(() => {
     const raw = account_forecast.value;
     const allValues = (raw?.datasets ?? [])
@@ -171,6 +279,8 @@
 
     const hasPositive = max > 0;
     const hasNegative = min < 0;
+    const forecastColor = hasNegative && !hasPositive ? NEGATIVE_COLOR : POSITIVE_COLOR;
+
     const colorStops = hasPositive && hasNegative
       ? [
           { offset: 0, color: POSITIVE_COLOR, opacity: 0.4 },
@@ -188,6 +298,9 @@
       day: "2-digit",
     });
 
+    const trend = hasTrend.value;
+    const datasetCount = raw?.datasets?.length ?? 1;
+
     return {
       chart: {
         type: "area",
@@ -195,15 +308,33 @@
         zoom: { enabled: false },
         animations: { enabled: false },
       },
-      colors: [hasNegative && !hasPositive ? NEGATIVE_COLOR : POSITIVE_COLOR],
+      colors: [
+        ...Array(datasetCount).fill(forecastColor),
+        ...(trend ? [TREND_COLOR] : []),
+      ],
       dataLabels: { enabled: false },
-      stroke: { curve: "smooth", width: 2 },
+      stroke: {
+        curve: trend
+          ? [...Array(datasetCount).fill("smooth"), "straight"]
+          : "smooth",
+        width: trend
+          ? [...Array(datasetCount).fill(2), 1.5]
+          : 2,
+        dashArray: trend
+          ? [...Array(datasetCount).fill(0), 5]
+          : 0,
+      },
       fill: {
-        type: "gradient",
+        type: trend
+          ? [...Array(datasetCount).fill("gradient"), "solid"]
+          : "gradient",
         gradient: {
           type: "vertical",
           colorStops: raw.datasets.map(() => colorStops),
         },
+        opacity: trend
+          ? [...Array(datasetCount).fill(1), 0]
+          : 1,
       },
       markers: { size: 0 },
       annotations: {
@@ -229,27 +360,50 @@
           borderWidth: 1,
           strokeDashArray: 0,
         }],
-        points: minPostTodayPoint.value ? [{
-          x: minPostTodayPoint.value.x,
-          y: minPostTodayPoint.value.y,
-          marker: {
-            size: 6,
-            fillColor: "#f44336",
-            strokeColor: "#fff",
-            strokeWidth: 2,
-          },
-          label: {
-            text: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(minPostTodayPoint.value.y),
-            borderColor: "#f44336",
-            offsetY: -12,
-            style: {
-              color: "#fff",
-              background: "#f44336",
-              fontSize: "10px",
-              padding: { top: 3, bottom: 3, left: 5, right: 5 },
+        points: [
+          ...(minPostTodayPoint.value ? [{
+            x: minPostTodayPoint.value.x,
+            y: minPostTodayPoint.value.y,
+            marker: {
+              size: 6,
+              fillColor: "#f44336",
+              strokeColor: "#fff",
+              strokeWidth: 2,
             },
-          },
-        }] : [],
+            label: {
+              text: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(minPostTodayPoint.value.y),
+              borderColor: "#f44336",
+              offsetY: -12,
+              style: {
+                color: "#fff",
+                background: "#f44336",
+                fontSize: "10px",
+                padding: { top: 3, bottom: 3, left: 5, right: 5 },
+              },
+            },
+          }] : []),
+          ...(monthFirstPoint.value ? [{
+            x: monthFirstPoint.value.x,
+            y: monthFirstPoint.value.y,
+            marker: {
+              size: 6,
+              fillColor: "#06966a",
+              strokeColor: "#fff",
+              strokeWidth: 2,
+            },
+            label: {
+              text: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(monthFirstPoint.value.y),
+              borderColor: "#06966a",
+              offsetY: -12,
+              style: {
+                color: "#fff",
+                background: "#06966a",
+                fontSize: "10px",
+                padding: { top: 3, bottom: 3, left: 5, right: 5 },
+              },
+            },
+          }] : []),
+        ],
       },
       xaxis: {
         type: "category",
@@ -272,6 +426,21 @@
       tooltip: {
         shared: false,
         custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+          if (trend && seriesIndex === w.config.series.length - 1) {
+            const val = series[seriesIndex]?.[dataPointIndex];
+            const xLabel = w.config.series[seriesIndex]?.data?.[dataPointIndex]?.x ?? "";
+            const formatted = val != null
+              ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val)
+              : "N/A";
+            return `<div style="padding:8px 10px;font-family:inherit;">
+              <div style="color:#888;font-size:11px;margin-bottom:4px;">${xLabel}</div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${TREND_COLOR};flex-shrink:0;"></span>
+                <span style="color:#888;font-size:11px;">Trend</span>
+                <span style="font-weight:600;color:${TREND_COLOR};font-size:12px;">${formatted}</span>
+              </div>
+            </div>`;
+          }
           const val = series[seriesIndex]?.[dataPointIndex];
           const color = (val ?? 0) >= 0 ? POSITIVE_COLOR : NEGATIVE_COLOR;
           const xLabel = w.config.series[seriesIndex]?.data?.[dataPointIndex]?.x ?? "";

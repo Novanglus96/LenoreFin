@@ -40,6 +40,39 @@ These variables create the initial admin user on first startup. They are only us
 | `VITE_API_KEY` | Yes | — | API key embedded into the frontend at build time. Must match the key you create in the admin panel under **Auth → API Keys**. |
 | `TIMEZONE` | No | `UTC` | Server timezone (e.g. `America/New_York`). Affects scheduled tasks and date display. |
 
+## Push Notifications
+
+Browser Web Push is opt-in. Leave these unset to disable push entirely.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `VAPID_PRIVATE_KEY` | No | — | VAPID private key (URL-safe base64, no padding). Required to send push notifications. |
+| `VAPID_PUBLIC_KEY` | No | — | VAPID public key served to browsers at subscription time. |
+| `VAPID_EMAIL` | No | `admin@example.com` | Contact email included in the VAPID `sub` claim. |
+
+**Generating VAPID keys:**
+
+```bash
+python -c "
+from py_vapid import Vapid
+from cryptography.hazmat.primitives import serialization
+import base64
+v = Vapid()
+v.generate_keys()
+priv = base64.urlsafe_b64encode(v.private_key.private_bytes(
+    serialization.Encoding.DER,
+    serialization.PrivateFormat.PKCS8,
+    serialization.NoEncryption()
+)).rstrip(b'=').decode()
+pub = base64.urlsafe_b64encode(v.private_key.public_key().public_bytes(
+    serialization.Encoding.X962,
+    serialization.PublicFormat.UncompressedPoint
+)).rstrip(b'=').decode()
+print('VAPID_PRIVATE_KEY=' + priv)
+print('VAPID_PUBLIC_KEY=' + pub)
+"
+```
+
 ## Networking
 
 The app listens on port `80` inside the container. Map it to any host port you like:

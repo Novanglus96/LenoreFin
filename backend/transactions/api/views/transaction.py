@@ -5,11 +5,13 @@ from accounts.models import Account
 from tags.models import Tag
 from transactions.api.schemas.transaction import (
     TransactionIn,
+    TransactionBatchIn,
     TransactionList,
     TransactionOut,
     PaginatedTransactions,
     MultiTranscationDate,
     TransactionQuery,
+    ForecastTransactionList,
 )
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -27,7 +29,13 @@ from django.db.models import (
 from django.db.models.functions import Concat, Coalesce, Abs
 from transactions.services.transaction import (
     create_transaction_service,
+    create_transactions_service,
     update_transaction_service,
+)
+from transactions.services.forecast_conversion import (
+    convert_forecast_transaction,
+    ForecastTransactionNotFound,
+    ForecastTransactionNotConvertible,
 )
 from utils.dates import (
     get_todays_date_timezone_adjusted,
@@ -100,6 +108,54 @@ def create_transaction(request, payload: TransactionIn):
         raise
     except Exception as e:
         api_logger.error("Transaction not created")
+        error_logger.exception(f"{str(e)}")
+        raise HttpError(500, f"Record creation error : {str(e)}")
+
+
+@transaction_router.post("/create-multiple", auth=FullAccessAuth())
+def create_multiple_transactions(request, payload: TransactionBatchIn):
+    """
+    The function `create_multiple_transactions` creates a batch of transactions
+    in a single atomic request.
+
+    Args:
+        request ():
+        payload (TransactionBatchIn): An object using schema of TransactionBatchIn.
+
+    Returns:
+        dict: The number of transactions created under the key 'created'.
+
+    Raises:
+        HttpError: 400 if the batch is empty or touches a parent account,
+            500 if creation fails.
+    """
+
+    if not payload.transactions:
+        raise HttpError(400, "At least one transaction is required.")
+
+    try:
+        affected = list(
+            filter(
+                None,
+                [
+                    account_id
+                    for item in payload.transactions
+                    for account_id in (
+                        item.source_account_id,
+                        item.destination_account_id,
+                    )
+                ],
+            )
+        )
+        _assert_not_parent(*affected)
+        created = create_transactions_service(payload.transactions)
+        _invalidate_accounts(*affected)
+        api_logger.info(f"{created} transactions created")
+        return {"created": created}
+    except HttpError:
+        raise
+    except Exception as e:
+        api_logger.error("Transactions not created")
         error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record creation error : {str(e)}")
 
@@ -263,6 +319,50 @@ def delete_transaction(request, payload: TransactionList):
         api_logger.error("Transaction not deleted")
         error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
+
+
+@transaction_router.patch("/convert-forecast", auth=FullAccessAuth())
+def convert_forecast_transactions(request, payload: ForecastTransactionList):
+    """
+    The function `convert_forecast_transactions` turns credit-card payment
+    forecasts into real pending transactions.
+
+    Interest projections (savings, parent-group and credit-card statement
+    interest) are rejected — they do not reconcile on rebuild and would be
+    double counted. Reminder-derived rows are not handled here either; those
+    convert through /reminders/addtrans/{reminder_id}, which also advances the
+    reminder.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        payload (ForecastTransactionList): ForecastCacheTransaction ids to convert.
+
+    Returns:
+        dict: 'success' True, and 'converted' with the ids that were converted.
+
+    Raises:
+        HttpError: 404 if an id does not exist, 400 if a row is an interest
+        projection, 500 on failure.
+    """
+
+    try:
+        converted = []
+        for forecast_id in payload.forecast_transactions:
+            convert_forecast_transaction(forecast_id)
+            converted.append(forecast_id)
+            api_logger.info(f"Forecast transaction converted : #{forecast_id}")
+        return {"success": True, "converted": converted}
+    except ForecastTransactionNotFound as e:
+        api_logger.error("Forecast transaction not converted")
+        raise HttpError(404, str(e))
+    except ForecastTransactionNotConvertible as e:
+        api_logger.error("Forecast transaction not convertible")
+        raise HttpError(400, str(e))
+    except Exception as e:
+        # Log other types of exceptions
+        api_logger.error("Forecast transaction not converted")
+        error_logger.exception(f"{str(e)}")
+        raise HttpError(500, f"Forecast conversion error: {str(e)}")
 
 
 @transaction_router.put("/update/{transaction_id}", auth=FullAccessAuth())

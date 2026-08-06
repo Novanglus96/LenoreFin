@@ -1,8 +1,410 @@
+# [1.7.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.6...v1.7.0-alpha.7) (2026-08-06)
+
+
+### Features
+
+* animate icon state transitions ([#193](https://github.com/Novanglus96/LenoreFin/issues/193)) ([df7dd25](https://github.com/Novanglus96/LenoreFin/commit/df7dd25815de774b068dd3c6ac1551d7e7f23c7c))
+
+# [1.7.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.5...v1.7.0-alpha.6) (2026-08-06)
+
+
+### Features
+
+* add multi-transaction batch add form ([#192](https://github.com/Novanglus96/LenoreFin/issues/192)) ([2ecfee7](https://github.com/Novanglus96/LenoreFin/commit/2ecfee72e1ac988c1f5583be7d63d20b47a12df8))
+
+# [1.7.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.4...v1.7.0-alpha.5) (2026-08-06)
+
+
+### Bug Fixes
+
+* inject today into balance accuracy tests instead of assuming it ([#191](https://github.com/Novanglus96/LenoreFin/issues/191)) ([b00d998](https://github.com/Novanglus96/LenoreFin/commit/b00d998abdf4624bb638188b9da32343d351133e)), closes [#190](https://github.com/Novanglus96/LenoreFin/issues/190) [#190](https://github.com/Novanglus96/LenoreFin/issues/190) [#190](https://github.com/Novanglus96/LenoreFin/issues/190) [#190](https://github.com/Novanglus96/LenoreFin/issues/190)
+
+# [1.7.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.3...v1.7.0-alpha.4) (2026-08-06)
+
+
+### Bug Fixes
+
+* anchor ordering tests to the real date instead of a literal ([#190](https://github.com/Novanglus96/LenoreFin/issues/190)) ([f6e621c](https://github.com/Novanglus96/LenoreFin/commit/f6e621c0511e9af9e4e4b832cb4f2a47326636fd))
+
+# [1.7.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.2...v1.7.0-alpha.3) (2026-08-06)
+
+
+### Bug Fixes
+
+* restrict forecast conversion to credit-card payments ([#189](https://github.com/Novanglus96/LenoreFin/issues/189)) ([4e23c87](https://github.com/Novanglus96/LenoreFin/commit/4e23c87df730d9509e3681c7f063de2b574cff6a))
+
+# [1.7.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.1...v1.7.0-alpha.2) (2026-08-06)
+
+
+### Bug Fixes
+
+* allow row-click selection of forecast rows and clean their description ([#188](https://github.com/Novanglus96/LenoreFin/issues/188)) ([e236b44](https://github.com/Novanglus96/LenoreFin/commit/e236b44614b69f9252ec70cfa98ed5857a373cb3))
+
+# [1.7.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.2-alpha.1...v1.7.0-alpha.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* only require a payment amount for the custom cc strategy ([#187](https://github.com/Novanglus96/LenoreFin/issues/187)) ([3467cd4](https://github.com/Novanglus96/LenoreFin/commit/3467cd4a08de7ee6c509e5630fe3afa2f4ae7bdc))
+
+
+### Features
+
+* convert computed forecast transactions to real transactions ([#186](https://github.com/Novanglus96/LenoreFin/issues/186)) ([ea0178b](https://github.com/Novanglus96/LenoreFin/commit/ea0178b6a8ac3cb98519f26158369a4beb68b41f))
+
+## [1.6.2-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1...v1.6.2-alpha.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* save edited note values instead of the original row ([#185](https://github.com/Novanglus96/LenoreFin/issues/185)) ([9993382](https://github.com/Novanglus96/LenoreFin/commit/9993382aef2ef8d5604fc0ba44dd00da2eb6a5ae))
+
+## [1.6.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0...v1.6.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* allow creating messages from Django admin ([#183](https://github.com/Novanglus96/LenoreFin/issues/183)) ([8fd51ab](https://github.com/Novanglus96/LenoreFin/commit/8fd51ab0e67087d0478d8cc8cf7dde498d97bf41))
+* broadcast WebSocket invalidation on all Message creation paths ([#182](https://github.com/Novanglus96/LenoreFin/issues/182)) ([7623fec](https://github.com/Novanglus96/LenoreFin/commit/7623fec2c6ba631ae6e5823a3ceceb1a0e44d594))
+* constrain inbox menu to viewport width on mobile ([#181](https://github.com/Novanglus96/LenoreFin/issues/181)) ([bbb2fa2](https://github.com/Novanglus96/LenoreFin/commit/bbb2fa2faf202097c270918cf91c7f7dd37157ff))
+
+## [1.6.1-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1-alpha.2...v1.6.1-alpha.3) (2026-05-28)
+
+
+### Bug Fixes
+
+* allow creating messages from Django admin ([#183](https://github.com/Novanglus96/LenoreFin/issues/183)) ([8fd51ab](https://github.com/Novanglus96/LenoreFin/commit/8fd51ab0e67087d0478d8cc8cf7dde498d97bf41))
+
+## [1.6.1-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1-alpha.1...v1.6.1-alpha.2) (2026-05-28)
+
+
+### Bug Fixes
+
+* broadcast WebSocket invalidation on all Message creation paths ([#182](https://github.com/Novanglus96/LenoreFin/issues/182)) ([7623fec](https://github.com/Novanglus96/LenoreFin/commit/7623fec2c6ba631ae6e5823a3ceceb1a0e44d594))
+
+## [1.6.1-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0...v1.6.1-alpha.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* constrain inbox menu to viewport width on mobile ([#181](https://github.com/Novanglus96/LenoreFin/issues/181)) ([bbb2fa2](https://github.com/Novanglus96/LenoreFin/commit/bbb2fa2faf202097c270918cf91c7f7dd37157ff))
+
+# [1.6.0](https://github.com/Novanglus96/LenoreFin/compare/v1.5.2...v1.6.0) (2026-05-28)
+
+
+### Bug Fixes
+
+* add websockets explicitly for uvicorn WebSocket support ([#170](https://github.com/Novanglus96/LenoreFin/issues/170)) ([608350e](https://github.com/Novanglus96/LenoreFin/commit/608350e23c2379f67ab74ad831131ecb4f596b47))
+* align WebSocket broadcast keys with full frontend invalidation set ([#171](https://github.com/Novanglus96/LenoreFin/issues/171)) ([57944bd](https://github.com/Novanglus96/LenoreFin/commit/57944bd231a9b4d8caa459c1ab7ab4f343f1747a))
+* make fixture loaddata calls idempotent with || true ([5224825](https://github.com/Novanglus96/LenoreFin/commit/52248255fe3e10180f3955d57a19a05b0fc05bc6))
+* move daphne to first position in INSTALLED_APPS ([4442f61](https://github.com/Novanglus96/LenoreFin/commit/4442f61843ee906cd70b6bb3f275931099a35917))
+* move daphne to first position in INSTALLED_APPS ([#168](https://github.com/Novanglus96/LenoreFin/issues/168)) ([c2c1ebc](https://github.com/Novanglus96/LenoreFin/commit/c2c1ebc6fc742d1149eec33b7bfb6a22aae6ac4e))
+* remove unused isLoading from RemindersWidget destructure ([#173](https://github.com/Novanglus96/LenoreFin/issues/173)) ([b656f2e](https://github.com/Novanglus96/LenoreFin/commit/b656f2efebc1a5c2363ab203b19102d8fddf1b6d))
+* resolve pre-existing test failures in reports and graph_by_tags ([834a8fa](https://github.com/Novanglus96/LenoreFin/commit/834a8fa459278f72b9a7b2bbe9fb3e5cfab227c1))
+* show fetching state on reminders table during background refetch ([#172](https://github.com/Novanglus96/LenoreFin/issues/172)) ([869a1e4](https://github.com/Novanglus96/LenoreFin/commit/869a1e48cabdb7eb778c38b48eebc32de823cf89))
+* suppress flake8 E402 on deferred imports in asgi.py ([#167](https://github.com/Novanglus96/LenoreFin/issues/167)) ([f658edb](https://github.com/Novanglus96/LenoreFin/commit/f658edbb7b350aaa2799ad6552e314fb8829e7b5))
+* switch to gunicorn+uvicorn workers for ASGI serving ([e2f0040](https://github.com/Novanglus96/LenoreFin/commit/e2f0040ebd758f3e930c43f7c7d872b7a66bc00c))
+* update PWA icons to use elephant favicon with transparency ([#165](https://github.com/Novanglus96/LenoreFin/issues/165)) ([8aa1fe6](https://github.com/Novanglus96/LenoreFin/commit/8aa1fe69ac1519a6837d32c98c6b172eaeb71064))
+
+
+### Features
+
+* add Patreon announcement workflow and script ([#164](https://github.com/Novanglus96/LenoreFin/issues/164)) ([1e84262](https://github.com/Novanglus96/LenoreFin/commit/1e84262527faea8a245c13c2a46be05b61a2accf))
+* add WebSocket real-time sync via Django Channels ([#166](https://github.com/Novanglus96/LenoreFin/issues/166)) ([310194e](https://github.com/Novanglus96/LenoreFin/commit/310194e5aa331e1eaede824419cf8d28af2d64c3))
+* investment performance estimation ([#177](https://github.com/Novanglus96/LenoreFin/issues/177)) ([6e5eba0](https://github.com/Novanglus96/LenoreFin/commit/6e5eba0d2367cad474f8c31c8f06e18d8ba87b9b))
+* recurring transaction detection with weekly scan and inbox alerts ([#175](https://github.com/Novanglus96/LenoreFin/issues/175)) ([66030fb](https://github.com/Novanglus96/LenoreFin/commit/66030fb45bf2dd819891093fe79258b37859dc3d))
+* scheduled reports with inbox WebSocket broadcast ([#174](https://github.com/Novanglus96/LenoreFin/issues/174)) ([8479dca](https://github.com/Novanglus96/LenoreFin/commit/8479dca568b9fb461bd736dfe99b93a85ea04d94))
+* web push notifications for inbox messages ([#176](https://github.com/Novanglus96/LenoreFin/issues/176)) ([6c85448](https://github.com/Novanglus96/LenoreFin/commit/6c854482b49dc0d41d61ec980b9a3cc175b67489))
+
+# [1.6.0-alpha.15](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.14...v1.6.0-alpha.15) (2026-05-28)
+
+
+### Bug Fixes
+
+* resolve pre-existing test failures in reports and graph_by_tags ([834a8fa](https://github.com/Novanglus96/LenoreFin/commit/834a8fa459278f72b9a7b2bbe9fb3e5cfab227c1))
+
+# [1.6.0-alpha.14](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.13...v1.6.0-alpha.14) (2026-05-28)
+
+
+### Features
+
+* investment performance estimation ([#177](https://github.com/Novanglus96/LenoreFin/issues/177)) ([6e5eba0](https://github.com/Novanglus96/LenoreFin/commit/6e5eba0d2367cad474f8c31c8f06e18d8ba87b9b))
+
+# [1.6.0-alpha.13](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.12...v1.6.0-alpha.13) (2026-05-28)
+
+
+### Features
+
+* web push notifications for inbox messages ([#176](https://github.com/Novanglus96/LenoreFin/issues/176)) ([6c85448](https://github.com/Novanglus96/LenoreFin/commit/6c854482b49dc0d41d61ec980b9a3cc175b67489))
+
+# [1.6.0-alpha.12](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.11...v1.6.0-alpha.12) (2026-05-28)
+
+
+### Features
+
+* recurring transaction detection with weekly scan and inbox alerts ([#175](https://github.com/Novanglus96/LenoreFin/issues/175)) ([66030fb](https://github.com/Novanglus96/LenoreFin/commit/66030fb45bf2dd819891093fe79258b37859dc3d))
+
+# [1.6.0-alpha.11](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.10...v1.6.0-alpha.11) (2026-05-27)
+
+
+### Features
+
+* scheduled reports with inbox WebSocket broadcast ([#174](https://github.com/Novanglus96/LenoreFin/issues/174)) ([8479dca](https://github.com/Novanglus96/LenoreFin/commit/8479dca568b9fb461bd736dfe99b93a85ea04d94))
+
+# [1.6.0-alpha.10](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.9...v1.6.0-alpha.10) (2026-05-27)
+
+
+### Bug Fixes
+
+* remove unused isLoading from RemindersWidget destructure ([#173](https://github.com/Novanglus96/LenoreFin/issues/173)) ([b656f2e](https://github.com/Novanglus96/LenoreFin/commit/b656f2efebc1a5c2363ab203b19102d8fddf1b6d))
+
+# [1.6.0-alpha.9](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.8...v1.6.0-alpha.9) (2026-05-27)
+
+
+### Bug Fixes
+
+* show fetching state on reminders table during background refetch ([#172](https://github.com/Novanglus96/LenoreFin/issues/172)) ([869a1e4](https://github.com/Novanglus96/LenoreFin/commit/869a1e48cabdb7eb778c38b48eebc32de823cf89))
+
+# [1.6.0-alpha.8](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.7...v1.6.0-alpha.8) (2026-05-27)
+
+
+### Bug Fixes
+
+* align WebSocket broadcast keys with full frontend invalidation set ([#171](https://github.com/Novanglus96/LenoreFin/issues/171)) ([57944bd](https://github.com/Novanglus96/LenoreFin/commit/57944bd231a9b4d8caa459c1ab7ab4f343f1747a))
+
+# [1.6.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.6...v1.6.0-alpha.7) (2026-05-27)
+
+
+### Bug Fixes
+
+* add websockets explicitly for uvicorn WebSocket support ([#170](https://github.com/Novanglus96/LenoreFin/issues/170)) ([608350e](https://github.com/Novanglus96/LenoreFin/commit/608350e23c2379f67ab74ad831131ecb4f596b47))
+
+# [1.6.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.5...v1.6.0-alpha.6) (2026-05-27)
+
+
+### Bug Fixes
+
+* make fixture loaddata calls idempotent with || true ([5224825](https://github.com/Novanglus96/LenoreFin/commit/52248255fe3e10180f3955d57a19a05b0fc05bc6))
+* move daphne to first position in INSTALLED_APPS ([4442f61](https://github.com/Novanglus96/LenoreFin/commit/4442f61843ee906cd70b6bb3f275931099a35917))
+* switch to gunicorn+uvicorn workers for ASGI serving ([e2f0040](https://github.com/Novanglus96/LenoreFin/commit/e2f0040ebd758f3e930c43f7c7d872b7a66bc00c))
+
+# [1.6.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.4...v1.6.0-alpha.5) (2026-05-27)
+
+
+### Bug Fixes
+
+* move daphne to first position in INSTALLED_APPS ([#168](https://github.com/Novanglus96/LenoreFin/issues/168)) ([c2c1ebc](https://github.com/Novanglus96/LenoreFin/commit/c2c1ebc6fc742d1149eec33b7bfb6a22aae6ac4e))
+
+# [1.6.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.3...v1.6.0-alpha.4) (2026-05-27)
+
+
+### Bug Fixes
+
+* suppress flake8 E402 on deferred imports in asgi.py ([#167](https://github.com/Novanglus96/LenoreFin/issues/167)) ([f658edb](https://github.com/Novanglus96/LenoreFin/commit/f658edbb7b350aaa2799ad6552e314fb8829e7b5))
+
+# [1.6.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.2...v1.6.0-alpha.3) (2026-05-27)
+
+
+### Features
+
+* add WebSocket real-time sync via Django Channels ([#166](https://github.com/Novanglus96/LenoreFin/issues/166)) ([310194e](https://github.com/Novanglus96/LenoreFin/commit/310194e5aa331e1eaede824419cf8d28af2d64c3))
+
+# [1.6.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0-alpha.1...v1.6.0-alpha.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* update PWA icons to use elephant favicon with transparency ([#165](https://github.com/Novanglus96/LenoreFin/issues/165)) ([8aa1fe6](https://github.com/Novanglus96/LenoreFin/commit/8aa1fe69ac1519a6837d32c98c6b172eaeb71064))
+
+# [1.6.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.2-alpha.1...v1.6.0-alpha.1) (2026-05-27)
+
+
+### Features
+
+* add Patreon announcement workflow and script ([#164](https://github.com/Novanglus96/LenoreFin/issues/164)) ([1e84262](https://github.com/Novanglus96/LenoreFin/commit/1e84262527faea8a245c13c2a46be05b61a2accf))
+
+## [1.5.2](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1...v1.5.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* favorite accounts projected balance includes reminders and forecasts ([#161](https://github.com/Novanglus96/LenoreFin/issues/161)) ([fa2f61e](https://github.com/Novanglus96/LenoreFin/commit/fa2f61ecd689f16aa7f646567f0c5687c5a1b567))
+* per-user favorite accounts and fix widget navigation ([#162](https://github.com/Novanglus96/LenoreFin/issues/162)) ([1207c3c](https://github.com/Novanglus96/LenoreFin/commit/1207c3c54a4671c7e1c65af6a7f7989bbdc4ae5f))
+
+## [1.5.2-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1...v1.5.2-alpha.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* favorite accounts projected balance includes reminders and forecasts ([#161](https://github.com/Novanglus96/LenoreFin/issues/161)) ([fa2f61e](https://github.com/Novanglus96/LenoreFin/commit/fa2f61ecd689f16aa7f646567f0c5687c5a1b567))
+* per-user favorite accounts and fix widget navigation ([#162](https://github.com/Novanglus96/LenoreFin/issues/162)) ([1207c3c](https://github.com/Novanglus96/LenoreFin/commit/1207c3c54a4671c7e1c65af6a7f7989bbdc4ae5f))
+
+## [1.5.1-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1-alpha.2...v1.5.1-alpha.3) (2026-05-27)
+
+
+### Bug Fixes
+
+* per-user favorite accounts and fix widget navigation ([#162](https://github.com/Novanglus96/LenoreFin/issues/162)) ([1207c3c](https://github.com/Novanglus96/LenoreFin/commit/1207c3c54a4671c7e1c65af6a7f7989bbdc4ae5f))
+
+## [1.5.1-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.5.1-alpha.1...v1.5.1-alpha.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* favorite accounts projected balance includes reminders and forecasts ([#161](https://github.com/Novanglus96/LenoreFin/issues/161)) ([fa2f61e](https://github.com/Novanglus96/LenoreFin/commit/fa2f61ecd689f16aa7f646567f0c5687c5a1b567))
+
+## [1.5.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0...v1.5.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* improve ring text readability in yellow budget range ([452eaab](https://github.com/Novanglus96/LenoreFin/commit/452eaab15120dd371573be1a905f1029f26e3edf))
+* replace v-progress-circular with inline SVG ring for desktop budget widget ([b6f1ed7](https://github.com/Novanglus96/LenoreFin/commit/b6f1ed79885dcbe4956ab3ae1a0a904ca728ac24))
+* restore v-progress-circular and fix color/bg-color collision at yellow threshold ([940a69b](https://github.com/Novanglus96/LenoreFin/commit/940a69bd80794a15a6f732746b6d53a53b1048d4))
+* ring and budget text use warning color when over budget ([fa439d0](https://github.com/Novanglus96/LenoreFin/commit/fa439d0ef728f5aab1fbf306a11a4f8b806cb807))
+* sort favorite accounts by name and fix desktop budget ring percentage ([2fbaddb](https://github.com/Novanglus96/LenoreFin/commit/2fbaddb53ed1892cc079a85ea42b63d84dc0e1c0))
+* use error color for over-budget amounts, label text unchanged ([97fe88e](https://github.com/Novanglus96/LenoreFin/commit/97fe88e23731b6c935f6d5561e435eb3478b9e3b))
+* use theme on-surface color for budget ring text ([d9a212d](https://github.com/Novanglus96/LenoreFin/commit/d9a212d87f386f7f2e21b0662d2759dc5031b575))
+* use yellow-lighten-4 for budget ring bg track in yellow range for contrast ([63a0113](https://github.com/Novanglus96/LenoreFin/commit/63a01131c2506f0cb3b9583cb12e6513b8dafd46))
+
+## [1.5.1-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0...v1.5.1-alpha.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* improve ring text readability in yellow budget range ([452eaab](https://github.com/Novanglus96/LenoreFin/commit/452eaab15120dd371573be1a905f1029f26e3edf))
+* replace v-progress-circular with inline SVG ring for desktop budget widget ([b6f1ed7](https://github.com/Novanglus96/LenoreFin/commit/b6f1ed79885dcbe4956ab3ae1a0a904ca728ac24))
+* restore v-progress-circular and fix color/bg-color collision at yellow threshold ([940a69b](https://github.com/Novanglus96/LenoreFin/commit/940a69bd80794a15a6f732746b6d53a53b1048d4))
+* ring and budget text use warning color when over budget ([fa439d0](https://github.com/Novanglus96/LenoreFin/commit/fa439d0ef728f5aab1fbf306a11a4f8b806cb807))
+* sort favorite accounts by name and fix desktop budget ring percentage ([2fbaddb](https://github.com/Novanglus96/LenoreFin/commit/2fbaddb53ed1892cc079a85ea42b63d84dc0e1c0))
+* use error color for over-budget amounts, label text unchanged ([97fe88e](https://github.com/Novanglus96/LenoreFin/commit/97fe88e23731b6c935f6d5561e435eb3478b9e3b))
+* use theme on-surface color for budget ring text ([d9a212d](https://github.com/Novanglus96/LenoreFin/commit/d9a212d87f386f7f2e21b0662d2759dc5031b575))
+* use yellow-lighten-4 for budget ring bg track in yellow range for contrast ([63a0113](https://github.com/Novanglus96/LenoreFin/commit/63a01131c2506f0cb3b9583cb12e6513b8dafd46))
+
+# [1.5.0](https://github.com/Novanglus96/LenoreFin/compare/v1.4.2...v1.5.0) (2026-05-26)
+
+
+### Bug Fixes
+
+* anchor account forecast y-axis to $0 for consistent scale ([0c2efe9](https://github.com/Novanglus96/LenoreFin/commit/0c2efe9bc0795a90a784eddd7ceaf6460be66311))
+* auto-add new widget slots to existing user dashboard configs on GET ([84b6e4d](https://github.com/Novanglus96/LenoreFin/commit/84b6e4dbd2b896390b84c8c0fd56a3567f861a1c))
+* combined chip display and reminder conversion race condition ([5cb92f1](https://github.com/Novanglus96/LenoreFin/commit/5cb92f125fca04a276284b1de29fdcd90cd6ae85))
+* convert note_text to TextField and remove frontend 254-char limit ([#153](https://github.com/Novanglus96/LenoreFin/issues/153)) ([6527395](https://github.com/Novanglus96/LenoreFin/commit/6527395e745401f9a119fe6cbf1ad8eb0186d8ec))
+* darken mobile action panel background for better contrast ([22ee69f](https://github.com/Novanglus96/LenoreFin/commit/22ee69fe6cc35432a36da9daad040ee2721343c0))
+* import computed from vue not tanstack in dashboardComposable ([507c73e](https://github.com/Novanglus96/LenoreFin/commit/507c73e07a37f6fc5f1d41b80c525f91ef89a9fb))
+* parse version tag to determine release type for Reddit announcements ([#145](https://github.com/Novanglus96/LenoreFin/issues/145)) ([f60a690](https://github.com/Novanglus96/LenoreFin/commit/f60a6900dc6e0af2ee99a1b2adc27ad2af237094))
+* propagate is_favorite through DTO, service, and mapper layers ([60ef26a](https://github.com/Novanglus96/LenoreFin/commit/60ef26a3448285bd184dd68f4183e5bcc70be939))
+* replace combined chip with mdi-layers icon for parent accounts ([8083ec7](https://github.com/Novanglus96/LenoreFin/commit/8083ec7733c02708c7bed09520590ae6f8c0f8a5))
+* use v-model:opened on v-list to correctly auto-expand FAVORITES group ([4d6cba2](https://github.com/Novanglus96/LenoreFin/commit/4d6cba290a0cc8927408f4d574df2d73e2e3d38b))
+
+
+### Features
+
+* add 1st-of-month balance flag to account forecast widget ([#152](https://github.com/Novanglus96/LenoreFin/issues/152)) ([b64f9ce](https://github.com/Novanglus96/LenoreFin/commit/b64f9cec29f2e3e681924fc9ef4b148bae5966c1))
+* add account favorites with FAVORITES menu section and header toggle ([98126c0](https://github.com/Novanglus96/LenoreFin/commit/98126c0ed1ce45136f984545003041bcc7b0cd3c))
+* add account favorites with star icon and priority sort in menu ([9c8e1bd](https://github.com/Novanglus96/LenoreFin/commit/9c8e1bde47f604006b8c96a51997712773570003))
+* add days remaining until budget reset to budget widget ([#154](https://github.com/Novanglus96/LenoreFin/issues/154)) ([9d03371](https://github.com/Novanglus96/LenoreFin/commit/9d03371e1d116a81f496e088dd2a9674bd26cdb1))
+* add favorite accounts balance widget to dashboard ([8123cc0](https://github.com/Novanglus96/LenoreFin/commit/8123cc0567167d82fb35b2aa3cc39620d6848039))
+* add mobile action bottom sheet on account header name tap ([3143a38](https://github.com/Novanglus96/LenoreFin/commit/3143a38ffac11a1277cefdfccf61530aae751061))
+* add toggleable trend line to account forecast widget ([#151](https://github.com/Novanglus96/LenoreFin/issues/151)) ([b1d4c97](https://github.com/Novanglus96/LenoreFin/commit/b1d4c978a9b01275fdc3bb70e9a64f9a75a42713))
+* allow all authenticated users to edit dashboard and graph widgets ([2da0999](https://github.com/Novanglus96/LenoreFin/commit/2da09991953db7877d30aed49ffd9d3090ffc6e3))
+* auto-expand FAVORITES group on menu load when favorites exist ([3678d69](https://github.com/Novanglus96/LenoreFin/commit/3678d6972ea51f26e8e5fe6c4824146c00c0eb3e))
+* move dashboard edit button to app bar, visible only on dashboard route ([46ca5b6](https://github.com/Novanglus96/LenoreFin/commit/46ca5b6fe559254d68ec7f85b58ea78e83b11fc8))
+* per-user dashboard widget ordering and visibility ([980b6f2](https://github.com/Novanglus96/LenoreFin/commit/980b6f2f25198d6fd1c13e3696e5479f0b19d115))
+* per-user graph widget config (name, type, tag, filters) ([eb2645a](https://github.com/Novanglus96/LenoreFin/commit/eb2645a031375260327aaa6299d9207213e46205))
+* per-user reports with optional sharing ([#157](https://github.com/Novanglus96/LenoreFin/issues/157)) ([991b3e4](https://github.com/Novanglus96/LenoreFin/commit/991b3e4506b2ca6162244323ecc9cff2aeb38ad2))
+* replace bottom sheet with inline expand panel for mobile account actions ([3e13222](https://github.com/Novanglus96/LenoreFin/commit/3e13222d0272a3d0a3cde276c165ec469d7fe45c))
+
+# [1.5.0-alpha.7](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.6...v1.5.0-alpha.7) (2026-05-26)
+
+
+### Features
+
+* per-user reports with optional sharing ([#157](https://github.com/Novanglus96/LenoreFin/issues/157)) ([991b3e4](https://github.com/Novanglus96/LenoreFin/commit/991b3e4506b2ca6162244323ecc9cff2aeb38ad2))
+
+# [1.5.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.5...v1.5.0-alpha.6) (2026-05-26)
+
+
+### Bug Fixes
+
+* auto-add new widget slots to existing user dashboard configs on GET ([84b6e4d](https://github.com/Novanglus96/LenoreFin/commit/84b6e4dbd2b896390b84c8c0fd56a3567f861a1c))
+* import computed from vue not tanstack in dashboardComposable ([507c73e](https://github.com/Novanglus96/LenoreFin/commit/507c73e07a37f6fc5f1d41b80c525f91ef89a9fb))
+
+
+### Features
+
+* add favorite accounts balance widget to dashboard ([8123cc0](https://github.com/Novanglus96/LenoreFin/commit/8123cc0567167d82fb35b2aa3cc39620d6848039))
+* allow all authenticated users to edit dashboard and graph widgets ([2da0999](https://github.com/Novanglus96/LenoreFin/commit/2da09991953db7877d30aed49ffd9d3090ffc6e3))
+* move dashboard edit button to app bar, visible only on dashboard route ([46ca5b6](https://github.com/Novanglus96/LenoreFin/commit/46ca5b6fe559254d68ec7f85b58ea78e83b11fc8))
+* per-user dashboard widget ordering and visibility ([980b6f2](https://github.com/Novanglus96/LenoreFin/commit/980b6f2f25198d6fd1c13e3696e5479f0b19d115))
+* per-user graph widget config (name, type, tag, filters) ([eb2645a](https://github.com/Novanglus96/LenoreFin/commit/eb2645a031375260327aaa6299d9207213e46205))
+
+# [1.5.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.4...v1.5.0-alpha.5) (2026-05-26)
+
+
+### Bug Fixes
+
+* darken mobile action panel background for better contrast ([22ee69f](https://github.com/Novanglus96/LenoreFin/commit/22ee69fe6cc35432a36da9daad040ee2721343c0))
+* propagate is_favorite through DTO, service, and mapper layers ([60ef26a](https://github.com/Novanglus96/LenoreFin/commit/60ef26a3448285bd184dd68f4183e5bcc70be939))
+* replace combined chip with mdi-layers icon for parent accounts ([8083ec7](https://github.com/Novanglus96/LenoreFin/commit/8083ec7733c02708c7bed09520590ae6f8c0f8a5))
+* use v-model:opened on v-list to correctly auto-expand FAVORITES group ([4d6cba2](https://github.com/Novanglus96/LenoreFin/commit/4d6cba290a0cc8927408f4d574df2d73e2e3d38b))
+
+
+### Features
+
+* add account favorites with FAVORITES menu section and header toggle ([98126c0](https://github.com/Novanglus96/LenoreFin/commit/98126c0ed1ce45136f984545003041bcc7b0cd3c))
+* add account favorites with star icon and priority sort in menu ([9c8e1bd](https://github.com/Novanglus96/LenoreFin/commit/9c8e1bde47f604006b8c96a51997712773570003))
+* add mobile action bottom sheet on account header name tap ([3143a38](https://github.com/Novanglus96/LenoreFin/commit/3143a38ffac11a1277cefdfccf61530aae751061))
+* auto-expand FAVORITES group on menu load when favorites exist ([3678d69](https://github.com/Novanglus96/LenoreFin/commit/3678d6972ea51f26e8e5fe6c4824146c00c0eb3e))
+* replace bottom sheet with inline expand panel for mobile account actions ([3e13222](https://github.com/Novanglus96/LenoreFin/commit/3e13222d0272a3d0a3cde276c165ec469d7fe45c))
+
+# [1.5.0-alpha.4](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.3...v1.5.0-alpha.4) (2026-05-26)
+
+
+### Features
+
+* add days remaining until budget reset to budget widget ([#154](https://github.com/Novanglus96/LenoreFin/issues/154)) ([9d03371](https://github.com/Novanglus96/LenoreFin/commit/9d03371e1d116a81f496e088dd2a9674bd26cdb1))
+
+# [1.5.0-alpha.3](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.2...v1.5.0-alpha.3) (2026-05-26)
+
+
+### Bug Fixes
+
+* convert note_text to TextField and remove frontend 254-char limit ([#153](https://github.com/Novanglus96/LenoreFin/issues/153)) ([6527395](https://github.com/Novanglus96/LenoreFin/commit/6527395e745401f9a119fe6cbf1ad8eb0186d8ec))
+
+# [1.5.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.5.0-alpha.1...v1.5.0-alpha.2) (2026-05-26)
+
+
+### Features
+
+* add 1st-of-month balance flag to account forecast widget ([#152](https://github.com/Novanglus96/LenoreFin/issues/152)) ([b64f9ce](https://github.com/Novanglus96/LenoreFin/commit/b64f9cec29f2e3e681924fc9ef4b148bae5966c1))
+
+# [1.5.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.4.3-alpha.1...v1.5.0-alpha.1) (2026-05-26)
+
+
+### Features
+
+* add toggleable trend line to account forecast widget ([#151](https://github.com/Novanglus96/LenoreFin/issues/151)) ([b1d4c97](https://github.com/Novanglus96/LenoreFin/commit/b1d4c978a9b01275fdc3bb70e9a64f9a75a42713))
+
+## [1.4.3-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.4.2...v1.4.3-alpha.1) (2026-05-22)
+
+
+### Bug Fixes
+
+* anchor account forecast y-axis to $0 for consistent scale ([0c2efe9](https://github.com/Novanglus96/LenoreFin/commit/0c2efe9bc0795a90a784eddd7ceaf6460be66311))
+* combined chip display and reminder conversion race condition ([5cb92f1](https://github.com/Novanglus96/LenoreFin/commit/5cb92f125fca04a276284b1de29fdcd90cd6ae85))
+* parse version tag to determine release type for Reddit announcements ([#145](https://github.com/Novanglus96/LenoreFin/issues/145)) ([f60a690](https://github.com/Novanglus96/LenoreFin/commit/f60a6900dc6e0af2ee99a1b2adc27ad2af237094))
+
+# [1.4.0-alpha.47](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.46...v1.4.0-alpha.47) (2026-05-22)
 ## [1.4.2](https://github.com/Novanglus96/LenoreFin/compare/v1.4.1...v1.4.2) (2026-05-22)
 
 
 ### Bug Fixes
 
+* anchor account forecast y-axis to $0 for consistent scale ([0c2efe9](https://github.com/Novanglus96/LenoreFin/commit/0c2efe9bc0795a90a784eddd7ceaf6460be66311))
+* combined chip display and reminder conversion race condition ([5cb92f1](https://github.com/Novanglus96/LenoreFin/commit/5cb92f125fca04a276284b1de29fdcd90cd6ae85))
+
+# [1.4.0-alpha.46](https://github.com/Novanglus96/LenoreFin/compare/v1.4.0-alpha.45...v1.4.0-alpha.46) (2026-05-22)
 * anchor account forecast y-axis to $0 for consistent scale ([a306226](https://github.com/Novanglus96/LenoreFin/commit/a30622601d4a9b739b3bbbf4bfe2289a7d8de7ed))
 * combined chip display and reminder conversion race condition ([b9507de](https://github.com/Novanglus96/LenoreFin/commit/b9507deb1d25e83cea5ef8d33b01922df97cc9c2))
 
@@ -11,6 +413,7 @@
 
 ### Bug Fixes
 
+* parse version tag to determine release type for Reddit announcements ([#145](https://github.com/Novanglus96/LenoreFin/issues/145)) ([f60a690](https://github.com/Novanglus96/LenoreFin/commit/f60a6900dc6e0af2ee99a1b2adc27ad2af237094))
 * restore UserAdmin fieldsets by correcting MRO in RestrictedUserAdmin ([#147](https://github.com/Novanglus96/LenoreFin/issues/147)) ([fb1b165](https://github.com/Novanglus96/LenoreFin/commit/fb1b1658b45887be2287b6889b31bcf6b9f40737))
 
 # [1.4.0](https://github.com/Novanglus96/LenoreFin/compare/v1.3.1...v1.4.0) (2026-05-22)

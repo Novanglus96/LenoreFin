@@ -12,6 +12,9 @@ export default defineConfig({
     vue(),
     vueDevTools(),
     VitePWA({
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.js",
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "logov2.png", "apple-touch-icon.png"],
       manifest: {
@@ -28,22 +31,8 @@ export default defineConfig({
           { src: "android-chrome-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
-      workbox: {
+      injectManifest: {
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api\//, /^\/admin/, /^\/static\//],
-        runtimeCaching: [
-          {
-            urlPattern: /^\/api\//,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "api-cache",
-              networkTimeoutSeconds: 10,
-              expiration: { maxEntries: 100, maxAgeSeconds: 3600 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
       },
     }),
     createHtmlPlugin({
@@ -65,6 +54,11 @@ export default defineConfig({
       "/media": {
         target: "https://back-dev.danielleandjohn.love", // Serve media files from backend in dev
         changeOrigin: true,
+      },
+      "/ws": {
+        target: "wss://back-dev.danielleandjohn.love",
+        changeOrigin: true,
+        ws: true,
       },
     },
   },

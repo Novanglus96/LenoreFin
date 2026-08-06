@@ -4,3 +4,6 @@ from accounts.services.account_financials import (
     list_accounts_with_financials as list_accounts_with_financials,
 )
 from accounts.services.forecast import get_account_forecast as get_account_forecast
+from accounts.services.investment_performance import (
+    calculate_investment_return as calculate_investment_return,
+)

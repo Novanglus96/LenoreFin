@@ -61,37 +61,40 @@
                 {{ budget.budget.name }}
               </div>
               <v-progress-circular
-                :model-value="budget.remaining_percentage"
+                :model-value="100 - budget.used_percentage"
                 :size="100"
                 :width="12"
                 :color="graphColor(budget.used_percentage)"
                 :bg-color="graphBGColor(budget.used_percentage)"
               >
-                {{
-                  formatCurrency(
-                    parseFloat(budget.budget.amount) +
-                      parseFloat(budget.budget.roll_over_amt) -
-                      parseFloat(Math.abs(budget.used_total)),
-                  )
-                }}
-                <br />
-                {{
-                  parseFloat(budget.budget.amount) +
-                    parseFloat(budget.budget.roll_over_amt) -
-                    parseFloat(Math.abs(budget.used_total)) <
-                  0
-                    ? "over"
-                    : "left"
-                }}
+                <span
+                  :style="
+                    remainingAmt(budget) < 0
+                      ? 'color: rgba(var(--v-theme-error), var(--v-high-emphasis-opacity))'
+                      : 'color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity))'
+                  "
+                >
+                  {{ formatCurrency(remainingAmt(budget)) }}
+                  <br />
+                  {{ remainingAmt(budget) < 0 ? "over" : "left" }}
+                </span>
               </v-progress-circular>
               <div class="text-subtitle-2 text-center">
                 Budget:
-                {{
-                  formatCurrency(
-                    parseFloat(budget.budget.amount) +
-                      parseFloat(budget.budget.roll_over_amt),
-                  )
-                }}
+                <span
+                  :style="
+                    remainingAmt(budget) < 0
+                      ? 'color: rgba(var(--v-theme-error), var(--v-high-emphasis-opacity))'
+                      : 'color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity))'
+                  "
+                >
+                  {{
+                    formatCurrency(
+                      parseFloat(budget.budget.amount) +
+                        parseFloat(budget.budget.roll_over_amt),
+                    )
+                  }}
+                </span>
                 <span
                   :class="
                     budget.budget.roll_over_amt < 0
@@ -103,8 +106,8 @@
                   ({{ formatCurrency(budget.budget.roll_over_amt) }})
                 </span>
               </div>
-              <div class="text-subtitle-2 text-center">
-                Used: {{ formatCurrency(Math.abs(budget.used_total)) }}
+              <div class="text-caption text-center text-medium-emphasis mt-1">
+                Resets: {{ daysUntilReset(budget.budget.next_start) }}
               </div>
             </v-card-text>
           </v-card>
@@ -161,6 +164,9 @@
               }})
             </template>
           </v-progress-linear>
+          <div class="text-caption text-medium-emphasis mt-1 text-right">
+            Resets: {{ daysUntilReset(budget.budget.next_start) }}
+          </div>
         </v-list-item>
       </v-list>
     </v-card-text>
@@ -188,6 +194,17 @@
   const { budgets, isLoading } = useBudgets(props.widget);
   const showAddForm = ref(false);
 
+  const daysUntilReset = nextStart => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const reset = new Date(nextStart + "T00:00:00");
+    const days = Math.ceil((reset - today) / (1000 * 60 * 60 * 24));
+    if (days < 0) return "N/A";
+    if (days === 0) return "today";
+    if (days === 1) return "1 day";
+    return `${days} days`;
+  };
+
   const formatCurrency = value => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -196,6 +213,11 @@
       maximumFractionDigits: 2,
     }).format(value);
   };
+  const remainingAmt = budget =>
+    parseFloat(budget.budget.amount) +
+    parseFloat(budget.budget.roll_over_amt) -
+    parseFloat(Math.abs(budget.used_total));
+
   const graphColor = value => {
     const thresholds = [
       { limit: 10, color: "green" },
@@ -224,11 +246,11 @@
       { limit: 30, color: "green-lighten-3" },
       { limit: 40, color: "green-lighten-3" },
       { limit: 50, color: "green-lighten-3" },
-      { limit: 60, color: "yellow" },
-      { limit: 70, color: "yellow-lighten-3" },
-      { limit: 80, color: "yellow-lighten-3" },
-      { limit: 90, color: "yellow-lighten-3" },
-      { limit: 99, color: "yellow-lighten-3" },
+      { limit: 60, color: "yellow-lighten-4" },
+      { limit: 70, color: "yellow-lighten-4" },
+      { limit: 80, color: "yellow-lighten-4" },
+      { limit: 90, color: "yellow-lighten-4" },
+      { limit: 99, color: "yellow-lighten-4" },
     ];
 
     for (const { limit, color } of thresholds) {

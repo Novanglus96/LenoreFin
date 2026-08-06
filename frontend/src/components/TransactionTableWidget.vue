@@ -10,14 +10,18 @@
         >
           <template v-slot:activator="{ props }">
             <v-btn
-              :icon="hasActiveFilters ? 'mdi-filter' : 'mdi-filter-outline'"
+              icon
               flat
               variant="plain"
               v-bind="props"
               @click="showFilters = !showFilters"
               :color="hasActiveFilters ? 'primary' : undefined"
               :disabled="isActive"
-            ></v-btn>
+            >
+              <AnimatedIcon
+                :icon="hasActiveFilters ? 'mdi-filter' : 'mdi-filter-outline'"
+              />
+            </v-btn>
           </template>
         </v-tooltip>
         <v-tooltip
@@ -37,6 +41,13 @@
             ></v-btn>
           </template>
         </v-tooltip>
+        <!-- Opened from the single Add Transaction form, not from this toolbar. -->
+        <MultipleTransactionAddForm
+          v-if="props.variant === 'account' && authStore.isFullAccess && !isParentAccount"
+          v-model="multipleAddDialog"
+          @update-dialog="updateMultipleAddDialog"
+          :account_id="props.accountID"
+        />
         <FileImportForm
           v-model="importFileDialog"
           @update-dialog="updateImportFileDialog"
@@ -190,13 +201,14 @@
           }"
         >
           <div class="text-center">
+            <!-- Interest projections have no action available, so they render
+                 without the selection badge rather than looking clickable. -->
             <v-btn
-              @click="toggleSelect(internalItem)"
               variant="plain"
               icon
               block
-              :disabled="!isSelectable(internalItem.raw)"
-              v-if="!isSelectable(internalItem.raw)"
+              disabled
+              v-if="!isActionable(internalItem.raw)"
             >
               <v-icon
                 icon="mdi-alpha-p-circle"
@@ -227,14 +239,13 @@
               location="right top"
               :offset-x="6"
               :offset-y="10"
-              v-if="isSelectable(internalItem.raw)"
+              v-if="isActionable(internalItem.raw)"
             >
               <v-btn
                 @click="toggleSelect(internalItem)"
                 variant="plain"
                 icon
                 block
-                :disabled="!isSelectable(internalItem.raw)"
               >
                 <v-icon
                   icon="mdi-alpha-p-circle"
@@ -296,7 +307,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             <v-tooltip text="Image(s)" location="top">
               <template v-slot:activator="{ props }">
@@ -371,7 +382,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             {{ formatDate(item.transaction_date, true) }}
           </div>
@@ -383,7 +394,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             <span :class="getClassForMoney(item.pretty_total, item.status.id)">
               {{ formatCurrency(item.pretty_total) }}
@@ -397,7 +408,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             <span
               :class="getClassForMoney(item.balance, item.status.id)"
@@ -420,7 +431,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             <span>{{ item.description }}</span>
           </div>
@@ -432,7 +443,7 @@
           <div
             class="w-100 h-100 d-flex align-center text-primary text-subtitle-2"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             {{ processTags(item.tags) }}
           </div>
@@ -444,14 +455,14 @@
           <div
             class="w-100 h-100 d-flex align-center text-altAccent"
             style="cursor: pointer"
-            @click="item.id > -10000 ? toggleSelect(internalItem) : null"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             <span>{{ item.pretty_account }}</span>
           </div>
         </template>
         <!-- Mobile View -->
         <template v-slot:[`item.mobile`]="{ item, internalItem, toggleSelect }">
-          <div @click="item.id > -10000 ? toggleSelect(internalItem) : null">
+          <div @click="isActionable(item) ? toggleSelect(internalItem) : null">
             <v-container class="ma-0 pa-0 ga-0">
               <v-row dense class="ma-0 pa-0 ga-0">
                 <v-col class="ma-0 pa-0 ga-0" cols="3">
@@ -591,6 +602,7 @@
             v-model="transactionAddFormDialog"
             :isEdit="false"
             @update-dialog="updateAddDialog"
+            @open-multiple="openMultipleAddForm"
             :account_id="props.account"
             :passedFormData="blankForm"
           />
@@ -675,11 +687,7 @@
                 <v-tooltip text="Edit Transaction(s)" location="left" key="3">
                   <template v-slot:activator="{ props }">
                     <v-btn
-                      :icon="
-                        selected_transactions.length > 1
-                          ? 'mdi-calendar-edit'
-                          : 'mdi-invoice-text-edit'
-                      "
+                      icon
                       :disabled="
                         (selected_transactions &&
                           selected_transactions.length === 0) ||
@@ -689,7 +697,16 @@
                       @click="displayEditForm"
                       v-bind="props"
                       key="3"
-                    ></v-btn>
+                    >
+                      <AnimatedIcon
+                        transition="scale"
+                        :icon="
+                          selected_transactions.length > 1
+                            ? 'mdi-calendar-edit'
+                            : 'mdi-invoice-text-edit'
+                        "
+                      />
+                    </v-btn>
                   </template>
                 </v-tooltip>
               </div>
@@ -707,6 +724,7 @@
                         clickClearTransaction(
                           selected_transactions,
                           selected_reminders,
+                          selected_forecasts,
                         )
                       "
                       v-bind="props"
@@ -736,6 +754,8 @@
 <script setup>
   import { ref, defineProps, computed, watch } from "vue";
   import TransactionForm from "@/components/TransactionForm.vue";
+  import MultipleTransactionAddForm from "@/components/MultipleTransactionAddForm.vue";
+  import AnimatedIcon from "@/components/AnimatedIcon.vue";
   import FileImportForm from "@/components/FileImportForm.vue";
   import { useTransactionsStore } from "@/stores/transactions";
   import MultipleTransactionEditForm from "@/components/MultipleTransactionEditForm.vue";
@@ -750,7 +770,8 @@
   import { useTags } from "@/composables/tagsComposable";
   const { isOnline } = useOnlineStatus();
 
-  const { removeTransaction, clearTransaction } = useTransactions();
+  const { removeTransaction, clearTransaction, convertForecastTransactions } =
+    useTransactions();
   const { addReminderTransaction } = useReminders();
   const authStore = useAuthStore();
   const { smAndDown, mdAndUp } = useDisplay();
@@ -821,6 +842,7 @@
   const showMultipleTransactionEditDialog = ref(false);
   const transactionAddFormDialog = ref(false);
   const importFileDialog = ref(false);
+  const multipleAddDialog = ref(false);
   const transactionEditFormDialog = ref(false);
   const deleteDisable = ref(true);
   const editDisable = ref(true);
@@ -939,8 +961,10 @@
 
   const selected_transactions = ref([]);
   const selected_reminders = ref([]);
+  // Computed forecast rows (cc interest/payments, savings interest). Held apart
+  // from selected_reminders because they convert through a different endpoint.
+  const selected_forecasts = ref([]);
   const selected_all = ref([]);
-  const isSelectable = item => item.id > -10000;
 
   const headers = ref([
     { title: "", key: "status", width: "72px" },
@@ -988,12 +1012,33 @@
   const uncheck_all = () => {
     selected_transactions.value = [];
     selected_reminders.value = [];
+    selected_forecasts.value = [];
     selected_all.value = [];
     open.value = false;
   };
+  // Simulated rows are emitted with negated ids: reminder rows as -id, computed
+  // forecast rows as -id - 10000. This undoes the forecast offset to recover the
+  // ForecastCacheTransaction pk the convert endpoint expects.
+  const toForecastId = displayId => -displayId - 10000;
+
+  // Of the computed forecast rows, only credit-card payments (transfer type)
+  // can be converted. Interest projections -- savings/parent-group (income) and
+  // credit-card statement interest (expense) -- are excluded: they are derived
+  // from the balance rather than netted against existing interest transactions,
+  // so converting one would be recomputed and re-added on the next rebuild.
+  const isForecastRow = item => item.id <= -10000;
+  const isConvertibleForecast = item =>
+    isForecastRow(item) && item.transaction_type?.slug === "transfer";
+
+  // A row is actionable when something can be done with it: real transactions
+  // clear, reminder rows add, and cc payment forecasts convert.
+  const isActionable = item =>
+    !isForecastRow(item) || isConvertibleForecast(item);
+
   const rowChanged = newSelection => {
     selected_transactions.value = [];
     selected_reminders.value = [];
+    selected_forecasts.value = [];
     for (const selectedrow of newSelection) {
       if (selectedrow.id > 0) {
         selected_transactions.value.push(selectedrow.id);
@@ -1004,9 +1049,14 @@
           transaction_date: selectedrow.transaction_date,
         };
         selected_reminders.value.push(reminder_trans_obj);
+      } else if (isConvertibleForecast(selectedrow)) {
+        selected_forecasts.value.push(toForecastId(selectedrow.id));
       }
     }
-    if (selected_reminders.value.length == 0) {
+    if (
+      selected_reminders.value.length == 0 &&
+      selected_forecasts.value.length == 0
+    ) {
       deleteDisable.value = false;
       editDisable.value = false;
     } else {
@@ -1015,7 +1065,8 @@
     }
     if (
       selected_transactions.value.length > 0 ||
-      selected_reminders.value.length > 0
+      selected_reminders.value.length > 0 ||
+      selected_forecasts.value.length > 0
     ) {
       clearDisable.value = false;
       open.value = true;
@@ -1031,7 +1082,11 @@
     clearFilters();
   };
 
-  const clickClearTransaction = async (transactions, reminderTransactions) => {
+  const clickClearTransaction = async (
+    transactions,
+    reminderTransactions,
+    forecastTransactions,
+  ) => {
     if (transactions.length > 0) {
       clearTransaction(transactions);
     }
@@ -1040,8 +1095,14 @@
     reminderTransactions.forEach(transaction => {
       addReminderTransaction(transaction);
     });
+    // Sent as one batch -- the endpoint takes a list, unlike the per-row
+    // reminder conversion above.
+    if (forecastTransactions.length > 0) {
+      convertForecastTransactions(forecastTransactions);
+    }
     selected_transactions.value = [];
     selected_reminders.value = [];
+    selected_forecasts.value = [];
     clearDisable.value = true;
     clearFilters();
   };
@@ -1049,6 +1110,16 @@
   const updateAddDialog = () => {
     transactionAddFormDialog.value = false;
     clearFilters();
+  };
+
+  const updateMultipleAddDialog = () => {
+    multipleAddDialog.value = false;
+  };
+
+  // TransactionForm closes itself before emitting, so this only has to open
+  // the batch form.
+  const openMultipleAddForm = () => {
+    multipleAddDialog.value = true;
   };
 
   const updateImportFileDialog = () => {

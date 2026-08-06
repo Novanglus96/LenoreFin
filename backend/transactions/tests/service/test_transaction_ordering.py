@@ -17,10 +17,18 @@ from transactions.api.dependencies.transaction_utilities import (
 from transactions.api.dependencies.get_transactions_by_account import (
     get_transactions_by_account,
 )
+from utils.dates import get_todays_date_timezone_adjusted
 
 AUTH = {"Authorization": "Bearer test-api-key"}
 
-TODAY = date(2026, 6, 1)
+# Must track the real current date, and must use the same timezone-adjusted
+# helper the code under test uses. The forecast path keeps only rows dated on or
+# after today, so a hardcoded date silently stops exercising it the moment that
+# date passes: this was pinned to 2026-06-01 and
+# test_forecast_list_endpoint_includes_forecast_transactions began failing on
+# 2026-06-02, when "TOMORROW" became yesterday and the row was filtered out as
+# past. Anything anchored to a literal date here is a time bomb.
+TODAY = get_todays_date_timezone_adjusted()
 
 
 # ---------------------------------------------------------------------------

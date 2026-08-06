@@ -1,5 +1,6 @@
 from ninja import Router
 from ninja.errors import HttpError
+from django.db.models import Q
 from administration.models import Message
 from administration.api.schemas.message import (
     MessageIn,
@@ -19,6 +20,15 @@ error_logger = logging.getLogger("error")
 task_logger = logging.getLogger("task")
 
 message_router = Router(tags=["Messages"])
+
+
+def _safe_user(request):
+    """Return request.user only when it's a real persisted User (integer PK)."""
+    try:
+        user = request.user
+        return user if isinstance(getattr(user, "pk", None), int) else None
+    except AttributeError:
+        return None
 
 
 @message_router.post("/create", auth=FullAccessAuth())
@@ -93,7 +103,8 @@ def update_messages(request, message_id: int, payload: AllMessage):
         success: True
     """
     try:
-        messages = Message.objects.all()
+        user = _safe_user(request)
+        messages = Message.objects.filter(Q(user__isnull=True) | Q(user=user)) if user else Message.objects.filter(user__isnull=True)
 
         for message in messages:
             message.unread = payload.unread
@@ -180,9 +191,9 @@ def delete_messages(request, message_id: int):
     """
 
     try:
-        messages = Message.objects.all()
-        for message in messages:
-            message.delete()
+        user = _safe_user(request)
+        qs = Message.objects.filter(Q(user__isnull=True) | Q(user=user)) if user else Message.objects.filter(user__isnull=True)
+        qs.delete()
         api_logger.info("All Messages deleted")
         return {"success": True}
     except Exception as e:
@@ -206,7 +217,7 @@ def list_messages(request):
     """
 
     try:
-        message_list_object = get_message_list()
+        message_list_object = get_message_list(user=_safe_user(request))
         api_logger.debug("Message list retrieved")
         return message_list_object
     except Exception as e:

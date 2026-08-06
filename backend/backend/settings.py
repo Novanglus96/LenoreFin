@@ -37,6 +37,7 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "import_export",
     "unfold",
     "unfold.contrib.filters",
@@ -61,6 +62,7 @@ INSTALLED_APPS = [
     "dbbackup",
     "ninja",
     "django_q",
+    "channels",
 ]
 
 MIDDLEWARE = [
@@ -93,6 +95,18 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
+ASGI_APPLICATION = "backend.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", int(os.environ.get("REDIS_PORT", 6379)))],
+            "capacity": 100,
+            "expiry": 60,
+        },
+    }
+}
 
 
 # Database

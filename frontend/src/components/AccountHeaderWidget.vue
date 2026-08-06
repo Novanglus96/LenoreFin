@@ -46,8 +46,13 @@
                   class="mr-1"
                   aria-hidden="true"
                 />
-                <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" label class="mr-1">combined</v-chip>
-                <v-tooltip text="Edit Account" location="top" v-if="authStore.isFullAccess">
+                <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-icon icon="mdi-layers" color="secondary" size="small" class="mr-1" v-bind="props" />
+                  </template>
+                </v-tooltip>
+                <!-- Desktop: tooltip triggers edit on click -->
+                <v-tooltip text="Edit Account" location="top" v-if="authStore.isFullAccess && !smAndDown">
                   <template v-slot:activator="{ props }">
                     <span
                       class="mx-1"
@@ -66,7 +71,15 @@
                     </span>
                   </template>
                 </v-tooltip>
-                <span class="mx-1" v-else>
+                <!-- Mobile full-access: plain name text (chevron is the toggle) -->
+                <span class="mx-1 flex-grow-1" v-if="authStore.isFullAccess && smAndDown">
+                  {{
+                    account.active
+                      ? account.account_name
+                      : account.account_name + " (Inactive)"
+                  }}
+                </span>
+                <span class="mx-1" v-if="!authStore.isFullAccess">
                   {{
                     account.active
                       ? account.account_name
@@ -78,16 +91,41 @@
                   :account="account"
                   @update-dialog="updateEditDialog"
                 />
+                <!-- Desktop inline action buttons -->
                 <v-tooltip
-                  :text="account.active ? 'Delete Account' : 'Enable Account'"
+                  :text="account.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'"
                   location="top"
-                  v-if="authStore.isFullAccess"
+                  v-if="!smAndDown"
                 >
                   <template v-slot:activator="{ props }">
                     <v-btn
-                      :icon="
-                        account.active ? 'mdi-delete' : 'mdi-delete-restore'
-                      "
+                      icon
+                      :color="account.is_favorite ? 'amber' : undefined"
+                      flat
+                      variant="text"
+                      @click="toggleFavorite(account.id)"
+                      v-bind="props"
+                      size="small"
+                      class="mx-0"
+                      :disabled="!isOnline"
+                    >
+                      <AnimatedIcon
+                        transition="scale"
+                        :icon="
+                          account.is_favorite ? 'mdi-star' : 'mdi-star-outline'
+                        "
+                      />
+                    </v-btn>
+                  </template>
+                </v-tooltip>
+                <v-tooltip
+                  :text="account.active ? 'Delete Account' : 'Enable Account'"
+                  location="top"
+                  v-if="authStore.isFullAccess && !smAndDown"
+                >
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      icon
                       flat
                       variant="text"
                       @click="deleteDialog = true"
@@ -95,15 +133,85 @@
                       size="small"
                       class="mx-0"
                       :disabled="!isOnline"
-                    />
+                    >
+                      <AnimatedIcon
+                        transition="scale"
+                        :icon="
+                          account.active ? 'mdi-delete' : 'mdi-delete-restore'
+                        "
+                      />
+                    </v-btn>
                   </template>
                 </v-tooltip>
+                <!-- Mobile chevron toggle. Up and down are the same glyph, so
+                     this rotates one icon rather than cross-fading two. -->
+                <v-btn
+                  v-if="smAndDown"
+                  icon
+                  flat
+                  variant="text"
+                  size="small"
+                  class="mx-0"
+                  @click="actionDrawer = !actionDrawer"
+                >
+                  <v-icon
+                    icon="mdi-chevron-down"
+                    :class="[
+                      'chevron-toggle',
+                      { 'chevron-toggle--flipped': actionDrawer },
+                    ]"
+                  ></v-icon>
+                </v-btn>
                 <DeleteAccountForm
                   v-model="deleteDialog"
                   :account="account"
                   @update-dialog="updateDeleteDialog"
                 />
               </v-card>
+              <!-- Mobile inline action expand panel -->
+              <v-expand-transition>
+                <v-card
+                  v-if="actionDrawer && smAndDown"
+                  class="mx-1 mt-0 bg-primary-darken-2"
+                  variant="outlined"
+                  rounded="0 0 4 4"
+                >
+                  <v-card-text class="d-flex justify-center ga-3 py-2 px-2">
+                    <v-btn
+                      v-if="authStore.isFullAccess"
+                      variant="tonal"
+                      color="primary"
+                      prepend-icon="mdi-pencil"
+                      size="small"
+                      @click="actionDrawer = false; editDialog = true"
+                      :disabled="!isOnline"
+                    >
+                      Edit
+                    </v-btn>
+                    <v-btn
+                      variant="tonal"
+                      :color="account.is_favorite ? 'amber' : undefined"
+                      :prepend-icon="account.is_favorite ? 'mdi-star' : 'mdi-star-outline'"
+                      size="small"
+                      @click="toggleFavorite(account.id)"
+                      :disabled="!isOnline"
+                    >
+                      {{ account.is_favorite ? 'Unfavorite' : 'Favorite' }}
+                    </v-btn>
+                    <v-btn
+                      v-if="authStore.isFullAccess"
+                      variant="tonal"
+                      color="error"
+                      :prepend-icon="account.active ? 'mdi-delete' : 'mdi-delete-restore'"
+                      size="small"
+                      @click="actionDrawer = false; deleteDialog = true"
+                      :disabled="!isOnline"
+                    >
+                      {{ account.active ? 'Delete' : 'Enable' }}
+                    </v-btn>
+                  </v-card-text>
+                </v-card>
+              </v-expand-transition>
             </v-col>
             <v-col cols="2" v-if="!smAndDown"></v-col>
           </v-row>
@@ -223,6 +331,45 @@
               </div>
               <div class="text-primary-lighten-2">available credit</div>
             </v-col>
+            <!-- Investment: estimated annual return -->
+            <v-col
+              v-if="account.account_type.slug === 'investment'"
+              class="text-center align-content-end"
+            >
+              <div class="text-white font-weight-bold text-body">
+                <span v-if="investmentReturn && investmentReturn.sufficient_data">
+                  {{ investmentReturn.rate > 0 ? '+' : '' }}{{ investmentReturn.rate.toFixed(2) }}%
+                  <v-tooltip
+                    v-if="account.calculate_interest && authStore.isFullAccess && isOnline"
+                    location="bottom"
+                    text="Apply to forecast APY"
+                  >
+                    <template v-slot:activator="{ props: tipProps }">
+                      <v-icon
+                        size="x-small"
+                        icon="mdi-chart-line-variant"
+                        color="accent"
+                        class="cursor-pointer"
+                        v-bind="tipProps"
+                        @click="applyReturnToForecast()"
+                      />
+                    </template>
+                  </v-tooltip>
+                </span>
+                <span v-else class="text-primary-lighten-2">—</span>
+              </div>
+              <div class="text-primary-lighten-2">
+                est. annual return
+                <v-tooltip
+                  location="bottom"
+                  :text="`Based on last ${investmentReturn?.period_months ?? 12} months (${investmentReturn?.data_points ?? 0} transactions)`"
+                >
+                  <template v-slot:activator="{ props: tipProps }">
+                    <v-icon size="x-small" icon="mdi-information-outline" v-bind="tipProps" />
+                  </template>
+                </v-tooltip>
+              </div>
+            </v-col>
           </v-row>
           <!-- Small Display View -->
           <v-row density="compact" v-if="smAndDown">
@@ -270,13 +417,44 @@
                 variant="text"
                 :append-icon="!showMore ? 'mdi-chevron-down' : 'mdi-chevron-up'"
                 @click="toggleMore"
-                v-if="account.account_type.id == 1"
+                v-if="account.account_type.id == 1 || account.account_type.slug === 'investment'"
               >
                 {{ !showMore ? "more" : "less" }}
               </v-btn>
             </v-col>
           </v-row>
         </v-container>
+        <v-expand-transition>
+          <v-container fluid v-if="account.account_type.slug === 'investment' && showMore">
+            <v-row density="compact">
+              <v-col class="text-center align-content-end">
+                <div class="text-white font-weight-bold text-body">
+                  <span v-if="investmentReturn && investmentReturn.sufficient_data">
+                    {{ investmentReturn.rate > 0 ? '+' : '' }}{{ investmentReturn.rate.toFixed(2) }}%
+                    <v-tooltip
+                      v-if="account.calculate_interest && authStore.isFullAccess && isOnline"
+                      location="bottom"
+                      text="Apply to forecast APY"
+                    >
+                      <template v-slot:activator="{ props: tipProps }">
+                        <v-icon
+                          size="x-small"
+                          icon="mdi-chart-line-variant"
+                          color="accent"
+                          class="cursor-pointer"
+                          v-bind="tipProps"
+                          @click="applyReturnToForecast()"
+                        />
+                      </template>
+                    </v-tooltip>
+                  </span>
+                  <span v-else class="text-primary-lighten-2">—</span>
+                </div>
+                <div class="text-primary-lighten-2">est. annual return</div>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-expand-transition>
         <v-expand-transition>
           <v-container fluid v-if="account.account_type.id == 1 && showMore">
             <v-row density="compact" class="">
@@ -376,14 +554,15 @@
   </div>
 </template>
 <script setup>
-  import { defineProps, ref } from "vue";
-  import { useAccountByID } from "@/composables/accountsComposable";
+  import { defineProps, ref, computed } from "vue";
+  import { useAccountByID, useAccounts, useInvestmentReturn } from "@/composables/accountsComposable";
   import EditAccountForm from "./EditAccountForm.vue";
   import AdjustBalanceForm from "./AdjustBalanceForm.vue";
   import DeleteAccountForm from "./DeleteAccountForm.vue";
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
   import RewardsGraphs from "./RewardsGraphs.vue";
+  import AnimatedIcon from "./AnimatedIcon.vue";
   import { useAuthStore } from "@/stores/auth";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
   const { isOnline } = useOnlineStatus();
@@ -393,6 +572,7 @@
   const adjBalDialog = ref(false);
   const editDialog = ref(false);
   const deleteDialog = ref(false);
+  const actionDrawer = ref(false);
   const showMore = ref(false);
   const showRewardGraph = ref(false);
 
@@ -400,7 +580,26 @@
     account: Array,
   });
 
-  const { account } = useAccountByID(props.account);
+  const { account, editAccount } = useAccountByID(props.account);
+  const { toggleFavorite } = useAccounts();
+
+  const accountId = computed(() =>
+    Array.isArray(props.account) ? props.account[0] : props.account,
+  );
+  const isInvestment = computed(
+    () => account.value?.account_type?.slug === "investment",
+  );
+  const { investmentReturn } = useInvestmentReturn(
+    computed(() => (isInvestment.value ? accountId.value : null)),
+  );
+
+  async function applyReturnToForecast() {
+    if (!investmentReturn.value?.sufficient_data) return;
+    await editAccount({
+      id: accountId.value,
+      annual_rate: investmentReturn.value.rate,
+    });
+  }
 
   const updateAdjBalDialog = value => {
     adjBalDialog.value = value;
@@ -489,6 +688,19 @@
   @media (max-width: 600px) {
     .bank-watermark {
       display: none;
+    }
+  }
+  .chevron-toggle {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .chevron-toggle--flipped {
+    transform: rotate(180deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chevron-toggle {
+      transition-duration: 0.01ms;
     }
   }
 </style>
