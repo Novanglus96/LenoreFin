@@ -13,7 +13,7 @@
       <v-tooltip location="bottom" text="Highlight lowest balance after today">
         <template v-slot:activator="{ props: tipProps }">
           <v-btn
-            :icon="showMinHighlight ? 'mdi-flag' : 'mdi-flag-outline'"
+            icon
             flat
             size="small"
             :color="showMinHighlight ? 'error' : undefined"
@@ -21,7 +21,11 @@
             :disabled="isActive"
             v-bind="tipProps"
             @click="toggleMinHighlight"
-          ></v-btn>
+          >
+            <AnimatedIcon
+              :icon="showMinHighlight ? 'mdi-flag' : 'mdi-flag-outline'"
+            />
+          </v-btn>
         </template>
       </v-tooltip>
       <v-tooltip location="bottom" text="Show trend line">
@@ -109,6 +113,7 @@
 <script setup>
   import { ref, defineProps, defineEmits, computed } from "vue";
   import ApexChart from "vue3-apexcharts";
+  import AnimatedIcon from "@/components/AnimatedIcon.vue";
   import { useAccountForecasts } from "@/composables/forecastsComposable";
   import { useMainStore } from "@/stores/main";
   import { useDisplay } from "vuetify";

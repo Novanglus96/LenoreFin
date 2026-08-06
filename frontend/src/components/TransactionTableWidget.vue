@@ -10,14 +10,18 @@
         >
           <template v-slot:activator="{ props }">
             <v-btn
-              :icon="hasActiveFilters ? 'mdi-filter' : 'mdi-filter-outline'"
+              icon
               flat
               variant="plain"
               v-bind="props"
               @click="showFilters = !showFilters"
               :color="hasActiveFilters ? 'primary' : undefined"
               :disabled="isActive"
-            ></v-btn>
+            >
+              <AnimatedIcon
+                :icon="hasActiveFilters ? 'mdi-filter' : 'mdi-filter-outline'"
+              />
+            </v-btn>
           </template>
         </v-tooltip>
         <v-tooltip
@@ -683,11 +687,7 @@
                 <v-tooltip text="Edit Transaction(s)" location="left" key="3">
                   <template v-slot:activator="{ props }">
                     <v-btn
-                      :icon="
-                        selected_transactions.length > 1
-                          ? 'mdi-calendar-edit'
-                          : 'mdi-invoice-text-edit'
-                      "
+                      icon
                       :disabled="
                         (selected_transactions &&
                           selected_transactions.length === 0) ||
@@ -697,7 +697,16 @@
                       @click="displayEditForm"
                       v-bind="props"
                       key="3"
-                    ></v-btn>
+                    >
+                      <AnimatedIcon
+                        transition="scale"
+                        :icon="
+                          selected_transactions.length > 1
+                            ? 'mdi-calendar-edit'
+                            : 'mdi-invoice-text-edit'
+                        "
+                      />
+                    </v-btn>
                   </template>
                 </v-tooltip>
               </div>
@@ -746,6 +755,7 @@
   import { ref, defineProps, computed, watch } from "vue";
   import TransactionForm from "@/components/TransactionForm.vue";
   import MultipleTransactionAddForm from "@/components/MultipleTransactionAddForm.vue";
+  import AnimatedIcon from "@/components/AnimatedIcon.vue";
   import FileImportForm from "@/components/FileImportForm.vue";
   import { useTransactionsStore } from "@/stores/transactions";
   import MultipleTransactionEditForm from "@/components/MultipleTransactionEditForm.vue";
