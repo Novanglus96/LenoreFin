@@ -43,6 +43,7 @@ def patch_delete_pattern():
          patch("reminders.signals.delete_pattern", return_value=None), \
          patch("transactions.signals.delete_pattern", return_value=None), \
          patch("transactions.api.views.transaction.delete_pattern", return_value=None), \
+         patch("transactions.services.forecast_conversion.delete_pattern", return_value=None), \
          patch("transactions.tasks.delete_pattern", return_value=None):
         yield
 

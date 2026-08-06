@@ -41,6 +41,13 @@ class TransactionList(Schema):
     transactions: List[int]
 
 
+# The class ForecastTransactionList is a schema for converting forecast
+# transactions. Ids are ForecastCacheTransaction pks, not the negated display
+# ids the transaction list emits for simulated rows.
+class ForecastTransactionList(Schema):
+    forecast_transactions: List[int]
+
+
 # The class MultiTransactionDate is a schema for editing dates of transactions.
 class MultiTranscationDate(Schema):
     transaction_ids: List[int]

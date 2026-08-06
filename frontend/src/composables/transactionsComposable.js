@@ -133,6 +133,30 @@ async function clearTransactionFunction(clearedTransaction) {
   }
 }
 
+// Takes ForecastCacheTransaction ids, not the negated display ids the table
+// shows for simulated rows -- see toForecastId in TransactionTableWidget.
+async function convertForecastTransactionsFunction(forecastIds) {
+  const mainstore = useMainStore();
+  let payload = {
+    forecast_transactions: forecastIds,
+  };
+  try {
+    const response = await apiClient.patch(
+      "/transactions/convert-forecast",
+      payload,
+    );
+    mainstore.showSnackbar(
+      forecastIds.length > 1
+        ? "Forecast transactions converted successfully!"
+        : "Forecast transaction converted successfully!",
+      "success",
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Forecast transaction not converted: ");
+  }
+}
+
 async function updateTransactionFunction(updatedTransaction) {
   const mainstore = useMainStore();
   try {
@@ -221,6 +245,14 @@ export function useTransactions() {
     },
   });
 
+  const convertForecastTransactionsMutation = useMutation({
+    mutationFn: convertForecastTransactionsFunction,
+    onSuccess: () => {
+      invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
+    },
+  });
+
   const multiEditTransactionsMutation = useMutation({
     mutationFn: multiEditTransactionsFunction,
     onSuccess: () => {
@@ -257,6 +289,10 @@ export function useTransactions() {
     multiEditTransactionsMutation.mutate(data);
   }
 
+  async function convertForecastTransactions(forecastIds) {
+    convertForecastTransactionsMutation.mutate(forecastIds);
+  }
+
   return {
     isLoading,
     isFetching,
@@ -266,6 +302,7 @@ export function useTransactions() {
     clearTransaction,
     editTransaction,
     mutliEditTransactions,
+    convertForecastTransactions,
   };
 }
 

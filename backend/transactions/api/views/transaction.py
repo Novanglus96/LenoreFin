@@ -10,6 +10,7 @@ from transactions.api.schemas.transaction import (
     PaginatedTransactions,
     MultiTranscationDate,
     TransactionQuery,
+    ForecastTransactionList,
 )
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -28,6 +29,10 @@ from django.db.models.functions import Concat, Coalesce, Abs
 from transactions.services.transaction import (
     create_transaction_service,
     update_transaction_service,
+)
+from transactions.services.forecast_conversion import (
+    convert_forecast_transaction,
+    ForecastTransactionNotFound,
 )
 from utils.dates import (
     get_todays_date_timezone_adjusted,
@@ -263,6 +268,44 @@ def delete_transaction(request, payload: TransactionList):
         api_logger.error("Transaction not deleted")
         error_logger.exception(f"{str(e)}")
         raise HttpError(500, f"Record retrieval error: {str(e)}")
+
+
+@transaction_router.patch("/convert-forecast", auth=FullAccessAuth())
+def convert_forecast_transactions(request, payload: ForecastTransactionList):
+    """
+    The function `convert_forecast_transactions` turns computed forecast rows
+    (credit-card interest/payments, savings interest) into real pending
+    transactions, carrying them across as-is.
+
+    Reminder-derived rows are not handled here — those already convert through
+    /reminders/addtrans/{reminder_id}, which also advances the reminder.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        payload (ForecastTransactionList): ForecastCacheTransaction ids to convert.
+
+    Returns:
+        dict: 'success' True, and 'converted' with the ids that were converted.
+
+    Raises:
+        HttpError: 404 if any id does not exist, 500 on failure.
+    """
+
+    try:
+        converted = []
+        for forecast_id in payload.forecast_transactions:
+            convert_forecast_transaction(forecast_id)
+            converted.append(forecast_id)
+            api_logger.info(f"Forecast transaction converted : #{forecast_id}")
+        return {"success": True, "converted": converted}
+    except ForecastTransactionNotFound as e:
+        api_logger.error("Forecast transaction not converted")
+        raise HttpError(404, str(e))
+    except Exception as e:
+        # Log other types of exceptions
+        api_logger.error("Forecast transaction not converted")
+        error_logger.exception(f"{str(e)}")
+        raise HttpError(500, f"Forecast conversion error: {str(e)}")
 
 
 @transaction_router.put("/update/{transaction_id}", auth=FullAccessAuth())
