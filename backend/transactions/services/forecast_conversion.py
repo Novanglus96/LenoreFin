@@ -21,6 +21,35 @@ class ForecastTransactionNotFound(Exception):
     pass
 
 
+class ForecastTransactionNotConvertible(Exception):
+    pass
+
+
+# Only credit-card payment projections may be converted. The generators emit
+# three kinds of forecast row, distinguished by transaction type:
+#
+#   income   -> savings / parent-group interest
+#   expense  -> credit-card statement interest
+#   transfer -> credit-card payment (funding account -> card)
+#
+# Interest is excluded because it does not reconcile. The payment forecast
+# subtracts existing real and reminder transactions in the payment window, so
+# converting one makes the next rebuild produce a smaller row or none at all.
+# Interest is derived from the balance instead, and is not netted against
+# interest transactions that already exist -- so a converted interest charge
+# would simply be recomputed and re-added, double counting it.
+CONVERTIBLE_TYPE_SLUG = "transfer"
+
+
+def is_convertible_forecast(forecast) -> bool:
+    """True when a ForecastCacheTransaction may be made real."""
+
+    return (
+        forecast.transaction_type is not None
+        and forecast.transaction_type.slug == CONVERTIBLE_TYPE_SLUG
+    )
+
+
 def clean_forecast_description(description: str) -> str:
     """
     Turns a projected description into one that reads as a real transaction.
@@ -46,7 +75,10 @@ def clean_forecast_description(description: str) -> str:
 
 def convert_forecast_transaction(forecast_id: int) -> None:
     """
-    Materialises a computed forecast row into a real pending Transaction.
+    Materialises a credit-card payment forecast into a real pending Transaction.
+
+    Only payment projections are convertible; interest projections raise
+    ForecastTransactionNotConvertible. See CONVERTIBLE_TYPE_SLUG for why.
 
     ForecastCacheTransactions are projections derived from account settings
     (credit-card statement interest/payments, savings interest) rather than
@@ -70,10 +102,18 @@ def convert_forecast_transaction(forecast_id: int) -> None:
     """
 
     try:
-        forecast = ForecastCacheTransaction.objects.get(id=forecast_id)
+        forecast = ForecastCacheTransaction.objects.select_related(
+            "transaction_type"
+        ).get(id=forecast_id)
     except ForecastCacheTransaction.DoesNotExist:
         raise ForecastTransactionNotFound(
             f"Forecast transaction {forecast_id} not found"
+        )
+
+    if not is_convertible_forecast(forecast):
+        raise ForecastTransactionNotConvertible(
+            f"Forecast transaction {forecast_id} is an interest projection "
+            "and cannot be converted"
         )
 
     today = get_todays_date_timezone_adjusted()

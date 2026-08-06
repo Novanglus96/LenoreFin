@@ -190,6 +190,34 @@
           }"
         >
           <div class="text-center">
+            <!-- Interest projections have no action available, so they render
+                 without the selection badge rather than looking clickable. -->
+            <v-btn
+              variant="plain"
+              icon
+              block
+              disabled
+              v-if="!isActionable(internalItem.raw)"
+            >
+              <v-icon
+                icon="mdi-alpha-p-circle"
+                color="textPending"
+                size="x-large"
+                v-if="internalItem.raw.status.id === 1"
+              ></v-icon>
+              <v-icon
+                icon="mdi-alpha-c-circle"
+                color="success"
+                v-if="internalItem.raw.status.id === 2"
+                size="large"
+              ></v-icon>
+              <v-icon
+                icon="mdi-alpha-r-circle"
+                color="error"
+                v-if="internalItem.raw.status.id === 3"
+                size="large"
+              ></v-icon>
+            </v-btn>
             <v-badge
               color="textPending-lighten-3"
               :icon="
@@ -200,6 +228,7 @@
               location="right top"
               :offset-x="6"
               :offset-y="10"
+              v-if="isActionable(internalItem.raw)"
             >
               <v-btn
                 @click="toggleSelect(internalItem)"
@@ -267,7 +296,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="toggleSelect(internalItem)"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             <v-tooltip text="Image(s)" location="top">
               <template v-slot:activator="{ props }">
@@ -342,7 +371,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="toggleSelect(internalItem)"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             {{ formatDate(item.transaction_date, true) }}
           </div>
@@ -354,7 +383,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="toggleSelect(internalItem)"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             <span :class="getClassForMoney(item.pretty_total, item.status.id)">
               {{ formatCurrency(item.pretty_total) }}
@@ -368,7 +397,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="toggleSelect(internalItem)"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             <span
               :class="getClassForMoney(item.balance, item.status.id)"
@@ -391,7 +420,7 @@
           <div
             class="w-100 h-100 d-flex align-center"
             style="cursor: pointer"
-            @click="toggleSelect(internalItem)"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             <span>{{ item.description }}</span>
           </div>
@@ -403,7 +432,7 @@
           <div
             class="w-100 h-100 d-flex align-center text-primary text-subtitle-2"
             style="cursor: pointer"
-            @click="toggleSelect(internalItem)"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             {{ processTags(item.tags) }}
           </div>
@@ -415,14 +444,14 @@
           <div
             class="w-100 h-100 d-flex align-center text-altAccent"
             style="cursor: pointer"
-            @click="toggleSelect(internalItem)"
+            @click="isActionable(item) ? toggleSelect(internalItem) : null"
           >
             <span>{{ item.pretty_account }}</span>
           </div>
         </template>
         <!-- Mobile View -->
         <template v-slot:[`item.mobile`]="{ item, internalItem, toggleSelect }">
-          <div @click="toggleSelect(internalItem)">
+          <div @click="isActionable(item) ? toggleSelect(internalItem) : null">
             <v-container class="ma-0 pa-0 ga-0">
               <v-row dense class="ma-0 pa-0 ga-0">
                 <v-col class="ma-0 pa-0 ga-0" cols="3">
@@ -972,6 +1001,20 @@
   // ForecastCacheTransaction pk the convert endpoint expects.
   const toForecastId = displayId => -displayId - 10000;
 
+  // Of the computed forecast rows, only credit-card payments (transfer type)
+  // can be converted. Interest projections -- savings/parent-group (income) and
+  // credit-card statement interest (expense) -- are excluded: they are derived
+  // from the balance rather than netted against existing interest transactions,
+  // so converting one would be recomputed and re-added on the next rebuild.
+  const isForecastRow = item => item.id <= -10000;
+  const isConvertibleForecast = item =>
+    isForecastRow(item) && item.transaction_type?.slug === "transfer";
+
+  // A row is actionable when something can be done with it: real transactions
+  // clear, reminder rows add, and cc payment forecasts convert.
+  const isActionable = item =>
+    !isForecastRow(item) || isConvertibleForecast(item);
+
   const rowChanged = newSelection => {
     selected_transactions.value = [];
     selected_reminders.value = [];
@@ -986,7 +1029,7 @@
           transaction_date: selectedrow.transaction_date,
         };
         selected_reminders.value.push(reminder_trans_obj);
-      } else if (selectedrow.id <= -10000) {
+      } else if (isConvertibleForecast(selectedrow)) {
         selected_forecasts.value.push(toForecastId(selectedrow.id));
       }
     }

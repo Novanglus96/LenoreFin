@@ -9,6 +9,7 @@ from transactions.models import (
     TransactionDetail,
 )
 from transactions.services import (
+    ForecastTransactionNotConvertible,
     ForecastTransactionNotFound,
     clean_forecast_description,
     convert_forecast_transaction,
@@ -18,7 +19,7 @@ from transactions.services import (
 @pytest.fixture
 def forecast_with_tag(
     test_pending_transaction_status,
-    test_expense_transaction_type,
+    test_transfer_transaction_type,
     test_income_transaction_type,
     test_checking_account,
     test_tag,
@@ -33,7 +34,7 @@ def forecast_with_tag(
         status=test_pending_transaction_status,
         description="(Test Card Estimated Payment)",
         memo="projected",
-        transaction_type=test_expense_transaction_type,
+        transaction_type=test_transfer_transaction_type,
         source_account=test_checking_account,
         total_amount=Decimal("-125.00"),
     )
@@ -87,8 +88,8 @@ def test_convert_carries_tags_across(forecast_with_tag, test_tag):
     detail = details.first()
     assert detail.tag_id == test_tag.id
     assert detail.full_toggle is True
-    # create_transactions re-derives the sign from transaction_type, so an
-    # expense must not come back positive after the round trip.
+    # create_transactions re-derives the sign from transaction_type, so a
+    # non-income row must not come back positive after the round trip.
     assert detail.detail_amt == Decimal("-125.00")
 
 
@@ -96,24 +97,56 @@ def test_convert_carries_tags_across(forecast_with_tag, test_tag):
 @pytest.mark.service
 def test_convert_untagged_forecast(
     test_pending_transaction_status,
-    test_expense_transaction_type,
+    test_transfer_transaction_type,
     test_income_transaction_type,
     test_checking_account,
 ):
-    """A forecast row with no details still converts."""
+    """A payment forecast with no details still converts."""
     forecast = ForecastCacheTransaction.objects.create(
         status=test_pending_transaction_status,
-        description="(Test Savings Interest)",
-        transaction_type=test_expense_transaction_type,
+        description="(Test Card Estimated Payment)",
+        transaction_type=test_transfer_transaction_type,
         source_account=test_checking_account,
         total_amount=Decimal("-3.21"),
     )
 
     convert_forecast_transaction(forecast.id)
 
-    created = Transaction.objects.get(description="Test Savings Interest")
+    created = Transaction.objects.get(description="Test Card Payment")
     assert created.total_amount == Decimal("-3.21")
     assert not TransactionDetail.objects.filter(transaction_id=created.id).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.service
+@pytest.mark.parametrize("interest_type", ["income", "expense"])
+def test_interest_projections_are_rejected(
+    interest_type,
+    request,
+    test_pending_transaction_status,
+    test_income_transaction_type,
+    test_expense_transaction_type,
+    test_checking_account,
+):
+    """Savings (income) and credit-card statement (expense) interest cannot be
+    converted -- neither reconciles on rebuild, so both would double count."""
+    type_obj = request.getfixturevalue(f"test_{interest_type}_transaction_type")
+    forecast = ForecastCacheTransaction.objects.create(
+        status=test_pending_transaction_status,
+        description="(Test Card Estimated Interest)",
+        transaction_type=type_obj,
+        source_account=test_checking_account,
+        total_amount=Decimal("-9.99"),
+    )
+
+    with pytest.raises(ForecastTransactionNotConvertible):
+        convert_forecast_transaction(forecast.id)
+
+    # The projection survives and no transaction is written.
+    assert ForecastCacheTransaction.objects.filter(id=forecast.id).exists()
+    assert not Transaction.objects.filter(
+        description="Test Card Interest"
+    ).exists()
 
 
 @pytest.mark.django_db
@@ -129,14 +162,14 @@ def test_convert_missing_forecast_raises(db):
 def test_convert_leaves_other_forecasts_alone(
     forecast_with_tag,
     test_pending_transaction_status,
-    test_expense_transaction_type,
+    test_transfer_transaction_type,
     test_checking_account,
 ):
     """Converting one row does not disturb the rest of the cache."""
     other = ForecastCacheTransaction.objects.create(
         status=test_pending_transaction_status,
         description="(Other Estimated Payment)",
-        transaction_type=test_expense_transaction_type,
+        transaction_type=test_transfer_transaction_type,
         source_account=test_checking_account,
         total_amount=Decimal("-50.00"),
     )
@@ -154,14 +187,14 @@ def test_convert_endpoint_converts_batch(
     patch_auth_as_full_access,
     forecast_with_tag,
     test_pending_transaction_status,
-    test_expense_transaction_type,
+    test_transfer_transaction_type,
     test_checking_account,
 ):
     """The endpoint takes a list and converts every id in it."""
     second = ForecastCacheTransaction.objects.create(
         status=test_pending_transaction_status,
         description="(Second Estimated Payment)",
-        transaction_type=test_expense_transaction_type,
+        transaction_type=test_transfer_transaction_type,
         source_account=test_checking_account,
         total_amount=Decimal("-10.00"),
     )
@@ -176,6 +209,34 @@ def test_convert_endpoint_converts_batch(
     assert Transaction.objects.filter(description="Test Card Payment").exists()
     assert Transaction.objects.filter(description="Second Payment").exists()
     assert ForecastCacheTransaction.objects.count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_convert_endpoint_rejects_interest_with_400(
+    api_client,
+    patch_auth_as_full_access,
+    test_pending_transaction_status,
+    test_expense_transaction_type,
+    test_checking_account,
+):
+    """An interest projection is refused at the API boundary, not silently
+    skipped, so the UI can surface why."""
+    forecast = ForecastCacheTransaction.objects.create(
+        status=test_pending_transaction_status,
+        description="(Test Card Estimated Interest)",
+        transaction_type=test_expense_transaction_type,
+        source_account=test_checking_account,
+        total_amount=Decimal("-9.99"),
+    )
+
+    response = api_client.patch(
+        "/transactions/convert-forecast",
+        json={"forecast_transactions": [forecast.id]},
+    )
+
+    assert response.status_code == 400
+    assert ForecastCacheTransaction.objects.filter(id=forecast.id).exists()
 
 
 @pytest.mark.django_db
