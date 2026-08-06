@@ -1,3 +1,10 @@
+# [1.7.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.1...v1.7.0-alpha.2) (2026-08-06)
+
+
+### Bug Fixes
+
+* allow row-click selection of forecast rows and clean their description ([#188](https://github.com/Novanglus96/LenoreFin/issues/188)) ([e236b44](https://github.com/Novanglus96/LenoreFin/commit/e236b44614b69f9252ec70cfa98ed5857a373cb3))
+
 # [1.7.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.2-alpha.1...v1.7.0-alpha.1) (2026-08-06)
 
 
