@@ -1,3 +1,10 @@
+# [1.7.0-alpha.6](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.5...v1.7.0-alpha.6) (2026-08-06)
+
+
+### Features
+
+* add multi-transaction batch add form ([#192](https://github.com/Novanglus96/LenoreFin/issues/192)) ([2ecfee7](https://github.com/Novanglus96/LenoreFin/commit/2ecfee72e1ac988c1f5583be7d63d20b47a12df8))
+
 # [1.7.0-alpha.5](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0-alpha.4...v1.7.0-alpha.5) (2026-08-06)
 
 
