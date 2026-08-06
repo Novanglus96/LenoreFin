@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import List, Optional
+from django.db import transaction as db_transaction
 from django.shortcuts import get_object_or_404
 from administration.models import DescriptionHistory
 from transactions.models import Transaction, Paycheck, TransactionDetail
@@ -37,15 +38,20 @@ def upsert_description_history(
         )
 
 
-def create_transaction_service(payload: TransactionIn) -> None:
+def build_full_transaction(payload: TransactionIn) -> FullTransaction:
     """
-    Create a new transaction from a TransactionIn payload.
+    Build a FullTransaction from a TransactionIn payload.
+
+    Side effects: upserts the description history entry and creates the
+    Paycheck row (if any), because FullTransaction only carries a paycheck_id.
+    Callers that need those side effects rolled back must wrap this in an
+    atomic block.
 
     Args:
         payload (TransactionIn): The validated transaction input.
 
-    Raises:
-        Exception: If transaction creation fails.
+    Returns:
+        FullTransaction: The transaction ready to hand to create_transactions.
     """
     paycheck_id = None
     tags = []
@@ -81,8 +87,7 @@ def create_transaction_service(payload: TransactionIn) -> None:
             )
             tags.append(tag_obj)
 
-    # Build FullTransaction and create it
-    transaction = FullTransaction(
+    return FullTransaction(
         transaction_date=payload.transaction_date,
         total_amount=payload.total_amount,
         status_id=payload.status_id,
@@ -98,10 +103,51 @@ def create_transaction_service(payload: TransactionIn) -> None:
         checkNumber=payload.checkNumber,
     )
 
-    if not create_transactions([transaction]):
+
+def create_transaction_service(payload: TransactionIn) -> None:
+    """
+    Create a new transaction from a TransactionIn payload.
+
+    Args:
+        payload (TransactionIn): The validated transaction input.
+
+    Raises:
+        Exception: If transaction creation fails.
+    """
+    if not create_transactions([build_full_transaction(payload)]):
         raise Exception("Error creating transaction")
 
     api_logger.info("Transaction created")
+
+
+def create_transactions_service(payloads: List[TransactionIn]) -> int:
+    """
+    Create several transactions from a list of TransactionIn payloads.
+
+    The whole batch is atomic, so a failure part-way through leaves no
+    transactions, details, paychecks or description-history rows behind.
+
+    Args:
+        payloads (List[TransactionIn]): The validated transaction inputs.
+
+    Returns:
+        int: The number of transactions created.
+
+    Raises:
+        ValueError: If the list is empty.
+        Exception: If transaction creation fails.
+    """
+    if not payloads:
+        raise ValueError("At least one transaction is required.")
+
+    with db_transaction.atomic():
+        full_transactions = [build_full_transaction(p) for p in payloads]
+
+        if not create_transactions(full_transactions):
+            raise Exception("Error creating transactions")
+
+    api_logger.info(f"{len(full_transactions)} transactions created")
+    return len(full_transactions)
 
 
 def update_transaction_service(transaction_id: int, payload: TransactionIn) -> None:

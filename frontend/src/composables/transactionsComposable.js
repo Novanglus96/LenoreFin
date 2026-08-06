@@ -90,6 +90,30 @@ async function createTransactionFunction(newTransaction) {
   }
 }
 
+// Creates a whole batch in one atomic request, so either every row lands or none
+// does -- unlike calling createTransactionFunction in a loop.
+async function createMultipleTransactionsFunction(newTransactions) {
+  const mainstore = useMainStore();
+  let payload = {
+    transactions: newTransactions,
+  };
+  try {
+    const response = await apiClient.post(
+      "/transactions/create-multiple",
+      payload,
+    );
+    mainstore.showSnackbar(
+      newTransactions.length > 1
+        ? `${newTransactions.length} transactions created successfully!`
+        : "Transaction created successfully!",
+      "success",
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Transactions not created: ");
+  }
+}
+
 async function deleteTransactionFunction(deletedTransaction) {
   const mainstore = useMainStore();
   let payload = {
@@ -229,6 +253,14 @@ export function useTransactions() {
     },
   });
 
+  const createMultipleTransactionsMutation = useMutation({
+    mutationFn: createMultipleTransactionsFunction,
+    onSuccess: () => {
+      invalidateTransactionDependencies(queryClient, [["description-history"]]);
+      scheduleForecastRefetch(queryClient);
+    },
+  });
+
   const deleteTransactionMutation = useMutation({
     mutationFn: deleteTransactionFunction,
     onSuccess: () => {
@@ -277,6 +309,10 @@ export function useTransactions() {
     createTransactionMutation.mutate(newTransaction);
   }
 
+  async function addTransactions(newTransactions) {
+    createMultipleTransactionsMutation.mutate(newTransactions);
+  }
+
   async function removeTransaction(deletedTransaction) {
     deleteTransactionMutation.mutate(deletedTransaction);
   }
@@ -298,6 +334,7 @@ export function useTransactions() {
     isFetching,
     transactions,
     addTransaction,
+    addTransactions,
     removeTransaction,
     clearTransaction,
     editTransaction,

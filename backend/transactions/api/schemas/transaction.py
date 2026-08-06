@@ -29,6 +29,12 @@ class TransactionIn(Schema):
     checkNumber: Optional[int] = None
 
 
+# The class TransactionBatchIn is a schema for creating several Transactions in
+# one request. Each entry is validated exactly as a single create would be.
+class TransactionBatchIn(Schema):
+    transactions: List[TransactionIn]
+
+
 # The class TransactionClear is a schema for clearing Transactions.
 class TransactionClear(Schema):
     id: int

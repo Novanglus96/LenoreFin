@@ -37,6 +37,29 @@
             ></v-btn>
           </template>
         </v-tooltip>
+        <v-tooltip
+          text="Add Multiple Transactions"
+          location="top"
+          v-if="props.variant === 'account' && authStore.isFullAccess && !isParentAccount"
+        >
+          <template v-slot:activator="{ props }">
+            <v-btn
+              icon="mdi-invoice-text-multiple"
+              flat
+              variant="plain"
+              v-bind="props"
+              @click="multipleAddDialog = true"
+              :disabled="isActive || !isOnline"
+              color="success"
+            ></v-btn>
+          </template>
+        </v-tooltip>
+        <MultipleTransactionAddForm
+          v-if="props.variant === 'account' && authStore.isFullAccess && !isParentAccount"
+          v-model="multipleAddDialog"
+          @update-dialog="updateMultipleAddDialog"
+          :account_id="props.accountID"
+        />
         <FileImportForm
           v-model="importFileDialog"
           @update-dialog="updateImportFileDialog"
@@ -737,6 +760,7 @@
 <script setup>
   import { ref, defineProps, computed, watch } from "vue";
   import TransactionForm from "@/components/TransactionForm.vue";
+  import MultipleTransactionAddForm from "@/components/MultipleTransactionAddForm.vue";
   import FileImportForm from "@/components/FileImportForm.vue";
   import { useTransactionsStore } from "@/stores/transactions";
   import MultipleTransactionEditForm from "@/components/MultipleTransactionEditForm.vue";
@@ -823,6 +847,7 @@
   const showMultipleTransactionEditDialog = ref(false);
   const transactionAddFormDialog = ref(false);
   const importFileDialog = ref(false);
+  const multipleAddDialog = ref(false);
   const transactionEditFormDialog = ref(false);
   const deleteDisable = ref(true);
   const editDisable = ref(true);
@@ -1090,6 +1115,10 @@
   const updateAddDialog = () => {
     transactionAddFormDialog.value = false;
     clearFilters();
+  };
+
+  const updateMultipleAddDialog = () => {
+    multipleAddDialog.value = false;
   };
 
   const updateImportFileDialog = () => {
