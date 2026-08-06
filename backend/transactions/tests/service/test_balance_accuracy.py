@@ -17,6 +17,7 @@ Invariants under test:
 import pytest
 from datetime import date, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from transactions.models import Transaction, TransactionStatus, TransactionType
 from transactions.api.dependencies.transaction_utilities import (
@@ -34,7 +35,26 @@ TWO_DAYS_AGO = TODAY - timedelta(days=2)
 TOMORROW = TODAY + timedelta(days=1)
 NEXT_WEEK = TODAY + timedelta(days=7)
 
+# get_transactions_by_account anchors to get_todays_date_timezone_adjusted() and,
+# on the forecast path, drops every row dated before it. None of the tests here
+# pass forecast=True today, so the literal TODAY above is currently harmless --
+# but that is a property of the callers, not of the module, and the same pinned
+# literal is what made test_transaction_ordering.py start failing on 2026-06-02
+# (see #190). Inject TODAY instead of assuming it, so a forecast test added here
+# later gets the date it wrote rather than the wall clock.
+PATCH_TODAY = (
+    "transactions.api.dependencies.get_transactions_by_account."
+    "get_todays_date_timezone_adjusted"
+)
+
 BASE_BALANCE = Decimal("611.10")  # opening=55.55 + archive=555.55
+
+
+@pytest.fixture(autouse=True)
+def fixed_today():
+    """Pin the date the code under test sees to this module's TODAY."""
+    with patch(PATCH_TODAY, return_value=TODAY):
+        yield
 
 
 @pytest.fixture(autouse=True)
