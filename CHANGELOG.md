@@ -1,3 +1,22 @@
+# [1.7.0-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1...v1.7.0-rc.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* allow row-click selection of forecast rows and clean their description ([#188](https://github.com/Novanglus96/LenoreFin/issues/188)) ([e236b44](https://github.com/Novanglus96/LenoreFin/commit/e236b44614b69f9252ec70cfa98ed5857a373cb3))
+* anchor ordering tests to the real date instead of a literal ([#190](https://github.com/Novanglus96/LenoreFin/issues/190)) ([f6e621c](https://github.com/Novanglus96/LenoreFin/commit/f6e621c0511e9af9e4e4b832cb4f2a47326636fd))
+* inject today into balance accuracy tests instead of assuming it ([#191](https://github.com/Novanglus96/LenoreFin/issues/191)) ([b00d998](https://github.com/Novanglus96/LenoreFin/commit/b00d998abdf4624bb638188b9da32343d351133e)), closes [#190](https://github.com/Novanglus96/LenoreFin/issues/190) [#190](https://github.com/Novanglus96/LenoreFin/issues/190) [#190](https://github.com/Novanglus96/LenoreFin/issues/190) [#190](https://github.com/Novanglus96/LenoreFin/issues/190)
+* only require a payment amount for the custom cc strategy ([#187](https://github.com/Novanglus96/LenoreFin/issues/187)) ([3467cd4](https://github.com/Novanglus96/LenoreFin/commit/3467cd4a08de7ee6c509e5630fe3afa2f4ae7bdc))
+* restrict forecast conversion to credit-card payments ([#189](https://github.com/Novanglus96/LenoreFin/issues/189)) ([4e23c87](https://github.com/Novanglus96/LenoreFin/commit/4e23c87df730d9509e3681c7f063de2b574cff6a))
+* save edited note values instead of the original row ([#185](https://github.com/Novanglus96/LenoreFin/issues/185)) ([9993382](https://github.com/Novanglus96/LenoreFin/commit/9993382aef2ef8d5604fc0ba44dd00da2eb6a5ae))
+
+
+### Features
+
+* add multi-transaction batch add form ([#192](https://github.com/Novanglus96/LenoreFin/issues/192)) ([2ecfee7](https://github.com/Novanglus96/LenoreFin/commit/2ecfee72e1ac988c1f5583be7d63d20b47a12df8))
+* animate icon state transitions ([#193](https://github.com/Novanglus96/LenoreFin/issues/193)) ([df7dd25](https://github.com/Novanglus96/LenoreFin/commit/df7dd25815de774b068dd3c6ac1551d7e7f23c7c))
+* convert computed forecast transactions to real transactions ([#186](https://github.com/Novanglus96/LenoreFin/issues/186)) ([ea0178b](https://github.com/Novanglus96/LenoreFin/commit/ea0178b6a8ac3cb98519f26158369a4beb68b41f))
+
 # [1.7.0-beta.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1...v1.7.0-beta.1) (2026-08-06)
 
 
