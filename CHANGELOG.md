@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/Novanglus96/LenoreFin/compare/v1.6.1...v1.6.2) (2026-08-08)
+
+
+### Bug Fixes
+
+* allow Build & Publish to be re-run manually ([ce60ada](https://github.com/Novanglus96/LenoreFin/commit/ce60ada476aa18adcd15a8d88c1d23ccc348a577))
+
 ## [1.6.1](https://github.com/Novanglus96/LenoreFin/compare/v1.6.0...v1.6.1) (2026-05-28)
 
 
