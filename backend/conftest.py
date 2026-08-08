@@ -43,6 +43,7 @@ def patch_delete_pattern():
          patch("reminders.signals.delete_pattern", return_value=None), \
          patch("transactions.signals.delete_pattern", return_value=None), \
          patch("transactions.api.views.transaction.delete_pattern", return_value=None), \
+         patch("transactions.services.forecast_conversion.delete_pattern", return_value=None), \
          patch("transactions.tasks.delete_pattern", return_value=None):
         yield
 
@@ -240,6 +241,11 @@ def test_expense_transaction_type():
 @pytest.fixture
 def test_income_transaction_type():
     return TransactionType.objects.create(transaction_type="Income")
+
+
+@pytest.fixture
+def test_transfer_transaction_type():
+    return TransactionType.objects.create(transaction_type="Transfer")
 
 
 @pytest.fixture

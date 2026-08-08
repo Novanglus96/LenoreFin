@@ -1,7 +1,7 @@
 <template>
   <v-dialog persistent :fullscreen="smAndDown" :width="smAndDown ? undefined : '1024'">
     <v-card>
-      <v-card-title>
+      <v-card-title class="d-flex align-center">
         <span class="text-h5" v-if="props.isEdit == false">
           Add Transaction
         </span>
@@ -11,6 +11,21 @@
           icon="mdi-bell"
           color="amber"
         ></v-icon>
+        <v-spacer></v-spacer>
+        <!-- Escape hatch for anyone part-way through entering one transaction
+             who realises they have several. Adding only -- there is no batch
+             equivalent of editing. -->
+        <v-btn
+          v-if="!props.isEdit"
+          variant="text"
+          size="small"
+          color="primary"
+          prepend-icon="mdi-invoice-text-multiple"
+          @click="openMultipleForm"
+          :disabled="!isOnline"
+        >
+          {{ smAndDown ? "Multiple" : "Add Multiple" }}
+        </v-btn>
       </v-card-title>
 
       <v-card-text>
@@ -678,7 +693,7 @@
   const { descriptionHistory, isLoading: description_history_isLoading } =
     useDescriptionHistory();
 
-  const emit = defineEmits(["updateDialog"]);
+  const emit = defineEmits(["updateDialog", "openMultiple"]);
   const props = defineProps({
     itemFormDialog: { type: Boolean, default: false },
     isEdit: { type: Boolean, default: false },
@@ -828,6 +843,14 @@
     initializeFormData();
     tab.value = 0;
     emit("updateDialog", false);
+  };
+
+  // Hands off to the batch form. Anything typed here is discarded rather than
+  // carried over -- the batch form has its own defaults, and silently seeding
+  // one of its rows from a half-filled form would be more surprising than not.
+  const openMultipleForm = () => {
+    closeDialog();
+    emit("openMultiple");
   };
 
   const tagsUpdated = data => {

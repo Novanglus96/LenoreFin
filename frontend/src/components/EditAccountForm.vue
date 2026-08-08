@@ -474,10 +474,14 @@
         then: schema => schema.required("Must select payment strategy."),
         otherwise: schema => schema.notRequired(),
       }),
+    // Only the custom strategy uses payment_amount -- full and minimum derive
+    // the payment themselves. Must match the field's own v-if above, or the
+    // form blocks on a validation error attached to a hidden field.
     payment_amount: yup
       .number()
       .when(["account_type_id", "calculate_payments", "payment_strategy"], {
-        is: (type, calc, strat) => type === 1 && calc === true && strat,
+        is: (type, calc, strat) =>
+          type === 1 && calc === true && strat === "C",
         then: schema => schema.required("Must enter a payment amount."),
         otherwise: schema => schema.notRequired(),
       }),
