@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/vue-query";
+import { toValue, computed } from "vue";
 import apiClient from "./apiClient";
 import { useMainStore } from "@/stores/main";
 
@@ -69,6 +70,17 @@ async function deleteAccountFunction(deletedAccount) {
     return response.data;
   } catch (error) {
     handleApiError(error, "Account not deleted: ");
+  }
+}
+
+async function toggleFavoriteFunction(account_id) {
+  try {
+    const response = await apiClient.post(
+      "/accounts/toggle-favorite/" + account_id,
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Favorite not toggled: ");
   }
 }
 
@@ -151,8 +163,20 @@ export function useAccounts(inactive) {
     },
   });
 
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: toggleFavoriteFunction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts", "favorite_balances"] });
+    },
+  });
+
   async function addAccount(newAccount) {
     createAccountMutation.mutate(newAccount);
+  }
+
+  async function toggleFavorite(account_id) {
+    toggleFavoriteMutation.mutate(account_id);
   }
 
   return {
@@ -171,6 +195,7 @@ export function useAccounts(inactive) {
     inactive_accounts,
     inactive_isLoading,
     addAccount,
+    toggleFavorite,
   };
 }
 
@@ -220,6 +245,48 @@ export function useAccountByID(account_id) {
     removeAccount,
     editAccount,
   };
+}
+
+export function useFavoriteBalances() {
+  const queryClient = useQueryClient();
+  const { data: favoriteBalances, isLoading } = useQuery({
+    queryKey: ["accounts", "favorite_balances"],
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get("/accounts/favorite-balances");
+        return response.data;
+      } catch (error) {
+        handleApiError(error, "Favorite balances not fetched");
+      }
+    },
+    select: response => response,
+    client: queryClient,
+  });
+
+  return { favoriteBalances, isLoading };
+}
+
+export function useInvestmentReturn(account_id) {
+  const queryClient = useQueryClient();
+  const { data: investmentReturn, isLoading } = useQuery({
+    queryKey: ["accounts", "investment_return", account_id],
+    queryFn: async () => {
+      try {
+        const id = toValue(account_id);
+        const response = await apiClient.get(
+          `/accounts/${id}/investment-return`,
+        );
+        return response.data;
+      } catch (error) {
+        handleApiError(error, "Investment return not fetched");
+      }
+    },
+    select: response => response,
+    enabled: computed(() => !!toValue(account_id)),
+    client: queryClient,
+  });
+
+  return { investmentReturn, isLoading };
 }
 
 function formatDateToYYYYMMDD(date) {

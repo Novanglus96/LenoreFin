@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from tags.models import Tag
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 import pytz
 import os
 from core.mixins import SystemObjectMixin
@@ -180,14 +181,34 @@ class Message(models.Model):
     - message_date (DateTimeField): The date of the message, defaults to today.
     - message (CharField): The text of the messsage, limited to 254 characters.
     - unread (BooleanField): Whether or not this message is unread, default is True.
+    - user (ForeignKey): Optional owner — null means visible to all users.
     """
 
     message_date = models.DateTimeField(default=current_date_time)
     message = models.CharField(max_length=254)
     unread = models.BooleanField(default=True)
+    user = models.ForeignKey(
+        "auth.User", on_delete=models.CASCADE, null=True, blank=True, related_name="messages"
+    )
+    link = models.CharField(max_length=254, null=True, blank=True)
 
     def __str__(self):
         return self.message
+
+
+class PushSubscription(models.Model):
+    """Stores a browser Web Push subscription for a user."""
+
+    user = models.ForeignKey(
+        "auth.User", on_delete=models.CASCADE, related_name="push_subscriptions"
+    )
+    endpoint = models.TextField(unique=True)
+    p256dh = models.TextField()
+    auth = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} — {self.endpoint[:60]}"
 
 
 class Version(SingletonModel):
@@ -222,6 +243,41 @@ class BackupConfig(SingletonModel):
     def load(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+DEFAULT_DASHBOARD_LAYOUT = [
+    {"id": "graphs", "visible": True},
+    {"id": "budgets", "visible": True},
+    {"id": "account_balances", "visible": True},
+    {"id": "reminders", "visible": True},
+    {"id": "transactions", "visible": True},
+]
+
+DEFAULT_GRAPH_WIDGETS = [
+    {"widget_id": 1, "graph_name": "Expenses", "type_id": 1, "tag_id": None, "month": 0, "exclude": "[0]"},
+    {"widget_id": 2, "graph_name": "Income", "type_id": 2, "tag_id": None, "month": 0, "exclude": "[0]"},
+    {"widget_id": 3, "graph_name": "Untagged", "type_id": 3, "tag_id": None, "month": 0, "exclude": "[0]"},
+]
+
+
+class UserDashboardConfig(models.Model):
+    """
+    Stores per-user dashboard widget ordering, visibility, and graph widget configs.
+
+    Fields:
+    - user (OneToOneField): The owning user.
+    - layout (JSONField): Ordered list of widget configs, each with 'id' and 'visible'.
+    - graph_widgets (JSONField): Per-user config for each of the 3 pie chart widgets.
+    """
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="dashboard_config"
+    )
+    layout = models.JSONField(default=list)
+    graph_widgets = models.JSONField(default=list)
+
+    def __str__(self):
+        return f"Dashboard config for {self.user.username}"
 
 
 class DescriptionHistory(models.Model):

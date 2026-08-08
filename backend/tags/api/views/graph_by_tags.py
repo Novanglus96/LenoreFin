@@ -24,7 +24,7 @@ def get_graph_new(request, widget_id: int):
         List[PieGraphItem]: the pie graph data items
     """
     try:
-        result = get_graph_new_data(widget_id)
+        result = get_graph_new_data(widget_id, request.user)
         api_logger.debug(f"Graph data retrieved : {widget_id}")
         return result
     except Exception as e:
@@ -46,7 +46,7 @@ def get_graph(request, widget_id: int):
         GraphOut: the graph data object
     """
     try:
-        result = get_graph_data(widget_id)
+        result = get_graph_data(widget_id, request.user)
         api_logger.debug(f"Graph data retrieved : {widget_id}")
         return result
     except Exception as e:

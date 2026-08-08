@@ -11,6 +11,9 @@ from core.cache.keys import (
     account_combined_transactions,
     account_reminder_transactions,
 )
+from core.broadcast import broadcast_invalidate
+
+_REMINDER_BROADCAST_KEYS = ["reminders", "accounts", "account_forecast", "tag_graph"]
 
 
 @receiver(post_save, sender=Reminder)
@@ -29,6 +32,7 @@ def update_and_invalidate_cache_on_save(sender, instance, **kwargs):
         delete_pattern(
             account_combined_transactions(instance.reminder_destination_account.id)
         )
+    broadcast_invalidate(_REMINDER_BROADCAST_KEYS)
 
 
 @receiver(post_delete, sender=Reminder)
@@ -63,3 +67,4 @@ def update_and_invalidate_cache_on_delete(sender, instance, **kwargs):
             "transactions.tasks.update_interest_forecast_cache",
             dest.id,
         )
+    broadcast_invalidate(_REMINDER_BROADCAST_KEYS)

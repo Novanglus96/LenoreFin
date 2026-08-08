@@ -343,6 +343,17 @@
                     density="comfortable"
                     :error-messages="annual_rate.errorMessage.value"
                   ></v-text-field>
+                  <v-chip
+                    v-if="props.account.account_type.slug === 'investment' && investmentReturn?.sufficient_data"
+                    size="small"
+                    color="accent"
+                    variant="tonal"
+                    prepend-icon="mdi-calculator"
+                    class="mt-1"
+                    @click="annual_rate.value.value = investmentReturn.rate"
+                  >
+                    Calculated from history: {{ investmentReturn.rate > 0 ? '+' : '' }}{{ investmentReturn.rate.toFixed(2) }}% — click to use
+                  </v-chip>
                 </v-col>
                 <v-col :cols="smAndDown ? 12 : undefined">
                   <v-select
@@ -378,7 +389,7 @@
   } from "vue";
   import { useDisplay } from "vuetify";
   import { useBanks } from "@/composables/banksComposable";
-  import { useAccountByID } from "@/composables/accountsComposable";
+  import { useAccountByID, useInvestmentReturn } from "@/composables/accountsComposable";
   import { useMainStore } from "@/stores/main";
   import { useAccounts } from "@/composables/accountsComposable";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
@@ -463,10 +474,14 @@
         then: schema => schema.required("Must select payment strategy."),
         otherwise: schema => schema.notRequired(),
       }),
+    // Only the custom strategy uses payment_amount -- full and minimum derive
+    // the payment themselves. Must match the field's own v-if above, or the
+    // form blocks on a validation error attached to a hidden field.
     payment_amount: yup
       .number()
       .when(["account_type_id", "calculate_payments", "payment_strategy"], {
-        is: (type, calc, strat) => type === 1 && calc === true && strat,
+        is: (type, calc, strat) =>
+          type === 1 && calc === true && strat === "C",
         then: schema => schema.required("Must enter a payment amount."),
         otherwise: schema => schema.notRequired(),
       }),
@@ -534,6 +549,10 @@
   });
   const { editAccount } = useAccountByID(props.account.id);
   const generalError = ref("");
+
+  const { investmentReturn } = useInvestmentReturn(
+    props.account.account_type.slug === "investment" ? props.account.id : null,
+  );
 
   const submit = handleSubmit(
     values => {

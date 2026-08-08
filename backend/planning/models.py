@@ -88,11 +88,11 @@ class Note(models.Model):
     Model representing a note used to add notes relevant to planning.
 
     Fields:
-    - note_text (CharField): The text of the note, limited to 254 characters
+    - note_text (TextField): The text of the note, unlimited length.
     - note_date (DateField): the date this note was added, defaults to today.
     """
 
-    note_text = models.CharField(max_length=254)
+    note_text = models.TextField()
     note_date = models.DateField(default=current_date)
 
     def __str__(self):
@@ -114,6 +114,26 @@ class CalculationRule(models.Model):
     name = models.CharField(max_length=254, unique=True)
     source_account_id = models.IntegerField()
     destination_account_id = models.IntegerField()
+
+
+class DetectedRecurring(models.Model):
+    description = models.CharField(max_length=254)
+    estimated_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    repeat = models.ForeignKey(
+        Repeat, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    next_estimated_date = models.DateField()
+    transaction_ids = models.JSONField(default=list)
+    is_ignored = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    suggested_tag_id = models.IntegerField(null=True, blank=True)
+    suggested_account_id = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.description
 
 
 class Budget(models.Model):

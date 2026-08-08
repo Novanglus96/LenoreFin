@@ -5,6 +5,7 @@ Description: Contains task definitions to be scheduuled.
 Author: John Adams <johnmadams96@gmail.com>
 Date: February 15, 2024
 """
+from core.broadcast import broadcast_invalidate
 
 from transactions.models import (
     Transaction,
@@ -108,20 +109,30 @@ def cleanup_old_backups():
             error_logger.exception(f"Failed to delete backup {f}: {e}")
 
 
-def create_message(message_text):
+def create_message(message_text, user=None, link=None):
     """
     The function `create_message` creates a Message object for
     displaying a message alert in the app inbox.
 
     Args:
         message_text (str): The text of the message
+        user: Optional User instance — if set, message is private to that user
+              and the WebSocket notification targets only their channel group.
+        link (str): Optional frontend route (e.g. '/planning/detections') —
+                    clicking the message navigates there.
     """
 
     Message.objects.create(
         message_date=get_todays_date_timezone_adjusted(True),
         message=message_text,
         unread=True,
+        user=user,
+        link=link,
     )
+    group = f"user_{user.pk}" if user else "global"
+    broadcast_invalidate(["messages"], group=group)
+    from administration.push import send_push_notifications
+    send_push_notifications(message_text, link=link, user=user)
 
 
 def convert_reminder():
@@ -230,6 +241,12 @@ def roll_over_budgets():
         )
         non_roll_over_budgets = budgets.filter(roll_over=False)
         non_roll_over_budgets.update(roll_over_amt=0)
+        for budget in budgets.filter(roll_over=False, next_start__lte=today):
+            _, _, _, next_start = calculate_repeat_window(
+                budget.start_day, budget.repeat
+            )
+            budget.next_start = next_start
+            budget.save()
         num_of_budgets = 0
         for budget in roll_over_budgets:
             transactions = []
@@ -798,6 +815,7 @@ def update_reminder_cache(reminder_id):
         if reminder.reminder_destination_account is not None:
             delete_pattern(account_all_transactions(reminder.reminder_destination_account.id))
             update_cc_forecast_cache(reminder.reminder_destination_account.id)
+        broadcast_invalidate(["reminders", "accounts", "account_forecast", "tag_graph"])
     except Exception as e:
         task_logger.warning("There was an error creating cache")
         error_logger.warning(f"{str(e)}")
@@ -999,6 +1017,7 @@ def update_interest_forecast_cache(account_id):
             ).delete()
             create_transactions(transactions_to_create, 'forecast')
         delete_pattern(account_all(account_id))
+        broadcast_invalidate(["accounts"])
     except Exception as e:
         error_logger.exception(
             f"Error calculating interest forecast for account {account_id}: {e}"
@@ -1235,6 +1254,7 @@ def update_cc_forecast_cache(account_id):
         delete_pattern(account_all(account_id))
         if funding_account:
             delete_pattern(account_all(funding_account.id))
+        broadcast_invalidate(["accounts"])
     except Exception as e:
         error_logger.exception(f"Error calculating CC forecast for account {account_id}: {e}")
 
@@ -1448,6 +1468,243 @@ def calculate_interest(
     daily_rate = annual_rate / 365 / 100
     interest = amount * daily_rate * days
     return interest.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def _result_dict_for_json(result: dict) -> dict:
+    """Convert run_report() output (with date/Decimal values) to JSON-safe dict."""
+    from decimal import Decimal as D
+
+    def _d(v):
+        return str(v) if isinstance(v, D) else v
+
+    def _date(v):
+        return v.isoformat() if v and hasattr(v, "isoformat") else v
+
+    rows = []
+    for row in result.get("rows", []):
+        serialized_row = {
+            "label": row.get("label"),
+            "total": _d(row.get("total")),
+            "period1_total": _d(row.get("period1_total")),
+            "period2_total": _d(row.get("period2_total")),
+            "difference": _d(row.get("difference")),
+        }
+        if "transactions" in row and row["transactions"] is not None:
+            serialized_row["transactions"] = [
+                {
+                    "id": tx["id"],
+                    "date": _date(tx["date"]),
+                    "description": tx["description"],
+                    "amount": _d(tx["amount"]),
+                    "account": tx["account"],
+                }
+                for tx in row["transactions"]
+            ]
+        rows.append(serialized_row)
+
+    return {
+        "report_type": result.get("report_type"),
+        "group_by": result.get("group_by"),
+        "date_from": _date(result.get("date_from")),
+        "date_to": _date(result.get("date_to")),
+        "period2_from": _date(result.get("period2_from")),
+        "period2_to": _date(result.get("period2_to")),
+        "rows": rows,
+        "subtotal": _d(result.get("subtotal")),
+        "subtotal2": _d(result.get("subtotal2")),
+    }
+
+
+def run_scheduled_reports():
+    """Run all ReportConfigs that are due for their scheduled execution."""
+    from reports.models import ReportConfig, ReportResult
+    from reports.services.execution import run_report
+    from reports.api.views.report import _compute_next_run
+
+    now = timezone.now()
+    due = ReportConfig.objects.filter(
+        is_scheduled=True, next_run_at__lte=now
+    ).prefetch_related("tag_selections", "accounts")
+
+    for config in due:
+        try:
+            tag_dicts = [
+                {
+                    "tag_id": sel.tag_id,
+                    "sub_tag_id": sel.sub_tag_id,
+                    "main_tag_id": sel.main_tag_id,
+                }
+                for sel in config.tag_selections.all()
+            ]
+            result = run_report(
+                report_type=config.report_type,
+                date_range_type=config.date_range_type,
+                group_by=config.group_by,
+                date_from=config.date_from,
+                date_to=config.date_to,
+                account_ids=list(config.accounts.values_list("id", flat=True)),
+                tag_selections=tag_dicts,
+                show_transactions=config.show_transactions,
+                show_subtotal=config.show_subtotal,
+                include_pending=config.include_pending,
+                period2_date_from=config.period2_date_from,
+                period2_date_to=config.period2_date_to,
+            )
+            ReportResult.objects.create(
+                config=config,
+                result_data=_result_dict_for_json(result),
+                status="success",
+            )
+            create_message(f"Scheduled report '{config.name}' completed successfully.", user=config.created_by)
+            task_logger.info(f"Scheduled report '{config.name}' (id={config.id}) ran successfully.")
+        except Exception as e:
+            ReportResult.objects.create(
+                config=config,
+                result_data={},
+                status="error",
+                error_message=str(e),
+            )
+            create_message(f"Scheduled report '{config.name}' failed: {e}", user=config.created_by)
+            error_logger.exception(f"Scheduled report '{config.name}' (id={config.id}) failed: {e}")
+
+        config.next_run_at = _compute_next_run(config.schedule_frequency, config.schedule_day)
+        config.save(update_fields=["next_run_at"])
+
+    if due:
+        broadcast_invalidate(["report_results"])
+
+
+def detect_recurring_transactions():
+    """Scan transaction history for recurring patterns and create DetectedRecurring records."""
+    from planning.models import DetectedRecurring
+    from reminders.models import Repeat, Reminder
+    from transactions.models import Transaction, TransactionStatus, TransactionDetail
+    from django.db.models import Count as _Count
+    from collections import defaultdict, Counter
+    from datetime import timedelta
+    from decimal import Decimal as D
+
+    today = date.today()
+    window_start = today - timedelta(days=400)
+
+    status_ids = list(
+        TransactionStatus.objects.filter(slug__in=["cleared", "reconciled", "archived"])
+        .values_list("id", flat=True)
+    )
+
+    txs = list(
+        Transaction.objects.filter(
+            transaction_date__gte=window_start,
+            status_id__in=status_ids,
+        )
+        .exclude(description__isnull=True)
+        .exclude(description="")
+        .values("id", "description", "transaction_date", "total_amount", "source_account_id")
+        .order_by("description", "transaction_date")
+    )
+
+    existing_descriptions = set(Reminder.objects.values_list("description", flat=True))
+    ignored_descriptions = set(
+        DetectedRecurring.objects.filter(is_ignored=True).values_list("description", flat=True)
+    )
+
+    repeat_by_days = {}
+    for r in Repeat.objects.all():
+        total_days = r.days + r.weeks * 7 + r.months * 30 + r.years * 365
+        if total_days > 0:
+            repeat_by_days[total_days] = r
+
+    # (period_days, tolerance_days, min_occurrences)
+    TARGET_PERIODS = [(7, 5, 3), (14, 5, 3), (30, 5, 3), (365, 14, 2)]
+
+    groups = defaultdict(list)
+    for tx in txs:
+        key = tx["description"].strip().lower()
+        groups[key].append(tx)
+
+    new_detections = []
+    for key, group in groups.items():
+        description = group[0]["description"].strip()
+        desc_lower = description.lower()
+        if any(desc_lower in d.lower() or d.lower() in desc_lower for d in existing_descriptions):
+            continue
+        if key in {d.strip().lower() for d in ignored_descriptions}:
+            continue
+
+        group = sorted(group, key=lambda t: t["transaction_date"])
+        dates = [t["transaction_date"] for t in group]
+        amounts = [abs(float(t["total_amount"])) for t in group]
+
+        if len(group) < 2:
+            continue
+
+        intervals = [(dates[i + 1] - dates[i]).days for i in range(len(dates) - 1)]
+        avg_interval = sum(intervals) / len(intervals)
+
+        match = next(
+            ((p, tol, min_occ) for p, tol, min_occ in TARGET_PERIODS if abs(avg_interval - p) <= tol),
+            None,
+        )
+        if match is None:
+            continue
+        target, tolerance, min_occurrences = match
+        if len(group) < min_occurrences:
+            continue
+        if any(abs(iv - avg_interval) > tolerance for iv in intervals):
+            continue
+
+        avg_amount = sum(amounts) / len(amounts)
+        if avg_amount == 0:
+            continue
+        if any(abs(a - avg_amount) / avg_amount > 0.20 for a in amounts):
+            continue
+        recent_amount = amounts[-1]
+
+        if (today - dates[-1]).days > target + tolerance:
+            continue
+
+        next_date = dates[-1] + timedelta(days=target)
+        repeat = repeat_by_days.get(target)
+
+        tx_ids = [t["id"] for t in group]
+        tag_row = (
+            TransactionDetail.objects.filter(transaction_id__in=tx_ids)
+            .exclude(tag_id__isnull=True)
+            .values("tag_id")
+            .annotate(n=_Count("id"))
+            .order_by("-n")
+            .first()
+        )
+        suggested_tag_id = tag_row["tag_id"] if tag_row else None
+
+        account_counts = Counter(t["source_account_id"] for t in group if t["source_account_id"] is not None)
+        suggested_account_id = account_counts.most_common(1)[0][0] if account_counts else None
+
+        new_detections.append(
+            DetectedRecurring(
+                description=description,
+                estimated_amount=D(str(round(recent_amount, 2))),
+                repeat=repeat,
+                next_estimated_date=next_date,
+                transaction_ids=[t["id"] for t in group],
+                suggested_tag_id=suggested_tag_id,
+                suggested_account_id=suggested_account_id,
+            )
+        )
+
+    DetectedRecurring.objects.filter(is_ignored=False).delete()
+
+    if new_detections:
+        DetectedRecurring.objects.bulk_create(new_detections)
+        create_message(
+            f"{len(new_detections)} recurring transaction pattern(s) detected. "
+            "View suggestions under Planning → Detections.",
+            link="/planning/detections",
+        )
+        task_logger.info(f"detect_recurring_transactions: {len(new_detections)} patterns found.")
+    else:
+        task_logger.info("detect_recurring_transactions: no new patterns found.")
+    broadcast_invalidate(["detected_recurring"])
 
 
 # TODO: Task to look for negative dips

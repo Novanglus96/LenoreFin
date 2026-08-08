@@ -136,7 +136,9 @@ class Command(BaseCommand):
 
     def _restore_data(self, data):
         from administration.models import Payee, DescriptionHistory, Option, BackupConfig, GraphType
-        from accounts.models import AccountType, Bank, Account, Reward
+        from accounts.models import AccountType, Bank, Account, AccountFavorite, Reward
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
         from tags.models import TagType, MainTag, SubTag, Tag
         from transactions.models import (
             TransactionStatus, TransactionType,
@@ -451,6 +453,7 @@ class Command(BaseCommand):
                 show_transactions=item.get("show_transactions", False),
                 show_subtotal=item.get("show_subtotal", True),
                 include_pending=item.get("include_pending", False),
+                is_shared=item.get("is_shared", False),
             )
             for account_name in item.get("account_names", []):
                 acct = account_by_name.get(account_name)
@@ -464,7 +467,15 @@ class Command(BaseCommand):
                     main_tag=main_tag_by_slug.get(sel["main_tag_slug"]) if sel.get("main_tag_slug") else None,
                 )
 
-        # --- 21. Option singleton (update in place) ---
+        # --- 21. AccountFavorites ---
+        AccountFavorite.objects.all().delete()
+        for item in data.get("account_favorites", []):
+            user = User.objects.filter(username=item["username"]).first()
+            account = account_by_name.get(item["account_name"])
+            if user and account:
+                AccountFavorite.objects.get_or_create(user=user, account=account)
+
+        # --- 22. Option singleton (update in place) ---
         if "option" in data:
             opt = data["option"]
             option = Option.load()

@@ -116,6 +116,24 @@ class Command(BaseCommand):
                 "start_today": False,
                 "delete": False,
             },
+            {
+                "task_name": "Run Scheduled Reports",
+                "function": "transactions.tasks.run_scheduled_reports",
+                "time": "00:00",
+                "arguments": "",
+                "type": "HOURLY",
+                "start_today": True,
+                "delete": False,
+            },
+            {
+                "task_name": "Detect Recurring Transactions",
+                "function": "transactions.tasks.detect_recurring_transactions",
+                "time": "08:00",
+                "arguments": "",
+                "type": "WEEKLY",
+                "start_today": True,
+                "delete": False,
+            },
         ]
 
         # Schedule or modify tasks

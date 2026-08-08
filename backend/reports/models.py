@@ -22,6 +22,17 @@ GROUP_BY_CHOICES = [
     ("MONTH", "Month"),
 ]
 
+SCHEDULE_FREQUENCY_CHOICES = [
+    ("DAILY", "Daily"),
+    ("WEEKLY", "Weekly"),
+    ("MONTHLY", "Monthly"),
+]
+
+RESULT_STATUS_CHOICES = [
+    ("success", "Success"),
+    ("error", "Error"),
+]
+
 
 class ReportConfig(models.Model):
     name = models.CharField(max_length=254)
@@ -37,6 +48,13 @@ class ReportConfig(models.Model):
     show_transactions = models.BooleanField(default=False)
     show_subtotal = models.BooleanField(default=True)
     include_pending = models.BooleanField(default=False)
+    is_shared = models.BooleanField(default=False)
+    is_scheduled = models.BooleanField(default=False)
+    schedule_frequency = models.CharField(
+        max_length=10, choices=SCHEDULE_FREQUENCY_CHOICES, null=True, blank=True
+    )
+    schedule_day = models.IntegerField(null=True, blank=True)
+    next_run_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -48,6 +66,22 @@ class ReportConfig(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ReportResult(models.Model):
+    config = models.ForeignKey(
+        ReportConfig, on_delete=models.CASCADE, related_name="results"
+    )
+    run_at = models.DateTimeField(auto_now_add=True)
+    result_data = models.JSONField(default=dict)
+    status = models.CharField(max_length=10, choices=RESULT_STATUS_CHOICES, default="success")
+    error_message = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ["-run_at"]
+
+    def __str__(self):
+        return f"{self.config.name} — {self.run_at:%Y-%m-%d %H:%M}"
 
 
 class ReportConfigTag(models.Model):

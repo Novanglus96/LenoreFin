@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Count, F, Sum
 from django.utils import timezone
 
-from administration.models import Option
+from administration.models import UserDashboardConfig, DEFAULT_GRAPH_WIDGETS, DEFAULT_DASHBOARD_LAYOUT
 from tags.api.schemas.graph_by_tags import GraphDataset, GraphOut, PieGraphItem
 from tags.models import Tag
 from transactions.models import Transaction, TransactionDetail
@@ -44,39 +44,18 @@ GRAPH_COLORS = [
 ]
 
 
-def _resolve_widget_options(options: Option, widget_id: int) -> dict:
-    """Extract the relevant widget settings from the Options object."""
-    if widget_id == 1:
-        return {
-            "graph_name": options.widget1_graph_name,
-            "exclude": options.widget1_exclude,
-            "tag_id": options.widget1_tag_id,
-            "month": options.widget1_month,
-            "type_id": options.widget1_type_id,
-        }
-    if widget_id == 2:
-        return {
-            "graph_name": options.widget2_graph_name,
-            "exclude": options.widget2_exclude,
-            "tag_id": options.widget2_tag_id,
-            "month": options.widget2_month,
-            "type_id": options.widget2_type_id,
-        }
-    if widget_id == 3:
-        return {
-            "graph_name": options.widget3_graph_name,
-            "exclude": options.widget3_exclude,
-            "tag_id": options.widget3_tag_id,
-            "month": options.widget3_month,
-            "type_id": options.widget3_type_id,
-        }
-    return {
-        "graph_name": "",
-        "exclude": "[0]",
-        "tag_id": None,
-        "month": 0,
-        "type_id": 0,
-    }
+def _resolve_widget_options(graph_widgets: list, widget_id: int) -> dict:
+    """Extract the relevant widget settings from the user's graph_widgets config."""
+    for widget in graph_widgets:
+        if widget.get("widget_id") == widget_id:
+            return {
+                "graph_name": widget.get("graph_name", ""),
+                "exclude": widget.get("exclude", "[0]"),
+                "tag_id": widget.get("tag_id"),
+                "month": widget.get("month", 0),
+                "type_id": widget.get("type_id", 1),
+            }
+    return {"graph_name": "", "exclude": "[0]", "tag_id": None, "month": 0, "type_id": 1}
 
 
 def _get_tags_and_result(
@@ -203,14 +182,25 @@ def _shuffled_colors(today_tz, widget_id: int) -> list:
     return colors
 
 
-def get_graph_new_data(widget_id: int) -> List[PieGraphItem]:
+def _get_user_graph_widgets(user) -> list:
+    """Return the user's graph_widgets config, creating defaults if needed."""
+    if not isinstance(getattr(user, "pk", None), int):
+        return DEFAULT_GRAPH_WIDGETS
+    config, _ = UserDashboardConfig.objects.get_or_create(
+        user=user,
+        defaults={"layout": DEFAULT_DASHBOARD_LAYOUT, "graph_widgets": DEFAULT_GRAPH_WIDGETS},
+    )
+    return config.graph_widgets or DEFAULT_GRAPH_WIDGETS
+
+
+def get_graph_new_data(widget_id: int, user) -> List[PieGraphItem]:
     """
     Service function backing the /graph-by-tags/new endpoint.
 
     Returns a list of PieGraphItem objects for the given widget.
     """
-    options = Option.load()
-    widget_opts = _resolve_widget_options(options, widget_id)
+    graph_widgets = _get_user_graph_widgets(user)
+    widget_opts = _resolve_widget_options(graph_widgets, widget_id)
 
     exclude_list = json.loads(widget_opts["exclude"])
     today = timezone.now()
@@ -251,14 +241,14 @@ def get_graph_new_data(widget_id: int) -> List[PieGraphItem]:
     return graph_items
 
 
-def get_graph_data(widget_id: int) -> GraphOut:
+def get_graph_data(widget_id: int, user) -> GraphOut:
     """
     Service function backing the /graph-by-tags/get endpoint.
 
     Returns a GraphOut object for the given widget.
     """
-    options = Option.load()
-    widget_opts = _resolve_widget_options(options, widget_id)
+    graph_widgets = _get_user_graph_widgets(user)
+    widget_opts = _resolve_widget_options(graph_widgets, widget_id)
 
     exclude_list = json.loads(widget_opts["exclude"])
     today = timezone.now()

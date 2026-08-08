@@ -1,6 +1,7 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
 from core.admin import UnfoldImportExportModelAdmin
-from .models import ChristmasGift, ContribRule, Contribution, Note, CalculationRule, Budget
+from .models import ChristmasGift, ContribRule, Contribution, Note, CalculationRule, Budget, DetectedRecurring
 
 
 class ChristmasGiftAdmin(UnfoldImportExportModelAdmin):
@@ -39,9 +40,16 @@ class BudgetAdmin(UnfoldImportExportModelAdmin):
     ordering = ["name"]
 
 
+class DetectedRecurringAdmin(ModelAdmin):
+    list_display = ["description", "estimated_amount", "repeat", "next_estimated_date", "is_ignored", "created_at"]
+    list_filter = ["is_ignored"]
+    search_fields = ["description"]
+
+
 admin.site.register(ChristmasGift, ChristmasGiftAdmin)
 admin.site.register(ContribRule, ContribRuleAdmin)
 admin.site.register(Contribution, ContributionAdmin)
 admin.site.register(Note, NoteAdmin)
 admin.site.register(CalculationRule, CalculationRuleAdmin)
 admin.site.register(Budget, BudgetAdmin)
+admin.site.register(DetectedRecurring, DetectedRecurringAdmin)

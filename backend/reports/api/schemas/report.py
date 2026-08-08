@@ -1,5 +1,5 @@
 from ninja import Schema
-from typing import List, Optional
+from typing import List, Optional, Any
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -31,6 +31,10 @@ class ReportConfigIn(Schema):
     show_transactions: bool = False
     show_subtotal: bool = True
     include_pending: bool = False
+    is_shared: bool = False
+    is_scheduled: bool = False
+    schedule_frequency: Optional[str] = None
+    schedule_day: Optional[int] = None
     tag_selections: List[TagSelectionIn] = []
 
 
@@ -49,6 +53,12 @@ class ReportConfigOut(Schema):
     show_transactions: bool
     show_subtotal: bool
     include_pending: bool
+    is_shared: bool
+    is_owner: bool
+    is_scheduled: bool
+    schedule_frequency: Optional[str] = None
+    schedule_day: Optional[int] = None
+    next_run_at: Optional[datetime] = None
     tag_selections: List[TagSelectionOut]
     created_at: datetime
     updated_at: datetime
@@ -98,3 +108,11 @@ class ReportResultOut(Schema):
     rows: List[ReportRowOut]
     subtotal: Optional[Decimal] = None
     subtotal2: Optional[Decimal] = None
+
+
+class ReportResultRecordOut(Schema):
+    id: int
+    run_at: datetime
+    status: str
+    error_message: str
+    result_data: Optional[Any] = None

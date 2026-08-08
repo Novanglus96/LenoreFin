@@ -173,7 +173,51 @@ The composite tag entity combining a MainTag and optional SubTag. This is the ta
 
 ---
 
+## Administration
+
+### Message
+
+An in-app inbox message displayed to users on the dashboard.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `message_date` | DateTimeField | Defaults to current time |
+| `message` | CharField | Message text (max 254 chars) |
+| `unread` | BooleanField | Defaults to `True` |
+| `user` | FK → User | Optional; `null` means visible to all users |
+| `link` | CharField | Optional internal URL (e.g. `/planning/detections`) |
+
+### PushSubscription
+
+A browser Web Push subscription registered by a user. Each endpoint is unique.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `user` | FK → User | Owner; cascade-deleted when user is removed |
+| `endpoint` | TextField | Push service endpoint URL (unique) |
+| `p256dh` | TextField | Browser-generated public key |
+| `auth` | TextField | Browser-generated auth secret |
+| `created_at` | DateTimeField | Auto-set on creation |
+
+---
+
 ## Planning
+
+### DetectedRecurring
+
+A recurring payment pattern detected automatically from transaction history.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `description` | CharField | Payee name or description |
+| `estimated_amount` | DecimalField | Estimated payment amount |
+| `repeat` | FK → Repeat | Optional; suggested recurrence interval |
+| `next_estimated_date` | DateField | Next predicted occurrence |
+| `transaction_ids` | JSONField | List of source transaction IDs |
+| `is_ignored` | BooleanField | Defaults to `False`; ignored records are hidden |
+| `suggested_tag_id` | IntegerField | Optional tag suggestion |
+| `suggested_account_id` | IntegerField | Optional account suggestion |
+| `created_at` | DateTimeField | Auto-set on creation |
 
 ### Budget
 
@@ -235,3 +279,56 @@ Marks a specific date as excluded from a reminder's recurrence.
 |-------|------|-------|
 | `reminder` | FK → Reminder | |
 | `exclude_date` | DateField | |
+
+---
+
+## Reports
+
+### ReportConfig
+
+A saved report configuration. Can be run on-demand or on a schedule.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `name` | CharField | Display name |
+| `description` | TextField | Optional notes |
+| `report_type` | CharField | `TOTALS` or `COMPARISON` |
+| `date_range_type` | CharField | `CUSTOM`, `THIS_MONTH`, `LAST_MONTH`, `YTD`, etc. |
+| `date_from` | DateField | Period 1 start (custom range) |
+| `date_to` | DateField | Period 1 end (custom range) |
+| `period2_date_from` | DateField | Period 2 start (comparison only) |
+| `period2_date_to` | DateField | Period 2 end (comparison only) |
+| `accounts` | M2M → Account | Optional account filter; empty = all accounts |
+| `group_by` | CharField | `TAG` or `MONTH` |
+| `show_transactions` | BooleanField | Expand transaction-level detail in results |
+| `show_subtotal` | BooleanField | Show subtotal rows |
+| `include_pending` | BooleanField | Include pending transactions |
+| `is_shared` | BooleanField | Visible to all users |
+| `is_scheduled` | BooleanField | Run automatically on a schedule |
+| `schedule_frequency` | CharField | `DAILY`, `WEEKLY`, or `MONTHLY` (scheduled only) |
+| `schedule_day` | IntegerField | Day of week (0–6) or day of month (1–31) for scheduled runs |
+| `next_run_at` | DateTimeField | Next scheduled execution time |
+| `created_by` | FK → User | Report owner |
+
+### ReportResult
+
+A historical run of a `ReportConfig`. Stores the output data for the report history panel.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `config` | FK → ReportConfig | Parent report; cascade-deleted |
+| `run_at` | DateTimeField | Auto-set when the run completes |
+| `result_data` | JSONField | Full serialized report output |
+| `status` | CharField | `success` or `error` |
+| `error_message` | TextField | Populated only when `status = error` |
+
+### ReportConfigTag
+
+Through-table linking a `ReportConfig` to specific tag selections. Exactly one of `tag`, `sub_tag`, or `main_tag` is set per row.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `report` | FK → ReportConfig | |
+| `tag` | FK → Tag | Leaf-level tag filter |
+| `sub_tag` | FK → SubTag | Sub-tag level filter |
+| `main_tag` | FK → MainTag | Top-level tag filter |

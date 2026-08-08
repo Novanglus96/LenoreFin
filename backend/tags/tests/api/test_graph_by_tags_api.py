@@ -1,59 +1,27 @@
 import pytest
-from administration.models import GraphType, Option
 
 AUTH = {"Authorization": "Bearer test-api-key"}
 
 
-@pytest.fixture
-def graph_types():
-    """Create the GraphType rows that Option FKs reference."""
-    gt1 = GraphType.objects.create(id=1, graph_type="Type 1")
-    gt2 = GraphType.objects.create(id=2, graph_type="Type 2")
-    gt3 = GraphType.objects.create(id=3, graph_type="Type 3")
-    return gt1, gt2, gt3
-
-
-@pytest.fixture
-def option_singleton(graph_types):
-    """Create the singleton Option row required by the graph_by_tags endpoints."""
-    return Option.objects.create(
-        widget1_graph_name="Widget 1",
-        widget1_month=0,
-        widget1_exclude="[0]",
-        widget1_type_id=1,
-        widget2_graph_name="Widget 2",
-        widget2_month=0,
-        widget2_exclude="[0]",
-        widget2_type_id=2,
-        widget3_graph_name="Widget 3",
-        widget3_month=0,
-        widget3_exclude="[0]",
-        widget3_type_id=3,
-    )
+# The graph endpoints now use per-user UserDashboardConfig (DEFAULT_GRAPH_WIDGETS
+# when no real user is present) rather than the global Option singleton.
+# DEFAULT_GRAPH_WIDGETS: widget 1 = "Expenses" (type 1), 2 = "Income" (type 2),
+#                        3 = "Untagged" (type 3)
 
 
 @pytest.mark.django_db
 @pytest.mark.api
-def test_get_graph_new_returns_list(api_client, option_singleton):
-    """The /new endpoint must return a list of pie graph items."""
+def test_get_graph_new_returns_list(api_client):
+    """The /new endpoint must return a list (may be empty when no transactions exist)."""
     response = api_client.get("/tags/graph-by-tags/new?widget_id=1", headers=AUTH)
 
     assert response.status_code == 200
-    data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 1
-
-    # Each item must have the expected shape
-    first = data[0]
-    assert "key" in first
-    assert "title" in first
-    assert "value" in first
-    assert "color" in first
+    assert isinstance(response.json(), list)
 
 
 @pytest.mark.django_db
 @pytest.mark.api
-def test_get_graph_new_widget2(api_client, option_singleton):
+def test_get_graph_new_widget2(api_client):
     response = api_client.get("/tags/graph-by-tags/new?widget_id=2", headers=AUTH)
 
     assert response.status_code == 200
@@ -62,7 +30,7 @@ def test_get_graph_new_widget2(api_client, option_singleton):
 
 @pytest.mark.django_db
 @pytest.mark.api
-def test_get_graph_new_widget3(api_client, option_singleton):
+def test_get_graph_new_widget3(api_client):
     response = api_client.get("/tags/graph-by-tags/new?widget_id=3", headers=AUTH)
 
     assert response.status_code == 200
@@ -71,8 +39,8 @@ def test_get_graph_new_widget3(api_client, option_singleton):
 
 @pytest.mark.django_db
 @pytest.mark.api
-def test_get_graph_returns_structure(api_client, option_singleton):
-    """The /get endpoint must return labels and datasets."""
+def test_get_graph_returns_structure(api_client):
+    """The /get endpoint must return labels and datasets with the default widget name."""
     response = api_client.get("/tags/graph-by-tags/get?widget_id=1", headers=AUTH)
 
     assert response.status_code == 200
@@ -87,12 +55,13 @@ def test_get_graph_returns_structure(api_client, option_singleton):
     assert "label" in dataset
     assert "data" in dataset
     assert "backgroundColor" in dataset
-    assert dataset["label"] == "Widget 1"
+    # Label comes from DEFAULT_GRAPH_WIDGETS, not the Option singleton
+    assert dataset["label"] == "Expenses"
 
 
 @pytest.mark.django_db
 @pytest.mark.api
-def test_get_graph_widget2(api_client, option_singleton):
+def test_get_graph_widget2(api_client):
     response = api_client.get("/tags/graph-by-tags/get?widget_id=2", headers=AUTH)
 
     assert response.status_code == 200
@@ -103,7 +72,7 @@ def test_get_graph_widget2(api_client, option_singleton):
 
 @pytest.mark.django_db
 @pytest.mark.api
-def test_get_graph_widget3_untagged_path(api_client, option_singleton):
+def test_get_graph_widget3_untagged_path(api_client):
     """Widget 3 uses type_id=3 (all transactions), exercises the untagged path."""
     response = api_client.get("/tags/graph-by-tags/get?widget_id=3", headers=AUTH)
 
@@ -115,17 +84,21 @@ def test_get_graph_widget3_untagged_path(api_client, option_singleton):
 
 @pytest.mark.django_db
 @pytest.mark.api
-def test_get_graph_new_no_option_returns_error(api_client):
-    """When there is no Option row the endpoint should return a 500."""
-    response = api_client.get("/tags/graph-by-tags/new?widget_id=1", headers=AUTH)
+def test_get_graph_new_unknown_widget_falls_back(api_client):
+    """Unknown widget_id falls back to type_id=1 defaults and returns a valid list."""
+    response = api_client.get("/tags/graph-by-tags/new?widget_id=99", headers=AUTH)
 
-    assert response.status_code == 500
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
 
 
 @pytest.mark.django_db
 @pytest.mark.api
-def test_get_graph_no_option_returns_error(api_client):
-    """When there is no Option row the endpoint should return a 500."""
-    response = api_client.get("/tags/graph-by-tags/get?widget_id=1", headers=AUTH)
+def test_get_graph_unknown_widget_falls_back(api_client):
+    """Unknown widget_id falls back to type_id=1 defaults and returns valid graph shape."""
+    response = api_client.get("/tags/graph-by-tags/get?widget_id=99", headers=AUTH)
 
-    assert response.status_code == 500
+    assert response.status_code == 200
+    data = response.json()
+    assert "labels" in data
+    assert "datasets" in data

@@ -21,11 +21,73 @@
       density="compact"
       nav
       :bg-color="smAndDown ? 'background' : 'surface'"
+      v-model:opened="openedGroups"
     >
+      <!-- Favorites section -->
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
+        value="favorites"
+        v-if="favoriteAccounts.length > 0"
+      >
+        <template v-slot:activator="{ props }">
+          <v-list-item color="amber" base-color="amber" v-bind="props">
+            <template v-slot:prepend>
+              <v-icon
+                icon="mdi-star"
+                :size="!isMobile ? 'default' : 'x-large'"
+              ></v-icon>
+            </template>
+            <v-list-item-title>
+              <span :class="isMobile ? 'text-h6' : ''">FAVORITES</span>
+            </v-list-item-title>
+            <v-list-item-subtitle>
+              <span :class="isMobile ? 'text-subtitle-1' : ''">
+                {{ favoriteAccounts.length }}
+                {{ favoriteAccounts.length == 1 ? "account" : "accounts" }}
+              </span>
+            </v-list-item-subtitle>
+          </v-list-item>
+        </template>
+        <v-list-item
+          v-for="(account, i) in favoriteAccounts"
+          :key="i"
+          color="accent"
+          @click="setAccount(account.id, False)"
+        >
+          <template v-slot:prepend>
+            <BankLogo :logo-url="account.bank?.logo_url" :size="20" class="mr-1" />
+          </template>
+          <v-list-item-title>
+            <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            <span
+              :class="
+                account.balance >= 0
+                  ? 'text-success font-weight-bold'
+                  : 'text-error font-weight-bold'
+              "
+            >
+              <NumberFlow
+                :value="account.balance"
+                :format="{ style: 'currency', currency: 'USD' }"
+              />
+            </span>
+          </v-list-item-subtitle>
+        </v-list-item>
+      </v-list-group>
+      <v-divider v-if="favoriteAccounts.length > 0"></v-divider>
+      <v-list-group
+        collapse-icon="mdi-chevron-up"
+        expand-icon="mdi-chevron-down"
+
         value="checking"
       >
         <template v-slot:activator="{ props }">
@@ -68,7 +130,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -90,7 +156,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="savings"
       >
         <template v-slot:activator="{ props }">
@@ -133,7 +199,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -155,7 +225,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="cc"
       >
         <template v-slot:activator="{ props }">
@@ -198,7 +268,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -220,7 +294,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="investment"
       >
         <template v-slot:activator="{ props }">
@@ -263,7 +337,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -285,7 +363,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="loan"
       >
         <template v-slot:activator="{ props }">
@@ -328,7 +406,11 @@
           </template>
           <v-list-item-title>
             <span :class="isMobile ? 'text-subtitle-1 font-weight-bold' : ''">{{ account.account_name }}</span>
-            <v-chip v-if="account.is_parent_account" size="x-small" color="secondary" variant="tonal" label class="ml-1">combined</v-chip>
+            <v-tooltip v-if="account.is_parent_account" text="Combined account" location="top">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-layers" color="secondary" size="x-small" class="ml-1" v-bind="props" />
+              </template>
+            </v-tooltip>
           </v-list-item-title>
           <v-list-item-subtitle>
             <span
@@ -350,7 +432,7 @@
       <v-list-group
         collapse-icon="mdi-chevron-up"
         expand-icon="mdi-chevron-down"
-        v-model="groupActive"
+
         value="inactive"
       >
         <template v-slot:activator="{ props }">
@@ -404,7 +486,7 @@
 </template>
 <script setup>
   import { useAccounts } from "@/composables/accountsComposable";
-  import { ref } from "vue";
+  import { ref, computed, watch } from "vue";
   import { useRouter } from "vue-router";
   import { useTransactionsStore } from "@/stores/transactions";
   import NumberFlow from "@number-flow/vue";
@@ -420,7 +502,7 @@
 
   const transactions_store = useTransactionsStore();
   const router = useRouter();
-  const groupActive = ref(null);
+  const openedGroups = ref([]);
 
   const sortForMenu = accounts => {
     if (!accounts) return []
@@ -446,6 +528,7 @@
   };
 
   const {
+    accounts,
     checking_accounts,
     cc_accounts,
     savings_accounts,
@@ -453,6 +536,23 @@
     loan_accounts,
     inactive_accounts,
   } = useAccounts();
+
+  const FAVORITE_TYPE_ORDER = { checking: 0, savings: 1, 'credit-card': 2, investment: 3, loan: 4 };
+
+  const favoriteAccounts = computed(() =>
+    [...(accounts.value ?? []).filter(a => a.is_favorite)].sort((a, b) => {
+      const ta = FAVORITE_TYPE_ORDER[a.account_type?.slug] ?? 99;
+      const tb = FAVORITE_TYPE_ORDER[b.account_type?.slug] ?? 99;
+      return ta !== tb ? ta - tb : a.account_name.localeCompare(b.account_name);
+    })
+  );
+
+  watch(favoriteAccounts, val => {
+    if (val && val.length > 0 && !openedGroups.value.includes("favorites")) {
+      openedGroups.value = ["favorites"];
+    }
+  }, { immediate: true });
+
   const add_account_link = ref("/accounts/add");
 </script>
 
