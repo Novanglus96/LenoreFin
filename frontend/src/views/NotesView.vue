@@ -201,8 +201,10 @@
     addNote(note);
   };
 
-  const clickEditNote = () => {
-    editNote(editedNote.value);
+  // Takes the edited values emitted by NoteForm. The id comes from the selected
+  // row rather than the form, since it is not part of the validation schema.
+  const clickEditNote = note => {
+    editNote({ ...note, id: editedNote.value.id });
     selectedNote.value = [];
   };
 

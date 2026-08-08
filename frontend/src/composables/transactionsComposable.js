@@ -90,6 +90,30 @@ async function createTransactionFunction(newTransaction) {
   }
 }
 
+// Creates a whole batch in one atomic request, so either every row lands or none
+// does -- unlike calling createTransactionFunction in a loop.
+async function createMultipleTransactionsFunction(newTransactions) {
+  const mainstore = useMainStore();
+  let payload = {
+    transactions: newTransactions,
+  };
+  try {
+    const response = await apiClient.post(
+      "/transactions/create-multiple",
+      payload,
+    );
+    mainstore.showSnackbar(
+      newTransactions.length > 1
+        ? `${newTransactions.length} transactions created successfully!`
+        : "Transaction created successfully!",
+      "success",
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Transactions not created: ");
+  }
+}
+
 async function deleteTransactionFunction(deletedTransaction) {
   const mainstore = useMainStore();
   let payload = {
@@ -130,6 +154,30 @@ async function clearTransactionFunction(clearedTransaction) {
     return response.data;
   } catch (error) {
     handleApiError(error, "Transaction not cleared: ");
+  }
+}
+
+// Takes ForecastCacheTransaction ids, not the negated display ids the table
+// shows for simulated rows -- see toForecastId in TransactionTableWidget.
+async function convertForecastTransactionsFunction(forecastIds) {
+  const mainstore = useMainStore();
+  let payload = {
+    forecast_transactions: forecastIds,
+  };
+  try {
+    const response = await apiClient.patch(
+      "/transactions/convert-forecast",
+      payload,
+    );
+    mainstore.showSnackbar(
+      forecastIds.length > 1
+        ? "Forecast transactions converted successfully!"
+        : "Forecast transaction converted successfully!",
+      "success",
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Forecast transaction not converted: ");
   }
 }
 
@@ -205,6 +253,14 @@ export function useTransactions() {
     },
   });
 
+  const createMultipleTransactionsMutation = useMutation({
+    mutationFn: createMultipleTransactionsFunction,
+    onSuccess: () => {
+      invalidateTransactionDependencies(queryClient, [["description-history"]]);
+      scheduleForecastRefetch(queryClient);
+    },
+  });
+
   const deleteTransactionMutation = useMutation({
     mutationFn: deleteTransactionFunction,
     onSuccess: () => {
@@ -215,6 +271,14 @@ export function useTransactions() {
 
   const clearTransactionMutation = useMutation({
     mutationFn: clearTransactionFunction,
+    onSuccess: () => {
+      invalidateTransactionDependencies(queryClient);
+      scheduleForecastRefetch(queryClient);
+    },
+  });
+
+  const convertForecastTransactionsMutation = useMutation({
+    mutationFn: convertForecastTransactionsFunction,
     onSuccess: () => {
       invalidateTransactionDependencies(queryClient);
       scheduleForecastRefetch(queryClient);
@@ -245,6 +309,10 @@ export function useTransactions() {
     createTransactionMutation.mutate(newTransaction);
   }
 
+  async function addTransactions(newTransactions) {
+    createMultipleTransactionsMutation.mutate(newTransactions);
+  }
+
   async function removeTransaction(deletedTransaction) {
     deleteTransactionMutation.mutate(deletedTransaction);
   }
@@ -257,15 +325,21 @@ export function useTransactions() {
     multiEditTransactionsMutation.mutate(data);
   }
 
+  async function convertForecastTransactions(forecastIds) {
+    convertForecastTransactionsMutation.mutate(forecastIds);
+  }
+
   return {
     isLoading,
     isFetching,
     transactions,
     addTransaction,
+    addTransactions,
     removeTransaction,
     clearTransaction,
     editTransaction,
     mutliEditTransactions,
+    convertForecastTransactions,
   };
 }
 

@@ -126,13 +126,17 @@
               <template v-slot:activator="{ props: tipProps }">
                 <v-btn
                   v-bind="tipProps"
-                  :icon="pushSubscribed ? 'mdi-bell' : 'mdi-bell-outline'"
+                  icon
                   :color="pushSubscribed ? 'primary' : 'default'"
                   size="small"
                   variant="text"
                   @click.stop="togglePush"
                   :disabled="!isOnline"
-                ></v-btn>
+                >
+                  <AnimatedIcon
+                    :icon="pushSubscribed ? 'mdi-bell' : 'mdi-bell-outline'"
+                  />
+                </v-btn>
               </template>
             </v-tooltip>
           </v-card-title>
@@ -188,13 +192,17 @@
                 <template v-slot:activator="{ props: tipProps }">
                   <v-btn
                     v-bind="tipProps"
-                    :icon="pushSubscribed ? 'mdi-bell' : 'mdi-bell-outline'"
+                    icon
                     :color="pushSubscribed ? 'primary' : 'default'"
                     size="small"
                     variant="text"
                     @click.stop="togglePush"
                     :disabled="!isOnline"
-                  ></v-btn>
+                  >
+                    <AnimatedIcon
+                      :icon="pushSubscribed ? 'mdi-bell' : 'mdi-bell-outline'"
+                    />
+                  </v-btn>
                 </template>
               </v-tooltip>
             </v-card-title>
@@ -355,6 +363,7 @@
   import AccountsMenu from "@/components/AccountsMenu.vue";
   import PlanningMenu from "@/components/PlanningMenu.vue";
   import DashboardEditor from "@/components/DashboardEditor.vue";
+  import AnimatedIcon from "@/components/AnimatedIcon.vue";
   import { useMessages } from "@/composables/messagesComposable";
   import { usePushNotifications } from "@/composables/usePushNotifications";
   import { useRouter, useRoute } from "vue-router";

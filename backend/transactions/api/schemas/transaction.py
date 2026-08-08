@@ -29,6 +29,12 @@ class TransactionIn(Schema):
     checkNumber: Optional[int] = None
 
 
+# The class TransactionBatchIn is a schema for creating several Transactions in
+# one request. Each entry is validated exactly as a single create would be.
+class TransactionBatchIn(Schema):
+    transactions: List[TransactionIn]
+
+
 # The class TransactionClear is a schema for clearing Transactions.
 class TransactionClear(Schema):
     id: int
@@ -39,6 +45,13 @@ class TransactionClear(Schema):
 # The class TransactionClearList is a schema for a list of clearing Transactions.
 class TransactionList(Schema):
     transactions: List[int]
+
+
+# The class ForecastTransactionList is a schema for converting forecast
+# transactions. Ids are ForecastCacheTransaction pks, not the negated display
+# ids the transaction list emits for simulated rows.
+class ForecastTransactionList(Schema):
+    forecast_transactions: List[int]
 
 
 # The class MultiTransactionDate is a schema for editing dates of transactions.
