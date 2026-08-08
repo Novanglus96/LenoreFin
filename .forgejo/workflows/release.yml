@@ -1,0 +1,13 @@
+name: Semantic Release
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, "release/v*", alpha, beta, rc]
+jobs:
+  release:
+    uses: lenore/lenore-ci/.forgejo/workflows/release.yml@v1
+    with:
+      # Phase 2 computes and compares; it never writes. Flipping this to false
+      # is the Phase 3 cutover, in the same change that deletes .github/workflows/.
+      dry_run: true
+    secrets: inherit

@@ -2,7 +2,20 @@
 # STAGE 1 #
 # Vue build
 ###########
-FROM node:lts-alpine AS frontend-build
+# Digest-pinned on purpose. `node:lts-alpine` is fully floating — `lts` rolls to
+# a new major on its own schedule — so rebuilding an OLD release tag could pull
+# a different Node major and produce a materially different frontend bundle
+# under the same version tag. That defeats "re-run any step after an outage with
+# no gaps": the re-run would succeed and quietly ship different bytes.
+#
+# The Python bases below are already specific (python:3.11.4-slim-bookworm), so
+# this was the only floating base in the image.
+#
+# To bump: docker pull node:lts-alpine && docker image inspect node:lts-alpine \
+#            --format '{{index .RepoDigests 0}}'
+# and update the comment with the version you moved to.
+FROM node:lts-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS frontend-build
+# ^ node 24.19.0 (lts-alpine as of 2026-08-07)
 
 WORKDIR /app
 COPY frontend/package*.json ./
