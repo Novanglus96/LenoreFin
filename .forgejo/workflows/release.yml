@@ -7,7 +7,9 @@ jobs:
   release:
     uses: lenore/lenore-ci/.forgejo/workflows/release.yml@v1
     with:
-      # Phase 2 computes and compares; it never writes. Flipping this to false
-      # is the Phase 3 cutover, in the same change that deletes .github/workflows/.
-      dry_run: true
+      # Phase 3 cutover (2026-08-09): the forge is now the writer. This flip and
+      # the deletion of .github/workflows/ are one change on purpose — Forgejo
+      # reads both directories, so a split would run every workflow twice and
+      # produce the double-bump this migration exists to prevent.
+      dry_run: false
     secrets: inherit
