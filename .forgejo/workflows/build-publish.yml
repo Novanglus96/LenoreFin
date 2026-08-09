@@ -17,5 +17,11 @@ jobs:
       # re-publishing the release.
       tag: ${{ github.event.release.tag_name || inputs.tag }}
       image_list: app          # LenoreFin is single-container
-      dry_run: true
+      # Both registries from the first real release. release-audit asserts
+      # "image present in BOTH registries" per tag, so leaving push_forge off
+      # would make it report a true gap on every release — and a check that is
+      # permanently red is a check nobody reads.
+      push_dockerhub: true
+      push_forge: true
+      dry_run: false
     secrets: inherit
