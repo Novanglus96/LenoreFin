@@ -8,6 +8,13 @@ on:
         description: "Release tag to announce (e.g. v1.6.1)"
         required: true
 jobs:
+  # 🔴 DELIBERATELY STILL DRY. scripts/post_to_patreon.py POSTs to
+  # /api/oauth2/v2/posts, but Patreon's public API v2 is READ-ONLY for posts —
+  # there is no credential that makes this work, so it has 404'd since v1.6.1
+  # (2026-05-28) while reporting green behind continue-on-error. Kept as a
+  # visible marker that the integration is owed a rewrite (own job off the
+  # critical path, re-runnable by tag, deduped by an announced/patreon/vX.Y.Z
+  # marker tag). Dry means it cannot fail a release in the meantime.
   patreon:
     uses: lenore/lenore-ci/.forgejo/workflows/announce.yml@v1
     with:
@@ -20,5 +27,5 @@ jobs:
     with:
       tag: ${{ github.event.release.tag_name || inputs.tag }}
       target: reddit
-      dry_run: true
+      dry_run: false
     secrets: inherit
