@@ -353,6 +353,12 @@
     emergency_amt: "0",
     cap: "0",
     active: true,
+    account_id: null,
+    reminder_id: null,
+    goal_type: "none",
+    goal_amount: "0",
+    goal_date: null,
+    goal_rate: "0",
   });
 
   const {
