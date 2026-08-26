@@ -201,13 +201,15 @@
 
         <template v-slot:[`item.current`]="{ item }">
           <div class="text-center">
-            {{ formatCurrency(item.suggestion?.current_per_paycheck ?? 0) }}
+            <!-- The row's own figure, not the suggestion's: a contribution with
+                 no goal has no suggestion but is still costing money. -->
+            {{ formatCurrency(item.current_per_paycheck) }}
             <!-- Drift: the plan and the reminder disagree. null means no
                  reminder is linked, which is not the same as zero drift. -->
             <v-tooltip
               v-if="item.drift !== null && Number(item.drift) !== 0"
               :text="`The linked reminder moves ${formatCurrency(
-                Number(item.suggestion?.current_per_paycheck ?? 0) - Number(item.drift),
+                Number(item.current_per_paycheck) - Number(item.drift),
               )}, not this`"
               location="top"
             >
@@ -230,7 +232,9 @@
               {{ formatCurrency(item.suggestion.required_per_paycheck) }}
             </span>
           </div>
-          <span v-else class="text-caption text-medium-emphasis">—</span>
+          <span v-else class="text-caption text-medium-emphasis">
+            {{ item.goal_type === "none" ? "no goal" : "—" }}
+          </span>
         </template>
 
         <template v-slot:[`item.delta`]="{ item }">

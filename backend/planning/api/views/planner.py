@@ -53,6 +53,7 @@ def _row(contribution, months, horizon_months):
     analysis = analyze_contribution(
         contribution, months=months, horizon_months=horizon_months
     )
+    current = contribution.per_paycheck or Decimal("0")
     if analysis is None:
         return PlannerRowOut(
             contribution_id=contribution.id,
@@ -61,8 +62,12 @@ def _row(contribution, months, horizon_months):
             account_name=None,
             reminder_id=contribution.reminder_id,
             goal_type=contribution.goal_type,
+            current_per_paycheck=current,
             note="Link an account to analyse this contribution.",
         )
+    note = analysis["note"]
+    if note is None and contribution.goal_type == Contribution.GOAL_NONE:
+        note = "No goal set — counted in the totals, but nothing to suggest."
     return PlannerRowOut(
         contribution_id=contribution.id,
         contribution=contribution.contribution,
@@ -72,10 +77,11 @@ def _row(contribution, months, horizon_months):
         else None,
         reminder_id=contribution.reminder_id,
         goal_type=contribution.goal_type,
+        current_per_paycheck=current,
         trend=analysis["trend"],
         suggestion=analysis["suggestion"],
         drift=analysis["drift"],
-        note=analysis["note"],
+        note=note,
     )
 
 
@@ -107,16 +113,14 @@ def planner_analysis(
         current_total = Decimal("0")
         suggested_total = Decimal("0")
         for row in rows:
-            if row.suggestion:
-                current_total += row.suggestion.current_per_paycheck
-                suggested_total += row.suggestion.required_per_paycheck
-            else:
-                # No goal to solve: it still costs what it costs.
-                contribution = next(
-                    c for c in contributions if c.id == row.contribution_id
-                )
-                current_total += contribution.per_paycheck or Decimal("0")
-                suggested_total += contribution.per_paycheck or Decimal("0")
+            current_total += row.current_per_paycheck
+            # Nothing to suggest means nothing changes — the contribution still
+            # costs what it costs, so it carries into the suggested total too.
+            suggested_total += (
+                row.suggestion.required_per_paycheck
+                if row.suggestion
+                else row.current_per_paycheck
+            )
 
         api_logger.debug("Planner analysis retrieved")
         return PlannerOut(

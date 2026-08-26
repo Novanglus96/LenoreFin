@@ -49,6 +49,10 @@ class PlannerRowOut(Schema):
     account_name: Optional[str] = None
     reminder_id: Optional[int] = None
     goal_type: str
+    # What is being contributed today. Lives on the row rather than only inside
+    # `suggestion`, because a contribution with no goal has no suggestion but is
+    # still costing money every payday.
+    current_per_paycheck: AmountDecimal
     trend: Optional[TrendOut] = None
     suggestion: Optional[SuggestionOut] = None
     # None means no reminder is linked, which is not the same as zero drift.

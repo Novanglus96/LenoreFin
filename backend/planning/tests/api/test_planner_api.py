@@ -139,6 +139,36 @@ def test_analysis_row_for_contribution_without_account(api_client):
 
 @pytest.mark.django_db
 @pytest.mark.api
+def test_goalless_contribution_shows_its_amount_and_counts_in_totals(
+    api_client, planned_contribution
+):
+    """No goal means no suggestion — but the money is still going out.
+
+    The row must report what is actually being contributed, and carry into both
+    totals unchanged, so the paycheck figures stay truthful. Reading the amount
+    off `suggestion` showed 0.00 for these rows and understated the totals.
+    """
+    from planning.models import Contribution
+
+    planned_contribution.goal_type = Contribution.GOAL_NONE
+    planned_contribution.save(update_fields=["goal_type"])
+
+    body = api_client.get("/planning/planner/analysis", headers=AUTH).json()
+    row = next(
+        r for r in body["rows"] if r["contribution_id"] == planned_contribution.id
+    )
+
+    assert row["suggestion"] is None
+    assert Decimal(row["current_per_paycheck"]) == Decimal("10.00")
+    assert "No goal set" in row["note"]
+    # Counted, and counted identically on both sides so the change reads zero.
+    assert Decimal(body["current_per_paycheck_total"]) == Decimal("10.00")
+    assert Decimal(body["suggested_per_paycheck_total"]) == Decimal("10.00")
+    assert Decimal(body["delta_per_paycheck_total"]) == Decimal("0.00")
+
+
+@pytest.mark.django_db
+@pytest.mark.api
 def test_apply_updates_contribution_and_reminder_together(
     api_client, planned_contribution
 ):
