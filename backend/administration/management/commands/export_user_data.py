@@ -273,8 +273,18 @@ class Command(BaseCommand):
                 "emergency_diff": str(c.emergency_diff),
                 "cap": str(c.cap),
                 "active": c.active,
+                "account_name": c.account.account_name if c.account else None,
+                # Keyed the same way reminder_exclusions is — the source pk,
+                # which the importer resolves through reminder_id_map.
+                "reminder_id": c.reminder_id,
+                "goal_type": c.goal_type,
+                "goal_amount": str(c.goal_amount),
+                "goal_date": str(c.goal_date) if c.goal_date else None,
+                "goal_rate": str(c.goal_rate),
             }
-            for c in Contribution.objects.all()
+            for c in Contribution.objects.all().select_related(
+                "account", "reminder"
+            )
         ]
 
         # 16. Notes

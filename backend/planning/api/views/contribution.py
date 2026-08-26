@@ -1,4 +1,5 @@
 from ninja import Router
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from planning.models import Contribution
@@ -34,9 +35,19 @@ def create_contribution(request, payload: ContributionIn):
     """
 
     try:
-        contribution = Contribution.objects.create(**payload.dict())
+        contribution = Contribution(**payload.dict())
+        # Goal/reminder coherence is enforced in Contribution.clean(); without
+        # this the API would happily store a goal pointing at no account, or a
+        # reminder that funds a different account than the goal measures.
+        contribution.full_clean(exclude=["contribution"])
+        contribution.save()
         api_logger.info(f"Contribution created : {payload.contribution}")
         return {"id": contribution.id}
+    except ValidationError as validation_error:
+        api_logger.error(
+            f"Contribution not created : invalid ({validation_error.messages})"
+        )
+        raise HttpError(400, "; ".join(validation_error.messages))
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():
@@ -84,11 +95,23 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
         contribution.emergency_diff = payload.emergency_diff
         contribution.cap = payload.cap
         contribution.active = payload.active
+        contribution.account_id = payload.account_id
+        contribution.reminder_id = payload.reminder_id
+        contribution.goal_type = payload.goal_type
+        contribution.goal_amount = payload.goal_amount
+        contribution.goal_date = payload.goal_date
+        contribution.goal_rate = payload.goal_rate
+        contribution.full_clean(exclude=["contribution"])
         contribution.save()
         api_logger.info(f"Contribution updated : {contribution.contribution}")
         return {"success": True}
     except Http404:
         raise HttpError(404, "Contribution not found")
+    except ValidationError as validation_error:
+        api_logger.error(
+            f"Contribution not updated : invalid ({validation_error.messages})"
+        )
+        raise HttpError(400, "; ".join(validation_error.messages))
     except IntegrityError as integrity_error:
         # Check if the integrity error is due to a duplicate
         if "unique constraint" in str(integrity_error).lower():

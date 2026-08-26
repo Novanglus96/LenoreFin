@@ -393,6 +393,8 @@ class Command(BaseCommand):
             )
 
         # --- 15. Contributions ---
+        # Runs after Reminders (13) so reminder_id_map is populated; a backup
+        # taken before the planner fields existed simply leaves them at default.
         for item in data.get("contributions", []):
             Contribution.objects.create(
                 contribution=item["contribution"],
@@ -401,6 +403,16 @@ class Command(BaseCommand):
                 emergency_diff=item["emergency_diff"],
                 cap=item["cap"],
                 active=item["active"],
+                account=account_by_name.get(item["account_name"])
+                if item.get("account_name")
+                else None,
+                reminder=reminder_id_map.get(item["reminder_id"])
+                if item.get("reminder_id")
+                else None,
+                goal_type=item.get("goal_type", Contribution.GOAL_NONE),
+                goal_amount=item.get("goal_amount", 0),
+                goal_date=item.get("goal_date"),
+                goal_rate=item.get("goal_rate", 0),
             )
 
         # --- 16. Notes ---

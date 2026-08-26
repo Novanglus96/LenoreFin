@@ -262,6 +262,91 @@ def test_roundtrip_reminder_maps(
     assert restored.repeat.slug == test_repeat.slug
 
 
+@pytest.mark.django_db
+def test_roundtrip_contribution_planner_fields(
+    tmp_path, test_checking_account, test_savings_account,
+    test_tag, test_repeat, test_expense_transaction_type,
+):
+    """A contribution's account, reminder link and goal all survive a round trip.
+
+    The reminder link is the one that can silently break: it is exported as the
+    source pk and has to come back through reminder_id_map, not as a raw id.
+    """
+    from planning.models import Contribution
+    from reminders.models import Reminder
+
+    reminder = Reminder.objects.create(
+        tag=test_tag,
+        amount="200.00",
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=test_savings_account,
+        description="House Transfer",
+        transaction_type=test_expense_transaction_type,
+        repeat=test_repeat,
+        auto_add=False,
+    )
+    Contribution.objects.create(
+        contribution="House",
+        per_paycheck="200.00",
+        emergency_amt="0.00",
+        emergency_diff="0.00",
+        cap="0.00",
+        active=True,
+        account=test_savings_account,
+        reminder=reminder,
+        goal_type=Contribution.GOAL_TARGET,
+        goal_amount="5000.00",
+        goal_date="2027-06-01",
+        goal_rate="0.00",
+    )
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    call_command("import_user_data", output)
+
+    restored = Contribution.objects.get(contribution="House")
+    assert restored.account is not None
+    assert restored.account.account_name == test_savings_account.account_name
+    assert restored.reminder is not None
+    assert restored.reminder.description == "House Transfer"
+    # The remapped reminder must be the restored one, not a dangling source pk.
+    assert restored.reminder_id == Reminder.objects.get(
+        description="House Transfer"
+    ).id
+    assert restored.goal_type == Contribution.GOAL_TARGET
+    assert str(restored.goal_amount) == "5000.00"
+    assert str(restored.goal_date) == "2027-06-01"
+
+
+@pytest.mark.django_db
+def test_roundtrip_contribution_without_planner_fields(
+    tmp_path, test_checking_account,
+):
+    """A contribution with no account, reminder or goal still round trips.
+
+    This is the shape every pre-planner backup has, so it must not raise.
+    """
+    from planning.models import Contribution
+
+    Contribution.objects.create(
+        contribution="HSA",
+        per_paycheck="50.00",
+        emergency_amt="0.00",
+        emergency_diff="0.00",
+        cap="0.00",
+        active=True,
+    )
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    call_command("import_user_data", output)
+
+    restored = Contribution.objects.get(contribution="HSA")
+    assert restored.account is None
+    assert restored.reminder is None
+    assert restored.goal_type == Contribution.GOAL_NONE
+
+
 # ---------------------------------------------------------------------------
 # Version check
 # ---------------------------------------------------------------------------

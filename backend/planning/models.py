@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from tags.models import Tag
@@ -53,6 +54,15 @@ class Contribution(models.Model):
     """
     Model representing a contribution to be taken out each paycheck.
 
+    A contribution ties three things together:
+    - the *intent* (`per_paycheck`, and a goal for the funded account),
+    - the *account* the money lands in,
+    - the *mechanism* (`reminder`) that actually moves it.
+
+    `per_paycheck` is what you plan to contribute; the linked reminder's amount
+    is what is actually scheduled. The two can disagree, and the planner surfaces
+    that drift rather than silently trusting either one.
+
     Fields:
     - contribution (CharField): The description of the contribution, limited to 254 characters,
     and must be unique.
@@ -64,7 +74,29 @@ class Contribution(models.Model):
     - cap (DecimalField): The cap for destination contibution that shuts off this contribution, default
     is 0.00.
     - active (BooleanField): Wether or not this contribution is active.
+    - account (ForeignKey): The account this contribution funds. Null until linked.
+    - reminder (ForeignKey): The recurring transfer that moves the money. Null until linked.
+    - goal_type (CharField): What this account should do — see GOAL_CHOICES.
+    - goal_amount (DecimalField): Target balance (TARGET), floor (FLOOR), or growth
+      per month in dollars (GROW when goal_rate is 0).
+    - goal_date (DateField): The date a TARGET goal must be met by.
+    - goal_rate (DecimalField): Annual growth rate as a percent, for GROW goals.
+      Takes precedence over goal_amount when non-zero.
     """
+
+    GOAL_NONE = "none"
+    GOAL_HOLD = "hold"
+    GOAL_TARGET = "target"
+    GOAL_FLOOR = "floor"
+    GOAL_GROW = "grow"
+
+    GOAL_CHOICES = [
+        (GOAL_NONE, "No goal"),
+        (GOAL_HOLD, "Hold steady"),
+        (GOAL_TARGET, "Reach a target by a date"),
+        (GOAL_FLOOR, "Never dip below a floor"),
+        (GOAL_GROW, "Grow by an amount or rate"),
+    ]
 
     contribution = models.CharField(max_length=20, unique=True)
     per_paycheck = models.DecimalField(
@@ -78,6 +110,65 @@ class Contribution(models.Model):
     )
     cap = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     active = models.BooleanField(default=True)
+    account = models.ForeignKey(
+        "accounts.Account",
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        related_name="contributions",
+    )
+    reminder = models.ForeignKey(
+        "reminders.Reminder",
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        related_name="contributions",
+    )
+    goal_type = models.CharField(
+        max_length=10, choices=GOAL_CHOICES, default=GOAL_NONE
+    )
+    goal_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00
+    )
+    goal_date = models.DateField(null=True, blank=True, default=None)
+    goal_rate = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00
+    )
+
+    def clean(self):
+        # A goal is only meaningful against an account to measure.
+        if self.goal_type != self.GOAL_NONE and not self.account_id:
+            raise ValidationError(
+                "Set an account before giving this contribution a goal."
+            )
+        # A target needs both a number and a deadline — solving for
+        # "per paycheck" divides by the paychecks left before goal_date.
+        if self.goal_type == self.GOAL_TARGET:
+            if not self.goal_date:
+                raise ValidationError(
+                    "A target goal needs a date to reach the target by."
+                )
+            if self.goal_amount is None or self.goal_amount <= 0:
+                raise ValidationError(
+                    "A target goal needs a target balance greater than zero."
+                )
+        if self.goal_type == self.GOAL_FLOOR and self.goal_amount is None:
+            raise ValidationError("A floor goal needs a floor balance.")
+        if self.goal_type == self.GOAL_GROW:
+            if not self.goal_amount and not self.goal_rate:
+                raise ValidationError(
+                    "A growth goal needs either an amount per month or an annual rate."
+                )
+        # The reminder is the apply target, so it has to be the transfer that
+        # actually funds this account — otherwise applying a suggestion would
+        # move money somewhere the goal does not measure.
+        if self.reminder_id and self.account_id:
+            if self.reminder.reminder_destination_account_id != self.account_id:
+                raise ValidationError(
+                    "The linked reminder must transfer into this contribution's account."
+                )
 
     def __str__(self):
         return self.contribution
