@@ -26,6 +26,8 @@ class TrendOut(Schema):
     current_balance: AmountDecimal
     excluded_contribution_total: AmountDecimal
     one_off_total: AmountDecimal
+    extra_contributions_total: AmountDecimal
+    modal_contribution_amount: Optional[AmountDecimal] = None
     projected_low_balance: AmountDecimal
     paychecks_to_low: condecimal(max_digits=8, decimal_places=2)
     suggested_floor: AmountDecimal

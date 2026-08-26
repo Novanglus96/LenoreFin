@@ -75,6 +75,13 @@ class Trend:
     excluded_contribution_total: Decimal
     # Unscheduled spend seen only once in the window: reported, never projected.
     one_off_total: Decimal
+    # Money added beyond the scheduled contribution — ad-hoc top-ups sharing its
+    # description. Counted as real inflow, and surfaced so it is visible that a
+    # bucket may only stay afloat because of them.
+    extra_contributions_total: Decimal
+    # The amount the contribution actually repeats at, which can differ from the
+    # reminder's configured amount.
+    modal_contribution_amount: Decimal | None
     # The low point of the projected balance path, and how many paychecks away
     # it is. A floor goal is solved against this, not against the endpoint.
     projected_low_balance: Decimal
@@ -105,11 +112,67 @@ def _signed_amount(tx, account_id: int) -> Decimal:
     return tx.total_amount
 
 
+def _modal_contribution_amount(
+    window: list,
+    account_id: int,
+    source_account_id: int | None,
+    description: str | None,
+) -> Decimal | None:
+    """The amount this contribution *repeats* at, or None if nothing repeats.
+
+    Real funding is a scheduled transfer plus ad-hoc top-ups sharing its
+    description — 13 x 75.00 alongside one-off 850, 510, 1000. Only the
+    repeating amount is the contribution; the rest is extra money genuinely
+    added to the account.
+
+    Derived from what recurred rather than from `reminder.amount`, which matters
+    because applying a suggestion changes the reminder. A mode computed from
+    history keeps describing history correctly, and shifts on its own as new
+    transactions at the new amount accumulate.
+    """
+    if description is None:
+        return None
+    counts: dict[Decimal, int] = {}
+    for tx in window:
+        if not _matches_contribution_shape(
+            tx, account_id, source_account_id, description
+        ):
+            continue
+        amount = abs(tx.total_amount)
+        counts[amount] = counts.get(amount, 0) + 1
+    if not counts:
+        return None
+    amount, occurrences = max(counts.items(), key=lambda kv: (kv[1], kv[0]))
+    # One occurrence is not a pattern; without repetition there is nothing to
+    # separate a scheduled transfer from a top-up, so treat it all as the
+    # contribution rather than inventing a distinction.
+    return amount if occurrences >= 2 else None
+
+
+def _matches_contribution_shape(
+    tx,
+    account_id: int,
+    source_account_id: int | None,
+    description: str | None,
+) -> bool:
+    """A transfer into this account, from the right place, under the right name."""
+    if not tx.transaction_type or tx.transaction_type.slug != "transfer":
+        return False
+    if tx.destination_account_id != account_id:
+        return False
+    if source_account_id is not None and tx.source_account_id != source_account_id:
+        return False
+    if description is not None:
+        return tx.description == description
+    return True
+
+
 def _is_contribution_transfer(
     tx,
     account_id: int,
     source_account_id: int | None,
     description: str | None = None,
+    modal_amount: Decimal | None = None,
 ) -> bool:
     """True when this transaction is *this* contribution topping the account up.
 
@@ -131,14 +194,15 @@ def _is_contribution_transfer(
     transfer is treated as a top-up. That is coarse, and it is why linking the
     reminder is worth doing.
     """
-    if not tx.transaction_type or tx.transaction_type.slug != "transfer":
+    if not _matches_contribution_shape(
+        tx, account_id, source_account_id, description
+    ):
         return False
-    if tx.destination_account_id != account_id:
-        return False
-    if source_account_id is not None and tx.source_account_id != source_account_id:
-        return False
-    if description is not None:
-        return tx.description == description
+    # Only the repeating amount is the scheduled contribution. Extra top-ups
+    # under the same description are real money arriving, and excluding them
+    # made every bucket look like it was draining when it was growing.
+    if modal_amount is not None:
+        return abs(tx.total_amount) == modal_amount
     return True
 
 
@@ -200,35 +264,49 @@ def _scheduled_flow(
     def field(row, name):
         return row[name] if isinstance(row, dict) else getattr(row, name, None)
 
-    last_balance = Decimal(str(field(rows[-1], "balance")))
-    net_change = last_balance - Decimal(str(opening))
-
-    contribution_inflow = Decimal("0")
     covered: set[str] = set()
     path: list[tuple[int, Decimal]] = []
+    # Rows carry no source/destination (totals_only strips them), so a row's
+    # signed effect is read from the step it makes in the running balance.
+    previous = Decimal(str(opening))
+    scheduled_total = Decimal("0")
     for row in rows:
         description = field(row, "description")
         row_date = field(row, "transaction_date")
         row_balance = field(row, "balance")
-        if row_date is not None and row_balance is not None:
-            path.append(((row_date - today).days, Decimal(str(row_balance))))
+        delta = Decimal("0")
+        if row_balance is not None:
+            balance = Decimal(str(row_balance))
+            delta = balance - previous
+            previous = balance
+            if row_date is not None:
+                path.append(((row_date - today).days, balance))
         # Only *simulated* rows are recurring projections. A real future-dated
         # transaction that happens to share a description is a one-off already
         # on the books, and letting it into this set was catastrophic: a single
         # future "Car Transfer" row suppressed all six historical ones, wiping
         # that bucket's entire ad-hoc rate and asking for 30 a paycheck less
         # than it needs.
-        if description and field(row, "simulated"):
+        simulated = bool(field(row, "simulated"))
+        if description and simulated:
             covered.add(description)
+
+        # The rate counts recurring projections only. A real future-dated
+        # transaction is a known one-off, and for these accounts it is usually
+        # the same behaviour the ad-hoc rate already carries forward — counting
+        # both charged an account twice for one habit and inflated its shortfall
+        # by hundreds a month. It still sits in `path`, so a floor goal sees the
+        # dip it causes.
+        if not simulated:
+            continue
         if (
             contribution_description is not None
             and description == contribution_description
         ):
-            contribution_inflow += abs(Decimal(str(field(row, "total_amount") or 0)))
+            continue
+        scheduled_total += delta
 
-    per_month = (
-        (net_change - contribution_inflow) / Decimal(horizon_months)
-    ).quantize(Decimal("0.01"))
+    per_month = (scheduled_total / Decimal(horizon_months)).quantize(Decimal("0.01"))
     return per_month, covered, path
 
 
@@ -287,8 +365,13 @@ def analyze_account_trend(
 
     # Walk the window once, splitting flows three ways while accumulating the
     # real balance curve for the regression.
+    modal_amount = _modal_contribution_amount(
+        window, account_id, source_account_id, contribution_description
+    )
+
     natural_flow = Decimal("0")
     contributed = Decimal("0")
+    extra_contributions = Decimal("0")
     # Ad-hoc candidates are gathered per description so one-offs can be dropped
     # afterwards — see below.
     adhoc_by_description: dict[str, list[Decimal]] = {}
@@ -298,12 +381,28 @@ def analyze_account_trend(
         amount = _signed_amount(tx, account_id)
         balance += amount
         if _is_contribution_transfer(
-            tx, account_id, source_account_id, contribution_description
+            tx, account_id, source_account_id, contribution_description, modal_amount
         ):
             contributed += amount
         else:
             natural_flow += amount
-            if tx.description not in forecast_descriptions:
+            if (
+                _matches_contribution_shape(
+                    tx, account_id, source_account_id, contribution_description
+                )
+                or (
+                    contribution_description is not None
+                    and tx.description == contribution_description
+                )
+            ):
+                # An extra top-up: real inflow, but not the scheduled stream.
+                # The second arm matters — a transfer recorded under some other
+                # transaction type still fails the shape check, and would then
+                # hit the forecast-description guard below and be dropped
+                # entirely. That silently deleted 1,441 of real funding from one
+                # bucket, making it look like it was draining.
+                extra_contributions += amount
+            elif tx.description not in forecast_descriptions:
                 adhoc_by_description.setdefault(tx.description, []).append(amount)
         points.append(((tx.transaction_date - start_date).days, float(balance)))
 
@@ -326,6 +425,7 @@ def analyze_account_trend(
     window_days = Decimal((today - start_date).days or 1)
     months_elapsed = window_days / DAYS_PER_MONTH
 
+    adhoc_flow += extra_contributions
     adhoc_per_month = (adhoc_flow / months_elapsed).quantize(Decimal("0.01"))
     # Biweekly unless a linked reminder says otherwise — the overwhelmingly
     # common case, and the only sane guess when nothing is linked.
@@ -399,6 +499,8 @@ def analyze_account_trend(
         current_balance=balance.quantize(Decimal("0.01")),
         excluded_contribution_total=contributed.quantize(Decimal("0.01")),
         one_off_total=one_off_total.quantize(Decimal("0.01")),
+        extra_contributions_total=extra_contributions.quantize(Decimal("0.01")),
+        modal_contribution_amount=modal_amount,
         projected_low_balance=low_balance.quantize(Decimal("0.01")),
         paychecks_to_low=(
             Decimal(days_to_low) / DAYS_PER_YEAR * per_year

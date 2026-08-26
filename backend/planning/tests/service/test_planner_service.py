@@ -797,6 +797,8 @@ def test_imminent_dip_asks_for_a_lump_sum_not_a_rate_change(
         current_balance=Decimal("100"),
         excluded_contribution_total=Decimal("0"),
         one_off_total=Decimal("0"),
+        extra_contributions_total=Decimal("0"),
+        modal_contribution_amount=None,
         projected_low_balance=Decimal("-900"),
         paychecks_to_low=Decimal("0.6"),   # inside the threshold
         suggested_floor=Decimal("100"),
@@ -865,3 +867,90 @@ def test_suggested_floor_sizes_the_excess_of_a_bad_month(
     assert trend.suggested_floor == pytest.approx(
         Decimal("500.00"), abs=Decimal("1")
     )
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_extra_top_ups_are_not_mistaken_for_the_contribution(
+    draining_account, test_checking_account, biweekly_repeat,
+    test_cleared_transaction_status, test_transfer_transaction_type,
+):
+    """Only the repeating amount is the scheduled contribution.
+
+    Real funding is 13 transfers at exactly the reminder amount plus ad-hoc
+    top-ups sharing its description. Excluding all of them deleted every top-up
+    from the maths, so accounts that were growing looked like they were
+    draining — the whole plan came out roughly 1,000 a paycheck too expensive.
+    """
+    from reminders.models import Reminder
+
+    reminder = Reminder.objects.create(
+        amount=Decimal("-75.00"),
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=draining_account,
+        description="Transfer to Reno",
+        transaction_type=test_transfer_transaction_type,
+        repeat=biweekly_repeat,
+    )
+    Contribution.objects.create(
+        contribution="Reno",
+        per_paycheck=Decimal("75.00"),
+        account=draining_account,
+        reminder=reminder,
+        goal_type=Contribution.GOAL_HOLD,
+    )
+    # The scheduled stream: six at exactly the reminder amount.
+    for i in range(6):
+        t = _tx(draining_account, 75, TODAY - timedelta(days=28 * (i + 1)),
+                test_cleared_transaction_status, test_transfer_transaction_type,
+                source=test_checking_account, destination=draining_account)
+        t.description = "Transfer to Reno"
+        t.save(update_fields=["description"])
+    # Two ad-hoc top-ups under the same name.
+    for i, amt in enumerate([850, 510]):
+        t = _tx(draining_account, amt, TODAY - timedelta(days=45 + i * 20),
+                test_cleared_transaction_status, test_transfer_transaction_type,
+                source=test_checking_account, destination=draining_account)
+        t.description = "Transfer to Reno"
+        t.save(update_fields=["description"])
+
+    trend = analyze_account_trend(
+        draining_account.id, months=6,
+        source_account_id=test_checking_account.id,
+        contribution_description="Transfer to Reno",
+        today=TODAY,
+    )
+
+    # 6 x 75 is the contribution; the 850 and 510 are extra money arriving.
+    assert trend.modal_contribution_amount == Decimal("75.00")
+    assert trend.excluded_contribution_total == Decimal("450.00")
+    assert trend.extra_contributions_total == Decimal("1360.00")
+    # The top-ups must reach the projection rather than vanishing: 1360 of
+    # inflow against 600 of spending leaves the account ahead.
+    assert trend.adhoc_flow_per_month > 0
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_a_single_transfer_is_not_treated_as_a_repeating_amount(
+    draining_account, test_checking_account, biweekly_repeat,
+    test_cleared_transaction_status, test_transfer_transaction_type,
+):
+    """With no repetition there is nothing to separate schedule from top-up."""
+    t = _tx(draining_account, 200, TODAY - timedelta(days=20),
+            test_cleared_transaction_status, test_transfer_transaction_type,
+            source=test_checking_account, destination=draining_account)
+    t.description = "Transfer to Reno"
+    t.save(update_fields=["description"])
+
+    trend = analyze_account_trend(
+        draining_account.id, months=6,
+        source_account_id=test_checking_account.id,
+        contribution_description="Transfer to Reno",
+        today=TODAY,
+    )
+
+    assert trend.modal_contribution_amount is None
+    # Falls back to treating it as the contribution rather than inventing a split.
+    assert trend.excluded_contribution_total == Decimal("200.00")
+    assert trend.extra_contributions_total == Decimal("0.00")
