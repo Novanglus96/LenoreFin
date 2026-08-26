@@ -168,6 +168,38 @@ def test_apply_updates_contribution_and_reminder_together(
 
 @pytest.mark.django_db
 @pytest.mark.api
+def test_apply_preserves_the_reminder_sign_convention(
+    api_client, planned_contribution
+):
+    """A transfer reminder must stay negative after applying.
+
+    Real reminders store transfers and expenses as negative amounts, with
+    direction carried by source/destination rather than by sign, and the
+    transaction generator copies `amount` straight into `total_amount`. Writing
+    the solver's magnitude raw would flip the transfer positive and produce a
+    transaction unlike every other one in the ledger.
+    """
+    from reminders.models import Reminder
+
+    reminder = Reminder.objects.get(pk=planned_contribution.reminder_id)
+    reminder.amount = Decimal("-10.00")
+    reminder.save(update_fields=["amount"])
+
+    response = api_client.post(
+        "/planning/planner/apply",
+        json={"contribution_ids": [planned_contribution.id]},
+        headers=AUTH,
+    )
+
+    assert response.status_code == 200
+    reminder.refresh_from_db()
+    assert reminder.amount < 0, "transfer reminder flipped positive"
+    new_amount = Decimal(response.json()["results"][0]["new_per_paycheck"])
+    assert reminder.amount == -new_amount
+
+
+@pytest.mark.django_db
+@pytest.mark.api
 def test_apply_leaves_no_drift_behind(api_client, planned_contribution):
     """After applying, the analysis must report zero drift for that row."""
     api_client.post(

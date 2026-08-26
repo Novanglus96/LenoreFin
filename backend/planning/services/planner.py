@@ -75,22 +75,40 @@ def _signed_amount(tx, account_id: int) -> Decimal:
     return tx.total_amount
 
 
-def _is_contribution_transfer(tx, account_id: int, source_account_id: int | None) -> bool:
-    """True when this transaction is the contribution topping the account up.
+def _is_contribution_transfer(
+    tx,
+    account_id: int,
+    source_account_id: int | None,
+    description: str | None = None,
+) -> bool:
+    """True when this transaction is *this* contribution topping the account up.
 
-    Real transactions carry no link back to the reminder that spawned them, so
-    the contribution is identified by its shape instead: a transfer landing in
-    this account. When the contribution has a linked reminder we can be strict
-    and require the money to have come from that reminder's source account;
-    without one, any incoming transfer is treated as a top-up, which is the
-    right default for a savings account funded from checking.
+    Real transactions carry no FK back to the reminder that spawned them, so the
+    contribution is identified by its shape: a transfer landing in this account.
+
+    Matching on the source account alone is not enough. One account is very
+    often fed by several transfers from the same checking account — only one of
+    which is the contribution being solved for. Excluding all of them drops the
+    others out of the natural flow *without* crediting them back, so the account
+    looks like it drains far faster than it does and the suggestion balloons.
+
+    The reminder's description is the discriminator, because the transaction
+    generator copies it verbatim onto every transaction it creates. It is also
+    stable across amount changes, which matters because applying a suggestion
+    changes the amount — an amount-based match would break itself on first use.
+
+    Without a linked reminder there is nothing to match on, so any incoming
+    transfer is treated as a top-up. That is coarse, and it is why linking the
+    reminder is worth doing.
     """
     if not tx.transaction_type or tx.transaction_type.slug != "transfer":
         return False
     if tx.destination_account_id != account_id:
         return False
-    if source_account_id is not None:
-        return tx.source_account_id == source_account_id
+    if source_account_id is not None and tx.source_account_id != source_account_id:
+        return False
+    if description is not None:
+        return tx.description == description
     return True
 
 
@@ -116,6 +134,7 @@ def analyze_account_trend(
     months: int = 6,
     source_account_id: int | None = None,
     today: date | None = None,
+    contribution_description: str | None = None,
 ) -> Trend | None:
     """Measure an account's natural drift over the last `months` months.
 
@@ -166,7 +185,9 @@ def analyze_account_trend(
     for tx in window:
         amount = _signed_amount(tx, account_id)
         balance += amount
-        if _is_contribution_transfer(tx, account_id, source_account_id):
+        if _is_contribution_transfer(
+            tx, account_id, source_account_id, contribution_description
+        ):
             contributed += amount
         else:
             natural_flow += amount
@@ -401,6 +422,9 @@ def analyze_contribution(
         months=months,
         source_account_id=source_account_id,
         today=today,
+        contribution_description=(
+            contribution.reminder.description if contribution.reminder_id else None
+        ),
     )
     if trend is None:
         return {

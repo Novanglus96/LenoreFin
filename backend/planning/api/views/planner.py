@@ -29,6 +29,24 @@ error_logger = logging.getLogger("error")
 planner_router = Router(tags=["Planner"])
 
 
+def _signed_like(magnitude: Decimal, existing: Decimal | None) -> Decimal:
+    """Give `magnitude` the sign convention the reminder already uses.
+
+    Reminder amounts carry a sign that the transaction generator copies
+    *directly* into `total_amount`: transfers and expenses are stored negative,
+    income positive, with a transfer's direction encoded by its source and
+    destination accounts rather than by its sign. The solver works in
+    magnitudes, so writing its result raw would flip a transfer positive and
+    produce a transaction inconsistent with every other one in the ledger —
+    which `_signed_amount` would then read as an inflow.
+
+    Preserving the existing sign rather than hardcoding "negative" keeps this
+    correct if a contribution is ever pointed at an income-shaped reminder.
+    """
+    magnitude = abs(magnitude)
+    return -magnitude if (existing or Decimal("0")) < 0 else magnitude
+
+
 def _row(contribution, months):
     """Build one planner row, tolerating a contribution with nothing to analyse."""
     analysis = analyze_contribution(contribution, months=months)
@@ -208,7 +226,9 @@ def planner_apply(request, payload: PlannerApplyIn):
 
                 if contribution.reminder_id:
                     reminder = contribution.reminder
-                    reminder.amount = suggestion.required_per_paycheck
+                    reminder.amount = _signed_like(
+                        suggestion.required_per_paycheck, reminder.amount
+                    )
                     reminder.save(update_fields=["amount"])
 
                 results.append(

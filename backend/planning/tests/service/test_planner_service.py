@@ -470,3 +470,76 @@ def test_projection_curves_diverge_by_the_delta(draining_account):
     assert rows[-1][2] == pytest.approx(trend.current_balance, abs=Decimal("2"))
     # And it must be strictly better than doing nothing.
     assert rows[-1][2] > rows[-1][1]
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_second_funding_stream_is_not_silently_excluded(
+    draining_account, test_checking_account, biweekly_repeat,
+    test_cleared_transaction_status, test_transfer_transaction_type,
+):
+    """Another transfer from the same source must not vanish from the maths.
+
+    Found against real data: an account fed by two biweekly transfers from the
+    same checking account had *both* excluded as "the contribution", so the
+    second stream was dropped from natural flow without being credited back.
+    The account looked like it drained twice as fast as it did and the
+    suggestion came back roughly four times too large.
+
+    Only the transfer matching the linked reminder's description is the
+    contribution; anything else arriving is natural inflow.
+    """
+    from reminders.models import Reminder
+
+    reminder = Reminder.objects.create(
+        amount=Decimal("-100.00"),
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=draining_account,
+        description="Transfer to House",
+        transaction_type=test_transfer_transaction_type,
+        repeat=biweekly_repeat,
+    )
+    contribution = Contribution.objects.create(
+        contribution="House",
+        per_paycheck=Decimal("100.00"),
+        account=draining_account,
+        reminder=reminder,
+        goal_type=Contribution.GOAL_HOLD,
+    )
+    # The contribution's own stream, named like the reminder.
+    for i in range(6):
+        _tx(draining_account, 100, TODAY - timedelta(days=30 * (i + 1) - 1),
+            test_cleared_transaction_status, test_transfer_transaction_type,
+            source=test_checking_account, destination=draining_account)
+    # A separate stream from the same account, under a different name.
+    for i in range(6):
+        t = _tx(draining_account, 400, TODAY - timedelta(days=30 * (i + 1) - 2),
+                test_cleared_transaction_status, test_transfer_transaction_type,
+                source=test_checking_account, destination=draining_account)
+        t.description = "DCA Transfer"
+        t.save(update_fields=["description"])
+    for t in Transaction.objects.filter(
+        destination_account=draining_account, total_amount=Decimal("100")
+    ):
+        t.description = "Transfer to House"
+        t.save(update_fields=["description"])
+
+    trend = analyze_account_trend(
+        draining_account.id, months=6,
+        source_account_id=test_checking_account.id,
+        contribution_description="Transfer to House",
+        today=TODAY,
+    )
+
+    # Only the 6 x 100 stream is the contribution.
+    assert trend.excluded_contribution_total == Decimal("600.00")
+    # The 6 x 400 stream stays in natural flow, offsetting the 600 of spending:
+    # (2400 - 600) / 5.9138 months.
+    assert trend.natural_flow_per_month == pytest.approx(
+        Decimal("304.37"), abs=Decimal("0.05")
+    )
+
+    suggestion = solve_for_contribution(contribution, trend, today=TODAY)
+    # The account is funded well beyond its drain, so nothing more is needed.
+    assert suggestion.required_per_paycheck == Decimal("0.00")
+    assert suggestion.warning is not None
