@@ -611,62 +611,6 @@ def test_repeated_unscheduled_spending_is_a_rate(
 
 @pytest.mark.service
 @pytest.mark.django_db
-def test_headroom_reports_affordability_and_income_change(
-    test_checking_account, test_payee, test_pending_transaction_status,
-    test_expense_transaction_type,
-):
-    """Headroom sums paychecks per *period*, so two earners are not halved."""
-    from planning.services.planner import net_per_paycheck, paycheck_headroom
-    from transactions.models import Paycheck, Transaction
-
-    for i in range(4):
-        for net in (Decimal("1700.00"), Decimal("1800.00")):
-            pc = Paycheck.objects.create(
-                gross=net * 2, net=net, taxes=0, health=0, pension=0,
-                fsa=0, dca=0, union_dues=0, four_fifty_seven_b=0, payee=test_payee,
-            )
-            Transaction.objects.create(
-                description="Paycheck",
-                transaction_date=TODAY - timedelta(days=14 * (i + 1)),
-                status=test_pending_transaction_status,
-                transaction_type=test_expense_transaction_type,
-                source_account=test_checking_account,
-                paycheck=pc,
-            )
-
-    # Two earners on the same day must sum, not average.
-    assert net_per_paycheck(today=TODAY) == Decimal("3500.00")
-
-    h = paycheck_headroom(Decimal("3000"), Decimal("3400"), today=TODAY)
-    assert h["headroom_now"] == Decimal("500.00")
-    assert h["headroom_if_applied"] == Decimal("100.00")
-    assert h["affordable"] is True
-
-    # A plan that overruns take-home is reported as unaffordable...
-    over = paycheck_headroom(Decimal("3000"), Decimal("3800"), today=TODAY)
-    assert over["affordable"] is False
-    # ...and a raise is an input, because it cannot be read from history.
-    with_raise = paycheck_headroom(
-        Decimal("3000"), Decimal("3800"), income_adjustment=Decimal("400"), today=TODAY
-    )
-    assert with_raise["affordable"] is True
-    assert with_raise["headroom_if_applied"] == Decimal("100.00")
-
-
-@pytest.mark.service
-@pytest.mark.django_db
-def test_headroom_without_paycheck_history_says_so(test_checking_account):
-    from planning.services.planner import paycheck_headroom
-
-    h = paycheck_headroom(Decimal("100"), Decimal("200"), today=TODAY)
-
-    assert h["net_per_paycheck"] is None
-    assert h["affordable"] is None
-    assert "No paycheck history" in h["note"]
-
-
-@pytest.mark.service
-@pytest.mark.django_db
 def test_projection_is_reported_in_the_paycheck_cadence(
     draining_account, test_checking_account, biweekly_repeat,
     test_transfer_transaction_type,
@@ -954,3 +898,114 @@ def test_a_single_transfer_is_not_treated_as_a_repeating_amount(
     # Falls back to treating it as the contribution rather than inventing a split.
     assert trend.excluded_contribution_total == Decimal("200.00")
     assert trend.extra_contributions_total == Decimal("0.00")
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_allocatable_is_capacity_not_take_home(
+    draining_account, test_checking_account, biweekly_repeat,
+    test_cleared_transaction_status, test_transfer_transaction_type,
+    test_expense_transaction_type,
+):
+    """Capacity is what you allocate today, adjusted by the account's drift.
+
+    Take-home is the wrong measure: the funding account is a hub, so most of
+    what flows through it is money going out to buckets and coming back to pay
+    the bills those buckets exist for. Real data had 7,893 a paycheck moving
+    through it against a take-home of 3,556.
+    """
+    from planning.services.planner import allocatable_per_paycheck
+    from reminders.models import Reminder
+
+    reminder = Reminder.objects.create(
+        amount=Decimal("-100.00"),
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=draining_account,
+        description="Transfer to House",
+        transaction_type=test_transfer_transaction_type,
+        repeat=biweekly_repeat,
+    )
+    Contribution.objects.create(
+        contribution="House",
+        per_paycheck=Decimal("100.00"),
+        account=draining_account,
+        reminder=reminder,
+        goal_type=Contribution.GOAL_HOLD,
+    )
+    # Checking drifts down across the window. Only 12 of these land inside it —
+    # the 13th sits at 182 days against a 180-day window.
+    for i in range(13):
+        _tx(test_checking_account, -20, TODAY - timedelta(days=14 * (i + 1)),
+            test_cleared_transaction_status, test_expense_transaction_type,
+            source=test_checking_account)
+
+    allocatable, drift = allocatable_per_paycheck(
+        Decimal("100.00"), months=6, today=TODAY
+    )
+
+    # 12 x -20 over 12.86 paychecks in the window.
+    assert drift == pytest.approx(Decimal("-18.67"), abs=Decimal("0.05"))
+    # Allocating 100 while the account bleeds 18.67 means only ~81 was there.
+    assert allocatable == pytest.approx(Decimal("81.33"), abs=Decimal("0.05"))
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_headroom_measures_against_allocatable(
+    draining_account, test_checking_account, biweekly_repeat,
+    test_transfer_transaction_type,
+):
+    """Headroom compares the plan to capacity, and a raise adds to capacity."""
+    from planning.services.planner import paycheck_headroom
+    from reminders.models import Reminder
+
+    reminder = Reminder.objects.create(
+        amount=Decimal("-100.00"),
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=draining_account,
+        description="Transfer to House",
+        transaction_type=test_transfer_transaction_type,
+        repeat=biweekly_repeat,
+    )
+    Contribution.objects.create(
+        contribution="House",
+        per_paycheck=Decimal("100.00"),
+        account=draining_account,
+        reminder=reminder,
+        goal_type=Contribution.GOAL_HOLD,
+    )
+
+    # No checking activity at all: it held steady, so capacity is exactly what
+    # is being allocated today.
+    h = paycheck_headroom(Decimal("100"), Decimal("150"), today=TODAY)
+    assert h["allocatable_per_paycheck"] == Decimal("100.00")
+    assert h["headroom_now"] == Decimal("0.00")
+    assert h["headroom_if_applied"] == Decimal("-50.00")
+    assert h["affordable"] is False
+
+    # A stated raise is capacity that history cannot show.
+    with_raise = paycheck_headroom(
+        Decimal("100"), Decimal("150"), income_adjustment=Decimal("60"), today=TODAY
+    )
+    assert with_raise["allocatable_per_paycheck"] == Decimal("160.00")
+    assert with_raise["headroom_if_applied"] == Decimal("10.00")
+    assert with_raise["affordable"] is True
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_headroom_without_a_funding_account_says_so(draining_account):
+    """No linked reminder means no funding account to measure against."""
+    from planning.services.planner import paycheck_headroom
+
+    Contribution.objects.create(
+        contribution="Unlinked",
+        per_paycheck=Decimal("100.00"),
+        account=draining_account,
+    )
+
+    h = paycheck_headroom(Decimal("100"), Decimal("200"), today=TODAY)
+
+    assert h["allocatable_per_paycheck"] is None
+    assert h["affordable"] is None
+    assert "no funding account" in h["note"]

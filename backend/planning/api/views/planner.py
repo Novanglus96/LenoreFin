@@ -20,7 +20,6 @@ from planning.services.planner import (
     analyze_account_trend,
     analyze_contribution,
     apply_maximise_goals,
-    net_per_paycheck,
     paycheck_headroom,
     project_with_contribution,
     solve_for_contribution,
@@ -112,13 +111,6 @@ def planner_analysis(
         )
         rows = [_row(c, months, horizon_months) for c in contributions]
 
-        # Second pass: "maximise" rows claim whatever the other goals leave, so
-        # they can only be solved once the rest are known.
-        net = net_per_paycheck()
-        apply_maximise_goals(
-            rows, None if net is None else net + income_adjustment
-        )
-
         current_total = Decimal("0")
         suggested_total = Decimal("0")
         for row in rows:
@@ -131,6 +123,32 @@ def planner_analysis(
                 else row.current_per_paycheck
             )
 
+        # Second pass: "maximise" rows claim whatever the other goals leave, so
+        # they can only be solved once the rest are known — and they divide
+        # *allocatable* capacity, not take-home.
+        headroom = paycheck_headroom(
+            current_total, suggested_total, income_adjustment, months=months
+        )
+        apply_maximise_goals(rows, headroom["allocatable_per_paycheck"])
+        if any(
+            r.suggestion
+            and r.suggestion.goal_type == Contribution.GOAL_MAXIMISE
+            for r in rows
+        ):
+            # Those rows just changed, so the totals and headroom built before
+            # them are stale.
+            suggested_total = sum(
+                (
+                    r.suggestion.required_per_paycheck
+                    if r.suggestion
+                    else r.current_per_paycheck
+                )
+                for r in rows
+            )
+            headroom = paycheck_headroom(
+                current_total, suggested_total, income_adjustment, months=months
+            )
+
         api_logger.debug("Planner analysis retrieved")
         return PlannerOut(
             rows=rows,
@@ -139,9 +157,7 @@ def planner_analysis(
             delta_per_paycheck_total=suggested_total - current_total,
             window_months=months,
             horizon_months=horizon_months,
-            headroom=paycheck_headroom(
-                current_total, suggested_total, income_adjustment
-            ),
+            headroom=headroom,
         )
     except Exception as e:
         api_logger.error("Planner analysis not retrieved")

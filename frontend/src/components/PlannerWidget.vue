@@ -96,7 +96,7 @@
            the per-cheque noise dwarfs a typical raise, so there is nothing in
            history to detect it from. -->
       <v-alert
-        v-if="headroom && headroom.net_per_paycheck !== null"
+        v-if="headroom && headroom.allocatable_per_paycheck !== null"
         :type="headroom.affordable ? 'success' : 'warning'"
         variant="tonal"
         density="compact"
@@ -104,19 +104,43 @@
       >
         <div class="d-flex flex-wrap ga-4 align-center text-body-2">
           <span>
-            Take-home
-            <strong>{{ formatCurrency(headroom.net_per_paycheck) }}</strong>
-            <template v-if="Number(headroom.income_adjustment) !== 0">
-              + {{ formatCurrency(headroom.income_adjustment) }} change
-            </template>
-            per pay period
+            <!-- Capacity, not take-home. The funding account is a hub, so most
+                 of what passes through it is money going out to buckets and
+                 coming back to pay the bills those buckets exist for. -->
+            To allocate
+            <strong>
+              {{ formatCurrency(headroom.allocatable_per_paycheck) }}
+            </strong>
+            <v-tooltip
+              location="top"
+              :text="`Allocated today ${formatCurrency(
+                planner?.current_per_paycheck_total,
+              )} ${Number(headroom.funding_account_drift) < 0 ? 'less' : 'plus'} ${formatCurrency(
+                Math.abs(Number(headroom.funding_account_drift)),
+              )} of funding-account drift` +
+                (Number(headroom.income_adjustment) !== 0
+                  ? `, plus ${formatCurrency(headroom.income_adjustment)} stated pay change`
+                  : '') +
+                (headroom.net_per_paycheck
+                  ? `. Take-home is ${formatCurrency(headroom.net_per_paycheck)}, but bills paid straight from checking never reach a bucket.`
+                  : '')"
+            >
+              <template v-slot:activator="{ props }">
+                <v-icon
+                  v-bind="props"
+                  size="x-small"
+                  class="ms-1"
+                  icon="mdi-information-outline"
+                ></v-icon>
+              </template>
+            </v-tooltip>
           </span>
           <span>
-            Spare now
+            Unallocated now
             <strong>{{ formatCurrency(headroom.headroom_now) }}</strong>
           </span>
           <span>
-            Spare if applied
+            Left if applied
             <strong :class="headroom.affordable ? '' : 'text-error'">
               {{ formatCurrency(headroom.headroom_if_applied) }}
             </strong>

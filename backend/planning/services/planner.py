@@ -875,58 +875,137 @@ def net_per_paycheck(periods: int = 6, today: date | None = None) -> Decimal | N
     return (sum(recent) / Decimal(len(recent))).quantize(Decimal("0.01"))
 
 
+def funding_account_id() -> int | None:
+    """The account the contributions are paid out of.
+
+    Taken as the one most contributions draw on rather than configured
+    separately, because that is already recorded on every linked reminder.
+    """
+    counts: dict[int, int] = {}
+    for c in Contribution.objects.filter(
+        active=True, reminder__isnull=False
+    ).select_related("reminder"):
+        source = c.reminder.reminder_source_account_id
+        if source:
+            counts[source] = counts.get(source, 0) + 1
+    if not counts:
+        return None
+    return max(counts.items(), key=lambda kv: kv[1])[0]
+
+
+def allocatable_per_paycheck(
+    current_total: Decimal,
+    months: int = 6,
+    today: date | None = None,
+) -> tuple[Decimal | None, Decimal | None]:
+    """How much there is to allocate each paycheck, and how the account drifted.
+
+    NOT take-home pay. The funding account is a hub, not a wallet: money leaves
+    it for the buckets and comes back from them to pay the bills those buckets
+    exist for. Over six months of real data it saw 7,893 a paycheck in and
+    7,915 out against a take-home of 3,556 — so measuring capacity against
+    take-home ignores the ~786 a paycheck of bills that leave it directly and
+    never pass through a bucket.
+
+    The definition that works falls out of "every dollar should be working
+    somewhere", which means the funding account should net to zero:
+
+        allocatable = what is allocated today + however much it actually drifted
+
+    If it held steady, today's allocation is exactly what there is. If it grew,
+    that surplus could be put to work; if it shrank, the allocation is already
+    beyond its means.
+    """
+    account_id = funding_account_id()
+    if account_id is None:
+        return None, None
+
+    today = today or get_todays_date_timezone_adjusted()
+    start_date = today - timedelta(days=int(DAYS_PER_MONTH) * months)
+    try:
+        cleared = TransactionStatus.objects.get(slug="cleared")
+    except TransactionStatus.DoesNotExist:
+        return None, None
+
+    account_q = Q(source_account_id=account_id) | Q(
+        destination_account_id=account_id
+    )
+    net_change = Decimal("0")
+    for tx in Transaction.objects.filter(
+        account_q,
+        status=cleared,
+        transaction_date__gte=start_date,
+        transaction_date__lte=today,
+    ).select_related("transaction_type"):
+        net_change += _signed_amount(tx, account_id)
+
+    window_days = Decimal((today - start_date).days or 1)
+    paychecks_in_window = window_days / DAYS_PER_YEAR * Decimal("26.0893")
+    if paychecks_in_window <= 0:
+        return None, None
+    drift = (net_change / paychecks_in_window).quantize(Decimal("0.01"))
+    return (current_total + drift).quantize(Decimal("0.01")), drift
+
+
 def paycheck_headroom(
     current_total: Decimal,
     suggested_total: Decimal,
     income_adjustment: Decimal = Decimal("0"),
-    periods: int = 6,
+    months: int = 6,
     today: date | None = None,
 ) -> dict:
-    """What is left over per pay period, now and if the suggestions were applied.
+    """What is left to allocate, now and if the suggestions were applied.
 
     `income_adjustment` is supplied rather than inferred. A raise is a future
     event, and with more than one earner the per-cheque noise is far larger than
     a typical raise, so there is nothing in history to detect it from.
     """
-    net = net_per_paycheck(periods=periods, today=today)
-    if net is None:
+    allocatable, drift = allocatable_per_paycheck(
+        current_total, months=months, today=today
+    )
+    take_home = net_per_paycheck(today=today)
+    if allocatable is None:
         return {
-            "net_per_paycheck": None,
+            "net_per_paycheck": take_home,
+            "allocatable_per_paycheck": None,
+            "funding_account_drift": None,
             "income_adjustment": income_adjustment,
             "headroom_now": None,
             "headroom_if_applied": None,
             "affordable": None,
-            "note": "No paycheck history, so headroom cannot be worked out.",
+            "note": (
+                "No linked reminders, so there is no funding account to measure "
+                "against."
+            ),
         }
-    adjusted_net = net + income_adjustment
-    headroom_now = adjusted_net - current_total
-    headroom_if_applied = adjusted_net - suggested_total
+    adjusted = allocatable + income_adjustment
     return {
-        "net_per_paycheck": net,
+        "net_per_paycheck": take_home,
+        "allocatable_per_paycheck": adjusted,
+        "funding_account_drift": drift,
         "income_adjustment": income_adjustment,
-        "headroom_now": headroom_now.quantize(Decimal("0.01")),
-        "headroom_if_applied": headroom_if_applied.quantize(Decimal("0.01")),
-        "affordable": headroom_if_applied >= 0,
+        "headroom_now": (adjusted - current_total).quantize(Decimal("0.01")),
+        "headroom_if_applied": (adjusted - suggested_total).quantize(
+            Decimal("0.01")
+        ),
+        "affordable": adjusted >= suggested_total,
         "note": None,
     }
 
 
-def apply_maximise_goals(
-    rows: list, net_available: Decimal | None
-) -> None:
-    """Give every "maximise" row whatever headroom the other goals leave.
+def apply_maximise_goals(rows: list, allocatable: Decimal | None) -> None:
+    """Give every "maximise" row whatever capacity the other goals leave.
 
     This cannot be solved per-account like the other goals, because the answer
     is defined by what the rest of the plan costs. It runs as a second pass over
     already-solved rows and mutates their suggestions in place.
 
+    `allocatable` is capacity to allocate — not take-home. See
+    `allocatable_per_paycheck` for why those differ by hundreds a paycheck.
+
     `rows` are PlannerRowOut-shaped: anything with `.suggestion` and
     `.current_per_paycheck`. Kept structural rather than typed to avoid the
     service importing the API schema.
-
-    With no paycheck history there is no headroom to divide, so maximise rows
-    are left at their current figure and say why — guessing would be worse than
-    declining to answer.
     """
     maximise = [
         r
@@ -936,10 +1015,11 @@ def apply_maximise_goals(
     if not maximise:
         return
 
-    if net_available is None:
+    if allocatable is None:
         for row in maximise:
             row.suggestion.warning = (
-                "No paycheck history, so there is no headroom figure to divide."
+                "No funding account to measure against, so there is no capacity "
+                "figure to divide."
             )
         return
 
@@ -956,7 +1036,7 @@ def apply_maximise_goals(
             else row.current_per_paycheck
         )
 
-    leftover = net_available - committed
+    leftover = allocatable - committed
     if leftover < 0:
         leftover = Decimal("0")
 
@@ -968,8 +1048,8 @@ def apply_maximise_goals(
         ).quantize(Decimal("0.01"))
         if share == 0:
             row.suggestion.warning = (
-                "The other goals already claim the whole paycheck — nothing "
-                "left to put here."
+                "The other goals already claim everything there is to allocate "
+                "— nothing left to put here."
             )
             row.suggestion.reason = "Nothing left over once the other goals are funded."
         else:

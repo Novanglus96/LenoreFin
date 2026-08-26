@@ -337,35 +337,19 @@ def test_projection_400s_without_an_account(api_client):
     ).status_code == 400
 
 
+
+
 @pytest.mark.django_db
 @pytest.mark.api
-def test_maximise_takes_what_the_other_goals_leave(
-    api_client, planned_contribution, test_savings_account, test_payee,
-    test_pending_transaction_status, test_expense_transaction_type,
-    test_checking_account,
+def test_maximise_divides_allocatable_capacity(
+    api_client, planned_contribution, test_savings_account
 ):
-    """A maximise goal is the residual claimant, so it needs a second pass.
+    """A maximise goal is the residual claimant on capacity, not on take-home.
 
-    It cannot be solved per-account like the others: the answer is defined by
-    what the rest of the plan costs.
+    It cannot be solved per-account: the answer is defined by what the rest of
+    the plan costs, so it runs as a second pass once the others are known.
     """
     from planning.models import Contribution
-    from transactions.models import Paycheck, Transaction
-
-    for i in range(4):
-        pc = Paycheck.objects.create(
-            gross=Decimal("2000"), net=Decimal("1000"), taxes=0, health=0,
-            pension=0, fsa=0, dca=0, union_dues=0, four_fifty_seven_b=0,
-            payee=test_payee,
-        )
-        Transaction.objects.create(
-            description="Paycheck",
-            transaction_date=date.today() - timedelta(days=14 * (i + 1)),
-            status=test_pending_transaction_status,
-            transaction_type=test_expense_transaction_type,
-            source_account=test_checking_account,
-            paycheck=pc,
-        )
 
     college = Contribution.objects.create(
         contribution="College",
@@ -376,16 +360,15 @@ def test_maximise_takes_what_the_other_goals_leave(
 
     body = api_client.get("/planning/planner/analysis", headers=AUTH).json()
     row = next(r for r in body["rows"] if r["contribution_id"] == college.id)
-
-    assert row["suggestion"] is not None
-    assert row["suggestion"]["goal_type"] == "maximise"
     other = next(
         r for r in body["rows"] if r["contribution_id"] == planned_contribution.id
     )
-    # Take-home is 1000 a period; whatever the other goal claims is not available.
-    expected = Decimal("1000") - Decimal(
-        other["suggestion"]["required_per_paycheck"]
-    )
+
+    assert row["suggestion"]["goal_type"] == "maximise"
+    allocatable = Decimal(body["headroom"]["allocatable_per_paycheck"])
+    expected = allocatable - Decimal(other["suggestion"]["required_per_paycheck"])
+    if expected < 0:
+        expected = Decimal("0")
     assert Decimal(row["suggestion"]["required_per_paycheck"]) == pytest.approx(
         expected, abs=Decimal("0.02")
     )
@@ -393,21 +376,19 @@ def test_maximise_takes_what_the_other_goals_leave(
 
 @pytest.mark.django_db
 @pytest.mark.api
-def test_maximise_without_paycheck_history_declines_to_guess(
-    api_client, test_savings_account
+def test_headroom_is_reported_against_allocatable_not_take_home(
+    api_client, planned_contribution
 ):
-    """No headroom figure means no answer — a guess would be worse."""
-    from planning.models import Contribution
-
-    college = Contribution.objects.create(
-        contribution="College",
-        per_paycheck=Decimal("5.00"),
-        account=test_savings_account,
-        goal_type=Contribution.GOAL_MAXIMISE,
-    )
-
+    """The page must quote capacity, and keep take-home only as context."""
     body = api_client.get("/planning/planner/analysis", headers=AUTH).json()
-    row = next(r for r in body["rows"] if r["contribution_id"] == college.id)
+    h = body["headroom"]
 
-    assert Decimal(row["suggestion"]["required_per_paycheck"]) == Decimal("5.00")
-    assert "no headroom figure" in row["suggestion"]["warning"]
+    assert h["allocatable_per_paycheck"] is not None
+    assert h["funding_account_drift"] is not None
+    # Capacity is today's allocation adjusted by drift — not take-home, which
+    # for a hub account overstates it by hundreds a paycheck.
+    assert Decimal(h["allocatable_per_paycheck"]) == pytest.approx(
+        Decimal(body["current_per_paycheck_total"])
+        + Decimal(h["funding_account_drift"]),
+        abs=Decimal("0.02"),
+    )

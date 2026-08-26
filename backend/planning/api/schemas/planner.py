@@ -73,7 +73,12 @@ class PlannerRowOut(Schema):
 class HeadroomOut(Schema):
     """Whether the plan actually fits in a pay period."""
 
+    # Take-home, for context only — it is NOT the capacity figure.
     net_per_paycheck: Optional[AmountDecimal] = None
+    # What can actually be allocated: today's allocation plus the funding
+    # account's drift, plus any stated income change.
+    allocatable_per_paycheck: Optional[AmountDecimal] = None
+    funding_account_drift: Optional[AmountDecimal] = None
     income_adjustment: AmountDecimal
     headroom_now: Optional[AmountDecimal] = None
     headroom_if_applied: Optional[AmountDecimal] = None
