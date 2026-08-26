@@ -19,7 +19,7 @@
         "@semantic-release/exec",
         {
           "verifyReleaseCmd": "echo ${nextRelease.version} > backend/VERSION && npx json -I -f frontend/package.json -e \"this.version='${nextRelease.version}'\"",
-          "prepareCmd": "echo Prepared release ${nextRelease.version}"
+          "prepareCmd": "echo Prepared release ${nextRelease.version} && sed -i 's#https://forge\\.lan\\.danielleandjohn\\.love/lenore/LenoreFin#https://github.com/Novanglus96/LenoreFin#g' CHANGELOG.md"
         }
       ],
       [
