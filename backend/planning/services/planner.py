@@ -54,6 +54,14 @@ class Trend:
     scheduled_flow_per_month: Decimal    # forward, from the forecast
     adhoc_flow_per_month: Decimal        # historical spending no reminder explains
     projected_flow_per_month: Decimal    # scheduled + adhoc — the solver's input
+    # The same figures in the cadence the money actually moves in. Planning
+    # happens per paycheck, so a monthly rate is a unit the reader has to
+    # convert before it means anything.
+    paychecks_per_year: Decimal
+    paychecks_in_horizon: Decimal
+    scheduled_flow_per_paycheck: Decimal
+    adhoc_flow_per_paycheck: Decimal
+    projected_flow_per_paycheck: Decimal
     observed_slope_per_month: Decimal
     r_squared: float
     data_points: int
@@ -211,6 +219,7 @@ def analyze_account_trend(
     today: date | None = None,
     contribution_description: str | None = None,
     horizon_months: int = 12,
+    per_year: Decimal | None = None,
 ) -> Trend | None:
     """Measure an account's natural drift over the last `months` months.
 
@@ -298,6 +307,13 @@ def analyze_account_trend(
     months_elapsed = window_days / DAYS_PER_MONTH
 
     adhoc_per_month = (adhoc_flow / months_elapsed).quantize(Decimal("0.01"))
+    # Biweekly unless a linked reminder says otherwise — the overwhelmingly
+    # common case, and the only sane guess when nothing is linked.
+    per_year = per_year if per_year is not None else Decimal("26")
+    horizon_paychecks = (per_year * Decimal(horizon_months) / 12).quantize(
+        Decimal("0.01")
+    )
+    projected_per_month = scheduled_per_month + adhoc_per_month
 
     return Trend(
         natural_flow_per_month=(natural_flow / months_elapsed).quantize(
@@ -305,7 +321,21 @@ def analyze_account_trend(
         ),
         scheduled_flow_per_month=scheduled_per_month,
         adhoc_flow_per_month=adhoc_per_month,
-        projected_flow_per_month=scheduled_per_month + adhoc_per_month,
+        projected_flow_per_month=projected_per_month,
+        paychecks_per_year=per_year,
+        paychecks_in_horizon=horizon_paychecks,
+        # Quantized here, not in _per_paycheck: the solver wants full precision,
+        # but these are serialised, and an unbounded division through a
+        # condecimal(decimal_places=2) is a 500 waiting to happen.
+        scheduled_flow_per_paycheck=_per_paycheck(
+            scheduled_per_month, per_year
+        ).quantize(Decimal("0.01")),
+        adhoc_flow_per_paycheck=_per_paycheck(adhoc_per_month, per_year).quantize(
+            Decimal("0.01")
+        ),
+        projected_flow_per_paycheck=_per_paycheck(
+            projected_per_month, per_year
+        ).quantize(Decimal("0.01")),
         horizon_months=horizon_months,
         observed_slope_per_month=(
             Decimal(str(slope_per_day)) * DAYS_PER_MONTH
@@ -537,6 +567,7 @@ def analyze_contribution(
             contribution.reminder.description if contribution.reminder_id else None
         ),
         horizon_months=horizon_months,
+        per_year=paychecks_per_year(contribution),
     )
     if trend is None:
         return {

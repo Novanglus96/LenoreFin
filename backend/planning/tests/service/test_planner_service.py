@@ -663,3 +663,62 @@ def test_headroom_without_paycheck_history_says_so(test_checking_account):
     assert h["net_per_paycheck"] is None
     assert h["affordable"] is None
     assert "No paycheck history" in h["note"]
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_projection_is_reported_in_the_paycheck_cadence(
+    draining_account, test_checking_account, biweekly_repeat,
+    test_transfer_transaction_type,
+):
+    """Per-paycheck figures must reconcile with the monthly ones and the solver.
+
+    The table plans in paychecks, so the projected figure is reported that way.
+    It has to be the same number the solver works from — a display unit that
+    disagrees with the arithmetic behind it is worse than no display at all.
+    """
+    from reminders.models import Reminder
+
+    reminder = Reminder.objects.create(
+        amount=Decimal("-100.00"),
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=draining_account,
+        description="Transfer to House",
+        transaction_type=test_transfer_transaction_type,
+        repeat=biweekly_repeat,
+    )
+    contribution = Contribution.objects.create(
+        contribution="House",
+        per_paycheck=Decimal("100.00"),
+        account=draining_account,
+        reminder=reminder,
+        goal_type=Contribution.GOAL_HOLD,
+    )
+
+    result = analyze_contribution(contribution, months=6, today=TODAY)
+    trend, suggestion = result["trend"], result["suggestion"]
+
+    # Cadence comes from the linked biweekly reminder, not the 26 fallback.
+    assert trend.paychecks_per_year == pytest.approx(
+        Decimal("26.0893"), abs=Decimal("0.01")
+    )
+    assert trend.paychecks_in_horizon == pytest.approx(
+        Decimal("26.09"), abs=Decimal("0.01")
+    )
+    # The parts still add up in the new unit.
+    assert trend.projected_flow_per_paycheck == pytest.approx(
+        trend.scheduled_flow_per_paycheck + trend.adhoc_flow_per_paycheck,
+        abs=Decimal("0.02"),
+    )
+    # And it agrees with the monthly figure it was converted from.
+    monthly_equivalent = (
+        trend.projected_flow_per_paycheck * trend.paychecks_per_year / 12
+    )
+    assert monthly_equivalent == pytest.approx(
+        trend.projected_flow_per_month, abs=Decimal("0.05")
+    )
+    # Holding steady means offsetting exactly that, so the displayed figure is
+    # the one the suggestion is built from.
+    assert suggestion.required_per_paycheck == pytest.approx(
+        -trend.projected_flow_per_paycheck, abs=Decimal("0.02")
+    )

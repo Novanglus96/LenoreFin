@@ -170,15 +170,18 @@
 
         <template v-slot:[`item.trend`]="{ item }">
           <div v-if="item.trend" class="text-center">
-            <span :class="deltaClass(item.trend.projected_flow_per_month)">
-              {{ formatDelta(item.trend.projected_flow_per_month) }}/mo
+            <!-- Per paycheck, not per month: every other figure in this table
+                 is per paycheck, and that is the cadence the money moves in. -->
+            <span :class="deltaClass(item.trend.projected_flow_per_paycheck)">
+              {{ formatDelta(item.trend.projected_flow_per_paycheck) }}
             </span>
             <!-- The breakdown matters: "scheduled" comes from the forecast, so
                  annual and quarterly obligations are weighted by their real
                  dates rather than by whether they happened to fall inside the
                  history window. r² speaks only to the ad-hoc half. -->
             <v-tooltip
-              :text="`Scheduled ${item.trend.scheduled_flow_per_month}/mo + ad-hoc ${item.trend.adhoc_flow_per_month}/mo` +
+              :text="`Per paycheck: scheduled ${item.trend.scheduled_flow_per_paycheck} + ad-hoc ${item.trend.adhoc_flow_per_paycheck}` +
+                     ` (${item.trend.projected_flow_per_month}/mo over ${item.trend.paychecks_in_horizon} paychecks)` +
                      (Number(item.trend.one_off_total) !== 0
                        ? ` · ${item.trend.one_off_total} of one-offs excluded`
                        : '') +
@@ -311,9 +314,9 @@
     { title: "Last 12 months", value: 12 },
   ];
   const horizonOptions = [
-    { title: "6 months", value: 6 },
-    { title: "1 year", value: 12 },
-    { title: "2 years", value: 24 },
+    { title: "6 mo (~13 pc)", value: 6 },
+    { title: "1 yr (~26 pc)", value: 12 },
+    { title: "2 yr (~52 pc)", value: 24 },
   ];
 
   const { planner, isLoading, isFetching, isApplying, applySuggestions } =
@@ -325,7 +328,7 @@
   const headers = [
     { title: "Contribution", key: "contribution" },
     { title: "Goal", key: "goal_type", align: "center" },
-    { title: "Projected", key: "trend", align: "center" },
+    { title: "Projected/pc", key: "trend", align: "center" },
     { title: "Now", key: "current", align: "center" },
     { title: "Suggested", key: "suggested", align: "center" },
     { title: "Change", key: "delta", align: "center" },

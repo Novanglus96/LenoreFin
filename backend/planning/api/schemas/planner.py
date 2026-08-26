@@ -13,6 +13,11 @@ class TrendOut(Schema):
     scheduled_flow_per_month: AmountDecimal
     adhoc_flow_per_month: AmountDecimal
     projected_flow_per_month: AmountDecimal
+    paychecks_per_year: condecimal(max_digits=8, decimal_places=4)
+    paychecks_in_horizon: condecimal(max_digits=8, decimal_places=2)
+    scheduled_flow_per_paycheck: AmountDecimal
+    adhoc_flow_per_paycheck: AmountDecimal
+    projected_flow_per_paycheck: AmountDecimal
     horizon_months: int
     observed_slope_per_month: AmountDecimal
     r_squared: float
