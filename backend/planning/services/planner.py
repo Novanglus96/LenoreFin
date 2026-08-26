@@ -425,7 +425,11 @@ def analyze_account_trend(
     window_days = Decimal((today - start_date).days or 1)
     months_elapsed = window_days / DAYS_PER_MONTH
 
-    adhoc_flow += extra_contributions
+    # Top-ups are deliberately NOT projected. They are unplanned — money moved
+    # in when it happened to be spare — so counting on them would quietly build
+    # the plan on rescues that may not come, and hide the fact that the
+    # *scheduled* transfer is short. They are reported instead, as
+    # `extra_contributions_total`.
     adhoc_per_month = (adhoc_flow / months_elapsed).quantize(Decimal("0.01"))
     # Biweekly unless a linked reminder says otherwise — the overwhelmingly
     # common case, and the only sane guess when nothing is linked.
@@ -719,6 +723,18 @@ def solve_for_contribution(
             "entirely and still meet the goal."
         )
         required = Decimal("0.00")
+
+    if trend is not None and trend.extra_contributions_total > 0:
+        # The gap between the scheduled transfer and what the account needs has
+        # been covered by hand. Naming it turns "you are short" into "this is
+        # what you have been topping up, and this is what would replace it".
+        topped_up = trend.extra_contributions_total
+        note = (
+            f"You topped this up by {topped_up} over the last "
+            f"{trend.window_months} months; this figure does not assume that "
+            f"continues."
+        )
+        warning = f"{warning} {note}" if warning else note
 
     return Suggestion(
         goal_type=goal,

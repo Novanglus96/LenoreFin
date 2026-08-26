@@ -925,9 +925,9 @@ def test_extra_top_ups_are_not_mistaken_for_the_contribution(
     assert trend.modal_contribution_amount == Decimal("75.00")
     assert trend.excluded_contribution_total == Decimal("450.00")
     assert trend.extra_contributions_total == Decimal("1360.00")
-    # The top-ups must reach the projection rather than vanishing: 1360 of
-    # inflow against 600 of spending leaves the account ahead.
-    assert trend.adhoc_flow_per_month > 0
+    # Top-ups are reported but deliberately not projected — they are unplanned,
+    # so the suggestion must not quietly depend on them arriving again.
+    assert trend.adhoc_flow_per_month <= 0
 
 
 @pytest.mark.service
