@@ -133,25 +133,28 @@ export function useContributions() {
     client: queryClient,
   });
 
+  // The planner is derived from these records — its goal, account, reminder
+  // and per-paycheck figure all live on Contribution — so every write here has
+  // to invalidate it too. Applying a suggestion already invalidates
+  // "contributions" from the other direction; this is the missing half.
+  const invalidateContributions = () => {
+    queryClient.invalidateQueries({ queryKey: ["contributions"] });
+    queryClient.invalidateQueries({ queryKey: ["planner"] });
+  };
+
   const createContributionMutation = useMutation({
     mutationFn: createContributionFunction,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contributions"] });
-    },
+    onSuccess: invalidateContributions,
   });
 
   const deleteContributionMutation = useMutation({
     mutationFn: deleteContributionFunction,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contributions"] });
-    },
+    onSuccess: invalidateContributions,
   });
 
   const updateContributionMutation = useMutation({
     mutationFn: updateContributionFunction,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contributions"] });
-    },
+    onSuccess: invalidateContributions,
   });
 
   async function addContribution(newContribution) {

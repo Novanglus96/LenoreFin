@@ -92,6 +92,9 @@ export function useReminders() {
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      // The planner reads reminder amounts for both the drift indicator and
+      // the scheduled half of its projection, so a reminder edit invalidates it.
+      queryClient.invalidateQueries({ queryKey: ["planner"] });
     },
   });
 
@@ -103,6 +106,9 @@ export function useReminders() {
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      // The planner reads reminder amounts for both the drift indicator and
+      // the scheduled half of its projection, so a reminder edit invalidates it.
+      queryClient.invalidateQueries({ queryKey: ["planner"] });
     },
   });
 
@@ -114,6 +120,9 @@ export function useReminders() {
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      // The planner reads reminder amounts for both the drift indicator and
+      // the scheduled half of its projection, so a reminder edit invalidates it.
+      queryClient.invalidateQueries({ queryKey: ["planner"] });
     },
   });
 
@@ -125,6 +134,9 @@ export function useReminders() {
       queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
       queryClient.invalidateQueries({ queryKey: ["tag_graph"] });
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      // The planner reads reminder amounts for both the drift indicator and
+      // the scheduled half of its projection, so a reminder edit invalidates it.
+      queryClient.invalidateQueries({ queryKey: ["planner"] });
       // Delayed refetch ensures the async reminder cache rebuild (django-q2 worker)
       // has completed before the UI shows the final state.
       setTimeout(() => {

@@ -208,6 +208,9 @@ const TRANSACTION_DEPENDENT_KEYS = [
   ["budgets"],
   ["retirement_forecast"],
   ["retirement_transactions"],
+  // The planner's ad-hoc rate is measured from cleared transaction history, so
+  // any transaction write can change what it suggests.
+  ["planner"],
 ];
 
 function invalidateTransactionDependencies(queryClient, extra = []) {
@@ -224,6 +227,10 @@ function scheduleForecastRefetch(queryClient) {
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["account_forecast"] });
     queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    // The planner's scheduled half comes from the forecast, so it needs the
+    // delayed pass too — invalidating it only immediately would refetch against
+    // the pre-task forecast and cache a stale projection.
+    queryClient.invalidateQueries({ queryKey: ["planner"] });
   }, 3500);
 }
 
