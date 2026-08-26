@@ -142,7 +142,7 @@
                 </v-col>
                 <v-col
                   :cols="smAndDown ? 12 : 4"
-                  v-if="['target', 'floor', 'grow'].includes(goal_type.value.value)"
+                  v-if="['target', 'floor', 'grow', 'budget'].includes(goal_type.value.value)"
                 >
                   <v-text-field
                     v-model="goal_amount.value.value"
@@ -268,6 +268,10 @@
       },
       goal_amount(value) {
         const goal = goal_type.value.value;
+        if (goal === "budget") {
+          if (value == null || value === "" || parseFloat(value) <= 0)
+            return "A budget needs the amount to fund per year.";
+        }
         if (goal === "target") {
           if (value == null || value === "" || parseFloat(value) <= 0)
             return "A target needs a balance greater than 0.";
@@ -322,15 +326,18 @@
 
   const goalOptions = [
     { title: "No goal", value: "none" },
-    { title: "Hold steady", value: "hold" },
+    { title: "Cover spending, never dip below a floor", value: "floor" },
+    { title: "Cover obligations, hold the buffer", value: "hold" },
+    { title: "Fund a set amount per year", value: "budget" },
+    { title: "Contribute whatever is left over", value: "maximise" },
     { title: "Reach a target by a date", value: "target" },
-    { title: "Never dip below a floor", value: "floor" },
     { title: "Grow by an amount or rate", value: "grow" },
   ];
 
   const amountLabel = computed(() => {
     if (goal_type.value.value === "target") return "Target balance";
     if (goal_type.value.value === "floor") return "Floor balance";
+    if (goal_type.value.value === "budget") return "Amount per year";
     return "Growth per month";
   });
 

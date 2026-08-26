@@ -8,3 +8,4 @@ from planning.services.planner import project_with_contribution as project_with_
 from planning.services.planner import solve_for_contribution as solve_for_contribution
 from planning.services.planner import net_per_paycheck as net_per_paycheck
 from planning.services.planner import paycheck_headroom as paycheck_headroom
+from planning.services.planner import apply_maximise_goals as apply_maximise_goals

@@ -722,3 +722,146 @@ def test_projection_is_reported_in_the_paycheck_cadence(
     assert suggestion.required_per_paycheck == pytest.approx(
         -trend.projected_flow_per_paycheck, abs=Decimal("0.02")
     )
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_floor_solves_against_the_low_point_not_the_endpoint(
+    draining_account, test_checking_account, biweekly_repeat,
+    test_transfer_transaction_type,
+):
+    """A floor binds where the balance is lowest, wherever that falls.
+
+    An account can finish the horizon comfortably having gone under along the
+    way, and solving on the endpoint would never see it.
+    """
+    from reminders.models import Reminder
+
+    reminder = Reminder.objects.create(
+        amount=Decimal("-100.00"),
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=draining_account,
+        description="Transfer to House",
+        transaction_type=test_transfer_transaction_type,
+        repeat=biweekly_repeat,
+    )
+    contribution = Contribution.objects.create(
+        contribution="House",
+        per_paycheck=Decimal("100.00"),
+        account=draining_account,
+        reminder=reminder,
+        goal_type=Contribution.GOAL_FLOOR,
+        goal_amount=Decimal("500.00"),
+    )
+
+    result = analyze_contribution(contribution, months=6, today=TODAY)
+    trend, suggestion = result["trend"], result["suggestion"]
+
+    # The solver must quote the low point, never the closing balance.
+    assert trend.projected_low_balance <= trend.current_balance
+    assert suggestion is not None
+    assert str(trend.projected_low_balance) in suggestion.reason or (
+        suggestion.warning is not None
+    )
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_imminent_dip_asks_for_a_lump_sum_not_a_rate_change(
+    draining_account, test_checking_account, biweekly_repeat,
+    test_transfer_transaction_type,
+):
+    """A dip inside two paychecks cannot be fixed by contributing more.
+
+    Real data made this obvious: a bucket nine days from a shortfall was asked
+    for +1,861 a paycheck, because the shortfall was being divided by the
+    fraction of a paycheck that fitted before it.
+    """
+    from planning.services.planner import MIN_PAYCHECKS_TO_SOLVE, Suggestion, Trend
+
+    trend = Trend(
+        natural_flow_per_month=Decimal("-100"),
+        scheduled_flow_per_month=Decimal("-100"),
+        adhoc_flow_per_month=Decimal("0"),
+        projected_flow_per_month=Decimal("-100"),
+        paychecks_per_year=Decimal("26"),
+        paychecks_in_horizon=Decimal("26"),
+        scheduled_flow_per_paycheck=Decimal("-46.15"),
+        adhoc_flow_per_paycheck=Decimal("0"),
+        projected_flow_per_paycheck=Decimal("-46.15"),
+        observed_slope_per_month=Decimal("-100"),
+        r_squared=0.9,
+        data_points=10,
+        window_months=6,
+        horizon_months=12,
+        current_balance=Decimal("100"),
+        excluded_contribution_total=Decimal("0"),
+        one_off_total=Decimal("0"),
+        projected_low_balance=Decimal("-900"),
+        paychecks_to_low=Decimal("0.6"),   # inside the threshold
+        suggested_floor=Decimal("100"),
+    )
+    contribution = Contribution.objects.create(
+        contribution="Imminent",
+        per_paycheck=Decimal("50.00"),
+        account=draining_account,
+        goal_type=Contribution.GOAL_FLOOR,
+        goal_amount=Decimal("100.00"),
+    )
+
+    suggestion = solve_for_contribution(contribution, trend, today=TODAY)
+
+    assert trend.paychecks_to_low < MIN_PAYCHECKS_TO_SOLVE
+    # The rate is left alone...
+    assert suggestion.required_per_paycheck == Decimal("50.00")
+    assert suggestion.delta_per_paycheck == Decimal("0.00")
+    # ...and the shortfall is named as a one-off instead.
+    assert "one-off top-up" in suggestion.warning
+    assert "1000" in suggestion.warning
+    assert isinstance(suggestion, Suggestion)
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_budget_goal_ignores_history(draining_account, biweekly_repeat):
+    """A budget is prescriptive — it constrains spending rather than following it."""
+    contribution = Contribution.objects.create(
+        contribution="Vacation",
+        per_paycheck=Decimal("10.00"),
+        account=draining_account,
+        goal_type=Contribution.GOAL_BUDGET,
+        goal_amount=Decimal("5200.00"),
+    )
+    trend = analyze_account_trend(draining_account.id, months=6, today=TODAY)
+
+    suggestion = solve_for_contribution(contribution, trend, today=TODAY)
+
+    # 5200 a year at the 26-paycheck fallback, regardless of what the account
+    # has actually been doing.
+    assert suggestion.required_per_paycheck == Decimal("200.00")
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_suggested_floor_sizes_the_excess_of_a_bad_month(
+    test_savings_account, test_cleared_transaction_status,
+    test_expense_transaction_type,
+):
+    """The buffer absorbs *variation*, not a whole month's spend.
+
+    Sizing it to the worst month outright demanded that a pass-through grocery
+    bucket hold a full month of spending idle.
+    """
+    # Five months of 300, one of 900. Worst is 900, average 400 → excess 500.
+    for i, amt in enumerate([300, 300, 300, 300, 300, 900]):
+        t = _tx(test_savings_account, -amt, TODAY - timedelta(days=30 * (i + 1) - 5),
+                test_cleared_transaction_status, test_expense_transaction_type,
+                source=test_savings_account)
+        t.description = "Groceries Transfer"
+        t.save(update_fields=["description"])
+
+    trend = analyze_account_trend(test_savings_account.id, months=6, today=TODAY)
+
+    assert trend.suggested_floor == pytest.approx(
+        Decimal("500.00"), abs=Decimal("1")
+    )

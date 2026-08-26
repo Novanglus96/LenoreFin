@@ -26,6 +26,9 @@ class TrendOut(Schema):
     current_balance: AmountDecimal
     excluded_contribution_total: AmountDecimal
     one_off_total: AmountDecimal
+    projected_low_balance: AmountDecimal
+    paychecks_to_low: condecimal(max_digits=8, decimal_places=2)
+    suggested_floor: AmountDecimal
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -89,14 +89,23 @@ class Contribution(models.Model):
     GOAL_TARGET = "target"
     GOAL_FLOOR = "floor"
     GOAL_GROW = "grow"
+    GOAL_BUDGET = "budget"
+    GOAL_MAXIMISE = "maximise"
 
     GOAL_CHOICES = [
         (GOAL_NONE, "No goal"),
-        (GOAL_HOLD, "Hold steady"),
+        (GOAL_HOLD, "Cover obligations, hold the buffer"),
         (GOAL_TARGET, "Reach a target by a date"),
-        (GOAL_FLOOR, "Never dip below a floor"),
+        (GOAL_FLOOR, "Cover spending, never dip below a floor"),
         (GOAL_GROW, "Grow by an amount or rate"),
+        (GOAL_BUDGET, "Fund a set amount per year"),
+        (GOAL_MAXIMISE, "Contribute whatever is left over"),
     ]
+
+    # hold/floor/target/grow are *descriptive* — solved from what the account
+    # actually does. budget and maximise are *prescriptive*: you state the
+    # figure, or take what remains. Mixing the two in one enum is deliberate,
+    # because from the page's point of view they are all "what should this be".
 
     contribution = models.CharField(max_length=20, unique=True)
     per_paycheck = models.DecimalField(
@@ -160,6 +169,11 @@ class Contribution(models.Model):
             if not self.goal_amount and not self.goal_rate:
                 raise ValidationError(
                     "A growth goal needs either an amount per month or an annual rate."
+                )
+        if self.goal_type == self.GOAL_BUDGET:
+            if not self.goal_amount or self.goal_amount <= 0:
+                raise ValidationError(
+                    "A budget goal needs the amount to fund per year."
                 )
         # The reminder is the apply target, so it has to be the transfer that
         # actually funds this account — otherwise applying a suggestion would

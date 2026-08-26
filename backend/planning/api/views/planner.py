@@ -19,6 +19,8 @@ from planning.models import Contribution
 from planning.services.planner import (
     analyze_account_trend,
     analyze_contribution,
+    apply_maximise_goals,
+    net_per_paycheck,
     paycheck_headroom,
     project_with_contribution,
     solve_for_contribution,
@@ -109,6 +111,13 @@ def planner_analysis(
             .order_by("id")
         )
         rows = [_row(c, months, horizon_months) for c in contributions]
+
+        # Second pass: "maximise" rows claim whatever the other goals leave, so
+        # they can only be solved once the rest are known.
+        net = net_per_paycheck()
+        apply_maximise_goals(
+            rows, None if net is None else net + income_adjustment
+        )
 
         current_total = Decimal("0")
         suggested_total = Decimal("0")

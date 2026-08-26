@@ -41,6 +41,10 @@ DAYS_PER_YEAR = Decimal("365.25")
 # Below this many cleared transactions a trend is noise, not signal.
 MIN_DATA_POINTS = 3
 
+# A dip closer than this cannot meaningfully be fixed by changing a per-paycheck
+# contribution — there are not enough paydays before it to accumulate anything.
+MIN_PAYCHECKS_TO_SOLVE = Decimal("2")
+
 
 @dataclass
 class Trend:
@@ -71,6 +75,13 @@ class Trend:
     excluded_contribution_total: Decimal
     # Unscheduled spend seen only once in the window: reported, never projected.
     one_off_total: Decimal
+    # The low point of the projected balance path, and how many paychecks away
+    # it is. A floor goal is solved against this, not against the endpoint.
+    projected_low_balance: Decimal
+    paychecks_to_low: Decimal
+    # A floor derived from how much the account's spending actually varies —
+    # offered as a starting point, never imposed.
+    suggested_floor: Decimal
 
 
 @dataclass
@@ -153,8 +164,12 @@ def _scheduled_flow(
     horizon_months: int,
     today: date,
     contribution_description: str | None,
-) -> tuple[Decimal, set[str]]:
-    """Net monthly flow the *schedule* implies, and the descriptions it covers.
+) -> tuple[Decimal, set[str], list[tuple[int, Decimal]]]:
+    """Net monthly flow, the descriptions it covers, and the balance path.
+
+    The path is (days from today, projected balance) and is what a floor goal
+    has to be solved against — an account can finish the year comfortably
+    having gone negative in month three, and only the path shows that.
 
     The description set is how the caller avoids double counting: anything the
     forecast will generate forward — reminder transactions, projected interest,
@@ -178,9 +193,9 @@ def _scheduled_flow(
     except Exception:
         # A forecast failure must not take the whole planner down; returning
         # zero leaves the caller with history only, i.e. the old behaviour.
-        return Decimal("0"), set()
+        return Decimal("0"), set(), []
     if not rows:
-        return Decimal("0"), set()
+        return Decimal("0"), set(), []
 
     def field(row, name):
         return row[name] if isinstance(row, dict) else getattr(row, name, None)
@@ -190,8 +205,13 @@ def _scheduled_flow(
 
     contribution_inflow = Decimal("0")
     covered: set[str] = set()
+    path: list[tuple[int, Decimal]] = []
     for row in rows:
         description = field(row, "description")
+        row_date = field(row, "transaction_date")
+        row_balance = field(row, "balance")
+        if row_date is not None and row_balance is not None:
+            path.append(((row_date - today).days, Decimal(str(row_balance))))
         # Only *simulated* rows are recurring projections. A real future-dated
         # transaction that happens to share a description is a one-off already
         # on the books, and letting it into this set was catastrophic: a single
@@ -209,7 +229,7 @@ def _scheduled_flow(
     per_month = (
         (net_change - contribution_inflow) / Decimal(horizon_months)
     ).quantize(Decimal("0.01"))
-    return per_month, covered
+    return per_month, covered, path
 
 
 def analyze_account_trend(
@@ -261,7 +281,7 @@ def analyze_account_trend(
     if len(window) < MIN_DATA_POINTS:
         return None
 
-    scheduled_per_month, forecast_descriptions = _scheduled_flow(
+    scheduled_per_month, forecast_descriptions, forecast_path = _scheduled_flow(
         account_id, horizon_months, today, contribution_description
     )
 
@@ -315,6 +335,39 @@ def analyze_account_trend(
     )
     projected_per_month = scheduled_per_month + adhoc_per_month
 
+    # Overlay ad-hoc spending on the forecast path. The forecast only knows
+    # scheduled flows, so for a bucket like groceries — which has no outflow
+    # reminder at all — the raw path climbs forever and would report a low point
+    # of "today", hiding the very dip a floor goal exists to prevent.
+    low_balance = balance
+    days_to_low = 0
+    adhoc_per_day = adhoc_per_month / DAYS_PER_MONTH
+    for days, projected in forecast_path:
+        adjusted = projected + adhoc_per_day * Decimal(days)
+        if adjusted < low_balance:
+            low_balance = adjusted
+            days_to_low = days
+
+    # How much worse a bad cycle is than a typical one. The buffer exists to
+    # absorb *variation*, so it is sized to the excess of the worst month over
+    # the average — not to the worst month outright, which for a pass-through
+    # bucket like groceries would demand holding a whole month's spend idle.
+    monthly_totals: dict[int, Decimal] = {}
+    for tx in window:
+        if _is_contribution_transfer(
+            tx, account_id, source_account_id, contribution_description
+        ):
+            continue
+        bucket = (today - tx.transaction_date).days // int(DAYS_PER_MONTH)
+        monthly_totals.setdefault(bucket, Decimal("0"))
+        monthly_totals[bucket] += _signed_amount(tx, account_id)
+    if monthly_totals:
+        worst_month = min(monthly_totals.values())
+        mean_month = sum(monthly_totals.values()) / Decimal(len(monthly_totals))
+        suggested_floor = abs(worst_month - mean_month).quantize(Decimal("0.01"))
+    else:
+        suggested_floor = Decimal("0.00")
+
     return Trend(
         natural_flow_per_month=(natural_flow / months_elapsed).quantize(
             Decimal("0.01")
@@ -346,6 +399,11 @@ def analyze_account_trend(
         current_balance=balance.quantize(Decimal("0.01")),
         excluded_contribution_total=contributed.quantize(Decimal("0.01")),
         one_off_total=one_off_total.quantize(Decimal("0.01")),
+        projected_low_balance=low_balance.quantize(Decimal("0.01")),
+        paychecks_to_low=(
+            Decimal(days_to_low) / DAYS_PER_YEAR * per_year
+        ).quantize(Decimal("0.01")),
+        suggested_floor=suggested_floor,
     )
 
 
@@ -383,17 +441,28 @@ def _per_paycheck(monthly: Decimal, per_year: Decimal) -> Decimal:
     return (monthly * 12) / per_year
 
 
+# Goals you state rather than derive. They need no history at all, so they are
+# answerable on an account the planner cannot measure.
+PRESCRIPTIVE_GOALS = frozenset(
+    {Contribution.GOAL_BUDGET, Contribution.GOAL_MAXIMISE}
+)
+
+
 def solve_for_contribution(
     contribution: Contribution,
-    trend: Trend,
+    trend: Trend | None,
     today: date | None = None,
 ) -> Suggestion | None:
-    """Turn a goal plus a measured trend into a required per-paycheck figure.
+    """Turn a goal into a required per-paycheck figure.
 
-    Returns None for a contribution with no goal — there is nothing to solve.
+    Returns None for a contribution with no goal, and for a descriptive goal on
+    an account with too little history to measure — those genuinely have no
+    answer. Prescriptive goals still resolve without a trend.
     """
     goal = contribution.goal_type
     if goal == Contribution.GOAL_NONE:
+        return None
+    if trend is None and goal not in PRESCRIPTIVE_GOALS:
         return None
 
     today = today or get_todays_date_timezone_adjusted()
@@ -404,12 +473,42 @@ def solve_for_contribution(
     # Projected, not historical: scheduled obligations come from the forecast so
     # annual and quarterly lumps are weighted by their real calendar placement,
     # and ad-hoc spending comes from history because no reminder describes it.
-    natural = _per_paycheck(trend.projected_flow_per_month, per_year)
+    natural = (
+        _per_paycheck(trend.projected_flow_per_month, per_year)
+        if trend is not None
+        else Decimal("0")
+    )
 
     warning = None
     achievable = True
 
-    if goal == Contribution.GOAL_HOLD:
+    if goal == Contribution.GOAL_BUDGET:
+        # Prescriptive: you decided what this is worth per year, so history does
+        # not get a vote. Deliberately ignores drift — the point of a budget is
+        # that it constrains spending rather than following it.
+        required = contribution.goal_amount / per_year
+        reason = (
+            f"Funding {contribution.goal_amount} a year over "
+            f"{per_year.quantize(Decimal('0.1'))} paychecks."
+        )
+
+    elif goal == Contribution.GOAL_MAXIMISE:
+        # Cannot be solved here: it depends on every *other* contribution being
+        # funded first. The caller does a second pass once the rest are known —
+        # see `apply_maximise_goals`. Reported as current until then, so a
+        # half-computed figure is never mistaken for an answer.
+        return Suggestion(
+            goal_type=goal,
+            current_per_paycheck=current,
+            required_per_paycheck=current,
+            delta_per_paycheck=Decimal("0"),
+            paychecks_per_year=per_year,
+            reason="Takes whatever is left after the other goals are funded.",
+            achievable=True,
+            warning=None,
+        )
+
+    elif goal == Contribution.GOAL_HOLD:
         # Offset the drift exactly: contribution + natural == 0.
         required = -natural
         reason = (
@@ -462,24 +561,45 @@ def solve_for_contribution(
         )
 
     elif goal == Contribution.GOAL_FLOOR:
-        # The floor binds at the account's low point, which for a steadily
-        # draining account is the end of the horizon. Solve so the balance
-        # never crosses the floor over the next year.
-        horizon_paychecks = per_year
-        projected = trend.current_balance + (natural + current) * horizon_paychecks
-        if projected >= contribution.goal_amount:
+        # A floor binds at the account's *low point*, not at the end of the
+        # horizon. An account can finish the year healthy having gone under in
+        # month three, and the endpoint would never show it.
+        low = trend.projected_low_balance
+        floor = contribution.goal_amount
+        if low >= floor:
             required = current
             reason = (
-                f"Projected to sit at {projected.quantize(Decimal('0.01'))} in a "
-                f"year, above the {contribution.goal_amount} floor."
+                f"Dips to {low} at worst, staying above the {floor} floor."
             )
         else:
-            shortfall = contribution.goal_amount - projected
-            required = current + (shortfall / horizon_paychecks)
-            reason = (
-                f"Projected to fall to {projected.quantize(Decimal('0.01'))} in a "
-                f"year, {shortfall.quantize(Decimal('0.01'))} below the floor."
-            )
+            shortfall = floor - low
+            paychecks_before_low = trend.paychecks_to_low
+            if paychecks_before_low < MIN_PAYCHECKS_TO_SOLVE:
+                # Too close to fix by changing the rate. Only a couple of
+                # paychecks land before the dip, so dividing the shortfall by
+                # them demands an absurd figure — one real bucket asked for
+                # +1,861 a paycheck to cover a dip nine days out. A lump sum is
+                # the honest answer, and the rate is left alone.
+                required = current
+                reason = (
+                    f"Dips to {low} in only "
+                    f"{paychecks_before_low.quantize(Decimal('0.1'))} paychecks — "
+                    f"too soon to fix by contributing more."
+                )
+                warning = (
+                    f"Needs a one-off top-up of about "
+                    f"{shortfall.quantize(Decimal('0.01'))} rather than a "
+                    f"per-paycheck change."
+                )
+            else:
+                # Only the paychecks landing *before* the dip can fix it;
+                # spreading it over the whole horizon would arrive too late.
+                required = current + (shortfall / paychecks_before_low)
+                reason = (
+                    f"Dips to {low} in "
+                    f"{paychecks_before_low.quantize(Decimal('0.1'))} paychecks, "
+                    f"{shortfall.quantize(Decimal('0.01'))} under the {floor} floor."
+                )
 
     else:
         return None
@@ -570,11 +690,13 @@ def analyze_contribution(
         per_year=paychecks_per_year(contribution),
     )
     if trend is None:
+        # A prescriptive goal still has an answer here — it never depended on
+        # the history that is missing.
         return {
             "contribution_id": contribution.id,
             "account_id": contribution.account_id,
             "trend": None,
-            "suggestion": None,
+            "suggestion": solve_for_contribution(contribution, None, today=today),
             "drift": _drift(contribution),
             "note": (
                 "Not enough cleared history in the last "
@@ -669,3 +791,70 @@ def paycheck_headroom(
         "affordable": headroom_if_applied >= 0,
         "note": None,
     }
+
+
+def apply_maximise_goals(
+    rows: list, net_available: Decimal | None
+) -> None:
+    """Give every "maximise" row whatever headroom the other goals leave.
+
+    This cannot be solved per-account like the other goals, because the answer
+    is defined by what the rest of the plan costs. It runs as a second pass over
+    already-solved rows and mutates their suggestions in place.
+
+    `rows` are PlannerRowOut-shaped: anything with `.suggestion` and
+    `.current_per_paycheck`. Kept structural rather than typed to avoid the
+    service importing the API schema.
+
+    With no paycheck history there is no headroom to divide, so maximise rows
+    are left at their current figure and say why — guessing would be worse than
+    declining to answer.
+    """
+    maximise = [
+        r
+        for r in rows
+        if r.suggestion and r.suggestion.goal_type == Contribution.GOAL_MAXIMISE
+    ]
+    if not maximise:
+        return
+
+    if net_available is None:
+        for row in maximise:
+            row.suggestion.warning = (
+                "No paycheck history, so there is no headroom figure to divide."
+            )
+        return
+
+    # What everything else claims. Maximise rows contribute their *current*
+    # amount here rather than their suggestion, because their suggestion is the
+    # very thing being computed.
+    committed = Decimal("0")
+    for row in rows:
+        if row.suggestion and row.suggestion.goal_type == Contribution.GOAL_MAXIMISE:
+            continue
+        committed += (
+            row.suggestion.required_per_paycheck
+            if row.suggestion
+            else row.current_per_paycheck
+        )
+
+    leftover = net_available - committed
+    if leftover < 0:
+        leftover = Decimal("0")
+
+    share = (leftover / Decimal(len(maximise))).quantize(Decimal("0.01"))
+    for row in maximise:
+        row.suggestion.required_per_paycheck = share
+        row.suggestion.delta_per_paycheck = (
+            share - row.suggestion.current_per_paycheck
+        ).quantize(Decimal("0.01"))
+        if share == 0:
+            row.suggestion.warning = (
+                "The other goals already claim the whole paycheck — nothing "
+                "left to put here."
+            )
+            row.suggestion.reason = "Nothing left over once the other goals are funded."
+        else:
+            row.suggestion.reason = (
+                f"{share} left over per paycheck once the other goals are funded."
+            )

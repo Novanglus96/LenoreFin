@@ -182,6 +182,8 @@
             <v-tooltip
               :text="`Per paycheck: scheduled ${item.trend.scheduled_flow_per_paycheck} + ad-hoc ${item.trend.adhoc_flow_per_paycheck}` +
                      ` (${item.trend.projected_flow_per_month}/mo over ${item.trend.paychecks_in_horizon} paychecks)` +
+                     ` · low point ${item.trend.projected_low_balance} in ${item.trend.paychecks_to_low} paychecks` +
+                     ` · suggested floor ${item.trend.suggested_floor}` +
                      (Number(item.trend.one_off_total) !== 0
                        ? ` · ${item.trend.one_off_total} of one-offs excluded`
                        : '') +
@@ -345,10 +347,12 @@
 
   const goalLabels = {
     none: "None",
-    hold: "Hold steady",
+    hold: "Obligations",
     target: "Target",
     floor: "Floor",
     grow: "Grow",
+    budget: "Budget",
+    maximise: "Leftover",
   };
 
   const goalColors = {
@@ -357,6 +361,8 @@
     target: "info",
     floor: "warning",
     grow: "success",
+    budget: "info",
+    maximise: "secondary",
   };
 
   const goalLabel = key => goalLabels[key] ?? key;
