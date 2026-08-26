@@ -9,12 +9,18 @@ class TrendOut(Schema):
     """What an account does on its own, with contributions excluded."""
 
     natural_flow_per_month: AmountDecimal
+    # What the solver actually uses: forward scheduled flow plus ad-hoc spend.
+    scheduled_flow_per_month: AmountDecimal
+    adhoc_flow_per_month: AmountDecimal
+    projected_flow_per_month: AmountDecimal
+    horizon_months: int
     observed_slope_per_month: AmountDecimal
     r_squared: float
     data_points: int
     window_months: int
     current_balance: AmountDecimal
     excluded_contribution_total: AmountDecimal
+    one_off_total: AmountDecimal
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -50,6 +56,17 @@ class PlannerRowOut(Schema):
     note: Optional[str] = None
 
 
+class HeadroomOut(Schema):
+    """Whether the plan actually fits in a pay period."""
+
+    net_per_paycheck: Optional[AmountDecimal] = None
+    income_adjustment: AmountDecimal
+    headroom_now: Optional[AmountDecimal] = None
+    headroom_if_applied: Optional[AmountDecimal] = None
+    affordable: Optional[bool] = None
+    note: Optional[str] = None
+
+
 class PlannerOut(Schema):
     """The whole planner view, with paycheck totals for the summary row."""
 
@@ -58,6 +75,8 @@ class PlannerOut(Schema):
     suggested_per_paycheck_total: AmountDecimal
     delta_per_paycheck_total: AmountDecimal
     window_months: int
+    horizon_months: int
+    headroom: HeadroomOut
 
 
 class ProjectionPointOut(Schema):

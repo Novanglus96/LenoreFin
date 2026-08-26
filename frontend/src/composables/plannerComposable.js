@@ -21,10 +21,14 @@ function handleApiError(error, message) {
   throw error;
 }
 
-async function getPlannerAnalysisFunction(months) {
+async function getPlannerAnalysisFunction(months, horizonMonths, incomeAdjustment) {
   try {
     const response = await apiClient.get("/planning/planner/analysis", {
-      params: { months },
+      params: {
+        months,
+        horizon_months: horizonMonths,
+        income_adjustment: incomeAdjustment,
+      },
     });
     return response.data;
   } catch (error) {
@@ -75,7 +79,7 @@ async function applySuggestionsFunction(contributionIds) {
   }
 }
 
-export function usePlanner(months) {
+export function usePlanner(months, horizonMonths, incomeAdjustment) {
   const queryClient = useQueryClient();
 
   const {
@@ -83,8 +87,13 @@ export function usePlanner(months) {
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: ["planner", months],
-    queryFn: () => getPlannerAnalysisFunction(unref(months)),
+    queryKey: ["planner", months, horizonMonths, incomeAdjustment],
+    queryFn: () =>
+      getPlannerAnalysisFunction(
+        unref(months),
+        unref(horizonMonths),
+        unref(incomeAdjustment),
+      ),
     select: response => response,
     client: queryClient,
   });

@@ -6,3 +6,5 @@ from planning.services.planner import analyze_contribution as analyze_contributi
 from planning.services.planner import paychecks_per_year as paychecks_per_year
 from planning.services.planner import project_with_contribution as project_with_contribution
 from planning.services.planner import solve_for_contribution as solve_for_contribution
+from planning.services.planner import net_per_paycheck as net_per_paycheck
+from planning.services.planner import paycheck_headroom as paycheck_headroom

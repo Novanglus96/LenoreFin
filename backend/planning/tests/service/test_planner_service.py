@@ -543,3 +543,123 @@ def test_second_funding_stream_is_not_silently_excluded(
     # The account is funded well beyond its drain, so nothing more is needed.
     assert suggestion.required_per_paycheck == Decimal("0.00")
     assert suggestion.warning is not None
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_one_off_spending_is_not_projected_as_a_rate(
+    test_savings_account, test_cleared_transaction_status,
+    test_expense_transaction_type,
+):
+    """A single large expense is an event, not a monthly burn.
+
+    Found against real data: one bucket's entire unscheduled history was
+    "Closing Costs" and "Home Transfer", once each. Treating 5,654 of
+    house-purchase costs as a recurring rate asked for an extra 573 a paycheck,
+    forever.
+    """
+    _tx(test_savings_account, -3500, TODAY - timedelta(days=40),
+        test_cleared_transaction_status, test_expense_transaction_type,
+        source=test_savings_account)
+    one_off = Transaction.objects.get(total_amount=Decimal("-3500"))
+    one_off.description = "Closing Costs"
+    one_off.save(update_fields=["description"])
+    # Two more, distinct one-offs — still events, not a rate.
+    for i, (amt, desc) in enumerate([(-800, "Home Transfer"), (-450, "Survey")]):
+        t = _tx(test_savings_account, amt, TODAY - timedelta(days=60 + i * 10),
+                test_cleared_transaction_status, test_expense_transaction_type,
+                source=test_savings_account)
+        t.description = desc
+        t.save(update_fields=["description"])
+
+    trend = analyze_account_trend(test_savings_account.id, months=6, today=TODAY)
+
+    assert trend is not None
+    # Nothing recurs, so there is no ad-hoc rate at all.
+    assert trend.adhoc_flow_per_month == Decimal("0.00")
+    assert trend.one_off_total == Decimal("-4750.00")
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_repeated_unscheduled_spending_is_a_rate(
+    test_savings_account, test_cleared_transaction_status,
+    test_expense_transaction_type,
+):
+    """Spending that recurs under one name is real, even with no reminder.
+
+    The grocery bucket has no outflow reminder at all — its whole drain is
+    repeated "Groceries Transfer" rows. A forecast-only planner would say it
+    never spends anything and suggest cutting the contribution to zero.
+    """
+    for i in range(6):
+        t = _tx(test_savings_account, -300, TODAY - timedelta(days=30 * (i + 1)),
+                test_cleared_transaction_status, test_expense_transaction_type,
+                source=test_savings_account)
+        t.description = "Groceries Transfer"
+        t.save(update_fields=["description"])
+
+    trend = analyze_account_trend(test_savings_account.id, months=6, today=TODAY)
+
+    assert trend is not None
+    assert trend.one_off_total == Decimal("0.00")
+    # 1800 over 5.9138 months.
+    assert trend.adhoc_flow_per_month == pytest.approx(
+        Decimal("-304.37"), abs=Decimal("0.05")
+    )
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_headroom_reports_affordability_and_income_change(
+    test_checking_account, test_payee, test_pending_transaction_status,
+    test_expense_transaction_type,
+):
+    """Headroom sums paychecks per *period*, so two earners are not halved."""
+    from planning.services.planner import net_per_paycheck, paycheck_headroom
+    from transactions.models import Paycheck, Transaction
+
+    for i in range(4):
+        for net in (Decimal("1700.00"), Decimal("1800.00")):
+            pc = Paycheck.objects.create(
+                gross=net * 2, net=net, taxes=0, health=0, pension=0,
+                fsa=0, dca=0, union_dues=0, four_fifty_seven_b=0, payee=test_payee,
+            )
+            Transaction.objects.create(
+                description="Paycheck",
+                transaction_date=TODAY - timedelta(days=14 * (i + 1)),
+                status=test_pending_transaction_status,
+                transaction_type=test_expense_transaction_type,
+                source_account=test_checking_account,
+                paycheck=pc,
+            )
+
+    # Two earners on the same day must sum, not average.
+    assert net_per_paycheck(today=TODAY) == Decimal("3500.00")
+
+    h = paycheck_headroom(Decimal("3000"), Decimal("3400"), today=TODAY)
+    assert h["headroom_now"] == Decimal("500.00")
+    assert h["headroom_if_applied"] == Decimal("100.00")
+    assert h["affordable"] is True
+
+    # A plan that overruns take-home is reported as unaffordable...
+    over = paycheck_headroom(Decimal("3000"), Decimal("3800"), today=TODAY)
+    assert over["affordable"] is False
+    # ...and a raise is an input, because it cannot be read from history.
+    with_raise = paycheck_headroom(
+        Decimal("3000"), Decimal("3800"), income_adjustment=Decimal("400"), today=TODAY
+    )
+    assert with_raise["affordable"] is True
+    assert with_raise["headroom_if_applied"] == Decimal("100.00")
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_headroom_without_paycheck_history_says_so(test_checking_account):
+    from planning.services.planner import paycheck_headroom
+
+    h = paycheck_headroom(Decimal("100"), Decimal("200"), today=TODAY)
+
+    assert h["net_per_paycheck"] is None
+    assert h["affordable"] is None
+    assert "No paycheck history" in h["note"]

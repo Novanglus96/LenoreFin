@@ -12,8 +12,31 @@
         variant="outlined"
         hide-details
         label="History window"
-        style="max-width: 180px"
+        style="max-width: 165px"
       ></v-select>
+      <v-select
+        v-model="horizonMonths"
+        :items="horizonOptions"
+        item-title="title"
+        item-value="value"
+        density="compact"
+        variant="outlined"
+        hide-details
+        label="Plan ahead"
+        style="max-width: 150px"
+      ></v-select>
+      <v-text-field
+        v-model.number="incomeAdjustment"
+        density="compact"
+        variant="outlined"
+        hide-details
+        label="Pay change"
+        type="number"
+        step="5"
+        prefix="$"
+        suffix="/pc"
+        style="max-width: 145px"
+      ></v-text-field>
       <v-tooltip
         text="Apply the suggested amount to the selected contributions"
         location="top"
@@ -68,6 +91,52 @@
         </v-row>
       </v-container>
 
+      <!-- Headroom: whether the plan actually fits in a pay period. A raise is
+           an input rather than something inferred — with more than one earner
+           the per-cheque noise dwarfs a typical raise, so there is nothing in
+           history to detect it from. -->
+      <v-alert
+        v-if="headroom && headroom.net_per_paycheck !== null"
+        :type="headroom.affordable ? 'success' : 'warning'"
+        variant="tonal"
+        density="compact"
+        class="mx-4 mb-3"
+      >
+        <div class="d-flex flex-wrap ga-4 align-center text-body-2">
+          <span>
+            Take-home
+            <strong>{{ formatCurrency(headroom.net_per_paycheck) }}</strong>
+            <template v-if="Number(headroom.income_adjustment) !== 0">
+              + {{ formatCurrency(headroom.income_adjustment) }} change
+            </template>
+            per pay period
+          </span>
+          <span>
+            Spare now
+            <strong>{{ formatCurrency(headroom.headroom_now) }}</strong>
+          </span>
+          <span>
+            Spare if applied
+            <strong :class="headroom.affordable ? '' : 'text-error'">
+              {{ formatCurrency(headroom.headroom_if_applied) }}
+            </strong>
+          </span>
+          <span v-if="!headroom.affordable" class="font-weight-medium">
+            Short by
+            {{ formatCurrency(Math.abs(Number(headroom.headroom_if_applied))) }}
+            — fund the goals that matter most, or raise income.
+          </span>
+        </div>
+      </v-alert>
+      <v-alert
+        v-else-if="headroom && headroom.note"
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mx-4 mb-3"
+        :text="headroom.note"
+      ></v-alert>
+
       <v-data-table
         :headers="headers"
         :items="rows"
@@ -101,13 +170,19 @@
 
         <template v-slot:[`item.trend`]="{ item }">
           <div v-if="item.trend" class="text-center">
-            <span :class="deltaClass(item.trend.natural_flow_per_month)">
-              {{ formatDelta(item.trend.natural_flow_per_month) }}/mo
+            <span :class="deltaClass(item.trend.projected_flow_per_month)">
+              {{ formatDelta(item.trend.projected_flow_per_month) }}/mo
             </span>
-            <!-- r² is the honesty column: a low fit means lumpy history, and
-                 the suggestion built on it deserves less trust. -->
+            <!-- The breakdown matters: "scheduled" comes from the forecast, so
+                 annual and quarterly obligations are weighted by their real
+                 dates rather than by whether they happened to fall inside the
+                 history window. r² speaks only to the ad-hoc half. -->
             <v-tooltip
-              :text="`Fit r² ${item.trend.r_squared} over ${item.trend.data_points} transactions`"
+              :text="`Scheduled ${item.trend.scheduled_flow_per_month}/mo + ad-hoc ${item.trend.adhoc_flow_per_month}/mo` +
+                     (Number(item.trend.one_off_total) !== 0
+                       ? ` · ${item.trend.one_off_total} of one-offs excluded`
+                       : '') +
+                     ` · fit r² ${item.trend.r_squared} over ${item.trend.data_points} transactions`"
               location="top"
             >
               <template v-slot:activator="{ props }">
@@ -221,6 +296,8 @@
   const authStore = useAuthStore();
 
   const months = ref(6);
+  const horizonMonths = ref(12);
+  const incomeAdjustment = ref(0);
   const selected = ref([]);
   const confirmDialog = ref(false);
 
@@ -229,16 +306,22 @@
     { title: "Last 6 months", value: 6 },
     { title: "Last 12 months", value: 12 },
   ];
+  const horizonOptions = [
+    { title: "6 months", value: 6 },
+    { title: "1 year", value: 12 },
+    { title: "2 years", value: 24 },
+  ];
 
   const { planner, isLoading, isFetching, isApplying, applySuggestions } =
-    usePlanner(months);
+    usePlanner(months, horizonMonths, incomeAdjustment);
 
   const rows = computed(() => planner.value?.rows ?? []);
+  const headroom = computed(() => planner.value?.headroom ?? null);
 
   const headers = [
     { title: "Contribution", key: "contribution" },
     { title: "Goal", key: "goal_type", align: "center" },
-    { title: "Trend", key: "trend", align: "center" },
+    { title: "Projected", key: "trend", align: "center" },
     { title: "Now", key: "current", align: "center" },
     { title: "Suggested", key: "suggested", align: "center" },
     { title: "Change", key: "delta", align: "center" },

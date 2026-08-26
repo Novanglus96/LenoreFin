@@ -19,6 +19,7 @@ from planning.models import Contribution
 from planning.services.planner import (
     analyze_account_trend,
     analyze_contribution,
+    paycheck_headroom,
     project_with_contribution,
     solve_for_contribution,
 )
@@ -47,9 +48,11 @@ def _signed_like(magnitude: Decimal, existing: Decimal | None) -> Decimal:
     return -magnitude if (existing or Decimal("0")) < 0 else magnitude
 
 
-def _row(contribution, months):
+def _row(contribution, months, horizon_months):
     """Build one planner row, tolerating a contribution with nothing to analyse."""
-    analysis = analyze_contribution(contribution, months=months)
+    analysis = analyze_contribution(
+        contribution, months=months, horizon_months=horizon_months
+    )
     if analysis is None:
         return PlannerRowOut(
             contribution_id=contribution.id,
@@ -77,7 +80,12 @@ def _row(contribution, months):
 
 
 @planner_router.get("/analysis", response=PlannerOut)
-def planner_analysis(request, months: int = 6):
+def planner_analysis(
+    request,
+    months: int = 6,
+    horizon_months: int = 12,
+    income_adjustment: Decimal = Decimal("0"),
+):
     """Trend, goal suggestion and reminder drift for every active contribution.
 
     Runs synchronously. The work is a handful of indexed queries per account
@@ -85,6 +93,8 @@ def planner_analysis(request, months: int = 6):
     """
     if months < 1 or months > 60:
         raise HttpError(400, "months must be between 1 and 60")
+    if horizon_months < 1 or horizon_months > 60:
+        raise HttpError(400, "horizon_months must be between 1 and 60")
 
     try:
         contributions = (
@@ -92,7 +102,7 @@ def planner_analysis(request, months: int = 6):
             .select_related("account", "reminder", "reminder__repeat")
             .order_by("id")
         )
-        rows = [_row(c, months) for c in contributions]
+        rows = [_row(c, months, horizon_months) for c in contributions]
 
         current_total = Decimal("0")
         suggested_total = Decimal("0")
@@ -115,6 +125,10 @@ def planner_analysis(request, months: int = 6):
             suggested_per_paycheck_total=suggested_total,
             delta_per_paycheck_total=suggested_total - current_total,
             window_months=months,
+            horizon_months=horizon_months,
+            headroom=paycheck_headroom(
+                current_total, suggested_total, income_adjustment
+            ),
         )
     except Exception as e:
         api_logger.error("Planner analysis not retrieved")

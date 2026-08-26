@@ -30,6 +30,7 @@ from django.db.models import Q
 from accounts.models import Account
 from planning.models import Contribution
 from transactions.models import Transaction, TransactionStatus
+from transactions.services import get_account_transactions_and_balances
 from utils.dates import get_todays_date_timezone_adjusted
 
 # Average days per month/year, so a cadence in months and one in weeks are
@@ -43,15 +44,25 @@ MIN_DATA_POINTS = 3
 
 @dataclass
 class Trend:
-    """What an account does when nobody is topping it up."""
+    """What an account does when nobody is topping it up.
 
-    natural_flow_per_month: Decimal
+    `projected_flow_per_month` is what the solver uses, and it is deliberately
+    not the historical figure. See `analyze_account_trend` for why.
+    """
+
+    natural_flow_per_month: Decimal      # historical, contributions removed
+    scheduled_flow_per_month: Decimal    # forward, from the forecast
+    adhoc_flow_per_month: Decimal        # historical spending no reminder explains
+    projected_flow_per_month: Decimal    # scheduled + adhoc — the solver's input
     observed_slope_per_month: Decimal
     r_squared: float
     data_points: int
     window_months: int
+    horizon_months: int
     current_balance: Decimal
     excluded_contribution_total: Decimal
+    # Unscheduled spend seen only once in the window: reported, never projected.
+    one_off_total: Decimal
 
 
 @dataclass
@@ -129,12 +140,77 @@ def _linear_regression(points: list[tuple[float, float]]) -> tuple[float, float]
     return slope, r_squared
 
 
+def _scheduled_flow(
+    account_id: int,
+    horizon_months: int,
+    today: date,
+    contribution_description: str | None,
+) -> tuple[Decimal, set[str]]:
+    """Net monthly flow the *schedule* implies, and the descriptions it covers.
+
+    The description set is how the caller avoids double counting: anything the
+    forecast will generate forward — reminder transactions, projected interest,
+    credit-card payments — must not *also* be counted from history.
+
+    History alone gets lumpy obligations wrong. One real savings bucket carries
+    an annual -687 and a quarterly -2036.92; whether those land inside a
+    six-month window is luck, and the answer swung by 157 a paycheck — in the
+    opposite direction — depending on how they fell. The forecast knows their
+    actual calendar placement, so it weights them properly.
+
+    Direction cannot be read off forecast rows (`totals_only` strips source and
+    destination accounts), so net change comes from the running balance and the
+    contribution's own inflows are subtracted by description.
+    """
+    end_date = today + timedelta(days=int(DAYS_PER_YEAR) * horizon_months // 12)
+    try:
+        rows, opening = get_account_transactions_and_balances(
+            end_date, account_id, True, True, today, False
+        )
+    except Exception:
+        # A forecast failure must not take the whole planner down; returning
+        # zero leaves the caller with history only, i.e. the old behaviour.
+        return Decimal("0"), set()
+    if not rows:
+        return Decimal("0"), set()
+
+    def field(row, name):
+        return row[name] if isinstance(row, dict) else getattr(row, name, None)
+
+    last_balance = Decimal(str(field(rows[-1], "balance")))
+    net_change = last_balance - Decimal(str(opening))
+
+    contribution_inflow = Decimal("0")
+    covered: set[str] = set()
+    for row in rows:
+        description = field(row, "description")
+        # Only *simulated* rows are recurring projections. A real future-dated
+        # transaction that happens to share a description is a one-off already
+        # on the books, and letting it into this set was catastrophic: a single
+        # future "Car Transfer" row suppressed all six historical ones, wiping
+        # that bucket's entire ad-hoc rate and asking for 30 a paycheck less
+        # than it needs.
+        if description and field(row, "simulated"):
+            covered.add(description)
+        if (
+            contribution_description is not None
+            and description == contribution_description
+        ):
+            contribution_inflow += abs(Decimal(str(field(row, "total_amount") or 0)))
+
+    per_month = (
+        (net_change - contribution_inflow) / Decimal(horizon_months)
+    ).quantize(Decimal("0.01"))
+    return per_month, covered
+
+
 def analyze_account_trend(
     account_id: int,
     months: int = 6,
     source_account_id: int | None = None,
     today: date | None = None,
     contribution_description: str | None = None,
+    horizon_months: int = 12,
 ) -> Trend | None:
     """Measure an account's natural drift over the last `months` months.
 
@@ -176,10 +252,17 @@ def analyze_account_trend(
     if len(window) < MIN_DATA_POINTS:
         return None
 
-    # Walk the window once, accumulating the real balance curve while keeping
-    # the contribution's own top-ups in a separate bucket.
+    scheduled_per_month, forecast_descriptions = _scheduled_flow(
+        account_id, horizon_months, today, contribution_description
+    )
+
+    # Walk the window once, splitting flows three ways while accumulating the
+    # real balance curve for the regression.
     natural_flow = Decimal("0")
     contributed = Decimal("0")
+    # Ad-hoc candidates are gathered per description so one-offs can be dropped
+    # afterwards — see below.
+    adhoc_by_description: dict[str, list[Decimal]] = {}
     balance = balance_at_start
     points: list[tuple[float, float]] = []
     for tx in window:
@@ -191,16 +274,39 @@ def analyze_account_trend(
             contributed += amount
         else:
             natural_flow += amount
+            if tx.description not in forecast_descriptions:
+                adhoc_by_description.setdefault(tx.description, []).append(amount)
         points.append(((tx.transaction_date - start_date).days, float(balance)))
+
+    # A description seen exactly once in the window is an *event*, not a rate.
+    # Real data settles this: one savings bucket's entire unscheduled history
+    # was "Closing Costs" and "Home Transfer", one occurrence each. Treating
+    # 5,654 of house-purchase costs as a recurring monthly burn asked for an
+    # extra 573 a paycheck forever. Meanwhile the grocery bucket's unscheduled
+    # history is nine "Groceries Transfer" rows, which genuinely is a rate.
+    adhoc_flow = sum(
+        (sum(amounts) for amounts in adhoc_by_description.values() if len(amounts) > 1),
+        Decimal("0"),
+    )
+    one_off_total = sum(
+        (sum(amounts) for amounts in adhoc_by_description.values() if len(amounts) == 1),
+        Decimal("0"),
+    )
 
     slope_per_day, r_squared = _linear_regression(points)
     window_days = Decimal((today - start_date).days or 1)
     months_elapsed = window_days / DAYS_PER_MONTH
 
+    adhoc_per_month = (adhoc_flow / months_elapsed).quantize(Decimal("0.01"))
+
     return Trend(
         natural_flow_per_month=(natural_flow / months_elapsed).quantize(
             Decimal("0.01")
         ),
+        scheduled_flow_per_month=scheduled_per_month,
+        adhoc_flow_per_month=adhoc_per_month,
+        projected_flow_per_month=scheduled_per_month + adhoc_per_month,
+        horizon_months=horizon_months,
         observed_slope_per_month=(
             Decimal(str(slope_per_day)) * DAYS_PER_MONTH
         ).quantize(Decimal("0.01")),
@@ -209,6 +315,7 @@ def analyze_account_trend(
         window_months=months,
         current_balance=balance.quantize(Decimal("0.01")),
         excluded_contribution_total=contributed.quantize(Decimal("0.01")),
+        one_off_total=one_off_total.quantize(Decimal("0.01")),
     )
 
 
@@ -264,7 +371,10 @@ def solve_for_contribution(
     current = contribution.per_paycheck or Decimal("0")
 
     # The account's own drift, expressed in the same units as a contribution.
-    natural = _per_paycheck(trend.natural_flow_per_month, per_year)
+    # Projected, not historical: scheduled obligations come from the forecast so
+    # annual and quarterly lumps are weighted by their real calendar placement,
+    # and ad-hoc spending comes from history because no reminder describes it.
+    natural = _per_paycheck(trend.projected_flow_per_month, per_year)
 
     warning = None
     achievable = True
@@ -273,7 +383,7 @@ def solve_for_contribution(
         # Offset the drift exactly: contribution + natural == 0.
         required = -natural
         reason = (
-            f"Spending runs {trend.natural_flow_per_month}/month against this "
+            f"Projected at {trend.projected_flow_per_month}/month against this "
             f"account; {required.quantize(Decimal('0.01'))} per paycheck holds it flat."
         )
 
@@ -289,7 +399,7 @@ def solve_for_contribution(
             target_desc = f"{contribution.goal_amount}/month"
         required = -natural + _per_paycheck(monthly_growth, per_year)
         reason = (
-            f"Offsetting {trend.natural_flow_per_month}/month of drift and "
+            f"Offsetting {trend.projected_flow_per_month}/month of drift and "
             f"growing by {target_desc}."
         )
 
@@ -386,7 +496,7 @@ def project_with_contribution(
     Returns (month_offset, balance_now, balance_if_applied) tuples.
     """
     per_year = suggestion.paychecks_per_year
-    monthly_natural = trend.natural_flow_per_month
+    monthly_natural = trend.projected_flow_per_month
     monthly_current = (suggestion.current_per_paycheck * per_year) / 12
     monthly_suggested = (suggestion.required_per_paycheck * per_year) / 12
 
@@ -404,6 +514,7 @@ def analyze_contribution(
     contribution: Contribution,
     months: int = 6,
     today: date | None = None,
+    horizon_months: int = 12,
 ) -> dict | None:
     """Full picture for one contribution: trend, suggestion, and drift.
 
@@ -425,6 +536,7 @@ def analyze_contribution(
         contribution_description=(
             contribution.reminder.description if contribution.reminder_id else None
         ),
+        horizon_months=horizon_months,
     )
     if trend is None:
         return {
@@ -462,3 +574,67 @@ def _drift(contribution: Contribution) -> Decimal | None:
     return ((contribution.per_paycheck or Decimal("0")) - abs(scheduled)).quantize(
         Decimal("0.01")
     )
+
+
+def net_per_paycheck(periods: int = 6, today: date | None = None) -> Decimal | None:
+    """Average take-home per *pay period*, not per paycheck.
+
+    A household can have several earners paid on the same day, so paychecks are
+    grouped by date and summed before averaging — otherwise two earners look
+    like half the income. Real data swings 1622-1997 per individual cheque, so a
+    single recent period is not representative and several are averaged.
+
+    Returns None when there is no paycheck history to average.
+    """
+    today = today or get_todays_date_timezone_adjusted()
+    rows = (
+        Transaction.objects.filter(
+            paycheck__isnull=False, transaction_date__lte=today
+        )
+        .select_related("paycheck")
+        .order_by("-transaction_date")[: periods * 6]
+    )
+    by_date: dict[date, Decimal] = {}
+    for tx in rows:
+        by_date.setdefault(tx.transaction_date, Decimal("0"))
+        by_date[tx.transaction_date] += tx.paycheck.net or Decimal("0")
+    if not by_date:
+        return None
+    recent = [by_date[d] for d in sorted(by_date, reverse=True)[:periods]]
+    return (sum(recent) / Decimal(len(recent))).quantize(Decimal("0.01"))
+
+
+def paycheck_headroom(
+    current_total: Decimal,
+    suggested_total: Decimal,
+    income_adjustment: Decimal = Decimal("0"),
+    periods: int = 6,
+    today: date | None = None,
+) -> dict:
+    """What is left over per pay period, now and if the suggestions were applied.
+
+    `income_adjustment` is supplied rather than inferred. A raise is a future
+    event, and with more than one earner the per-cheque noise is far larger than
+    a typical raise, so there is nothing in history to detect it from.
+    """
+    net = net_per_paycheck(periods=periods, today=today)
+    if net is None:
+        return {
+            "net_per_paycheck": None,
+            "income_adjustment": income_adjustment,
+            "headroom_now": None,
+            "headroom_if_applied": None,
+            "affordable": None,
+            "note": "No paycheck history, so headroom cannot be worked out.",
+        }
+    adjusted_net = net + income_adjustment
+    headroom_now = adjusted_net - current_total
+    headroom_if_applied = adjusted_net - suggested_total
+    return {
+        "net_per_paycheck": net,
+        "income_adjustment": income_adjustment,
+        "headroom_now": headroom_now.quantize(Decimal("0.01")),
+        "headroom_if_applied": headroom_if_applied.quantize(Decimal("0.01")),
+        "affordable": headroom_if_applied >= 0,
+        "note": None,
+    }
