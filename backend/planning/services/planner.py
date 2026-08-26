@@ -212,7 +212,10 @@ def paychecks_per_year(contribution: Contribution) -> Decimal:
     )
     if period_days <= 0:
         return biweekly
-    return DAYS_PER_YEAR / period_days
+    # Quantized because the raw division is unbounded (365.25/14 runs to 27
+    # decimal places) and this value is serialised as well as multiplied.
+    # Four places is far finer than any cadence distinction that matters.
+    return (DAYS_PER_YEAR / period_days).quantize(Decimal("0.0001"))
 
 
 def _per_paycheck(monthly: Decimal, per_year: Decimal) -> Decimal:
