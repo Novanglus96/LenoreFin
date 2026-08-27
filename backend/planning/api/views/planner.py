@@ -19,7 +19,8 @@ from planning.models import Contribution
 from planning.services.planner import (
     analyze_account_trend,
     analyze_contribution,
-    apply_maximise_goals,
+    allocate_capacity,
+    minimum_per_paycheck,
     paycheck_headroom,
     project_with_contribution,
     solve_for_contribution,
@@ -64,11 +65,22 @@ def _row(contribution, months, horizon_months):
             reminder_id=contribution.reminder_id,
             goal_type=contribution.goal_type,
             current_per_paycheck=current,
+            topup_per_paycheck=Decimal("0.00"),
+            effective_per_paycheck=current,
+            minimum_per_paycheck=Decimal("0.00"),
+            allocated_per_paycheck=current,
+            move_per_paycheck=Decimal("0.00"),
             note="Link an account to analyse this contribution.",
         )
     note = analysis["note"]
     if note is None and contribution.goal_type == Contribution.GOAL_NONE:
         note = "No goal set — counted in the totals, but nothing to suggest."
+    trend = analysis["trend"]
+    # Top-ups are funding that is already happening, so the row's baseline is
+    # the scheduled transfer plus them. Comparing a suggestion against the
+    # scheduled figure alone counts money that is already going in as money that
+    # still needs finding.
+    topup = trend.topup_per_paycheck if trend else Decimal("0.00")
     return PlannerRowOut(
         contribution_id=contribution.id,
         contribution=contribution.contribution,
@@ -79,11 +91,81 @@ def _row(contribution, months, horizon_months):
         reminder_id=contribution.reminder_id,
         goal_type=contribution.goal_type,
         current_per_paycheck=current,
-        trend=analysis["trend"],
+        topup_per_paycheck=topup,
+        effective_per_paycheck=(current + topup).quantize(Decimal("0.01")),
+        minimum_per_paycheck=minimum_per_paycheck(trend),
+        # Filled in by `allocate_capacity`, which needs every row before it can
+        # decide any of them.
+        allocated_per_paycheck=current,
+        move_per_paycheck=Decimal("0.00"),
+        trend=trend,
         suggestion=analysis["suggestion"],
         drift=analysis["drift"],
         note=note,
     )
+
+
+def _build_analysis(months, horizon_months, income_adjustment):
+    """Every row, plus the one allocation they were decided by.
+
+    Shared by the read and the apply so the two cannot disagree. Applying is
+    the only place the numbers actually get written, and a contribution's share
+    depends on every *other* contribution — so recomputing it per-row on the way
+    in would write figures the page never showed.
+    """
+    contributions = (
+        Contribution.objects.filter(active=True)
+        .select_related("account", "reminder", "reminder__repeat")
+        .order_by("id")
+    )
+    rows = [_row(c, months, horizon_months) for c in contributions]
+
+    current_total = Decimal("0")
+    effective_total = Decimal("0")
+    suggested_total = Decimal("0")
+    for row in rows:
+        current_total += row.current_per_paycheck
+        effective_total += row.effective_per_paycheck
+        # Nothing to suggest means nothing changes — the contribution still
+        # costs what it costs, so it carries into the suggested total too.
+        suggested_total += (
+            row.suggestion.required_per_paycheck
+            if row.suggestion
+            else row.current_per_paycheck
+        )
+
+    # Capacity is measured against what is *effectively* being allocated —
+    # scheduled transfers plus the top-ups being made by hand — because that is
+    # what the household has demonstrably been sustaining.
+    headroom = paycheck_headroom(
+        effective_total,
+        suggested_total,
+        income_adjustment,
+        months=months,
+        horizon_months=horizon_months,
+    )
+    # One constrained distribution, not N independent solves. This also resolves
+    # the "maximise" rows, which can only be answered once everything else has
+    # taken its share.
+    allocation = allocate_capacity(rows, headroom["allocatable_per_paycheck"])
+    # Maximise rows changed inside the allocation, so a total built before it is
+    # stale.
+    suggested_total = sum(
+        (
+            r.suggestion.required_per_paycheck
+            if r.suggestion
+            else r.current_per_paycheck
+        )
+        for r in rows
+    )
+    return {
+        "rows": rows,
+        "current_total": current_total,
+        "effective_total": effective_total,
+        "suggested_total": suggested_total,
+        "headroom": headroom,
+        "allocation": allocation,
+    }
 
 
 @planner_router.get("/analysis", response=PlannerOut)
@@ -104,60 +186,20 @@ def planner_analysis(
         raise HttpError(400, "horizon_months must be between 1 and 60")
 
     try:
-        contributions = (
-            Contribution.objects.filter(active=True)
-            .select_related("account", "reminder", "reminder__repeat")
-            .order_by("id")
-        )
-        rows = [_row(c, months, horizon_months) for c in contributions]
-
-        current_total = Decimal("0")
-        suggested_total = Decimal("0")
-        for row in rows:
-            current_total += row.current_per_paycheck
-            # Nothing to suggest means nothing changes — the contribution still
-            # costs what it costs, so it carries into the suggested total too.
-            suggested_total += (
-                row.suggestion.required_per_paycheck
-                if row.suggestion
-                else row.current_per_paycheck
-            )
-
-        # Second pass: "maximise" rows claim whatever the other goals leave, so
-        # they can only be solved once the rest are known — and they divide
-        # *allocatable* capacity, not take-home.
-        headroom = paycheck_headroom(
-            current_total, suggested_total, income_adjustment, months=months
-        )
-        apply_maximise_goals(rows, headroom["allocatable_per_paycheck"])
-        if any(
-            r.suggestion
-            and r.suggestion.goal_type == Contribution.GOAL_MAXIMISE
-            for r in rows
-        ):
-            # Those rows just changed, so the totals and headroom built before
-            # them are stale.
-            suggested_total = sum(
-                (
-                    r.suggestion.required_per_paycheck
-                    if r.suggestion
-                    else r.current_per_paycheck
-                )
-                for r in rows
-            )
-            headroom = paycheck_headroom(
-                current_total, suggested_total, income_adjustment, months=months
-            )
-
+        built = _build_analysis(months, horizon_months, income_adjustment)
         api_logger.debug("Planner analysis retrieved")
         return PlannerOut(
-            rows=rows,
-            current_per_paycheck_total=current_total,
-            suggested_per_paycheck_total=suggested_total,
-            delta_per_paycheck_total=suggested_total - current_total,
+            rows=built["rows"],
+            current_per_paycheck_total=built["current_total"],
+            effective_per_paycheck_total=built["effective_total"],
+            suggested_per_paycheck_total=built["suggested_total"],
+            delta_per_paycheck_total=(
+                built["suggested_total"] - built["current_total"]
+            ),
             window_months=months,
             horizon_months=horizon_months,
-            headroom=headroom,
+            headroom=built["headroom"],
+            allocation=built["allocation"],
         )
     except Exception as e:
         api_logger.error("Planner analysis not retrieved")
@@ -230,6 +272,19 @@ def planner_apply(request, payload: PlannerApplyIn):
             )
             found = {c.id: c for c in contributions}
 
+            # The allocation is the thing being applied, and a contribution's
+            # share depends on every other one — so it is computed once, over
+            # the whole set, exactly as the page computed it. Solving each row
+            # again on its own would write figures that were never displayed,
+            # and would hand every "maximise" row a residual calculated against
+            # a different plan.
+            built = _build_analysis(
+                payload.months,
+                payload.horizon_months,
+                payload.income_adjustment,
+            )
+            allocated = {r.contribution_id: r for r in built["rows"]}
+
             for contribution_id in payload.contribution_ids:
                 contribution = found.get(contribution_id)
                 if not contribution:
@@ -242,8 +297,8 @@ def planner_apply(request, payload: PlannerApplyIn):
                     )
                     continue
 
-                analysis = analyze_contribution(contribution)
-                suggestion = analysis["suggestion"] if analysis else None
+                row = allocated.get(contribution_id)
+                suggestion = row.suggestion if row else None
                 if suggestion is None:
                     results.append(
                         PlannerApplyResultOut(
@@ -263,15 +318,17 @@ def planner_apply(request, payload: PlannerApplyIn):
                     )
                     continue
 
+                # What the allocation granted, not what the goal asked for.
+                # When the pot cannot stretch to every goal these differ, and
+                # the granted figure is the one that fits.
+                amount = row.allocated_per_paycheck
                 previous = contribution.per_paycheck
-                contribution.per_paycheck = suggestion.required_per_paycheck
+                contribution.per_paycheck = amount
                 contribution.save(update_fields=["per_paycheck"])
 
                 if contribution.reminder_id:
                     reminder = contribution.reminder
-                    reminder.amount = _signed_like(
-                        suggestion.required_per_paycheck, reminder.amount
-                    )
+                    reminder.amount = _signed_like(amount, reminder.amount)
                     reminder.save(update_fields=["amount"])
 
                 results.append(
@@ -279,7 +336,7 @@ def planner_apply(request, payload: PlannerApplyIn):
                         contribution_id=contribution_id,
                         applied=True,
                         previous_per_paycheck=previous,
-                        new_per_paycheck=suggestion.required_per_paycheck,
+                        new_per_paycheck=amount,
                     )
                 )
 

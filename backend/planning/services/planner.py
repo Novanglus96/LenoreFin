@@ -29,6 +29,7 @@ from django.db.models import Q
 
 from accounts.models import Account
 from planning.models import Contribution
+from reminders.models import Reminder
 from transactions.models import Transaction, TransactionStatus
 from transactions.services import get_account_transactions_and_balances
 from utils.dates import get_todays_date_timezone_adjusted
@@ -79,6 +80,13 @@ class Trend:
     # description. Counted as real inflow, and surfaced so it is visible that a
     # bucket may only stay afloat because of them.
     extra_contributions_total: Decimal
+    # The same top-ups expressed as a rate. This is *current funding*, not a
+    # forecast: it says what is being put in today, by hand, on top of the
+    # scheduled transfer. Nothing projects it forward — see
+    # `adhoc_per_month` for why top-ups are excluded from the projection — but
+    # leaving it out of the baseline was what made the planner demand hundreds
+    # a paycheck of "new" money that was already being contributed.
+    topup_per_paycheck: Decimal
     # The amount the contribution actually repeats at, which can differ from the
     # reminder's configured amount.
     modal_contribution_amount: Decimal | None
@@ -439,6 +447,16 @@ def analyze_account_trend(
     )
     projected_per_month = scheduled_per_month + adhoc_per_month
 
+    # Top-ups as a rate over the window that actually contained them. Measured
+    # against paychecks rather than months so it is directly comparable with
+    # `per_paycheck`, which is what it gets added to.
+    window_paychecks = window_days / DAYS_PER_YEAR * per_year
+    topup_per_paycheck = (
+        (extra_contributions / window_paychecks).quantize(Decimal("0.01"))
+        if window_paychecks > 0
+        else Decimal("0.00")
+    )
+
     # Overlay ad-hoc spending on the forecast path. The forecast only knows
     # scheduled flows, so for a bucket like groceries — which has no outflow
     # reminder at all — the raw path climbs forever and would report a low point
@@ -504,6 +522,7 @@ def analyze_account_trend(
         excluded_contribution_total=contributed.quantize(Decimal("0.01")),
         one_off_total=one_off_total.quantize(Decimal("0.01")),
         extra_contributions_total=extra_contributions.quantize(Decimal("0.01")),
+        topup_per_paycheck=topup_per_paycheck,
         modal_contribution_amount=modal_amount,
         projected_low_balance=low_balance.quantize(Decimal("0.01")),
         paychecks_to_low=(
@@ -511,6 +530,28 @@ def analyze_account_trend(
         ).quantize(Decimal("0.01")),
         suggested_floor=suggested_floor,
     )
+
+
+def occurrences_per_year(repeat) -> Decimal | None:
+    """How many times a year a repeat period comes round.
+
+    None when the repeat is missing or degenerate, so callers can pick their own
+    fallback rather than inheriting a guess that looks like a measurement.
+    """
+    if repeat is None:
+        return None
+    period_days = (
+        Decimal(repeat.days or 0)
+        + Decimal(repeat.weeks or 0) * 7
+        + Decimal(repeat.months or 0) * DAYS_PER_MONTH
+        + Decimal(repeat.years or 0) * DAYS_PER_YEAR
+    )
+    if period_days <= 0:
+        return None
+    # Quantized because the raw division is unbounded (365.25/14 runs to 27
+    # decimal places) and this value is serialised as well as multiplied.
+    # Four places is far finer than any cadence distinction that matters.
+    return (DAYS_PER_YEAR / period_days).quantize(Decimal("0.0001"))
 
 
 def paychecks_per_year(contribution: Contribution) -> Decimal:
@@ -523,21 +564,9 @@ def paychecks_per_year(contribution: Contribution) -> Decimal:
     """
     biweekly = Decimal("26")
     reminder = contribution.reminder
-    if not reminder or not reminder.repeat:
+    if not reminder:
         return biweekly
-    repeat = reminder.repeat
-    period_days = (
-        Decimal(repeat.days or 0)
-        + Decimal(repeat.weeks or 0) * 7
-        + Decimal(repeat.months or 0) * DAYS_PER_MONTH
-        + Decimal(repeat.years or 0) * DAYS_PER_YEAR
-    )
-    if period_days <= 0:
-        return biweekly
-    # Quantized because the raw division is unbounded (365.25/14 runs to 27
-    # decimal places) and this value is serialised as well as multiplied.
-    # Four places is far finer than any cadence distinction that matters.
-    return (DAYS_PER_YEAR / period_days).quantize(Decimal("0.0001"))
+    return occurrences_per_year(reminder.repeat) or biweekly
 
 
 def _per_paycheck(monthly: Decimal, per_year: Decimal) -> Decimal:
@@ -893,6 +922,149 @@ def funding_account_id() -> int | None:
     return max(counts.items(), key=lambda kv: kv[1])[0]
 
 
+def bucket_reminder_ids() -> set[int]:
+    """Reminders that move money into a planned bucket.
+
+    These are the allocation itself, so they are never counted as a change in
+    what there is to allocate — reducing one is the planner's output, not an
+    input to it.
+    """
+    return {
+        c.reminder_id
+        for c in Contribution.objects.filter(active=True, reminder__isnull=False)
+        if c.reminder_id
+    }
+
+
+def forward_reminder_change(
+    horizon_months: int = 12,
+    today: date | None = None,
+) -> tuple[Decimal, list[dict]]:
+    """How much capacity changes over the horizon because reminders start or end.
+
+    Measured drift says what the funding account does *today*. It cannot know
+    that childcare stops in December or that the reimbursement paying for it
+    stops with it, and those are exactly the changes worth planning around.
+
+    Each non-bucket reminder on the funding account is compared against itself:
+    what it will actually contribute over the horizon, versus what it would
+    contribute if it simply carried on. The difference is the change in
+    capacity. A reminder with no end date and a start in the past nets to zero
+    and never appears, so this reports only what genuinely shifts.
+
+    Returns the annualised change and a per-reminder breakdown, because "you
+    will have 260 a paycheck less from January" is only actionable if it also
+    says which commitments caused it.
+    """
+    account_id = funding_account_id()
+    if account_id is None:
+        return Decimal("0"), []
+
+    today = today or get_todays_date_timezone_adjusted()
+    horizon_years = Decimal(horizon_months) / 12
+    end_date = today + timedelta(days=int(DAYS_PER_YEAR * horizon_years))
+    bucket_ids = bucket_reminder_ids()
+
+    changes: list[dict] = []
+    total = Decimal("0")
+    for reminder in Reminder.objects.filter(
+        Q(reminder_source_account_id=account_id)
+        | Q(reminder_destination_account_id=account_id)
+    ).select_related("repeat"):
+        if reminder.id in bucket_ids:
+            continue
+        per_year = occurrences_per_year(reminder.repeat)
+        if per_year is None:
+            # A one-off has nothing to carry on doing, so it cannot represent a
+            # change in the run rate.
+            continue
+
+        # Already over: it is in neither today's run rate nor the horizon, so it
+        # represents no change at all.
+        if reminder.end_date and reminder.end_date < today:
+            continue
+
+        amount = _reminder_signed_amount(reminder, account_id)
+        delta = _horizon_change(reminder, amount, per_year, today, end_date)
+        if delta == 0:
+            continue
+        changes.append(
+            {
+                "reminder_id": reminder.id,
+                "description": reminder.description,
+                "change_per_year": (delta / horizon_years).quantize(Decimal("0.01")),
+                "ends": reminder.end_date,
+                "starts": reminder.start_date,
+            }
+        )
+        total += delta
+
+    return (total / horizon_years).quantize(Decimal("0.01")), changes
+
+
+def _reminder_signed_amount(reminder, account_id: int) -> Decimal:
+    """A reminder's amount from the funding account's point of view.
+
+    Transfers and expenses are stored negative and direction lives in the
+    source/destination pair, so a transfer *into* this account has to have its
+    sign flipped to read as the inflow it is.
+    """
+    amount = reminder.amount or Decimal("0")
+    if reminder.reminder_destination_account_id == account_id:
+        return abs(amount)
+    return amount
+
+
+def _horizon_change(
+    reminder, amount: Decimal, per_year: Decimal, today: date, end_date: date
+) -> Decimal:
+    """How much a reminder's contribution over the horizon differs from its run rate.
+
+    Both sides are prorated over the *same* number of days, which is the whole
+    point: a reminder that is already running and never ends must come out at
+    exactly zero. Measuring the horizon in occurrences but the run rate in years
+    left a few days' rounding on every one of them, and twenty untouched
+    reminders summed that noise into a 250-a-paycheck capacity change that
+    nothing had actually caused.
+
+    Occurrences are prorated rather than enumerated — the exact dates do not
+    matter to a rate, and walking a biweekly series over a year to count 26 of
+    them is a lot of work to arrive at 26.
+
+    "Already running" cannot be read from `start_date`, which this app rolls
+    forward in step with `next_date` and so is always in the future. It is taken
+    instead from the next occurrence falling within a couple of periods: a
+    monthly bill due next month is running, one whose first payment is six
+    months out is a new commitment that today's rate knows nothing about.
+    """
+    horizon_days = Decimal((end_date - today).days)
+    if horizon_days <= 0 or per_year <= 0:
+        return Decimal("0.00")
+
+    period_days = DAYS_PER_YEAR / per_year
+    next_date = reminder.next_date or reminder.start_date or today
+    # Two periods of slack, not one: a monthly reminder whose current occurrence
+    # has already been generated legitimately sits over a month out.
+    running = Decimal((next_date - today).days) <= period_days * 2
+
+    first = today if running else next_date
+    last = end_date
+    if reminder.end_date and reminder.end_date < last:
+        last = reminder.end_date
+    active_days = Decimal(max(0, (last - first).days))
+
+    # What it will really contribute, versus what today's rate implies. A
+    # commitment that has not begun contributes nothing to today's rate, so its
+    # whole horizon effect is a change.
+    actual = amount * per_year * (active_days / DAYS_PER_YEAR)
+    steady = (
+        amount * per_year * (horizon_days / DAYS_PER_YEAR)
+        if running
+        else Decimal("0")
+    )
+    return (actual - steady).quantize(Decimal("0.01"))
+
+
 def allocatable_per_paycheck(
     current_total: Decimal,
     months: int = 6,
@@ -947,14 +1119,54 @@ def allocatable_per_paycheck(
     return (current_total + drift).quantize(Decimal("0.01")), drift
 
 
+def minimum_per_paycheck(trend: Trend | None) -> Decimal:
+    """The non-negotiable share: what dated obligations demand over the horizon.
+
+    Only *scheduled* outflows count — the mortgage, the tax bill, the insurance
+    premium. Ad-hoc spending is real but it is not dated, so it can be squeezed;
+    a quarterly property-tax payment cannot. The account's existing balance is
+    spent first, because money already in the bucket does not need contributing
+    twice.
+
+    Buckets whose spending is entirely ad-hoc (groceries, gifts) return zero
+    here. That is not a claim they need nothing — it is a claim that nothing
+    about them is *fixed*, which is exactly what the tier is for.
+    """
+    if trend is None or trend.paychecks_in_horizon <= 0:
+        return Decimal("0.00")
+    obligations = trend.scheduled_flow_per_month * Decimal(trend.horizon_months)
+    if obligations >= 0:
+        return Decimal("0.00")
+    shortfall = -obligations - trend.current_balance
+    if shortfall <= 0:
+        return Decimal("0.00")
+    return (shortfall / trend.paychecks_in_horizon).quantize(Decimal("0.01"))
+
+
 def paycheck_headroom(
     current_total: Decimal,
     suggested_total: Decimal,
     income_adjustment: Decimal = Decimal("0"),
     months: int = 6,
+    horizon_months: int = 12,
     today: date | None = None,
 ) -> dict:
-    """What is left to allocate, now and if the suggestions were applied.
+    """What there is to allocate, and how it compares with what is wanted.
+
+    `current_total` must be the *effective* allocation — scheduled transfers
+    plus the top-ups being made by hand. Passing the scheduled figure alone
+    understates the baseline by everything that is already being contributed
+    off-plan, which on real data was 694 a paycheck and produced a shortfall
+    that the account balances flatly contradicted.
+
+    Capacity is built from three terms:
+
+    - what is being allocated today, which is the only measurement of what the
+      household can actually sustain;
+    - how the funding account drifted while doing it, so an allocation beyond
+      its means shows up as a negative;
+    - how much the reminders say that changes over the horizon, which is the
+      only part drift cannot see.
 
     `income_adjustment` is supplied rather than inferred. A raise is a future
     event, and with more than one earner the per-cheque noise is far larger than
@@ -969,6 +1181,8 @@ def paycheck_headroom(
             "net_per_paycheck": take_home,
             "allocatable_per_paycheck": None,
             "funding_account_drift": None,
+            "forward_reminder_change": None,
+            "reminder_changes": [],
             "income_adjustment": income_adjustment,
             "headroom_now": None,
             "headroom_if_applied": None,
@@ -978,11 +1192,21 @@ def paycheck_headroom(
                 "against."
             ),
         }
-    adjusted = allocatable + income_adjustment
+    forward_change, changes = forward_reminder_change(
+        horizon_months=horizon_months, today=today
+    )
+    # Expressed per paycheck to match everything else on this page. The change
+    # is annual, so it divides by the pay cadence rather than the horizon.
+    forward_per_paycheck = (forward_change / Decimal("26.0893")).quantize(
+        Decimal("0.01")
+    )
+    adjusted = allocatable + income_adjustment + forward_per_paycheck
     return {
         "net_per_paycheck": take_home,
         "allocatable_per_paycheck": adjusted,
         "funding_account_drift": drift,
+        "forward_reminder_change": forward_per_paycheck,
+        "reminder_changes": changes,
         "income_adjustment": income_adjustment,
         "headroom_now": (adjusted - current_total).quantize(Decimal("0.01")),
         "headroom_if_applied": (adjusted - suggested_total).quantize(
@@ -993,66 +1217,222 @@ def paycheck_headroom(
     }
 
 
-def apply_maximise_goals(rows: list, allocatable: Decimal | None) -> None:
-    """Give every "maximise" row whatever capacity the other goals leave.
+def allocate_capacity(rows: list, capacity: Decimal | None) -> dict:
+    """Distribute a fixed pot across the contributions, instead of summing wishes.
 
-    This cannot be solved per-account like the other goals, because the answer
-    is defined by what the rest of the plan costs. It runs as a second pass over
-    already-solved rows and mutates their suggestions in place.
+    Solving each bucket alone and adding the answers up asks "what would make
+    every account healthy", which is a different question from "what should I do
+    with the money I have". On real data the first question returned 3,666 a
+    paycheck against 2,820 scheduled and called the difference a shortfall,
+    while the accounts themselves were net *ahead* — because 694 a paycheck of
+    hand top-ups were funding the gap and no one had counted them.
 
-    `allocatable` is capacity to allocate — not take-home. See
-    `allocatable_per_paycheck` for why those differ by hundreds a paycheck.
+    So the pot is distributed in tiers:
 
-    `rows` are PlannerRowOut-shaped: anything with `.suggestion` and
-    `.current_per_paycheck`. Kept structural rather than typed to avoid the
-    service importing the API schema.
+    1. **Obligations** — dated, unavoidable, funded first and in full.
+    2. **Goals** — what each bucket asked for above its obligations, rationed
+       pro-rata when there is not enough to satisfy everything.
+    3. **Whatever is left** — split across the `maximise` buckets, which exist
+       precisely to absorb it.
+
+    Each row is compared against its *effective* funding, so the result reads as
+    a reallocation rather than a demand for new money.
+
+    `rows` are PlannerRowOut-shaped: anything carrying `.suggestion`,
+    `.current_per_paycheck` and `.topup_per_paycheck`. Kept structural rather
+    than typed so the service never imports the API schema.
     """
+    planned = [r for r in rows if r.suggestion is not None]
+    if capacity is None or not planned:
+        return {
+            "capacity_per_paycheck": capacity,
+            "obligations_total": Decimal("0.00"),
+            "desired_total": Decimal("0.00"),
+            "allocated_total": Decimal("0.00"),
+            "effective_total": Decimal("0.00"),
+            "unallocated": Decimal("0.00"),
+            "net_change_total": Decimal("0.00"),
+            "feasible": None,
+            "shortfall": None,
+            "moves": [],
+            "note": (
+                "No capacity figure, so there is nothing to distribute."
+                if capacity is None
+                else "No contributions with goals to allocate between."
+            ),
+        }
+
     maximise = [
-        r
-        for r in rows
-        if r.suggestion and r.suggestion.goal_type == Contribution.GOAL_MAXIMISE
+        r for r in planned if r.suggestion.goal_type == Contribution.GOAL_MAXIMISE
     ]
-    if not maximise:
-        return
+    fixed = [
+        r for r in planned if r.suggestion.goal_type != Contribution.GOAL_MAXIMISE
+    ]
 
-    if allocatable is None:
+    obligations = sum((r.minimum_per_paycheck for r in fixed), Decimal("0"))
+    desired = sum((r.suggestion.required_per_paycheck for r in fixed), Decimal("0"))
+    effective_total = sum(
+        (r.effective_per_paycheck for r in planned), Decimal("0")
+    )
+
+    feasible = capacity >= obligations
+    if not feasible:
+        # Obligations alone overrun the pot. Nothing discretionary can be funded,
+        # and pretending otherwise would bury the one fact that matters.
+        share = capacity / obligations if obligations > 0 else Decimal("0")
+        for row in fixed:
+            row.allocated_per_paycheck = (
+                row.minimum_per_paycheck * share
+            ).quantize(Decimal("0.01"))
         for row in maximise:
-            row.suggestion.warning = (
-                "No funding account to measure against, so there is no capacity "
-                "figure to divide."
-            )
-        return
-
-    # What everything else claims. Maximise rows contribute their *current*
-    # amount here rather than their suggestion, because their suggestion is the
-    # very thing being computed.
-    committed = Decimal("0")
-    for row in rows:
-        if row.suggestion and row.suggestion.goal_type == Contribution.GOAL_MAXIMISE:
-            continue
-        committed += (
-            row.suggestion.required_per_paycheck
-            if row.suggestion
-            else row.current_per_paycheck
+            row.allocated_per_paycheck = Decimal("0.00")
+        allocated_total = sum(
+            (r.allocated_per_paycheck for r in planned), Decimal("0")
         )
+        return {
+            "capacity_per_paycheck": capacity,
+            "obligations_total": obligations.quantize(Decimal("0.01")),
+            "desired_total": desired.quantize(Decimal("0.01")),
+            "allocated_total": allocated_total.quantize(Decimal("0.01")),
+            "effective_total": effective_total.quantize(Decimal("0.01")),
+            "unallocated": Decimal("0.00"),
+            "net_change_total": (
+                allocated_total - effective_total
+            ).quantize(Decimal("0.01")),
+            "feasible": False,
+            "shortfall": (obligations - capacity).quantize(Decimal("0.01")),
+            "moves": _moves_from(planned),
+            "note": (
+                "Dated obligations alone exceed what there is to allocate. This "
+                "is not a budgeting problem the planner can solve by moving "
+                "money between buckets."
+            ),
+        }
 
-    leftover = allocatable - committed
+    # Tier 2: ration what is left across the gap between obligation and goal.
+    remaining = capacity - obligations
+    wants = sum(
+        (
+            max(Decimal("0"), r.suggestion.required_per_paycheck - r.minimum_per_paycheck)
+            for r in fixed
+        ),
+        Decimal("0"),
+    )
+    if wants <= 0:
+        ratio = Decimal("0")
+    elif remaining >= wants:
+        ratio = Decimal("1")
+    else:
+        ratio = remaining / wants
+
+    for row in fixed:
+        want = max(
+            Decimal("0"),
+            row.suggestion.required_per_paycheck - row.minimum_per_paycheck,
+        )
+        row.allocated_per_paycheck = (
+            row.minimum_per_paycheck + want * ratio
+        ).quantize(Decimal("0.01"))
+
+    # Tier 3: the residual is what "maximise" means.
+    leftover = remaining - (wants * ratio)
     if leftover < 0:
         leftover = Decimal("0")
-
-    share = (leftover / Decimal(len(maximise))).quantize(Decimal("0.01"))
-    for row in maximise:
-        row.suggestion.required_per_paycheck = share
-        row.suggestion.delta_per_paycheck = (
-            share - row.suggestion.current_per_paycheck
-        ).quantize(Decimal("0.01"))
-        if share == 0:
-            row.suggestion.warning = (
-                "The other goals already claim everything there is to allocate "
-                "— nothing left to put here."
-            )
-            row.suggestion.reason = "Nothing left over once the other goals are funded."
-        else:
+    if maximise:
+        share = (leftover / Decimal(len(maximise))).quantize(Decimal("0.01"))
+        for row in maximise:
+            row.allocated_per_paycheck = share
+            row.suggestion.required_per_paycheck = share
+            row.suggestion.delta_per_paycheck = (
+                share - row.suggestion.current_per_paycheck
+            ).quantize(Decimal("0.01"))
             row.suggestion.reason = (
-                f"{share} left over per paycheck once the other goals are funded."
+                f"{share} a paycheck left once obligations and goals are funded."
+                if share > 0
+                else "Nothing left once obligations and goals are funded."
             )
+            if share == 0:
+                row.suggestion.warning = (
+                    "The other goals already claim everything there is to "
+                    "allocate — nothing left to put here."
+                )
+        unallocated = Decimal("0.00")
+    else:
+        unallocated = leftover.quantize(Decimal("0.01"))
+
+    allocated_total = sum((r.allocated_per_paycheck for r in planned), Decimal("0"))
+    return {
+        "capacity_per_paycheck": capacity,
+        "obligations_total": obligations.quantize(Decimal("0.01")),
+        "desired_total": desired.quantize(Decimal("0.01")),
+        "allocated_total": allocated_total.quantize(Decimal("0.01")),
+        "effective_total": effective_total.quantize(Decimal("0.01")),
+        "unallocated": unallocated,
+        # Negative when the plan has to shrink overall, which the paired moves
+        # cannot show: they only ever match a giver to a taker, so an
+        # across-the-board reduction leaves givers unpaired and silently
+        # unexplained.
+        "net_change_total": (allocated_total - effective_total).quantize(
+            Decimal("0.01")
+        ),
+        "feasible": True,
+        "shortfall": Decimal("0.00"),
+        "moves": _moves_from(planned),
+        "note": (
+            None
+            if ratio >= 1
+            else (
+                "Not enough to meet every goal in full, so what is left after "
+                "obligations is shared out in proportion to what each asked for."
+            )
+        ),
+    }
+
+
+def _moves_from(rows: list) -> list[dict]:
+    """Pair the buckets giving money up with the ones taking it on.
+
+    "Move 122 from Reno to Ellie" is the sentence someone can act on; "Reno
+    -122, Ellie +247" is a table they have to solve themselves. Sources are
+    drained largest-first into destinations largest-first, which keeps the
+    number of transfers down — the point is to be actionable, and six moves
+    beat sixteen.
+    """
+    givers = []
+    takers = []
+    for row in rows:
+        delta = (
+            row.allocated_per_paycheck - row.effective_per_paycheck
+        ).quantize(Decimal("0.01"))
+        row.move_per_paycheck = delta
+        if delta < 0:
+            givers.append([row, -delta])
+        elif delta > 0:
+            takers.append([row, delta])
+
+    givers.sort(key=lambda pair: pair[1], reverse=True)
+    takers.sort(key=lambda pair: pair[1], reverse=True)
+
+    moves: list[dict] = []
+    i = j = 0
+    while i < len(givers) and j < len(takers):
+        giver, available = givers[i]
+        taker, needed = takers[j]
+        amount = min(available, needed)
+        if amount > 0:
+            moves.append(
+                {
+                    "from_contribution_id": giver.contribution_id,
+                    "from_contribution": giver.contribution,
+                    "to_contribution_id": taker.contribution_id,
+                    "to_contribution": taker.contribution,
+                    "amount_per_paycheck": amount.quantize(Decimal("0.01")),
+                }
+            )
+        givers[i][1] -= amount
+        takers[j][1] -= amount
+        if givers[i][1] <= 0:
+            i += 1
+        if takers[j][1] <= 0:
+            j += 1
+    return moves

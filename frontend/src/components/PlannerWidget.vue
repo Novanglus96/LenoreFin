@@ -60,32 +60,47 @@
     </v-card-title>
 
     <v-card-text class="ma-0 pa-0">
-      <!-- Summary strip: what the plan costs now vs what it would cost. -->
+      <!-- Summary strip: what is really being put aside now, what the plan
+           allocates, and the difference. The baseline is the *effective*
+           figure — scheduled transfers plus the top-ups being made by hand —
+           because comparing against the scheduled amount alone counts money
+           already going in as money still to be found. -->
       <v-container>
         <v-row dense align="center">
           <v-col cols="12" sm="4" class="text-center">
             <div class="text-caption text-medium-emphasis">
-              Current per paycheck
+              Putting aside now
             </div>
             <div class="text-body-1 font-weight-bold">
+              {{ formatCurrency(planner?.effective_per_paycheck_total ?? 0) }}
+            </div>
+            <div
+              v-if="topupTotal !== 0"
+              class="text-caption text-medium-emphasis"
+            >
               {{ formatCurrency(planner?.current_per_paycheck_total ?? 0) }}
+              scheduled + {{ formatCurrency(topupTotal) }} by hand
             </div>
           </v-col>
           <v-col cols="12" sm="4" class="text-center">
-            <div class="text-caption text-medium-emphasis">
-              Suggested per paycheck
-            </div>
+            <div class="text-caption text-medium-emphasis">Plan allocates</div>
             <div class="text-body-1 font-weight-bold">
-              {{ formatCurrency(planner?.suggested_per_paycheck_total ?? 0) }}
+              {{ formatCurrency(allocation?.allocated_total ?? 0) }}
+            </div>
+            <div v-if="allocation" class="text-caption text-medium-emphasis">
+              {{ formatCurrency(allocation.obligations_total) }} of it is fixed
             </div>
           </v-col>
           <v-col cols="12" sm="4" class="text-center">
-            <div class="text-caption text-medium-emphasis">Change</div>
+            <div class="text-caption text-medium-emphasis">Net change</div>
             <div
               class="text-body-1 font-weight-bold"
-              :class="deltaClass(planner?.delta_per_paycheck_total)"
+              :class="deltaClass(allocation?.net_change_total)"
             >
-              {{ formatDelta(planner?.delta_per_paycheck_total ?? 0) }}
+              {{ formatDelta(allocation?.net_change_total ?? 0) }}
+            </div>
+            <div class="text-caption text-medium-emphasis">
+              mostly a reshuffle
             </div>
           </v-col>
         </v-row>
@@ -113,17 +128,24 @@
             </strong>
             <v-tooltip
               location="top"
-              :text="`Allocated today ${formatCurrency(
-                planner?.current_per_paycheck_total,
-              )} ${Number(headroom.funding_account_drift) < 0 ? 'less' : 'plus'} ${formatCurrency(
-                Math.abs(Number(headroom.funding_account_drift)),
-              )} of funding-account drift` +
+              :text="
+                `Putting aside today ${formatCurrency(
+                  planner?.effective_per_paycheck_total,
+                )} ${Number(headroom.funding_account_drift) < 0 ? 'less' : 'plus'} ${formatCurrency(
+                  Math.abs(Number(headroom.funding_account_drift)),
+                )} of funding-account drift` +
+                (Number(headroom.forward_reminder_change) !== 0
+                  ? `, ${Number(headroom.forward_reminder_change) < 0 ? 'less' : 'plus'} ${formatCurrency(
+                      Math.abs(Number(headroom.forward_reminder_change)),
+                    )} as commitments start and end`
+                  : '') +
                 (Number(headroom.income_adjustment) !== 0
                   ? `, plus ${formatCurrency(headroom.income_adjustment)} stated pay change`
                   : '') +
                 (headroom.net_per_paycheck
                   ? `. Take-home is ${formatCurrency(headroom.net_per_paycheck)}, but bills paid straight from checking never reach a bucket.`
-                  : '')"
+                  : '')
+              "
             >
               <template v-slot:activator="{ props }">
                 <v-icon
@@ -145,10 +167,13 @@
               {{ formatCurrency(headroom.headroom_if_applied) }}
             </strong>
           </span>
-          <span v-if="!headroom.affordable" class="font-weight-medium">
-            Short by
-            {{ formatCurrency(Math.abs(Number(headroom.headroom_if_applied))) }}
-            — fund the goals that matter most, or raise income.
+          <span
+            v-if="allocation && allocation.feasible === false"
+            class="font-weight-medium"
+          >
+            Fixed obligations alone are
+            {{ formatCurrency(allocation.shortfall) }} over capacity — moving
+            money between buckets cannot fix this one.
           </span>
         </div>
       </v-alert>
@@ -159,6 +184,54 @@
         density="compact"
         class="mx-4 mb-3"
         :text="headroom.note"
+      ></v-alert>
+
+      <!-- The actionable answer. "Move 122 from Reno to Ellie" is a sentence
+           someone can act on; a column of deltas is a table they have to solve
+           themselves. -->
+      <v-alert
+        v-if="allocation?.moves?.length"
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mx-4 mb-3"
+      >
+        <div class="text-body-2 font-weight-medium mb-1">
+          Rebalance {{ allocation.moves.length }}
+          {{ allocation.moves.length === 1 ? "transfer" : "transfers" }}
+        </div>
+        <div class="d-flex flex-column ga-1">
+          <div
+            v-for="(move, i) in allocation.moves"
+            :key="i"
+            class="text-body-2 d-flex align-center ga-1 flex-wrap"
+          >
+            <strong>{{ formatCurrency(move.amount_per_paycheck) }}</strong>
+            <span class="text-medium-emphasis">a paycheck from</span>
+            <span class="font-weight-medium">{{ move.from_contribution }}</span>
+            <v-icon size="x-small" icon="mdi-arrow-right"></v-icon>
+            <span class="font-weight-medium">{{ move.to_contribution }}</span>
+          </div>
+        </div>
+        <!-- Moves only ever pair a giver with a taker, so an across-the-board
+             change leaves a remainder they cannot show. -->
+        <div
+          v-if="Number(allocation.net_change_total) !== 0"
+          class="text-caption text-medium-emphasis mt-2"
+        >
+          Overall the plan
+          {{ Number(allocation.net_change_total) < 0 ? "shrinks" : "grows" }} by
+          {{ formatCurrency(Math.abs(Number(allocation.net_change_total))) }}
+          a paycheck on top of these moves.
+        </div>
+      </v-alert>
+      <v-alert
+        v-else-if="allocation?.note && allocation.feasible !== false"
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mx-4 mb-3"
+        :text="allocation.note"
       ></v-alert>
 
       <v-data-table
@@ -187,7 +260,11 @@
         </template>
 
         <template v-slot:[`item.goal_type`]="{ item }">
-          <v-chip size="x-small" :color="goalColor(item.goal_type)" variant="tonal">
+          <v-chip
+            size="x-small"
+            :color="goalColor(item.goal_type)"
+            variant="tonal"
+          >
             {{ goalLabel(item.goal_type) }}
           </v-chip>
         </template>
@@ -204,14 +281,16 @@
                  dates rather than by whether they happened to fall inside the
                  history window. r² speaks only to the ad-hoc half. -->
             <v-tooltip
-              :text="`Per paycheck: scheduled ${item.trend.scheduled_flow_per_paycheck} + ad-hoc ${item.trend.adhoc_flow_per_paycheck}` +
-                     ` (${item.trend.projected_flow_per_month}/mo over ${item.trend.paychecks_in_horizon} paychecks)` +
-                     ` · low point ${item.trend.projected_low_balance} in ${item.trend.paychecks_to_low} paychecks` +
-                     ` · suggested floor ${item.trend.suggested_floor}` +
-                     (Number(item.trend.one_off_total) !== 0
-                       ? ` · ${item.trend.one_off_total} of one-offs excluded`
-                       : '') +
-                     ` · fit r² ${item.trend.r_squared} over ${item.trend.data_points} transactions`"
+              :text="
+                `Per paycheck: scheduled ${item.trend.scheduled_flow_per_paycheck} + ad-hoc ${item.trend.adhoc_flow_per_paycheck}` +
+                ` (${item.trend.projected_flow_per_month}/mo over ${item.trend.paychecks_in_horizon} paychecks)` +
+                ` · low point ${item.trend.projected_low_balance} in ${item.trend.paychecks_to_low} paychecks` +
+                ` · suggested floor ${item.trend.suggested_floor}` +
+                (Number(item.trend.one_off_total) !== 0
+                  ? ` · ${item.trend.one_off_total} of one-offs excluded`
+                  : '') +
+                ` · fit r² ${item.trend.r_squared} over ${item.trend.data_points} transactions`
+              "
               location="top"
             >
               <template v-slot:activator="{ props }">
@@ -219,7 +298,9 @@
                   v-bind="props"
                   size="x-small"
                   class="ms-1"
-                  :color="item.trend.r_squared < 0.5 ? 'warning' : 'medium-emphasis'"
+                  :color="
+                    item.trend.r_squared < 0.5 ? 'warning' : 'medium-emphasis'
+                  "
                   icon="mdi-information-outline"
                 ></v-icon>
               </template>
@@ -230,9 +311,18 @@
 
         <template v-slot:[`item.current`]="{ item }">
           <div class="text-center">
-            <!-- The row's own figure, not the suggestion's: a contribution with
-                 no goal has no suggestion but is still costing money. -->
-            {{ formatCurrency(item.current_per_paycheck) }}
+            <!-- The effective figure: scheduled plus what is being topped up by
+                 hand. A contribution with no goal has no suggestion but is
+                 still costing money, so this comes off the row, not the
+                 suggestion. -->
+            {{ formatCurrency(item.effective_per_paycheck) }}
+            <div
+              v-if="Number(item.topup_per_paycheck) !== 0"
+              class="text-caption text-medium-emphasis"
+            >
+              {{ formatCurrency(item.current_per_paycheck) }} +
+              {{ formatCurrency(item.topup_per_paycheck) }} by hand
+            </div>
             <!-- Drift: the plan and the reminder disagree. null means no
                  reminder is linked, which is not the same as zero drift. -->
             <v-tooltip
@@ -258,8 +348,31 @@
         <template v-slot:[`item.suggested`]="{ item }">
           <div class="text-center" v-if="item.suggestion">
             <span class="font-weight-bold">
-              {{ formatCurrency(item.suggestion.required_per_paycheck) }}
+              {{ formatCurrency(item.allocated_per_paycheck) }}
             </span>
+            <!-- What it asked for, when the pot could not stretch that far. The
+                 gap is the point: it says this bucket was rationed, not that
+                 the goal was wrong. -->
+            <v-tooltip
+              v-if="
+                Number(item.suggestion.required_per_paycheck) !==
+                Number(item.allocated_per_paycheck)
+              "
+              location="top"
+              :text="`Asked for ${formatCurrency(
+                item.suggestion.required_per_paycheck,
+              )}; ${formatCurrency(item.minimum_per_paycheck)} of this bucket is fixed obligations`"
+            >
+              <template v-slot:activator="{ props }">
+                <v-icon
+                  v-bind="props"
+                  size="x-small"
+                  class="ms-1"
+                  color="medium-emphasis"
+                  icon="mdi-scale-balance"
+                ></v-icon>
+              </template>
+            </v-tooltip>
           </div>
           <span v-else class="text-caption text-medium-emphasis">
             {{ item.goal_type === "none" ? "no goal" : "—" }}
@@ -268,8 +381,10 @@
 
         <template v-slot:[`item.delta`]="{ item }">
           <div class="text-center" v-if="item.suggestion">
-            <span :class="deltaClass(item.suggestion.delta_per_paycheck, true)">
-              {{ formatDelta(item.suggestion.delta_per_paycheck) }}
+            <!-- Against effective funding, so an over-topped bucket reads as a
+                 source of money rather than as already correct. -->
+            <span :class="deltaClass(item.move_per_paycheck, true)">
+              {{ formatDelta(item.move_per_paycheck) }}
             </span>
           </div>
           <span v-else class="text-caption text-medium-emphasis">—</span>
@@ -292,9 +407,13 @@
         <v-card-text>
           <p class="mb-2">
             This updates
-            {{ selected.length }} contribution{{ selected.length === 1 ? "" : "s" }}
-            and the recurring transfer{{ selected.length === 1 ? "" : "s" }} behind
-            {{ selected.length === 1 ? "it" : "them" }}.
+            {{ selected.length }} contribution{{
+              selected.length === 1 ? "" : "s"
+            }}
+            and the recurring transfer{{
+              selected.length === 1 ? "" : "s"
+            }}
+            behind {{ selected.length === 1 ? "it" : "them" }}.
           </p>
           <p class="text-caption text-medium-emphasis">
             Your per-paycheck total changes by
@@ -350,14 +469,21 @@
 
   const rows = computed(() => planner.value?.rows ?? []);
   const headroom = computed(() => planner.value?.headroom ?? null);
+  const allocation = computed(() => planner.value?.allocation ?? null);
+
+  // Top-ups across every bucket: the funding that was happening but never
+  // appeared in a plan.
+  const topupTotal = computed(() =>
+    rows.value.reduce((sum, r) => sum + Number(r.topup_per_paycheck ?? 0), 0),
+  );
 
   const headers = [
     { title: "Contribution", key: "contribution" },
     { title: "Goal", key: "goal_type", align: "center" },
     { title: "Projected/pc", key: "trend", align: "center" },
-    { title: "Now", key: "current", align: "center" },
-    { title: "Suggested", key: "suggested", align: "center" },
-    { title: "Change", key: "delta", align: "center" },
+    { title: "Putting in", key: "current", align: "center" },
+    { title: "Allocated", key: "suggested", align: "center" },
+    { title: "Move", key: "delta", align: "center" },
     { title: "Why", key: "why" },
   ];
 
@@ -366,7 +492,13 @@
   const selectedDelta = computed(() =>
     rows.value
       .filter(r => selected.value.includes(r.contribution_id))
-      .reduce((sum, r) => sum + Number(r.suggestion?.delta_per_paycheck ?? 0), 0),
+      // The scheduled transfer is what "apply" rewrites, so the dialog quotes
+      // the change to that — not the change against effective funding, which
+      // includes top-ups that applying does not touch.
+      .reduce(
+        (sum, r) => sum + Number(r.suggestion?.delta_per_paycheck ?? 0),
+        0,
+      ),
   );
 
   const goalLabels = {

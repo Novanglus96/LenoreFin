@@ -387,8 +387,80 @@ def test_headroom_is_reported_against_allocatable_not_take_home(
     assert h["funding_account_drift"] is not None
     # Capacity is today's allocation adjusted by drift — not take-home, which
     # for a hub account overstates it by hundreds a paycheck.
+    # Capacity is measured against *effective* funding — scheduled plus the
+    # top-ups happening by hand — not the scheduled figure alone.
     assert Decimal(h["allocatable_per_paycheck"]) == pytest.approx(
-        Decimal(body["current_per_paycheck_total"])
-        + Decimal(h["funding_account_drift"]),
+        Decimal(body["effective_per_paycheck_total"])
+        + Decimal(h["funding_account_drift"])
+        + Decimal(h["forward_reminder_change"]),
         abs=Decimal("0.02"),
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_allocation_never_exceeds_capacity(api_client, planned_contribution):
+    """The plan must fit the pot by construction, not by coincidence.
+
+    Solving each bucket alone and summing could return any total at all; on real
+    data it asked for 3,666 a paycheck against 2,820 scheduled and called the
+    difference a shortfall.
+    """
+    body = api_client.get("/planning/planner/analysis", headers=AUTH).json()
+    allocation = body["allocation"]
+
+    capacity = Decimal(allocation["capacity_per_paycheck"])
+    assert Decimal(allocation["allocated_total"]) <= capacity + Decimal("0.05")
+    # And it is genuinely distributed, not just capped.
+    granted = sum(
+        Decimal(r["allocated_per_paycheck"])
+        for r in body["rows"]
+        if r["suggestion"]
+    )
+    assert granted == pytest.approx(
+        Decimal(allocation["allocated_total"]), abs=Decimal("0.05")
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.api
+def test_apply_writes_the_allocated_amount_not_the_wish(
+    api_client, planned_contribution, test_savings_account
+):
+    """What gets written is what the page showed.
+
+    A contribution's share depends on every other one, so re-solving each row on
+    its own during apply would write a figure that was never displayed.
+    """
+    from planning.models import Contribution
+
+    Contribution.objects.create(
+        contribution="College",
+        per_paycheck=Decimal("5.00"),
+        account=test_savings_account,
+        goal_type=Contribution.GOAL_MAXIMISE,
+    )
+    body = api_client.get("/planning/planner/analysis", headers=AUTH).json()
+    row = next(
+        r
+        for r in body["rows"]
+        if r["contribution_id"] == planned_contribution.id
+    )
+    expected = Decimal(row["allocated_per_paycheck"])
+
+    response = api_client.post(
+        "/planning/planner/apply",
+        json={"contribution_ids": [planned_contribution.id]},
+        headers=AUTH,
+    )
+
+    assert response.status_code == 200
+    result = response.json()["results"][0]
+    assert result["applied"] is True
+    assert Decimal(result["new_per_paycheck"]) == pytest.approx(
+        expected, abs=Decimal("0.02")
+    )
+    planned_contribution.refresh_from_db()
+    assert planned_contribution.per_paycheck == pytest.approx(
+        expected, abs=Decimal("0.02")
     )

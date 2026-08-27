@@ -13,6 +13,8 @@ import pytest
 
 from planning.models import Contribution
 from planning.services.planner import (
+    Suggestion,
+    Trend,
     analyze_account_trend,
     analyze_contribution,
     paychecks_per_year,
@@ -742,6 +744,7 @@ def test_imminent_dip_asks_for_a_lump_sum_not_a_rate_change(
         excluded_contribution_total=Decimal("0"),
         one_off_total=Decimal("0"),
         extra_contributions_total=Decimal("0"),
+        topup_per_paycheck=Decimal("0"),
         modal_contribution_amount=None,
         projected_low_balance=Decimal("-900"),
         paychecks_to_low=Decimal("0.6"),   # inside the threshold
@@ -1009,3 +1012,301 @@ def test_headroom_without_a_funding_account_says_so(draining_account):
     assert h["allocatable_per_paycheck"] is None
     assert h["affordable"] is None
     assert "no funding account" in h["note"]
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_topups_are_measured_as_current_funding(
+    test_savings_account, test_checking_account, biweekly_repeat,
+    test_cleared_transaction_status, test_transfer_transaction_type,
+):
+    """Hand top-ups are funding that is already happening, and must be counted.
+
+    Not projected — see the ad-hoc rate for why — but a baseline that ignores
+    them treats money already going in as money still to be found. On real data
+    that was 694 a paycheck, and it produced a shortfall the account balances
+    flatly contradicted.
+    """
+    # 13 scheduled transfers at 75, plus three top-ups sharing the description.
+    for i in range(13):
+        _tx(test_savings_account, 75, TODAY - timedelta(days=14 * (i + 1)),
+            test_cleared_transaction_status, test_transfer_transaction_type,
+            source=test_checking_account, destination=test_savings_account)
+    for extra in (850, 510, 1000):
+        _tx(test_savings_account, extra, TODAY - timedelta(days=40),
+            test_cleared_transaction_status, test_transfer_transaction_type,
+            source=test_checking_account, destination=test_savings_account)
+
+    trend = analyze_account_trend(
+        test_savings_account.id,
+        months=6,
+        source_account_id=test_checking_account.id,
+        today=TODAY,
+        contribution_description="Test",
+    )
+
+    assert trend is not None
+    # The modal amount is the contribution; the rest is extra.
+    assert trend.modal_contribution_amount == Decimal("75.00")
+    assert trend.extra_contributions_total == Decimal("2360.00")
+    # 2360 over the 12.81 paychecks in a 180-day window.
+    assert trend.topup_per_paycheck == pytest.approx(
+        Decimal("184.20"), abs=Decimal("0.5")
+    )
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_minimum_is_dated_obligations_net_of_balance():
+    """Only scheduled outflows are non-negotiable, and the balance pays first."""
+    from planning.services.planner import minimum_per_paycheck
+
+    def trend(scheduled, balance):
+        return Trend(
+            natural_flow_per_month=Decimal("0"),
+            scheduled_flow_per_month=Decimal(scheduled),
+            adhoc_flow_per_month=Decimal("-500"),
+            projected_flow_per_month=Decimal("0"),
+            paychecks_per_year=Decimal("26"),
+            paychecks_in_horizon=Decimal("26"),
+            scheduled_flow_per_paycheck=Decimal("0"),
+            adhoc_flow_per_paycheck=Decimal("0"),
+            projected_flow_per_paycheck=Decimal("0"),
+            observed_slope_per_month=Decimal("0"),
+            r_squared=0.0,
+            data_points=10,
+            window_months=6,
+            horizon_months=12,
+            current_balance=Decimal(balance),
+            excluded_contribution_total=Decimal("0"),
+            one_off_total=Decimal("0"),
+            extra_contributions_total=Decimal("0"),
+            topup_per_paycheck=Decimal("0"),
+            modal_contribution_amount=None,
+            projected_low_balance=Decimal("0"),
+            paychecks_to_low=Decimal("0"),
+            suggested_floor=Decimal("0"),
+        )
+
+    # 1200 a month of obligations over a year is 14400, less 2600 already held,
+    # over 26 paychecks.
+    assert minimum_per_paycheck(trend("-1200", "2600")) == Decimal("453.85")
+    # A bucket whose spending is entirely ad-hoc has nothing *fixed*, which is
+    # not the same as needing nothing.
+    assert minimum_per_paycheck(trend("0", "0")) == Decimal("0.00")
+    # Already holding more than the obligations demand.
+    assert minimum_per_paycheck(trend("-100", "5000")) == Decimal("0.00")
+    assert minimum_per_paycheck(None) == Decimal("0.00")
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_forward_change_is_zero_for_a_reminder_that_never_ends(
+    draining_account, test_checking_account, biweekly_repeat,
+    test_transfer_transaction_type, test_expense_transaction_type,
+):
+    """An untouched commitment is not a change, and must not read as one.
+
+    Prorating the horizon in occurrences but the run rate in whole years left a
+    few days' rounding on every reminder; across twenty of them that summed to a
+    250-a-paycheck capacity swing that nothing had actually caused.
+    """
+    from planning.services.planner import forward_reminder_change
+    from reminders.models import Reminder
+
+    reminder = Reminder.objects.create(
+        amount=Decimal("-100.00"),
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=draining_account,
+        description="Transfer to House",
+        transaction_type=test_transfer_transaction_type,
+        repeat=biweekly_repeat,
+    )
+    Contribution.objects.create(
+        contribution="House", per_paycheck=Decimal("100.00"),
+        account=draining_account, reminder=reminder,
+        goal_type=Contribution.GOAL_HOLD,
+    )
+    # An ordinary standing bill on the funding account, with no end date.
+    Reminder.objects.create(
+        amount=Decimal("-80.00"),
+        reminder_source_account=test_checking_account,
+        description="Internet",
+        transaction_type=test_expense_transaction_type,
+        repeat=biweekly_repeat,
+        next_date=TODAY + timedelta(days=7),
+    )
+
+    change, changes = forward_reminder_change(horizon_months=12, today=TODAY)
+
+    assert change == Decimal("0.00")
+    assert changes == []
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_forward_change_sees_a_commitment_ending(
+    draining_account, test_checking_account, biweekly_repeat,
+    test_transfer_transaction_type, test_expense_transaction_type,
+):
+    """An expense stopping mid-horizon frees up capacity drift cannot see."""
+    from planning.services.planner import forward_reminder_change
+    from reminders.models import Reminder
+
+    reminder = Reminder.objects.create(
+        amount=Decimal("-100.00"),
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=draining_account,
+        description="Transfer to House",
+        transaction_type=test_transfer_transaction_type,
+        repeat=biweekly_repeat,
+    )
+    Contribution.objects.create(
+        contribution="House", per_paycheck=Decimal("100.00"),
+        account=draining_account, reminder=reminder,
+        goal_type=Contribution.GOAL_HOLD,
+    )
+    # Childcare, stopping halfway through the horizon.
+    Reminder.objects.create(
+        amount=Decimal("-260.00"),
+        reminder_source_account=test_checking_account,
+        description="Preschool",
+        transaction_type=test_expense_transaction_type,
+        repeat=biweekly_repeat,
+        next_date=TODAY + timedelta(days=7),
+        end_date=TODAY + timedelta(days=182),
+    )
+
+    change, changes = forward_reminder_change(horizon_months=12, today=TODAY)
+
+    # It runs for roughly half the year, so about half its annual cost stops.
+    assert change == pytest.approx(Decimal("3380"), abs=Decimal("60"))
+    assert change > 0
+    assert len(changes) == 1
+    assert changes[0]["description"] == "Preschool"
+    assert changes[0]["ends"] == TODAY + timedelta(days=182)
+
+
+class _Row:
+    """The structural contract `allocate_capacity` works against."""
+
+    def __init__(self, cid, name, current, topup, minimum, required, goal):
+        self.contribution_id = cid
+        self.contribution = name
+        self.current_per_paycheck = Decimal(current)
+        self.topup_per_paycheck = Decimal(topup)
+        self.effective_per_paycheck = Decimal(current) + Decimal(topup)
+        self.minimum_per_paycheck = Decimal(minimum)
+        self.allocated_per_paycheck = Decimal(current)
+        self.move_per_paycheck = Decimal("0")
+        self.suggestion = Suggestion(
+            goal_type=goal,
+            current_per_paycheck=Decimal(current),
+            required_per_paycheck=Decimal(required),
+            delta_per_paycheck=Decimal("0"),
+            paychecks_per_year=Decimal("26"),
+            reason="",
+        )
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_allocation_funds_obligations_then_rations_the_rest():
+    """A fixed pot is distributed, not a list of wishes summed.
+
+    Solving each bucket alone answers "what would make everything healthy",
+    which is a different question from "what should I do with the money I have".
+    """
+    from planning.services.planner import allocate_capacity
+
+    rows = [
+        # Obligation 400, wants 500.
+        _Row(1, "House", "400", "0", "400", "500", Contribution.GOAL_HOLD),
+        # No obligation, wants 300.
+        _Row(2, "Grocery", "100", "0", "0", "300", Contribution.GOAL_FLOOR),
+    ]
+    # 400 of obligations plus 300 of the 400 wanted above them.
+    result = allocate_capacity(rows, Decimal("700"))
+
+    assert result["feasible"] is True
+    assert result["obligations_total"] == Decimal("400.00")
+    assert result["desired_total"] == Decimal("800.00")
+    assert result["allocated_total"] == Decimal("700.00")
+    # 300 left over 400 of wants: each gets three quarters of what it asked for
+    # above its obligation.
+    assert rows[0].allocated_per_paycheck == Decimal("475.00")
+    assert rows[1].allocated_per_paycheck == Decimal("225.00")
+    assert "in proportion" in result["note"]
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_allocation_gives_the_remainder_to_maximise():
+    """`maximise` exists to absorb whatever is left, and only that."""
+    from planning.services.planner import allocate_capacity
+
+    rows = [
+        _Row(1, "House", "400", "0", "400", "500", Contribution.GOAL_HOLD),
+        _Row(2, "College", "25", "0", "0", "25", Contribution.GOAL_MAXIMISE),
+    ]
+    result = allocate_capacity(rows, Decimal("800"))
+
+    # House takes its full 500; the other 300 is what maximise means.
+    assert rows[0].allocated_per_paycheck == Decimal("500.00")
+    assert rows[1].allocated_per_paycheck == Decimal("300.00")
+    assert result["unallocated"] == Decimal("0.00")
+    assert result["allocated_total"] == Decimal("800.00")
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_allocation_reports_obligations_it_cannot_cover():
+    """The one case moving money between buckets cannot fix."""
+    from planning.services.planner import allocate_capacity
+
+    rows = [
+        _Row(1, "House", "400", "0", "400", "500", Contribution.GOAL_HOLD),
+        _Row(2, "Car", "200", "0", "200", "200", Contribution.GOAL_FLOOR),
+    ]
+    result = allocate_capacity(rows, Decimal("300"))
+
+    assert result["feasible"] is False
+    assert result["shortfall"] == Decimal("300.00")
+    assert "exceed" in result["note"]
+    # Rationed pro-rata across the obligations rather than silently favouring one.
+    assert rows[0].allocated_per_paycheck == Decimal("200.00")
+    assert rows[1].allocated_per_paycheck == Decimal("100.00")
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_allocation_reads_as_moves_against_effective_funding():
+    """The output is "move X from A to B", not "find X more".
+
+    Top-ups are part of the baseline, so an over-topped bucket shows up as a
+    source of money rather than as already-correct.
+    """
+    from planning.services.planner import allocate_capacity
+
+    rows = [
+        # Effectively getting 275 by hand, but only needs 150.
+        _Row(1, "Reno", "75", "200", "0", "150", Contribution.GOAL_FLOOR),
+        # Getting 85, needs 350.
+        _Row(2, "Ellie", "85", "0", "0", "350", Contribution.GOAL_FLOOR),
+    ]
+    result = allocate_capacity(rows, Decimal("500"))
+
+    assert rows[0].move_per_paycheck == Decimal("-125.00")
+    assert rows[1].move_per_paycheck == Decimal("265.00")
+    assert result["moves"] == [
+        {
+            "from_contribution_id": 1,
+            "from_contribution": "Reno",
+            "to_contribution_id": 2,
+            "to_contribution": "Ellie",
+            "amount_per_paycheck": Decimal("125.00"),
+        }
+    ]
+    # Reno's 125 does not cover Ellie's 265; the rest is the plan growing into
+    # capacity that was not being allocated at all.
+    assert result["net_change_total"] == Decimal("140.00")

@@ -21,7 +21,11 @@ function handleApiError(error, message) {
   throw error;
 }
 
-async function getPlannerAnalysisFunction(months, horizonMonths, incomeAdjustment) {
+async function getPlannerAnalysisFunction(
+  months,
+  horizonMonths,
+  incomeAdjustment,
+) {
   try {
     const response = await apiClient.get("/planning/planner/analysis", {
       params: {
@@ -48,11 +52,22 @@ async function getPlannerProjectionFunction(contributionId, months) {
   }
 }
 
-async function applySuggestionsFunction(contributionIds) {
+async function applySuggestionsFunction({
+  contributionIds,
+  months,
+  horizonMonths,
+  incomeAdjustment,
+}) {
   const mainstore = useMainStore();
   try {
+    // The window and horizon go with the request: a contribution's share
+    // depends on every other one, so applying under different settings than the
+    // page displayed would write figures the user never saw.
     const response = await apiClient.post("/planning/planner/apply", {
       contribution_ids: contributionIds,
+      months,
+      horizon_months: horizonMonths,
+      income_adjustment: incomeAdjustment,
     });
     const { applied_count: applied, results } = response.data;
     const skipped = results.filter(r => !r.applied);
@@ -112,7 +127,12 @@ export function usePlanner(months, horizonMonths, incomeAdjustment) {
   });
 
   async function applySuggestions(contributionIds) {
-    return applyMutation.mutateAsync(contributionIds);
+    return applyMutation.mutateAsync({
+      contributionIds,
+      months: unref(months),
+      horizonMonths: unref(horizonMonths),
+      incomeAdjustment: unref(incomeAdjustment),
+    });
   }
 
   return {
