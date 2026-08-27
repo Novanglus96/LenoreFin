@@ -43,7 +43,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import ROUND_CEILING, Decimal
 
 from django.db.models import Q
 
@@ -120,6 +120,12 @@ class PlanResult:
     paychecks_in_horizon: int
 
     capacity_per_paycheck: Decimal
+    # What the year affords, ignoring when the money lands. A plan between this
+    # and `capacity_per_paycheck` is affordable but badly timed.
+    horizon_capacity_per_paycheck: Decimal
+    # Set when the plan only fails on timing: the date it runs short, and the
+    # one-off transfer that fixes it.
+    timing_shortfall: dict | None
     minimums_total: Decimal
     targets_total: Decimal
     planned_total: Decimal
@@ -405,7 +411,10 @@ def required_rate(
     if low is None:
         low = Decimal("0")
     return (
-        needed.quantize(Decimal("0.01")),
+        # Rounded up, not to nearest: this is a floor, and a minimum rounded
+        # down is short by construction. Four cents of it was enough to fail
+        # verification on a bucket whose rate was otherwise exactly right.
+        needed.quantize(Decimal("0.01"), rounding=ROUND_CEILING),
         low.quantize(Decimal("0.01")),
         low_date,
         warning,
@@ -416,20 +425,25 @@ def capacity_per_paycheck(
     path: list[PathPoint],
     buffer: Decimal,
     paycheck_days: list[int],
-) -> tuple[Decimal, list[dict]]:
-    """The largest total per paycheck the funding account can sustain all year.
+) -> tuple[Decimal, Decimal, dict | None, list[dict]]:
+    """The largest total per paycheck the funding account can sustain.
 
-    The mirror of `required_rate`: every point demands
-    `total <= (baseline(t) - buffer) / paychecks_so_far(t)`, and capacity is
-    whichever point allows least. Deriving it from the path rather than from an
-    annual average is the point — this account opens at 653.45 and bottoms at
-    393.73 within a week, so the near term binds far harder than the year does.
+    Returns two figures, because they answer different questions and the
+    difference between them is the most useful thing the planner can say.
 
-    A point that breaches the buffer before any paycheck lands cannot be fixed
-    by allocating less, so it is reported separately rather than driving
-    capacity negative.
+    `horizon` is what the year affords: the whole surplus divided across every
+    payday. `limited` is what the *path* affords, which is whichever point
+    allows least — every point demands
+    `total <= (baseline(t) - buffer) / paychecks_so_far(t)`.
+
+    When a plan fits the first but not the second it is not unaffordable, it is
+    badly timed: the money exists over the year but is not there in the week it
+    is needed. That wants a one-off transfer, not a smaller plan, and telling
+    someone to cut their savings when they actually need to move 990 across for
+    a fortnight is bad advice.
     """
-    allowed = None
+    limited = None
+    binding: dict | None = None
     blocked: list[dict] = []
 
     for point in path:
@@ -445,15 +459,35 @@ def capacity_per_paycheck(
                     }
                 )
             continue
-        limit = headroom / landed
-        if allowed is None or limit < allowed:
-            allowed = limit
+        allowed = headroom / landed
+        if limited is None or allowed < limited:
+            limited = allowed
+            binding = {
+                "when": point.when,
+                "balance": point.balance,
+                "paychecks_by_then": int(landed),
+            }
 
-    if allowed is None:
-        allowed = Decimal("0")
-    if allowed < 0:
-        allowed = Decimal("0")
-    return allowed.quantize(Decimal("0.01")), blocked
+    if limited is None:
+        limited = Decimal("0")
+    if limited < 0:
+        limited = Decimal("0")
+
+    # What the year affords, ignoring when the money arrives.
+    total_paychecks = Decimal(len(paycheck_days))
+    if path and total_paychecks > 0:
+        horizon = (path[-1].balance - buffer) / total_paychecks
+    else:
+        horizon = limited
+    if horizon < 0:
+        horizon = Decimal("0")
+
+    return (
+        limited.quantize(Decimal("0.01")),
+        horizon.quantize(Decimal("0.01")),
+        binding,
+        blocked,
+    )
 
 
 def rate_to_reach(
@@ -489,7 +523,7 @@ def rate_to_reach(
     landed = Decimal(_paychecks_before(by_day, paycheck_days))
     if landed < MIN_PAYCHECKS_TO_SOLVE:
         return Decimal("0.00")
-    return (gap / landed).quantize(Decimal("0.01"))
+    return (gap / landed).quantize(Decimal("0.01"), rounding=ROUND_CEILING)
 
 
 def build_plan(
@@ -521,6 +555,8 @@ def build_plan(
             paychecks=[],
             paychecks_in_horizon=0,
             capacity_per_paycheck=Decimal("0"),
+            horizon_capacity_per_paycheck=Decimal("0"),
+            timing_shortfall=None,
             minimums_total=Decimal("0"),
             targets_total=Decimal("0"),
             planned_total=Decimal("0"),
@@ -543,6 +579,8 @@ def build_plan(
             paychecks=[],
             paychecks_in_horizon=0,
             capacity_per_paycheck=Decimal("0"),
+            horizon_capacity_per_paycheck=Decimal("0"),
+            timing_shortfall=None,
             minimums_total=Decimal("0"),
             targets_total=Decimal("0"),
             planned_total=Decimal("0"),
@@ -566,7 +604,9 @@ def build_plan(
     }
 
     fund_path, _ = baseline_path(fund_id, today, end_date, plan_descriptions)
-    capacity, blocked = capacity_per_paycheck(fund_path, buffer, paycheck_days)
+    capacity, horizon_capacity, binding, blocked = capacity_per_paycheck(
+        fund_path, buffer, paycheck_days
+    )
 
     lines: list[AccountPlan] = []
     for contribution in contributions:
@@ -592,6 +632,31 @@ def build_plan(
             f"fix that — it needs {blocked[0]['short_by']} put in now."
         )
 
+    # Two different failures wear the same face. If the minimums fit the year
+    # but not the path, the money exists and simply is not there in the week it
+    # is needed — a one-off transfer fixes that, and cutting the plan would be
+    # the wrong advice entirely.
+    timing: dict | None = None
+    if minimums_total > capacity and minimums_total <= horizon_capacity and binding:
+        needed = (
+            minimums_total * Decimal(binding["paychecks_by_then"])
+            - (binding["balance"] - buffer)
+        ).quantize(Decimal("0.01"))
+        timing = {
+            "when": binding["when"],
+            "balance": binding["balance"],
+            "paychecks_by_then": binding["paychecks_by_then"],
+            "one_off_needed": needed,
+        }
+        notes.append(
+            f"This plan is affordable over the year — it needs "
+            f"{minimums_total.quantize(Decimal('0.01'))} a paycheck against "
+            f"{horizon_capacity} the year affords — but the funding account runs "
+            f"short around {binding['when']}. Moving {needed} into it before then "
+            f"makes the plan work; contributing less does not."
+        )
+        capacity = minimums_total
+
     feasible = minimums_total <= capacity
     if not feasible:
         levers = _levers(lines, minimums_total - capacity, capacity)
@@ -604,6 +669,8 @@ def build_plan(
             paychecks=paychecks,
             paychecks_in_horizon=len(paychecks),
             capacity_per_paycheck=capacity,
+            horizon_capacity_per_paycheck=horizon_capacity,
+            timing_shortfall=timing,
             minimums_total=minimums_total.quantize(Decimal("0.01")),
             targets_total=targets_total.quantize(Decimal("0.01")),
             planned_total=Decimal("0.00"),
@@ -658,6 +725,13 @@ def build_plan(
     breaches = _verify(
         lines, fund_path, paycheck_days, buffer, today, end_date, plan_descriptions
     )
+    if timing:
+        # Already diagnosed, already costed, and the note says what to do about
+        # it. Reporting it a second time as a plan failure would be telling the
+        # user to cut their savings to fix something a transfer fixes.
+        for breach in breaches:
+            if breach["account"] == "funding":
+                breach["kind"] = "one_off"
     if remaining > 0:
         notes.append(
             f"{remaining.quantize(Decimal('0.01'))} a paycheck is left unallocated "
@@ -671,13 +745,15 @@ def build_plan(
         paychecks=paychecks,
         paychecks_in_horizon=len(paychecks),
         capacity_per_paycheck=capacity,
+        horizon_capacity_per_paycheck=horizon_capacity,
+        timing_shortfall=timing,
         minimums_total=minimums_total.quantize(Decimal("0.01")),
         targets_total=targets_total.quantize(Decimal("0.01")),
         planned_total=planned_total.quantize(Decimal("0.01")),
         current_total=current_total.quantize(Decimal("0.01")),
         unallocated=remaining.quantize(Decimal("0.01")),
         feasible=True,
-        verified=not breaches,
+        verified=not any(b["kind"] == "structural" for b in breaches),
         lines=lines,
         breaches=breaches,
         notes=notes,
@@ -873,6 +949,12 @@ def _verify(
                     "when": point.when,
                     "balance": balance.quantize(Decimal("0.01")),
                     "floor": buffer,
+                    # Too few paydays have landed for any rate to have fixed
+                    # this, so it is a transfer to make, not a plan to change.
+                    "kind": (
+                        "one_off" if landed < MIN_PAYCHECKS_TO_SOLVE else "structural"
+                    ),
+                    "one_off_needed": (buffer - balance).quantize(Decimal("0.01")),
                 }
             )
             break
@@ -882,15 +964,30 @@ def _verify(
             continue
         contribution = Contribution.objects.filter(pk=line.contribution_id).first()
         spend_events: list[tuple[date, Decimal]] = []
+        budgets = []
+        own = None
         if contribution:
-            for budget in contribution.budgets.select_related("repeat").all():
+            budgets = list(contribution.budgets.select_related("repeat").all())
+            for budget in budgets:
                 spend_events.extend(budget_events(budget, today, end_date))
+            if contribution.reminder_id and contribution.reminder.description:
+                own = contribution.reminder.description
+        # Only this contribution's own transfer, exactly as `_line_for` saw it.
+        # Excluding every contribution's description instead quietly removed
+        # other buckets' transfers that happen to touch this account — one real
+        # bucket carries a "Transfer to House" — so the verified path was not
+        # the path the rate was solved against.
         path, _ = baseline_path(
             line.account_id,
             today,
             end_date,
-            plan_descriptions,
+            {own} if own else set(),
             spend_events=spend_events,
+            replace_adhoc_reimbursements_to=(
+                contribution.reminder.reminder_source_account_id
+                if budgets and contribution and contribution.reminder_id
+                else None
+            ),
         )
         for point in path:
             landed = Decimal(_paychecks_before(point.day, paycheck_days))
@@ -903,6 +1000,17 @@ def _verify(
                         "when": point.when,
                         "balance": balance.quantize(Decimal("0.01")),
                         "floor": Decimal("0.00"),
+                        # `required_rate` deliberately declines to solve a dip
+                        # this close — there are not enough paydays before it to
+                        # accumulate anything, so the honest answer is a one-off
+                        # top-up. Verification has to make the same distinction
+                        # or it reports its own policy back as a failure.
+                        "kind": (
+                            "one_off"
+                            if landed < MIN_PAYCHECKS_TO_SOLVE
+                            else "structural"
+                        ),
+                        "one_off_needed": (-balance).quantize(Decimal("0.01")),
                     }
                 )
                 break
