@@ -2,7 +2,7 @@ from ninja import Router
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from ninja.errors import HttpError
-from planning.models import Contribution
+from planning.models import Budget, Contribution
 from planning.api.schemas.contribution import (
     ContributionIn,
     ContributionOut,
@@ -35,12 +35,16 @@ def create_contribution(request, payload: ContributionIn):
     """
 
     try:
-        contribution = Contribution(**payload.dict())
-        # Goal/reminder coherence is enforced in Contribution.clean(); without
-        # this the API would happily store a goal pointing at no account, or a
-        # reminder that funds a different account than the goal measures.
+        fields = payload.dict()
+        # Many-to-many cannot be set before the row exists.
+        budget_ids = fields.pop("budget_ids", [])
+        contribution = Contribution(**fields)
+        # Target/account coherence is enforced in Contribution.clean(); without
+        # this the API would happily store a target pointing at no account.
         contribution.full_clean(exclude=["contribution"])
         contribution.save()
+        if budget_ids:
+            contribution.budgets.set(Budget.objects.filter(id__in=budget_ids))
         api_logger.info(f"Contribution created : {payload.contribution}")
         return {"id": contribution.id}
     except ValidationError as validation_error:
@@ -91,18 +95,18 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
         contribution = get_object_or_404(Contribution, id=contribution_id)
         contribution.contribution = payload.contribution
         contribution.per_paycheck = payload.per_paycheck
-        contribution.emergency_amt = payload.emergency_amt
-        contribution.emergency_diff = payload.emergency_diff
-        contribution.cap = payload.cap
+        contribution.minimum_per_paycheck = payload.minimum_per_paycheck
+        contribution.target_balance = payload.target_balance
+        contribution.target_date = payload.target_date
+        contribution.sweep = payload.sweep
+        contribution.priority = payload.priority
         contribution.active = payload.active
         contribution.account_id = payload.account_id
         contribution.reminder_id = payload.reminder_id
-        contribution.goal_type = payload.goal_type
-        contribution.goal_amount = payload.goal_amount
-        contribution.goal_date = payload.goal_date
-        contribution.goal_rate = payload.goal_rate
+
         contribution.full_clean(exclude=["contribution"])
         contribution.save()
+        contribution.budgets.set(Budget.objects.filter(id__in=payload.budget_ids))
         api_logger.info(f"Contribution updated : {contribution.contribution}")
         return {"success": True}
     except Http404:
@@ -186,11 +190,26 @@ def list_contributions(request):
         per_paycheck_total = sum(
             [contrib.per_paycheck for contrib in active_contribs]
         )
+        # The emergency plan, derived rather than stored. What each contribution
+        # may not go below, and what that frees up to refill the emergency fund.
         emergency_paycheck_total = sum(
-            [contrib.emergency_amt for contrib in active_contribs]
+            [
+                contrib.minimum_per_paycheck
+                if contrib.minimum_per_paycheck is not None
+                else contrib.per_paycheck
+                for contrib in active_contribs
+            ]
         )
         total_emergency = sum(
-            [contrib.emergency_diff for contrib in active_contribs]
+            [
+                contrib.per_paycheck
+                - (
+                    contrib.minimum_per_paycheck
+                    if contrib.minimum_per_paycheck is not None
+                    else contrib.per_paycheck
+                )
+                for contrib in active_contribs
+            ]
         )
 
         # Create the ContributionWithTotals object

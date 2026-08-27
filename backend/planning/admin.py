@@ -17,7 +17,7 @@ class ContribRuleAdmin(UnfoldImportExportModelAdmin):
 
 
 class ContributionAdmin(UnfoldImportExportModelAdmin):
-    list_display = ["id", "contribution", "per_paycheck", "emergency_amt", "emergency_diff", "cap", "active"]
+    list_display = ["id", "contribution", "priority", "per_paycheck", "minimum_per_paycheck", "target_balance", "sweep", "active"]
     list_display_links = ["contribution"]
     ordering = ["id"]
 

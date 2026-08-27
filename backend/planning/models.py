@@ -84,40 +84,17 @@ class Contribution(models.Model):
       Takes precedence over goal_amount when non-zero.
     """
 
-    GOAL_NONE = "none"
-    GOAL_HOLD = "hold"
-    GOAL_TARGET = "target"
-    GOAL_FLOOR = "floor"
-    GOAL_GROW = "grow"
-    GOAL_BUDGET = "budget"
-    GOAL_MAXIMISE = "maximise"
-
-    GOAL_CHOICES = [
-        (GOAL_NONE, "No goal"),
-        (GOAL_HOLD, "Cover obligations, hold the buffer"),
-        (GOAL_TARGET, "Reach a target by a date"),
-        (GOAL_FLOOR, "Cover spending, never dip below a floor"),
-        (GOAL_GROW, "Grow by an amount or rate"),
-        (GOAL_BUDGET, "Fund a set amount per year"),
-        (GOAL_MAXIMISE, "Contribute whatever is left over"),
-    ]
-
-    # hold/floor/target/grow are *descriptive* — solved from what the account
-    # actually does. budget and maximise are *prescriptive*: you state the
-    # figure, or take what remains. Mixing the two in one enum is deliberate,
-    # because from the page's point of view they are all "what should this be".
-
     contribution = models.CharField(max_length=20, unique=True)
     per_paycheck = models.DecimalField(
         max_digits=12, decimal_places=2, default=0.00
     )
-    emergency_amt = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00
+    # The floor this contribution may never go below, in any mode — including
+    # an emergency, when discretionary funding is cut back and the difference is
+    # diverted to refill the emergency fund. Null means "work it out": whatever
+    # this account's budgets and dated obligations actually demand.
+    minimum_per_paycheck = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True, default=None
     )
-    emergency_diff = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00
-    )
-    cap = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     active = models.BooleanField(default=True)
     account = models.ForeignKey(
         "accounts.Account",
@@ -135,67 +112,54 @@ class Contribution(models.Model):
         on_delete=models.SET_NULL,
         related_name="contributions",
     )
-    goal_type = models.CharField(
-        max_length=10, choices=GOAL_CHOICES, default=GOAL_NONE
+    # The budgets this bucket exists to fund. A budget is the *plan* for a
+    # category's spending — user-maintained, dated, with its own repeat — which
+    # makes it a far better statement of what an account must cover than a rate
+    # derived from how much it happened to move last month. Left empty for a
+    # bucket whose spending is genuinely sporadic; those are saved toward a
+    # stated target instead of being predicted.
+    budgets = models.ManyToManyField(
+        "planning.Budget", blank=True, related_name="contributions"
     )
-    goal_amount = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0.00
-    )
-    goal_date = models.DateField(null=True, blank=True, default=None)
-    goal_rate = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00
-    )
-    # Lower is funded first. When capacity runs out the planner stops filling
-    # goals in this order, so the ranking is what decides who goes short —
-    # sharing the shortage equally across every bucket is not a decision anyone
-    # would actually make.
-    priority = models.IntegerField(default=100)
-    # A floor the user insists on, regardless of what the account's own
-    # obligations work out to. Null means "derive it": the smallest amount that
-    # keeps this account above its floor for the whole horizon. Zero is a real
-    # answer meaning "nothing is required here", which is why this is nullable
-    # rather than defaulting to 0.
-    minimum_per_paycheck = models.DecimalField(
+    # What this account should accumulate to. Funding stops once the balance is
+    # there, which is what frees capacity for everything below it in priority.
+    target_balance = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True, default=None
     )
+    # When the target must be met. Null means "hold it from now on" rather than
+    # "reach it by a date", which are different problems.
+    target_date = models.DateField(null=True, blank=True, default=None)
+    # Takes whatever is left once everything else is funded. More than one is
+    # allowed; they share the remainder.
+    sweep = models.BooleanField(default=False)
+    # Lower is funded first. When capacity runs out the planner stops filling
+    # targets in this order, so the ranking is what decides who goes short —
+    # sharing a shortage equally across every bucket is not a decision anyone
+    # would actually make. It is also the order a windfall is applied in.
+    priority = models.IntegerField(default=100)
 
     def clean(self):
-        # A goal is only meaningful against an account to measure.
-        if self.goal_type != self.GOAL_NONE and not self.account_id:
+        # A target is a statement about an account's balance, so it needs an
+        # account to be a statement about.
+        if self.target_balance is not None and not self.account_id:
             raise ValidationError(
-                "Set an account before giving this contribution a goal."
+                "Set an account before giving this contribution a target."
             )
-        # A target needs both a number and a deadline — solving for
-        # "per paycheck" divides by the paychecks left before goal_date.
-        if self.goal_type == self.GOAL_TARGET:
-            if not self.goal_date:
-                raise ValidationError(
-                    "A target goal needs a date to reach the target by."
-                )
-            if self.goal_amount is None or self.goal_amount <= 0:
-                raise ValidationError(
-                    "A target goal needs a target balance greater than zero."
-                )
-        if self.goal_type == self.GOAL_FLOOR and self.goal_amount is None:
-            raise ValidationError("A floor goal needs a floor balance.")
-        if self.goal_type == self.GOAL_GROW:
-            if not self.goal_amount and not self.goal_rate:
-                raise ValidationError(
-                    "A growth goal needs either an amount per month or an annual rate."
-                )
-        if self.goal_type == self.GOAL_BUDGET:
-            if not self.goal_amount or self.goal_amount <= 0:
-                raise ValidationError(
-                    "A budget goal needs the amount to fund per year."
-                )
-        # The reminder is the apply target, so it has to be the transfer that
-        # actually funds this account — otherwise applying a suggestion would
-        # move money somewhere the goal does not measure.
-        if self.reminder_id and self.account_id:
-            if self.reminder.reminder_destination_account_id != self.account_id:
-                raise ValidationError(
-                    "The linked reminder must transfer into this contribution's account."
-                )
+        if self.target_balance is not None and self.target_balance < 0:
+            raise ValidationError("A target balance cannot be negative.")
+        if self.target_date and self.target_balance is None:
+            raise ValidationError(
+                "A target date needs a target balance to reach by then."
+            )
+        if self.minimum_per_paycheck is not None and self.minimum_per_paycheck < 0:
+            raise ValidationError("A minimum cannot be negative.")
+        # A sweep takes what is left over, so a ceiling on it is a contradiction
+        # — the leftover is defined by everything else, not by this row.
+        if self.sweep and self.target_balance is not None:
+            raise ValidationError(
+                "A sweep contribution takes whatever is left, so it cannot also "
+                "have a target balance."
+            )
 
     def __str__(self):
         return self.contribution

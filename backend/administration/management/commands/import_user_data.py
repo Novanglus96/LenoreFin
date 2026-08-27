@@ -7,6 +7,23 @@ from django.core.management import call_command
 from django.db import transaction as db_transaction
 
 
+def _optional_amount(value):
+    """`cap` used 0 to mean "no cap"; `target_balance` says that as None.
+
+    Restored as 0 it would read as "accumulate to nothing", which stops the
+    bucket being funded at all.
+    """
+    if value is None:
+        return None
+    from decimal import Decimal
+
+    try:
+        amount = Decimal(str(value))
+    except Exception:
+        return None
+    return None if amount == 0 else amount
+
+
 class Command(BaseCommand):
     help = "Restore user data from a version-agnostic JSON backup (.json.gz)"
 
@@ -393,15 +410,24 @@ class Command(BaseCommand):
             )
 
         # --- 15. Contributions ---
+        pending_contribution_budgets = []
         # Runs after Reminders (13) so reminder_id_map is populated; a backup
         # taken before the planner fields existed simply leaves them at default.
         for item in data.get("contributions", []):
-            Contribution.objects.create(
+            contribution_obj = Contribution.objects.create(
                 contribution=item["contribution"],
                 per_paycheck=item["per_paycheck"],
-                emergency_amt=item["emergency_amt"],
-                emergency_diff=item["emergency_diff"],
-                cap=item["cap"],
+                # Backups predating the one-plan reshape carry `emergency_amt`
+                # and `cap`; those are exactly what the new names mean, so an
+                # old export restores without losing the emergency plan.
+                minimum_per_paycheck=item.get(
+                    "minimum_per_paycheck", item.get("emergency_amt")
+                ),
+                target_balance=_optional_amount(
+                    item.get("target_balance", item.get("cap"))
+                ),
+                target_date=item.get("target_date") or item.get("goal_date"),
+                sweep=item.get("sweep", item.get("goal_type") == "maximise"),
                 active=item["active"],
                 account=account_by_name.get(item["account_name"])
                 if item.get("account_name")
@@ -409,12 +435,12 @@ class Command(BaseCommand):
                 reminder=reminder_id_map.get(item["reminder_id"])
                 if item.get("reminder_id")
                 else None,
-                goal_type=item.get("goal_type", Contribution.GOAL_NONE),
-                goal_amount=item.get("goal_amount", 0),
-                goal_date=item.get("goal_date"),
-                goal_rate=item.get("goal_rate", 0),
                 priority=item.get("priority", 100),
-                minimum_per_paycheck=item.get("minimum_per_paycheck"),
+            )
+            # Budgets are imported at step 20, after this, so the link is made
+            # by name once both sides exist rather than here.
+            pending_contribution_budgets.append(
+                (contribution_obj, item.get("budget_names", []))
             )
 
         # --- 16. Notes ---
@@ -442,6 +468,18 @@ class Command(BaseCommand):
                 widget=item["widget"],
                 next_start=item["next_start"],
             )
+
+        # Contributions were created at step 15, before the budgets they point
+        # at existed, so the links are made here now both sides are present.
+        budget_by_name = {b.name: b for b in Budget.objects.all()}
+        for contribution_obj, budget_names in pending_contribution_budgets:
+            linked = [
+                budget_by_name[name]
+                for name in budget_names
+                if name in budget_by_name
+            ]
+            if linked:
+                contribution_obj.budgets.set(linked)
 
         # --- 19. CalculationRules ---
         for item in data.get("calculation_rules", []):

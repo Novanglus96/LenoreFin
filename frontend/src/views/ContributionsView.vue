@@ -2,7 +2,7 @@
   <div>
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded">
-        <PlannerWidget />
+        <SavingsPlanWidget />
       </v-col>
     </v-row>
     <v-row class="pa-1 ga-1" no-gutters>
@@ -18,7 +18,7 @@
   </div>
 </template>
 <script setup>
-  import PlannerWidget from "@/components/PlannerWidget.vue";
+  import SavingsPlanWidget from "@/components/SavingsPlanWidget.vue";
   import ContributionsWidget from "@/components/ContributionsWidget.vue";
   import ContributionRulesWidget from "@/components/ContributionRulesWidget.vue";
 </script>

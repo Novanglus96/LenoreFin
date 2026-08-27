@@ -86,7 +86,7 @@ class AccountPlan:
     account_id: int | None
     account_name: str | None
     priority: int
-    goal_type: str
+    sweep: bool
     paychecks_per_year: Decimal
 
     current_per_paycheck: Decimal
@@ -95,13 +95,18 @@ class AccountPlan:
     target_per_paycheck: Decimal
     planned_per_paycheck: Decimal
 
-    floor: Decimal
+    # What this bucket's linked budgets come to, and which they are. This is the
+    # planned spending it exists to cover.
+    budgeted_per_paycheck: Decimal
+    budget_names: list[str]
+    target_balance: Decimal | None
     projected_low: Decimal
     projected_low_date: date | None
-    # True when the account's spending is only described by a derived rate
-    # rather than by reminders, so its share of the plan is an estimate.
-    spending_is_estimated: bool
-    adhoc_per_month: Decimal
+    # What the account has actually been spending, measured. Never an input to
+    # the plan — budgets are — but a budget that disagrees with reality by a
+    # wide margin is worth saying out loud.
+    observed_spend_per_month: Decimal
+    spend_variance_per_paycheck: Decimal
     reason: str
     warning: str | None = None
 
@@ -202,37 +207,101 @@ def _paychecks_before(day: int, paycheck_days: list[int]) -> int:
     return count
 
 
+def budget_events(
+    budget, today: date, end_date: date
+) -> list[tuple[date, Decimal]]:
+    """When a budget's spending actually lands, and how much.
+
+    Dated events rather than a smooth rate, because when the money is needed
+    decides how much has to be saved by then. Christmas is the case that proves
+    it: 1,995 a year trickled evenly never requires the account to hold more
+    than a couple of hundred, while the same 1,995 landing in December means the
+    bucket must have the whole sum by then. The second is what actually happens.
+    """
+    repeat = budget.repeat
+    if repeat is None or not budget.amount:
+        return []
+    period = (
+        Decimal(repeat.days or 0)
+        + Decimal(repeat.weeks or 0) * 7
+        + Decimal(repeat.months or 0) * DAYS_PER_MONTH
+        + Decimal(repeat.years or 0) * DAYS_PER_YEAR
+    )
+    if period <= 0:
+        return []
+
+    step = int(period)
+    cursor = budget.next_start or budget.start_day or today
+    # A budget whose cycle started before today is already part way through; the
+    # remainder of the current cycle still has to be funded.
+    while cursor < today:
+        cursor = cursor + timedelta(days=step)
+
+    events: list[tuple[date, Decimal]] = []
+    guard = 0
+    while cursor <= end_date and guard < 400:
+        events.append((cursor, -abs(budget.amount)))
+        cursor = cursor + timedelta(days=step)
+        guard += 1
+    return events
+
+
+def budget_per_paycheck(budget) -> Decimal:
+    """A budget's amount expressed in the cadence the planner allocates in."""
+    repeat = budget.repeat
+    if repeat is None or not budget.amount:
+        return Decimal("0.00")
+    period = (
+        Decimal(repeat.days or 0)
+        + Decimal(repeat.weeks or 0) * 7
+        + Decimal(repeat.months or 0) * DAYS_PER_MONTH
+        + Decimal(repeat.years or 0) * DAYS_PER_YEAR
+    )
+    if period <= 0:
+        return Decimal("0.00")
+    per_year = DAYS_PER_YEAR / period
+    return (abs(budget.amount) * per_year / Decimal("26.0893")).quantize(
+        Decimal("0.01")
+    )
+
+
 def baseline_path(
     account_id: int,
     today: date,
     end_date: date,
     exclude_descriptions: set[str],
-    adhoc_per_month: Decimal = Decimal("0"),
+    spend_events: list[tuple[date, Decimal]] | None = None,
+    replace_adhoc_reimbursements_to: int | None = None,
 ) -> tuple[list[PathPoint], Decimal]:
-    """An account's projected balance with named flows removed and drift added.
+    """An account's projected balance with named flows removed and budgets added.
 
     `exclude_descriptions` takes out the transfers the plan is deciding, so the
     plan is superimposed on an account nobody is funding yet. Their deltas are
     backed out of the running balance rather than merely skipped, otherwise
     every later point still carries them.
 
-    `adhoc_per_month` drip-feeds spending that no reminder describes. Without
-    it, a bucket like groceries — which has no outflow reminder at all — climbs
-    forever, never breaches anything, and the planner cheerfully recommends
-    defunding it.
+    `spend_events` are the budgets this bucket funds. The forecast is a
+    known-commitments engine — it projects reminders, recorded transactions and
+    the card bills those produce — so discretionary spending that has not been
+    entered yet is simply absent from the future. For the funding account that
+    is harmless, because the missing card payment and the missing reimbursement
+    cancel out. For a bucket it is not: that spending is the whole reason the
+    bucket exists. The budget is the user's own statement of it, which beats a
+    rate derived from how much the account happened to move last month.
     """
     try:
         rows, opening = get_account_transactions_and_balances(
-            end_date, account_id, True, True, today, False
+            end_date, account_id, False, True, today, False
         )
     except Exception:
         return [], Decimal("0")
 
     opening = Decimal(str(opening))
-    path: list[PathPoint] = []
     running = opening
     previous = opening
-    adhoc_per_day = adhoc_per_month / DAYS_PER_MONTH
+    # Everything that moves the balance, forecast and budget alike, merged into
+    # one ordered walk.
+    steps: list[tuple[int, date, Decimal]] = []
 
     for row in rows:
         raw = _field(row, "balance")
@@ -241,28 +310,38 @@ def baseline_path(
         balance = Decimal(str(raw))
         delta = balance - previous
         previous = balance
-
-        description = _field(row, "description")
-        # Excluded flows come off the running balance, but the *date* is still
-        # kept. Skipping the point outright made the path collapse to one entry
-        # for any bucket whose only modelled flow is the contribution being
-        # planned — and a one-point path can never show the drift that
-        # accumulates across the year, so those buckets reported needing nothing.
-        if description not in exclude_descriptions:
-            running += delta
-
         when = _field(row, "transaction_date")
         if when is None:
             continue
-        day = (when - today).days
-        path.append(
-            PathPoint(
-                day=day,
-                when=when,
-                balance=(running + adhoc_per_day * Decimal(day)).quantize(
-                    Decimal("0.01")
-                ),
+        description = _field(row, "description")
+        # Excluded flows contribute no delta, but the date is still a point on
+        # the path. Skipping them outright made the path collapse to one entry
+        # for any bucket whose only modelled flow is the contribution being
+        # planned, and a one-point path can never show drift accumulating.
+        keep = description not in exclude_descriptions
+        if keep and replace_adhoc_reimbursements_to is not None:
+            reimburses = (
+                _field(row, "destination_account_id")
+                == replace_adhoc_reimbursements_to
+                and _field(row, "source_account_id") == account_id
+                and _field(row, "reminder_id") is None
             )
+            if reimburses:
+                keep = False
+        steps.append(
+            ((when - today).days, when, delta if keep else Decimal("0"))
+        )
+
+    for when, amount in spend_events or []:
+        steps.append(((when - today).days, when, amount))
+
+    steps.sort(key=lambda step: step[0])
+
+    path: list[PathPoint] = []
+    for day, when, delta in steps:
+        running += delta
+        path.append(
+            PathPoint(day=day, when=when, balance=running.quantize(Decimal("0.01")))
         )
 
     # The horizon's end is a point in its own right. Without it an account whose
@@ -274,9 +353,7 @@ def baseline_path(
             PathPoint(
                 day=horizon_days,
                 when=end_date,
-                balance=(
-                    running + adhoc_per_day * Decimal(horizon_days)
-                ).quantize(Decimal("0.01")),
+                balance=running.quantize(Decimal("0.01")),
             )
         )
     return path, opening
@@ -379,75 +456,40 @@ def capacity_per_paycheck(
     return allowed.quantize(Decimal("0.01")), blocked
 
 
-def _target_rate(
-    contribution: Contribution,
-    trend,
-    minimum: Decimal,
-    per_year: Decimal,
+def rate_to_reach(
+    path: list[PathPoint],
+    target: Decimal,
+    by: date | None,
     today: date,
-    path: list,
     paycheck_days: list[int],
-) -> tuple[Decimal, str]:
-    """What this bucket should get when there is enough to go round.
+) -> Decimal:
+    """The per-paycheck rate that gets a balance to `target` by `by`.
 
-    Deliberately separate from the minimum. A minimum is "this account must not
-    go overdrawn", which its dated withdrawals decide. A target is what you
-    *want* it to do — hold a buffer, fund a year's holiday, reach a number by a
-    date — and that is a goal competing for what is left, not an obligation.
-
-    Conflating the two put Car Savings' 2,932 buffer in the same tier as the
-    mortgage, so rebuilding a cushion outranked paying the bills and no plan
-    could be built at all.
+    With no date this is "hold at least `target` from here on", which is the
+    same solve as a minimum against a higher line. With a date it is a single
+    constraint at one point, which is a weaker demand — money that only has to
+    be there by next August need not be there in October.
     """
-    goal = contribution.goal_type
+    if by is None:
+        needed, _, _, _ = required_rate(path, target, paycheck_days)
+        return needed
 
-    if goal == Contribution.GOAL_BUDGET and contribution.goal_amount:
-        rate = contribution.goal_amount / per_year
-        return (
-            max(minimum, rate.quantize(Decimal("0.01"))),
-            f"Funding {contribution.goal_amount} a year.",
-        )
-
-    if goal == Contribution.GOAL_FLOOR:
-        # "Never dip below this" — the same solve as the minimum, against a
-        # higher line.
-        needed, _, _, _ = required_rate(path, contribution.goal_amount, paycheck_days)
-        return (
-            max(minimum, needed),
-            f"Holding a {contribution.goal_amount} buffer at the worst point.",
-        )
-
-    if goal == Contribution.GOAL_TARGET and contribution.goal_date and trend:
-        days_left = (contribution.goal_date - today).days
-        if days_left > 0:
-            left = max(Decimal("1"), (Decimal(days_left) / DAYS_PER_YEAR) * per_year)
-            gap = contribution.goal_amount - trend.current_balance
-            if gap > 0:
-                return (
-                    max(minimum, (gap / left).quantize(Decimal("0.01"))),
-                    f"{gap.quantize(Decimal('0.01'))} short of "
-                    f"{contribution.goal_amount} by {contribution.goal_date}.",
-                )
-        return minimum, "Target already met."
-
-    if goal == Contribution.GOAL_GROW and trend:
-        if contribution.goal_rate:
-            monthly = (trend.current_balance * (contribution.goal_rate / 100)) / 12
-            what = f"{contribution.goal_rate}%/yr"
+    by_day = (by - today).days
+    balance = None
+    for point in path:
+        if point.day <= by_day:
+            balance = point.balance
         else:
-            monthly = contribution.goal_amount
-            what = f"{contribution.goal_amount}/month"
-        rate = minimum + (monthly * 12 / per_year)
-        return rate.quantize(Decimal("0.01")), f"Covering costs and growing by {what}."
-
-    if goal == Contribution.GOAL_MAXIMISE:
-        # Answered by the sweep, once everything else is funded.
-        return minimum, "Takes whatever is left once the other goals are funded."
-
-    if goal == Contribution.GOAL_HOLD:
-        return minimum, "Covering its obligations exactly."
-
-    return minimum, "No goal set — held at the minimum it needs."
+            break
+    if balance is None:
+        balance = path[0].balance if path else Decimal("0")
+    gap = target - balance
+    if gap <= 0:
+        return Decimal("0.00")
+    landed = Decimal(_paychecks_before(by_day, paycheck_days))
+    if landed < MIN_PAYCHECKS_TO_SOLVE:
+        return Decimal("0.00")
+    return (gap / landed).quantize(Decimal("0.01"))
 
 
 def build_plan(
@@ -601,7 +643,7 @@ def build_plan(
 
     # The sweep: whatever survives goes to the accounts that exist to absorb it.
     sweeps = [
-        line for line in lines if line.goal_type == Contribution.GOAL_MAXIMISE
+        line for line in lines if line.sweep
     ]
     if remaining > 0 and sweeps:
         share = (remaining / Decimal(len(sweeps))).quantize(Decimal("0.01"))
@@ -650,38 +692,106 @@ def _line_for(
     window_months: int,
     horizon_months: int,
 ) -> AccountPlan:
-    """Work out one contribution's minimum and target from its own account."""
+    """Work out one contribution's minimum and target from its own account.
+
+    Three inputs, in order of authority: the budgets it funds (what you plan to
+    spend), the dated reminders on its account (what you are committed to), and
+    the target balance (what you want it to build up to). Measured behaviour is
+    reported but never planned on — that is the whole point of the budgets.
+    """
     per_year = paychecks_per_year(contribution)
     current = contribution.per_paycheck or Decimal("0")
+    stated_minimum = contribution.minimum_per_paycheck
     own = (
         contribution.reminder.description
         if contribution.reminder_id and contribution.reminder.description
         else None
     )
 
+    budgets = list(contribution.budgets.select_related("repeat").all())
+    budgeted = sum(
+        (budget_per_paycheck(b) for b in budgets), Decimal("0")
+    ).quantize(Decimal("0.01"))
+    budget_names = [b.name for b in budgets]
+
     if not contribution.account_id:
+        minimum = stated_minimum if stated_minimum is not None else Decimal("0.00")
         return AccountPlan(
             contribution_id=contribution.id,
             contribution=contribution.contribution,
             account_id=None,
             account_name=None,
             priority=contribution.priority,
-            goal_type=contribution.goal_type,
+            sweep=contribution.sweep,
             paychecks_per_year=per_year,
             current_per_paycheck=current,
-            minimum_per_paycheck=contribution.minimum_per_paycheck or Decimal("0.00"),
-            minimum_is_stated=contribution.minimum_per_paycheck is not None,
-            target_per_paycheck=contribution.minimum_per_paycheck or Decimal("0.00"),
+            minimum_per_paycheck=minimum,
+            minimum_is_stated=stated_minimum is not None,
+            target_per_paycheck=minimum,
             planned_per_paycheck=Decimal("0.00"),
-            floor=Decimal("0.00"),
+            budgeted_per_paycheck=budgeted,
+            budget_names=budget_names,
+            target_balance=contribution.target_balance,
             projected_low=Decimal("0.00"),
             projected_low_date=None,
-            spending_is_estimated=False,
-            adhoc_per_month=Decimal("0.00"),
+            observed_spend_per_month=Decimal("0.00"),
+            spend_variance_per_paycheck=Decimal("0.00"),
             reason="No account linked, so there is nothing to project.",
             warning="Link an account to include this in the plan.",
         )
 
+    spend_events: list[tuple[date, Decimal]] = []
+    for budget in budgets:
+        spend_events.extend(budget_events(budget, today, end_date))
+
+    path, _ = baseline_path(
+        contribution.account_id,
+        today,
+        end_date,
+        {own} if own else set(),
+        spend_events=spend_events,
+        # Only when budgets are supplying the spending; otherwise the recorded
+        # reimbursements are the only evidence there is.
+        replace_adhoc_reimbursements_to=(
+            contribution.reminder.reminder_source_account_id
+            if budgets and contribution.reminder_id
+            else None
+        ),
+    )
+
+    # Solvency, nothing more: this account must not go overdrawn once its
+    # budgets and its dated obligations are both on the path. Whatever buffer it
+    # would *like* to hold is a target competing for the remainder rather than
+    # outranking someone else's mortgage.
+    derived, low, low_date, warning = required_rate(
+        path, Decimal("0"), paycheck_days
+    )
+    minimum = max(derived, stated_minimum or Decimal("0"))
+
+    if contribution.sweep:
+        target = minimum
+        reason = "Takes whatever is left once everything else is funded."
+    elif contribution.target_balance is not None:
+        needed = rate_to_reach(
+            path, contribution.target_balance, contribution.target_date, today,
+            paycheck_days,
+        )
+        target = max(minimum, needed)
+        reason = (
+            f"Building to {contribution.target_balance}"
+            + (f" by {contribution.target_date}" if contribution.target_date else "")
+            + "."
+        )
+    elif budgets:
+        target = minimum
+        reason = "Covering " + ", ".join(budget_names) + "."
+    else:
+        target = minimum
+        reason = "Covering its dated obligations."
+
+    # Measured behaviour, reported as a cross-check. A budget that disagrees
+    # sharply with what the account actually spends is worth knowing about, but
+    # it is the budget the plan is built on.
     trend = analyze_account_trend(
         contribution.account_id,
         months=window_months,
@@ -695,39 +805,19 @@ def _line_for(
         horizon_months=horizon_months,
         per_year=per_year,
     )
-    adhoc = trend.adhoc_flow_per_month if trend else Decimal("0")
-
-    path, _ = baseline_path(
-        contribution.account_id,
-        today,
-        end_date,
-        {own} if own else set(),
-        adhoc_per_month=adhoc,
+    observed = trend.adhoc_flow_per_month if trend else Decimal("0.00")
+    observed_per_paycheck = (
+        (observed * 12 / per_year).quantize(Decimal("0.01"))
+        if per_year > 0
+        else Decimal("0.00")
     )
-    # A minimum is solvency, nothing more: this account must not go overdrawn.
-    # Whatever buffer it would *like* to hold is a goal, and competes for what
-    # is left over rather than outranking someone else's mortgage.
-    floor = Decimal("0")
-    derived, low, low_date, warning = required_rate(path, floor, paycheck_days)
-
-    stated = contribution.minimum_per_paycheck
-    minimum = derived if stated is None else max(stated, Decimal("0"))
-    if stated is not None and derived > stated:
-        warning = (
-            f"You set a minimum of {stated}, but this account needs {derived} a "
-            f"paycheck to stay out of the red."
-        ) + (f" {warning}" if warning else "")
-
-    target, reason = _target_rate(
-        contribution, trend, minimum, per_year, today, path, paycheck_days
-    )
-    if target < minimum:
-        target = minimum
-
-    # Spending only a derived rate describes is an estimate, and the plan should
-    # say so rather than presenting it with the same confidence as a reminder.
-    scheduled = trend.scheduled_flow_per_month if trend else Decimal("0")
-    estimated = bool(adhoc < 0 and scheduled >= 0)
+    variance = (budgeted + observed_per_paycheck).quantize(Decimal("0.01"))
+    if budgets and variance < -Decimal("25"):
+        note = (
+            f"Budgeted {budgeted} a paycheck, but this account has actually been "
+            f"spending {abs(observed_per_paycheck)}. The plan follows the budget."
+        )
+        warning = f"{warning} {note}" if warning else note
 
     return AccountPlan(
         contribution_id=contribution.id,
@@ -735,18 +825,20 @@ def _line_for(
         account_id=contribution.account_id,
         account_name=contribution.account.account_name,
         priority=contribution.priority,
-        goal_type=contribution.goal_type,
+        sweep=contribution.sweep,
         paychecks_per_year=per_year,
         current_per_paycheck=current,
         minimum_per_paycheck=minimum,
-        minimum_is_stated=stated is not None,
+        minimum_is_stated=stated_minimum is not None,
         target_per_paycheck=target,
         planned_per_paycheck=Decimal("0.00"),
-        floor=floor,
+        budgeted_per_paycheck=budgeted,
+        budget_names=budget_names,
+        target_balance=contribution.target_balance,
         projected_low=low,
         projected_low_date=low_date,
-        spending_is_estimated=estimated,
-        adhoc_per_month=adhoc,
+        observed_spend_per_month=observed,
+        spend_variance_per_paycheck=variance,
         reason=reason,
         warning=warning,
     )
@@ -788,24 +880,29 @@ def _verify(
     for line in lines:
         if not line.account_id:
             continue
+        contribution = Contribution.objects.filter(pk=line.contribution_id).first()
+        spend_events: list[tuple[date, Decimal]] = []
+        if contribution:
+            for budget in contribution.budgets.select_related("repeat").all():
+                spend_events.extend(budget_events(budget, today, end_date))
         path, _ = baseline_path(
             line.account_id,
             today,
             end_date,
             plan_descriptions,
-            adhoc_per_month=line.adhoc_per_month,
+            spend_events=spend_events,
         )
         for point in path:
             landed = Decimal(_paychecks_before(point.day, paycheck_days))
             balance = point.balance + line.planned_per_paycheck * landed
-            if balance < line.floor:
+            if balance < 0:
                 breaches.append(
                     {
                         "account": "bucket",
                         "account_name": line.account_name,
                         "when": point.when,
                         "balance": balance.quantize(Decimal("0.01")),
-                        "floor": line.floor,
+                        "floor": Decimal("0.00"),
                     }
                 )
                 break

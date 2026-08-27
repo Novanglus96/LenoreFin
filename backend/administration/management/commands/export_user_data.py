@@ -269,26 +269,27 @@ class Command(BaseCommand):
             {
                 "contribution": c.contribution,
                 "per_paycheck": str(c.per_paycheck),
-                "emergency_amt": str(c.emergency_amt),
-                "emergency_diff": str(c.emergency_diff),
-                "cap": str(c.cap),
-                "active": c.active,
-                "account_name": c.account.account_name if c.account else None,
-                # Keyed the same way reminder_exclusions is — the source pk,
-                # which the importer resolves through reminder_id_map.
-                "reminder_id": c.reminder_id,
-                "goal_type": c.goal_type,
-                "goal_amount": str(c.goal_amount),
-                "goal_date": str(c.goal_date) if c.goal_date else None,
-                "goal_rate": str(c.goal_rate),
-                "priority": c.priority,
-                # Nullable on purpose: None means "derive it", 0 means "nothing
-                # is required here". Stringifying a None would lose that.
+                # Nullable on purpose: None means "work it out from budgets and
+                # obligations", 0 means "nothing is required here".
                 "minimum_per_paycheck": (
                     str(c.minimum_per_paycheck)
                     if c.minimum_per_paycheck is not None
                     else None
                 ),
+                "target_balance": (
+                    str(c.target_balance) if c.target_balance is not None else None
+                ),
+                "target_date": str(c.target_date) if c.target_date else None,
+                "sweep": c.sweep,
+                "active": c.active,
+                "account_name": c.account.account_name if c.account else None,
+                # Keyed the same way reminder_exclusions is — the source pk,
+                # which the importer resolves through reminder_id_map.
+                "reminder_id": c.reminder_id,
+                "priority": c.priority,
+                # By name, because Budget.name is unique and pks are not stable
+                # across an export/import cycle.
+                "budget_names": [b.name for b in c.budgets.all()],
             }
             for c in Contribution.objects.all().select_related(
                 "account", "reminder"

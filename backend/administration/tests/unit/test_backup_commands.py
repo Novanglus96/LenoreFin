@@ -84,9 +84,8 @@ def test_roundtrip_restores_all_core_models(
     Contribution.objects.create(
         contribution="HSA",
         per_paycheck="50.00",
-        emergency_amt="0.00",
-        emergency_diff="0.00",
-        cap="3600.00",
+        minimum_per_paycheck="0.00",
+        target_balance="3600.00",
         active=True,
     )
     Note.objects.create(note_text="Check budget monthly")
@@ -267,7 +266,7 @@ def test_roundtrip_contribution_planner_fields(
     tmp_path, test_checking_account, test_savings_account,
     test_tag, test_repeat, test_expense_transaction_type,
 ):
-    """A contribution's account, reminder link and goal all survive a round trip.
+    """A contribution's account, reminder link and target all survive a round trip.
 
     The reminder link is the one that can silently break: it is exported as the
     source pk and has to come back through reminder_id_map, not as a raw id.
@@ -288,16 +287,13 @@ def test_roundtrip_contribution_planner_fields(
     Contribution.objects.create(
         contribution="House",
         per_paycheck="200.00",
-        emergency_amt="0.00",
-        emergency_diff="0.00",
-        cap="0.00",
+        minimum_per_paycheck="25.00",
+        target_balance="5000.00",
+        target_date="2027-06-01",
+        priority=5,
         active=True,
         account=test_savings_account,
         reminder=reminder,
-        goal_type=Contribution.GOAL_TARGET,
-        goal_amount="5000.00",
-        goal_date="2027-06-01",
-        goal_rate="0.00",
     )
 
     output = str(tmp_path / "backup.json.gz")
@@ -313,16 +309,17 @@ def test_roundtrip_contribution_planner_fields(
     assert restored.reminder_id == Reminder.objects.get(
         description="House Transfer"
     ).id
-    assert restored.goal_type == Contribution.GOAL_TARGET
-    assert str(restored.goal_amount) == "5000.00"
-    assert str(restored.goal_date) == "2027-06-01"
+    assert str(restored.target_balance) == "5000.00"
+    assert str(restored.target_date) == "2027-06-01"
+    assert str(restored.minimum_per_paycheck) == "25.00"
+    assert restored.priority == 5
 
 
 @pytest.mark.django_db
 def test_roundtrip_contribution_without_planner_fields(
     tmp_path, test_checking_account,
 ):
-    """A contribution with no account, reminder or goal still round trips.
+    """A contribution with no account, reminder or target still round trips.
 
     This is the shape every pre-planner backup has, so it must not raise.
     """
@@ -331,9 +328,8 @@ def test_roundtrip_contribution_without_planner_fields(
     Contribution.objects.create(
         contribution="HSA",
         per_paycheck="50.00",
-        emergency_amt="0.00",
-        emergency_diff="0.00",
-        cap="0.00",
+        minimum_per_paycheck="0.00",
+        target_balance="0.00",
         active=True,
     )
 
@@ -344,7 +340,8 @@ def test_roundtrip_contribution_without_planner_fields(
     restored = Contribution.objects.get(contribution="HSA")
     assert restored.account is None
     assert restored.reminder is None
-    assert restored.goal_type == Contribution.GOAL_NONE
+    assert restored.target_balance is None
+    assert restored.sweep is False
 
 
 # ---------------------------------------------------------------------------

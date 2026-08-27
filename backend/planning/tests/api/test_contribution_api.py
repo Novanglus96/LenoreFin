@@ -5,9 +5,7 @@ AUTH = {"Authorization": "Bearer test-api-key"}
 CONTRIB_PAYLOAD = {
     "contribution": "Test 401k",
     "per_paycheck": "100.00",
-    "emergency_amt": "50.00",
-    "emergency_diff": "50.00",
-    "cap": "5000.00",
+    "minimum_per_paycheck": "50.00",
     "active": True,
 }
 
@@ -19,9 +17,8 @@ def test_contribution():
     return Contribution.objects.create(
         contribution="Existing 401k",
         per_paycheck=200.00,
-        emergency_amt=100.00,
-        emergency_diff=100.00,
-        cap=10000.00,
+        minimum_per_paycheck=100.00,
+        target_balance=10000.00,
         active=True,
     )
 
@@ -80,10 +77,8 @@ def test_update_contribution(api_client, test_contribution):
         json={
             "contribution": test_contribution.contribution,
             "per_paycheck": "150.00",
-            "emergency_amt": "75.00",
-            "emergency_diff": "75.00",
-            "cap": "5000.00",
-            "active": True,
+            "minimum_per_paycheck": "75.00",
+                    "active": True,
         },
         headers=AUTH,
     )
@@ -127,17 +122,15 @@ def test_list_contributions_totals_sum_active(api_client):
     Contribution.objects.create(
         contribution="Active A",
         per_paycheck=100.00,
-        emergency_amt=50.00,
-        emergency_diff=50.00,
-        cap=5000.00,
+        minimum_per_paycheck=50.00,
+        target_balance=5000.00,
         active=True,
     )
     Contribution.objects.create(
         contribution="Inactive B",
         per_paycheck=999.00,
-        emergency_amt=999.00,
-        emergency_diff=999.00,
-        cap=9999.00,
+        minimum_per_paycheck=999.00,
+        target_balance=9999.00,
         active=False,
     )
 

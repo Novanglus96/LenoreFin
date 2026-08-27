@@ -51,9 +51,10 @@ class DomainContribution:
     id: int
     contribution: str
     per_paycheck: Decimal
-    emergency_diff: Decimal
-    emergency_amt: Decimal
-    cap: Decimal
+    minimum_per_paycheck: Optional[Decimal]
+    target_balance: Optional[Decimal]
+    sweep: bool
+    priority: int
     active: bool
 
 
