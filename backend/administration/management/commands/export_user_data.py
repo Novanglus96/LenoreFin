@@ -281,6 +281,14 @@ class Command(BaseCommand):
                 "goal_amount": str(c.goal_amount),
                 "goal_date": str(c.goal_date) if c.goal_date else None,
                 "goal_rate": str(c.goal_rate),
+                "priority": c.priority,
+                # Nullable on purpose: None means "derive it", 0 means "nothing
+                # is required here". Stringifying a None would lose that.
+                "minimum_per_paycheck": (
+                    str(c.minimum_per_paycheck)
+                    if c.minimum_per_paycheck is not None
+                    else None
+                ),
             }
             for c in Contribution.objects.all().select_related(
                 "account", "reminder"

@@ -413,6 +413,8 @@ class Command(BaseCommand):
                 goal_amount=item.get("goal_amount", 0),
                 goal_date=item.get("goal_date"),
                 goal_rate=item.get("goal_rate", 0),
+                priority=item.get("priority", 100),
+                minimum_per_paycheck=item.get("minimum_per_paycheck"),
             )
 
         # --- 16. Notes ---

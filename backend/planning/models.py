@@ -145,6 +145,19 @@ class Contribution(models.Model):
     goal_rate = models.DecimalField(
         max_digits=5, decimal_places=2, default=0.00
     )
+    # Lower is funded first. When capacity runs out the planner stops filling
+    # goals in this order, so the ranking is what decides who goes short —
+    # sharing the shortage equally across every bucket is not a decision anyone
+    # would actually make.
+    priority = models.IntegerField(default=100)
+    # A floor the user insists on, regardless of what the account's own
+    # obligations work out to. Null means "derive it": the smallest amount that
+    # keeps this account above its floor for the whole horizon. Zero is a real
+    # answer meaning "nothing is required here", which is why this is nullable
+    # rather than defaulting to 0.
+    minimum_per_paycheck = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True, default=None
+    )
 
     def clean(self):
         # A goal is only meaningful against an account to measure.
