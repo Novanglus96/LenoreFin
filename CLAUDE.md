@@ -57,6 +57,30 @@ Test markers: `@pytest.mark.unit`, `@pytest.mark.service`, `@pytest.mark.api`
 
 Test fixtures are in `conftest.py` at the repo root. `api_client` is the Django Ninja `TestClient`.
 
+### Frontend E2E Tests (Playwright)
+
+```bash
+docker compose up -d                                   # the suite drives :8081
+export E2E_PASSWORD="$(grep DJANGO_SUPERUSER_PASSWORD .env.dev | cut -d= -f2)"
+cd frontend
+npm run test:e2e                  # headless
+npm run test:e2e:ui               # pick and watch individual specs
+```
+
+These exist for one blind spot: a Vue template that reads a key the API does
+not send fails silently everywhere else. The page compiles, eslint is clean,
+`npm run build` succeeds, and every backend test passes while the column
+renders empty. Assertions here are about what a person sees, not payload
+shapes — the API tests already pin those.
+
+They drive the running dev stack rather than starting their own server, and
+they run single-worker against the shared dev database, so a spec that creates
+a bucket must delete it again.
+
+Chromium is installed globally by the `code_server` Ansible role, pinned to
+match `@playwright/test` in `package.json` — keep the two in step, the same
+rule as ruff.
+
 ### Linting
 
 Ruff is the linter (not flake8 — use the full path per global CLAUDE.md rules). Also:
