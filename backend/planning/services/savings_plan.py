@@ -22,17 +22,18 @@ This one runs the other way round.
    dates, so the balance under it is `baseline(t) + rate * paychecks_so_far(t)`,
    and the binding constraint is whichever date needs the most.
 
-4. `capacity` — the same arithmetic applied to the funding account, giving the
-   largest total that can be allocated without pushing it below its buffer at
-   any point in the year. A scalar, but derived from the whole path, so a plan
-   that balances over twelve months while overdrawing in September is rejected
-   rather than averaged away.
+4. `capacity` — the same arithmetic applied to the funding account, in two
+   figures. What the year affords is the constraint on the plan; what the path
+   affords unaided is advisory, and the difference between them is money that
+   has to be moved across rather than money that cannot be saved.
 
 5. `build_plan` — fund every minimum, then fill goals in priority order until
    the money runs out, then sweep the remainder.
 
-6. `_verify` — re-check the finished plan against every path. It should pass by
-   construction; it has caught enough arithmetic slips to be worth keeping.
+6. `_verify` — re-check the finished plan against every path, and classify what
+   it finds. A dip the account climbs out of is a timing problem with a
+   one-off fix; a dip it never recovers from is the plan being wrong. Only the
+   second invalidates a plan.
 
 The whole thing costs one forecast pass per account. Candidate allocations are
 evaluated by superposition rather than by re-running the forecast, which is
@@ -43,7 +44,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from decimal import ROUND_CEILING, Decimal
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 
 from django.db.models import Q
 
@@ -68,6 +69,22 @@ DEFAULT_BUFFER = Decimal("10.00")
 # Sanity bound on a derived minimum. Without it a bucket that dips the day
 # before its first paycheck asks for the entire shortfall in one go.
 MIN_PAYCHECKS_TO_SOLVE = Decimal("2")
+
+# How long an account may sit below its floor and still count as a timing
+# problem rather than a broken plan. Measured in paydays, not days, because the
+# question is "has money arrived and the account is *still* under water?" — that
+# scales with how the household is actually paid instead of assuming a
+# fortnight. Two paydays in and not recovered is not a dip, it is a deficit.
+MAX_TIMING_DIP_PAYDAYS = 2
+
+# How often it is reasonable to have to move money across to cover a gap.
+# Owner's call, 2026-08-31, made against the real trade-off: this household can
+# allocate 2,557 a paycheck with no bridging at all, 2,773 with three transfers
+# a year, or the whole 2,893 the year affords — at which point checking dips
+# every single pay cycle and the "plan" is really a fortnightly shuffle. Three
+# sits just before that knee. It caps *discretionary* filling only; a minimum
+# the household has stated is funded whatever bridging it implies.
+MAX_BRIDGES_PER_YEAR = 3
 
 
 @dataclass
@@ -119,12 +136,18 @@ class PlanResult:
     paychecks: list[date]
     paychecks_in_horizon: int
 
+    # Three figures, each answering a different question.
+    # What the plan allocates up to: the most that can be put away while the
+    # bridging stays within budget.
     capacity_per_paycheck: Decimal
-    # What the year affords, ignoring when the money lands. A plan between this
-    # and `capacity_per_paycheck` is affordable but badly timed.
+    # The largest plan that never needs money moved across at all. Advisory —
+    # a plan above it is still valid, it just carries a bridging schedule.
+    path_capacity_per_paycheck: Decimal
+    # The year's surplus over its paydays. The hard ceiling: a plan above this
+    # is not badly timed, it is unaffordable.
     horizon_capacity_per_paycheck: Decimal
-    # Set when the plan only fails on timing: the date it runs short, and the
-    # one-off transfer that fixes it.
+    # Set when the plan is affordable but arrives late: the date the funding
+    # account runs short, and the one-off transfer that covers it.
     timing_shortfall: dict | None
     minimums_total: Decimal
     targets_total: Decimal
@@ -343,12 +366,24 @@ def baseline_path(
 
     steps.sort(key=lambda step: step[0])
 
-    path: list[PathPoint] = []
+    # One point per day, holding that day's closing balance. Several
+    # transactions can land on one date and the forecast does not model their
+    # order, so a running balance that dips mid-day and recovers before the day
+    # is out says nothing except that the rows were sorted arbitrarily. Reading
+    # closing balances also makes the path agree with `_paychecks_before`, which
+    # already counts a payday landing *on* the day it is needed. Judging every
+    # intermediate row instead invented a 994.16 shortfall on one October
+    # afternoon and six more like it, none of which exist at close of business.
+    #
+    # A household that wants protection from posting order sets a larger buffer;
+    # that is the honest dial for it, and it is per household.
+    by_day: dict[int, PathPoint] = {}
     for day, when, delta in steps:
         running += delta
-        path.append(
-            PathPoint(day=day, when=when, balance=running.quantize(Decimal("0.01")))
+        by_day[day] = PathPoint(
+            day=day, when=when, balance=running.quantize(Decimal("0.01"))
         )
+    path: list[PathPoint] = [by_day[day] for day in sorted(by_day)]
 
     # The horizon's end is a point in its own right. Without it an account whose
     # last modelled transaction is in month three looks safe for the rest of the
@@ -363,6 +398,157 @@ def baseline_path(
             )
         )
     return path, opening
+
+
+@dataclass
+class Dip:
+    """One contiguous run below an account's floor.
+
+    The owner's rule for what counts as "no account goes negative" is not
+    "balance >= 0 at every point". It is:
+
+        Small dips or short periods that can be covered by moving money are
+        acceptable. Those are just timing issues if at the end of the plan the
+        account is rectified.
+
+    So a dip has to be measured, not merely detected: how deep, how long, and
+    whether the account climbs back out. `depth` is exactly the one-off transfer
+    that erases it, which is also the input the bridging schedule is built from.
+    """
+
+    start: date
+    start_day: int
+    low: Decimal
+    low_when: date
+    depth: Decimal
+    recovers_on: date | None
+    days_below: int
+    paydays_below: int
+
+    @property
+    def kind(self) -> str:
+        """`one_off` — a bridge fixes it. `structural` — the plan is wrong.
+
+        A dip the account never climbs out of is the plan failing: the money was
+        never there, and no transfer covers a permanent deficit. A dip that is
+        still open after two paydays have landed is the same thing arriving
+        slowly. Everything else is timing, and timing is a transfer.
+
+        Depth deliberately does not appear here. However deep a dip is, if the
+        account recovers, the plan itself is sound and what is needed is a
+        movement of money — whether one can actually be found is the bridging
+        solver's question, and it escalates the dip if the answer is no.
+        """
+        if self.recovers_on is None:
+            return "structural"
+        if self.paydays_below > MAX_TIMING_DIP_PAYDAYS:
+            return "structural"
+        return "one_off"
+
+    @property
+    def why(self) -> str:
+        if self.recovers_on is None:
+            return (
+                f"Below the floor from {self.start} to the end of the plan, "
+                f"{self.depth} under at worst. The account never recovers, so "
+                f"no transfer fixes this."
+            )
+        if self.paydays_below > MAX_TIMING_DIP_PAYDAYS:
+            return (
+                f"Below the floor from {self.start} until {self.recovers_on} — "
+                f"{self.paydays_below} paydays land while it is under water. "
+                f"That is a shortfall, not a timing gap."
+            )
+        return (
+            f"Dips {self.depth} below the floor on {self.low_when} and recovers "
+            f"by {self.recovers_on}. Moving {self.depth} in before {self.start} "
+            f"covers it."
+        )
+
+
+def find_dips(
+    points: list[tuple[int, date, Decimal]],
+    floor: Decimal,
+    paycheck_days: list[int],
+) -> list[Dip]:
+    """Every run below `floor` on a path, with what it would take to bridge it.
+
+    Takes `(day, date, balance)` triples rather than `PathPoint`s because the
+    balances being judged are the *planned* ones — the baseline with the
+    allocation superimposed — not the baseline the path object holds.
+    """
+    dips: list[Dip] = []
+    open_dip: Dip | None = None
+
+    for day, when, balance in points:
+        if balance < floor:
+            if open_dip is None:
+                open_dip = Dip(
+                    start=when,
+                    start_day=day,
+                    low=balance,
+                    low_when=when,
+                    depth=floor - balance,
+                    recovers_on=None,
+                    days_below=0,
+                    paydays_below=0,
+                )
+            elif balance < open_dip.low:
+                open_dip.low = balance
+                open_dip.low_when = when
+                open_dip.depth = floor - balance
+        elif open_dip is not None:
+            _close_dip(open_dip, when, day, paycheck_days)
+            dips.append(open_dip)
+            open_dip = None
+
+    if open_dip is not None:
+        # Still under water at the horizon: no recovery date, and the duration
+        # runs to the end of what was modelled.
+        end_day = points[-1][0]
+        open_dip.days_below = end_day - open_dip.start_day
+        open_dip.paydays_below = _paychecks_before(
+            end_day, paycheck_days
+        ) - _paychecks_before(open_dip.start_day, paycheck_days)
+        open_dip.recovers_on = None
+        dips.append(open_dip)
+
+    for dip in dips:
+        dip.low = dip.low.quantize(Decimal("0.01"))
+        dip.depth = dip.depth.quantize(Decimal("0.01"))
+    return dips
+
+
+def _close_dip(
+    dip: Dip, when: date, day: int, paycheck_days: list[int]
+) -> None:
+    dip.recovers_on = when
+    dip.days_below = day - dip.start_day
+    # Paydays that land *after* the dip opens and by the time it closes. A
+    # payday on the opening day is already in that day's balance, so it did not
+    # get a chance to help.
+    dip.paydays_below = _paychecks_before(day, paycheck_days) - _paychecks_before(
+        dip.start_day, paycheck_days
+    )
+
+
+def _dip_report(
+    dip: Dip, account: str, account_name: str | None, floor: Decimal
+) -> dict:
+    return {
+        "account": account,
+        "account_name": account_name,
+        "kind": dip.kind,
+        "when": dip.start,
+        "low_when": dip.low_when,
+        "balance": dip.low,
+        "floor": floor,
+        "one_off_needed": dip.depth,
+        "recovers_on": dip.recovers_on,
+        "days_below": dip.days_below,
+        "paydays_below": dip.paydays_below,
+        "why": dip.why,
+    }
 
 
 def required_rate(
@@ -432,15 +618,16 @@ def capacity_per_paycheck(
     difference between them is the most useful thing the planner can say.
 
     `horizon` is what the year affords: the whole surplus divided across every
-    payday. `limited` is what the *path* affords, which is whichever point
-    allows least — every point demands
+    payday. **This is the constraint on the plan.** `limited` is what the *path*
+    affords, which is whichever point allows least — every point demands
     `total <= (baseline(t) - buffer) / paychecks_so_far(t)`.
 
-    When a plan fits the first but not the second it is not unaffordable, it is
-    badly timed: the money exists over the year but is not there in the week it
-    is needed. That wants a one-off transfer, not a smaller plan, and telling
-    someone to cut their savings when they actually need to move 990 across for
-    a fortnight is bad advice.
+    A plan between the two is not unaffordable, it is badly timed: the money
+    exists over the year but is not there in the week it is needed. That wants a
+    one-off transfer, not a smaller plan, and telling someone to cut their
+    savings when they actually need to move 990 across for a fortnight is bad
+    advice. So `limited` is advisory — the largest plan that needs no bridging
+    at all — and the bridging schedule covers the difference.
     """
     limited = None
     binding: dict | None = None
@@ -488,6 +675,79 @@ def capacity_per_paycheck(
         binding,
         blocked,
     )
+
+
+def _funding_dips(
+    path: list[PathPoint],
+    total: Decimal,
+    buffer: Decimal,
+    paycheck_days: list[int],
+) -> list[Dip]:
+    """The dips a given per-paycheck total would leave in the funding account.
+
+    Superposition again: a fixed total is a fixed transfer on known dates, so
+    the balance under it is `baseline(t) - total * paychecks_so_far(t)` and no
+    forecast has to be re-run to try a candidate.
+    """
+    points = [
+        (
+            point.day,
+            point.when,
+            point.balance - total * Decimal(_paychecks_before(point.day, paycheck_days)),
+        )
+        for point in path
+    ]
+    return find_dips(points, buffer, paycheck_days)
+
+
+def allocatable_per_paycheck(
+    path: list[PathPoint],
+    buffer: Decimal,
+    paycheck_days: list[int],
+    path_capacity: Decimal,
+    horizon_capacity: Decimal,
+    max_bridges: int,
+) -> Decimal:
+    """The most that can be allocated while bridging stays occasional.
+
+    Between the zero-bridge figure and the year's surplus there is a curve, and
+    it has a knee. On real data: one transfer a year buys 120 a paycheck more
+    than never bridging, three buy 216 — and then the count runs away, because
+    a plan that allocates every last cent leaves checking with no slack at all
+    and it goes under in every pay cycle.
+
+    Found by bisection rather than a formula: dip *count* is a step function of
+    the total, not something to solve for. Each candidate costs one arithmetic
+    pass over the path. Adjacent dips can merge as the total rises, so the count
+    is not perfectly monotonic and the search can settle a little low — which
+    errs toward fewer transfers, the safe direction.
+    """
+
+    def acceptable(total: Decimal) -> bool:
+        dips = _funding_dips(path, total, buffer, paycheck_days)
+        # Count alone is not enough. A total high enough to hold the account
+        # under water for half the year shows up as *one* dip, which would sail
+        # through a budget of three. A structural dip disqualifies a candidate
+        # however few there are of it.
+        if any(dip.kind == "structural" for dip in dips):
+            return False
+        return len(dips) <= max_bridges
+
+    if horizon_capacity <= path_capacity:
+        return path_capacity
+    if acceptable(horizon_capacity):
+        return horizon_capacity
+
+    lo, hi = path_capacity, horizon_capacity
+    for _ in range(24):
+        mid = (lo + hi) / 2
+        if acceptable(mid):
+            lo = mid
+        else:
+            hi = mid
+    # Down, never to nearest. Rounding a boundary up by a cent is enough to buy
+    # an extra dip — two cents under the floor is still under the floor.
+    return lo.quantize(Decimal("0.01"), rounding=ROUND_FLOOR)
 
 
 def rate_to_reach(
@@ -555,6 +815,7 @@ def build_plan(
             paychecks=[],
             paychecks_in_horizon=0,
             capacity_per_paycheck=Decimal("0"),
+            path_capacity_per_paycheck=Decimal("0"),
             horizon_capacity_per_paycheck=Decimal("0"),
             timing_shortfall=None,
             minimums_total=Decimal("0"),
@@ -579,6 +840,7 @@ def build_plan(
             paychecks=[],
             paychecks_in_horizon=0,
             capacity_per_paycheck=Decimal("0"),
+            path_capacity_per_paycheck=Decimal("0"),
             horizon_capacity_per_paycheck=Decimal("0"),
             timing_shortfall=None,
             minimums_total=Decimal("0"),
@@ -604,8 +866,21 @@ def build_plan(
     }
 
     fund_path, _ = baseline_path(fund_id, today, end_date, plan_descriptions)
-    capacity, horizon_capacity, binding, blocked = capacity_per_paycheck(
+    # Three figures. The path one is what needs no bridging; the horizon one is
+    # what the year affords and is the real test of affordability; `capacity` is
+    # where the plan actually stops — the most that can be put away before the
+    # bridging stops being occasional and turns into a fortnightly shuffle.
+    path_capacity, horizon_capacity, binding, blocked = capacity_per_paycheck(
         fund_path, buffer, paycheck_days
+    )
+    max_bridges = max(1, round(MAX_BRIDGES_PER_YEAR * horizon_months / 12))
+    capacity = allocatable_per_paycheck(
+        fund_path,
+        buffer,
+        paycheck_days,
+        path_capacity,
+        horizon_capacity,
+        max_bridges,
     )
 
     lines: list[AccountPlan] = []
@@ -632,34 +907,21 @@ def build_plan(
             f"fix that — it needs {blocked[0]['short_by']} put in now."
         )
 
-    # Two different failures wear the same face. If the minimums fit the year
-    # but not the path, the money exists and simply is not there in the week it
-    # is needed — a one-off transfer fixes that, and cutting the plan would be
-    # the wrong advice entirely.
-    timing: dict | None = None
-    if minimums_total > capacity and minimums_total <= horizon_capacity and binding:
-        needed = (
-            minimums_total * Decimal(binding["paychecks_by_then"])
-            - (binding["balance"] - buffer)
-        ).quantize(Decimal("0.01"))
-        timing = {
-            "when": binding["when"],
-            "balance": binding["balance"],
-            "paychecks_by_then": binding["paychecks_by_then"],
-            "one_off_needed": needed,
-        }
+    # Affordability is judged against the year, not against the bridging
+    # budget: a minimum the household has stated gets funded even if it costs
+    # more transfers than a discretionary top-up would be allowed to.
+    feasible = minimums_total <= horizon_capacity
+    if minimums_total > capacity and feasible:
         notes.append(
-            f"This plan is affordable over the year — it needs "
-            f"{minimums_total.quantize(Decimal('0.01'))} a paycheck against "
-            f"{horizon_capacity} the year affords — but the funding account runs "
-            f"short around {binding['when']}. Moving {needed} into it before then "
-            f"makes the plan work; contributing less does not."
+            f"The stated minimums come to "
+            f"{minimums_total.quantize(Decimal('0.01'))} a paycheck, above the "
+            f"{capacity} that keeps bridging down to {max_bridges} transfers. "
+            f"They are funded anyway — a minimum is a commitment — so expect "
+            f"more movements than that."
         )
         capacity = minimums_total
-
-    feasible = minimums_total <= capacity
     if not feasible:
-        levers = _levers(lines, minimums_total - capacity, capacity)
+        levers = _levers(lines, minimums_total - horizon_capacity, horizon_capacity)
         for line in lines:
             line.planned_per_paycheck = Decimal("0.00")
         return PlanResult(
@@ -669,8 +931,9 @@ def build_plan(
             paychecks=paychecks,
             paychecks_in_horizon=len(paychecks),
             capacity_per_paycheck=capacity,
+            path_capacity_per_paycheck=path_capacity,
             horizon_capacity_per_paycheck=horizon_capacity,
-            timing_shortfall=timing,
+            timing_shortfall=None,
             minimums_total=minimums_total.quantize(Decimal("0.01")),
             targets_total=targets_total.quantize(Decimal("0.01")),
             planned_total=Decimal("0.00"),
@@ -725,13 +988,35 @@ def build_plan(
     breaches = _verify(
         lines, fund_path, paycheck_days, buffer, today, end_date, plan_descriptions
     )
+
+    # The bridge, taken from what verification actually measured rather than
+    # re-derived from the binding point: the first timing dip on the funding
+    # account, its date, and the amount that erases it.
+    timing: dict | None = next(
+        (
+            b
+            for b in breaches
+            if b["account"] == "funding" and b["kind"] == "one_off"
+        ),
+        None,
+    )
     if timing:
-        # Already diagnosed, already costed, and the note says what to do about
-        # it. Reporting it a second time as a plan failure would be telling the
-        # user to cut their savings to fix something a transfer fixes.
-        for breach in breaches:
-            if breach["account"] == "funding":
-                breach["kind"] = "one_off"
+        notes.append(
+            f"This plan is affordable over the year — it allocates "
+            f"{planned_total.quantize(Decimal('0.01'))} a paycheck against "
+            f"{horizon_capacity} the year affords — but the funding account "
+            f"runs short "
+            f"around {timing['when']}, recovering by {timing['recovers_on']}. "
+            f"Moving {timing['one_off_needed']} into it beforehand covers the "
+            f"gap; contributing less is not the fix."
+        )
+    if planned_total > path_capacity and binding:
+        notes.append(
+            f"A plan of {path_capacity} a paycheck or less would need no money "
+            f"moved across at all — that is what the funding account can carry "
+            f"unaided by {binding['when']}, {binding['paychecks_by_then']} "
+            f"paychecks in."
+        )
     if remaining > 0:
         notes.append(
             f"{remaining.quantize(Decimal('0.01'))} a paycheck is left unallocated "
@@ -745,6 +1030,7 @@ def build_plan(
         paychecks=paychecks,
         paychecks_in_horizon=len(paychecks),
         capacity_per_paycheck=capacity,
+        path_capacity_per_paycheck=path_capacity,
         horizon_capacity_per_paycheck=horizon_capacity,
         timing_shortfall=timing,
         minimums_total=minimums_total.quantize(Decimal("0.01")),
@@ -934,30 +1220,27 @@ def _verify(
     Superposition should make this redundant — the rates were derived from these
     very paths — but "should" is doing a lot of work in a module that decides
     where someone's money goes, and this has caught real arithmetic slips.
+
+    What it is checking for is *not* "balance >= 0 everywhere". An account that
+    dips and climbs back out has a timing problem, and the answer to a timing
+    problem is to move money across, not to save less. Only a dip the account
+    never recovers from — or one still open after two paydays have landed —
+    means the plan itself is wrong. Every dip is reported either way, because
+    the timing ones are the bridging schedule.
     """
     breaches: list[dict] = []
 
     total = sum((line.planned_per_paycheck for line in lines), Decimal("0"))
-    for point in fund_path:
-        landed = Decimal(_paychecks_before(point.day, paycheck_days))
-        balance = point.balance - total * landed
-        if balance < buffer:
-            breaches.append(
-                {
-                    "account": "funding",
-                    "account_name": None,
-                    "when": point.when,
-                    "balance": balance.quantize(Decimal("0.01")),
-                    "floor": buffer,
-                    # Too few paydays have landed for any rate to have fixed
-                    # this, so it is a transfer to make, not a plan to change.
-                    "kind": (
-                        "one_off" if landed < MIN_PAYCHECKS_TO_SOLVE else "structural"
-                    ),
-                    "one_off_needed": (buffer - balance).quantize(Decimal("0.01")),
-                }
-            )
-            break
+    planned_points = [
+        (
+            point.day,
+            point.when,
+            point.balance - total * Decimal(_paychecks_before(point.day, paycheck_days)),
+        )
+        for point in fund_path
+    ]
+    for dip in find_dips(planned_points, buffer, paycheck_days):
+        breaches.append(_dip_report(dip, "funding", None, buffer))
 
     for line in lines:
         if not line.account_id:
@@ -989,31 +1272,20 @@ def _verify(
                 else None
             ),
         )
-        for point in path:
-            landed = Decimal(_paychecks_before(point.day, paycheck_days))
-            balance = point.balance + line.planned_per_paycheck * landed
-            if balance < 0:
-                breaches.append(
-                    {
-                        "account": "bucket",
-                        "account_name": line.account_name,
-                        "when": point.when,
-                        "balance": balance.quantize(Decimal("0.01")),
-                        "floor": Decimal("0.00"),
-                        # `required_rate` deliberately declines to solve a dip
-                        # this close — there are not enough paydays before it to
-                        # accumulate anything, so the honest answer is a one-off
-                        # top-up. Verification has to make the same distinction
-                        # or it reports its own policy back as a failure.
-                        "kind": (
-                            "one_off"
-                            if landed < MIN_PAYCHECKS_TO_SOLVE
-                            else "structural"
-                        ),
-                        "one_off_needed": (-balance).quantize(Decimal("0.01")),
-                    }
-                )
-                break
+        planned_points = [
+            (
+                point.day,
+                point.when,
+                point.balance
+                + line.planned_per_paycheck
+                * Decimal(_paychecks_before(point.day, paycheck_days)),
+            )
+            for point in path
+        ]
+        for dip in find_dips(planned_points, Decimal("0.00"), paycheck_days):
+            breaches.append(
+                _dip_report(dip, "bucket", line.account_name, Decimal("0.00"))
+            )
 
     return breaches
 
