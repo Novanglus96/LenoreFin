@@ -386,3 +386,40 @@ def test_the_loan_runs_for_exactly_as_long_as_the_dip():
 
     assert bridges[0]["when"] == TODAY + timedelta(days=100)
     assert bridges[0]["return_on"] == TODAY + timedelta(days=117)
+
+
+# ---------------------------------------------------------------------------
+# Rounding: figures a person can actually set up at a bank
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.service
+def test_rounding_goes_the_way_that_keeps_the_promise():
+    """Direction is not a style question here.
+
+    A minimum rounded down is short by construction. Discretionary filling
+    rounded up is what tipped this household's plan to 2,895 against the
+    2,893.11 the year afforded — a plan made unaffordable by tidying it.
+    """
+    from planning.services.savings_plan import round_down_to, round_up_to
+
+    assert round_up_to(Decimal("156.37")) == Decimal("160.00")
+    assert round_down_to(Decimal("156.37")) == Decimal("155.00")
+    # Already on the increment, so neither direction moves it.
+    assert round_up_to(Decimal("150.00")) == Decimal("150.00")
+    assert round_down_to(Decimal("150.00")) == Decimal("150.00")
+    # Never below nothing: a negative allocation is not a contribution.
+    assert round_down_to(Decimal("2.50")) == Decimal("0.00")
+    assert round_down_to(Decimal("-40.00")) == Decimal("0.00")
+
+
+@pytest.mark.service
+def test_a_bridge_is_rounded_up_because_a_gap_is_not_nearly_covered():
+    from planning.services.savings_plan import find_dips, round_up_to
+
+    dips = find_dips(points((0, 500), (20, Decimal("-106.02")), (24, 300)), FLOOR, PAYDAYS)
+
+    assert dips[0].depth == Decimal("116.02")
+    # The measurement stays exact; the remedy is a transfer somebody makes.
+    assert round_up_to(dips[0].depth) == Decimal("120.00")
+    assert "Moving 120.00 in" in dips[0].why

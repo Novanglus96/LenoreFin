@@ -46,13 +46,27 @@
             </div>
           </v-col>
           <v-col cols="12" sm="6" md="3">
-            <div class="text-caption text-medium-emphasis">
-              Minimums require
-            </div>
-            <div class="text-h6">{{ money(plan.minimums_total) }}</div>
-            <div class="text-caption text-medium-emphasis">
-              what every account must have
-            </div>
+            <template v-if="Number(plan.freed_per_paycheck) > 0">
+              <div class="text-caption text-medium-emphasis">
+                Going in that need not
+              </div>
+              <div class="text-h6 text-warning">
+                {{ money(plan.freed_per_paycheck) }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                across {{ overfundedCount }}
+                {{ overfundedCount === 1 ? "account" : "accounts" }}
+              </div>
+            </template>
+            <template v-else>
+              <div class="text-caption text-medium-emphasis">
+                Minimums require
+              </div>
+              <div class="text-h6">{{ money(plan.minimums_total) }}</div>
+              <div class="text-caption text-medium-emphasis">
+                what every account must have
+              </div>
+            </template>
           </v-col>
           <v-col cols="12" sm="6" md="3">
             <div class="text-caption text-medium-emphasis">
@@ -163,6 +177,15 @@
           </div>
         </template>
         <template v-slot:[`item.reason`]="{ item }">
+          <v-chip
+            v-if="Number(item.freed_per_paycheck) > 0"
+            color="warning"
+            size="x-small"
+            label
+            class="mb-1"
+          >
+            can drop {{ money(item.freed_per_paycheck) }}
+          </v-chip>
           <div class="text-caption">{{ item.reason }}</div>
           <div v-if="item.warning" class="text-caption text-warning">
             {{ item.warning }}
@@ -311,6 +334,13 @@
     { title: "Plan", key: "planned_per_paycheck", width: "120px" },
     { title: "Why", key: "reason" },
   ];
+
+  const overfundedCount = computed(
+    () =>
+      (plan.value?.lines ?? []).filter(
+        line => Number(line.freed_per_paycheck) > 0,
+      ).length,
+  );
 
   const displayHeaders = computed(() =>
     mdAndUp.value ? headers : [{ title: "", key: "mobile" }],

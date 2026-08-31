@@ -86,6 +86,36 @@ MAX_TIMING_DIP_PAYDAYS = 2
 # the household has stated is funded whatever bridging it implies.
 MAX_BRIDGES_PER_YEAR = 3
 
+# Contributions are set up as standing transfers at a bank, by a person, so the
+# figures have to be ones a person would actually type. Owner's call,
+# 2026-08-31: five dollars.
+#
+# Which way each figure rounds is not a style question — it is what keeps the
+# guarantees true. A minimum rounded down is short by construction, so minimums
+# round UP. Discretionary filling rounds DOWN, because rounding every line up
+# put this household's plan at 2,895 against the 2,893.11 the year affords: a
+# plan that no longer fits, produced by tidying it. A bridging transfer rounds
+# UP, because covering all but four dollars of a gap does not cover the gap.
+ROUNDING_INCREMENT = Decimal("5")
+
+
+def round_up_to(value: Decimal, step: Decimal = ROUNDING_INCREMENT) -> Decimal:
+    """The next multiple of `step` at or above `value`."""
+    if step <= 0:
+        return value
+    stepped = (value / step).quantize(Decimal("1"), rounding=ROUND_CEILING) * step
+    return stepped.quantize(Decimal("0.01"))
+
+
+def round_down_to(value: Decimal, step: Decimal = ROUNDING_INCREMENT) -> Decimal:
+    """The previous multiple of `step` at or below `value`."""
+    if step <= 0:
+        return value
+    if value <= 0:
+        return Decimal("0.00")
+    stepped = (value / step).quantize(Decimal("1"), rounding=ROUND_FLOOR) * step
+    return stepped.quantize(Decimal("0.01"))
+
 
 @dataclass
 class PathPoint:
@@ -128,6 +158,16 @@ class AccountPlan:
     spend_variance_per_paycheck: Decimal
     reason: str
     warning: str | None = None
+    # Both are worked out once the allocation is settled, so they are filled in
+    # afterwards rather than passed in.
+    #
+    # What cutting this line back to the plan would free, against what is being
+    # contributed today. Positive means the account is getting more than it
+    # needs.
+    freed_per_paycheck: Decimal = Decimal("0.00")
+    # The part of this line nothing asked for: allocated beyond every stated
+    # minimum and target because it had nowhere else to go.
+    optional_per_paycheck: Decimal = Decimal("0.00")
 
 
 @dataclass
@@ -156,6 +196,15 @@ class PlanResult:
     planned_total: Decimal
     current_total: Decimal
     unallocated: Decimal
+    # What the plan frees compared with what is being contributed today. The
+    # planner is not only for finding money to save — an account that has
+    # already got what it needs is money doing nothing, and saying so is half
+    # the value of proving the plan.
+    freed_per_paycheck: Decimal
+    # Allocated beyond every stated minimum and target, because a sweep account
+    # exists to absorb it. Not a goal being met — a goal nobody has written
+    # down, or money that could simply be spent.
+    optional_per_paycheck: Decimal
 
     feasible: bool
     verified: bool
@@ -481,8 +530,8 @@ class Dip:
             )
         return (
             f"Dips {self.depth} below the floor on {self.low_when} and recovers "
-            f"by {self.recovers_on}. Moving {self.depth} in before {self.start} "
-            f"covers it."
+            f"by {self.recovers_on}. Moving {round_up_to(self.depth)} in before "
+            f"{self.start} covers it."
         )
 
 
@@ -563,7 +612,9 @@ def _dip_report(
         "low_when": dip.low_when,
         "balance": dip.low,
         "floor": floor,
-        "one_off_needed": dip.depth,
+        # The measurement stays exact in `balance` and in the sentence; this
+        # is the remedy, and a remedy is a transfer somebody makes.
+        "one_off_needed": round_up_to(dip.depth),
         "recovers_on": dip.recovers_on,
         "days_below": dip.days_below,
         "paydays_below": dip.paydays_below,
@@ -843,6 +894,8 @@ def build_plan(
             planned_total=Decimal("0"),
             current_total=Decimal("0"),
             unallocated=Decimal("0"),
+            freed_per_paycheck=Decimal("0"),
+            optional_per_paycheck=Decimal("0"),
             feasible=False,
             verified=False,
             notes=[
@@ -868,6 +921,8 @@ def build_plan(
             planned_total=Decimal("0"),
             current_total=Decimal("0"),
             unallocated=Decimal("0"),
+            freed_per_paycheck=Decimal("0"),
+            optional_per_paycheck=Decimal("0"),
             feasible=False,
             verified=False,
             notes=[
@@ -968,6 +1023,8 @@ def build_plan(
             planned_total=Decimal("0.00"),
             current_total=current_total.quantize(Decimal("0.01")),
             unallocated=Decimal("0.00"),
+            freed_per_paycheck=Decimal("0.00"),
+            optional_per_paycheck=Decimal("0.00"),
             feasible=False,
             verified=False,
             lines=lines,
@@ -991,7 +1048,12 @@ def build_plan(
         want = line.target_per_paycheck - line.planned_per_paycheck
         if want <= 0:
             continue
-        give = min(want, remaining)
+        # Down to the increment. Rounding the discretionary half up is what
+        # tips a plan past what the year affords, and going a little short of a
+        # target is a preference not met rather than a bill not paid.
+        give = round_down_to(min(want, remaining))
+        if give <= 0:
+            continue
         line.planned_per_paycheck = (line.planned_per_paycheck + give).quantize(
             Decimal("0.01")
         )
@@ -1005,15 +1067,44 @@ def build_plan(
         line for line in lines if line.sweep
     ]
     if remaining > 0 and sweeps:
-        share = (remaining / Decimal(len(sweeps))).quantize(Decimal("0.01"))
-        for line in sweeps:
-            line.planned_per_paycheck = (
-                line.planned_per_paycheck + share
-            ).quantize(Decimal("0.01"))
-            line.reason = f"{share} a paycheck left over once everything else is funded."
-        remaining = Decimal("0")
+        share = round_down_to(remaining / Decimal(len(sweeps)))
+        if share > 0:
+            for line in sweeps:
+                line.planned_per_paycheck = (
+                    line.planned_per_paycheck + share
+                ).quantize(Decimal("0.01"))
+                line.reason = (
+                    f"{share} a paycheck left over once everything else is "
+                    f"funded."
+                )
+                line.optional_per_paycheck = share
+                remaining -= share
 
     planned_total = sum((line.planned_per_paycheck for line in lines), Decimal("0"))
+
+    # Saving too much is a finding, not a happy accident. An account that
+    # already has what it needs is money sitting still, and the planner is in a
+    # better position than anyone to notice — it has just proved how little
+    # each account actually requires.
+    for line in lines:
+        over = line.current_per_paycheck - line.planned_per_paycheck
+        line.freed_per_paycheck = (
+            over.quantize(Decimal("0.01")) if over > 0 else Decimal("0.00")
+        )
+        if line.freed_per_paycheck > 0:
+            line.reason = (
+                f"{line.reason} Putting in {line.current_per_paycheck} today, "
+                f"which is {line.freed_per_paycheck} a paycheck more than this "
+                f"needs."
+            ).strip()
+
+    freed_total = sum(
+        (line.freed_per_paycheck for line in lines), Decimal("0")
+    )
+    optional_total = sum(
+        (line.optional_per_paycheck for line in lines), Decimal("0")
+    )
+
     breaches = _verify(lines, fund_path, paycheck_days, buffer, paths)
     bridges = solve_bridges(
         breaches, lines, paths, paycheck_days, fund_id, today
@@ -1047,10 +1138,36 @@ def build_plan(
             f"unaided by {binding['when']}, {binding['paychecks_by_then']} "
             f"paychecks in."
         )
-    if remaining > 0:
+    if remaining >= ROUNDING_INCREMENT:
         notes.append(
             f"{remaining.quantize(Decimal('0.01'))} a paycheck is left unallocated "
-            "— every goal is fully funded and no account is set to absorb the rest."
+            "— every goal is fully funded and no account is set to absorb the "
+            "rest. That is money you do not need to save."
+        )
+    if optional_total > 0:
+        sweep_names = ", ".join(
+            line.contribution for line in lines if line.optional_per_paycheck > 0
+        )
+        notes.append(
+            f"Every stated minimum and target is met by "
+            f"{(planned_total - optional_total).quantize(Decimal('0.01'))} a "
+            f"paycheck. The other {optional_total} goes to {sweep_names} "
+            f"because nothing else asked for it — that is a goal you have not "
+            f"written down, or money you could stop saving."
+        )
+    if freed_total > 0:
+        cuts = sorted(
+            (line for line in lines if line.freed_per_paycheck > 0),
+            key=lambda line: line.freed_per_paycheck,
+            reverse=True,
+        )[:3]
+        detail = ", ".join(
+            f"{line.contribution} {line.freed_per_paycheck}" for line in cuts
+        )
+        notes.append(
+            f"{freed_total.quantize(Decimal('0.01'))} a paycheck is going into "
+            f"accounts that do not need it — {detail}. Lowering those "
+            f"contributions costs nothing the plan depends on."
         )
 
     return PlanResult(
@@ -1068,6 +1185,8 @@ def build_plan(
         planned_total=planned_total.quantize(Decimal("0.01")),
         current_total=current_total.quantize(Decimal("0.01")),
         unallocated=remaining.quantize(Decimal("0.01")),
+        freed_per_paycheck=freed_total.quantize(Decimal("0.01")),
+        optional_per_paycheck=optional_total.quantize(Decimal("0.01")),
         feasible=True,
         verified=not any(b["kind"] == "structural" for b in breaches),
         lines=lines,
@@ -1182,7 +1301,10 @@ def _line_for(
     derived, low, low_date, warning = required_rate(
         path, Decimal("0"), paycheck_days
     )
-    minimum = max(derived, stated_minimum or Decimal("0"))
+    # Up to the increment: this is a floor, and a floor rounded down is not one.
+    # A stated minimum is rounded too — the user's figure is what it may not go
+    # below, and going above it is always safe.
+    minimum = round_up_to(max(derived, stated_minimum or Decimal("0")))
 
     if contribution.sweep:
         target = minimum
@@ -1192,7 +1314,7 @@ def _line_for(
             path, contribution.target_balance, contribution.target_date, today,
             paycheck_days,
         )
-        target = max(minimum, needed)
+        target = max(minimum, round_up_to(needed))
         reason = (
             f"Building to {contribution.target_balance}"
             + (f" by {contribution.target_date}" if contribution.target_date else "")
@@ -1441,6 +1563,8 @@ def solve_bridges(
         until_day = (
             (breach["recovers_on"] - today).days if breach["recovers_on"] else None
         )
+        # Already rounded up to the increment by `_dip_report`: covering all
+        # but four dollars of a gap does not cover the gap.
         wanted = breach["one_off_needed"]
 
         offers = []

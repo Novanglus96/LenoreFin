@@ -25,6 +25,9 @@ class PlanLineOut(Schema):
     minimum_is_stated: bool
     target_per_paycheck: AmountDecimal
     planned_per_paycheck: AmountDecimal
+    # Positive means this account is being given more than it needs.
+    freed_per_paycheck: AmountDecimal
+    optional_per_paycheck: AmountDecimal
 
     budgeted_per_paycheck: AmountDecimal
     budget_names: List[str] = []
@@ -106,6 +109,10 @@ class SavingsPlanOut(Schema):
     planned_total: AmountDecimal
     current_total: AmountDecimal
     unallocated: AmountDecimal
+    # What the plan frees against what is contributed today, and what is being
+    # put away that no stated minimum or target asked for.
+    freed_per_paycheck: AmountDecimal
+    optional_per_paycheck: AmountDecimal
 
     feasible: bool
     verified: bool
