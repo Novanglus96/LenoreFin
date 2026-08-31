@@ -2,9 +2,9 @@
   <v-card variant="outlined" :elevation="4" class="bg-surface">
     <v-card-title class="text-left">
       <span class="text-subtitle-2 text-primary">
-        Per Paycheck Overage Rules
+        Windfall Rules
       </span>
-      <v-tooltip text="Add Overage Rule" location="top" v-if="authStore.isFullAccess">
+      <v-tooltip text="Add windfall rule" location="top" v-if="authStore.isFullAccess">
         <template v-slot:activator="{ props }">
           <v-btn
             icon="mdi-water-plus"

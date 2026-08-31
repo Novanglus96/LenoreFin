@@ -5,6 +5,27 @@
       <v-chip v-if="plan && !isLoading" :color="statusColor" size="x-small" label>
         {{ statusLabel }}
       </v-chip>
+      <v-tooltip text="Add bucket" location="top" v-if="authStore.isFullAccess">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            icon="mdi-pail-plus"
+            flat
+            variant="plain"
+            size="small"
+            v-bind="props"
+            :disabled="!isOnline"
+            @click="addDialog = true"
+          ></v-btn>
+        </template>
+      </v-tooltip>
+      <BucketForm
+        v-model="addDialog"
+        key="0"
+        :isEdit="false"
+        :passedFormData="blankBucket"
+        @update-dialog="value => (addDialog = value)"
+        @add-bucket="addBucket"
+      />
       <v-spacer></v-spacer>
       <span
         v-if="plan && !isLoading"
@@ -128,8 +149,8 @@
       <!-- The allocation -->
       <v-data-table
         :headers="displayHeaders"
-        :items="plan.lines"
-        :items-length="plan.lines.length"
+        :items="rows"
+        :items-length="rows.length"
         item-value="bucket_id"
         density="compact"
         disable-sort
@@ -141,16 +162,27 @@
         class="bg-background"
       >
         <template v-slot:[`item.bucket_name`]="{ item }">
-          <div class="font-weight-bold">{{ item.bucket_name }}</div>
+          <div
+            :class="
+              item.active
+                ? 'font-weight-bold'
+                : 'font-italic text-warning text-decoration-line-through'
+            "
+          >
+            {{ item.bucket_name }}
+          </div>
           <div class="text-caption text-medium-emphasis">
             {{ item.account_name ?? "no account" }}
           </div>
         </template>
         <template v-slot:[`item.current_per_paycheck`]="{ item }">
-          <div class="text-center">{{ money(item.current_per_paycheck) }}</div>
+          <div class="text-center">
+            {{ money(item.current_per_paycheck ?? item.bucket.contribution_per_paycheck) }}
+          </div>
         </template>
         <template v-slot:[`item.minimum_per_paycheck`]="{ item }">
-          <div class="text-center">
+          <div class="text-center" v-if="!item.in_plan">—</div>
+          <div class="text-center" v-else>
             {{ money(item.minimum_per_paycheck) }}
             <v-tooltip
               v-if="!item.minimum_is_stated"
@@ -169,12 +201,15 @@
           </div>
         </template>
         <template v-slot:[`item.planned_per_paycheck`]="{ item }">
-          <div class="text-center font-weight-bold">
-            {{ money(item.planned_per_paycheck) }}
-          </div>
-          <div class="text-caption text-center" :class="lineDeltaClass(item)">
-            {{ lineDelta(item) }}
-          </div>
+          <div class="text-center" v-if="!item.in_plan">—</div>
+          <template v-else>
+            <div class="text-center font-weight-bold">
+              {{ money(item.planned_per_paycheck) }}
+            </div>
+            <div class="text-caption text-center" :class="lineDeltaClass(item)">
+              {{ lineDelta(item) }}
+            </div>
+          </template>
         </template>
         <template v-slot:[`item.reason`]="{ item }">
           <v-chip
@@ -206,29 +241,128 @@
           <div v-if="item.warning" class="text-caption text-warning">
             {{ item.warning }}
           </div>
+          <div v-if="!item.in_plan" class="text-caption text-medium-emphasis">
+            Inactive, so the plan does not fund it.
+          </div>
+        </template>
+
+        <!-- A bucket is edited where its plan is read, rather than from a
+             second table of the same rows further down the page. -->
+        <template v-slot:[`item.actions`]="{ item }">
+          <div class="d-flex justify-end">
+            <v-btn
+              variant="plain"
+              icon="mdi-pencil"
+              size="small"
+              density="comfortable"
+              :disabled="!isOnline"
+              @click="openEdit(item)"
+            ></v-btn>
+            <v-btn
+              variant="plain"
+              icon="mdi-delete"
+              size="small"
+              density="comfortable"
+              color="error"
+              :disabled="!isOnline"
+              @click="openDelete(item)"
+            ></v-btn>
+          </div>
         </template>
         <!-- Mobile view -->
         <template v-slot:[`item.mobile`]="{ item }">
           <div class="py-1">
-            <div class="font-weight-bold text-primary">
+            <div
+              class="text-primary"
+              :class="
+                item.active
+                  ? 'font-weight-bold'
+                  : 'font-italic text-decoration-line-through'
+              "
+            >
               {{ item.bucket_name }}
               <span class="text-caption text-medium-emphasis">
                 {{ item.account_name }}
               </span>
             </div>
             <div class="d-flex justify-space-between text-caption">
-              <span>now {{ money(item.current_per_paycheck) }}</span>
-              <span>min {{ money(item.minimum_per_paycheck) }}</span>
-              <span class="font-weight-bold">
-                plan {{ money(item.planned_per_paycheck) }}
+              <span>
+                now
+                {{ money(item.current_per_paycheck ?? item.bucket.contribution_per_paycheck) }}
               </span>
+              <template v-if="item.in_plan">
+                <span>min {{ money(item.minimum_per_paycheck) }}</span>
+                <span class="font-weight-bold">
+                  plan {{ money(item.planned_per_paycheck) }}
+                </span>
+              </template>
+              <span v-else class="text-medium-emphasis">not in the plan</span>
             </div>
             <div class="text-caption text-medium-emphasis">
               {{ item.reason }}
             </div>
+            <div v-if="authStore.isFullAccess" class="d-flex justify-end">
+              <v-btn
+                variant="plain"
+                icon="mdi-pencil"
+                size="small"
+                density="comfortable"
+                :disabled="!isOnline"
+                @click="openEdit(item)"
+              ></v-btn>
+              <v-btn
+                variant="plain"
+                icon="mdi-delete"
+                size="small"
+                density="comfortable"
+                color="error"
+                :disabled="!isOnline"
+                @click="openDelete(item)"
+              ></v-btn>
+            </div>
           </div>
         </template>
       </v-data-table>
+
+      <!-- The emergency plan, derived rather than stored: what every bucket
+           may not go below, and what cutting back to that would free. -->
+      <div
+        v-if="buckets"
+        class="text-caption text-medium-emphasis text-right px-4 py-2"
+      >
+        Contributed now {{ money(buckets.per_paycheck_total) }} · in an
+        emergency {{ money(buckets.emergency_paycheck_total) }} ·
+        freeing {{ money(buckets.total_emergency) }}
+      </div>
+
+      <BucketForm
+        v-if="editing"
+        v-model="editDialog"
+        :key="editing.id"
+        :isEdit="true"
+        :passedFormData="editing"
+        @update-dialog="value => (editDialog = value)"
+        @edit-bucket="editBucket"
+      />
+
+      <v-dialog v-model="deleteDialog" width="400">
+        <v-card>
+          <v-card-title>Delete bucket?</v-card-title>
+          <v-card-text>
+            <span>{{ editing?.name }}</span>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn @click="deleteDialog = false">Close</v-btn>
+            <v-btn
+              color="error"
+              :disabled="!isOnline"
+              @click="confirmDelete"
+            >
+              Delete
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- Budgets are the only thing the plan acts on, so this is how twelve
            months of measured spending gets a say: accepting one changes a
@@ -318,13 +452,84 @@
   </v-card>
 </template>
 <script setup>
-  import { computed } from "vue";
+  import { computed, ref } from "vue";
   import { useDisplay } from "vuetify";
   import NumberFlow from "@number-flow/vue";
+  import BucketForm from "@/components/BucketForm.vue";
   import { useSavingsPlan } from "@/composables/savingsPlanComposable";
+  import { useBuckets } from "@/composables/bucketsComposable";
+  import { useAuthStore } from "@/stores/auth";
+  import { useOnlineStatus } from "@/composables/useOnlineStatus";
 
   const { mdAndUp } = useDisplay();
+  const authStore = useAuthStore();
+  const { isOnline } = useOnlineStatus();
   const { plan, isLoading } = useSavingsPlan();
+  const { buckets, addBucket, editBucket, removeBucket } = useBuckets();
+
+  const addDialog = ref(false);
+  const editDialog = ref(false);
+  const deleteDialog = ref(false);
+  const editing = ref(null);
+
+  const blankBucket = {
+    id: 0,
+    name: null,
+    contribution_per_paycheck: "0",
+    // Null, not zero: blank means "work the minimum out from the budgets and
+    // the dated bills", which is what most buckets want.
+    minimum_per_paycheck: null,
+    target_balance: null,
+    target_date: null,
+    sweep: false,
+    sweep_share: 1,
+    priority: 100,
+    lendable: true,
+    receives_rewards: false,
+    budget_ids: [],
+    scope_tag_ids: [],
+    active: true,
+    account_id: null,
+    reminder_id: null,
+  };
+
+  // The rows are the *buckets*, annotated with what the plan says about each,
+  // rather than the plan's lines. The plan only solves active buckets, so
+  // driving the table from it would hide every inactive one — and with the
+  // separate buckets table gone, hidden means unreachable: no way to open
+  // Charity again once it is switched off.
+  const rows = computed(() => {
+    const lines = new Map(
+      (plan.value?.lines ?? []).map(line => [line.bucket_id, line]),
+    );
+    return (buckets.value?.buckets ?? []).map(bucket => {
+      const line = lines.get(bucket.id);
+      return {
+        ...(line ?? {}),
+        bucket_id: bucket.id,
+        bucket_name: bucket.name,
+        active: bucket.active,
+        in_plan: Boolean(line),
+        reason: line?.reason ?? "",
+        bucket,
+      };
+    });
+  });
+
+  const openEdit = row => {
+    editing.value = row.bucket;
+    editDialog.value = true;
+  };
+
+  const openDelete = row => {
+    editing.value = row.bucket;
+    deleteDialog.value = true;
+  };
+
+  const confirmDelete = () => {
+    removeBucket(editing.value);
+    deleteDialog.value = false;
+  };
 
   const money = value =>
     new Intl.NumberFormat("en-US", {
@@ -379,13 +584,19 @@
     return delta > 0 ? "text-success" : "text-warning";
   };
 
-  const headers = [
-    { title: "Bucket", key: "bucket_name" },
-    { title: "Now", key: "current_per_paycheck", width: "110px" },
-    { title: "Minimum", key: "minimum_per_paycheck", width: "120px" },
-    { title: "Plan", key: "planned_per_paycheck", width: "120px" },
-    { title: "Why", key: "reason" },
-  ];
+  const headers = computed(() => {
+    const columns = [
+      { title: "Bucket", key: "bucket_name" },
+      { title: "Now", key: "current_per_paycheck", width: "110px" },
+      { title: "Minimum", key: "minimum_per_paycheck", width: "120px" },
+      { title: "Plan", key: "planned_per_paycheck", width: "120px" },
+      { title: "Why", key: "reason" },
+    ];
+    if (authStore.isFullAccess) {
+      columns.push({ title: "", key: "actions", width: "96px" });
+    }
+    return columns;
+  });
 
   const suggestionIcon = kind =>
     ({
@@ -403,6 +614,6 @@
   );
 
   const displayHeaders = computed(() =>
-    mdAndUp.value ? headers : [{ title: "", key: "mobile" }],
+    mdAndUp.value ? headers.value : [{ title: "", key: "mobile" }],
   );
 </script>

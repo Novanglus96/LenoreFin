@@ -8,7 +8,7 @@
               <v-row dense>
                 <v-col>
                   <h4 class="text-h6 font-weight-bold mb-2">
-                    {{ props.isEdit ? "Edit" : "Add" }} Overage Rule
+                    {{ props.isEdit ? "Edit" : "Add" }} Windfall Rule
                   </h4>
                 </v-col>
               </v-row>
