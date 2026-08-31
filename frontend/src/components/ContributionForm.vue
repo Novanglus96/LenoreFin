@@ -25,7 +25,7 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col :cols="smAndDown ? 6 : 3">
+                <v-col :cols="smAndDown ? 6 : 4">
                   <v-text-field
                     v-model="per_paycheck.value.value"
                     variant="outlined"
@@ -35,45 +35,36 @@
                     type="number"
                     step="1.00"
                     prefix="$"
-                    @update:modelValue="updateDifference"
+                    hint="What the transfer moves today"
+                    persistent-hint
                   ></v-text-field>
                 </v-col>
-                <v-col :cols="smAndDown ? 6 : 3">
+                <v-col :cols="smAndDown ? 6 : 4">
                   <v-text-field
-                    v-model="emergency_amt.value.value"
+                    v-model="minimum_per_paycheck.value.value"
                     variant="outlined"
-                    label="Emergency Amt"
+                    label="Minimum"
                     density="compact"
-                    :error-messages="emergency_amt.errorMessage.value"
+                    :error-messages="minimum_per_paycheck.errorMessage.value"
                     type="number"
                     step="1.00"
                     prefix="$"
-                    @update:modelValue="updateDifference"
+                    hint="Blank works it out from budgets and bills"
+                    persistent-hint
+                    clearable
                   ></v-text-field>
                 </v-col>
-                <v-col :cols="smAndDown ? 6 : 3">
+                <v-col :cols="smAndDown ? 6 : 4">
                   <v-text-field
-                    v-model="emergency_diff.value.value"
+                    v-model="difference"
                     variant="outlined"
                     label="Difference"
                     density="compact"
-                    :error-messages="emergency_diff.errorMessage.value"
                     type="number"
-                    step="1.00"
                     prefix="$"
+                    hint="Freed up in emergency mode"
+                    persistent-hint
                     disabled
-                  ></v-text-field>
-                </v-col>
-                <v-col :cols="smAndDown ? 6 : 3">
-                  <v-text-field
-                    v-model="cap.value.value"
-                    variant="outlined"
-                    label="Cap"
-                    density="compact"
-                    :error-messages="cap.errorMessage.value"
-                    type="number"
-                    step="1.00"
-                    prefix="$"
                   ></v-text-field>
                 </v-col>
               </v-row>
@@ -100,10 +91,10 @@
                     item-title="title"
                     item-value="value"
                     variant="outlined"
-                    label="Funds account"
+                    label="Account"
                     density="compact"
-                    clearable
                     :error-messages="account_id.errorMessage.value"
+                    clearable
                   ></v-select>
                 </v-col>
                 <v-col :cols="smAndDown ? 12 : 6">
@@ -113,77 +104,106 @@
                     item-title="title"
                     item-value="value"
                     variant="outlined"
-                    label="Recurring transfer"
+                    label="Funded by reminder"
                     density="compact"
-                    clearable
+                    :error-messages="reminder_id.errorMessage.value"
                     :disabled="!account_id.value.value"
                     :hint="
                       account_id.value.value
-                        ? 'Only transfers into the selected account'
+                        ? 'Transfers landing in this account'
                         : 'Pick an account first'
                     "
                     persistent-hint
-                    :error-messages="reminder_id.errorMessage.value"
+                    clearable
                   ></v-select>
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col :cols="smAndDown ? 12 : 4">
+                <v-col>
                   <v-select
-                    v-model="goal_type.value.value"
-                    :items="goalOptions"
+                    v-model="budget_ids.value.value"
+                    :items="budgetOptions"
                     item-title="title"
                     item-value="value"
                     variant="outlined"
-                    label="Goal"
+                    label="Budgets this covers"
                     density="compact"
-                    :error-messages="goal_type.errorMessage.value"
+                    multiple
+                    chips
+                    closable-chips
+                    clearable
+                    hint="The spending this bucket exists to pay for. Leave empty when the spending is genuinely sporadic — save toward a target instead."
+                    persistent-hint
                   ></v-select>
                 </v-col>
-                <v-col
-                  :cols="smAndDown ? 12 : 4"
-                  v-if="['target', 'floor', 'grow', 'budget'].includes(goal_type.value.value)"
-                >
+              </v-row>
+              <v-row dense>
+                <v-col :cols="smAndDown ? 12 : 6">
                   <v-text-field
-                    v-model="goal_amount.value.value"
+                    v-model="target_balance.value.value"
                     variant="outlined"
-                    :label="amountLabel"
+                    label="Target balance"
                     density="compact"
+                    :error-messages="target_balance.errorMessage.value"
                     type="number"
                     step="1.00"
                     prefix="$"
-                    :error-messages="goal_amount.errorMessage.value"
+                    :disabled="sweep.value.value"
+                    hint="What this account should build up to"
+                    persistent-hint
+                    clearable
                   ></v-text-field>
                 </v-col>
-                <v-col
-                  :cols="smAndDown ? 12 : 4"
-                  v-if="goal_type.value.value === 'target'"
-                >
+                <v-col :cols="smAndDown ? 12 : 6">
                   <v-text-field
-                    v-model="goal_date.value.value"
+                    v-model="target_date.value.value"
                     variant="outlined"
                     label="Reach it by"
                     density="compact"
+                    :error-messages="target_date.errorMessage.value"
                     type="date"
-                    :error-messages="goal_date.errorMessage.value"
+                    :disabled="sweep.value.value"
+                    hint="Blank means hold it from now on"
+                    persistent-hint
+                    clearable
                   ></v-text-field>
                 </v-col>
-                <v-col
-                  :cols="smAndDown ? 12 : 4"
-                  v-if="goal_type.value.value === 'grow'"
-                >
+              </v-row>
+              <v-row dense>
+                <v-col :cols="smAndDown ? 12 : 4">
                   <v-text-field
-                    v-model="goal_rate.value.value"
+                    v-model="priority.value.value"
                     variant="outlined"
-                    label="Or annual rate"
+                    label="Priority"
                     density="compact"
+                    :error-messages="priority.errorMessage.value"
                     type="number"
-                    step="0.25"
-                    suffix="%"
-                    hint="Overrides the amount when set"
+                    step="1"
+                    hint="Lower is funded first"
                     persistent-hint
-                    :error-messages="goal_rate.errorMessage.value"
                   ></v-text-field>
+                </v-col>
+                <v-col :cols="smAndDown ? 12 : 4">
+                  <v-checkbox
+                    v-model="sweep.value.value"
+                    :error-messages="sweep.errorMessage.value"
+                    label="Takes what is left over"
+                    density="compact"
+                    hide-details
+                  ></v-checkbox>
+                </v-col>
+                <v-col :cols="smAndDown ? 12 : 4">
+                  <v-checkbox
+                    v-model="lendable.value.value"
+                    :error-messages="lendable.errorMessage.value"
+                    label="Can be borrowed from"
+                    density="compact"
+                    hide-details
+                  ></v-checkbox>
+                  <div class="text-caption text-medium-emphasis">
+                    The planner may move money out of here for a few days to
+                    cover a gap, and puts it back.
+                  </div>
                 </v-col>
               </v-row>
               <v-row dense>
@@ -217,8 +237,16 @@
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
   import { useAccounts } from "@/composables/accountsComposable";
   import { useReminders } from "@/composables/remindersComposable";
+  import { useBudgets } from "@/composables/budgetsComposable";
   import { useField, useForm } from "vee-validate";
   const { isOnline } = useOnlineStatus();
+
+  // Blank is a real answer for several of these fields and it does not mean
+  // zero: a blank minimum means "work it out from the budgets and the bills",
+  // and a blank target means there is no target. Sending 0 instead would be
+  // stating a figure the user never gave.
+  const blankIsNull = value =>
+    value === "" || value === null || value === undefined ? null : value;
 
   const { smAndDown } = useDisplay();
   const { handleSubmit } = useForm({
@@ -231,77 +259,47 @@
       per_paycheck(value) {
         if (value == null || value === "")
           return "Paycheck amount is required.";
-        if (parseFloat(value) < 1)
-          return "Paycheck amount must be more than 0.";
-        if (parseFloat(value) < parseFloat(emergency_amt.value.value))
-          return "Paycheck amount can't be less than emergency amount.";
+        if (parseFloat(value) < 0)
+          return "Paycheck amount cannot be negative.";
 
         return true;
       },
-      emergency_amt(value) {
-        if (value == null || value === "")
-          return "Emergency amount is required.";
-        if (parseFloat(value) < 0) return "Emergency amount must be positive.";
-        if (parseFloat(value) > parseFloat(per_paycheck.value.value))
-          return "Emergency amount can't be greater than paycheck amount.";
+      minimum_per_paycheck(value) {
+        if (blankIsNull(value) === null) return true;
+        if (parseFloat(value) < 0) return "A minimum cannot be negative.";
 
         return true;
       },
-      cap(value) {
-        if (value == null || value === "")
-          return "You must specify a cap(Can be 0).";
-        if (value < 0) return "Cap amount must be positive.";
+      target_balance(value) {
+        if (blankIsNull(value) === null) return true;
+        if (parseFloat(value) < 0) return "A target balance cannot be negative.";
+        if (!account_id.value.value)
+          return "Set an account before giving this a target.";
+        if (sweep.value.value)
+          return "A sweep takes whatever is left, so it cannot also have a target.";
 
         return true;
       },
-      account_id(value) {
-        if (goal_type.value.value && goal_type.value.value !== "none" && !value)
-          return "Pick the account this goal measures.";
-
-        return true;
-      },
-      reminder_id() {
-        return true;
-      },
-      goal_type() {
-        return true;
-      },
-      goal_amount(value) {
-        const goal = goal_type.value.value;
-        if (goal === "budget") {
-          if (value == null || value === "" || parseFloat(value) <= 0)
-            return "A budget needs the amount to fund per year.";
-        }
-        if (goal === "target") {
-          if (value == null || value === "" || parseFloat(value) <= 0)
-            return "A target needs a balance greater than 0.";
-        }
-        if (goal === "floor") {
-          if (value == null || value === "") return "A floor needs a balance.";
-          if (parseFloat(value) < 0) return "Floor must be positive.";
-        }
-        if (goal === "grow") {
-          const rate = parseFloat(goal_rate.value.value);
-          const amt = parseFloat(value);
-          if (!rate && !amt)
-            return "Set a growth amount per month, or an annual rate.";
-        }
-
-        return true;
-      },
-      goal_date(value) {
-        if (goal_type.value.value !== "target") return true;
-        if (!value) return "A target needs a date to reach it by.";
+      target_date(value) {
+        if (blankIsNull(value) === null) return true;
+        if (blankIsNull(target_balance.value.value) === null)
+          return "A target date needs a target balance to reach by then.";
         // A past date cannot be solved for — there are no paychecks left.
         if (new Date(value) <= new Date())
           return "The target date must be in the future.";
 
         return true;
       },
-      goal_rate(value) {
-        if (value != null && value !== "" && parseFloat(value) < 0)
-          return "Rate must be positive.";
+      priority(value) {
+        if (value == null || value === "") return "Priority is required.";
+        if (parseInt(value) < 0) return "Priority cannot be negative.";
 
+        return true;
+      },
+      account_id() {
+        return true;
+      },
+      reminder_id() {
         return true;
       },
     },
@@ -310,41 +308,44 @@
   const id = useField("id");
   const contribution = useField("contribution");
   const per_paycheck = useField("per_paycheck");
-  const emergency_diff = useField("emergency_diff");
-  const emergency_amt = useField("emergency_amt");
-  const cap = useField("cap");
+  const minimum_per_paycheck = useField("minimum_per_paycheck");
+  const target_balance = useField("target_balance");
+  const target_date = useField("target_date");
+  const sweep = useField("sweep");
+  const priority = useField("priority");
+  const lendable = useField("lendable");
+  const budget_ids = useField("budget_ids");
   const active = useField("active");
   const account_id = useField("account_id");
   const reminder_id = useField("reminder_id");
-  const goal_type = useField("goal_type");
-  const goal_amount = useField("goal_amount");
-  const goal_date = useField("goal_date");
-  const goal_rate = useField("goal_rate");
 
   const { accounts } = useAccounts(false);
   const { reminders } = useReminders();
+  const { budgets } = useBudgets(false);
 
-  const goalOptions = [
-    { title: "No goal", value: "none" },
-    { title: "Cover spending, never dip below a floor", value: "floor" },
-    { title: "Cover obligations, hold the buffer", value: "hold" },
-    { title: "Fund a set amount per year", value: "budget" },
-    { title: "Contribute whatever is left over", value: "maximise" },
-    { title: "Reach a target by a date", value: "target" },
-    { title: "Grow by an amount or rate", value: "grow" },
-  ];
-
-  const amountLabel = computed(() => {
-    if (goal_type.value.value === "target") return "Target balance";
-    if (goal_type.value.value === "floor") return "Floor balance";
-    if (goal_type.value.value === "budget") return "Amount per year";
-    return "Growth per month";
+  // What the emergency plan frees up, shown rather than stored — it is the gap
+  // between what this moves now and the floor it may not go below.
+  const difference = computed(() => {
+    const per = parseFloat(per_paycheck.value.value);
+    const min = parseFloat(minimum_per_paycheck.value.value);
+    if (isNaN(per)) return "0";
+    if (isNaN(min)) return "0";
+    return (per - min).toFixed(2);
   });
 
   const accountOptions = computed(() =>
     (accounts.value ?? []).map(a => ({
       title: a.account_name,
       value: a.id,
+    })),
+  );
+
+  // The list endpoint wraps each budget in its spend totals, so the budget
+  // itself is a level down.
+  const budgetOptions = computed(() =>
+    (budgets.value ?? []).map(b => ({
+      title: b.budget?.name ?? b.name,
+      value: b.budget?.id ?? b.id,
     })),
   );
 
@@ -376,24 +377,36 @@
         id.value.value = props.passedFormData.id;
         contribution.value.value = props.passedFormData.contribution;
         per_paycheck.value.value = props.passedFormData.per_paycheck;
-        emergency_diff.value.value = props.passedFormData.emergency_diff;
-        emergency_amt.value.value = props.passedFormData.emergency_amt;
-        cap.value.value = props.passedFormData.cap;
+        minimum_per_paycheck.value.value =
+          props.passedFormData.minimum_per_paycheck ?? null;
+        target_balance.value.value =
+          props.passedFormData.target_balance ?? null;
+        target_date.value.value = props.passedFormData.target_date ?? null;
+        sweep.value.value = props.passedFormData.sweep ?? false;
+        priority.value.value = props.passedFormData.priority ?? 100;
+        lendable.value.value = props.passedFormData.lendable ?? true;
+        budget_ids.value.value = props.passedFormData.budget_ids ?? [];
         active.value.value = props.passedFormData.active;
         account_id.value.value = props.passedFormData.account_id ?? null;
         reminder_id.value.value = props.passedFormData.reminder_id ?? null;
-        goal_type.value.value = props.passedFormData.goal_type ?? "none";
-        goal_amount.value.value = props.passedFormData.goal_amount ?? "0";
-        goal_date.value.value = props.passedFormData.goal_date ?? null;
-        goal_rate.value.value = props.passedFormData.goal_rate ?? "0";
       }
     });
   };
   const submit = handleSubmit(values => {
+    const payload = {
+      ...values,
+      minimum_per_paycheck: blankIsNull(values.minimum_per_paycheck),
+      target_balance: blankIsNull(values.target_balance),
+      target_date: blankIsNull(values.target_date),
+      sweep: values.sweep ?? false,
+      lendable: values.lendable ?? true,
+      priority: parseInt(values.priority ?? 100),
+      budget_ids: values.budget_ids ?? [],
+    };
     if (props.isEdit) {
-      emit("editContribution", values);
+      emit("editContribution", payload);
     } else {
-      emit("addContribution", values);
+      emit("addContribution", payload);
     }
     emit("updateDialog", false);
   });
@@ -406,14 +419,6 @@
 
   const clickClose = () => {
     emit("updateDialog", false);
-  };
-
-  const updateDifference = () => {
-    if (per_paycheck.value.value && emergency_amt.value.value) {
-      emergency_diff.value.value =
-        parseFloat(per_paycheck.value.value) -
-        parseFloat(emergency_amt.value.value);
-    }
   };
 
   onMounted(() => {

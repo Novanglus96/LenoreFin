@@ -207,14 +207,14 @@
         <template v-slot:[`header.per_paycheck`] v-if="mdAndUp">
           <div class="text-center">Paycheck(per)</div>
         </template>
-        <template v-slot:[`header.emergency_amt`] v-if="mdAndUp">
-          <div class="text-center">Emergenct Amt</div>
+        <template v-slot:[`header.minimum_per_paycheck`] v-if="mdAndUp">
+          <div class="text-center">Minimum</div>
         </template>
-        <template v-slot:[`header.emergency_diff`] v-if="mdAndUp">
+        <template v-slot:[`header.difference`] v-if="mdAndUp">
           <div class="text-center">Difference</div>
         </template>
-        <template v-slot:[`header.cap`] v-if="mdAndUp">
-          <div class="text-center">Cap Amount</div>
+        <template v-slot:[`header.target_balance`] v-if="mdAndUp">
+          <div class="text-center">Target</div>
         </template>
         <template v-slot:[`item.contribution`]="{ item }" v-if="mdAndUp">
           <div>
@@ -242,7 +242,10 @@
             </span>
           </div>
         </template>
-        <template v-slot:[`item.emergency_amt`]="{ item }" v-if="mdAndUp">
+        <template
+          v-slot:[`item.minimum_per_paycheck`]="{ item }"
+          v-if="mdAndUp"
+        >
           <div class="text-center">
             <span
               :class="
@@ -251,11 +254,11 @@
                   : 'font-italic text-warning text-decoration-line-through'
               "
             >
-              {{ formatCurrency(item.emergency_amt) }}
+              {{ minimumLabel(item) }}
             </span>
           </div>
         </template>
-        <template v-slot:[`item.emergency_diff`]="{ item }" v-if="mdAndUp">
+        <template v-slot:[`item.difference`]="{ item }" v-if="mdAndUp">
           <div class="text-center">
             <span
               :class="
@@ -264,11 +267,11 @@
                   : 'font-italic text-warning text-decoration-line-through'
               "
             >
-              {{ formatCurrency(item.emergency_diff) }}
+              {{ differenceLabel(item) }}
             </span>
           </div>
         </template>
-        <template v-slot:[`item.cap`]="{ item }" v-if="mdAndUp">
+        <template v-slot:[`item.target_balance`]="{ item }" v-if="mdAndUp">
           <div class="text-center">
             <span
               :class="
@@ -277,7 +280,7 @@
                   : 'font-italic text-warning text-decoration-line-through'
               "
             >
-              {{ formatCurrency(item.cap) }}
+              {{ targetLabel(item) }}
             </span>
           </div>
         </template>
@@ -297,13 +300,13 @@
                 Per
               </v-col>
               <v-col class="pa-0 ga-0 ma-0 text-center font-weight-bold">
-                Emer
+                Min
               </v-col>
               <v-col class="pa-0 ga-0 ma-0 text-center font-weight-bold">
                 Diff
               </v-col>
               <v-col class="pa-0 ga-0 ma-0 text-center font-weight-bold">
-                Cap
+                Target
               </v-col>
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
@@ -311,13 +314,13 @@
                 {{ formatCurrency(item.per_paycheck) }}
               </v-col>
               <v-col class="pa-0 ga-0 ma-0 text-center">
-                {{ formatCurrency(item.emergency_amt) }}
+                {{ minimumLabel(item) }}
               </v-col>
               <v-col class="pa-0 ga-0 ma-0 text-center">
-                {{ formatCurrency(item.emergency_diff) }}
+                {{ differenceLabel(item) }}
               </v-col>
               <v-col class="pa-0 ga-0 ma-0 text-center">
-                {{ formatCurrency(item.cap) }}
+                {{ targetLabel(item) }}
               </v-col>
             </v-row>
           </v-container>
@@ -349,16 +352,18 @@
     id: 0,
     contribution: null,
     per_paycheck: "0",
-    emergency_diff: "0",
-    emergency_amt: "0",
-    cap: "0",
+    // Null, not zero: blank means "work the minimum out from the budgets and
+    // the dated bills", which is what most buckets want.
+    minimum_per_paycheck: null,
+    target_balance: null,
+    target_date: null,
+    sweep: false,
+    priority: 100,
+    lendable: true,
+    budget_ids: [],
     active: true,
     account_id: null,
     reminder_id: null,
-    goal_type: "none",
-    goal_amount: "0",
-    goal_date: null,
-    goal_rate: "0",
   });
 
   const {
@@ -372,10 +377,33 @@
   const headers = ref([
     { title: "Contribution", key: "contribution" },
     { title: "Paycheck(per)", key: "per_paycheck", width: "140px" },
-    { title: "Emergency Amt", key: "emergency_amt", width: "140px" },
-    { title: "Difference", key: "emergency_diff", width: "140px" },
-    { title: "Cap Amount", key: "cap", width: "140px" },
+    { title: "Minimum", key: "minimum_per_paycheck", width: "140px" },
+    { title: "Difference", key: "difference", width: "140px" },
+    { title: "Target", key: "target_balance", width: "140px" },
   ]);
+
+  // A blank minimum is not zero — it means the planner derives it — so it
+  // reads as "auto" rather than as a dollar figure nobody entered.
+  const minimumLabel = item =>
+    item.minimum_per_paycheck === null || item.minimum_per_paycheck === undefined
+      ? "auto"
+      : formatCurrency(item.minimum_per_paycheck);
+
+  const differenceLabel = item => {
+    if (
+      item.minimum_per_paycheck === null ||
+      item.minimum_per_paycheck === undefined
+    )
+      return "—";
+    return formatCurrency(item.per_paycheck - item.minimum_per_paycheck);
+  };
+
+  const targetLabel = item => {
+    if (item.sweep) return "leftover";
+    if (item.target_balance === null || item.target_balance === undefined)
+      return "—";
+    return formatCurrency(item.target_balance);
+  };
   const displayHeaders = computed(() => {
     if (mdAndUp.value) {
       return headers.value;
