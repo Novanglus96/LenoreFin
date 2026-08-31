@@ -36,6 +36,9 @@ class PlanLineOut(Schema):
     # Card rewards expected to land here, and when.
     rewards_expected: AmountDecimal
     rewards_on: Optional[date] = None
+    # Funding this bucket gets that the plan does not set, and where from.
+    other_funding_per_paycheck: AmountDecimal
+    other_funding_names: List[str] = []
     # Spending measured from linked tags because no budget describes it.
     measured_per_year: AmountDecimal
     measured_tag_names: List[str] = []
@@ -138,6 +141,10 @@ class SavingsPlanOut(Schema):
     # put away that no stated minimum or target asked for.
     freed_per_paycheck: AmountDecimal
     optional_per_paycheck: AmountDecimal
+    # What arrives without the plan setting it. Unchanged by the plan, so it
+    # cancels out of any before-and-after — but the allocation quoted on its
+    # own reads as a smaller savings rate than the household actually has.
+    other_funding_total: AmountDecimal
 
     feasible: bool
     verified: bool

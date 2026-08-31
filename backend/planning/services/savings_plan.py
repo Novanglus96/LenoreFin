@@ -64,6 +64,7 @@ from planning.services.planner import (
     DAYS_PER_YEAR,
     analyze_account_trend,
     funding_account_id,
+    occurrences_per_year,
     paychecks_per_year,
 )
 from reminders.models import Reminder
@@ -184,6 +185,12 @@ class BucketPlan:
     # Card rewards expected to land in this account, and when.
     rewards_expected: Decimal = Decimal("0.00")
     rewards_on: date | None = None
+    # Funding this bucket receives that the plan does not decide — a
+    # dependent-care transfer, say. Already on the path, so the solved rates
+    # allow for it; named here because a line reporting 85.00 into an account
+    # that actually receives 362.77 cannot be reasoned about.
+    other_funding_per_paycheck: Decimal = Decimal("0.00")
+    other_funding_names: list[str] = field(default_factory=list)
     freed_per_paycheck: Decimal = Decimal("0.00")
     # The part of this line nothing asked for: allocated beyond every stated
     # minimum and target because it had nowhere else to go.
@@ -228,6 +235,13 @@ class SavingsPlan:
 
     feasible: bool
     verified: bool
+
+    # Funding the plan does not decide, across every bucket. `planned_total` is
+    # what the plan moves; this is what arrives anyway, and the two together are
+    # what the household actually puts away. Unchanged by the plan, so it drops
+    # out of any before-and-after comparison — which is exactly why quoting the
+    # allocation on its own reads as a smaller savings rate than the truth.
+    other_funding_total: Decimal = Decimal("0.00")
     lines: list[BucketPlan] = field(default_factory=list)
     breaches: list[dict] = field(default_factory=list)
     # Where the money for each timing dip comes from, and when it goes back.
@@ -1044,6 +1058,9 @@ def build_savings_plan(
     minimums_total = sum((line.minimum_per_paycheck for line in lines), Decimal("0"))
     targets_total = sum((line.target_per_paycheck for line in lines), Decimal("0"))
     current_total = sum((line.current_per_paycheck for line in lines), Decimal("0"))
+    other_funding_total = sum(
+        (line.other_funding_per_paycheck for line in lines), Decimal("0")
+    )
 
     if blocked:
         notes.append(
@@ -1083,6 +1100,7 @@ def build_savings_plan(
             targets_total=targets_total.quantize(Decimal("0.01")),
             planned_total=Decimal("0.00"),
             current_total=current_total.quantize(Decimal("0.01")),
+            other_funding_total=other_funding_total.quantize(Decimal("0.01")),
             unallocated=Decimal("0.00"),
             freed_per_paycheck=Decimal("0.00"),
             optional_per_paycheck=Decimal("0.00"),
@@ -1259,6 +1277,7 @@ def build_savings_plan(
         targets_total=targets_total.quantize(Decimal("0.01")),
         planned_total=planned_total.quantize(Decimal("0.01")),
         current_total=current_total.quantize(Decimal("0.01")),
+        other_funding_total=other_funding_total.quantize(Decimal("0.01")),
         unallocated=remaining.quantize(Decimal("0.01")),
         freed_per_paycheck=freed_total.quantize(Decimal("0.01")),
         optional_per_paycheck=optional_total.quantize(Decimal("0.01")),
@@ -1293,6 +1312,67 @@ def reward_events(
     if not (today <= outlook.redemption_on <= end_date):
         return []
     return [(outlook.redemption_on, outlook.expected_amount)]
+
+
+@dataclass
+class FundingSource:
+    """One reminder that puts money into a bucket's account."""
+
+    reminder_id: int
+    description: str
+    per_paycheck: Decimal
+    # True for the one the plan decides. Everything else arrives whether the
+    # plan likes it or not.
+    adjustable: bool
+
+
+def funding_sources(bucket: Bucket, per_year: Decimal) -> list[FundingSource]:
+    """Every reminder that funds this bucket, not only the one it points at.
+
+    Derived from the reminders themselves rather than declared on the bucket:
+    a reminder whose destination is this account *is* funding it, so there is
+    no way to forget to write one down. Ally - Kids is the case that demands
+    it — the linked `Transfer to Kids` moves 85.00 a fortnight while an
+    undeclared `DCA Transfer to Ally` moves 277.77, three times as much, and
+    the page said the bucket received 85.
+
+    Two kinds, and the difference is what the plan is allowed to do:
+
+    - **adjustable** — the transfer the plan decides. `bucket.reminder`, and
+      the only one lifted off the path so a new rate can be superimposed.
+    - **fixed** — money that arrives regardless. A dependent-care transfer is
+      set by an election made once a year, not by this plan. These stay *on*
+      the path, which is why the solved rates were already right; what was
+      missing was any way to see them.
+    """
+    if not bucket.account_id or per_year <= 0:
+        return []
+
+    sources: list[FundingSource] = []
+    for reminder in (
+        Reminder.objects.filter(reminder_destination_account_id=bucket.account_id)
+        .select_related("repeat")
+        .order_by("id")
+    ):
+        occurrences = occurrences_per_year(reminder.repeat)
+        if not occurrences:
+            # A one-off is a dated event on the path, not a rate. Reporting it
+            # as one would imply it recurs.
+            continue
+        amount = abs(Decimal(str(reminder.amount or 0)))
+        if amount <= 0:
+            continue
+        sources.append(
+            FundingSource(
+                reminder_id=reminder.id,
+                description=reminder.description or f"Reminder {reminder.id}",
+                per_paycheck=(amount * occurrences / per_year).quantize(
+                    Decimal("0.01")
+                ),
+                adjustable=reminder.id == bucket.reminder_id,
+            )
+        )
+    return sources
 
 
 def bucket_path(
@@ -1402,6 +1482,13 @@ def _line_for(
             warning="Link an account to include this in the plan.",
         )
 
+    # Everything funding this account, not only the reminder it points at.
+    sources = funding_sources(bucket, per_year)
+    other_funding = sum(
+        (s.per_paycheck for s in sources if not s.adjustable), Decimal("0")
+    ).quantize(Decimal("0.01"))
+    other_funding_names = [s.description for s in sources if not s.adjustable]
+
     _, measured_per_year, measured_tag_names = tag_spend_events(
         bucket, today, end_date
     )
@@ -1442,6 +1529,14 @@ def _line_for(
         target = minimum
         reason = "Covering its dated obligations."
 
+    if other_funding > 0:
+        # The plan is not being modest: this money is already on the path, so
+        # the rate below it is what is needed *on top* of what arrives anyway.
+        reason = (
+            f"{reason} A further {other_funding} a paycheck arrives from "
+            f"{', '.join(other_funding_names)}, which the plan does not set; "
+            f"the figure here is what is needed on top of it."
+        ).strip()
     if rewards_expected > 0:
         reason = (
             f"{reason} Card rewards of about {rewards_expected} are expected "
@@ -1510,6 +1605,8 @@ def _line_for(
         measured_tag_names=measured_tag_names,
         rewards_expected=rewards_expected,
         rewards_on=rewards_on,
+        other_funding_per_paycheck=other_funding,
+        other_funding_names=other_funding_names,
         target_balance=bucket.target_balance,
         projected_low=low,
         projected_low_date=low_date,

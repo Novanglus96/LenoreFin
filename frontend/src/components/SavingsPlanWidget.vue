@@ -65,6 +65,12 @@
             <div class="text-caption" :class="deltaClass">
               {{ deltaLabel }}
             </div>
+            <div
+              v-if="Number(plan.other_funding_total) > 0"
+              class="text-caption text-medium-emphasis"
+            >
+              plus {{ money(plan.other_funding_total) }} the plan does not set
+            </div>
           </v-col>
           <v-col cols="12" sm="6" md="3">
             <template v-if="Number(plan.freed_per_paycheck) > 0">
@@ -179,6 +185,14 @@
           <div class="text-center">
             {{ money(item.current_per_paycheck ?? item.bucket.contribution_per_paycheck) }}
           </div>
+          <!-- Money the plan does not set. Without it a bucket receiving
+               362.77 reads as receiving 85. -->
+          <div
+            v-if="Number(item.other_funding_per_paycheck) > 0"
+            class="text-caption text-center text-medium-emphasis"
+          >
+            +{{ money(item.other_funding_per_paycheck) }} elsewhere
+          </div>
         </template>
         <template v-slot:[`item.minimum_per_paycheck`]="{ item }">
           <div class="text-center" v-if="!item.in_plan">—</div>
@@ -289,6 +303,9 @@
               <span>
                 now
                 {{ money(item.current_per_paycheck ?? item.bucket.contribution_per_paycheck) }}
+                <template v-if="Number(item.other_funding_per_paycheck) > 0">
+                  +{{ money(item.other_funding_per_paycheck) }}
+                </template>
               </span>
               <template v-if="item.in_plan">
                 <span>min {{ money(item.minimum_per_paycheck) }}</span>

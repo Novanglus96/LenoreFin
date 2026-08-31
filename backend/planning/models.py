@@ -183,6 +183,20 @@ class Bucket(models.Model):
             )
         if self.minimum_per_paycheck is not None and self.minimum_per_paycheck < 0:
             raise ValidationError("A minimum cannot be negative.")
+        # The reminder this bucket points at is the one the plan *adjusts*, so
+        # it has to be one that actually funds the account. Pointing at a
+        # transfer that lands somewhere else would have the plan raising a
+        # figure that never reaches this bucket, and the funding it does
+        # receive would be reported as money nobody set.
+        if self.reminder_id and self.account_id:
+            destination = getattr(
+                self.reminder, "reminder_destination_account_id", None
+            )
+            if destination and destination != self.account_id:
+                raise ValidationError(
+                    "That reminder does not pay into this bucket's account, so "
+                    "the plan cannot use it to fund this bucket."
+                )
         # A sweep takes what is left over, so a ceiling on it is a contradiction
         # — the leftover is defined by everything else, not by this row.
         if self.sweep and self.target_balance is not None:
