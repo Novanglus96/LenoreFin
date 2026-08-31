@@ -55,7 +55,7 @@ class BudgetSuggestion:
     suggested_amount: Decimal
     cadence: str
     per_paycheck_effect: Decimal
-    bucket: str | None
+    bucket_name: str | None
     why: str
 
 
@@ -200,7 +200,7 @@ def review_budgets(today: date, window_days: int = 365) -> BudgetReview:
                 per_paycheck_effect=(gap / per_paycheck).quantize(
                     Decimal("0.01")
                 ),
-                bucket=budget_owner.get(budget.pk),
+                bucket_name=budget_owner.get(budget.pk),
                 why=(
                     f"{budget.name} budgets {budgeted} a year and the last "
                     f"twelve months came to {spent.quantize(Decimal('0.01'))}. "
@@ -267,7 +267,7 @@ def _overlaps(
                 suggested_amount=Decimal("0.00"),
                 cadence="",
                 per_paycheck_effect=Decimal("0.00"),
-                bucket=None,
+                bucket_name=None,
                 why=(
                     f"{len(names)} budgets cover the same tags: "
                     f"{', '.join(names[:6])}"
@@ -323,7 +323,7 @@ def _unbudgeted(
                 per_paycheck_effect=(spent / per_paycheck).quantize(
                     Decimal("0.01")
                 ),
-                bucket=bucket.name,
+                bucket_name=bucket.name,
                 why=(
                     f"{spent} a year was spent on {', '.join(names)}, which "
                     f"{bucket.name} is meant to cover and no "

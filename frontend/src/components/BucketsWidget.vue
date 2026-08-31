@@ -191,7 +191,7 @@
                 <v-card>
                   <v-card-title>Delete Bucket?</v-card-title>
                   <v-card-text>
-                    <span>{{ editingBucket.bucket }}</span>
+                    <span>{{ editingBucket.name }}</span>
                   </v-card-text>
                   <v-card-actions>
                     <v-btn @click="deleteBucketDialog = false">Close</v-btn>
@@ -216,7 +216,7 @@
         <template v-slot:[`header.target_balance`] v-if="mdAndUp">
           <div class="text-center">Target</div>
         </template>
-        <template v-slot:[`item.bucket`]="{ item }" v-if="mdAndUp">
+        <template v-slot:[`item.name`]="{ item }" v-if="mdAndUp">
           <div>
             <span
               :class="
@@ -225,7 +225,7 @@
                   : 'font-italic text-warning text-decoration-line-through'
               "
             >
-              {{ item.bucket }}
+              {{ item.name }}
             </span>
           </div>
         </template>
@@ -292,7 +292,7 @@
                 class="ma-0 pa-0 ga-0 font-weight-bold text-primary"
                 cols="12"
               >
-                {{ item.bucket }}
+                {{ item.name }}
               </v-col>
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
@@ -350,7 +350,7 @@
   const editingBucket = ref({ id: 0 });
   const newBucketData = ref({
     id: 0,
-    bucket: null,
+    name: null,
     contribution_per_paycheck: "0",
     // Null, not zero: blank means "work the minimum out from the budgets and
     // the dated bills", which is what most buckets want.
@@ -378,7 +378,7 @@
   } = useBuckets();
 
   const headers = ref([
-    { title: "Bucket", key: "bucket" },
+    { title: "Bucket", key: "name" },
     { title: "Paycheck(per)", key: "contribution_per_paycheck", width: "140px" },
     { title: "Minimum", key: "minimum_per_paycheck", width: "140px" },
     { title: "Difference", key: "difference", width: "140px" },

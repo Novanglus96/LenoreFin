@@ -15,11 +15,11 @@
               <v-row dense>
                 <v-col>
                   <v-text-field
-                    v-model="bucket.value.value"
+                    v-model="name.value.value"
                     variant="outlined"
                     label="Bucket"
                     density="compact"
-                    :error-messages="bucket.errorMessage.value"
+                    :error-messages="name.errorMessage.value"
                     :counter="254"
                   ></v-text-field>
                 </v-col>
@@ -297,7 +297,7 @@
   const { smAndDown } = useDisplay();
   const { handleSubmit } = useForm({
     validationSchema: {
-      bucket(value) {
+      name(value) {
         if (value?.length >= 2 && value?.length <= 254) return true;
 
         return "Bucket needs to be at least 2 characters, and less than 254.";
@@ -359,7 +359,7 @@
   });
 
   const id = useField("id");
-  const bucket = useField("bucket");
+  const name = useField("name");
   const contribution_per_paycheck = useField("contribution_per_paycheck");
   const minimum_per_paycheck = useField("minimum_per_paycheck");
   const target_balance = useField("target_balance");
@@ -441,8 +441,9 @@
     watchEffect(() => {
       if (props.passedFormData) {
         id.value.value = props.passedFormData.id;
-        bucket.value.value = props.passedFormData.bucket;
-        contribution_per_paycheck.value.value = props.passedFormData.per_paycheck;
+        name.value.value = props.passedFormData.name;
+        contribution_per_paycheck.value.value =
+          props.passedFormData.contribution_per_paycheck;
         minimum_per_paycheck.value.value =
           props.passedFormData.minimum_per_paycheck ?? null;
         target_balance.value.value =

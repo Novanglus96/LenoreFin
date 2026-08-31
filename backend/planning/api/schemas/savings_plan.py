@@ -71,7 +71,7 @@ class DipOut(Schema):
 class BridgeMovementOut(Schema):
     from_account_id: Optional[int] = None
     from_account: Optional[str] = None
-    bucket: str
+    bucket_name: str
     amount: AmountDecimal
     annual_rate: AmountDecimal
     # What that account could have spared in total, so the user can see how
@@ -104,7 +104,7 @@ class BudgetSuggestionOut(Schema):
     suggested_amount: AmountDecimal
     cadence: str
     per_paycheck_effect: AmountDecimal
-    bucket: Optional[str] = None
+    bucket_name: Optional[str] = None
     why: str
 
 

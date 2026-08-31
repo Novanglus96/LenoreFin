@@ -12,7 +12,7 @@ import PayeesView from "@/views/PayeesView.vue";
 import DocumentView from "@/views/DocumentView.vue";
 import CalculatorView from "@/views/CalculatorView.vue";
 import PayView from "@/views/PayView.vue";
-import BucketsView from "@/views/BucketsView.vue";
+import SavingsPlanView from "@/views/SavingsPlanView.vue";
 import ExpensesView from "@/views/ExpensesView.vue";
 import NotesView from "@/views/NotesView.vue";
 import RetirementView from "@/views/RetirementView.vue";
@@ -86,9 +86,9 @@ const routes = [
     component: CalculatorView,
   },
   {
-    path: "/planning/buckets",
-    name: "buckets",
-    component: BucketsView,
+    path: "/planning/savings-plan",
+    name: "savings-plan",
+    component: SavingsPlanView,
   },
   {
     path: "/planning/budgets",

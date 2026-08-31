@@ -1727,7 +1727,7 @@ def solve_bridges(
                 {
                     "from_account_id": line.account_id,
                     "from_account": line.account_name,
-                    "bucket": line.bucket_name,
+                    "bucket_name": line.bucket_name,
                     "amount": take.quantize(Decimal("0.01")),
                     "annual_rate": rate,
                     "spare": spare,

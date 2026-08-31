@@ -126,7 +126,7 @@ def test_spending_a_bucket_owns_with_no_budget_becomes_a_new_one(
 
     assert [s.kind for s in review.suggestions] == ["create"]
     suggestion = review.suggestions[0]
-    assert suggestion.bucket == "Gifts"
+    assert suggestion.bucket_name == "Gifts"
     assert suggestion.measured_per_year == Decimal("2023.34")
     # Named per paycheck too, because that is the unit the plan is stated in.
     assert suggestion.per_paycheck_effect == Decimal("77.55")
