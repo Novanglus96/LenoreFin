@@ -436,6 +436,10 @@ class Command(BaseCommand):
                 if item.get("reminder_id")
                 else None,
                 priority=item.get("priority", 100),
+                # A backup taken before bridging existed has no opinion on
+                # this, and the safe reading of no opinion is the default
+                # every contribution starts with.
+                lendable=item.get("lendable", True),
             )
             # Budgets are imported at step 20, after this, so the link is made
             # by name once both sides exist rather than here.

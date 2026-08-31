@@ -20,6 +20,8 @@ class ContributionIn(Schema):
     target_date: Optional[date] = None
     sweep: bool = False
     priority: int = 100
+    # Whether the planner may borrow from this account to bridge a gap.
+    lendable: bool = True
     budget_ids: List[int] = []
 
 
@@ -36,6 +38,7 @@ class ContributionOut(Schema):
     target_date: Optional[date] = None
     sweep: bool
     priority: int
+    lendable: bool
     budget_ids: List[int] = []
     budget_names: List[str] = []
     # Convenience for the table, so it need not join accounts client-side.

@@ -100,6 +100,7 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
         contribution.target_date = payload.target_date
         contribution.sweep = payload.sweep
         contribution.priority = payload.priority
+        contribution.lendable = payload.lendable
         contribution.active = payload.active
         contribution.account_id = payload.account_id
         contribution.reminder_id = payload.reminder_id

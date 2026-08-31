@@ -287,6 +287,7 @@ class Command(BaseCommand):
                 # which the importer resolves through reminder_id_map.
                 "reminder_id": c.reminder_id,
                 "priority": c.priority,
+                "lendable": c.lendable,
                 # By name, because Budget.name is unique and pks are not stable
                 # across an export/import cycle.
                 "budget_names": [b.name for b in c.budgets.all()],

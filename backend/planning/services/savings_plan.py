@@ -104,6 +104,8 @@ class AccountPlan:
     account_name: str | None
     priority: int
     sweep: bool
+    # Whether this account may be borrowed from to bridge someone else's gap.
+    lendable: bool
     paychecks_per_year: Decimal
 
     current_per_paycheck: Decimal
@@ -159,6 +161,10 @@ class PlanResult:
     verified: bool
     lines: list[AccountPlan] = field(default_factory=list)
     breaches: list[dict] = field(default_factory=list)
+    # Where the money for each timing dip comes from, and when it goes back.
+    # A plan is the allocation and this schedule together, not one without
+    # the other.
+    bridges: list[dict] = field(default_factory=list)
     levers: list[dict] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
@@ -384,6 +390,15 @@ def baseline_path(
             day=day, when=when, balance=running.quantize(Decimal("0.01"))
         )
     path: list[PathPoint] = [by_day[day] for day in sorted(by_day)]
+    # Today is a point on every path, even for an account with nothing
+    # scheduled for weeks. Starting at the first modelled transaction leaves the
+    # days before it unexamined, which reads as "this account holds nothing"
+    # rather than "nothing happens here yet".
+    if not path or path[0].day > 0:
+        path.insert(
+            0,
+            PathPoint(day=0, when=today, balance=opening.quantize(Decimal("0.01"))),
+        )
 
     # The horizon's end is a point in its own right. Without it an account whose
     # last modelled transaction is in month three looks safe for the rest of the
@@ -883,6 +898,14 @@ def build_plan(
         max_bridges,
     )
 
+    # One forecast pass per account, built here and shared. The rate solve, the
+    # verification and the bridging solver must all reason about the same path.
+    paths: dict[int, list[PathPoint]] = {
+        c.id: bucket_path(c, today, end_date)
+        for c in contributions
+        if c.account_id
+    }
+
     lines: list[AccountPlan] = []
     for contribution in contributions:
         lines.append(
@@ -893,6 +916,7 @@ def build_plan(
                 paycheck_days,
                 window_months,
                 horizon_months,
+                paths.get(contribution.id, []),
             )
         )
 
@@ -985,8 +1009,9 @@ def build_plan(
         remaining = Decimal("0")
 
     planned_total = sum((line.planned_per_paycheck for line in lines), Decimal("0"))
-    breaches = _verify(
-        lines, fund_path, paycheck_days, buffer, today, end_date, plan_descriptions
+    breaches = _verify(lines, fund_path, paycheck_days, buffer, paths)
+    bridges = solve_bridges(
+        breaches, lines, paths, paycheck_days, fund_id, today
     )
 
     # The bridge, taken from what verification actually measured rather than
@@ -1042,8 +1067,49 @@ def build_plan(
         verified=not any(b["kind"] == "structural" for b in breaches),
         lines=lines,
         breaches=breaches,
+        bridges=bridges,
         notes=notes,
     )
+
+
+def bucket_path(
+    contribution: Contribution, today: date, end_date: date
+) -> list[PathPoint]:
+    """The projected path of one contribution's account, unfunded by it.
+
+    Shared deliberately. `_line_for` solves a rate against this path, `_verify`
+    re-checks the finished plan on it, and the bridging solver asks it what it
+    can spare — and all three have to be looking at the *same* path or the plan
+    is proved against something it was not built from. That has already gone
+    wrong once: verification excluded every contribution's transfer while the
+    solver excluded only the row's own, and buckets carry each other's
+    transfers, so the verified path was not the solved path.
+    """
+    own = (
+        contribution.reminder.description
+        if contribution.reminder_id and contribution.reminder.description
+        else None
+    )
+    budgets = list(contribution.budgets.select_related("repeat").all())
+    spend_events: list[tuple[date, Decimal]] = []
+    for budget in budgets:
+        spend_events.extend(budget_events(budget, today, end_date))
+
+    path, _ = baseline_path(
+        contribution.account_id,
+        today,
+        end_date,
+        {own} if own else set(),
+        spend_events=spend_events,
+        # Only when budgets are supplying the spending; otherwise the recorded
+        # reimbursements are the only evidence there is.
+        replace_adhoc_reimbursements_to=(
+            contribution.reminder.reminder_source_account_id
+            if budgets and contribution.reminder_id
+            else None
+        ),
+    )
+    return path
 
 
 def _line_for(
@@ -1053,6 +1119,7 @@ def _line_for(
     paycheck_days: list[int],
     window_months: int,
     horizon_months: int,
+    path: list[PathPoint],
 ) -> AccountPlan:
     """Work out one contribution's minimum and target from its own account.
 
@@ -1085,6 +1152,7 @@ def _line_for(
             account_name=None,
             priority=contribution.priority,
             sweep=contribution.sweep,
+            lendable=contribution.lendable,
             paychecks_per_year=per_year,
             current_per_paycheck=current,
             minimum_per_paycheck=minimum,
@@ -1101,25 +1169,6 @@ def _line_for(
             reason="No account linked, so there is nothing to project.",
             warning="Link an account to include this in the plan.",
         )
-
-    spend_events: list[tuple[date, Decimal]] = []
-    for budget in budgets:
-        spend_events.extend(budget_events(budget, today, end_date))
-
-    path, _ = baseline_path(
-        contribution.account_id,
-        today,
-        end_date,
-        {own} if own else set(),
-        spend_events=spend_events,
-        # Only when budgets are supplying the spending; otherwise the recorded
-        # reimbursements are the only evidence there is.
-        replace_adhoc_reimbursements_to=(
-            contribution.reminder.reminder_source_account_id
-            if budgets and contribution.reminder_id
-            else None
-        ),
-    )
 
     # Solvency, nothing more: this account must not go overdrawn once its
     # budgets and its dated obligations are both on the path. Whatever buffer it
@@ -1188,6 +1237,7 @@ def _line_for(
         account_name=contribution.account.account_name,
         priority=contribution.priority,
         sweep=contribution.sweep,
+        lendable=contribution.lendable,
         paychecks_per_year=per_year,
         current_per_paycheck=current,
         minimum_per_paycheck=minimum,
@@ -1211,9 +1261,7 @@ def _verify(
     fund_path: list[PathPoint],
     paycheck_days: list[int],
     buffer: Decimal,
-    today: date,
-    end_date: date,
-    plan_descriptions: set[str],
+    paths: dict[int, list[PathPoint]],
 ) -> list[dict]:
     """Re-check the finished plan against every path it claims to satisfy.
 
@@ -1243,35 +1291,9 @@ def _verify(
         breaches.append(_dip_report(dip, "funding", None, buffer))
 
     for line in lines:
-        if not line.account_id:
+        path = paths.get(line.contribution_id)
+        if not line.account_id or not path:
             continue
-        contribution = Contribution.objects.filter(pk=line.contribution_id).first()
-        spend_events: list[tuple[date, Decimal]] = []
-        budgets = []
-        own = None
-        if contribution:
-            budgets = list(contribution.budgets.select_related("repeat").all())
-            for budget in budgets:
-                spend_events.extend(budget_events(budget, today, end_date))
-            if contribution.reminder_id and contribution.reminder.description:
-                own = contribution.reminder.description
-        # Only this contribution's own transfer, exactly as `_line_for` saw it.
-        # Excluding every contribution's description instead quietly removed
-        # other buckets' transfers that happen to touch this account — one real
-        # bucket carries a "Transfer to House" — so the verified path was not
-        # the path the rate was solved against.
-        path, _ = baseline_path(
-            line.account_id,
-            today,
-            end_date,
-            {own} if own else set(),
-            spend_events=spend_events,
-            replace_adhoc_reimbursements_to=(
-                contribution.reminder.reminder_source_account_id
-                if budgets and contribution and contribution.reminder_id
-                else None
-            ),
-        )
         planned_points = [
             (
                 point.day,
@@ -1288,6 +1310,221 @@ def _verify(
             )
 
     return breaches
+
+
+def _source_rates(account_ids: list[int]) -> dict[int, Decimal]:
+    """What each candidate account earns, for ranking which one to raid.
+
+    A child account cannot hold an APY — the model forbids it, because the
+    interest is calculated and paid on the parent. So a bucket's rate is its
+    parent's rate, and sibling buckets all earn the same. Ranking by rate only
+    separates accounts at different institutions, which is exactly when it
+    matters: take the money that is working least hard.
+    """
+    rates: dict[int, Decimal] = {}
+    for account in Account.objects.filter(pk__in=account_ids).select_related(
+        "parent_account"
+    ):
+        rate = account.annual_rate or Decimal("0")
+        if account.parent_account_id and not rate:
+            rate = account.parent_account.annual_rate or Decimal("0")
+        rates[account.pk] = rate
+    return rates
+
+
+def available_to_lend(
+    path: list[PathPoint],
+    rate_per_paycheck: Decimal,
+    paycheck_days: list[int],
+    from_day: int,
+    until_day: int | None,
+) -> Decimal:
+    """The most this account can lend out over a window without going under.
+
+    Superposition once more: money taken out on one date and put back on
+    another shifts the account's balance down by that amount for the days in
+    between, and by nothing at all outside them. So the loan is limited by the
+    account's *lowest* balance while it is outstanding — not by what it holds on
+    the day the money is wanted, which is the figure that would tempt you into
+    emptying a bucket the week before its own bill lands.
+
+    `until_day` of None is a permanent transfer: the account never gets it back,
+    so every day to the horizon constrains it.
+    """
+    lowest: Decimal | None = None
+    carried: Decimal | None = None
+
+    for point in path:
+        balance = point.balance + rate_per_paycheck * Decimal(
+            _paychecks_before(point.day, paycheck_days)
+        )
+        if point.day < from_day:
+            # A balance holds until something moves it. Windows are short — a
+            # dip that lasts three days is the common case — and most accounts
+            # have nothing scheduled inside one, so judging them only on points
+            # that fall within it concluded that an account sitting on fifteen
+            # thousand could not spare twenty-six.
+            carried = balance
+            continue
+        if until_day is not None and point.day >= until_day:
+            break
+        if lowest is None or balance < lowest:
+            lowest = balance
+
+    if carried is not None and (lowest is None or carried < lowest):
+        lowest = carried
+    if lowest is None or lowest <= 0:
+        return Decimal("0.00")
+    return lowest.quantize(Decimal("0.01"), rounding=ROUND_FLOOR)
+
+
+def solve_bridges(
+    breaches: list[dict],
+    lines: list[AccountPlan],
+    paths: dict[int, list[PathPoint]],
+    paycheck_days: list[int],
+    funding_id: int,
+    today: date,
+) -> list[dict]:
+    """Where the money for each timing dip comes from, and when it goes back.
+
+    A plan is not "here is your allocation, and by the way watch out in
+    October". It is an allocation plus a schedule of movements, and both are
+    applied together. This is the second half.
+
+    Every bridge is written as a **loan for exactly the length of the dip**.
+    That falls out of the arithmetic rather than being a policy: paying the
+    money back on the day the funding account recovers returns its path to
+    precisely what it was, and the path from the recovery date onward was
+    already proved to hold. So the repayment can never cause the next dip, and
+    the source is only out of pocket for the days it actually has to be.
+
+    Sources are ranked by what the money is earning, lowest first — raiding the
+    least productive account is the right default, and it is the hook the
+    interest-optimisation work will want. Ties break toward the least important
+    bucket, then the one with the most to spare, so a big low-priority balance
+    is preferred to scraping several small ones.
+
+    A dip that cannot be funded is not a timing problem after all: it is
+    reclassified `structural`, which is what makes the plan fail verification.
+    That is the promise the dip classifier deliberately left open — depth never
+    decides whether a dip is survivable, being able to cover it does.
+    """
+    bridges: list[dict] = []
+    timing = [
+        b
+        for b in breaches
+        if b["account"] == "funding" and b["kind"] == "one_off"
+    ]
+    if not timing:
+        return bridges
+
+    candidates = [
+        line
+        for line in lines
+        if line.account_id and line.lendable and paths.get(line.contribution_id)
+    ]
+    protected = [
+        line
+        for line in lines
+        if line.account_id and not line.lendable and paths.get(line.contribution_id)
+    ]
+    rates = _source_rates([line.account_id for line in candidates])
+
+    for breach in timing:
+        from_day = (breach["when"] - today).days
+        until_day = (
+            (breach["recovers_on"] - today).days if breach["recovers_on"] else None
+        )
+        wanted = breach["one_off_needed"]
+
+        offers = []
+        for line in candidates:
+            spare = available_to_lend(
+                paths[line.contribution_id],
+                line.planned_per_paycheck,
+                paycheck_days,
+                from_day,
+                until_day,
+            )
+            if spare > 0:
+                offers.append((rates.get(line.account_id, Decimal("0")), line, spare))
+        offers.sort(key=lambda o: (o[0], -o[1].priority, -o[2]))
+
+        movements: list[dict] = []
+        outstanding = wanted
+        for rate, line, spare in offers:
+            if outstanding <= 0:
+                break
+            take = min(spare, outstanding)
+            movements.append(
+                {
+                    "from_account_id": line.account_id,
+                    "from_account": line.account_name,
+                    "contribution": line.contribution,
+                    "amount": take.quantize(Decimal("0.01")),
+                    "annual_rate": rate,
+                    "spare": spare,
+                }
+            )
+            outstanding -= take
+
+        bridge = {
+            "for_account_id": funding_id,
+            "when": breach["when"],
+            "return_on": breach["recovers_on"],
+            "amount": wanted,
+            "covered": (wanted - outstanding).quantize(Decimal("0.01")),
+            "shortfall": max(outstanding, Decimal("0")).quantize(Decimal("0.01")),
+            "movements": movements,
+        }
+        if outstanding > 0:
+            # Worth saying which protected account would have covered it — but
+            # only after checking that it actually would. "Ellie's could have
+            # paid for this" is a claim about her balance, not a turn of
+            # phrase, and it has to be measured over the same window.
+            held_back = [
+                line.account_name
+                for line in protected
+                if available_to_lend(
+                    paths[line.contribution_id],
+                    line.planned_per_paycheck,
+                    paycheck_days,
+                    from_day,
+                    until_day,
+                )
+                >= outstanding
+            ]
+            # No source can spare it, so calling this a timing problem would be
+            # telling the user to make a transfer nobody can make.
+            breach["kind"] = "structural"
+            breach["why"] = (
+                f"Needs {wanted} before {breach['when']}, and no account can "
+                f"spare more than {bridge['covered']} of it while staying "
+                f"solvent itself. That is not bad timing, it is a shortfall."
+                + (
+                    f" {', '.join(held_back)} could cover the rest but is "
+                    f"marked not to be borrowed from."
+                    if held_back
+                    else ""
+                )
+            )
+            bridge["why"] = breach["why"]
+        else:
+            names = ", ".join(
+                f"{m['amount']} from {m['from_account']}" for m in movements
+            )
+            bridge["why"] = (
+                f"Move {names} into checking before {breach['when']}"
+                + (
+                    f", back on {breach['recovers_on']}."
+                    if breach["recovers_on"]
+                    else "."
+                )
+            )
+        bridges.append(bridge)
+
+    return bridges
 
 
 def _levers(

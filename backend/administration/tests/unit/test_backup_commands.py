@@ -291,6 +291,7 @@ def test_roundtrip_contribution_planner_fields(
         target_balance="5000.00",
         target_date="2027-06-01",
         priority=5,
+        lendable=False,
         active=True,
         account=test_savings_account,
         reminder=reminder,
@@ -313,6 +314,9 @@ def test_roundtrip_contribution_planner_fields(
     assert str(restored.target_date) == "2027-06-01"
     assert str(restored.minimum_per_paycheck) == "25.00"
     assert restored.priority == 5
+    # Losing this on restore would quietly re-open an account the user had
+    # marked untouchable, and the planner would start borrowing from it again.
+    assert restored.lendable is False
 
 
 @pytest.mark.django_db
@@ -342,6 +346,9 @@ def test_roundtrip_contribution_without_planner_fields(
     assert restored.reminder is None
     assert restored.target_balance is None
     assert restored.sweep is False
+    # A backup taken before bridging existed says nothing about lending, and
+    # the safe reading of silence is the default.
+    assert restored.lendable is True
 
 
 # ---------------------------------------------------------------------------

@@ -137,6 +137,14 @@ class Contribution(models.Model):
     # sharing a shortage equally across every bucket is not a decision anyone
     # would actually make. It is also the order a windfall is applied in.
     priority = models.IntegerField(default=100)
+    # Whether this account may be borrowed from to cover a gap somewhere else.
+    # The planner schedules bridging transfers — money moved across for a few
+    # days and paid back when the funding account recovers — and it ranks
+    # sources by what they earn and how important they are. Neither of those
+    # captures "this is my daughter's savings account and it is not a slush
+    # fund", so that is stated rather than inferred. On by default: most
+    # buckets are the household's own money in a different pocket.
+    lendable = models.BooleanField(default=True)
 
     def clean(self):
         # A target is a statement about an account's balance, so it needs an

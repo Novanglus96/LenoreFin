@@ -209,3 +209,180 @@ def test_a_plan_needing_no_bridging_allocates_the_whole_surplus():
     )
 
     assert allocatable == horizon_capacity
+
+
+# ---------------------------------------------------------------------------
+# Bridging: where the money for a timing dip comes from
+# ---------------------------------------------------------------------------
+
+
+def a_line(contribution_id, account_id, name, lendable=True, priority=100):
+    from planning.services.savings_plan import AccountPlan
+
+    return AccountPlan(
+        contribution_id=contribution_id,
+        contribution=name,
+        account_id=account_id,
+        account_name=name,
+        priority=priority,
+        sweep=False,
+        lendable=lendable,
+        paychecks_per_year=Decimal("26"),
+        current_per_paycheck=Decimal("0"),
+        minimum_per_paycheck=Decimal("0"),
+        minimum_is_stated=False,
+        target_per_paycheck=Decimal("0"),
+        planned_per_paycheck=Decimal("0"),
+        budgeted_per_paycheck=Decimal("0"),
+        budget_names=[],
+        target_balance=None,
+        projected_low=Decimal("0"),
+        projected_low_date=None,
+        observed_spend_per_month=Decimal("0"),
+        spend_variance_per_paycheck=Decimal("0"),
+        reason="",
+    )
+
+
+def a_dip_breach(start_day, recover_day, needed):
+    return {
+        "account": "funding",
+        "account_name": None,
+        "kind": "one_off",
+        "when": TODAY + timedelta(days=start_day),
+        "low_when": TODAY + timedelta(days=start_day),
+        "balance": Decimal("-1.00"),
+        "floor": FLOOR,
+        "one_off_needed": Decimal(str(needed)),
+        "recovers_on": TODAY + timedelta(days=recover_day),
+        "days_below": recover_day - start_day,
+        "paydays_below": 0,
+        "why": "",
+    }
+
+
+@pytest.mark.service
+def test_a_balance_holds_until_something_moves_it():
+    """The bug that made a bucket holding 15,000 unable to spare 26.
+
+    Dips are short — three days is typical — and most accounts have nothing
+    scheduled inside one. Judging an account only on the points that fall
+    within the window means judging it on no points at all.
+    """
+    from planning.services.savings_plan import available_to_lend
+
+    # One transaction, six weeks before the window opens, and nothing after.
+    quiet = path((0, 15000), (300, 15000))
+
+    spare = available_to_lend(quiet, Decimal("0"), PAYDAYS, 100, 103)
+
+    assert spare == Decimal("15000.00")
+
+
+@pytest.mark.service
+def test_lending_is_limited_by_the_low_point_while_the_money_is_out():
+    """Not by what the account holds on the day the money is wanted.
+
+    An account with 900 today and a 850 bill on Thursday can lend 50 over a
+    window that spans Thursday, however comfortable today looks.
+    """
+    from planning.services.savings_plan import available_to_lend
+
+    lumpy = path((0, 900), (102, 50), (120, 4000))
+
+    assert available_to_lend(lumpy, Decimal("0"), PAYDAYS, 100, 110) == Decimal(
+        "50.00"
+    )
+    # Repaid before the bill lands, the whole 900 is available.
+    assert available_to_lend(lumpy, Decimal("0"), PAYDAYS, 100, 102) == Decimal(
+        "900.00"
+    )
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_a_protected_account_is_never_borrowed_from():
+    from planning.services.savings_plan import solve_bridges
+
+    breaches = [a_dip_breach(100, 103, "500.00")]
+    lines = [
+        a_line(1, 11, "Ellie's Savings", lendable=False),
+        a_line(2, 12, "Ally - Reno", lendable=True),
+    ]
+    paths = {1: path((0, 90000)), 2: path((0, 500))}
+
+    bridges = solve_bridges(breaches, lines, paths, PAYDAYS, 42, TODAY)
+
+    assert len(bridges) == 1
+    assert [m["from_account"] for m in bridges[0]["movements"]] == ["Ally - Reno"]
+    assert bridges[0]["shortfall"] == Decimal("0.00")
+    assert breaches[0]["kind"] == "one_off"
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_an_unfundable_dip_stops_being_a_timing_problem():
+    """The escalation the classifier deliberately leaves open.
+
+    Depth never decides whether a dip is survivable — being able to cover it
+    does. So a dip nobody can fund is reclassified, and that is what makes the
+    plan fail verification instead of shipping advice to make an impossible
+    transfer.
+    """
+    from planning.services.savings_plan import solve_bridges
+
+    breaches = [a_dip_breach(100, 103, "500.00")]
+    lines = [a_line(1, 11, "Ellie's Savings", lendable=False)]
+    paths = {1: path((0, 90000))}
+
+    bridges = solve_bridges(breaches, lines, paths, PAYDAYS, 42, TODAY)
+
+    assert breaches[0]["kind"] == "structural"
+    assert bridges[0]["shortfall"] == Decimal("500.00")
+    # And it says which protected account would have covered it — a claim
+    # about a balance, so it is measured rather than assumed.
+    assert "Ellie's Savings could cover the rest" in breaches[0]["why"]
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_a_bridge_is_split_across_sources_when_no_one_can_cover_it():
+    from planning.services.savings_plan import solve_bridges
+
+    breaches = [a_dip_breach(100, 103, "500.00")]
+    lines = [
+        a_line(1, 11, "Ally - Pet", priority=200),
+        a_line(2, 12, "Ally - Reno", priority=300),
+    ]
+    paths = {1: path((0, 200)), 2: path((0, 400))}
+
+    bridges = solve_bridges(breaches, lines, paths, PAYDAYS, 42, TODAY)
+
+    movements = bridges[0]["movements"]
+    assert bridges[0]["shortfall"] == Decimal("0.00")
+    assert sum(m["amount"] for m in movements) == Decimal("500.00")
+    # Least important first, so the bucket nobody is counting on gives first.
+    assert movements[0]["from_account"] == "Ally - Reno"
+    assert movements[0]["amount"] == Decimal("400.00")
+    assert movements[1]["amount"] == Decimal("100.00")
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_the_loan_runs_for_exactly_as_long_as_the_dip():
+    """Repaying on the recovery date returns the funding path to what it was.
+
+    That path was already proved to hold from the recovery date onward, so the
+    repayment can never cause the next dip — which is why the window is the
+    dip's own span rather than a policy someone has to choose.
+    """
+    from planning.services.savings_plan import solve_bridges
+
+    breaches = [a_dip_breach(100, 117, "500.00")]
+    lines = [a_line(1, 11, "Ally - Reno")]
+    paths = {1: path((0, 5000))}
+
+    bridges = solve_bridges(breaches, lines, paths, PAYDAYS, 42, TODAY)
+
+    assert bridges[0]["when"] == TODAY + timedelta(days=100)
+    assert bridges[0]["return_on"] == TODAY + timedelta(days=117)
