@@ -134,6 +134,8 @@ class AccountPlan:
     account_name: str | None
     priority: int
     sweep: bool
+    # Relative weight when several accounts sweep the remainder.
+    sweep_share: int
     # Whether this account may be borrowed from to bridge someone else's gap.
     lendable: bool
     paychecks_per_year: Decimal
@@ -164,6 +166,10 @@ class AccountPlan:
     # What cutting this line back to the plan would free, against what is being
     # contributed today. Positive means the account is getting more than it
     # needs.
+    # What the linked tags actually cost over the last year, and which they
+    # are. Spending no budget describes, funded from evidence instead.
+    measured_per_year: Decimal = Decimal("0.00")
+    measured_tag_names: list[str] = field(default_factory=list)
     freed_per_paycheck: Decimal = Decimal("0.00")
     # The part of this line nothing asked for: allocated beyond every stated
     # minimum and target because it had nowhere else to go.
@@ -328,6 +334,85 @@ def budget_events(
         cursor = cursor + timedelta(days=step)
         guard += 1
     return events
+
+
+def tag_spend_events(
+    contribution: Contribution, today: date, end_date: date
+) -> tuple[list[tuple[date, Decimal]], Decimal, list[str]]:
+    """What this bucket's tags actually cost last year, replayed a year on.
+
+    Budgets are the better input wherever one exists — they are the user's own
+    statement of intent, and measurement is only its shadow. But some spending
+    is real, recurring and never going to be written down: birthdays are the
+    case that forced this. There are a dozen of them, they land unevenly across
+    the year, and nobody is going to maintain a budget per person. What was
+    actually spent is the only evidence there is.
+
+    Replayed as **dated events**, not as a rate, for the same reason budgets
+    are: when the money is needed decides how much must be saved by then. And
+    dates are what the history is good for — a birthday in March recurs in
+    March, so last year's dates shifted forward a year are a far better guess
+    than a twelfth of the total every month.
+
+    Tags that a linked budget already covers are excluded. Counting the
+    Christmas budget *and* Christmas spending would fund Christmas twice, which
+    is the same double-count that made this household's grocery minimum come
+    out at 696 from a 460 budget.
+    """
+    import json
+
+    from transactions.models import TransactionDetail
+
+    linked = list(contribution.tags.all())
+    if not linked:
+        return [], Decimal("0.00"), []
+
+    covered: set[int] = set()
+    for budget in contribution.budgets.all():
+        if budget.tag_ids:
+            try:
+                covered.update(json.loads(budget.tag_ids))
+            except (ValueError, TypeError):
+                continue
+
+    measured = [tag for tag in linked if tag.pk not in covered]
+    if not measured:
+        return [], Decimal("0.00"), []
+
+    window_start = today - timedelta(days=int(DAYS_PER_YEAR))
+    details = (
+        TransactionDetail.objects.filter(
+            tag_id__in=[tag.pk for tag in measured],
+            transaction__transaction_date__gte=window_start,
+            transaction__transaction_date__lt=today,
+        )
+        .exclude(transaction__status__slug="archived")
+        .select_related("transaction")
+    )
+
+    # One event per date rather than per line: three presents bought on the
+    # same afternoon are one demand on the account.
+    by_day: dict[date, Decimal] = {}
+    total = Decimal("0")
+    for detail in details:
+        # Summed rather than taken as absolute values, so a refund nets off the
+        # spending it reverses instead of counting as more money to find.
+        amount = detail.detail_amt or Decimal("0")
+        when = detail.transaction.transaction_date + timedelta(
+            days=int(DAYS_PER_YEAR)
+        )
+        if when < today or when > end_date:
+            continue
+        by_day[when] = by_day.get(when, Decimal("0")) + amount
+        total += amount
+
+    names = [
+        f"{tag.parent.tag_name if tag.parent else '?'}"
+        + (f"/{tag.child.tag_name}" if tag.child else "")
+        for tag in measured
+    ]
+    events = sorted(by_day.items())
+    return events, abs(total).quantize(Decimal("0.01")), names
 
 
 def budget_per_paycheck(budget) -> Decimal:
@@ -1066,19 +1151,32 @@ def build_plan(
     sweeps = [
         line for line in lines if line.sweep
     ]
-    if remaining > 0 and sweeps:
-        share = round_down_to(remaining / Decimal(len(sweeps)))
-        if share > 0:
-            for line in sweeps:
-                line.planned_per_paycheck = (
-                    line.planned_per_paycheck + share
-                ).quantize(Decimal("0.01"))
-                line.reason = (
-                    f"{share} a paycheck left over once everything else is "
-                    f"funded."
+    # Divided by weight, not equally. Two accounts absorbing the leftover are
+    # rarely equally deserving of it — a house-projects fund being propped up
+    # and a child's savings account are not the same claim — and before there
+    # was a way to say so, the split was decided by hand every time.
+    total_share = sum((max(line.sweep_share, 0) for line in sweeps), 0)
+    if remaining > 0 and total_share > 0:
+        pot = remaining
+        for line in sweeps:
+            if line.sweep_share <= 0:
+                continue
+            share = round_down_to(pot * Decimal(line.sweep_share) / Decimal(total_share))
+            if share <= 0:
+                continue
+            line.planned_per_paycheck = (
+                line.planned_per_paycheck + share
+            ).quantize(Decimal("0.01"))
+            line.reason = (
+                f"{share} a paycheck left over once everything else is funded"
+                + (
+                    f", {line.sweep_share} share of {total_share}."
+                    if len(sweeps) > 1
+                    else "."
                 )
-                line.optional_per_paycheck = share
-                remaining -= share
+            )
+            line.optional_per_paycheck = share
+            remaining -= share
 
     planned_total = sum((line.planned_per_paycheck for line in lines), Decimal("0"))
 
@@ -1218,6 +1316,8 @@ def bucket_path(
     spend_events: list[tuple[date, Decimal]] = []
     for budget in budgets:
         spend_events.extend(budget_events(budget, today, end_date))
+    measured_events, _, _ = tag_spend_events(contribution, today, end_date)
+    spend_events.extend(measured_events)
 
     path, _ = baseline_path(
         contribution.account_id,
@@ -1225,11 +1325,12 @@ def bucket_path(
         end_date,
         {own} if own else set(),
         spend_events=spend_events,
-        # Only when budgets are supplying the spending; otherwise the recorded
-        # reimbursements are the only evidence there is.
+        # Only when something is supplying the spending — a budget or measured
+        # tags. Otherwise the recorded reimbursements are the only evidence
+        # there is, and dropping them would leave the account looking idle.
         replace_adhoc_reimbursements_to=(
             contribution.reminder.reminder_source_account_id
-            if budgets and contribution.reminder_id
+            if spend_events and contribution.reminder_id
             else None
         ),
     )
@@ -1276,6 +1377,7 @@ def _line_for(
             account_name=None,
             priority=contribution.priority,
             sweep=contribution.sweep,
+            sweep_share=contribution.sweep_share,
             lendable=contribution.lendable,
             paychecks_per_year=per_year,
             current_per_paycheck=current,
@@ -1293,6 +1395,10 @@ def _line_for(
             reason="No account linked, so there is nothing to project.",
             warning="Link an account to include this in the plan.",
         )
+
+    _, measured_per_year, measured_tag_names = tag_spend_events(
+        contribution, today, end_date
+    )
 
     # Solvency, nothing more: this account must not go overdrawn once its
     # budgets and its dated obligations are both on the path. Whatever buffer it
@@ -1327,6 +1433,13 @@ def _line_for(
         target = minimum
         reason = "Covering its dated obligations."
 
+    if measured_per_year > 0:
+        reason = (
+            f"{reason} Also covering {measured_per_year} a year spent on "
+            f"{', '.join(measured_tag_names)}, measured over the last twelve "
+            f"months because no budget describes it."
+        ).strip()
+
     # Measured behaviour, reported as a cross-check. A budget that disagrees
     # sharply with what the account actually spends is worth knowing about, but
     # it is the budget the plan is built on.
@@ -1350,7 +1463,7 @@ def _line_for(
         else Decimal("0.00")
     )
     variance = (budgeted + observed_per_paycheck).quantize(Decimal("0.01"))
-    if budgets and variance < -Decimal("25"):
+    if budgets and not measured_tag_names and variance < -Decimal("25"):
         note = (
             f"Budgeted {budgeted} a paycheck, but this account has actually been "
             f"spending {abs(observed_per_paycheck)}. The plan follows the budget."
@@ -1364,6 +1477,7 @@ def _line_for(
         account_name=contribution.account.account_name,
         priority=contribution.priority,
         sweep=contribution.sweep,
+        sweep_share=contribution.sweep_share,
         lendable=contribution.lendable,
         paychecks_per_year=per_year,
         current_per_paycheck=current,
@@ -1373,6 +1487,8 @@ def _line_for(
         planned_per_paycheck=Decimal("0.00"),
         budgeted_per_paycheck=budgeted,
         budget_names=budget_names,
+        measured_per_year=measured_per_year,
+        measured_tag_names=measured_tag_names,
         target_balance=contribution.target_balance,
         projected_low=low,
         projected_low_date=low_date,

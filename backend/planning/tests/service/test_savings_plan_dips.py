@@ -226,6 +226,7 @@ def a_line(contribution_id, account_id, name, lendable=True, priority=100):
         account_name=name,
         priority=priority,
         sweep=False,
+        sweep_share=1,
         lendable=lendable,
         paychecks_per_year=Decimal("26"),
         current_per_paycheck=Decimal("0"),
@@ -423,3 +424,34 @@ def test_a_bridge_is_rounded_up_because_a_gap_is_not_nearly_covered():
     # The measurement stays exact; the remedy is a transfer somebody makes.
     assert round_up_to(dips[0].depth) == Decimal("120.00")
     assert "Moving 120.00 in" in dips[0].why
+
+
+# ---------------------------------------------------------------------------
+# Sweeps: dividing what is left over
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.service
+def test_sweeps_divide_the_remainder_by_weight():
+    """Two accounts absorbing the leftover are rarely equally deserving of it.
+
+    A house-projects fund being deliberately propped up and a child's savings
+    account are not the same claim, and before there was a way to say so the
+    split was decided by hand every time.
+    """
+    from planning.services.savings_plan import round_down_to
+
+    remaining = Decimal("400.00")
+    shares = {"Reno": 3, "Ellie's Savings": 1}
+    total_share = sum(shares.values())
+
+    given = {
+        name: round_down_to(remaining * Decimal(share) / Decimal(total_share))
+        for name, share in shares.items()
+    }
+
+    assert given["Reno"] == Decimal("300.00")
+    assert given["Ellie's Savings"] == Decimal("100.00")
+    # Equal weights are the old behaviour, so nothing changes for anyone who
+    # never sets a share.
+    assert round_down_to(remaining * Decimal(1) / Decimal(2)) == Decimal("200.00")

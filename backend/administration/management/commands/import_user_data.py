@@ -440,9 +440,19 @@ class Command(BaseCommand):
                 # this, and the safe reading of no opinion is the default
                 # every contribution starts with.
                 lendable=item.get("lendable", True),
+                sweep_share=item.get("sweep_share", 1),
             )
             # Budgets are imported at step 20, after this, so the link is made
             # by name once both sides exist rather than here.
+            # Tags exist by now (imported before contributions), so they can
+            # be linked straight away; budgets cannot, and wait until step 20.
+            tag_pks = [
+                tag_slug_to_pk[slug]
+                for slug in item.get("tag_slugs", [])
+                if slug in tag_slug_to_pk
+            ]
+            if tag_pks:
+                contribution_obj.tags.set(tag_pks)
             pending_contribution_budgets.append(
                 (contribution_obj, item.get("budget_names", []))
             )

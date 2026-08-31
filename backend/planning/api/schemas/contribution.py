@@ -19,10 +19,15 @@ class ContributionIn(Schema):
     target_balance: Optional[AmountDecimal] = None
     target_date: Optional[date] = None
     sweep: bool = False
+    # Relative weight when several accounts sweep the remainder.
+    sweep_share: int = 1
     priority: int = 100
     # Whether the planner may borrow from this account to bridge a gap.
     lendable: bool = True
     budget_ids: List[int] = []
+    # Spending tags this bucket covers. What was spent on them over the last
+    # year funds the bucket where no linked budget describes it.
+    tag_ids: List[int] = []
 
 
 # The class ContributionOut is a schema for representing Contributions.
@@ -37,10 +42,12 @@ class ContributionOut(Schema):
     target_balance: Optional[AmountDecimal] = None
     target_date: Optional[date] = None
     sweep: bool
+    sweep_share: int
     priority: int
     lendable: bool
     budget_ids: List[int] = []
     budget_names: List[str] = []
+    tag_ids: List[int] = []
     # Convenience for the table, so it need not join accounts client-side.
     account_name: Optional[str] = None
     # What the linked reminder actually moves, against which per_paycheck is
@@ -60,6 +67,10 @@ class ContributionOut(Schema):
     @staticmethod
     def resolve_budget_ids(obj):
         return [b.id for b in obj.budgets.all()]
+
+    @staticmethod
+    def resolve_tag_ids(obj):
+        return [t.id for t in obj.tags.all()]
 
     @staticmethod
     def resolve_budget_names(obj):

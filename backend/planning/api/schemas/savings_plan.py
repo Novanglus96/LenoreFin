@@ -15,6 +15,7 @@ class PlanLineOut(Schema):
     account_name: Optional[str] = None
     priority: int
     sweep: bool
+    sweep_share: int
     lendable: bool
 
     current_per_paycheck: AmountDecimal
@@ -31,6 +32,9 @@ class PlanLineOut(Schema):
 
     budgeted_per_paycheck: AmountDecimal
     budget_names: List[str] = []
+    # Spending measured from linked tags because no budget describes it.
+    measured_per_year: AmountDecimal
+    measured_tag_names: List[str] = []
     target_balance: Optional[AmountDecimal] = None
     projected_low: AmountDecimal
     projected_low_date: Optional[date] = None

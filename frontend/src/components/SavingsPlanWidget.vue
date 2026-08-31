@@ -187,6 +187,14 @@
             can drop {{ money(item.freed_per_paycheck) }}
           </v-chip>
           <div class="text-caption">{{ item.reason }}</div>
+          <div
+            v-if="Number(item.measured_per_year) > 0"
+            class="text-caption text-medium-emphasis"
+          >
+            <v-icon icon="mdi-tag-outline" size="x-small"></v-icon>
+            {{ money(item.measured_per_year) }} a year measured on
+            {{ item.measured_tag_names.join(", ") }}
+          </div>
           <div v-if="item.warning" class="text-caption text-warning">
             {{ item.warning }}
           </div>

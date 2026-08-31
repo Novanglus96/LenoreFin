@@ -292,6 +292,7 @@ def test_roundtrip_contribution_planner_fields(
         target_date="2027-06-01",
         priority=5,
         lendable=False,
+        sweep_share=3,
         active=True,
         account=test_savings_account,
         reminder=reminder,
@@ -317,6 +318,33 @@ def test_roundtrip_contribution_planner_fields(
     # Losing this on restore would quietly re-open an account the user had
     # marked untouchable, and the planner would start borrowing from it again.
     assert restored.lendable is False
+    assert restored.sweep_share == 3
+
+
+@pytest.mark.django_db
+def test_roundtrip_contribution_tags(tmp_path, test_checking_account, test_tag):
+    """Tags carry by slug, not by pk.
+
+    Primary keys are not stable across an export/import cycle, and a
+    contribution that came back linked to whatever tag happened to land on that
+    pk would fund the wrong spending — silently, since the number would still
+    look plausible.
+    """
+    from planning.models import Contribution
+    from tags.models import Tag
+
+    contribution = Contribution.objects.create(
+        contribution="Gifts", per_paycheck="45.00", active=True
+    )
+    contribution.tags.set([test_tag])
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    call_command("import_user_data", output)
+
+    restored = Contribution.objects.get(contribution="Gifts")
+    assert [t.slug for t in restored.tags.all()] == [test_tag.slug]
+    assert restored.tags.first().pk == Tag.objects.get(slug=test_tag.slug).pk
 
 
 @pytest.mark.django_db

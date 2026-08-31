@@ -138,6 +138,25 @@
                 </v-col>
               </v-row>
               <v-row dense>
+                <v-col>
+                  <v-select
+                    v-model="tag_ids.value.value"
+                    :items="tagOptions"
+                    item-title="title"
+                    item-value="value"
+                    variant="outlined"
+                    label="Spending tags this covers"
+                    density="compact"
+                    multiple
+                    chips
+                    closable-chips
+                    clearable
+                    hint="For spending no budget describes — birthdays and the like. What was spent on these over the last year funds the account. Tags a linked budget already covers are ignored, so nothing is counted twice."
+                    persistent-hint
+                  ></v-select>
+                </v-col>
+              </v-row>
+              <v-row dense>
                 <v-col :cols="smAndDown ? 12 : 6">
                   <v-text-field
                     v-model="target_balance.value.value"
@@ -191,6 +210,20 @@
                     density="compact"
                     hide-details
                   ></v-checkbox>
+                  <v-text-field
+                    v-if="sweep.value.value"
+                    v-model="sweep_share.value.value"
+                    variant="outlined"
+                    label="Share"
+                    density="compact"
+                    :error-messages="sweep_share.errorMessage.value"
+                    type="number"
+                    step="1"
+                    min="1"
+                    hint="Relative weight when several accounts sweep"
+                    persistent-hint
+                    class="mt-2"
+                  ></v-text-field>
                 </v-col>
                 <v-col :cols="smAndDown ? 12 : 4">
                   <v-checkbox
@@ -238,6 +271,7 @@
   import { useAccounts } from "@/composables/accountsComposable";
   import { useReminders } from "@/composables/remindersComposable";
   import { useBudgets } from "@/composables/budgetsComposable";
+  import { useTags } from "@/composables/tagsComposable";
   import { useField, useForm } from "vee-validate";
   const { isOnline } = useOnlineStatus();
 
@@ -290,6 +324,13 @@
 
         return true;
       },
+      sweep_share(value) {
+        if (!sweep.value.value) return true;
+        if (value == null || value === "") return "A sweep needs a share.";
+        if (parseInt(value) < 1) return "A share must be at least 1.";
+
+        return true;
+      },
       priority(value) {
         if (value == null || value === "") return "Priority is required.";
         if (parseInt(value) < 0) return "Priority cannot be negative.";
@@ -312,9 +353,11 @@
   const target_balance = useField("target_balance");
   const target_date = useField("target_date");
   const sweep = useField("sweep");
+  const sweep_share = useField("sweep_share");
   const priority = useField("priority");
   const lendable = useField("lendable");
   const budget_ids = useField("budget_ids");
+  const tag_ids = useField("tag_ids");
   const active = useField("active");
   const account_id = useField("account_id");
   const reminder_id = useField("reminder_id");
@@ -322,6 +365,7 @@
   const { accounts } = useAccounts(false);
   const { reminders } = useReminders();
   const { budgets } = useBudgets(false);
+  const { tags } = useTags();
 
   // What the emergency plan frees up, shown rather than stored — it is the gap
   // between what this moves now and the floor it may not go below.
@@ -346,6 +390,15 @@
     (budgets.value ?? []).map(b => ({
       title: b.budget?.name ?? b.name,
       value: b.budget?.id ?? b.id,
+    })),
+  );
+
+  // Named parent/child the way the rest of the app shows a tag, so "Christmas"
+  // and "Christmas / Ellie" are distinguishable in a long list.
+  const tagOptions = computed(() =>
+    (tags.value ?? []).map(t => ({
+      title: t.child ? `${t.parent.tag_name} / ${t.child.tag_name}` : t.parent.tag_name,
+      value: t.id,
     })),
   );
 
@@ -383,9 +436,11 @@
           props.passedFormData.target_balance ?? null;
         target_date.value.value = props.passedFormData.target_date ?? null;
         sweep.value.value = props.passedFormData.sweep ?? false;
+        sweep_share.value.value = props.passedFormData.sweep_share ?? 1;
         priority.value.value = props.passedFormData.priority ?? 100;
         lendable.value.value = props.passedFormData.lendable ?? true;
         budget_ids.value.value = props.passedFormData.budget_ids ?? [];
+        tag_ids.value.value = props.passedFormData.tag_ids ?? [];
         active.value.value = props.passedFormData.active;
         account_id.value.value = props.passedFormData.account_id ?? null;
         reminder_id.value.value = props.passedFormData.reminder_id ?? null;
@@ -399,9 +454,11 @@
       target_balance: blankIsNull(values.target_balance),
       target_date: blankIsNull(values.target_date),
       sweep: values.sweep ?? false,
+      sweep_share: parseInt(values.sweep_share ?? 1),
       lendable: values.lendable ?? true,
       priority: parseInt(values.priority ?? 100),
       budget_ids: values.budget_ids ?? [],
+      tag_ids: values.tag_ids ?? [],
     };
     if (props.isEdit) {
       emit("editContribution", payload);

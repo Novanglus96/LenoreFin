@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from planning.models import Budget, Contribution
+from tags.models import Tag
 from planning.api.schemas.contribution import (
     ContributionIn,
     ContributionOut,
@@ -38,6 +39,7 @@ def create_contribution(request, payload: ContributionIn):
         fields = payload.dict()
         # Many-to-many cannot be set before the row exists.
         budget_ids = fields.pop("budget_ids", [])
+        tag_ids = fields.pop("tag_ids", [])
         contribution = Contribution(**fields)
         # Target/account coherence is enforced in Contribution.clean(); without
         # this the API would happily store a target pointing at no account.
@@ -45,6 +47,8 @@ def create_contribution(request, payload: ContributionIn):
         contribution.save()
         if budget_ids:
             contribution.budgets.set(Budget.objects.filter(id__in=budget_ids))
+        if tag_ids:
+            contribution.tags.set(Tag.objects.filter(id__in=tag_ids))
         api_logger.info(f"Contribution created : {payload.contribution}")
         return {"id": contribution.id}
     except ValidationError as validation_error:
@@ -99,6 +103,7 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
         contribution.target_balance = payload.target_balance
         contribution.target_date = payload.target_date
         contribution.sweep = payload.sweep
+        contribution.sweep_share = payload.sweep_share
         contribution.priority = payload.priority
         contribution.lendable = payload.lendable
         contribution.active = payload.active
@@ -108,6 +113,7 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
         contribution.full_clean(exclude=["contribution"])
         contribution.save()
         contribution.budgets.set(Budget.objects.filter(id__in=payload.budget_ids))
+        contribution.tags.set(Tag.objects.filter(id__in=payload.tag_ids))
         api_logger.info(f"Contribution updated : {contribution.contribution}")
         return {"success": True}
     except Http404:

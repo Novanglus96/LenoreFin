@@ -129,9 +129,23 @@ class Contribution(models.Model):
     # When the target must be met. Null means "hold it from now on" rather than
     # "reach it by a date", which are different problems.
     target_date = models.DateField(null=True, blank=True, default=None)
+    # The spending tags this bucket exists to cover, for the spending no budget
+    # describes. Birthdays are the case that demands it: they are real, they
+    # recur, they are spread unevenly through the year, and writing a budget per
+    # person is a chore nobody will keep up. What was actually spent on these
+    # tags over the last year is better evidence than a budget that does not
+    # exist. Tags a linked budget already covers are ignored here — counting the
+    # Christmas budget and Christmas spending both would fund Christmas twice.
+    tags = models.ManyToManyField(
+        "tags.Tag", blank=True, related_name="contributions"
+    )
     # Takes whatever is left once everything else is funded. More than one is
-    # allowed; they share the remainder.
+    # allowed; `sweep_share` decides how they divide it.
     sweep = models.BooleanField(default=False)
+    # Relative weight when several accounts sweep. Two sweeps at 3 and 1 split
+    # the remainder three to one. Equal by default, which is what it did before
+    # there was a way to say otherwise.
+    sweep_share = models.PositiveIntegerField(default=1)
     # Lower is funded first. When capacity runs out the planner stops filling
     # targets in this order, so the ranking is what decides who goes short —
     # sharing a shortage equally across every bucket is not a decision anyone

@@ -288,13 +288,17 @@ class Command(BaseCommand):
                 "reminder_id": c.reminder_id,
                 "priority": c.priority,
                 "lendable": c.lendable,
+                "sweep_share": c.sweep_share,
+                # By slug, the same way budgets carry their tags: primary keys
+                # are not stable across an export/import cycle.
+                "tag_slugs": [t.slug for t in c.tags.all()],
                 # By name, because Budget.name is unique and pks are not stable
                 # across an export/import cycle.
                 "budget_names": [b.name for b in c.budgets.all()],
             }
-            for c in Contribution.objects.all().select_related(
-                "account", "reminder"
-            )
+            for c in Contribution.objects.all()
+            .select_related("account", "reminder")
+            .prefetch_related("budgets", "tags")
         ]
 
         # 16. Notes
