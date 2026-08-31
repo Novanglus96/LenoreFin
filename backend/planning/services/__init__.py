@@ -5,6 +5,6 @@ from planning.services.planner import analyze_account_trend as analyze_account_t
 from planning.services.planner import paychecks_per_year as paychecks_per_year
 from planning.services.planner import occurrences_per_year as occurrences_per_year
 from planning.services.planner import funding_account_id as funding_account_id
-from planning.services.savings_plan import build_plan as build_plan
+from planning.services.savings_plan import build_savings_plan as build_savings_plan
 from planning.services.savings_plan import pay_calendar as pay_calendar
 from planning.services.savings_plan import budget_per_paycheck as budget_per_paycheck

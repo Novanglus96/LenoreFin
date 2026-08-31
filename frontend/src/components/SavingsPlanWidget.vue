@@ -130,7 +130,7 @@
         :headers="displayHeaders"
         :items="plan.lines"
         :items-length="plan.lines.length"
-        item-value="contribution_id"
+        item-value="bucket_id"
         density="compact"
         disable-sort
         hide-default-footer
@@ -140,8 +140,8 @@
         :header-props="{ class: 'font-weight-bold bg-secondary' }"
         class="bg-background"
       >
-        <template v-slot:[`item.contribution`]="{ item }">
-          <div class="font-weight-bold">{{ item.contribution }}</div>
+        <template v-slot:[`item.bucket`]="{ item }">
+          <div class="font-weight-bold">{{ item.bucket }}</div>
           <div class="text-caption text-medium-emphasis">
             {{ item.account_name ?? "no account" }}
           </div>
@@ -211,7 +211,7 @@
         <template v-slot:[`item.mobile`]="{ item }">
           <div class="py-1">
             <div class="font-weight-bold text-primary">
-              {{ item.contribution }}
+              {{ item.bucket }}
               <span class="text-caption text-medium-emphasis">
                 {{ item.account_name }}
               </span>
@@ -380,7 +380,7 @@
   };
 
   const headers = [
-    { title: "Contribution", key: "contribution" },
+    { title: "Bucket", key: "bucket" },
     { title: "Now", key: "current_per_paycheck", width: "110px" },
     { title: "Minimum", key: "minimum_per_paycheck", width: "120px" },
     { title: "Plan", key: "planned_per_paycheck", width: "120px" },

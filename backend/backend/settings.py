@@ -355,8 +355,8 @@ UNFOLD = {
                 "title": "Planning",
                 "items": [
                     {"title": "Budgets", "link": "/admin/planning/budget/"},
-                    {"title": "Contributions", "link": "/admin/planning/contribution/"},
-                    {"title": "Contribution Rules", "link": "/admin/planning/contribrule/"},
+                    {"title": "Buckets", "link": "/admin/planning/bucket/"},
+                    {"title": "Windfall Rules", "link": "/admin/planning/windfallrule/"},
                     {"title": "Notes", "link": "/admin/planning/note/"},
                     {"title": "Calculation Rules", "link": "/admin/planning/calculationrule/"},
                     {"title": "Christmas Gifts", "link": "/admin/planning/christmasgift/"},

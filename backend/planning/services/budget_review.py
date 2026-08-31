@@ -22,7 +22,7 @@ from decimal import Decimal
 
 from django.db.models import Sum
 
-from planning.models import Budget, Contribution
+from planning.models import Budget, Bucket
 from planning.services.budget_math import (
     amount_per_year,
     budget_tag_ids,
@@ -55,7 +55,7 @@ class BudgetSuggestion:
     suggested_amount: Decimal
     cadence: str
     per_paycheck_effect: Decimal
-    contribution: str | None
+    bucket: str | None
     why: str
 
 
@@ -117,11 +117,11 @@ def review_budgets(today: date, window_days: int = 365) -> BudgetReview:
 
     per_paycheck = Decimal("26.0893")
     budget_owner: dict[int, str] = {}
-    for contribution in Contribution.objects.filter(
+    for bucket in Bucket.objects.filter(
         active=True
     ).prefetch_related("budgets"):
-        for budget in contribution.budgets.all():
-            budget_owner[budget.pk] = contribution.contribution
+        for budget in bucket.budgets.all():
+            budget_owner[budget.pk] = bucket.name
 
     # Only the budgets that speak: leaves and parents, never a child. A
     # child's spending is inside its parent's total, so comparing both against
@@ -200,7 +200,7 @@ def review_budgets(today: date, window_days: int = 365) -> BudgetReview:
                 per_paycheck_effect=(gap / per_paycheck).quantize(
                     Decimal("0.01")
                 ),
-                contribution=budget_owner.get(budget.pk),
+                bucket=budget_owner.get(budget.pk),
                 why=(
                     f"{budget.name} budgets {budgeted} a year and the last "
                     f"twelve months came to {spent.quantize(Decimal('0.01'))}. "
@@ -267,7 +267,7 @@ def _overlaps(
                 suggested_amount=Decimal("0.00"),
                 cadence="",
                 per_paycheck_effect=Decimal("0.00"),
-                contribution=None,
+                bucket=None,
                 why=(
                     f"{len(names)} budgets cover the same tags: "
                     f"{', '.join(names[:6])}"
@@ -286,18 +286,18 @@ def _unbudgeted(
 ) -> list[BudgetSuggestion]:
     """Spending a bucket owns that no budget describes.
 
-    Scoped to tags someone has linked to a contribution, because unscoped this
+    Scoped to tags someone has linked to a bucket, because unscoped this
     is meaningless — transfers, income and card payments dwarf every real
     category, and a report led by "Transfer: 230,990 unbudgeted" is one nobody
     reads twice.
     """
     suggestions: list[BudgetSuggestion] = []
-    for contribution in Contribution.objects.filter(active=True).prefetch_related(
-        "tags__parent", "tags__child"
+    for bucket in Bucket.objects.filter(active=True).prefetch_related(
+        "scope_tags__parent", "scope_tags__child"
     ):
         loose = [
             tag
-            for tag in contribution.tags.all()
+            for tag in bucket.scope_tags.all()
             if tag.pk not in covered
             and measured.get(tag.pk, Decimal("0")) > 0
         ]
@@ -313,7 +313,7 @@ def _unbudgeted(
             BudgetSuggestion(
                 kind="create",
                 budget_id=None,
-                budget_name=f"{contribution.contribution} (unbudgeted)",
+                budget_name=f"{bucket.name} (unbudgeted)",
                 tag_names=names,
                 budgeted_per_year=Decimal("0.00"),
                 measured_per_year=spent,
@@ -323,12 +323,12 @@ def _unbudgeted(
                 per_paycheck_effect=(spent / per_paycheck).quantize(
                     Decimal("0.01")
                 ),
-                contribution=contribution.contribution,
+                bucket=bucket.name,
                 why=(
                     f"{spent} a year was spent on {', '.join(names)}, which "
-                    f"{contribution.contribution} is meant to cover and no "
+                    f"{bucket.name} is meant to cover and no "
                     f"budget describes. Until a budget says so the plan does "
-                    f"not fund it, so {contribution.contribution} is short by "
+                    f"not fund it, so {bucket.name} is short by "
                     f"about {(spent / per_paycheck).quantize(Decimal('0.01'))} "
                     f"a paycheck."
                 ),

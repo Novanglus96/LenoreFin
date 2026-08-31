@@ -41,7 +41,7 @@ class Command(BaseCommand):
         from tags.models import Tag, MainTag, SubTag
         from transactions.models import Transaction, Paycheck, TransactionDetail
         from reminders.models import Reminder, ReminderExclusion
-        from planning.models import ContribRule, Contribution, Note, ChristmasGift, Budget, CalculationRule
+        from planning.models import WindfallRule, Bucket, Note, ChristmasGift, Budget, CalculationRule
         from reports.models import ReportConfig
 
         data = {"app_version": get_version()}
@@ -258,17 +258,17 @@ class Command(BaseCommand):
             for re in ReminderExclusion.objects.all()
         ]
 
-        # 14. ContribRules
-        data["contrib_rules"] = [
+        # 14. WindfallRules
+        data["windfall_rules"] = [
             {"rule": cr.rule, "cap": cr.cap, "order": cr.order}
-            for cr in ContribRule.objects.all()
+            for cr in WindfallRule.objects.all()
         ]
 
-        # 15. Contributions
-        data["contributions"] = [
+        # 15. Buckets
+        data["buckets"] = [
             {
-                "contribution": c.contribution,
-                "per_paycheck": str(c.per_paycheck),
+                "name": c.name,
+                "contribution_per_paycheck": str(c.contribution_per_paycheck),
                 # Nullable on purpose: None means "work it out from budgets and
                 # obligations", 0 means "nothing is required here".
                 "minimum_per_paycheck": (
@@ -292,14 +292,14 @@ class Command(BaseCommand):
                 "receives_rewards": c.receives_rewards,
                 # By slug, the same way budgets carry their tags: primary keys
                 # are not stable across an export/import cycle.
-                "tag_slugs": [t.slug for t in c.tags.all()],
+                "scope_tag_slugs": [t.slug for t in c.scope_tags.all()],
                 # By name, because Budget.name is unique and pks are not stable
                 # across an export/import cycle.
                 "budget_names": [b.name for b in c.budgets.all()],
             }
-            for c in Contribution.objects.all()
+            for c in Bucket.objects.all()
             .select_related("account", "reminder")
-            .prefetch_related("budgets", "tags")
+            .prefetch_related("budgets", "scope_tags")
         ]
 
         # 16. Notes

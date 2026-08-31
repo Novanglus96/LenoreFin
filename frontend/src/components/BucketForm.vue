@@ -8,18 +8,18 @@
               <v-row dense>
                 <v-col>
                   <h4 class="text-h6 font-weight-bold mb-2">
-                    {{ props.isEdit ? "Edit" : "Add" }} Contribution
+                    {{ props.isEdit ? "Edit" : "Add" }} Bucket
                   </h4>
                 </v-col>
               </v-row>
               <v-row dense>
                 <v-col>
                   <v-text-field
-                    v-model="contribution.value.value"
+                    v-model="bucket.value.value"
                     variant="outlined"
-                    label="Contribution"
+                    label="Bucket"
                     density="compact"
-                    :error-messages="contribution.errorMessage.value"
+                    :error-messages="bucket.errorMessage.value"
                     :counter="254"
                   ></v-text-field>
                 </v-col>
@@ -27,11 +27,11 @@
               <v-row dense>
                 <v-col :cols="smAndDown ? 6 : 4">
                   <v-text-field
-                    v-model="per_paycheck.value.value"
+                    v-model="contribution_per_paycheck.value.value"
                     variant="outlined"
                     label="Paycheck(per)"
                     density="compact"
-                    :error-messages="per_paycheck.errorMessage.value"
+                    :error-messages="contribution_per_paycheck.errorMessage.value"
                     type="number"
                     step="1.00"
                     prefix="$"
@@ -70,7 +70,7 @@
               </v-row>
             </v-container>
           </v-sheet>
-          <!-- Planner section: what this contribution funds, how the money
+          <!-- Planner section: what this bucket funds, how the money
                actually moves, and what the account is supposed to do. -->
           <v-sheet border rounded class="mt-3">
             <v-container>
@@ -140,7 +140,7 @@
               <v-row dense>
                 <v-col>
                   <v-select
-                    v-model="tag_ids.value.value"
+                    v-model="scope_tag_ids.value.value"
                     :items="tagOptions"
                     item-title="title"
                     item-value="value"
@@ -269,7 +269,7 @@
           <v-spacer></v-spacer>
           <v-btn @click="clickClose" color="primary">Close</v-btn>
           <v-btn color="primary" type="submit" :disabled="!isOnline">
-            {{ props.isEdit ? "Save Changes" : "Add Contribution" }}
+            {{ props.isEdit ? "Save Changes" : "Add Bucket" }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -297,12 +297,12 @@
   const { smAndDown } = useDisplay();
   const { handleSubmit } = useForm({
     validationSchema: {
-      contribution(value) {
+      bucket(value) {
         if (value?.length >= 2 && value?.length <= 254) return true;
 
-        return "Contribution needs to be at least 2 characters, and less than 254.";
+        return "Bucket needs to be at least 2 characters, and less than 254.";
       },
-      per_paycheck(value) {
+      contribution_per_paycheck(value) {
         if (value == null || value === "")
           return "Paycheck amount is required.";
         if (parseFloat(value) < 0)
@@ -359,8 +359,8 @@
   });
 
   const id = useField("id");
-  const contribution = useField("contribution");
-  const per_paycheck = useField("per_paycheck");
+  const bucket = useField("bucket");
+  const contribution_per_paycheck = useField("contribution_per_paycheck");
   const minimum_per_paycheck = useField("minimum_per_paycheck");
   const target_balance = useField("target_balance");
   const target_date = useField("target_date");
@@ -370,7 +370,7 @@
   const lendable = useField("lendable");
   const receives_rewards = useField("receives_rewards");
   const budget_ids = useField("budget_ids");
-  const tag_ids = useField("tag_ids");
+  const scope_tag_ids = useField("scope_tag_ids");
   const active = useField("active");
   const account_id = useField("account_id");
   const reminder_id = useField("reminder_id");
@@ -383,7 +383,7 @@
   // What the emergency plan frees up, shown rather than stored — it is the gap
   // between what this moves now and the floor it may not go below.
   const difference = computed(() => {
-    const per = parseFloat(per_paycheck.value.value);
+    const per = parseFloat(contribution_per_paycheck.value.value);
     const min = parseFloat(minimum_per_paycheck.value.value);
     if (isNaN(per)) return "0";
     if (isNaN(min)) return "0";
@@ -441,8 +441,8 @@
     watchEffect(() => {
       if (props.passedFormData) {
         id.value.value = props.passedFormData.id;
-        contribution.value.value = props.passedFormData.contribution;
-        per_paycheck.value.value = props.passedFormData.per_paycheck;
+        bucket.value.value = props.passedFormData.bucket;
+        contribution_per_paycheck.value.value = props.passedFormData.per_paycheck;
         minimum_per_paycheck.value.value =
           props.passedFormData.minimum_per_paycheck ?? null;
         target_balance.value.value =
@@ -455,7 +455,7 @@
         receives_rewards.value.value =
           props.passedFormData.receives_rewards ?? false;
         budget_ids.value.value = props.passedFormData.budget_ids ?? [];
-        tag_ids.value.value = props.passedFormData.tag_ids ?? [];
+        scope_tag_ids.value.value = props.passedFormData.scope_tag_ids ?? [];
         active.value.value = props.passedFormData.active;
         account_id.value.value = props.passedFormData.account_id ?? null;
         reminder_id.value.value = props.passedFormData.reminder_id ?? null;
@@ -474,20 +474,20 @@
       receives_rewards: values.receives_rewards ?? false,
       priority: parseInt(values.priority ?? 100),
       budget_ids: values.budget_ids ?? [],
-      tag_ids: values.tag_ids ?? [],
+      scope_tag_ids: values.scope_tag_ids ?? [],
     };
     if (props.isEdit) {
-      emit("editContribution", payload);
+      emit("editBucket", payload);
     } else {
-      emit("addContribution", payload);
+      emit("addBucket", payload);
     }
     emit("updateDialog", false);
   });
 
   const emit = defineEmits([
     "updateDialog",
-    "addContribution",
-    "editContribution",
+    "addBucket",
+    "editBucket",
   ]);
 
   const clickClose = () => {

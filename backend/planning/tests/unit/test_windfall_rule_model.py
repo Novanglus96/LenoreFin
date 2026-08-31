@@ -1,10 +1,10 @@
 import pytest
-from planning.models import ContribRule
+from planning.models import WindfallRule
 
 
 @pytest.mark.django_db
-def test_contrib_rule_creation():
-    contrib_rule = ContribRule.objects.create(
+def test_windfall_rule_creation():
+    contrib_rule = WindfallRule.objects.create(
         rule="Contrib Rule", cap="Cap", order=1
     )
 
@@ -15,8 +15,8 @@ def test_contrib_rule_creation():
 
 
 @pytest.mark.django_db
-def test_contrib_rule_defaults():
-    contrib_rule = ContribRule.objects.create(rule="Contrib Rule")
+def test_windfall_rule_defaults():
+    contrib_rule = WindfallRule.objects.create(rule="Contrib Rule")
 
     assert contrib_rule.id is not None
     assert contrib_rule.cap is None
@@ -24,8 +24,8 @@ def test_contrib_rule_defaults():
 
 
 @pytest.mark.django_db
-def test_contrib_rule_string_representation():
-    contrib_rule = ContribRule.objects.create(rule="Contrib Rule")
+def test_windfall_rule_string_representation():
+    contrib_rule = WindfallRule.objects.create(rule="Contrib Rule")
     expected = "Contrib Rule"
 
     assert str(contrib_rule) == expected

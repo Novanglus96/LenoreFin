@@ -11,26 +11,26 @@
             flat
             variant="plain"
             v-bind="props"
-            @click="addContributionRuleDialog = true"
+            @click="addWindfallRuleDialog = true"
             size="small"
             :disabled="!isOnline"
           ></v-btn>
         </template>
       </v-tooltip>
-      <ContributionRuleForm
-        v-model="addContributionRuleDialog"
+      <WindfallRuleForm
+        v-model="addWindfallRuleDialog"
         key="0"
         :isEdit="false"
         @update-dialog="updateAddDialog"
-        @add-contribution-rule="clickAddContributionRule"
-        :passedFormData="newContributionRuleData"
+        @add-bucket-rule="clickAddBucketRule"
+        :passedFormData="newWindfallRuleData"
       />
     </v-card-title>
     <v-card-text class="ma-0 pa-0 ga-0">
       <v-data-table
         :headers="displayHeaders"
-        :items="contributionRules ? contributionRules : []"
-        :items-length="contributionRules ? contributionRules.length : 0"
+        :items="windfallRules ? windfallRules : []"
+        :items-length="windfallRules ? windfallRules.length : 0"
         :loading="isLoading"
         item-value="id"
         v-model:items-per-page="itemsPerPage"
@@ -52,7 +52,7 @@
         :hide-default-header="mdAndUp ? false : true"
         width="100%"
         :header-props="{ class: 'font-weight-bold bg-secondary' }"
-        v-model="selectedContributionRule"
+        v-model="selectedBucketRule"
         select-strategy="single"
         return-object
         :row-props="getRowProps"
@@ -64,32 +64,32 @@
               <v-btn
                 variant="plain"
                 icon
-                @click="editContributionRuleDialog = true"
-                :disabled="selectedContributionRule.length === 0 || !isOnline"
+                @click="editWindfallRuleDialog = true"
+                :disabled="selectedBucketRule.length === 0 || !isOnline"
               >
                 <v-icon icon="mdi-pencil"></v-icon>
               </v-btn>
-              <ContributionRuleForm
-                v-model="editContributionRuleDialog"
+              <WindfallRuleForm
+                v-model="editWindfallRuleDialog"
                 :key="editRule ? editRule.id : 0"
                 :isEdit="true"
                 @update-dialog="updateEditDialog"
                 :passedFormData="editRule"
-                @edit-contribution-rule="clickEditContributionRule"
+                @edit-bucket-rule="clickEditBucketRule"
               />
               <v-btn
                 variant="plain"
                 icon
-                :disabled="selectedContributionRule.length === 0 || !isOnline"
+                :disabled="selectedBucketRule.length === 0 || !isOnline"
               >
                 <v-icon
                   icon="mdi-delete"
-                  @click="deleteContributionRuleDialog = true"
+                  @click="deleteBucketRuleDialog = true"
                   color="error"
                 ></v-icon>
               </v-btn>
               <v-dialog
-                v-model="deleteContributionRuleDialog"
+                v-model="deleteBucketRuleDialog"
                 :key="editRule ? editRule.id : 0"
                 width="400"
               >
@@ -99,10 +99,10 @@
                     <span>{{ editRule.rule }}</span>
                   </v-card-text>
                   <v-card-actions>
-                    <v-btn @click="deleteContributionRuleDialog = false">
+                    <v-btn @click="deleteBucketRuleDialog = false">
                       Close
                     </v-btn>
-                    <v-btn @click="clickDeleteContributionRule(editRule)" :disabled="!isOnline">
+                    <v-btn @click="clickDeleteBucketRule(editRule)" :disabled="!isOnline">
                       Delete
                     </v-btn>
                   </v-card-actions>
@@ -174,8 +174,8 @@
 </template>
 <script setup>
   import { ref, computed, watch } from "vue";
-  import { useContributionRules } from "@/composables/contributionsComposable";
-  import ContributionRuleForm from "@/components/ContributionRuleForm.vue";
+  import { useWindfallRules } from "@/composables/bucketsComposable";
+  import WindfallRuleForm from "@/components/WindfallRuleForm.vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
   import { useOnlineStatus } from "@/composables/useOnlineStatus";
@@ -186,11 +186,11 @@
   const { mdAndUp } = useDisplay();
   const authStore = useAuthStore();
   const editRule = ref({ id: 0 });
-  const editContributionRuleDialog = ref(false);
-  const addContributionRuleDialog = ref(false);
-  const deleteContributionRuleDialog = ref(false);
-  const selectedContributionRule = ref([]);
-  const newContributionRuleData = ref({
+  const editWindfallRuleDialog = ref(false);
+  const addWindfallRuleDialog = ref(false);
+  const deleteBucketRuleDialog = ref(false);
+  const selectedBucketRule = ref([]);
+  const newWindfallRuleData = ref({
     id: 0,
     rule: null,
     order: 1,
@@ -198,12 +198,12 @@
   });
 
   const {
-    contributionRules,
+    windfallRules,
     isLoading,
-    addContributionRule,
-    editContributionRule,
-    removeContributionRule,
-  } = useContributionRules();
+    addWindfallRule,
+    editWindfallRule,
+    removeWindfallRule,
+  } = useWindfallRules();
 
   const headers = ref([
     { title: "Order", key: "order", width: "20px" },
@@ -219,38 +219,38 @@
   });
 
   const updateAddDialog = () => {
-    addContributionRuleDialog.value = false;
+    addWindfallRuleDialog.value = false;
   };
 
   const updateEditDialog = () => {
-    editContributionRuleDialog.value = false;
+    editWindfallRuleDialog.value = false;
   };
 
-  const clickEditContributionRule = contributionRule => {
-    editContributionRule(contributionRule);
-    editContributionRuleDialog.value = false;
-    selectedContributionRule.value = [];
+  const clickEditBucketRule = windfallRule => {
+    editWindfallRule(windfallRule);
+    editWindfallRuleDialog.value = false;
+    selectedBucketRule.value = [];
   };
 
-  const clickDeleteContributionRule = contributionRule => {
-    removeContributionRule(contributionRule);
-    deleteContributionRuleDialog.value = false;
-    selectedContributionRule.value = [];
+  const clickDeleteBucketRule = windfallRule => {
+    removeWindfallRule(windfallRule);
+    deleteBucketRuleDialog.value = false;
+    selectedBucketRule.value = [];
   };
 
-  const clickAddContributionRule = contributionRule => {
-    addContributionRule(contributionRule);
-    addContributionRuleDialog.value = false;
+  const clickAddBucketRule = windfallRule => {
+    addWindfallRule(windfallRule);
+    addWindfallRuleDialog.value = false;
   };
 
   const pageCount = computed(() =>
-    contributionRules.value && itemsPerPage.value
-      ? Math.ceil(contributionRules.value.length / itemsPerPage.value)
+    windfallRules.value && itemsPerPage.value
+      ? Math.ceil(windfallRules.value.length / itemsPerPage.value)
       : 1,
   );
 
   watch(
-    () => selectedContributionRule.value,
+    () => selectedBucketRule.value,
     val => {
       if (val) {
         editRule.value = val[0];
@@ -259,7 +259,7 @@
   );
   function getRowProps({ item }) {
     let rowformat = "";
-    const isSelected = selectedContributionRule.value.some(
+    const isSelected = selectedBucketRule.value.some(
       sel => sel.id === item.id,
     );
     if (isSelected) {

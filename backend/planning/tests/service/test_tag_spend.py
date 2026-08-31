@@ -66,10 +66,10 @@ def cleared_status(db):
 
 
 def a_contribution(name="Gifts"):
-    from planning.models import Contribution
+    from planning.models import Bucket
 
-    return Contribution.objects.create(
-        contribution=name, per_paycheck=Decimal("45.00"), active=True
+    return Bucket.objects.create(
+        name=name, contribution_per_paycheck=Decimal("45.00"), active=True
     )
 
 
@@ -84,13 +84,13 @@ def horizon():
 def test_spending_on_a_linked_tag_is_measured(gift_tags, cleared_status):
     from planning.services.savings_plan import tag_spend_events
 
-    contribution = a_contribution()
-    contribution.tags.set([gift_tags["gifts"]])
+    bucket = a_contribution()
+    bucket.scope_tags.set([gift_tags["gifts"]])
     a_spend(gift_tags["gifts"], -60, 100, cleared_status)
     a_spend(gift_tags["gifts"], -40, 30, cleared_status)
 
     today, end = horizon()
-    events, total, names = tag_spend_events(contribution, today, end)
+    events, total, names = tag_spend_events(bucket, today, end)
 
     assert total == Decimal("100.00")
     assert names == ["Gifts"]
@@ -111,19 +111,19 @@ def test_a_tag_its_budget_already_covers_is_not_counted_twice(
     from planning.models import Budget
     from planning.services.savings_plan import tag_spend_events
 
-    contribution = a_contribution()
+    bucket = a_contribution()
     budget = Budget.objects.create(
         name="Christmas",
         amount=Decimal("1995.00"),
         tag_ids=json.dumps([gift_tags["christmas"].pk]),
     )
-    contribution.budgets.set([budget])
-    contribution.tags.set([gift_tags["christmas"], gift_tags["gifts"]])
+    bucket.budgets.set([budget])
+    bucket.scope_tags.set([gift_tags["christmas"], gift_tags["gifts"]])
     a_spend(gift_tags["christmas"], -500, 60, cleared_status)
     a_spend(gift_tags["gifts"], -75, 60, cleared_status)
 
     today, end = horizon()
-    _, total, names = tag_spend_events(contribution, today, end)
+    _, total, names = tag_spend_events(bucket, today, end)
 
     # Only the birthday spending. The 500 of Christmas is already in the
     # budget, and the budget is what funds it.
@@ -136,12 +136,12 @@ def test_a_refund_nets_off_rather_than_counting_as_more_to_find(
 ):
     from planning.services.savings_plan import tag_spend_events
 
-    contribution = a_contribution()
-    contribution.tags.set([gift_tags["gifts"]])
+    bucket = a_contribution()
+    bucket.scope_tags.set([gift_tags["gifts"]])
     a_spend(gift_tags["gifts"], -80, 50, cleared_status)
     a_spend(gift_tags["gifts"], 30, 40, cleared_status)
 
-    _, total, _ = tag_spend_events(contribution, *horizon())
+    _, total, _ = tag_spend_events(bucket, *horizon())
 
     assert total == Decimal("50.00")
 
@@ -151,10 +151,10 @@ def test_a_bucket_with_no_tags_measures_nothing(gift_tags, cleared_status):
     doing so because of what it happened to spend last year."""
     from planning.services.savings_plan import tag_spend_events
 
-    contribution = a_contribution()
+    bucket = a_contribution()
     a_spend(gift_tags["gifts"], -500, 60, cleared_status)
 
-    events, total, names = tag_spend_events(contribution, *horizon())
+    events, total, names = tag_spend_events(bucket, *horizon())
 
     assert (events, total, names) == ([], Decimal("0.00"), [])
 
@@ -164,10 +164,10 @@ def test_spending_older_than_a_year_is_out_of_the_window(
 ):
     from planning.services.savings_plan import tag_spend_events
 
-    contribution = a_contribution()
-    contribution.tags.set([gift_tags["gifts"]])
+    bucket = a_contribution()
+    bucket.scope_tags.set([gift_tags["gifts"]])
     a_spend(gift_tags["gifts"], -200, 400, cleared_status)
 
-    _, total, _ = tag_spend_events(contribution, *horizon())
+    _, total, _ = tag_spend_events(bucket, *horizon())
 
     assert total == Decimal("0.00")

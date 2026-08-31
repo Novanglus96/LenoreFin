@@ -28,7 +28,7 @@ from decimal import Decimal
 from django.db.models import Q
 
 from accounts.models import Account
-from planning.models import Contribution
+from planning.models import Bucket
 from transactions.models import Transaction, TransactionStatus
 from transactions.services import get_account_transactions_and_balances
 from utils.dates import get_todays_date_timezone_adjusted
@@ -539,16 +539,16 @@ def occurrences_per_year(repeat) -> Decimal | None:
     return (DAYS_PER_YEAR / period_days).quantize(Decimal("0.0001"))
 
 
-def paychecks_per_year(contribution: Contribution) -> Decimal:
-    """How many times a year this contribution is paid.
+def paychecks_per_year(bucket: Bucket) -> Decimal:
+    """How many times a year this bucket's contribution is paid.
 
     Derived from the linked reminder's repeat rather than a global payday
-    setting, so two contributions on different cadences each solve correctly.
-    Falls back to biweekly, which is the overwhelmingly common case and the
-    only sane guess when nothing is linked.
+    setting, so two buckets on different cadences each solve correctly. Falls
+    back to biweekly, which is the overwhelmingly common case and the only sane
+    guess when nothing is linked.
     """
     biweekly = Decimal("26")
-    reminder = contribution.reminder
+    reminder = bucket.reminder
     if not reminder:
         return biweekly
     return occurrences_per_year(reminder.repeat) or biweekly
@@ -564,11 +564,11 @@ def _per_paycheck(monthly: Decimal, per_year: Decimal) -> Decimal:
 def funding_account_id() -> int | None:
     """The account the contributions are paid out of.
 
-    Taken as the one most contributions draw on rather than configured
-    separately, because that is already recorded on every linked reminder.
+    Taken as the one most buckets draw on rather than configured separately,
+    because that is already recorded on every linked reminder.
     """
     counts: dict[int, int] = {}
-    for c in Contribution.objects.filter(
+    for c in Bucket.objects.filter(
         active=True, reminder__isnull=False
     ).select_related("reminder"):
         source = c.reminder.reminder_source_account_id

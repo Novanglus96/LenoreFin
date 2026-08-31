@@ -27,8 +27,10 @@ This one runs the other way round.
    affords unaided is advisory, and the difference between them is money that
    has to be moved across rather than money that cannot be saved.
 
-5. `build_plan` — fund every minimum, then fill goals in priority order until
-   the money runs out, then sweep the remainder.
+5. `build_savings_plan` — fund every minimum, then fill goals in priority
+   order until the money runs out, then sweep the remainder. The result is the
+   savings plan: every bucket solved together, because a bucket on its own
+   cannot know whether it fits inside a paycheck.
 
 6. `_verify` — re-check the finished plan against every path, and classify what
    it finds. A dip the account climbs out of is a timing problem with a
@@ -49,7 +51,7 @@ from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from django.db.models import Q
 
 from accounts.models import Account
-from planning.models import Contribution
+from planning.models import Bucket
 from planning.services.budget_math import (
     amount_per_year,
     budget_events,
@@ -93,8 +95,8 @@ MAX_TIMING_DIP_PAYDAYS = 2
 # the household has stated is funded whatever bridging it implies.
 MAX_BRIDGES_PER_YEAR = 3
 
-# Contributions are set up as standing transfers at a bank, by a person, so the
-# figures have to be ones a person would actually type. Owner's call,
+# A contribution is set up as a standing transfer at a bank, by a person, so
+# the figures have to be ones a person would actually type. Owner's call,
 # 2026-08-31: five dollars.
 #
 # Which way each figure rounds is not a style question — it is what keeps the
@@ -132,11 +134,11 @@ class PathPoint:
 
 
 @dataclass
-class AccountPlan:
-    """One contribution's share of the plan, and the evidence behind it."""
+class BucketPlan:
+    """One bucket's share of the plan, and the evidence behind it."""
 
-    contribution_id: int
-    contribution: str
+    bucket_id: int
+    bucket_name: str
     account_id: int | None
     account_name: str | None
     priority: int
@@ -189,7 +191,7 @@ class AccountPlan:
 
 
 @dataclass
-class PlanResult:
+class SavingsPlan:
     generated_for: date
     horizon_months: int
     buffer: Decimal
@@ -226,7 +228,7 @@ class PlanResult:
 
     feasible: bool
     verified: bool
-    lines: list[AccountPlan] = field(default_factory=list)
+    lines: list[BucketPlan] = field(default_factory=list)
     breaches: list[dict] = field(default_factory=list)
     # Where the money for each timing dip comes from, and when it goes back.
     # A plan is the allocation and this schedule together, not one without
@@ -314,7 +316,7 @@ def _paychecks_before(day: int, paycheck_days: list[int]) -> int:
 
 
 def tag_spend_events(
-    contribution: Contribution, today: date, end_date: date
+    bucket: Bucket, today: date, end_date: date
 ) -> tuple[list[tuple[date, Decimal]], Decimal, list[str]]:
     """What this bucket's tags actually cost last year, replayed a year on.
 
@@ -340,12 +342,12 @@ def tag_spend_events(
 
     from transactions.models import TransactionDetail
 
-    linked = list(contribution.tags.all())
+    linked = list(bucket.scope_tags.all())
     if not linked:
         return [], Decimal("0.00"), []
 
     covered: set[int] = set()
-    for budget in contribution.budgets.all():
+    for budget in bucket.budgets.all():
         if budget.tag_ids:
             try:
                 covered.update(json.loads(budget.tag_ids))
@@ -912,12 +914,12 @@ def rate_to_reach(
     return (gap / landed).quantize(Decimal("0.01"), rounding=ROUND_CEILING)
 
 
-def build_plan(
+def build_savings_plan(
     horizon_months: int = 12,
     window_months: int = 6,
     buffer: Decimal | None = None,
     today: date | None = None,
-) -> PlanResult:
+) -> SavingsPlan:
     """Produce a savings plan that provably works, or explain why none does."""
     from utils.dates import get_todays_date_timezone_adjusted
 
@@ -926,15 +928,15 @@ def build_plan(
     end_date = today + timedelta(days=int(DAYS_PER_YEAR * horizon_months / 12))
 
     fund_id = funding_account_id()
-    contributions = list(
-        Contribution.objects.filter(active=True)
+    buckets = list(
+        Bucket.objects.filter(active=True)
         .select_related("account", "reminder", "reminder__repeat")
         .order_by("priority", "id")
     )
     notes: list[str] = []
 
     if fund_id is None:
-        return PlanResult(
+        return SavingsPlan(
             generated_for=today,
             horizon_months=horizon_months,
             buffer=buffer,
@@ -954,14 +956,14 @@ def build_plan(
             feasible=False,
             verified=False,
             notes=[
-                "No contribution has a linked reminder, so there is no funding "
+                "No bucket has a linked reminder, so there is no funding "
                 "account to plan against."
             ],
         )
 
     paychecks = pay_calendar(today, end_date, fund_id)
     if not paychecks:
-        return PlanResult(
+        return SavingsPlan(
             generated_for=today,
             horizon_months=horizon_months,
             buffer=buffer,
@@ -991,7 +993,7 @@ def build_plan(
     # funding account and the buckets before anything is superimposed.
     plan_descriptions = {
         c.reminder.description
-        for c in contributions
+        for c in buckets
         if c.reminder_id and c.reminder.description
     }
 
@@ -1017,21 +1019,21 @@ def build_plan(
     # verification and the bridging solver must all reason about the same path.
     paths: dict[int, list[PathPoint]] = {
         c.id: bucket_path(c, today, end_date)
-        for c in contributions
+        for c in buckets
         if c.account_id
     }
 
-    lines: list[AccountPlan] = []
-    for contribution in contributions:
+    lines: list[BucketPlan] = []
+    for bucket in buckets:
         lines.append(
             _line_for(
-                contribution,
+                bucket,
                 today,
                 end_date,
                 paycheck_days,
                 window_months,
                 horizon_months,
-                paths.get(contribution.id, []),
+                paths.get(bucket.id, []),
             )
         )
 
@@ -1063,7 +1065,7 @@ def build_plan(
         levers = _levers(lines, minimums_total - horizon_capacity, horizon_capacity)
         for line in lines:
             line.planned_per_paycheck = Decimal("0.00")
-        return PlanResult(
+        return SavingsPlan(
             generated_for=today,
             horizon_months=horizon_months,
             buffer=buffer,
@@ -1215,7 +1217,7 @@ def build_plan(
         )
     if optional_total > 0:
         sweep_names = ", ".join(
-            line.contribution for line in lines if line.optional_per_paycheck > 0
+            line.bucket_name for line in lines if line.optional_per_paycheck > 0
         )
         notes.append(
             f"Every stated minimum and target is met by "
@@ -1231,7 +1233,7 @@ def build_plan(
             reverse=True,
         )[:3]
         detail = ", ".join(
-            f"{line.contribution} {line.freed_per_paycheck}" for line in cuts
+            f"{line.bucket_name} {line.freed_per_paycheck}" for line in cuts
         )
         notes.append(
             f"{freed_total.quantize(Decimal('0.01'))} a paycheck is going into "
@@ -1239,7 +1241,7 @@ def build_plan(
             f"contributions costs nothing the plan depends on."
         )
 
-    return PlanResult(
+    return SavingsPlan(
         generated_for=today,
         horizon_months=horizon_months,
         buffer=buffer,
@@ -1267,7 +1269,7 @@ def build_plan(
 
 
 def reward_events(
-    contribution: Contribution, today: date, end_date: date
+    bucket: Bucket, today: date, end_date: date
 ) -> list[tuple[date, Decimal]]:
     """The November rewards, as money arriving in the account that gets them.
 
@@ -1278,7 +1280,7 @@ def reward_events(
     across the year, and averaging it would ask the bucket to hold the full
     amount by December anyway.
     """
-    if not contribution.receives_rewards:
+    if not bucket.receives_rewards:
         return []
 
     outlook = reward_outlook(today)
@@ -1290,35 +1292,35 @@ def reward_events(
 
 
 def bucket_path(
-    contribution: Contribution, today: date, end_date: date
+    bucket: Bucket, today: date, end_date: date
 ) -> list[PathPoint]:
-    """The projected path of one contribution's account, unfunded by it.
+    """The projected path of one bucket's account, unfunded by it.
 
     Shared deliberately. `_line_for` solves a rate against this path, `_verify`
     re-checks the finished plan on it, and the bridging solver asks it what it
     can spare — and all three have to be looking at the *same* path or the plan
     is proved against something it was not built from. That has already gone
-    wrong once: verification excluded every contribution's transfer while the
+    wrong once: verification excluded every bucket's transfer while the
     solver excluded only the row's own, and buckets carry each other's
     transfers, so the verified path was not the solved path.
     """
     own = (
-        contribution.reminder.description
-        if contribution.reminder_id and contribution.reminder.description
+        bucket.reminder.description
+        if bucket.reminder_id and bucket.reminder.description
         else None
     )
     # Children are already inside their parent's total, so a bucket linked to
     # both would fund that spending twice.
     budgets = spending_budgets(
-        contribution.budgets.select_related("repeat", "parent").all()
+        bucket.budgets.select_related("repeat", "parent").all()
     )
     spend_events: list[tuple[date, Decimal]] = []
     for budget in budgets:
         spend_events.extend(budget_events(budget, today, end_date))
-    spend_events.extend(reward_events(contribution, today, end_date))
+    spend_events.extend(reward_events(bucket, today, end_date))
 
     path, _ = baseline_path(
-        contribution.account_id,
+        bucket.account_id,
         today,
         end_date,
         {own} if own else set(),
@@ -1327,8 +1329,8 @@ def bucket_path(
         # reimbursements are the only evidence there is, and dropping them
         # would leave the account looking idle.
         replace_adhoc_reimbursements_to=(
-            contribution.reminder.reminder_source_account_id
-            if budgets and contribution.reminder_id
+            bucket.reminder.reminder_source_account_id
+            if budgets and bucket.reminder_id
             else None
         ),
     )
@@ -1336,50 +1338,50 @@ def bucket_path(
 
 
 def _line_for(
-    contribution: Contribution,
+    bucket: Bucket,
     today: date,
     end_date: date,
     paycheck_days: list[int],
     window_months: int,
     horizon_months: int,
     path: list[PathPoint],
-) -> AccountPlan:
-    """Work out one contribution's minimum and target from its own account.
+) -> BucketPlan:
+    """Work out one bucket's minimum and target from its own account.
 
     Three inputs, in order of authority: the budgets it funds (what you plan to
     spend), the dated reminders on its account (what you are committed to), and
     the target balance (what you want it to build up to). Measured behaviour is
     reported but never planned on — that is the whole point of the budgets.
     """
-    per_year = paychecks_per_year(contribution)
-    current = contribution.per_paycheck or Decimal("0")
-    stated_minimum = contribution.minimum_per_paycheck
+    per_year = paychecks_per_year(bucket)
+    current = bucket.contribution_per_paycheck or Decimal("0")
+    stated_minimum = bucket.minimum_per_paycheck
     own = (
-        contribution.reminder.description
-        if contribution.reminder_id and contribution.reminder.description
+        bucket.reminder.description
+        if bucket.reminder_id and bucket.reminder.description
         else None
     )
 
     budgets = spending_budgets(
-        contribution.budgets.select_related("repeat", "parent").all()
+        bucket.budgets.select_related("repeat", "parent").all()
     )
     budgeted = sum(
         (budget_per_paycheck(b) for b in budgets), Decimal("0")
     ).quantize(Decimal("0.01"))
     budget_names = [b.name for b in budgets]
 
-    if not contribution.account_id:
+    if not bucket.account_id:
         minimum = stated_minimum if stated_minimum is not None else Decimal("0.00")
-        return AccountPlan(
-            contribution_id=contribution.id,
-            contribution=contribution.contribution,
+        return BucketPlan(
+            bucket_id=bucket.id,
+            bucket_name=bucket.name,
             account_id=None,
             account_name=None,
-            priority=contribution.priority,
-            sweep=contribution.sweep,
-            sweep_share=contribution.sweep_share,
-            lendable=contribution.lendable,
-            receives_rewards=contribution.receives_rewards,
+            priority=bucket.priority,
+            sweep=bucket.sweep,
+            sweep_share=bucket.sweep_share,
+            lendable=bucket.lendable,
+            receives_rewards=bucket.receives_rewards,
             paychecks_per_year=per_year,
             current_per_paycheck=current,
             minimum_per_paycheck=minimum,
@@ -1388,7 +1390,7 @@ def _line_for(
             planned_per_paycheck=Decimal("0.00"),
             budgeted_per_paycheck=budgeted,
             budget_names=budget_names,
-            target_balance=contribution.target_balance,
+            target_balance=bucket.target_balance,
             projected_low=Decimal("0.00"),
             projected_low_date=None,
             observed_spend_per_month=Decimal("0.00"),
@@ -1398,9 +1400,9 @@ def _line_for(
         )
 
     _, measured_per_year, measured_tag_names = tag_spend_events(
-        contribution, today, end_date
+        bucket, today, end_date
     )
-    rewards = reward_events(contribution, today, end_date)
+    rewards = reward_events(bucket, today, end_date)
     rewards_on = rewards[0][0] if rewards else None
     rewards_expected = rewards[0][1] if rewards else Decimal("0.00")
 
@@ -1416,18 +1418,18 @@ def _line_for(
     # below, and going above it is always safe.
     minimum = round_up_to(max(derived, stated_minimum or Decimal("0")))
 
-    if contribution.sweep:
+    if bucket.sweep:
         target = minimum
         reason = "Takes whatever is left once everything else is funded."
-    elif contribution.target_balance is not None:
+    elif bucket.target_balance is not None:
         needed = rate_to_reach(
-            path, contribution.target_balance, contribution.target_date, today,
+            path, bucket.target_balance, bucket.target_date, today,
             paycheck_days,
         )
         target = max(minimum, round_up_to(needed))
         reason = (
-            f"Building to {contribution.target_balance}"
-            + (f" by {contribution.target_date}" if contribution.target_date else "")
+            f"Building to {bucket.target_balance}"
+            + (f" by {bucket.target_date}" if bucket.target_date else "")
             + "."
         )
     elif budgets:
@@ -1457,11 +1459,11 @@ def _line_for(
     # sharply with what the account actually spends is worth knowing about, but
     # it is the budget the plan is built on.
     trend = analyze_account_trend(
-        contribution.account_id,
+        bucket.account_id,
         months=window_months,
         source_account_id=(
-            contribution.reminder.reminder_source_account_id
-            if contribution.reminder_id
+            bucket.reminder.reminder_source_account_id
+            if bucket.reminder_id
             else None
         ),
         today=today,
@@ -1483,16 +1485,16 @@ def _line_for(
         )
         warning = f"{warning} {note}" if warning else note
 
-    return AccountPlan(
-        contribution_id=contribution.id,
-        contribution=contribution.contribution,
-        account_id=contribution.account_id,
-        account_name=contribution.account.account_name,
-        priority=contribution.priority,
-        sweep=contribution.sweep,
-        sweep_share=contribution.sweep_share,
-        lendable=contribution.lendable,
-        receives_rewards=contribution.receives_rewards,
+    return BucketPlan(
+        bucket_id=bucket.id,
+        bucket_name=bucket.name,
+        account_id=bucket.account_id,
+        account_name=bucket.account.account_name,
+        priority=bucket.priority,
+        sweep=bucket.sweep,
+        sweep_share=bucket.sweep_share,
+        lendable=bucket.lendable,
+        receives_rewards=bucket.receives_rewards,
         paychecks_per_year=per_year,
         current_per_paycheck=current,
         minimum_per_paycheck=minimum,
@@ -1505,7 +1507,7 @@ def _line_for(
         measured_tag_names=measured_tag_names,
         rewards_expected=rewards_expected,
         rewards_on=rewards_on,
-        target_balance=contribution.target_balance,
+        target_balance=bucket.target_balance,
         projected_low=low,
         projected_low_date=low_date,
         observed_spend_per_month=observed,
@@ -1516,7 +1518,7 @@ def _line_for(
 
 
 def _verify(
-    lines: list[AccountPlan],
+    lines: list[BucketPlan],
     fund_path: list[PathPoint],
     paycheck_days: list[int],
     buffer: Decimal,
@@ -1550,7 +1552,7 @@ def _verify(
         breaches.append(_dip_report(dip, "funding", None, buffer))
 
     for line in lines:
-        path = paths.get(line.contribution_id)
+        path = paths.get(line.bucket_id)
         if not line.account_id or not path:
             continue
         planned_points = [
@@ -1639,7 +1641,7 @@ def available_to_lend(
 
 def solve_bridges(
     breaches: list[dict],
-    lines: list[AccountPlan],
+    lines: list[BucketPlan],
     paths: dict[int, list[PathPoint]],
     paycheck_days: list[int],
     funding_id: int,
@@ -1681,12 +1683,12 @@ def solve_bridges(
     candidates = [
         line
         for line in lines
-        if line.account_id and line.lendable and paths.get(line.contribution_id)
+        if line.account_id and line.lendable and paths.get(line.bucket_id)
     ]
     protected = [
         line
         for line in lines
-        if line.account_id and not line.lendable and paths.get(line.contribution_id)
+        if line.account_id and not line.lendable and paths.get(line.bucket_id)
     ]
     rates = _source_rates([line.account_id for line in candidates])
 
@@ -1702,7 +1704,7 @@ def solve_bridges(
         offers = []
         for line in candidates:
             spare = available_to_lend(
-                paths[line.contribution_id],
+                paths[line.bucket_id],
                 line.planned_per_paycheck,
                 paycheck_days,
                 from_day,
@@ -1722,7 +1724,7 @@ def solve_bridges(
                 {
                     "from_account_id": line.account_id,
                     "from_account": line.account_name,
-                    "contribution": line.contribution,
+                    "bucket": line.bucket_name,
                     "amount": take.quantize(Decimal("0.01")),
                     "annual_rate": rate,
                     "spare": spare,
@@ -1748,7 +1750,7 @@ def solve_bridges(
                 line.account_name
                 for line in protected
                 if available_to_lend(
-                    paths[line.contribution_id],
+                    paths[line.bucket_id],
                     line.planned_per_paycheck,
                     paycheck_days,
                     from_day,
@@ -1789,7 +1791,7 @@ def solve_bridges(
 
 
 def _levers(
-    lines: list[AccountPlan], shortfall: Decimal, capacity: Decimal
+    lines: list[BucketPlan], shortfall: Decimal, capacity: Decimal
 ) -> list[dict]:
     """What could actually close an unfixable gap, biggest first.
 
@@ -1816,7 +1818,7 @@ def _levers(
         levers.append(
             {
                 "kind": "minimum",
-                "what": f"Reduce what {line.contribution} must hold",
+                "what": f"Reduce what {line.bucket_name} must hold",
                 "amount_per_paycheck": line.minimum_per_paycheck,
                 "detail": (
                     f"Stated minimum of {line.minimum_per_paycheck}"

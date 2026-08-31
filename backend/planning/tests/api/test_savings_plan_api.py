@@ -15,7 +15,7 @@ AUTH = {"Authorization": "Bearer test-api-key"}
 @pytest.mark.django_db
 @pytest.mark.api
 def test_savings_plan_answers_when_there_is_nothing_to_plan(api_client):
-    """No contributions, no funding account, no pay calendar.
+    """No buckets, no funding account, no pay calendar.
 
     A fresh install hits this on the first page load, so it has to come back as
     a plan that explains itself rather than a 500.

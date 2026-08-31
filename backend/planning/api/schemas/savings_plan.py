@@ -7,10 +7,10 @@ from pydantic import ConfigDict, condecimal
 AmountDecimal = condecimal(max_digits=12, decimal_places=2)
 
 
-# The class PlanLineOut is a schema for one contribution's share of the plan.
+# The class PlanLineOut is a schema for one bucket's share of the plan.
 class PlanLineOut(Schema):
-    contribution_id: int
-    contribution: str
+    bucket_id: int
+    bucket_name: str
     account_id: Optional[int] = None
     account_name: Optional[str] = None
     priority: int
@@ -71,7 +71,7 @@ class DipOut(Schema):
 class BridgeMovementOut(Schema):
     from_account_id: Optional[int] = None
     from_account: Optional[str] = None
-    contribution: str
+    bucket: str
     amount: AmountDecimal
     annual_rate: AmountDecimal
     # What that account could have spared in total, so the user can see how
@@ -104,7 +104,7 @@ class BudgetSuggestionOut(Schema):
     suggested_amount: AmountDecimal
     cadence: str
     per_paycheck_effect: AmountDecimal
-    contribution: Optional[str] = None
+    bucket: Optional[str] = None
     why: str
 
 

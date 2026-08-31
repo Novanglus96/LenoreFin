@@ -77,7 +77,7 @@ The API is built with **Django Ninja** and registered centrally in `backend/back
 | `accounts` | Bank accounts, account types, forecasting | `/accounts`, `/accounts/forecast` |
 | `transactions` | Transactions, paychecks, statuses | `/transactions`, `/transactions/paychecks` |
 | `tags` | Tag hierarchy (MainTag → SubTag → Tag), analytics | `/tags`, `/tags/graph-by-tags` |
-| `planning` | Budget, contributions, retirement, calculator | `/planning/budget`, `/planning/contributions` |
+| `planning` | Buckets, budgets, savings plan, retirement, calculator | `/planning/budget`, `/planning/buckets`, `/planning/savings-plan` |
 | `reminders` | Bill reminders, recurring events | `/reminders` |
 | `imports` | CSV/file import pipeline | `/file-imports` |
 | `administration` | Payees, options, system messages, versioning | `/administration/options`, `/administration/version` |

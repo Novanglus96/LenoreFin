@@ -1,5 +1,7 @@
 import gzip
 import json
+from decimal import Decimal
+
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -71,7 +73,7 @@ def test_roundtrip_restores_all_core_models(
 ):
     from accounts.models import Account, Bank, Reward
     from administration.models import DescriptionHistory
-    from planning.models import Contribution, ContribRule, Note
+    from planning.models import Bucket, WindfallRule, Note
     from reminders.models import ReminderExclusion
 
     DescriptionHistory.objects.create(
@@ -80,10 +82,10 @@ def test_roundtrip_restores_all_core_models(
         tag=test_tag,
     )
     Reward.objects.create(reward_amount="50.00", reward_account=test_checking_account)
-    ContribRule.objects.create(rule="401k", cap="5000", order=1)
-    Contribution.objects.create(
-        contribution="HSA",
-        per_paycheck="50.00",
+    WindfallRule.objects.create(rule="401k", cap="5000", order=1)
+    Bucket.objects.create(
+        name="HSA",
+        contribution_per_paycheck="50.00",
         minimum_per_paycheck="0.00",
         target_balance="3600.00",
         active=True,
@@ -104,8 +106,8 @@ def test_roundtrip_restores_all_core_models(
     assert Reward.objects.filter(reward_amount="50.00").exists()
     assert Paycheck.objects.filter(gross=test_paycheck.gross).exists()
     assert Transaction.objects.filter(description=test_transaction.description).exists()
-    assert ContribRule.objects.filter(rule="401k").exists()
-    assert Contribution.objects.filter(contribution="HSA").exists()
+    assert WindfallRule.objects.filter(rule="401k").exists()
+    assert Bucket.objects.filter(name="HSA").exists()
     assert Note.objects.filter(note_text="Check budget monthly").exists()
     assert ReminderExclusion.objects.filter(exclude_date="2025-01-01").exists()
 
@@ -262,16 +264,16 @@ def test_roundtrip_reminder_maps(
 
 
 @pytest.mark.django_db
-def test_roundtrip_contribution_planner_fields(
+def test_roundtrip_bucket_planner_fields(
     tmp_path, test_checking_account, test_savings_account,
     test_tag, test_repeat, test_expense_transaction_type,
 ):
-    """A contribution's account, reminder link and target all survive a round trip.
+    """A bucket's account, reminder link and target all survive a round trip.
 
     The reminder link is the one that can silently break: it is exported as the
     source pk and has to come back through reminder_id_map, not as a raw id.
     """
-    from planning.models import Contribution
+    from planning.models import Bucket
     from reminders.models import Reminder
 
     reminder = Reminder.objects.create(
@@ -284,9 +286,9 @@ def test_roundtrip_contribution_planner_fields(
         repeat=test_repeat,
         auto_add=False,
     )
-    Contribution.objects.create(
-        contribution="House",
-        per_paycheck="200.00",
+    Bucket.objects.create(
+        name="House",
+        contribution_per_paycheck="200.00",
         minimum_per_paycheck="25.00",
         target_balance="5000.00",
         target_date="2027-06-01",
@@ -303,7 +305,7 @@ def test_roundtrip_contribution_planner_fields(
     call_command("export_user_data", output=output)
     call_command("import_user_data", output)
 
-    restored = Contribution.objects.get(contribution="House")
+    restored = Bucket.objects.get(name="House")
     assert restored.account is not None
     assert restored.account.account_name == test_savings_account.account_name
     assert restored.reminder is not None
@@ -356,44 +358,86 @@ def test_roundtrip_budget_parent(tmp_path, test_checking_account, test_tag):
 
 
 @pytest.mark.django_db
-def test_roundtrip_contribution_tags(tmp_path, test_checking_account, test_tag):
+def test_roundtrip_bucket_tags(tmp_path, test_checking_account, test_tag):
     """Tags carry by slug, not by pk.
 
     Primary keys are not stable across an export/import cycle, and a
-    contribution that came back linked to whatever tag happened to land on that
+    bucket that came back linked to whatever tag happened to land on that
     pk would fund the wrong spending — silently, since the number would still
     look plausible.
     """
-    from planning.models import Contribution
+    from planning.models import Bucket
     from tags.models import Tag
 
-    contribution = Contribution.objects.create(
-        contribution="Gifts", per_paycheck="45.00", active=True
+    bucket = Bucket.objects.create(
+        name="Gifts", contribution_per_paycheck="45.00", active=True
     )
-    contribution.tags.set([test_tag])
+    bucket.scope_tags.set([test_tag])
 
     output = str(tmp_path / "backup.json.gz")
     call_command("export_user_data", output=output)
     call_command("import_user_data", output)
 
-    restored = Contribution.objects.get(contribution="Gifts")
-    assert [t.slug for t in restored.tags.all()] == [test_tag.slug]
-    assert restored.tags.first().pk == Tag.objects.get(slug=test_tag.slug).pk
+    restored = Bucket.objects.get(name="Gifts")
+    assert [t.slug for t in restored.scope_tags.all()] == [test_tag.slug]
+    assert restored.scope_tags.first().pk == Tag.objects.get(slug=test_tag.slug).pk
 
 
 @pytest.mark.django_db
-def test_roundtrip_contribution_without_planner_fields(
+def test_import_reads_the_pre_bucket_spelling(tmp_path, test_tag):
+    """Every backup written before the rename says `contributions`.
+
+    Including the production snapshot this dev database was built from. The
+    rename was vocabulary only, so a file written under the old names has to
+    restore into buckets unchanged — otherwise renaming the model would have
+    quietly destroyed every existing backup.
+    """
+    from planning.models import Bucket, WindfallRule
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    with gzip.open(output, "rb") as f:
+        data = json.loads(f.read())
+
+    # Rewrite the planner section the way the old exporter wrote it.
+    data.pop("buckets", None)
+    data.pop("windfall_rules", None)
+    data["contributions"] = [
+        {
+            "contribution": "Gifts",
+            "per_paycheck": "45.00",
+            "active": True,
+            "tag_slugs": [test_tag.slug],
+        }
+    ]
+    data["contrib_rules"] = [
+        {"rule": "Split anything over 500", "cap": "Until projects complete", "order": 1}
+    ]
+    legacy = str(tmp_path / "legacy.json.gz")
+    with gzip.open(legacy, "wb") as f:
+        f.write(json.dumps(data).encode())
+
+    call_command("import_user_data", legacy)
+
+    restored = Bucket.objects.get(name="Gifts")
+    assert restored.contribution_per_paycheck == Decimal("45.00")
+    assert [t.slug for t in restored.scope_tags.all()] == [test_tag.slug]
+    assert WindfallRule.objects.get(rule="Split anything over 500").order == 1
+
+
+@pytest.mark.django_db
+def test_roundtrip_bucket_without_planner_fields(
     tmp_path, test_checking_account,
 ):
-    """A contribution with no account, reminder or target still round trips.
+    """A bucket with no account, reminder or target still round trips.
 
     This is the shape every pre-planner backup has, so it must not raise.
     """
-    from planning.models import Contribution
+    from planning.models import Bucket
 
-    Contribution.objects.create(
-        contribution="HSA",
-        per_paycheck="50.00",
+    Bucket.objects.create(
+        name="HSA",
+        contribution_per_paycheck="50.00",
         minimum_per_paycheck="0.00",
         target_balance="0.00",
         active=True,
@@ -403,7 +447,7 @@ def test_roundtrip_contribution_without_planner_fields(
     call_command("export_user_data", output=output)
     call_command("import_user_data", output)
 
-    restored = Contribution.objects.get(contribution="HSA")
+    restored = Bucket.objects.get(name="HSA")
     assert restored.account is None
     assert restored.reminder is None
     assert restored.target_balance is None

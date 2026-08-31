@@ -5,7 +5,7 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from planning.api.schemas.savings_plan import SavingsPlanOut
-from planning.services.savings_plan import build_plan
+from planning.services.savings_plan import build_savings_plan
 
 api_logger = logging.getLogger("api")
 error_logger = logging.getLogger("error")
@@ -23,7 +23,7 @@ def get_savings_plan(
     The function `get_savings_plan` builds a savings plan and returns it.
 
     The plan is computed on request rather than stored: it is derived entirely
-    from contributions, reminders, budgets and the forecast, and any of those
+    from buckets, reminders, budgets and the forecast, and any of those
     can change between one call and the next. It costs one forecast pass per
     account, so it is slow by the standards of this API — several seconds — and
     the client caches it rather than polling.
@@ -39,7 +39,7 @@ def get_savings_plan(
     """
 
     try:
-        plan = build_plan(horizon_months=horizon_months, buffer=buffer)
+        plan = build_savings_plan(horizon_months=horizon_months, buffer=buffer)
         api_logger.debug("Savings plan built")
         return plan
     except Exception as e:

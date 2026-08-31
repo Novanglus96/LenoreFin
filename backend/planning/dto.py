@@ -39,7 +39,7 @@ class DomainCalculator:
 
 
 @dataclass
-class DomainContribRule:
+class DomainWindfallRule:
     id: int
     rule: str
     cap: Optional[str] = None
@@ -47,10 +47,10 @@ class DomainContribRule:
 
 
 @dataclass
-class DomainContribution:
+class DomainBucket:
     id: int
-    contribution: str
-    per_paycheck: Decimal
+    name: str
+    contribution_per_paycheck: Decimal
     minimum_per_paycheck: Optional[Decimal]
     target_balance: Optional[Decimal]
     sweep: bool
@@ -59,8 +59,8 @@ class DomainContribution:
 
 
 @dataclass
-class DomainContributionWithTotals:
-    contributions: List[DomainContribution]
+class DomainBucketsWithTotals:
+    buckets: List[DomainBucket]
     per_paycheck_total: Decimal
     emergency_paycheck_total: Decimal
     total_emergency: Decimal

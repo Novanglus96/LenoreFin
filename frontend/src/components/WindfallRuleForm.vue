@@ -114,17 +114,17 @@
   };
   const submit = handleSubmit(values => {
     if (props.isEdit) {
-      emit("editContributionRule", values);
+      emit("editWindfallRule", values);
     } else {
-      emit("addContributionRule", values);
+      emit("addWindfallRule", values);
     }
     emit("updateDialog", false);
   });
 
   const emit = defineEmits([
     "updateDialog",
-    "addContributionRule",
-    "editContributionRule",
+    "addWindfallRule",
+    "editWindfallRule",
   ]);
 
   const clickClose = () => {

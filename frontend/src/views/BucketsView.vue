@@ -7,18 +7,18 @@
     </v-row>
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded">
-        <ContributionsWidget />
+        <BucketsWidget />
       </v-col>
     </v-row>
     <v-row class="pa-1 ga-1" no-gutters>
       <v-col class="rounded">
-        <ContributionRulesWidget />
+        <WindfallRulesWidget />
       </v-col>
     </v-row>
   </div>
 </template>
 <script setup>
   import SavingsPlanWidget from "@/components/SavingsPlanWidget.vue";
-  import ContributionsWidget from "@/components/ContributionsWidget.vue";
-  import ContributionRulesWidget from "@/components/ContributionRulesWidget.vue";
+  import BucketsWidget from "@/components/BucketsWidget.vue";
+  import WindfallRulesWidget from "@/components/WindfallRulesWidget.vue";
 </script>

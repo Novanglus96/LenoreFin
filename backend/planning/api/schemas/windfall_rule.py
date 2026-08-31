@@ -3,15 +3,15 @@ from typing import Optional
 from pydantic import ConfigDict
 
 
-# The class ContribRuleIn is a schema for validating Contribution Rules.
-class ContribRuleIn(Schema):
+# The class WindfallRuleIn is a schema for validating Windfall Rules.
+class WindfallRuleIn(Schema):
     rule: str
     cap: Optional[str] = None
     order: Optional[int] = 0
 
 
-# The class ContribRuleOut is a schema representing Contribution Rules.
-class ContribRuleOut(Schema):
+# The class WindfallRuleOut is a schema representing Windfall Rules.
+class WindfallRuleOut(Schema):
     id: int
     rule: str
     cap: Optional[str] = None

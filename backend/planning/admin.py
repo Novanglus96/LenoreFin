@@ -1,7 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 from core.admin import UnfoldImportExportModelAdmin
-from .models import ChristmasGift, ContribRule, Contribution, Note, CalculationRule, Budget, DetectedRecurring
+from .models import ChristmasGift, WindfallRule, Bucket, Note, CalculationRule, Budget, DetectedRecurring
 
 
 class ChristmasGiftAdmin(UnfoldImportExportModelAdmin):
@@ -10,15 +10,15 @@ class ChristmasGiftAdmin(UnfoldImportExportModelAdmin):
     ordering = ["tag"]
 
 
-class ContribRuleAdmin(UnfoldImportExportModelAdmin):
+class WindfallRuleAdmin(UnfoldImportExportModelAdmin):
     list_display = ["id", "rule", "cap"]
     list_display_links = ["id", "rule"]
     ordering = ["id"]
 
 
-class ContributionAdmin(UnfoldImportExportModelAdmin):
-    list_display = ["id", "contribution", "priority", "per_paycheck", "minimum_per_paycheck", "target_balance", "sweep", "active"]
-    list_display_links = ["contribution"]
+class BucketAdmin(UnfoldImportExportModelAdmin):
+    list_display = ["id", "name", "priority", "contribution_per_paycheck", "minimum_per_paycheck", "target_balance", "sweep", "active"]
+    list_display_links = ["name"]
     ordering = ["id"]
 
 
@@ -47,8 +47,8 @@ class DetectedRecurringAdmin(ModelAdmin):
 
 
 admin.site.register(ChristmasGift, ChristmasGiftAdmin)
-admin.site.register(ContribRule, ContribRuleAdmin)
-admin.site.register(Contribution, ContributionAdmin)
+admin.site.register(WindfallRule, WindfallRuleAdmin)
+admin.site.register(Bucket, BucketAdmin)
 admin.site.register(Note, NoteAdmin)
 admin.site.register(CalculationRule, CalculationRuleAdmin)
 admin.site.register(Budget, BudgetAdmin)

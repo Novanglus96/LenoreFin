@@ -158,7 +158,7 @@ def test_transfer_excluded_from_intrinsic_return(
         source_account=checking_account,
         status=cleared_status,
         transaction_type=transfer_type,
-        description="Contribution",
+        description="Bucket",
     )
     # Small organic gain
     Transaction.objects.create(

@@ -30,7 +30,7 @@ async function getSavingsPlanFunction() {
 export function useSavingsPlan() {
   const queryClient = useQueryClient();
 
-  // Keyed "planner" because contributions, reminders and transactions already
+  // Keyed "planner" because buckets, reminders and transactions already
   // invalidate that key when they change — the plan is derived from all three,
   // and every one of them can move it.
   const { data: plan, isLoading } = useQuery({

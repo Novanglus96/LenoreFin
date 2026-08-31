@@ -11,7 +11,7 @@ from decimal import Decimal
 
 import pytest
 
-from planning.models import Contribution
+from planning.models import Bucket
 from planning.services.planner import (
     analyze_account_trend,
     paychecks_per_year,
@@ -81,7 +81,7 @@ def test_trend_measures_natural_drain(draining_account):
 
 @pytest.mark.service
 @pytest.mark.django_db
-def test_trend_excludes_contribution_transfers(
+def test_trend_excludes_bucket_transfers(
     draining_account,
     test_checking_account,
     test_cleared_transaction_status,
@@ -155,14 +155,14 @@ def test_paychecks_per_year_derives_from_repeat(
         transaction_type=test_transfer_transaction_type,
         repeat=biweekly_repeat,
     )
-    contribution = Contribution.objects.create(
-        contribution="Cadence",
-        per_paycheck=Decimal("100.00"),
+    bucket = Bucket.objects.create(
+        name="Cadence",
+        contribution_per_paycheck=Decimal("100.00"),
         account=draining_account,
         reminder=reminder,
     )
 
-    assert paychecks_per_year(contribution) == pytest.approx(
+    assert paychecks_per_year(bucket) == pytest.approx(
         Decimal("26.09"), abs=Decimal("0.1")
     )
 
@@ -170,14 +170,14 @@ def test_paychecks_per_year_derives_from_repeat(
 @pytest.mark.service
 @pytest.mark.django_db
 def test_paychecks_per_year_falls_back_to_biweekly(draining_account):
-    """An unlinked contribution still solves, on the common-case cadence."""
-    contribution = Contribution.objects.create(
-        contribution="NoLink",
-        per_paycheck=Decimal("100.00"),
+    """An unlinked bucket still solves, on the common-case cadence."""
+    bucket = Bucket.objects.create(
+        name="NoLink",
+        contribution_per_paycheck=Decimal("100.00"),
         account=draining_account,
     )
 
-    assert paychecks_per_year(contribution) == Decimal("26")
+    assert paychecks_per_year(bucket) == Decimal("26")
 
 
 @pytest.mark.service
@@ -225,7 +225,7 @@ def test_repeated_unscheduled_spending_is_a_rate(
 
     The grocery bucket has no outflow reminder at all — its whole drain is
     repeated "Groceries Transfer" rows. A forecast-only planner would say it
-    never spends anything and suggest cutting the contribution to zero.
+    never spends anything and suggest cutting the bucket to zero.
     """
     for i in range(6):
         t = _tx(test_savings_account, -300, TODAY - timedelta(days=30 * (i + 1)),
@@ -291,7 +291,7 @@ def test_a_single_transfer_is_not_treated_as_a_repeating_amount(
     )
 
     assert trend.modal_contribution_amount is None
-    # Falls back to treating it as the contribution rather than inventing a split.
+    # Falls back to treating it as the bucket rather than inventing a split.
     assert trend.excluded_contribution_total == Decimal("200.00")
     assert trend.extra_contributions_total == Decimal("0.00")
 
@@ -328,7 +328,7 @@ def test_topups_are_measured_as_current_funding(
     )
 
     assert trend is not None
-    # The modal amount is the contribution; the rest is extra.
+    # The modal amount is the bucket; the rest is extra.
     assert trend.modal_contribution_amount == Decimal("75.00")
     assert trend.extra_contributions_total == Decimal("2360.00")
     # 2360 over the 12.81 paychecks in a 180-day window.

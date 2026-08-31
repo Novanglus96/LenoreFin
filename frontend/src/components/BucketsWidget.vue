@@ -2,29 +2,29 @@
   <v-card variant="outlined" :elevation="4" class="bg-surface">
     <v-card-title class="text-left">
       <span class="text-subtitle-2 text-primary">
-        Per Paycheck Contribution Rules
+        Per Paycheck Windfall Rules
       </span>
-      <v-tooltip text="Add Contribution" location="top" v-if="authStore.isFullAccess">
+      <v-tooltip text="Add Bucket" location="top" v-if="authStore.isFullAccess">
         <template v-slot:activator="{ props }">
           <v-btn
             icon="mdi-pail-plus"
             flat
             variant="plain"
             v-bind="props"
-            @click="addContributionDialog = true"
+            @click="addBucketDialog = true"
             size="small"
             :disabled="!isOnline"
           ></v-btn>
         </template>
       </v-tooltip>
 
-      <ContributionForm
-        v-model="addContributionDialog"
+      <BucketForm
+        v-model="addBucketDialog"
         key="0"
         :isEdit="false"
         @update-dialog="updateAddDialog"
-        @add-contribution="clickAddContribution"
-        :passedFormData="newContributionData"
+        @add-bucket="clickAddBucket"
+        :passedFormData="newBucketData"
       />
     </v-card-title>
     <v-card-text class="ma-0 pa-0 ga-0">
@@ -53,7 +53,7 @@
             md="1"
           >
             <NumberFlow
-              :value="contributions ? contributions.per_paycheck_total : 0"
+              :value="buckets ? buckets.per_paycheck_total : 0"
               :format="{ style: 'currency', currency: 'USD' }"
             />
           </v-col>
@@ -82,7 +82,7 @@
           >
             <NumberFlow
               :value="
-                contributions ? contributions.emergency_paycheck_total : 0
+                buckets ? buckets.emergency_paycheck_total : 0
               "
               :format="{ style: 'currency', currency: 'USD' }"
             />
@@ -111,7 +111,7 @@
             md="1"
           >
             <NumberFlow
-              :value="contributions ? contributions.total_emergency : 0"
+              :value="buckets ? buckets.total_emergency : 0"
               :format="{ style: 'currency', currency: 'USD' }"
             />
           </v-col>
@@ -119,8 +119,8 @@
       </v-container>
       <v-data-table
         :headers="displayHeaders"
-        :items="contributions ? contributions.contributions : []"
-        :items-length="contributions ? contributions.contributions.length : 0"
+        :items="buckets ? buckets.buckets : []"
+        :items-length="buckets ? buckets.buckets.length : 0"
         :loading="isLoading"
         item-value="id"
         v-model:items-per-page="itemsPerPage"
@@ -131,9 +131,9 @@
             title: 5,
           },
         ]"
-        items-per-page-text="Contributions per page"
-        no-data-text="No contributions!"
-        loading-text="Loading contributions..."
+        items-per-page-text="Buckets per page"
+        no-data-text="No buckets!"
+        loading-text="Loading buckets..."
         disable-sort
         :show-select="true"
         fixed-footer
@@ -142,7 +142,7 @@
         :hide-default-header="mdAndUp ? false : true"
         width="100%"
         :header-props="{ class: 'font-weight-bold bg-secondary' }"
-        v-model="selectedContribution"
+        v-model="selectedBucket"
         select-strategy="single"
         return-object
         :row-props="getRowProps"
@@ -159,43 +159,43 @@
               <v-btn
                 variant="plain"
                 icon
-                @click="editContributionDialog = true"
-                :disabled="selectedContribution.length === 0 || !isOnline"
+                @click="editBucketDialog = true"
+                :disabled="selectedBucket.length === 0 || !isOnline"
               >
                 <v-icon icon="mdi-pencil"></v-icon>
               </v-btn>
-              <ContributionForm
-                v-model="editContributionDialog"
-                :key="editContrib ? editContrib.id : 0"
+              <BucketForm
+                v-model="editBucketDialog"
+                :key="editingBucket ? editingBucket.id : 0"
                 :isEdit="true"
                 @update-dialog="updateEditDialog"
-                :passedFormData="editContrib"
-                @edit-contribution="clickEditContribution"
+                :passedFormData="editingBucket"
+                @edit-bucket="clickEditBucket"
               />
               <v-btn
                 variant="plain"
                 icon
-                :disabled="selectedContribution.length === 0 || !isOnline"
+                :disabled="selectedBucket.length === 0 || !isOnline"
               >
                 <v-icon
                   icon="mdi-delete"
-                  @click="deleteContributionDialog = true"
+                  @click="deleteBucketDialog = true"
                   color="error"
                 ></v-icon>
               </v-btn>
               <v-dialog
-                v-model="deleteContributionDialog"
-                :key="editContrib ? editContrib.id : 0"
+                v-model="deleteBucketDialog"
+                :key="editingBucket ? editingBucket.id : 0"
                 width="400"
               >
                 <v-card>
-                  <v-card-title>Delete Contribution?</v-card-title>
+                  <v-card-title>Delete Bucket?</v-card-title>
                   <v-card-text>
-                    <span>{{ editContrib.contribution }}</span>
+                    <span>{{ editingBucket.bucket }}</span>
                   </v-card-text>
                   <v-card-actions>
-                    <v-btn @click="deleteContributionDialog = false">Close</v-btn>
-                    <v-btn @click="clickDeleteContribution(editContrib)" :disabled="!isOnline">
+                    <v-btn @click="deleteBucketDialog = false">Close</v-btn>
+                    <v-btn @click="clickDeleteBucket(editingBucket)" :disabled="!isOnline">
                       Delete
                     </v-btn>
                   </v-card-actions>
@@ -216,7 +216,7 @@
         <template v-slot:[`header.target_balance`] v-if="mdAndUp">
           <div class="text-center">Target</div>
         </template>
-        <template v-slot:[`item.contribution`]="{ item }" v-if="mdAndUp">
+        <template v-slot:[`item.bucket`]="{ item }" v-if="mdAndUp">
           <div>
             <span
               :class="
@@ -225,7 +225,7 @@
                   : 'font-italic text-warning text-decoration-line-through'
               "
             >
-              {{ item.contribution }}
+              {{ item.bucket }}
             </span>
           </div>
         </template>
@@ -292,7 +292,7 @@
                 class="ma-0 pa-0 ga-0 font-weight-bold text-primary"
                 cols="12"
               >
-                {{ item.contribution }}
+                {{ item.bucket }}
               </v-col>
             </v-row>
             <v-row dense class="ma-0 pa-0 ga-0">
@@ -331,8 +331,8 @@
 </template>
 <script setup>
   import { ref, computed, watch } from "vue";
-  import { useContributions } from "@/composables/contributionsComposable";
-  import ContributionForm from "@/components/ContributionForm.vue";
+  import { useBuckets } from "@/composables/bucketsComposable";
+  import BucketForm from "@/components/BucketForm.vue";
   import NumberFlow from "@number-flow/vue";
   import { useDisplay } from "vuetify";
   import { useAuthStore } from "@/stores/auth";
@@ -343,15 +343,15 @@
   const itemsPerPage = ref(5);
   const { smAndDown, mdAndUp } = useDisplay();
   const authStore = useAuthStore();
-  const editContributionDialog = ref(false);
-  const addContributionDialog = ref(false);
-  const deleteContributionDialog = ref(false);
-  const selectedContribution = ref([]);
-  const editContrib = ref({ id: 0 });
-  const newContributionData = ref({
+  const editBucketDialog = ref(false);
+  const addBucketDialog = ref(false);
+  const deleteBucketDialog = ref(false);
+  const selectedBucket = ref([]);
+  const editingBucket = ref({ id: 0 });
+  const newBucketData = ref({
     id: 0,
-    contribution: null,
-    per_paycheck: "0",
+    bucket: null,
+    contribution_per_paycheck: "0",
     // Null, not zero: blank means "work the minimum out from the budgets and
     // the dated bills", which is what most buckets want.
     minimum_per_paycheck: null,
@@ -363,23 +363,23 @@
     lendable: true,
     receives_rewards: false,
     budget_ids: [],
-    tag_ids: [],
+    scope_tag_ids: [],
     active: true,
     account_id: null,
     reminder_id: null,
   });
 
   const {
-    contributions,
+    buckets,
     isLoading,
-    addContribution,
-    editContribution,
-    removeContribution,
-  } = useContributions();
+    addBucket,
+    editBucket,
+    removeBucket,
+  } = useBuckets();
 
   const headers = ref([
-    { title: "Contribution", key: "contribution" },
-    { title: "Paycheck(per)", key: "per_paycheck", width: "140px" },
+    { title: "Bucket", key: "bucket" },
+    { title: "Paycheck(per)", key: "contribution_per_paycheck", width: "140px" },
     { title: "Minimum", key: "minimum_per_paycheck", width: "140px" },
     { title: "Difference", key: "difference", width: "140px" },
     { title: "Target", key: "target_balance", width: "140px" },
@@ -416,28 +416,28 @@
   });
 
   const updateAddDialog = () => {
-    addContributionDialog.value = false;
+    addBucketDialog.value = false;
   };
 
   const updateEditDialog = () => {
-    editContributionDialog.value = false;
+    editBucketDialog.value = false;
   };
 
-  const clickEditContribution = contribution => {
-    editContribution(contribution);
-    editContributionDialog.value = false;
-    selectedContribution.value = [];
+  const clickEditBucket = bucket => {
+    editBucket(bucket);
+    editBucketDialog.value = false;
+    selectedBucket.value = [];
   };
 
-  const clickDeleteContribution = contribution => {
-    removeContribution(contribution);
-    deleteContributionDialog.value = false;
-    selectedContribution.value = [];
+  const clickDeleteBucket = bucket => {
+    removeBucket(bucket);
+    deleteBucketDialog.value = false;
+    selectedBucket.value = [];
   };
 
-  const clickAddContribution = contribution => {
-    addContribution(contribution);
-    addContributionDialog.value = false;
+  const clickAddBucket = bucket => {
+    addBucket(bucket);
+    addBucketDialog.value = false;
   };
   const formatCurrency = value => {
     return new Intl.NumberFormat("en-US", {
@@ -448,21 +448,21 @@
     }).format(value);
   };
   const pageCount = computed(() =>
-    contributions.value && itemsPerPage.value
-      ? Math.ceil(contributions.value.contributions.length / itemsPerPage.value)
+    buckets.value && itemsPerPage.value
+      ? Math.ceil(buckets.value.buckets.length / itemsPerPage.value)
       : 1,
   );
   watch(
-    () => selectedContribution.value,
+    () => selectedBucket.value,
     val => {
       if (val) {
-        editContrib.value = val[0];
+        editingBucket.value = val[0];
       }
     },
   );
   function getRowProps({ item }) {
     let rowformat = "";
-    const isSelected = selectedContribution.value.some(
+    const isSelected = selectedBucket.value.some(
       sel => sel.id === item.id,
     );
     if (isSelected) {

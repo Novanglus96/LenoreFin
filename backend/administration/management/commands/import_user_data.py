@@ -110,7 +110,7 @@ class Command(BaseCommand):
         from reminders.models import Reminder, ReminderExclusion, Repeat
         from tags.models import Tag, MainTag, SubTag
         from planning.models import (
-            ContribRule, Contribution, Note, ChristmasGift,
+            WindfallRule, Bucket, Note, ChristmasGift,
             Budget, CalculationRule,
         )
         from reports.models import ReportConfig
@@ -146,8 +146,8 @@ class Command(BaseCommand):
         Budget.objects.all().delete()
         CalculationRule.objects.all().delete()
         Note.objects.all().delete()
-        Contribution.objects.all().delete()
-        ContribRule.objects.all().delete()
+        Bucket.objects.all().delete()
+        WindfallRule.objects.all().delete()
 
         self.stdout.write("Cleared existing user data.")
 
@@ -162,7 +162,7 @@ class Command(BaseCommand):
             Transaction, Paycheck, TransactionDetail,
         )
         from reminders.models import Repeat, Reminder, ReminderExclusion
-        from planning.models import ContribRule, Contribution, Note, ChristmasGift, Budget, CalculationRule
+        from planning.models import WindfallRule, Bucket, Note, ChristmasGift, Budget, CalculationRule
         from reports.models import ReportConfig, ReportConfigTag
 
         # --- System lookup tables (slug → object) ---
@@ -401,22 +401,30 @@ class Command(BaseCommand):
                     exclude_date=item["exclude_date"],
                 )
 
-        # --- 14. ContribRules ---
-        for item in data.get("contrib_rules", []):
-            ContribRule.objects.create(
+        # --- 14. WindfallRules ---
+        # `contrib_rules` is what backups called these before the rename.
+        for item in data.get("windfall_rules", data.get("contrib_rules", [])):
+            WindfallRule.objects.create(
                 rule=item["rule"],
                 cap=item.get("cap"),
                 order=item.get("order", 0),
             )
 
-        # --- 15. Contributions ---
-        pending_contribution_budgets = []
+        # --- 15. Buckets ---
+        pending_bucket_budgets = []
         # Runs after Reminders (13) so reminder_id_map is populated; a backup
         # taken before the planner fields existed simply leaves them at default.
-        for item in data.get("contributions", []):
-            contribution_obj = Contribution.objects.create(
-                contribution=item["contribution"],
-                per_paycheck=item["per_paycheck"],
+        #
+        # Every existing backup file says `contributions`/`contribution`/
+        # `per_paycheck`, including the production snapshot this dev database
+        # was built from, so those spellings are read for as long as such files
+        # exist. New exports write the bucket names.
+        for item in data.get("buckets", data.get("contributions", [])):
+            bucket_obj = Bucket.objects.create(
+                name=item.get("name", item.get("contribution")),
+                contribution_per_paycheck=item.get(
+                    "contribution_per_paycheck", item.get("per_paycheck")
+                ),
                 # Backups predating the one-plan reshape carry `emergency_amt`
                 # and `cap`; those are exactly what the new names mean, so an
                 # old export restores without losing the emergency plan.
@@ -438,24 +446,24 @@ class Command(BaseCommand):
                 priority=item.get("priority", 100),
                 # A backup taken before bridging existed has no opinion on
                 # this, and the safe reading of no opinion is the default
-                # every contribution starts with.
+                # every bucket starts with.
                 lendable=item.get("lendable", True),
                 sweep_share=item.get("sweep_share", 1),
                 receives_rewards=item.get("receives_rewards", False),
             )
             # Budgets are imported at step 20, after this, so the link is made
             # by name once both sides exist rather than here.
-            # Tags exist by now (imported before contributions), so they can
-            # be linked straight away; budgets cannot, and wait until step 20.
+            # Tags exist by now (imported before buckets), so they can be linked
+            # straight away; budgets cannot, and wait until step 20.
             tag_pks = [
                 tag_slug_to_pk[slug]
-                for slug in item.get("tag_slugs", [])
+                for slug in item.get("scope_tag_slugs", item.get("tag_slugs", []))
                 if slug in tag_slug_to_pk
             ]
             if tag_pks:
-                contribution_obj.tags.set(tag_pks)
-            pending_contribution_budgets.append(
-                (contribution_obj, item.get("budget_names", []))
+                bucket_obj.scope_tags.set(tag_pks)
+            pending_bucket_budgets.append(
+                (bucket_obj, item.get("budget_names", []))
             )
 
         # --- 16. Notes ---
@@ -496,17 +504,17 @@ class Command(BaseCommand):
                 budget_obj.parent = parent
                 budget_obj.save(update_fields=["parent"])
 
-        # Contributions were created at step 15, before the budgets they point
-        # at existed, so the links are made here now both sides are present.
+        # Buckets were created at step 15, before the budgets they point at
+        # existed, so the links are made here now both sides are present.
         budget_by_name = {b.name: b for b in Budget.objects.all()}
-        for contribution_obj, budget_names in pending_contribution_budgets:
+        for bucket_obj, budget_names in pending_bucket_budgets:
             linked = [
                 budget_by_name[name]
                 for name in budget_names
                 if name in budget_by_name
             ]
             if linked:
-                contribution_obj.budgets.set(linked)
+                bucket_obj.budgets.set(linked)
 
         # --- 19. CalculationRules ---
         for item in data.get("calculation_rules", []):

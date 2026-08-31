@@ -75,8 +75,8 @@
       optional: false,
     },
     {
-      title: "Contributions",
-      link: "/planning/contributions",
+      title: "Buckets",
+      link: "/planning/buckets",
       icon: "mdi-pail",
       optional: true,
     },

@@ -216,12 +216,12 @@ def test_a_plan_needing_no_bridging_allocates_the_whole_surplus():
 # ---------------------------------------------------------------------------
 
 
-def a_line(contribution_id, account_id, name, lendable=True, priority=100):
-    from planning.services.savings_plan import AccountPlan
+def a_line(bucket_id, account_id, name, lendable=True, priority=100):
+    from planning.services.savings_plan import BucketPlan
 
-    return AccountPlan(
-        contribution_id=contribution_id,
-        contribution=name,
+    return BucketPlan(
+        bucket_id=bucket_id,
+        bucket_name=name,
         account_id=account_id,
         account_name=name,
         priority=priority,
@@ -410,7 +410,7 @@ def test_rounding_goes_the_way_that_keeps_the_promise():
     # Already on the increment, so neither direction moves it.
     assert round_up_to(Decimal("150.00")) == Decimal("150.00")
     assert round_down_to(Decimal("150.00")) == Decimal("150.00")
-    # Never below nothing: a negative allocation is not a contribution.
+    # Never below nothing: a negative allocation is not a bucket.
     assert round_down_to(Decimal("2.50")) == Decimal("0.00")
     assert round_down_to(Decimal("-40.00")) == Decimal("0.00")
 

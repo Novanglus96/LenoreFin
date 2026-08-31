@@ -12,8 +12,8 @@ from tags.api.routers.tag_type import tag_type_router
 from tags.api.routers.main_tag import main_tag_router
 from tags.api.routers.sub_tag import sub_tag_router
 from tags.api.routers.tag import tag_router
-from planning.api.routers.contrib_rule import contrib_rule_router
-from planning.api.routers.contribution import contribution_router
+from planning.api.routers.windfall_rule import windfall_rule_router
+from planning.api.routers.bucket import bucket_router
 from transactions.api.routers.transaction_type import transaction_type_router
 from reminders.api.routers.repeat import repeat_router
 from accounts.api.routers.forecast import forecast_router
@@ -73,8 +73,8 @@ api.add_router("/tags/tag-types", tag_type_router)
 api.add_router("/tags/main-tags", main_tag_router)
 api.add_router("/tags/sub-tags", sub_tag_router)
 api.add_router("/tags", tag_router)
-api.add_router("/planning/contrib-rules", contrib_rule_router)
-api.add_router("/planning/contributions", contribution_router)
+api.add_router("/planning/windfall-rules", windfall_rule_router)
+api.add_router("/planning/buckets", bucket_router)
 api.add_router("/transactions/transaction-types", transaction_type_router)
 api.add_router("/reminders/repeat", repeat_router)
 api.add_router("/accounts/forecast", forecast_router)

@@ -114,19 +114,19 @@ def test_a_small_difference_is_not_worth_saying(spend_tag, cleared, yearly):
 def test_spending_a_bucket_owns_with_no_budget_becomes_a_new_one(
     spend_tag, cleared
 ):
-    from planning.models import Contribution
+    from planning.models import Bucket
 
-    contribution = Contribution.objects.create(
-        contribution="Gifts", per_paycheck=Decimal("45.00"), active=True
+    bucket = Bucket.objects.create(
+        name="Gifts", contribution_per_paycheck=Decimal("45.00"), active=True
     )
-    contribution.tags.set([spend_tag])
+    bucket.scope_tags.set([spend_tag])
     spent(spend_tag, -2023.34, cleared)
 
     review = review_budgets(today())
 
     assert [s.kind for s in review.suggestions] == ["create"]
     suggestion = review.suggestions[0]
-    assert suggestion.contribution == "Gifts"
+    assert suggestion.bucket == "Gifts"
     assert suggestion.measured_per_year == Decimal("2023.34")
     # Named per paycheck too, because that is the unit the plan is stated in.
     assert suggestion.per_paycheck_effect == Decimal("77.55")
