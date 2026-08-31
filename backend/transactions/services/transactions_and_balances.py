@@ -174,9 +174,6 @@ def get_account_transactions_and_balances(
         for obj in reminder_transactions
     ]
     forecast_transactions_list = [
-        TransactionOut.from_orm(obj) for obj in forecast_transactions
-    ]
-    forecast_transactions_list = [
         TransactionOut.from_orm(obj).model_copy(
             update={"id": -obj.id - 10000, "simulated": True}
         )
