@@ -317,10 +317,12 @@ class Command(BaseCommand):
             for cg in ChristmasGift.objects.all().select_related("tag")
         ]
 
-        # 18. Budgets (convert tag_ids PK array to slug array)
+        # 18. Budgets (convert tag_ids PK array to slug array; parent by name)
         data["budgets"] = [
             {
                 "tag_ids": convert_id_json_array(b.tag_ids, tag_pk_to_slug),
+                # By name — Budget.name is unique and pks are not stable.
+                "parent_name": b.parent.name if b.parent_id else None,
                 "name": b.name,
                 "amount": str(b.amount),
                 "roll_over": b.roll_over,

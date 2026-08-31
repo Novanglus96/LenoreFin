@@ -89,17 +89,40 @@
               </v-col>
             </v-row>
             <v-row dense>
+              <v-col cols="12">
+                <v-select
+                  v-model="parent_id.value.value"
+                  :items="parentOptions"
+                  item-title="title"
+                  item-value="value"
+                  variant="outlined"
+                  label="Part of"
+                  density="compact"
+                  clearable
+                  :disabled="!canEdit || isParent"
+                  :hint="
+                    isParent
+                      ? 'This budget totals others, so it cannot be part of a total itself.'
+                      : 'Roll this budget up into a total, e.g. every gift into Christmas. The total is then the sum of its parts.'
+                  "
+                  persistent-hint
+                ></v-select>
+              </v-col>
+            </v-row>
+            <v-row dense>
               <v-col cols="2">
                 <v-text-field
                   v-model="amount.value.value"
                   variant="outlined"
-                  label="Amount"
+                  :label="isParent ? 'Total (from parts)' : 'Amount'"
                   prefix="$"
                   type="number"
                   step="1.00"
                   density="compact"
-                  :disabled="!canEdit"
+                  :disabled="!canEdit || isParent"
                   :error-messages="amount.errorMessage.value"
+                  :hint="isParent ? 'Added up from the budgets inside it' : undefined"
+                  :persistent-hint="isParent"
                 ></v-text-field>
               </v-col>
               <v-col cols="10">
@@ -210,7 +233,14 @@
   </form>
 </template>
 <script setup>
-  import { defineProps, watchEffect, onMounted, ref, defineEmits } from "vue";
+  import {
+    computed,
+    defineProps,
+    watchEffect,
+    onMounted,
+    ref,
+    defineEmits,
+  } from "vue";
   import { useField, useForm } from "vee-validate";
   import { useAuthStore } from "@/stores/auth";
   import { useTags } from "@/composables/tagsComposable";
@@ -223,7 +253,7 @@
   const authStore = useAuthStore();
   const { tags: tag_items, isLoading: tags_isLoading } = useTags();
   const { repeats, isLoading: repeats_isLoading } = useRepeats();
-  const { addBudget, removeBudget, editBudget } = useBudgets();
+  const { addBudget, removeBudget, editBudget, budgets } = useBudgets(false);
   const props = defineProps({
     budget: Object,
     edit: Boolean,
@@ -277,6 +307,20 @@
   const tag_ids = useField("tag_ids");
   const roll_over = useField("roll_over");
   const repeat = useField("repeat");
+  const parent_id = useField("parent_id");
+
+  // A parent's amount is the sum of its parts, so it is shown rather than
+  // edited — the whole point of the hierarchy is that the two cannot drift.
+  const isParent = computed(() => props.budget?.is_parent === true);
+
+  // Only budgets that are not themselves part of a total, and never this one:
+  // budgets nest one level, and nothing can be inside itself.
+  const parentOptions = computed(() =>
+    (budgets.value ?? [])
+      .map(b => b.budget ?? b)
+      .filter(b => !b.parent_id && b.id !== props.budget?.id)
+      .map(b => ({ title: b.name, value: b.id })),
+  );
 
   const watchPassedFormData = () => {
     watchEffect(() => {
@@ -293,6 +337,7 @@
           : [];
         roll_over.value.value = props.budget.roll_over;
         repeat.value.value = props.budget.repeat;
+        parent_id.value.value = props.budget.parent_id ?? null;
       }
     });
   };
@@ -310,6 +355,7 @@
         : [];
       roll_over.value.value = props.budget.roll_over;
       repeat.value.value = props.budget.repeat;
+      parent_id.value.value = props.budget.parent_id ?? null;
       canEdit.value = false;
     } else {
       emit("updateDialog", false);

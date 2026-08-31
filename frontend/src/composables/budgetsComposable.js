@@ -51,6 +51,7 @@ async function createBudgetFunction(newBudget) {
       tag_ids: JSON.stringify(newBudget.tag_ids),
       roll_over: newBudget.roll_over,
       repeat_id: newBudget.repeat.id,
+      parent_id: newBudget.parent_id ?? null,
       roll_over_amt: 0,
     };
     const response = await apiClient.post("/planning/budget/create", data);
@@ -88,6 +89,7 @@ async function updateBudgetFunction(budget) {
       tag_ids: JSON.stringify(budget.tag_ids),
       roll_over: budget.roll_over,
       repeat_id: budget.repeat.id,
+      parent_id: budget.parent_id ?? null,
     };
     const response = await apiClient.put(
       "/planning/budget/update/" + data.id,

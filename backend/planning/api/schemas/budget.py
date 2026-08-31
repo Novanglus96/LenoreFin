@@ -20,6 +20,9 @@ class BudgetIn(Schema):
     active: bool
     widget: bool
     next_start: date
+    # The budget this one is part of. Its amount is then a component of that
+    # one's total rather than a figure of its own.
+    parent_id: Optional[int] = None
 
 
 # The class BudgetOut is a schema for representing Budgets.
@@ -35,6 +38,11 @@ class BudgetOut(Schema):
     active: bool
     widget: bool
     next_start: date
+    parent_id: Optional[int] = None
+    # What this budget actually plans to spend: the stored amount for a leaf,
+    # the sum of the children for a parent.
+    planned_amount: BalanceDecimal
+    is_parent: bool
 
     model_config = ConfigDict(from_attributes=True)
 

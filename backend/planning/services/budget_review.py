@@ -16,7 +16,6 @@ its own.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
@@ -24,7 +23,11 @@ from decimal import Decimal
 from django.db.models import Sum
 
 from planning.models import Budget, Contribution
-from planning.services.planner import DAYS_PER_MONTH, DAYS_PER_YEAR
+from planning.services.budget_math import (
+    amount_per_year,
+    budget_tag_ids,
+    spending_budgets,
+)
 from tags.models import Tag
 from transactions.models import TransactionDetail
 
@@ -68,15 +71,9 @@ def _per_year(amount: Decimal, repeat) -> tuple[Decimal, str]:
     """A budget's yearly cost, and the cadence it is stated in."""
     if repeat is None or not amount:
         return Decimal("0.00"), "one-off"
-    period = (
-        Decimal(repeat.days or 0)
-        + Decimal(repeat.weeks or 0) * 7
-        + Decimal(repeat.months or 0) * DAYS_PER_MONTH
-        + Decimal(repeat.years or 0) * DAYS_PER_YEAR
-    )
-    if period <= 0:
+    per_year = amount_per_year(amount, repeat)
+    if per_year <= 0:
         return Decimal("0.00"), "one-off"
-    per_year = (abs(amount) * DAYS_PER_YEAR / period).quantize(Decimal("0.01"))
     return per_year, str(repeat)
 
 
@@ -126,16 +123,17 @@ def review_budgets(today: date, window_days: int = 365) -> BudgetReview:
         for budget in contribution.budgets.all():
             budget_owner[budget.pk] = contribution.contribution
 
-    budgets = list(Budget.objects.filter(active=True).select_related("repeat"))
-    tags_of: dict[int, list[int]] = {}
-    for budget in budgets:
-        if budget.tag_ids:
-            try:
-                tags_of[budget.pk] = json.loads(budget.tag_ids)
-            except (ValueError, TypeError):
-                tags_of[budget.pk] = []
-        else:
-            tags_of[budget.pk] = []
+    # Only the budgets that speak: leaves and parents, never a child. A
+    # child's spending is inside its parent's total, so comparing both against
+    # the same tags is the double count this hierarchy exists to end.
+    budgets = spending_budgets(
+        Budget.objects.filter(active=True)
+        .select_related("repeat", "parent")
+        .prefetch_related("children__repeat")
+    )
+    tags_of: dict[int, list[int]] = {
+        budget.pk: budget_tag_ids(budget) for budget in budgets
+    }
 
     # Two budgets covering the same tag both look overspent against the same
     # money. This household budgets Christmas twice over — a 1,995 parent and
@@ -166,7 +164,7 @@ def review_budgets(today: date, window_days: int = 365) -> BudgetReview:
         spent = sum(
             (measured.get(tid, Decimal("0")) for tid in tag_ids), Decimal("0")
         )
-        budgeted, cadence = _per_year(budget.amount, budget.repeat)
+        budgeted, cadence = _per_year(budget.planned_amount, budget.repeat)
         if budgeted <= 0 and spent <= 0:
             continue
 
@@ -176,7 +174,8 @@ def review_budgets(today: date, window_days: int = 365) -> BudgetReview:
         if budgeted > 0 and abs(gap) / budgeted < MATERIAL_FRACTION:
             continue
 
-        occurrences = (budgeted / abs(budget.amount)) if budget.amount else None
+        planned = budget.planned_amount
+        occurrences = (budgeted / abs(planned)) if planned else None
         suggested_amount = (
             (spent / occurrences).quantize(Decimal("0.01"))
             if occurrences

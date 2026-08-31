@@ -50,6 +50,11 @@ from django.db.models import Q
 
 from accounts.models import Account
 from planning.models import Contribution
+from planning.services.budget_math import (
+    amount_per_year,
+    budget_events,
+    spending_budgets,
+)
 from planning.services.budget_review import BudgetSuggestion, review_budgets
 from planning.services.rewards import reward_outlook
 from planning.services.planner import (
@@ -308,45 +313,6 @@ def _paychecks_before(day: int, paycheck_days: list[int]) -> int:
     return count
 
 
-def budget_events(
-    budget, today: date, end_date: date
-) -> list[tuple[date, Decimal]]:
-    """When a budget's spending actually lands, and how much.
-
-    Dated events rather than a smooth rate, because when the money is needed
-    decides how much has to be saved by then. Christmas is the case that proves
-    it: 1,995 a year trickled evenly never requires the account to hold more
-    than a couple of hundred, while the same 1,995 landing in December means the
-    bucket must have the whole sum by then. The second is what actually happens.
-    """
-    repeat = budget.repeat
-    if repeat is None or not budget.amount:
-        return []
-    period = (
-        Decimal(repeat.days or 0)
-        + Decimal(repeat.weeks or 0) * 7
-        + Decimal(repeat.months or 0) * DAYS_PER_MONTH
-        + Decimal(repeat.years or 0) * DAYS_PER_YEAR
-    )
-    if period <= 0:
-        return []
-
-    step = int(period)
-    cursor = budget.next_start or budget.start_day or today
-    # A budget whose cycle started before today is already part way through; the
-    # remainder of the current cycle still has to be funded.
-    while cursor < today:
-        cursor = cursor + timedelta(days=step)
-
-    events: list[tuple[date, Decimal]] = []
-    guard = 0
-    while cursor <= end_date and guard < 400:
-        events.append((cursor, -abs(budget.amount)))
-        cursor = cursor + timedelta(days=step)
-        guard += 1
-    return events
-
-
 def tag_spend_events(
     contribution: Contribution, today: date, end_date: date
 ) -> tuple[list[tuple[date, Decimal]], Decimal, list[str]]:
@@ -427,22 +393,15 @@ def tag_spend_events(
 
 
 def budget_per_paycheck(budget) -> Decimal:
-    """A budget's amount expressed in the cadence the planner allocates in."""
-    repeat = budget.repeat
-    if repeat is None or not budget.amount:
-        return Decimal("0.00")
-    period = (
-        Decimal(repeat.days or 0)
-        + Decimal(repeat.weeks or 0) * 7
-        + Decimal(repeat.months or 0) * DAYS_PER_MONTH
-        + Decimal(repeat.years or 0) * DAYS_PER_YEAR
-    )
-    if period <= 0:
-        return Decimal("0.00")
-    per_year = DAYS_PER_YEAR / period
-    return (abs(budget.amount) * per_year / Decimal("26.0893")).quantize(
-        Decimal("0.01")
-    )
+    """A budget's planned spend in the cadence the planner allocates in.
+
+    Uses `planned_amount`, so a parent reports the sum of its children rather
+    than a stored figure that has drifted away from them.
+    """
+    return (
+        amount_per_year(budget.planned_amount, budget.repeat)
+        / Decimal("26.0893")
+    ).quantize(Decimal("0.01"))
 
 
 def baseline_path(
@@ -1348,7 +1307,11 @@ def bucket_path(
         if contribution.reminder_id and contribution.reminder.description
         else None
     )
-    budgets = list(contribution.budgets.select_related("repeat").all())
+    # Children are already inside their parent's total, so a bucket linked to
+    # both would fund that spending twice.
+    budgets = spending_budgets(
+        contribution.budgets.select_related("repeat", "parent").all()
+    )
     spend_events: list[tuple[date, Decimal]] = []
     for budget in budgets:
         spend_events.extend(budget_events(budget, today, end_date))
@@ -1397,7 +1360,9 @@ def _line_for(
         else None
     )
 
-    budgets = list(contribution.budgets.select_related("repeat").all())
+    budgets = spending_budgets(
+        contribution.budgets.select_related("repeat", "parent").all()
+    )
     budgeted = sum(
         (budget_per_paycheck(b) for b in budgets), Decimal("0")
     ).quantize(Decimal("0.01"))

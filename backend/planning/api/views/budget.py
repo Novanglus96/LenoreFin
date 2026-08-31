@@ -41,7 +41,10 @@ def create_budget(request, payload: BudgetIn):
     """
 
     try:
-        budget = Budget.objects.create(**payload.dict())
+        budget = Budget(**payload.dict())
+        # One level only, and no budget can be its own total.
+        budget.full_clean(exclude=["tag_ids", "name"])
+        budget.save()
         api_logger.info(f"Budget created : {payload.name}")
         return {"id": budget.id}
     except IntegrityError as integrity_error:
@@ -94,6 +97,9 @@ def update_budget(request, budget_id: int, payload: BudgetIn):
         budget.active = payload.active
         budget.widget = payload.widget
         budget.next_start = payload.next_start
+        budget.parent_id = payload.parent_id
+        # One level only, and no budget can be its own total.
+        budget.full_clean(exclude=["tag_ids", "name"])
         budget.save()
         api_logger.info(f"Budget updated : {budget.name}")
         return {"success": True}
@@ -191,7 +197,7 @@ def list_budgets(
                     unique_transactions.append(transaction)
             for transaction in unique_transactions:
                 total += transaction.tag_total
-            budget_total = budget.amount
+            budget_total = budget.planned_amount
             if budget.roll_over:
                 budget_total += budget.roll_over_amt
             if budget_total <= 0:

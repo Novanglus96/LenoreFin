@@ -264,7 +264,23 @@ class Budget(models.Model):
 
     tag_ids = models.CharField(max_length=254)
     name = models.CharField(max_length=254, unique=True)
+    # For a leaf budget, what it plans to spend. For a budget with children the
+    # stored value is ignored — see `planned_amount`, which adds the children
+    # up. A parent exists to total its parts, not to hold a figure of its own
+    # that can drift away from them: Christmas was budgeted at 1,995 while the
+    # twenty-three people under it summed to 1,130, and nothing anywhere
+    # reconciled the two.
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    # One level only, the same rule accounts follow. A budget either totals
+    # others or is one of them.
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        related_name="children",
+    )
     roll_over = models.BooleanField(default=True)
     repeat = models.ForeignKey(
         Repeat, null=True, on_delete=models.SET_NULL, default=None
@@ -276,6 +292,43 @@ class Budget(models.Model):
     active = models.BooleanField(default=True)
     widget = models.BooleanField(default=True)
     next_start = models.DateField(default=current_date)
+
+    @property
+    def is_parent(self):
+        return self.pk is not None and self.children.filter(active=True).exists()
+
+    @property
+    def planned_amount(self):
+        """What this budget plans to spend, in its own cadence.
+
+        Derived for a parent, stored for everything else. Children are
+        converted into the parent's cadence first — a yearly parent over
+        monthly children is a legitimate thing to want, and summing the raw
+        figures would be out by a factor of twelve.
+        """
+        from planning.services.budget_math import parent_planned_amount
+
+        if not self.is_parent:
+            return self.amount
+        return parent_planned_amount(self)
+
+    def clean(self):
+        # One level, so a parent's total is always the sum of leaves and never
+        # of other totals.
+        if self.parent_id:
+            if self.pk and self.parent_id == self.pk:
+                raise ValidationError("A budget cannot be its own parent.")
+            parent = Budget.objects.filter(pk=self.parent_id).first()
+            if parent and parent.parent_id:
+                raise ValidationError(
+                    "That budget is already part of another total. Budgets "
+                    "only nest one level deep."
+                )
+            if self.pk and self.children.exists():
+                raise ValidationError(
+                    "This budget totals others, so it cannot itself be part of "
+                    "a total."
+                )
 
     def __str__(self):
         return f"{self.name}"

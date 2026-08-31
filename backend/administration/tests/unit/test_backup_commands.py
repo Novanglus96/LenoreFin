@@ -324,6 +324,38 @@ def test_roundtrip_contribution_planner_fields(
 
 
 @pytest.mark.django_db
+def test_roundtrip_budget_parent(tmp_path, test_checking_account, test_tag):
+    """A budget hierarchy survives, linked by name.
+
+    Restored the wrong way round, a parent would total nothing and its children
+    would each start funding themselves again — the double count the hierarchy
+    exists to prevent, reintroduced by a restore.
+    """
+    import json
+
+    from planning.models import Budget
+
+    parent = Budget.objects.create(
+        name="Christmas", amount="0.00", tag_ids=json.dumps([test_tag.pk])
+    )
+    Budget.objects.create(
+        name="Christmas - John",
+        amount="100.00",
+        tag_ids=json.dumps([test_tag.pk]),
+        parent=parent,
+    )
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    call_command("import_user_data", output)
+
+    restored_parent = Budget.objects.get(name="Christmas")
+    restored_child = Budget.objects.get(name="Christmas - John")
+    assert restored_child.parent_id == restored_parent.pk
+    assert restored_parent.parent_id is None
+
+
+@pytest.mark.django_db
 def test_roundtrip_contribution_tags(tmp_path, test_checking_account, test_tag):
     """Tags carry by slug, not by pk.
 

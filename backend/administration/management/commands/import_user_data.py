@@ -470,8 +470,12 @@ class Command(BaseCommand):
             )
 
         # --- 18. Budgets (convert tag slug array back to PK array) ---
+        # Parents are linked in a second pass: a child can name a parent that
+        # has not been created yet, and the order in the file is not the order
+        # of the hierarchy.
+        pending_budget_parents = []
         for item in data.get("budgets", []):
-            Budget.objects.create(
+            budget_obj = Budget.objects.create(
                 tag_ids=convert_slug_json_array(item["tag_ids"], tag_slug_to_pk),
                 name=item["name"],
                 amount=item["amount"],
@@ -483,6 +487,14 @@ class Command(BaseCommand):
                 widget=item["widget"],
                 next_start=item["next_start"],
             )
+            if item.get("parent_name"):
+                pending_budget_parents.append((budget_obj, item["parent_name"]))
+
+        for budget_obj, parent_name in pending_budget_parents:
+            parent = Budget.objects.filter(name=parent_name).first()
+            if parent:
+                budget_obj.parent = parent
+                budget_obj.save(update_fields=["parent"])
 
         # Contributions were created at step 15, before the budgets they point
         # at existed, so the links are made here now both sides are present.
