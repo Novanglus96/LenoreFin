@@ -410,16 +410,25 @@ def baseline_path(
     account_id: int,
     today: date,
     end_date: date,
-    exclude_descriptions: set[str],
+    exclude_reminder_ids: set[int],
     spend_events: list[tuple[date, Decimal]] | None = None,
     replace_adhoc_reimbursements_to: int | None = None,
 ) -> tuple[list[PathPoint], Decimal]:
     """An account's projected balance with named flows removed and budgets added.
 
-    `exclude_descriptions` takes out the transfers the plan is deciding, so the
+    `exclude_reminder_ids` takes out the transfers the plan is deciding, so the
     plan is superimposed on an account nobody is funding yet. Their deltas are
     backed out of the running balance rather than merely skipped, otherwise
     every later point still carries them.
+
+    Identified by the reminder they came from, not by what that reminder is
+    called. A description is a label a user may edit at any time, and applying
+    a plan is *expected* to rename these transfers to a convention — at which
+    point matching on the name would silently stop excluding them, count the
+    funding twice, and drop every requirement the planner reports. The id
+    survives a rename; the name does not. (History is matched by description
+    still, in `analyze_account_trend`, because a recorded `Transaction` carries
+    no link back to the reminder that produced it — only the forecast rows do.)
 
     `spend_events` are the budgets this bucket funds. The forecast is a
     known-commitments engine — it projects reminders, recorded transactions and
@@ -459,12 +468,11 @@ def baseline_path(
         when = _field(row, "transaction_date")
         if when is None:
             continue
-        description = _field(row, "description")
         # Excluded flows contribute no delta, but the date is still a point on
         # the path. Skipping them outright made the path collapse to one entry
         # for any bucket whose only modelled flow is the contribution being
         # planned, and a one-point path can never show drift accumulating.
-        keep = description not in exclude_descriptions
+        keep = _field(row, "reminder_id") not in exclude_reminder_ids
         if keep and replace_adhoc_reimbursements_to is not None:
             reimburses = (
                 _field(row, "destination_account_id")
@@ -991,13 +999,9 @@ def build_savings_plan(
 
     # Every transfer the plan is deciding, so it can be lifted off both the
     # funding account and the buckets before anything is superimposed.
-    plan_descriptions = {
-        c.reminder.description
-        for c in buckets
-        if c.reminder_id and c.reminder.description
-    }
+    plan_reminder_ids = {c.reminder_id for c in buckets if c.reminder_id}
 
-    fund_path, _ = baseline_path(fund_id, today, end_date, plan_descriptions)
+    fund_path, _ = baseline_path(fund_id, today, end_date, plan_reminder_ids)
     # Three figures. The path one is what needs no bridging; the horizon one is
     # what the year affords and is the real test of affordability; `capacity` is
     # where the plan actually stops — the most that can be put away before the
@@ -1304,11 +1308,6 @@ def bucket_path(
     solver excluded only the row's own, and buckets carry each other's
     transfers, so the verified path was not the solved path.
     """
-    own = (
-        bucket.reminder.description
-        if bucket.reminder_id and bucket.reminder.description
-        else None
-    )
     # Children are already inside their parent's total, so a bucket linked to
     # both would fund that spending twice.
     budgets = spending_budgets(
@@ -1323,7 +1322,7 @@ def bucket_path(
         bucket.account_id,
         today,
         end_date,
-        {own} if own else set(),
+        {bucket.reminder_id} if bucket.reminder_id else set(),
         spend_events=spend_events,
         # Only when budgets are supplying the spending; otherwise the recorded
         # reimbursements are the only evidence there is, and dropping them
@@ -1356,7 +1355,11 @@ def _line_for(
     per_year = paychecks_per_year(bucket)
     current = bucket.contribution_per_paycheck or Decimal("0")
     stated_minimum = bucket.minimum_per_paycheck
-    own = (
+    # Only for `analyze_account_trend`, which reads cleared history. A recorded
+    # `Transaction` has no link back to the reminder that produced it — only
+    # the forecast rows do — so the past can be matched by nothing but the
+    # description. The path, which is all future, is matched by reminder id.
+    own_description = (
         bucket.reminder.description
         if bucket.reminder_id and bucket.reminder.description
         else None
@@ -1467,7 +1470,7 @@ def _line_for(
             else None
         ),
         today=today,
-        contribution_description=own,
+        contribution_description=own_description,
         horizon_months=horizon_months,
         per_year=per_year,
     )
