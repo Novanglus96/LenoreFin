@@ -17,6 +17,7 @@ class PlanLineOut(Schema):
     sweep: bool
     sweep_share: int
     lendable: bool
+    receives_rewards: bool
 
     current_per_paycheck: AmountDecimal
     minimum_per_paycheck: AmountDecimal
@@ -32,6 +33,9 @@ class PlanLineOut(Schema):
 
     budgeted_per_paycheck: AmountDecimal
     budget_names: List[str] = []
+    # Card rewards expected to land here, and when.
+    rewards_expected: AmountDecimal
+    rewards_on: Optional[date] = None
     # Spending measured from linked tags because no budget describes it.
     measured_per_year: AmountDecimal
     measured_tag_names: List[str] = []
@@ -87,6 +91,23 @@ class BridgeOut(Schema):
     why: str
 
 
+# The class BudgetSuggestionOut is a schema for one budget worth revisiting.
+class BudgetSuggestionOut(Schema):
+    # raise | lower | create | overlap
+    kind: str
+    budget_id: Optional[int] = None
+    budget_name: str
+    tag_names: List[str] = []
+    budgeted_per_year: AmountDecimal
+    measured_per_year: AmountDecimal
+    suggested_per_year: AmountDecimal
+    suggested_amount: AmountDecimal
+    cadence: str
+    per_paycheck_effect: AmountDecimal
+    contribution: Optional[str] = None
+    why: str
+
+
 # The class LeverOut is a schema for what could close an unfixable gap.
 class LeverOut(Schema):
     kind: str
@@ -125,6 +146,7 @@ class SavingsPlanOut(Schema):
     lines: List[PlanLineOut] = []
     breaches: List[DipOut] = []
     bridges: List[BridgeOut] = []
+    budget_suggestions: List[BudgetSuggestionOut] = []
     levers: List[LeverOut] = []
     notes: List[str] = []
 

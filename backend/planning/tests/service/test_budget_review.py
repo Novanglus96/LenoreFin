@@ -1,0 +1,164 @@
+"""Budgets checked against what actually happened.
+
+Budgets are the only thing the savings plan acts on, which makes them worth
+revisiting: a decision nobody returns to drifts, and a category nobody wrote
+down at all is invisible. This is the loop that closes — measurement proposes,
+the budget decides, the plan follows.
+"""
+
+import json
+from datetime import timedelta
+from decimal import Decimal
+
+import pytest
+
+from planning.services.budget_review import review_budgets
+
+pytestmark = [pytest.mark.service, pytest.mark.django_db]
+
+
+@pytest.fixture
+def yearly(db):
+    from reminders.models import Repeat
+
+    repeat, _ = Repeat.objects.get_or_create(
+        repeat_name="Every Year", defaults={"years": 1, "slug": "every-year"}
+    )
+    return repeat
+
+
+@pytest.fixture
+def spend_tag(db):
+    from tags.models import MainTag, Tag, TagType
+
+    tag_type, _ = TagType.objects.get_or_create(tag_type="Expense")
+    main = MainTag.objects.create(tag_name="Christmas", tag_type=tag_type)
+    return Tag.objects.create(parent=main, tag_type=tag_type)
+
+
+@pytest.fixture
+def cleared(db):
+    from transactions.models import TransactionStatus
+
+    status, _ = TransactionStatus.objects.get_or_create(
+        transaction_status="Cleared", defaults={"slug": "cleared"}
+    )
+    return status
+
+
+def spent(tag, amount, status, days_ago=60):
+    from transactions.models import Transaction, TransactionDetail
+    from utils.dates import get_todays_date_timezone_adjusted
+
+    txn = Transaction.objects.create(
+        transaction_date=get_todays_date_timezone_adjusted()
+        - timedelta(days=days_ago),
+        total_amount=Decimal(str(amount)),
+        description="spend",
+        status=status,
+    )
+    TransactionDetail.objects.create(
+        transaction=txn, detail_amt=Decimal(str(amount)), tag=tag
+    )
+
+
+def a_budget(name, amount, tag, repeat):
+    from planning.models import Budget
+
+    return Budget.objects.create(
+        name=name,
+        amount=Decimal(str(amount)),
+        repeat=repeat,
+        tag_ids=json.dumps([tag.pk]),
+        active=True,
+    )
+
+
+def today():
+    from utils.dates import get_todays_date_timezone_adjusted
+
+    return get_todays_date_timezone_adjusted()
+
+
+def test_a_budget_that_matches_reality_is_left_alone(spend_tag, cleared, yearly):
+    a_budget("Christmas", 500, spend_tag, yearly)
+    spent(spend_tag, -480, cleared)
+
+    review = review_budgets(today())
+
+    assert review.suggestions == []
+
+
+def test_a_budget_well_under_what_was_spent_is_raised(
+    spend_tag, cleared, yearly
+):
+    a_budget("Christmas", 500, spend_tag, yearly)
+    spent(spend_tag, -900, cleared)
+
+    review = review_budgets(today())
+
+    assert [s.kind for s in review.suggestions] == ["raise"]
+    assert review.suggestions[0].suggested_amount == Decimal("900.00")
+    assert review.suggestions[0].measured_per_year == Decimal("900.00")
+
+
+def test_a_small_difference_is_not_worth_saying(spend_tag, cleared, yearly):
+    """Both bars have to be cleared. Ten per cent of a 60 budget is six
+    pounds, and nobody wants to be told about six pounds."""
+    a_budget("Christmas", 500, spend_tag, yearly)
+    spent(spend_tag, -530, cleared)
+
+    assert review_budgets(today()).suggestions == []
+
+
+def test_spending_a_bucket_owns_with_no_budget_becomes_a_new_one(
+    spend_tag, cleared
+):
+    from planning.models import Contribution
+
+    contribution = Contribution.objects.create(
+        contribution="Gifts", per_paycheck=Decimal("45.00"), active=True
+    )
+    contribution.tags.set([spend_tag])
+    spent(spend_tag, -2023.34, cleared)
+
+    review = review_budgets(today())
+
+    assert [s.kind for s in review.suggestions] == ["create"]
+    suggestion = review.suggestions[0]
+    assert suggestion.contribution == "Gifts"
+    assert suggestion.measured_per_year == Decimal("2023.34")
+    # Named per paycheck too, because that is the unit the plan is stated in.
+    assert suggestion.per_paycheck_effect == Decimal("77.55")
+
+
+def test_unbudgeted_spending_nobody_claimed_is_not_reported(
+    spend_tag, cleared
+):
+    """Unscoped, this report is meaningless.
+
+    Transfers, income and card payments dwarf every real category — a review
+    led by "Transfer: 230,990 unbudgeted" is one nobody reads twice. Only
+    spending some bucket has claimed through its tags counts.
+    """
+    spent(spend_tag, -5000, cleared)
+
+    assert review_budgets(today()).suggestions == []
+
+
+def test_two_budgets_covering_one_tag_cannot_be_checked(
+    spend_tag, cleared, yearly
+):
+    """The Christmas trap: a parent budget and twenty per-person budgets over
+    the same tags. Both look overspent against the same money, so "raise
+    John's gift budget from 100 to 524" would be founded on money the parent
+    budget already accounts for."""
+    a_budget("Christmas", 1995, spend_tag, yearly)
+    a_budget("Christmas - John", 100, spend_tag, yearly)
+    spent(spend_tag, -900, cleared)
+
+    review = review_budgets(today())
+
+    assert [s.kind for s in review.suggestions] == ["overlap"]
+    assert "not both" in review.suggestions[0].why
+    assert review.notes

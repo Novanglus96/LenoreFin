@@ -361,6 +361,7 @@
     sweep_share: 1,
     priority: 100,
     lendable: true,
+    receives_rewards: false,
     budget_ids: [],
     tag_ids: [],
     active: true,

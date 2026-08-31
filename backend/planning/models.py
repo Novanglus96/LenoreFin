@@ -139,6 +139,12 @@ class Contribution(models.Model):
     tags = models.ManyToManyField(
         "tags.Tag", blank=True, related_name="contributions"
     )
+    # Where the credit-card rewards land when they are cashed in. They accrue
+    # all year and are redeemed in one lump in November, which for this
+    # household is the largest single inflow the gift budget sees — and one the
+    # planner cannot otherwise know about, because nobody enters next
+    # November's statement credit a year ahead.
+    receives_rewards = models.BooleanField(default=False)
     # Takes whatever is left once everything else is funded. More than one is
     # allowed; `sweep_share` decides how they divide it.
     sweep = models.BooleanField(default=False)

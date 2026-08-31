@@ -50,6 +50,8 @@ from django.db.models import Q
 
 from accounts.models import Account
 from planning.models import Contribution
+from planning.services.budget_review import BudgetSuggestion, review_budgets
+from planning.services.rewards import reward_outlook
 from planning.services.planner import (
     DAYS_PER_MONTH,
     DAYS_PER_YEAR,
@@ -138,6 +140,8 @@ class AccountPlan:
     sweep_share: int
     # Whether this account may be borrowed from to bridge someone else's gap.
     lendable: bool
+    # Whether the card rewards are cashed into this account.
+    receives_rewards: bool
     paychecks_per_year: Decimal
 
     current_per_paycheck: Decimal
@@ -170,6 +174,9 @@ class AccountPlan:
     # are. Spending no budget describes, funded from evidence instead.
     measured_per_year: Decimal = Decimal("0.00")
     measured_tag_names: list[str] = field(default_factory=list)
+    # Card rewards expected to land in this account, and when.
+    rewards_expected: Decimal = Decimal("0.00")
+    rewards_on: date | None = None
     freed_per_paycheck: Decimal = Decimal("0.00")
     # The part of this line nothing asked for: allocated beyond every stated
     # minimum and target because it had nowhere else to go.
@@ -220,6 +227,10 @@ class PlanResult:
     # A plan is the allocation and this schedule together, not one without
     # the other.
     bridges: list[dict] = field(default_factory=list)
+    # Where the budgets disagree with the last twelve months. Budgets are the
+    # only thing the plan acts on, so this is how measurement gets a say:
+    # accepting one changes a budget, and that changes the plan.
+    budget_suggestions: list[BudgetSuggestion] = field(default_factory=list)
     levers: list[dict] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
@@ -1207,6 +1218,7 @@ def build_plan(
     bridges = solve_bridges(
         breaches, lines, paths, paycheck_days, fund_id, today
     )
+    review = review_budgets(today)
 
     # The bridge, taken from what verification actually measured rather than
     # re-derived from the binding point: the first timing dip on the funding
@@ -1290,8 +1302,32 @@ def build_plan(
         lines=lines,
         breaches=breaches,
         bridges=bridges,
-        notes=notes,
+        budget_suggestions=review.suggestions,
+        notes=notes + review.notes,
     )
+
+
+def reward_events(
+    contribution: Contribution, today: date, end_date: date
+) -> list[tuple[date, Decimal]]:
+    """The November rewards, as money arriving in the account that gets them.
+
+    A positive dated event rather than a smaller requirement, because the date
+    is the whole point: the cards are cashed in a few weeks before Christmas,
+    which is exactly when the gift bucket is at its emptiest. Money that shows
+    up in November is worth far more to this plan than the same sum averaged
+    across the year, and averaging it would ask the bucket to hold the full
+    amount by December anyway.
+    """
+    if not contribution.receives_rewards:
+        return []
+
+    outlook = reward_outlook(today)
+    if not outlook.redemption_on or outlook.expected_amount <= 0:
+        return []
+    if not (today <= outlook.redemption_on <= end_date):
+        return []
+    return [(outlook.redemption_on, outlook.expected_amount)]
 
 
 def bucket_path(
@@ -1316,8 +1352,7 @@ def bucket_path(
     spend_events: list[tuple[date, Decimal]] = []
     for budget in budgets:
         spend_events.extend(budget_events(budget, today, end_date))
-    measured_events, _, _ = tag_spend_events(contribution, today, end_date)
-    spend_events.extend(measured_events)
+    spend_events.extend(reward_events(contribution, today, end_date))
 
     path, _ = baseline_path(
         contribution.account_id,
@@ -1325,12 +1360,12 @@ def bucket_path(
         end_date,
         {own} if own else set(),
         spend_events=spend_events,
-        # Only when something is supplying the spending — a budget or measured
-        # tags. Otherwise the recorded reimbursements are the only evidence
-        # there is, and dropping them would leave the account looking idle.
+        # Only when budgets are supplying the spending; otherwise the recorded
+        # reimbursements are the only evidence there is, and dropping them
+        # would leave the account looking idle.
         replace_adhoc_reimbursements_to=(
             contribution.reminder.reminder_source_account_id
-            if spend_events and contribution.reminder_id
+            if budgets and contribution.reminder_id
             else None
         ),
     )
@@ -1379,6 +1414,7 @@ def _line_for(
             sweep=contribution.sweep,
             sweep_share=contribution.sweep_share,
             lendable=contribution.lendable,
+            receives_rewards=contribution.receives_rewards,
             paychecks_per_year=per_year,
             current_per_paycheck=current,
             minimum_per_paycheck=minimum,
@@ -1399,6 +1435,9 @@ def _line_for(
     _, measured_per_year, measured_tag_names = tag_spend_events(
         contribution, today, end_date
     )
+    rewards = reward_events(contribution, today, end_date)
+    rewards_on = rewards[0][0] if rewards else None
+    rewards_expected = rewards[0][1] if rewards else Decimal("0.00")
 
     # Solvency, nothing more: this account must not go overdrawn once its
     # budgets and its dated obligations are both on the path. Whatever buffer it
@@ -1433,11 +1472,20 @@ def _line_for(
         target = minimum
         reason = "Covering its dated obligations."
 
-    if measured_per_year > 0:
+    if rewards_expected > 0:
         reason = (
-            f"{reason} Also covering {measured_per_year} a year spent on "
-            f"{', '.join(measured_tag_names)}, measured over the last twelve "
-            f"months because no budget describes it."
+            f"{reason} Card rewards of about {rewards_expected} are expected "
+            f"on {rewards_on}, which is counted as money arriving rather than "
+            f"money to save."
+        ).strip()
+    if measured_per_year > 0:
+        # Reported, deliberately not funded. Budgets are the only thing the
+        # plan acts on, so this is a case for changing a budget rather than a
+        # number the plan quietly adopts — see `budget_review`.
+        reason = (
+            f"{reason} {measured_per_year} a year was spent on "
+            f"{', '.join(measured_tag_names)} with no budget describing it; "
+            f"the plan does not fund that until a budget says so."
         ).strip()
 
     # Measured behaviour, reported as a cross-check. A budget that disagrees
@@ -1479,6 +1527,7 @@ def _line_for(
         sweep=contribution.sweep,
         sweep_share=contribution.sweep_share,
         lendable=contribution.lendable,
+        receives_rewards=contribution.receives_rewards,
         paychecks_per_year=per_year,
         current_per_paycheck=current,
         minimum_per_paycheck=minimum,
@@ -1489,6 +1538,8 @@ def _line_for(
         budget_names=budget_names,
         measured_per_year=measured_per_year,
         measured_tag_names=measured_tag_names,
+        rewards_expected=rewards_expected,
+        rewards_on=rewards_on,
         target_balance=contribution.target_balance,
         projected_low=low,
         projected_low_date=low_date,

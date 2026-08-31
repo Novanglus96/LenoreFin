@@ -24,6 +24,8 @@ class ContributionIn(Schema):
     priority: int = 100
     # Whether the planner may borrow from this account to bridge a gap.
     lendable: bool = True
+    # Whether the card rewards are cashed into this account.
+    receives_rewards: bool = False
     budget_ids: List[int] = []
     # Spending tags this bucket covers. What was spent on them over the last
     # year funds the bucket where no linked budget describes it.
@@ -45,6 +47,7 @@ class ContributionOut(Schema):
     sweep_share: int
     priority: int
     lendable: bool
+    receives_rewards: bool
     budget_ids: List[int] = []
     budget_names: List[str] = []
     tag_ids: List[int] = []

@@ -188,6 +188,14 @@
           </v-chip>
           <div class="text-caption">{{ item.reason }}</div>
           <div
+            v-if="Number(item.rewards_expected) > 0"
+            class="text-caption text-success"
+          >
+            <v-icon icon="mdi-gift-outline" size="x-small"></v-icon>
+            {{ money(item.rewards_expected) }} of card rewards expected
+            {{ item.rewards_on }}
+          </div>
+          <div
             v-if="Number(item.measured_per_year) > 0"
             class="text-caption text-medium-emphasis"
           >
@@ -221,6 +229,42 @@
           </div>
         </template>
       </v-data-table>
+
+      <!-- Budgets are the only thing the plan acts on, so this is how twelve
+           months of measured spending gets a say: accepting one changes a
+           budget, and that changes the plan. -->
+      <v-container v-if="plan.budget_suggestions.length">
+        <div class="text-subtitle-2 font-weight-bold mb-1">
+          Budgets worth revisiting
+        </div>
+        <div class="text-caption text-medium-emphasis mb-2">
+          What the last twelve months say, against what the budgets say. The
+          plan does not act on any of it until a budget changes.
+        </div>
+        <v-list density="compact" class="bg-background rounded">
+          <v-list-item
+            v-for="(suggestion, i) in plan.budget_suggestions"
+            :key="i"
+            :prepend-icon="suggestionIcon(suggestion.kind)"
+          >
+            <v-list-item-title class="text-body-2">
+              <v-chip size="x-small" label class="mr-1">
+                {{ suggestion.kind }}
+              </v-chip>
+              {{ suggestion.budget_name }}
+              <span
+                v-if="Number(suggestion.per_paycheck_effect) !== 0"
+                class="text-medium-emphasis"
+              >
+                — about {{ money(suggestion.per_paycheck_effect) }} a paycheck
+              </span>
+            </v-list-item-title>
+            <v-list-item-subtitle class="text-caption">
+              {{ suggestion.why }}
+            </v-list-item-subtitle>
+          </v-list-item>
+        </v-list>
+      </v-container>
 
       <!-- The bridging schedule. Half the plan: an allocation without the
            movements that make it survivable is only half an answer. -->
@@ -342,6 +386,14 @@
     { title: "Plan", key: "planned_per_paycheck", width: "120px" },
     { title: "Why", key: "reason" },
   ];
+
+  const suggestionIcon = kind =>
+    ({
+      raise: "mdi-arrow-up-bold-outline",
+      lower: "mdi-arrow-down-bold-outline",
+      create: "mdi-plus-box-outline",
+      overlap: "mdi-vector-intersection",
+    })[kind] ?? "mdi-information-outline";
 
   const overfundedCount = computed(
     () =>

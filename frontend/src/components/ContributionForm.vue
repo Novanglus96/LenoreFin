@@ -237,6 +237,18 @@
                     The planner may move money out of here for a few days to
                     cover a gap, and puts it back.
                   </div>
+                  <v-checkbox
+                    v-model="receives_rewards.value.value"
+                    :error-messages="receives_rewards.errorMessage.value"
+                    label="Card rewards land here"
+                    density="compact"
+                    hide-details
+                    class="mt-2"
+                  ></v-checkbox>
+                  <div class="text-caption text-medium-emphasis">
+                    Counted as money arriving when the cards are cashed in,
+                    rather than money this account has to save.
+                  </div>
                 </v-col>
               </v-row>
               <v-row dense>
@@ -356,6 +368,7 @@
   const sweep_share = useField("sweep_share");
   const priority = useField("priority");
   const lendable = useField("lendable");
+  const receives_rewards = useField("receives_rewards");
   const budget_ids = useField("budget_ids");
   const tag_ids = useField("tag_ids");
   const active = useField("active");
@@ -439,6 +452,8 @@
         sweep_share.value.value = props.passedFormData.sweep_share ?? 1;
         priority.value.value = props.passedFormData.priority ?? 100;
         lendable.value.value = props.passedFormData.lendable ?? true;
+        receives_rewards.value.value =
+          props.passedFormData.receives_rewards ?? false;
         budget_ids.value.value = props.passedFormData.budget_ids ?? [];
         tag_ids.value.value = props.passedFormData.tag_ids ?? [];
         active.value.value = props.passedFormData.active;
@@ -456,6 +471,7 @@
       sweep: values.sweep ?? false,
       sweep_share: parseInt(values.sweep_share ?? 1),
       lendable: values.lendable ?? true,
+      receives_rewards: values.receives_rewards ?? false,
       priority: parseInt(values.priority ?? 100),
       budget_ids: values.budget_ids ?? [],
       tag_ids: values.tag_ids ?? [],

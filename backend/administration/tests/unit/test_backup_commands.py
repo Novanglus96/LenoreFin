@@ -293,6 +293,7 @@ def test_roundtrip_contribution_planner_fields(
         priority=5,
         lendable=False,
         sweep_share=3,
+        receives_rewards=True,
         active=True,
         account=test_savings_account,
         reminder=reminder,
@@ -319,6 +320,7 @@ def test_roundtrip_contribution_planner_fields(
     # marked untouchable, and the planner would start borrowing from it again.
     assert restored.lendable is False
     assert restored.sweep_share == 3
+    assert restored.receives_rewards is True
 
 
 @pytest.mark.django_db

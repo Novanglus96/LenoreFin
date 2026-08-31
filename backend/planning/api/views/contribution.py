@@ -106,6 +106,7 @@ def update_contribution(request, contribution_id: int, payload: ContributionIn):
         contribution.sweep_share = payload.sweep_share
         contribution.priority = payload.priority
         contribution.lendable = payload.lendable
+        contribution.receives_rewards = payload.receives_rewards
         contribution.active = payload.active
         contribution.account_id = payload.account_id
         contribution.reminder_id = payload.reminder_id

@@ -441,6 +441,7 @@ class Command(BaseCommand):
                 # every contribution starts with.
                 lendable=item.get("lendable", True),
                 sweep_share=item.get("sweep_share", 1),
+                receives_rewards=item.get("receives_rewards", False),
             )
             # Budgets are imported at step 20, after this, so the link is made
             # by name once both sides exist rather than here.

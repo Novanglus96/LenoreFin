@@ -228,6 +228,7 @@ def a_line(contribution_id, account_id, name, lendable=True, priority=100):
         sweep=False,
         sweep_share=1,
         lendable=lendable,
+        receives_rewards=False,
         paychecks_per_year=Decimal("26"),
         current_per_paycheck=Decimal("0"),
         minimum_per_paycheck=Decimal("0"),

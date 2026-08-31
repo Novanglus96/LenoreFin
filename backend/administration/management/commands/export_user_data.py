@@ -289,6 +289,7 @@ class Command(BaseCommand):
                 "priority": c.priority,
                 "lendable": c.lendable,
                 "sweep_share": c.sweep_share,
+                "receives_rewards": c.receives_rewards,
                 # By slug, the same way budgets carry their tags: primary keys
                 # are not stable across an export/import cycle.
                 "tag_slugs": [t.slug for t in c.tags.all()],
