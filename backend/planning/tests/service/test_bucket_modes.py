@@ -136,6 +136,24 @@ def test_maintain_prices_the_alternative_rather_than_guessing_at_it():
 
 
 @pytest.mark.service
+def test_the_alternative_is_priced_with_the_bucket_s_own_floor_under_it():
+    """A goal is still floored by what the bucket has to spend.
+
+    Quoting the raw solve promises a saving the switch cannot deliver. Here the
+    base is 200 and the goal solve wants 120, so moving to Goal costs 200, not
+    120 — and the saving is 1300, not the 1380 the unfloored figure implies.
+    Found on real data: House read as 1,500 against a base of 1,580.
+    """
+    base = Decimal("200.00")
+    bucket = FakeBucket(BucketMode.MAINTAIN, minimum_balance=Decimal("4000"))
+    target, _, warning = _ambition(bucket, FLAT, base, TODAY, END, PAYDAYS, [])
+
+    assert target == Decimal("1500.00")
+    assert "costs 200.00" in warning
+    assert "costs 120.00" not in warning
+
+
+@pytest.mark.service
 def test_a_maintain_that_is_already_covered_is_not_second_guessed():
     """No note where the floor costs nothing over the base.
 

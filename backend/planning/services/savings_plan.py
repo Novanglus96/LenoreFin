@@ -1523,8 +1523,16 @@ def _ambition(
         # is starving everything below it in priority.
         warning = None
         if target > minimum + ROUNDING_INCREMENT:
-            as_goal = round_up_to(
-                rate_to_reach(path, floor, end_date, today, paycheck_days)
+            # What the alternative would actually cost, floored the same way
+            # this line is. Quoting the raw solve understates it wherever the
+            # bucket's own spending is the binding constraint: House reads as
+            # 1,500 against a base of 1,580, so the plan would be promising a
+            # saving of 170 where switching really saves 90.
+            as_goal = max(
+                minimum,
+                round_up_to(
+                    rate_to_reach(path, floor, end_date, today, paycheck_days)
+                ),
             )
             if as_goal < target:
                 warning = (
