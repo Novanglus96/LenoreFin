@@ -402,6 +402,43 @@
         </v-card>
       </v-dialog>
 
+      <!-- Capacity is built from the income reminders, so a stale one makes
+           every figure above wrong in the same direction. -->
+      <v-container v-if="plan.income_drift.length">
+        <div class="text-subtitle-2 font-weight-bold mb-1">
+          Income worth checking
+        </div>
+        <div class="text-caption text-medium-emphasis mb-2">
+          What the paycheck reminders say, against what actually landed. The
+          plan believes the reminders.
+        </div>
+        <v-list density="compact" class="bg-background rounded">
+          <v-list-item
+            v-for="drift in plan.income_drift"
+            :key="drift.reminder_id"
+            prepend-icon="mdi-cash-sync"
+          >
+            <v-list-item-title class="text-body-2">
+              {{ drift.description }} —
+              <span
+                :class="
+                  Number(drift.drift) > 0 ? 'text-success' : 'text-warning'
+                "
+              >
+                {{ Number(drift.drift) > 0 ? "+" : "" }}{{ money(drift.drift) }}
+                a time
+              </span>
+              <span class="text-caption text-medium-emphasis">
+                ({{ money(drift.drift_per_year) }} a year)
+              </span>
+            </v-list-item-title>
+            <v-list-item-subtitle class="text-caption">
+              {{ drift.why }}
+            </v-list-item-subtitle>
+          </v-list-item>
+        </v-list>
+      </v-container>
+
       <!-- Budgets are the only thing the plan acts on, so this is how twelve
            months of measured spending gets a say: accepting one changes a
            budget, and that changes the plan. -->

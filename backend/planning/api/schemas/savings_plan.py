@@ -116,6 +116,20 @@ class BudgetSuggestionOut(Schema):
     why: str
 
 
+# The class IncomeDriftOut is a schema for one income reminder against reality.
+class IncomeDriftOut(Schema):
+    reminder_id: int
+    description: str
+    planned_amount: AmountDecimal
+    median_amount: AmountDecimal
+    mean_amount: AmountDecimal
+    deposits: int
+    drift: AmountDecimal
+    drift_per_year: AmountDecimal
+    upside_per_deposit: AmountDecimal
+    why: str
+
+
 # The class LeverOut is a schema for what could close an unfixable gap.
 class LeverOut(Schema):
     kind: str
@@ -159,6 +173,7 @@ class SavingsPlanOut(Schema):
     breaches: List[DipOut] = []
     bridges: List[BridgeOut] = []
     budget_suggestions: List[BudgetSuggestionOut] = []
+    income_drift: List[IncomeDriftOut] = []
     levers: List[LeverOut] = []
     notes: List[str] = []
 

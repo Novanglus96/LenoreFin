@@ -58,6 +58,7 @@ from planning.services.budget_math import (
     spending_budgets,
 )
 from planning.services.budget_review import BudgetSuggestion, review_budgets
+from planning.services.income_review import IncomeDrift, review_income
 from planning.services.rewards import reward_outlook
 from planning.services.planner import (
     DAYS_PER_MONTH,
@@ -258,6 +259,11 @@ class SavingsPlan:
     # only thing the plan acts on, so this is how measurement gets a say:
     # accepting one changes a budget, and that changes the plan.
     budget_suggestions: list[BudgetSuggestion] = field(default_factory=list)
+    # Where the income reminders disagree with what actually arrived. Capacity
+    # is built from those reminders, so a stale one makes every figure here
+    # wrong in the same direction — and silently, because the plan simply
+    # reports a smaller household than the one that exists.
+    income_drift: list[IncomeDrift] = field(default_factory=list)
     levers: list[dict] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
@@ -1208,6 +1214,7 @@ def build_savings_plan(
         breaches, lines, paths, paycheck_days, fund_id, today
     )
     review = review_budgets(today)
+    income = review_income(today, fund_id)
 
     # Say, per line, whether this bucket has been set up at all and whether
     # anything funds the spending it claims. The review already worked the
@@ -1326,6 +1333,7 @@ def build_savings_plan(
         breaches=breaches,
         bridges=bridges,
         budget_suggestions=review.suggestions,
+        income_drift=income.drifts,
         notes=notes + review.notes,
     )
 
