@@ -183,6 +183,11 @@ class BucketPlan:
     # are. Spending no budget describes, funded from evidence instead.
     measured_per_year: Decimal = Decimal("0.00")
     measured_tag_names: list[str] = field(default_factory=list)
+    # What the account's own budgets and dated bills actually demand, before
+    # any stated floor is applied. Reported separately because a stated minimum
+    # *hides* this figure: the plan echoes the number you typed and there is no
+    # way to tell "we budgeted this perfectly" from "nobody looked".
+    derived_minimum_per_paycheck: Decimal = Decimal("0.00")
     # Card rewards expected to land in this account, and when.
     rewards_expected: Decimal = Decimal("0.00")
     rewards_on: date | None = None
@@ -1556,6 +1561,13 @@ def _line_for(
     # A stated minimum is rounded too — the user's figure is what it may not go
     # below, and going above it is always safe.
     minimum = round_up_to(max(derived, stated_minimum or Decimal("0")))
+    # True only when the stated figure is the one *binding*, not merely when one
+    # exists. Reporting "stated" for a minimum the arithmetic actually drove
+    # made every line on this household's plan claim to be a stated floor,
+    # including the ones the plan had worked out for itself.
+    stated_is_binding = (
+        stated_minimum is not None and stated_minimum >= derived
+    )
 
     if bucket.sweep:
         target = minimum
@@ -1578,6 +1590,14 @@ def _line_for(
         target = minimum
         reason = "Covering its dated obligations."
 
+    if stated_is_binding and stated_minimum > derived + ROUNDING_INCREMENT:
+        note = (
+            f"Your stated minimum of {stated_minimum} is holding this above "
+            f"the {round_up_to(derived)} its budgets and bills actually "
+            f"demand, so the figure here is your decision rather than a "
+            f"calculation."
+        )
+        warning = f"{warning} {note}" if warning else note
     if other_funding > 0:
         # The plan is not being modest: this money is already on the path, so
         # the rate below it is what is needed *on top* of what arrives anyway.
@@ -1645,7 +1665,8 @@ def _line_for(
         paychecks_per_year=per_year,
         current_per_paycheck=current,
         minimum_per_paycheck=minimum,
-        minimum_is_stated=stated_minimum is not None,
+        minimum_is_stated=stated_is_binding,
+        derived_minimum_per_paycheck=round_up_to(derived),
         target_per_paycheck=target,
         planned_per_paycheck=Decimal("0.00"),
         budgeted_per_paycheck=budgeted,

@@ -212,6 +212,20 @@
                 ></v-icon>
               </template>
             </v-tooltip>
+            <!-- A stated floor otherwise hides what the arithmetic said, and
+                 "we budgeted this perfectly" reads exactly like "nobody
+                 looked". -->
+            <div
+              v-if="
+                item.minimum_is_stated &&
+                Number(item.derived_minimum_per_paycheck) <
+                  Number(item.minimum_per_paycheck)
+              "
+              class="text-caption text-medium-emphasis"
+            >
+              your floor · maths says
+              {{ money(item.derived_minimum_per_paycheck) }}
+            </div>
           </div>
         </template>
         <template v-slot:[`item.planned_per_paycheck`]="{ item }">

@@ -22,12 +22,14 @@ class PlanLineOut(Schema):
 
     current_per_paycheck: AmountDecimal
     minimum_per_paycheck: AmountDecimal
-    # False when the minimum was derived from the account's own budgets and
-    # bills rather than stated by the user, which is worth showing: one is a
-    # decision and the other is a consequence.
+    # True only when the stated figure is the one binding. A minimum can be
+    # stated and still be overridden by a larger derived one, and those two
+    # cases read identically until you say which won.
     minimum_is_stated: bool
     target_per_paycheck: AmountDecimal
     planned_per_paycheck: AmountDecimal
+    # What the budgets and bills demand before any stated floor is applied.
+    derived_minimum_per_paycheck: AmountDecimal = Decimal("0.00")
     # Positive means this account is being given more than it needs.
     freed_per_paycheck: AmountDecimal
     optional_per_paycheck: AmountDecimal
