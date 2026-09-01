@@ -24,6 +24,51 @@ def _optional_amount(value):
     return None if amount == 0 else amount
 
 
+def _mode_fields(item):
+    """The bucket's mode and its one meaningful figure, however it was written.
+
+    `mode` arrives directly in anything exported since the split. Older
+    backups — including every prod snapshot taken before it, and the ones that
+    predate buckets entirely — say the same thing with `target_balance` plus
+    the presence or absence of a date, so the mapping here is the migration's,
+    repeated. Restoring one of those into a Maintain it was never asked about
+    is correct: it is exactly what that backup's app was doing.
+    """
+    amount = _optional_amount(item.get("target_balance", item.get("cap")))
+    when = item.get("target_date") or item.get("goal_date")
+    mode = item.get("mode")
+    if mode is None:
+        if item.get("sweep", item.get("goal_type") == "maximise"):
+            mode = "maximise"
+        elif amount is not None and when:
+            mode = "goal"
+        elif amount is not None:
+            mode = "maintain"
+        else:
+            mode = "cover"
+
+    fields = {
+        "mode": mode,
+        "minimum_balance": None,
+        "goal_amount": None,
+        "goal_date": None,
+    }
+    if mode == "maintain":
+        fields["minimum_balance"] = (
+            _optional_amount(item.get("minimum_balance"))
+            if "minimum_balance" in item
+            else amount
+        )
+    elif mode == "goal":
+        fields["goal_amount"] = (
+            _optional_amount(item.get("goal_amount"))
+            if "goal_amount" in item
+            else amount
+        )
+        fields["goal_date"] = item.get("goal_date") or when
+    return fields
+
+
 class Command(BaseCommand):
     help = "Restore user data from a version-agnostic JSON backup (.json.gz)"
 
@@ -431,11 +476,7 @@ class Command(BaseCommand):
                 minimum_per_paycheck=item.get(
                     "minimum_per_paycheck", item.get("emergency_amt")
                 ),
-                target_balance=_optional_amount(
-                    item.get("target_balance", item.get("cap"))
-                ),
-                target_date=item.get("target_date") or item.get("goal_date"),
-                sweep=item.get("sweep", item.get("goal_type") == "maximise"),
+                **_mode_fields(item),
                 active=item["active"],
                 account=account_by_name.get(item["account_name"])
                 if item.get("account_name")

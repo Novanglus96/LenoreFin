@@ -191,35 +191,64 @@
               </v-row>
               <v-row dense>
                 <v-col :cols="smAndDown ? 12 : 6">
-                  <v-text-field
-                    v-model="target_balance.value.value"
+                  <v-select
+                    v-model="mode.value.value"
+                    :items="MODES"
+                    item-title="label"
+                    item-value="value"
                     variant="outlined"
-                    label="Target balance"
+                    label="What this bucket is for"
                     density="compact"
-                    :error-messages="target_balance.errorMessage.value"
+                    :error-messages="mode.errorMessage.value"
+                    :hint="MODE_HINTS[mode.value.value]"
+                    persistent-hint
+                  ></v-select>
+                </v-col>
+                <v-col v-if="mode.value.value === 'maintain'" :cols="smAndDown ? 12 : 6">
+                  <v-text-field
+                    v-model="minimum_balance.value.value"
+                    variant="outlined"
+                    label="Balance to hold"
+                    density="compact"
+                    :error-messages="minimum_balance.errorMessage.value"
                     type="number"
                     step="1.00"
                     prefix="$"
-                    :disabled="sweep.value.value"
-                    hint="What this account should build up to"
+                    hint="A floor under this account every day, which is the most expensive thing a bucket can be asked for"
                     persistent-hint
                     clearable
                   ></v-text-field>
                 </v-col>
-                <v-col :cols="smAndDown ? 12 : 6">
-                  <v-text-field
-                    v-model="target_date.value.value"
-                    variant="outlined"
-                    label="Reach it by"
-                    density="compact"
-                    :error-messages="target_date.errorMessage.value"
-                    type="date"
-                    :disabled="sweep.value.value"
-                    hint="Blank means hold it from now on"
-                    persistent-hint
-                    clearable
-                  ></v-text-field>
-                </v-col>
+                <template v-if="mode.value.value === 'goal'">
+                  <v-col :cols="smAndDown ? 12 : 3">
+                    <v-text-field
+                      v-model="goal_amount.value.value"
+                      variant="outlined"
+                      label="Goal amount"
+                      density="compact"
+                      :error-messages="goal_amount.errorMessage.value"
+                      type="number"
+                      step="1.00"
+                      prefix="$"
+                      hint="What to reach"
+                      persistent-hint
+                      clearable
+                    ></v-text-field>
+                  </v-col>
+                  <v-col :cols="smAndDown ? 12 : 3">
+                    <v-text-field
+                      v-model="goal_date.value.value"
+                      variant="outlined"
+                      label="Reach it by"
+                      density="compact"
+                      :error-messages="goal_date.errorMessage.value"
+                      type="date"
+                      hint="The date is what makes this cheaper than holding it"
+                      persistent-hint
+                      clearable
+                    ></v-text-field>
+                  </v-col>
+                </template>
               </v-row>
               <v-row dense>
                 <v-col :cols="smAndDown ? 12 : 4">
@@ -236,15 +265,8 @@
                   ></v-text-field>
                 </v-col>
                 <v-col :cols="smAndDown ? 12 : 4">
-                  <v-checkbox
-                    v-model="sweep.value.value"
-                    :error-messages="sweep.errorMessage.value"
-                    label="Takes what is left over"
-                    density="compact"
-                    hide-details
-                  ></v-checkbox>
                   <v-text-field
-                    v-if="sweep.value.value"
+                    v-if="mode.value.value === 'maximise'"
                     v-model="sweep_share.value.value"
                     variant="outlined"
                     label="Share"
@@ -327,6 +349,24 @@
   const blankIsNull = value =>
     value === "" || value === null || value === undefined ? null : value;
 
+  // What a bucket is *for*. Stated rather than inferred from which fields
+  // happen to be filled in — one field used to mean both "hold this from
+  // today" and "reach this by then", and those differ by more than an order of
+  // magnitude in what they cost a paycheck.
+  const MODES = [
+    { value: "cover", label: "Cover its spending" },
+    { value: "maintain", label: "Maintain a balance" },
+    { value: "goal", label: "Reach a goal by a date" },
+    { value: "maximise", label: "Take what is left over" },
+  ];
+  const MODE_HINTS = {
+    cover: "Funds what this bucket has to spend, and nothing on top.",
+    maintain:
+      "A floor under the account every day. The most expensive option — if the money is wanted by a date, use a goal instead.",
+    goal: "Spreads the amount across every payday until the date, so it costs a fraction of holding it.",
+    maximise: "Absorbs whatever is left once every other bucket is funded.",
+  };
+
   const { smAndDown } = useDisplay();
   const { handleSubmit } = useForm({
     validationSchema: {
@@ -355,28 +395,42 @@
 
         return true;
       },
-      target_balance(value) {
-        if (blankIsNull(value) === null) return true;
-        if (parseFloat(value) < 0) return "A target balance cannot be negative.";
+      mode() {
+        return true;
+      },
+      minimum_balance(value) {
+        if (mode.value.value !== "maintain") return true;
+        if (blankIsNull(value) === null)
+          return "A bucket set to Maintain needs the balance to hold.";
+        if (parseFloat(value) < 0) return "A minimum balance cannot be negative.";
         if (!account_id.value.value)
-          return "Set an account before giving this a target.";
-        if (sweep.value.value)
-          return "A sweep takes whatever is left, so it cannot also have a target.";
+          return "Set an account before giving this a balance to hold.";
 
         return true;
       },
-      target_date(value) {
-        if (blankIsNull(value) === null) return true;
-        if (blankIsNull(target_balance.value.value) === null)
-          return "A target date needs a target balance to reach by then.";
+      goal_amount(value) {
+        if (mode.value.value !== "goal") return true;
+        if (blankIsNull(value) === null) return "A goal needs an amount.";
+        if (parseFloat(value) < 0) return "A goal amount cannot be negative.";
+        if (!account_id.value.value)
+          return "Set an account before giving this a goal.";
+
+        return true;
+      },
+      goal_date(value) {
+        if (mode.value.value !== "goal") return true;
+        // Without the date this is a Maintain wearing a goal's clothes, which
+        // is the confusion modes exist to end — and the date is the whole
+        // reason a goal costs a fraction of a floor.
+        if (blankIsNull(value) === null) return "A goal needs the date to reach it by.";
         // A past date cannot be solved for — there are no paychecks left.
         if (new Date(value) <= new Date())
-          return "The target date must be in the future.";
+          return "The goal date must be in the future.";
 
         return true;
       },
       sweep_share(value) {
-        if (!sweep.value.value) return true;
+        if (mode.value.value !== "maximise") return true;
         if (value == null || value === "") return "A sweep needs a share.";
         if (parseInt(value) < 1) return "A share must be at least 1.";
 
@@ -402,9 +456,10 @@
   const contribution_per_paycheck = useField("contribution_per_paycheck");
   const minimum_per_paycheck = useField("minimum_per_paycheck");
   const buffer = useField("buffer");
-  const target_balance = useField("target_balance");
-  const target_date = useField("target_date");
-  const sweep = useField("sweep");
+  const mode = useField("mode");
+  const minimum_balance = useField("minimum_balance");
+  const goal_amount = useField("goal_amount");
+  const goal_date = useField("goal_date");
   const sweep_share = useField("sweep_share");
   const priority = useField("priority");
   const lendable = useField("lendable");
@@ -499,10 +554,11 @@
         minimum_per_paycheck.value.value =
           props.passedFormData.minimum_per_paycheck ?? null;
         buffer.value.value = props.passedFormData.buffer ?? "0";
-        target_balance.value.value =
-          props.passedFormData.target_balance ?? null;
-        target_date.value.value = props.passedFormData.target_date ?? null;
-        sweep.value.value = props.passedFormData.sweep ?? false;
+        mode.value.value = props.passedFormData.mode ?? "cover";
+        minimum_balance.value.value =
+          props.passedFormData.minimum_balance ?? null;
+        goal_amount.value.value = props.passedFormData.goal_amount ?? null;
+        goal_date.value.value = props.passedFormData.goal_date ?? null;
         sweep_share.value.value = props.passedFormData.sweep_share ?? 1;
         priority.value.value = props.passedFormData.priority ?? 100;
         lendable.value.value = props.passedFormData.lendable ?? true;
@@ -523,9 +579,13 @@
       ...values,
       minimum_per_paycheck: blankIsNull(values.minimum_per_paycheck),
       buffer: values.buffer ?? 0,
-      target_balance: blankIsNull(values.target_balance),
-      target_date: blankIsNull(values.target_date),
-      sweep: values.sweep ?? false,
+      // Only the field its mode gives meaning to is sent; the API rejects a
+      // figure the chosen mode would ignore rather than storing it silently.
+      mode: values.mode ?? "cover",
+      minimum_balance:
+        values.mode === "maintain" ? blankIsNull(values.minimum_balance) : null,
+      goal_amount: values.mode === "goal" ? blankIsNull(values.goal_amount) : null,
+      goal_date: values.mode === "goal" ? blankIsNull(values.goal_date) : null,
       sweep_share: parseInt(values.sweep_share ?? 1),
       lendable: values.lendable ?? true,
       receives_rewards: values.receives_rewards ?? false,

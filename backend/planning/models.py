@@ -53,6 +53,32 @@ class WindfallRule(models.Model):
         return self.rule
 
 
+class BucketMode(models.TextChoices):
+    """What a bucket is *for*, stated rather than inferred.
+
+    Every mode is the same solve with a different (floor, deadline). The base —
+    the budgets this bucket funds, its dated obligations, and its buffer — is
+    universal and is computed the same way for all four; the mode only decides
+    how much ambition sits above that base.
+
+    This used to be read off which nullable fields happened to be set, which
+    made two genuinely different intentions indistinguishable. `target_balance`
+    with no date meant "hold this from today"; with a date it meant "reach this
+    by then". The same field, two demands, an order of magnitude apart in what
+    they cost a paycheck.
+    """
+
+    # Fund what this bucket has to spend, and no more. The base alone.
+    COVER = "cover", "Cover"
+    # Hold a balance from today on. A floor under the account, every day.
+    MAINTAIN = "maintain", "Maintain"
+    # Reach an amount by a date. One constraint at one point, which is a far
+    # weaker demand than the same figure held from today.
+    GOAL = "goal", "Goal"
+    # Take whatever is left once every other bucket is funded.
+    MAXIMISE = "maximise", "Maximise"
+
+
 class Bucket(models.Model):
     """One named pot of money and the standing intent behind it.
 
@@ -133,14 +159,27 @@ class Bucket(models.Model):
     budgets = models.ManyToManyField(
         "planning.Budget", blank=True, related_name="buckets"
     )
-    # What this account should accumulate to. Funding stops once the balance is
-    # there, which is what frees capacity for everything below it in priority.
-    target_balance = models.DecimalField(
+    # What this bucket is for. See `BucketMode`: it decides what ambition sits
+    # above the base, and which of the fields below mean anything.
+    mode = models.CharField(
+        max_length=10,
+        choices=BucketMode.choices,
+        default=BucketMode.COVER,
+    )
+    # MAINTAIN only. A floor under the account, every day from now on. Funding
+    # has to be enough that the worst day still clears it, which makes this the
+    # most expensive thing a bucket can be asked to do — and the reason it is
+    # now said explicitly rather than inferred from an undated target.
+    minimum_balance = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True, default=None
     )
-    # When the target must be met. Null means "hold it from now on" rather than
-    # "reach it by a date", which are different problems.
-    target_date = models.DateField(null=True, blank=True, default=None)
+    # GOAL only, and the two are meaningless apart. Money that has to be there
+    # by a date need not be there before it, so this is one constraint at one
+    # point rather than a line under the whole path.
+    goal_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True, default=None
+    )
+    goal_date = models.DateField(null=True, blank=True, default=None)
     # The spending this bucket claims responsibility for. A *claim*, not a
     # source of funding: budgets are what the plan acts on, and this is how the
     # review finds the budgets that ought to exist and do not. Gift spending is
@@ -170,9 +209,6 @@ class Bucket(models.Model):
     # planner cannot otherwise know about, because nobody enters next
     # November's statement credit a year ahead.
     receives_rewards = models.BooleanField(default=False)
-    # Takes whatever is left once everything else is funded. More than one is
-    # allowed; `sweep_share` decides how they divide it.
-    sweep = models.BooleanField(default=False)
     # Relative weight when several accounts sweep. Two sweeps at 3 and 1 split
     # the remainder three to one. Equal by default, which is what it did before
     # there was a way to say otherwise.
@@ -213,18 +249,56 @@ class Bucket(models.Model):
             .distinct()
         )
 
+    @property
+    def sweep(self) -> bool:
+        """Whether this bucket absorbs the remainder.
+
+        Derived, not stored. A bucket that takes what is left is one *mode* of
+        being a bucket, and having both a mode and a boolean saying the same
+        thing is how the two drift apart.
+        """
+        return self.mode == BucketMode.MAXIMISE
+
     def clean(self):
-        # A target is a statement about an account's balance, so it needs an
-        # account to be a statement about.
-        if self.target_balance is not None and not self.account_id:
+        # Each mode is defined by exactly one set of fields, and a field that
+        # means nothing in the chosen mode is a statement nobody will ever see
+        # honoured. Rejecting it here is kinder than storing it and ignoring
+        # it, which is what the old inferred scheme did.
+        if self.mode == BucketMode.MAINTAIN:
+            if self.minimum_balance is None:
+                raise ValidationError(
+                    "A bucket set to Maintain needs the balance to hold."
+                )
+            if self.minimum_balance < 0:
+                raise ValidationError("A minimum balance cannot be negative.")
+        elif self.minimum_balance is not None:
             raise ValidationError(
-                "Set an account before giving this bucket a target."
+                "A minimum balance only applies to a bucket set to Maintain."
             )
-        if self.target_balance is not None and self.target_balance < 0:
-            raise ValidationError("A target balance cannot be negative.")
-        if self.target_date and self.target_balance is None:
+
+        if self.mode == BucketMode.GOAL:
+            # Neither half is any use alone: an amount with no date is a
+            # Maintain wearing a goal's clothes, which is the exact confusion
+            # this mode exists to end.
+            if self.goal_amount is None or self.goal_date is None:
+                raise ValidationError(
+                    "A goal needs both an amount and the date to reach it by."
+                )
+            if self.goal_amount < 0:
+                raise ValidationError("A goal amount cannot be negative.")
+        elif self.goal_amount is not None or self.goal_date is not None:
             raise ValidationError(
-                "A target date needs a target balance to reach by then."
+                "A goal amount and date only apply to a bucket set to Goal."
+            )
+
+        # A balance target is a statement about an account, so it needs an
+        # account to be a statement about.
+        if (
+            self.mode in (BucketMode.MAINTAIN, BucketMode.GOAL)
+            and not self.account_id
+        ):
+            raise ValidationError(
+                "Set an account before giving this bucket a balance to reach."
             )
         if self.minimum_per_paycheck is not None and self.minimum_per_paycheck < 0:
             raise ValidationError("A minimum cannot be negative.")
@@ -244,13 +318,6 @@ class Bucket(models.Model):
                     "That reminder does not pay into this bucket's account, so "
                     "the plan cannot use it to fund this bucket."
                 )
-        # A sweep takes what is left over, so a ceiling on it is a contradiction
-        # — the leftover is defined by everything else, not by this row.
-        if self.sweep and self.target_balance is not None:
-            raise ValidationError(
-                "A sweep bucket takes whatever is left, so it cannot also "
-                "have a target balance."
-            )
 
     def __str__(self):
         return self.name

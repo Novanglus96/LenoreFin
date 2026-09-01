@@ -276,10 +276,23 @@ class Command(BaseCommand):
                     if c.minimum_per_paycheck is not None
                     else None
                 ),
-                "target_balance": (
-                    str(c.target_balance) if c.target_balance is not None else None
+                "mode": c.mode,
+                "minimum_balance": (
+                    str(c.minimum_balance) if c.minimum_balance is not None else None
                 ),
-                "target_date": str(c.target_date) if c.target_date else None,
+                "goal_amount": (
+                    str(c.goal_amount) if c.goal_amount is not None else None
+                ),
+                "goal_date": str(c.goal_date) if c.goal_date else None,
+                # The pre-mode spelling, still written so a backup taken here
+                # restores into an older build of the app. Derived, never read
+                # back: the importer prefers `mode` when it is present.
+                "target_balance": (
+                    str(c.minimum_balance or c.goal_amount)
+                    if (c.minimum_balance or c.goal_amount) is not None
+                    else None
+                ),
+                "target_date": str(c.goal_date) if c.goal_date else None,
                 "sweep": c.sweep,
                 "active": c.active,
                 "account_name": c.account.account_name if c.account else None,

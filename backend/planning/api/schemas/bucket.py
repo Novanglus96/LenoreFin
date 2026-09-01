@@ -22,9 +22,13 @@ class BucketIn(Schema):
     # What the bucket should still hold at its lowest point, over and above
     # staying solvent.
     buffer: AmountDecimal = Decimal("0.00")
-    target_balance: Optional[AmountDecimal] = None
-    target_date: Optional[date] = None
-    sweep: bool = False
+    # What this bucket is for: cover / maintain / goal / maximise. Which of
+    # the three fields below carries meaning follows from it, and the model
+    # rejects a figure the chosen mode would ignore.
+    mode: str = "cover"
+    minimum_balance: Optional[AmountDecimal] = None
+    goal_amount: Optional[AmountDecimal] = None
+    goal_date: Optional[date] = None
     # Relative weight when several buckets sweep the remainder.
     sweep_share: int = 1
     priority: int = 100
@@ -52,8 +56,11 @@ class BucketOut(Schema):
     reminder_id: Optional[int] = None
     minimum_per_paycheck: Optional[AmountDecimal] = None
     buffer: AmountDecimal
-    target_balance: Optional[AmountDecimal] = None
-    target_date: Optional[date] = None
+    mode: str
+    minimum_balance: Optional[AmountDecimal] = None
+    goal_amount: Optional[AmountDecimal] = None
+    goal_date: Optional[date] = None
+    # Derived from the mode, sent because the table reads it directly.
     sweep: bool
     sweep_share: int
     priority: int

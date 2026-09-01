@@ -18,7 +18,8 @@ def test_bucket():
         name="Existing 401k",
         contribution_per_paycheck=200.00,
         minimum_per_paycheck=100.00,
-        target_balance=10000.00,
+        mode="maintain",
+        minimum_balance=10000.00,
         active=True,
     )
 
@@ -123,14 +124,16 @@ def test_list_buckets_totals_sum_active(api_client):
         name="Active A",
         contribution_per_paycheck=100.00,
         minimum_per_paycheck=50.00,
-        target_balance=5000.00,
+        mode="maintain",
+        minimum_balance=5000.00,
         active=True,
     )
     Bucket.objects.create(
         name="Inactive B",
         contribution_per_paycheck=999.00,
         minimum_per_paycheck=999.00,
-        target_balance=9999.00,
+        mode="maintain",
+        minimum_balance=9999.00,
         active=False,
     )
 

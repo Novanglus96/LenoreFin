@@ -87,7 +87,6 @@ def test_roundtrip_restores_all_core_models(
         name="HSA",
         contribution_per_paycheck="50.00",
         minimum_per_paycheck="0.00",
-        target_balance="3600.00",
         active=True,
     )
     Note.objects.create(note_text="Check budget monthly")
@@ -290,8 +289,9 @@ def test_roundtrip_bucket_planner_fields(
         name="House",
         contribution_per_paycheck="200.00",
         minimum_per_paycheck="25.00",
-        target_balance="5000.00",
-        target_date="2027-06-01",
+        mode="goal",
+        goal_amount="5000.00",
+        goal_date="2027-06-01",
         priority=5,
         lendable=False,
         sweep_share=3,
@@ -314,8 +314,9 @@ def test_roundtrip_bucket_planner_fields(
     assert restored.reminder_id == Reminder.objects.get(
         description="House Transfer"
     ).id
-    assert str(restored.target_balance) == "5000.00"
-    assert str(restored.target_date) == "2027-06-01"
+    assert restored.mode == "goal"
+    assert str(restored.goal_amount) == "5000.00"
+    assert str(restored.goal_date) == "2027-06-01"
     assert str(restored.minimum_per_paycheck) == "25.00"
     assert restored.priority == 5
     # Losing this on restore would quietly re-open an account the user had
@@ -426,6 +427,93 @@ def test_import_reads_the_pre_bucket_spelling(tmp_path, test_tag):
 
 
 @pytest.mark.django_db
+def test_import_reads_the_pre_mode_spelling(tmp_path, test_savings_account):
+    """Every backup written before modes says `target_balance` and `sweep`.
+
+    Including the production snapshot this dev database was built from. The
+    mapping has to be the migration's, exactly: an undated target restores as
+    Maintain and a dated one as Goal, because that is what the app those
+    backups came from was doing with them. Guessing differently here would
+    silently change what a restored household is saving for.
+    """
+    from planning.models import Bucket
+
+    output = str(tmp_path / "backup.json.gz")
+    call_command("export_user_data", output=output)
+    with gzip.open(output, "rb") as f:
+        data = json.loads(f.read())
+
+    account = test_savings_account.account_name
+    data["buckets"] = [
+        {
+            "name": "Vacation",
+            "contribution_per_paycheck": "150.00",
+            "target_balance": "4000.00",
+            "target_date": None,
+            "sweep": False,
+            "active": True,
+            "account_name": account,
+        },
+        {
+            "name": "House",
+            "contribution_per_paycheck": "200.00",
+            "target_balance": "5000.00",
+            "target_date": "2027-06-01",
+            "sweep": False,
+            "active": True,
+            "account_name": account,
+        },
+        {
+            "name": "Leftovers",
+            "contribution_per_paycheck": "0.00",
+            "target_balance": None,
+            "target_date": None,
+            "sweep": True,
+            "active": True,
+            "account_name": account,
+        },
+        {
+            "name": "Grocery",
+            "contribution_per_paycheck": "460.00",
+            "target_balance": None,
+            "target_date": None,
+            "sweep": False,
+            "active": True,
+            "account_name": account,
+        },
+    ]
+    legacy = str(tmp_path / "legacy.json.gz")
+    with gzip.open(legacy, "wb") as f:
+        f.write(json.dumps(data).encode())
+
+    call_command("import_user_data", legacy)
+
+    # An undated target meant "hold this from today", which is Maintain.
+    vacation = Bucket.objects.get(name="Vacation")
+    assert vacation.mode == "maintain"
+    assert str(vacation.minimum_balance) == "4000.00"
+    assert vacation.goal_amount is None
+
+    # A dated one meant "reach this by then", which is Goal — and the date is
+    # the whole difference, so losing it would cost this bucket an order of
+    # magnitude in what it demands a paycheck.
+    house = Bucket.objects.get(name="House")
+    assert house.mode == "goal"
+    assert str(house.goal_amount) == "5000.00"
+    assert str(house.goal_date) == "2027-06-01"
+    assert house.minimum_balance is None
+
+    leftovers = Bucket.objects.get(name="Leftovers")
+    assert leftovers.mode == "maximise"
+    assert leftovers.sweep is True
+
+    grocery = Bucket.objects.get(name="Grocery")
+    assert grocery.mode == "cover"
+    assert grocery.minimum_balance is None
+    assert grocery.goal_amount is None
+
+
+@pytest.mark.django_db
 def test_roundtrip_bucket_without_planner_fields(
     tmp_path, test_checking_account,
 ):
@@ -439,7 +527,6 @@ def test_roundtrip_bucket_without_planner_fields(
         name="HSA",
         contribution_per_paycheck="50.00",
         minimum_per_paycheck="0.00",
-        target_balance="0.00",
         active=True,
     )
 
@@ -450,7 +537,9 @@ def test_roundtrip_bucket_without_planner_fields(
     restored = Bucket.objects.get(name="HSA")
     assert restored.account is None
     assert restored.reminder is None
-    assert restored.target_balance is None
+    assert restored.mode == "cover"
+    assert restored.minimum_balance is None
+    assert restored.goal_amount is None
     assert restored.sweep is False
     # A backup taken before bridging existed says nothing about lending, and
     # the safe reading of silence is the default.

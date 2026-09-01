@@ -17,7 +17,7 @@ class WindfallRuleAdmin(UnfoldImportExportModelAdmin):
 
 
 class BucketAdmin(UnfoldImportExportModelAdmin):
-    list_display = ["id", "name", "priority", "contribution_per_paycheck", "minimum_per_paycheck", "target_balance", "sweep", "active"]
+    list_display = ["id", "name", "priority", "mode", "contribution_per_paycheck", "minimum_per_paycheck", "minimum_balance", "goal_amount", "goal_date", "active"]
     list_display_links = ["name"]
     ordering = ["id"]
 

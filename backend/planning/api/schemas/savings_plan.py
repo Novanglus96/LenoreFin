@@ -49,7 +49,11 @@ class PlanLineOut(Schema):
     # Spending measured from linked tags because no budget describes it.
     measured_per_year: AmountDecimal
     measured_tag_names: List[str] = []
-    target_balance: Optional[AmountDecimal] = None
+    # What this bucket is for, and whichever figure the mode gives meaning to.
+    mode: str = "cover"
+    minimum_balance: Optional[AmountDecimal] = None
+    goal_amount: Optional[AmountDecimal] = None
+    goal_date: Optional[date] = None
     projected_low: AmountDecimal
     projected_low_date: Optional[date] = None
     observed_spend_per_month: AmountDecimal

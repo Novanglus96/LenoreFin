@@ -569,9 +569,12 @@
     // the dated bills", which is what most buckets want.
     minimum_per_paycheck: null,
     buffer: "0",
-    target_balance: null,
-    target_date: null,
-    sweep: false,
+    // Cover is the honest default for a bucket nobody has told anything yet:
+    // fund what it has to spend, and ask for nothing on top.
+    mode: "cover",
+    minimum_balance: null,
+    goal_amount: null,
+    goal_date: null,
     sweep_share: 1,
     priority: 100,
     lendable: true,

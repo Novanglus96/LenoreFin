@@ -52,8 +52,10 @@ class DomainBucket:
     name: str
     contribution_per_paycheck: Decimal
     minimum_per_paycheck: Optional[Decimal]
-    target_balance: Optional[Decimal]
-    sweep: bool
+    mode: str
+    minimum_balance: Optional[Decimal]
+    goal_amount: Optional[Decimal]
+    goal_date: Optional[date]
     priority: int
     active: bool
 

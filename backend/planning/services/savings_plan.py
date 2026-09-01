@@ -51,7 +51,7 @@ from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from django.db.models import Q
 
 from accounts.models import Account
-from planning.models import Bucket
+from planning.models import Bucket, BucketMode
 from planning.services.budget_math import (
     amount_per_year,
     budget_events,
@@ -144,6 +144,9 @@ class BucketPlan:
     account_id: int | None
     account_name: str | None
     priority: int
+    # What this bucket is for. `sweep` is the same fact in the shape the
+    # allocator reads it in; both come off `Bucket.mode`.
+    mode: str
     sweep: bool
     # Relative weight when several accounts sweep the remainder.
     sweep_share: int
@@ -163,7 +166,11 @@ class BucketPlan:
     # planned spending it exists to cover.
     budgeted_per_paycheck: Decimal
     budget_names: list[str]
-    target_balance: Decimal | None
+    # Whichever of these the mode gives meaning to; the rest are null. Carried
+    # so the plan can show what it was asked for beside what that costs.
+    minimum_balance: Decimal | None
+    goal_amount: Decimal | None
+    goal_date: date | None
     projected_low: Decimal
     projected_low_date: date | None
     # What the account has actually been spending, measured. Never an input to
@@ -1468,6 +1475,90 @@ def bucket_path(
     return path
 
 
+def _ambition(
+    bucket: Bucket,
+    path: list[PathPoint],
+    minimum: Decimal,
+    today: date,
+    end_date: date,
+    paycheck_days: list[int],
+    budget_names: list[str],
+) -> tuple[Decimal, str, str | None]:
+    """How much this bucket asks for above its base, and why.
+
+    The base — budgets, dated obligations and buffer, all folded into
+    `minimum` by the caller — is universal: every bucket has to cover what it
+    has to cover. The mode decides only what sits on top, and each mode is the
+    same closed-form solve against a different (floor, deadline):
+
+    | Mode     | Floor            | Deadline    |
+    |----------|------------------|-------------|
+    | Cover    | the base         | —           |
+    | Maintain | `minimum_balance`| every day   |
+    | Goal     | `goal_amount`    | `goal_date` |
+    | Maximise | the base         | —           |
+
+    Returns the target, the sentence explaining it, and a warning when the mode
+    itself looks like the wrong question — which is the whole reason this is a
+    stated mode and not an inference.
+    """
+    if bucket.mode == BucketMode.MAXIMISE:
+        return (
+            minimum,
+            "Takes whatever is left once everything else is funded.",
+            None,
+        )
+
+    if bucket.mode == BucketMode.MAINTAIN:
+        floor = bucket.minimum_balance or Decimal("0")
+        needed = rate_to_reach(path, floor, None, today, paycheck_days)
+        target = max(minimum, round_up_to(needed))
+        reason = f"Holding at least {floor} from now on."
+        # A floor under every day is the most expensive thing a bucket can be
+        # asked for, and it is what an undated target used to mean by default —
+        # so a bucket that inherited Maintain from the migration may never have
+        # been asked the question. Price the alternative rather than guess at
+        # it: the same money, wanted by the end of the horizon instead of
+        # today, usually costs a fraction as much, and the difference is what
+        # is starving everything below it in priority.
+        warning = None
+        if target > minimum + ROUNDING_INCREMENT:
+            as_goal = round_up_to(
+                rate_to_reach(path, floor, end_date, today, paycheck_days)
+            )
+            if as_goal < target:
+                warning = (
+                    f"Holding {floor} from today costs {target} a paycheck, "
+                    f"{(target - minimum).quantize(Decimal('0.01'))} of it "
+                    f"above what this bucket actually has to spend. If that "
+                    f"money is wanted *by* a date rather than needed every "
+                    f"day, the same {floor} by {end_date} costs {as_goal} — "
+                    f"switch this bucket to Goal and give it the date."
+                )
+        return target, reason, warning
+
+    if bucket.mode == BucketMode.GOAL:
+        amount = bucket.goal_amount or Decimal("0")
+        needed = rate_to_reach(path, amount, bucket.goal_date, today, paycheck_days)
+        target = max(minimum, round_up_to(needed))
+        reason = f"Building to {amount} by {bucket.goal_date}."
+        warning = None
+        if bucket.goal_date and bucket.goal_date <= today:
+            # `rate_to_reach` returns zero for a date already gone, which reads
+            # on the plan as "this needs nothing" — true, and useless. The goal
+            # is not met, it is simply no longer being solved for.
+            warning = (
+                f"This goal's date, {bucket.goal_date}, has passed, so the "
+                f"plan is no longer funding it. Give it a new date or change "
+                f"what this bucket is for."
+            )
+        return target, reason, warning
+
+    if budget_names:
+        return minimum, "Covering " + ", ".join(budget_names) + ".", None
+    return minimum, "Covering its dated obligations.", None
+
+
 def _line_for(
     bucket: Bucket,
     today: date,
@@ -1513,6 +1604,7 @@ def _line_for(
             account_id=None,
             account_name=None,
             priority=bucket.priority,
+            mode=bucket.mode,
             sweep=bucket.sweep,
             sweep_share=bucket.sweep_share,
             lendable=bucket.lendable,
@@ -1525,7 +1617,9 @@ def _line_for(
             planned_per_paycheck=Decimal("0.00"),
             budgeted_per_paycheck=budgeted,
             budget_names=budget_names,
-            target_balance=bucket.target_balance,
+            minimum_balance=bucket.minimum_balance,
+            goal_amount=bucket.goal_amount,
+            goal_date=bucket.goal_date,
             projected_low=Decimal("0.00"),
             projected_low_date=None,
             observed_spend_per_month=Decimal("0.00"),
@@ -1569,26 +1663,11 @@ def _line_for(
         stated_minimum is not None and stated_minimum >= derived
     )
 
-    if bucket.sweep:
-        target = minimum
-        reason = "Takes whatever is left once everything else is funded."
-    elif bucket.target_balance is not None:
-        needed = rate_to_reach(
-            path, bucket.target_balance, bucket.target_date, today,
-            paycheck_days,
-        )
-        target = max(minimum, round_up_to(needed))
-        reason = (
-            f"Building to {bucket.target_balance}"
-            + (f" by {bucket.target_date}" if bucket.target_date else "")
-            + "."
-        )
-    elif budgets:
-        target = minimum
-        reason = "Covering " + ", ".join(budget_names) + "."
-    else:
-        target = minimum
-        reason = "Covering its dated obligations."
+    target, reason, mode_warning = _ambition(
+        bucket, path, minimum, today, end_date, paycheck_days, budget_names
+    )
+    if mode_warning:
+        warning = f"{warning} {mode_warning}" if warning else mode_warning
 
     if stated_is_binding and stated_minimum > derived + ROUNDING_INCREMENT:
         note = (
@@ -1658,6 +1737,7 @@ def _line_for(
         account_id=bucket.account_id,
         account_name=bucket.account.account_name,
         priority=bucket.priority,
+        mode=bucket.mode,
         sweep=bucket.sweep,
         sweep_share=bucket.sweep_share,
         lendable=bucket.lendable,
@@ -1678,7 +1758,9 @@ def _line_for(
         other_funding_per_paycheck=other_funding,
         other_funding_names=other_funding_names,
         claimed_tag_count=claimed_tag_count,
-        target_balance=bucket.target_balance,
+        minimum_balance=bucket.minimum_balance,
+        goal_amount=bucket.goal_amount,
+        goal_date=bucket.goal_date,
         projected_low=low,
         projected_low_date=low_date,
         observed_spend_per_month=observed,

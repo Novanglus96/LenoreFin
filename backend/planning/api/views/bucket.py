@@ -104,9 +104,10 @@ def update_bucket(request, bucket_id: int, payload: BucketIn):
         bucket.contribution_per_paycheck = payload.contribution_per_paycheck
         bucket.minimum_per_paycheck = payload.minimum_per_paycheck
         bucket.buffer = payload.buffer
-        bucket.target_balance = payload.target_balance
-        bucket.target_date = payload.target_date
-        bucket.sweep = payload.sweep
+        bucket.mode = payload.mode
+        bucket.minimum_balance = payload.minimum_balance
+        bucket.goal_amount = payload.goal_amount
+        bucket.goal_date = payload.goal_date
         bucket.sweep_share = payload.sweep_share
         bucket.priority = payload.priority
         bucket.lendable = payload.lendable
