@@ -191,6 +191,12 @@ class BucketPlan:
     # that actually receives 362.77 cannot be reasoned about.
     other_funding_per_paycheck: Decimal = Decimal("0.00")
     other_funding_names: list[str] = field(default_factory=list)
+    # How much spending this bucket has claimed, and what of it nothing funds.
+    # Silence used to mean two different things — correctly configured, and
+    # never set up — and eight of ten buckets were the second.
+    claimed_tag_count: int = 0
+    unbudgeted_per_year: Decimal = Decimal("0.00")
+    coverage: str | None = None
     freed_per_paycheck: Decimal = Decimal("0.00")
     # The part of this line nothing asked for: allocated beyond every stated
     # minimum and target because it had nowhere else to go.
@@ -356,7 +362,7 @@ def tag_spend_events(
 
     from transactions.models import TransactionDetail
 
-    linked = list(bucket.scope_tags.all())
+    linked = list(bucket.claimed_tags().select_related('parent', 'child'))
     if not linked:
         return [], Decimal("0.00"), []
 
@@ -1203,6 +1209,39 @@ def build_savings_plan(
     )
     review = review_budgets(today)
 
+    # Say, per line, whether this bucket has been set up at all and whether
+    # anything funds the spending it claims. The review already worked the
+    # figures out, so this is a join rather than a second pass over the ledger.
+    unbudgeted_by_bucket = {
+        suggestion.bucket_name: suggestion
+        for suggestion in review.suggestions
+        if suggestion.kind == "create" and suggestion.bucket_name
+    }
+    for line in lines:
+        suggestion = unbudgeted_by_bucket.get(line.bucket_name)
+        if suggestion:
+            line.unbudgeted_per_year = suggestion.measured_per_year
+            line.coverage = (
+                f"Claims {line.claimed_tag_count} "
+                f"{'tag' if line.claimed_tag_count == 1 else 'tags'}, and "
+                f"{suggestion.measured_per_year} a year of that spending has "
+                f"no budget. The plan does not fund it until one says so."
+            )
+        elif line.claimed_tag_count:
+            line.coverage = (
+                f"Claims {line.claimed_tag_count} "
+                f"{'tag' if line.claimed_tag_count == 1 else 'tags'}, all of it "
+                f"either budgeted or already scheduled."
+            )
+        elif line.account_id:
+            # Not an error — a bucket saving toward a goal genuinely owns no
+            # spending. But it is the difference between "nothing to report"
+            # and "nobody has looked", and those read identically otherwise.
+            line.coverage = (
+                "Claims no spending, so nothing here is checked against what "
+                "this account actually spends."
+            )
+
     # The bridge, taken from what verification actually measured rather than
     # re-derived from the binding point: the first timing dip on the funding
     # account, its date, and the amount that erases it.
@@ -1483,6 +1522,7 @@ def _line_for(
         )
 
     # Everything funding this account, not only the reminder it points at.
+    claimed_tag_count = bucket.claimed_tags().count()
     sources = funding_sources(bucket, per_year)
     other_funding = sum(
         (s.per_paycheck for s in sources if not s.adjustable), Decimal("0")
@@ -1608,6 +1648,7 @@ def _line_for(
         rewards_on=rewards_on,
         other_funding_per_paycheck=other_funding,
         other_funding_names=other_funding_names,
+        claimed_tag_count=claimed_tag_count,
         target_balance=bucket.target_balance,
         projected_low=low,
         projected_low_date=low_date,

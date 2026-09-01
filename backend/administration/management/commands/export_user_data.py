@@ -293,13 +293,18 @@ class Command(BaseCommand):
                 # By slug, the same way budgets carry their tags: primary keys
                 # are not stable across an export/import cycle.
                 "scope_tag_slugs": [t.slug for t in c.scope_tags.all()],
+                # By slug for the same reason: pks are not stable across a
+                # cycle, and a main tag claims whole families of spending.
+                "scope_main_tag_slugs": [
+                    m.slug for m in c.scope_main_tags.all()
+                ],
                 # By name, because Budget.name is unique and pks are not stable
                 # across an export/import cycle.
                 "budget_names": [b.name for b in c.budgets.all()],
             }
             for c in Bucket.objects.all()
             .select_related("account", "reminder")
-            .prefetch_related("budgets", "scope_tags")
+            .prefetch_related("budgets", "scope_tags", "scope_main_tags")
         ]
 
         # 16. Notes

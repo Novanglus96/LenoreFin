@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from typing import List, Optional
 
 from ninja import Schema
@@ -39,6 +40,10 @@ class PlanLineOut(Schema):
     # Funding this bucket gets that the plan does not set, and where from.
     other_funding_per_paycheck: AmountDecimal
     other_funding_names: List[str] = []
+    # Whether this bucket claims any spending, and what of it nothing funds.
+    claimed_tag_count: int = 0
+    unbudgeted_per_year: AmountDecimal = Decimal("0.00")
+    coverage: Optional[str] = None
     # Spending measured from linked tags because no budget describes it.
     measured_per_year: AmountDecimal
     measured_tag_names: List[str] = []

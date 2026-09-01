@@ -188,6 +188,14 @@ def review_budgets(today: date, window_days: int = 365) -> BudgetReview:
         _overlaps(budgets, tags_of, owners, ambiguous, per_paycheck)
     )
 
+    # The same netting the unbudgeted report uses. Without it the two halves
+    # of this review contradict each other: `create` proposes a budget for the
+    # spending no reminder covers, and the moment that budget exists `raise`
+    # tells you to inflate it to the un-netted figure — funding the preschool a
+    # second time, 329.33 a paycheck, on the strength of accepting the first
+    # suggestion. A review whose advice undoes itself is worse than none.
+    scheduled = _scheduled_by_tag()
+
     covered: set[int] = set()
     for budget in budgets:
         tag_ids = tags_of[budget.pk]
@@ -196,7 +204,15 @@ def review_budgets(today: date, window_days: int = 365) -> BudgetReview:
             continue
 
         spent = sum(
-            (measured.get(tid, Decimal("0")) for tid in tag_ids), Decimal("0")
+            (
+                max(
+                    measured.get(tid, Decimal("0"))
+                    - scheduled.get(tid, Decimal("0")),
+                    Decimal("0"),
+                )
+                for tid in tag_ids
+            ),
+            Decimal("0"),
         )
         budgeted, cadence = _per_year(budget.planned_amount, budget.repeat)
         if budgeted <= 0 and spent <= 0:
@@ -247,7 +263,7 @@ def review_budgets(today: date, window_days: int = 365) -> BudgetReview:
         )
 
     review.suggestions.extend(
-        _unbudgeted(measured, covered, per_paycheck, _scheduled_by_tag())
+        _unbudgeted(measured, covered, per_paycheck, scheduled)
     )
     if ambiguous:
         review.notes.append(
@@ -331,15 +347,14 @@ def _unbudgeted(
     reads twice.
     """
     suggestions: list[BudgetSuggestion] = []
-    for bucket in Bucket.objects.filter(active=True).prefetch_related(
-        "scope_tags__parent", "scope_tags__child"
-    ):
+    for bucket in Bucket.objects.filter(active=True):
+        claimed = list(bucket.claimed_tags().select_related("parent", "child"))
         # What a reminder already commits on a tag is planned, not unbudgeted.
         # Netting it off per tag rather than in total matters: a tag can be
         # part scheduled and part not, and Child Care is exactly that — 10,744
         # spent against an 8,592 preschool reminder leaves 2,152 nobody planned.
         unplanned: dict[int, Decimal] = {}
-        for tag in bucket.scope_tags.all():
+        for tag in claimed:
             if tag.pk in covered:
                 continue
             remainder = measured.get(tag.pk, Decimal("0")) - scheduled.get(
@@ -347,7 +362,7 @@ def _unbudgeted(
             )
             if remainder > 0:
                 unplanned[tag.pk] = remainder
-        loose = [tag for tag in bucket.scope_tags.all() if tag.pk in unplanned]
+        loose = [tag for tag in claimed if tag.pk in unplanned]
         if not loose:
             continue
         spent = sum(

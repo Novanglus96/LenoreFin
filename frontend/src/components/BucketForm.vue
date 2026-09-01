@@ -154,6 +154,25 @@
               <v-row dense>
                 <v-col>
                   <v-select
+                    v-model="scope_main_tag_ids.value.value"
+                    :items="mainTagOptions"
+                    item-title="title"
+                    item-value="value"
+                    variant="outlined"
+                    label="Spending families this covers"
+                    density="compact"
+                    multiple
+                    chips
+                    closable-chips
+                    clearable
+                    hint="Claims every tag in the family, including ones added later. Prefer this — naming tags one by one means a new subcategory silently belongs to nobody."
+                    persistent-hint
+                  ></v-select>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col>
+                  <v-select
                     v-model="scope_tag_ids.value.value"
                     :items="tagOptions"
                     item-title="title"
@@ -165,7 +184,7 @@
                     chips
                     closable-chips
                     clearable
-                    hint="For spending no budget describes — birthdays and the like. What was spent on these over the last year funds the account. Tags a linked budget already covers are ignored, so nothing is counted twice."
+                    hint="Individual tags, for anything the families above do not cover. A tag a linked budget already covers is ignored, so nothing is counted twice."
                     persistent-hint
                   ></v-select>
                 </v-col>
@@ -392,6 +411,7 @@
   const receives_rewards = useField("receives_rewards");
   const budget_ids = useField("budget_ids");
   const scope_tag_ids = useField("scope_tag_ids");
+  const scope_main_tag_ids = useField("scope_main_tag_ids");
   const active = useField("active");
   const account_id = useField("account_id");
   const reminder_id = useField("reminder_id");
@@ -426,6 +446,17 @@
       value: b.budget?.id ?? b.id,
     })),
   );
+
+  // A family is a main tag: claiming it claims every child, now and later.
+  const mainTagOptions = computed(() => {
+    const seen = new Map();
+    for (const t of tags.value ?? []) {
+      if (t.parent && !seen.has(t.parent.id)) {
+        seen.set(t.parent.id, { title: t.parent.tag_name, value: t.parent.id });
+      }
+    }
+    return [...seen.values()].sort((a, b) => a.title.localeCompare(b.title));
+  });
 
   // Named parent/child the way the rest of the app shows a tag, so "Christmas"
   // and "Christmas / Ellie" are distinguishable in a long list.
@@ -479,6 +510,8 @@
           props.passedFormData.receives_rewards ?? false;
         budget_ids.value.value = props.passedFormData.budget_ids ?? [];
         scope_tag_ids.value.value = props.passedFormData.scope_tag_ids ?? [];
+        scope_main_tag_ids.value.value =
+          props.passedFormData.scope_main_tag_ids ?? [];
         active.value.value = props.passedFormData.active;
         account_id.value.value = props.passedFormData.account_id ?? null;
         reminder_id.value.value = props.passedFormData.reminder_id ?? null;
@@ -499,6 +532,7 @@
       priority: parseInt(values.priority ?? 100),
       budget_ids: values.budget_ids ?? [],
       scope_tag_ids: values.scope_tag_ids ?? [],
+      scope_main_tag_ids: values.scope_main_tag_ids ?? [],
     };
     if (props.isEdit) {
       emit("editBucket", payload);

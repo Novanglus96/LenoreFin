@@ -1,4 +1,5 @@
 from ninja import Schema
+from decimal import Decimal
 from typing import List, Optional
 from datetime import date
 from pydantic import ConfigDict, condecimal
@@ -20,7 +21,7 @@ class BucketIn(Schema):
     minimum_per_paycheck: Optional[AmountDecimal] = None
     # What the bucket should still hold at its lowest point, over and above
     # staying solvent.
-    buffer: AmountDecimal = 0
+    buffer: AmountDecimal = Decimal("0.00")
     target_balance: Optional[AmountDecimal] = None
     target_date: Optional[date] = None
     sweep: bool = False
@@ -35,6 +36,10 @@ class BucketIn(Schema):
     # The spending this bucket claims. A claim, not a source of funding: it is
     # how the review finds the budgets that ought to exist and do not.
     scope_tag_ids: List[int] = []
+    # Whole families of spending. Claiming a main tag claims every tag under
+    # it, including ones added later, which is what stops a new subcategory
+    # quietly belonging to nobody.
+    scope_main_tag_ids: List[int] = []
 
 
 # The class BucketOut is a schema for representing Buckets.
@@ -57,6 +62,9 @@ class BucketOut(Schema):
     budget_ids: List[int] = []
     budget_names: List[str] = []
     scope_tag_ids: List[int] = []
+    scope_main_tag_ids: List[int] = []
+    # Every tag the bucket ends up owning, named or inherited from a main tag.
+    claimed_tag_ids: List[int] = []
     # Convenience for the table, so it need not join accounts client-side.
     account_name: Optional[str] = None
     # What the linked reminder actually moves, against which
@@ -81,6 +89,14 @@ class BucketOut(Schema):
     @staticmethod
     def resolve_scope_tag_ids(obj):
         return [t.id for t in obj.scope_tags.all()]
+
+    @staticmethod
+    def resolve_scope_main_tag_ids(obj):
+        return [m.id for m in obj.scope_main_tags.all()]
+
+    @staticmethod
+    def resolve_claimed_tag_ids(obj):
+        return [t.id for t in obj.claimed_tags()]
 
     @staticmethod
     def resolve_budget_names(obj):

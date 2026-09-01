@@ -258,6 +258,27 @@
           <div v-if="!item.in_plan" class="text-caption text-medium-emphasis">
             Inactive, so the plan does not fund it.
           </div>
+          <!-- Whether this bucket has been set up at all. Silence used to mean
+               both "configured" and "never looked at". -->
+          <div
+            v-else-if="item.coverage"
+            class="text-caption"
+            :class="
+              Number(item.unbudgeted_per_year) > 0
+                ? 'text-warning'
+                : 'text-medium-emphasis'
+            "
+          >
+            <v-icon
+              :icon="
+                item.claimed_tag_count
+                  ? 'mdi-tag-multiple-outline'
+                  : 'mdi-tag-off-outline'
+              "
+              size="x-small"
+            ></v-icon>
+            {{ item.coverage }}
+          </div>
         </template>
 
         <!-- A bucket is edited where its plan is read, rather than from a
@@ -506,6 +527,7 @@
     receives_rewards: false,
     budget_ids: [],
     scope_tag_ids: [],
+    scope_main_tag_ids: [],
     active: true,
     account_id: null,
     reminder_id: null,

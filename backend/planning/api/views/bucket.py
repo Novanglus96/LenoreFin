@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from ninja.errors import HttpError
 from planning.models import Budget, Bucket
-from tags.models import Tag
+from tags.models import MainTag, Tag
 from planning.api.schemas.bucket import (
     BucketIn,
     BucketOut,
@@ -40,6 +40,7 @@ def create_bucket(request, payload: BucketIn):
         # Many-to-many cannot be set before the row exists.
         budget_ids = fields.pop("budget_ids", [])
         tag_ids = fields.pop("scope_tag_ids", [])
+        main_tag_ids = fields.pop("scope_main_tag_ids", [])
         bucket = Bucket(**fields)
         # Target/account coherence is enforced in Bucket.clean(); without
         # this the API would happily store a target pointing at no account.
@@ -49,6 +50,8 @@ def create_bucket(request, payload: BucketIn):
             bucket.budgets.set(Budget.objects.filter(id__in=budget_ids))
         if tag_ids:
             bucket.scope_tags.set(Tag.objects.filter(id__in=tag_ids))
+        if main_tag_ids:
+            bucket.scope_main_tags.set(MainTag.objects.filter(id__in=main_tag_ids))
         api_logger.info(f"Bucket created : {payload.name}")
         return {"id": bucket.id}
     except ValidationError as validation_error:
@@ -116,6 +119,9 @@ def update_bucket(request, bucket_id: int, payload: BucketIn):
         bucket.save()
         bucket.budgets.set(Budget.objects.filter(id__in=payload.budget_ids))
         bucket.scope_tags.set(Tag.objects.filter(id__in=payload.scope_tag_ids))
+        bucket.scope_main_tags.set(
+            MainTag.objects.filter(id__in=payload.scope_main_tag_ids)
+        )
         api_logger.info(f"Bucket updated : {bucket.name}")
         return {"success": True}
     except Http404:

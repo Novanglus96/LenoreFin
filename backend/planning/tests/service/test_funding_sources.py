@@ -189,3 +189,70 @@ def test_the_adjustable_reminder_must_pay_into_the_bucket(
 
     with pytest.raises(ValidationError, match="does not pay into"):
         bucket.full_clean()
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_a_main_tag_claims_children_that_do_not_exist_yet(
+    test_savings_account, test_reminder,
+):
+    """The difference between a rule and a snapshot.
+
+    Naming child tags one by one is a photograph of the tag list on the day
+    someone set the bucket up. Add a subcategory later and the bucket that
+    obviously owns it does not claim it, the spending lands in a category no
+    bucket owns, and nothing anywhere says so — which is exactly how a gift
+    shortfall hid for years.
+    """
+    from planning.models import Bucket
+    from tags.models import MainTag, SubTag, Tag
+
+    kids = MainTag.objects.create(tag_name="Kids", slug="kids", tag_type_id=1)
+    clothes = SubTag.objects.create(tag_name="Clothes", tag_type_id=1)
+    Tag.objects.create(
+        parent=kids, child=clothes, tag_type_id=1, slug="kids-clothes"
+    )
+
+    bucket = Bucket.objects.create(
+        name="Kids bucket",
+        contribution_per_paycheck=Decimal("85.00"),
+        account=test_savings_account,
+        reminder=test_reminder,
+    )
+    bucket.scope_main_tags.set([kids])
+    assert bucket.claimed_tags().count() == 1
+
+    # A category nobody had thought of when the bucket was set up.
+    sports = SubTag.objects.create(tag_name="Sports", tag_type_id=1)
+    Tag.objects.create(
+        parent=kids, child=sports, tag_type_id=1, slug="kids-sports"
+    )
+
+    assert bucket.claimed_tags().count() == 2
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_naming_a_tag_and_its_family_does_not_claim_it_twice(
+    test_savings_account, test_reminder,
+):
+    """Both ways of claiming are allowed; the union is what counts."""
+    from planning.models import Bucket
+    from tags.models import MainTag, SubTag, Tag
+
+    kids = MainTag.objects.create(tag_name="Kids", slug="kids", tag_type_id=1)
+    clothes = SubTag.objects.create(tag_name="Clothes", tag_type_id=1)
+    tag = Tag.objects.create(
+        parent=kids, child=clothes, tag_type_id=1, slug="kids-clothes"
+    )
+
+    bucket = Bucket.objects.create(
+        name="Kids bucket",
+        contribution_per_paycheck=Decimal("85.00"),
+        account=test_savings_account,
+        reminder=test_reminder,
+    )
+    bucket.scope_tags.set([tag])
+    bucket.scope_main_tags.set([kids])
+
+    assert bucket.claimed_tags().count() == 1

@@ -462,6 +462,13 @@ class Command(BaseCommand):
             ]
             if tag_pks:
                 bucket_obj.scope_tags.set(tag_pks)
+            main_pks = [
+                main_tag_by_slug[slug].pk
+                for slug in item.get("scope_main_tag_slugs", [])
+                if slug in main_tag_by_slug
+            ]
+            if main_pks:
+                bucket_obj.scope_main_tags.set(main_pks)
             pending_bucket_budgets.append(
                 (bucket_obj, item.get("budget_names", []))
             )

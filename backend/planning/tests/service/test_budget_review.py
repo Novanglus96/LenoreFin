@@ -212,3 +212,64 @@ def test_spending_a_reminder_already_covers_is_not_called_unbudgeted(
     # 1,500 spent less 1,200 already committed, not the full 1,500.
     assert created[0].measured_per_year == Decimal("300.00")
     assert "already committed by reminders" in created[0].why
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_accepting_a_suggestion_settles_it(
+    cleared, test_checking_account, test_savings_account, test_tag,
+    test_expense_transaction_type,
+):
+    """A review whose advice undoes itself is worse than none.
+
+    `create` proposes a budget for the spending no reminder covers. If `raise`
+    then compares that budget against the *un-netted* measurement, accepting
+    the first suggestion immediately produces a second one telling you to fund
+    the scheduled part all over again — on real data, 329.33 a paycheck to pay
+    the preschool twice. The two halves have to net the same way.
+    """
+    from decimal import Decimal
+
+    from reminders.models import Reminder, Repeat
+    from planning.models import Bucket, Budget
+    from utils.dates import get_todays_date_timezone_adjusted
+
+    today = get_todays_date_timezone_adjusted()
+    monthly = Repeat.objects.create(repeat_name="Monthly", months=1)
+
+    bucket = Bucket.objects.create(
+        name="Kids",
+        contribution_per_paycheck=Decimal("85.00"),
+        account=test_savings_account,
+        active=True,
+    )
+    bucket.scope_tags.set([test_tag])
+    Reminder.objects.create(
+        tag=test_tag, amount=Decimal("-100.00"),
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=test_savings_account,
+        description="Preschool",
+        transaction_type=test_expense_transaction_type, repeat=monthly,
+    )
+    spent(test_tag, "-1500.00", cleared, days_ago=30)
+
+    proposed = next(
+        s for s in review_budgets(today).suggestions if s.kind == "create"
+    )
+    assert proposed.suggested_per_year == Decimal("300.00")
+
+    # Accept it, exactly as written.
+    budget = Budget.objects.create(
+        name=proposed.budget_name,
+        tag_ids=json.dumps([test_tag.id]),
+        amount=proposed.suggested_per_year,
+        repeat=Repeat.objects.create(repeat_name="Yearly", years=1),
+        active=True,
+    )
+    bucket.budgets.set([budget])
+
+    after = review_budgets(today).suggestions
+
+    assert [s for s in after if s.budget_name == proposed.budget_name] == [], (
+        "accepting the suggestion produced another suggestion about it"
+    )

@@ -154,6 +154,16 @@ class Bucket(models.Model):
     scope_tags = models.ManyToManyField(
         "tags.Tag", blank=True, related_name="buckets"
     )
+    # The whole families of spending this bucket owns. Naming a main tag claims
+    # every tag under it, including ones that do not exist yet — which is the
+    # difference between a rule and a snapshot. Listing children individually
+    # was how Ellie came to claim eight Kids tags: add "Kids / Sports" tomorrow
+    # and the spending lands in a category no bucket owns, with nothing to say
+    # so. A bucket is almost always named after a family anyway (Reno, Pet,
+    # Vacation), so this is also the shorter thing to say.
+    scope_main_tags = models.ManyToManyField(
+        "tags.MainTag", blank=True, related_name="buckets"
+    )
     # Where the credit-card rewards land when they are cashed in. They accrue
     # all year and are redeemed in one lump in November, which for this
     # household is the largest single inflow the gift budget sees — and one the
@@ -180,6 +190,28 @@ class Bucket(models.Model):
     # fund", so that is stated rather than inferred. On by default: most
     # buckets are the household's own money in a different pocket.
     lendable = models.BooleanField(default=True)
+
+    def claimed_tags(self):
+        """Every tag this bucket owns, however it was claimed.
+
+        The union of the tags named one by one and every tag under a claimed
+        main tag. One place, because three callers have to agree about it: the
+        plan measures these, the review reports on them, and the form shows
+        them.
+        """
+        from django.db.models import Q
+
+        from tags.models import Tag
+
+        if not self.pk:
+            return Tag.objects.none()
+        return (
+            Tag.objects.filter(
+                Q(pk__in=self.scope_tags.values("pk"))
+                | Q(parent_id__in=self.scope_main_tags.values("pk"))
+            )
+            .distinct()
+        )
 
     def clean(self):
         # A target is a statement about an account's balance, so it needs an
