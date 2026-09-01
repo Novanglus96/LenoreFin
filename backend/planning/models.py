@@ -94,6 +94,19 @@ class Bucket(models.Model):
     minimum_per_paycheck = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True, default=None
     )
+    # What this bucket should still hold at its lowest point. Without it the
+    # plan funds a bucket to exactly zero on its worst day, which is solvency
+    # rather than comfort: one bill landing a day early overdraws it. Zero by
+    # default because a derived minimum is already the smallest honest answer,
+    # and a cushion is a preference the household states rather than one the
+    # planner invents.
+    #
+    # Distinct from the funding account's buffer, which guards against posting
+    # order. This one covers a bucket's own spending coming in heavier than its
+    # budgets said.
+    buffer = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0.00
+    )
     active = models.BooleanField(default=True)
     account = models.ForeignKey(
         "accounts.Account",
@@ -183,6 +196,8 @@ class Bucket(models.Model):
             )
         if self.minimum_per_paycheck is not None and self.minimum_per_paycheck < 0:
             raise ValidationError("A minimum cannot be negative.")
+        if self.buffer is not None and self.buffer < 0:
+            raise ValidationError("A buffer cannot be negative.")
         # The reminder this bucket points at is the one the plan *adjusts*, so
         # it has to be one that actually funds the account. Pointing at a
         # transfer that lands somewhere else would have the plan raising a

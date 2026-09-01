@@ -162,3 +162,53 @@ def test_two_budgets_covering_one_tag_cannot_be_checked(
     assert [s.kind for s in review.suggestions] == ["overlap"]
     assert "not both" in review.suggestions[0].why
     assert review.notes
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_spending_a_reminder_already_covers_is_not_called_unbudgeted(
+    cleared, test_checking_account, test_savings_account, test_tag,
+    test_expense_transaction_type,
+):
+    """Scheduled is a stronger statement than budgeted, not a weaker one.
+
+    Kids/Child Care is the case: 10,744.11 went out on it last year with no
+    budget, but 8,592.00 of that is a monthly preschool reminder already on the
+    path. Suggesting a budget for the measured figure would fund the preschool
+    twice and ask for 330 a paycheck that is already committed.
+    """
+    from reminders.models import Reminder, Repeat
+    from planning.models import Bucket
+    from utils.dates import get_todays_date_timezone_adjusted
+
+    today = get_todays_date_timezone_adjusted()
+    monthly = Repeat.objects.create(repeat_name="Monthly", months=1)
+
+    bucket = Bucket.objects.create(
+        name="Kids",
+        contribution_per_paycheck=Decimal("85.00"),
+        account=test_savings_account,
+        active=True,
+    )
+    bucket.scope_tags.set([test_tag])
+
+    # 1,200 a year of it is scheduled.
+    Reminder.objects.create(
+        tag=test_tag,
+        amount=Decimal("-100.00"),
+        reminder_source_account=test_checking_account,
+        reminder_destination_account=test_savings_account,
+        description="Preschool",
+        transaction_type=test_expense_transaction_type,
+        repeat=monthly,
+    )
+    # 1,500 was actually spent on the tag.
+    spent(test_tag, "-1500.00", cleared, days_ago=30)
+
+    review = review_budgets(today)
+    created = [s for s in review.suggestions if s.kind == "create"]
+
+    assert len(created) == 1
+    # 1,500 spent less 1,200 already committed, not the full 1,500.
+    assert created[0].measured_per_year == Decimal("300.00")
+    assert "already committed by reminders" in created[0].why

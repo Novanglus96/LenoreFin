@@ -100,6 +100,7 @@ def update_bucket(request, bucket_id: int, payload: BucketIn):
         bucket.name = payload.name
         bucket.contribution_per_paycheck = payload.contribution_per_paycheck
         bucket.minimum_per_paycheck = payload.minimum_per_paycheck
+        bucket.buffer = payload.buffer
         bucket.target_balance = payload.target_balance
         bucket.target_date = payload.target_date
         bucket.sweep = payload.sweep

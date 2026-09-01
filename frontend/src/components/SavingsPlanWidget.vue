@@ -496,6 +496,7 @@
     // Null, not zero: blank means "work the minimum out from the budgets and
     // the dated bills", which is what most buckets want.
     minimum_per_paycheck: null,
+    buffer: "0",
     target_balance: null,
     target_date: null,
     sweep: false,

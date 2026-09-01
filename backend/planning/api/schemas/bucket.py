@@ -18,6 +18,9 @@ class BucketIn(Schema):
     # Null means "work it out from the budgets and obligations"; a number is a
     # floor the contribution to this bucket may not go below in any mode.
     minimum_per_paycheck: Optional[AmountDecimal] = None
+    # What the bucket should still hold at its lowest point, over and above
+    # staying solvent.
+    buffer: AmountDecimal = 0
     target_balance: Optional[AmountDecimal] = None
     target_date: Optional[date] = None
     sweep: bool = False
@@ -43,6 +46,7 @@ class BucketOut(Schema):
     account_id: Optional[int] = None
     reminder_id: Optional[int] = None
     minimum_per_paycheck: Optional[AmountDecimal] = None
+    buffer: AmountDecimal
     target_balance: Optional[AmountDecimal] = None
     target_date: Optional[date] = None
     sweep: bool

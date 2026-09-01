@@ -23,6 +23,8 @@ from decimal import Decimal
 from django.db.models import Sum
 
 from planning.models import Budget, Bucket
+from planning.services.planner import occurrences_per_year
+from reminders.models import Reminder
 from planning.services.budget_math import (
     amount_per_year,
     budget_tag_ids,
@@ -103,6 +105,38 @@ def _measured_by_tag(today: date, window_days: int) -> dict[int, Decimal]:
         if spent > 0:
             measured[row["tag_id"]] = spent
     return measured
+
+
+def _scheduled_by_tag() -> dict[int, Decimal]:
+    """What the dated reminders already commit, per tag, over a year.
+
+    Spending on a tag is not automatically unbudgeted just because no budget
+    covers it — it may be *scheduled*, which is a stronger statement than a
+    budget. Kids/Child Care is the case that forces this: 10,744.11 went out on
+    it last year and there is no budget, but 8,592.00 of it is a monthly
+    preschool reminder already on the path. Budgeting the measured figure would
+    fund the preschool twice, and the plan would ask for 330 a paycheck that is
+    already committed.
+
+    So the honest question is not "what was spent with no budget" but "what was
+    spent that neither a budget nor a reminder accounts for".
+    """
+    scheduled: dict[int, Decimal] = {}
+    for reminder in Reminder.objects.filter(
+        tag__isnull=False
+    ).select_related("repeat"):
+        occurrences = occurrences_per_year(reminder.repeat)
+        if not occurrences:
+            # A one-off is not an annual commitment, and treating it as one
+            # would wipe out a real category on the strength of a single event.
+            continue
+        amount = abs(Decimal(str(reminder.amount or 0)))
+        if amount <= 0:
+            continue
+        scheduled[reminder.tag_id] = scheduled.get(
+            reminder.tag_id, Decimal("0")
+        ) + amount * occurrences
+    return scheduled
 
 
 def _tag_label(tag: Tag) -> str:
@@ -212,7 +246,9 @@ def review_budgets(today: date, window_days: int = 365) -> BudgetReview:
             )
         )
 
-    review.suggestions.extend(_unbudgeted(measured, covered, per_paycheck))
+    review.suggestions.extend(
+        _unbudgeted(measured, covered, per_paycheck, _scheduled_by_tag())
+    )
     if ambiguous:
         review.notes.append(
             f"{len(ambiguous)} budgets cover tags another budget also covers, "
@@ -282,7 +318,10 @@ def _overlaps(
 
 
 def _unbudgeted(
-    measured: dict[int, Decimal], covered: set[int], per_paycheck: Decimal
+    measured: dict[int, Decimal],
+    covered: set[int],
+    per_paycheck: Decimal,
+    scheduled: dict[int, Decimal],
 ) -> list[BudgetSuggestion]:
     """Spending a bucket owns that no budget describes.
 
@@ -295,20 +334,31 @@ def _unbudgeted(
     for bucket in Bucket.objects.filter(active=True).prefetch_related(
         "scope_tags__parent", "scope_tags__child"
     ):
-        loose = [
-            tag
-            for tag in bucket.scope_tags.all()
-            if tag.pk not in covered
-            and measured.get(tag.pk, Decimal("0")) > 0
-        ]
+        # What a reminder already commits on a tag is planned, not unbudgeted.
+        # Netting it off per tag rather than in total matters: a tag can be
+        # part scheduled and part not, and Child Care is exactly that — 10,744
+        # spent against an 8,592 preschool reminder leaves 2,152 nobody planned.
+        unplanned: dict[int, Decimal] = {}
+        for tag in bucket.scope_tags.all():
+            if tag.pk in covered:
+                continue
+            remainder = measured.get(tag.pk, Decimal("0")) - scheduled.get(
+                tag.pk, Decimal("0")
+            )
+            if remainder > 0:
+                unplanned[tag.pk] = remainder
+        loose = [tag for tag in bucket.scope_tags.all() if tag.pk in unplanned]
         if not loose:
             continue
         spent = sum(
-            (measured[tag.pk] for tag in loose), Decimal("0")
+            (unplanned[tag.pk] for tag in loose), Decimal("0")
         ).quantize(Decimal("0.01"))
         if spent < MATERIAL_NEW_BUDGET:
             continue
         names = [_tag_label(tag) for tag in loose]
+        already = sum(
+            (scheduled.get(tag.pk, Decimal("0")) for tag in loose), Decimal("0")
+        ).quantize(Decimal("0.01"))
         suggestions.append(
             BudgetSuggestion(
                 kind="create",
@@ -325,12 +375,19 @@ def _unbudgeted(
                 ),
                 bucket_name=bucket.name,
                 why=(
-                    f"{spent} a year was spent on {', '.join(names)}, which "
-                    f"{bucket.name} is meant to cover and no "
-                    f"budget describes. Until a budget says so the plan does "
-                    f"not fund it, so {bucket.name} is short by "
-                    f"about {(spent / per_paycheck).quantize(Decimal('0.01'))} "
-                    f"a paycheck."
+                    f"{spent} a year was spent on {', '.join(names)} beyond "
+                    f"anything scheduled, which {bucket.name} is meant to "
+                    f"cover and no budget describes."
+                    + (
+                        f" A further {already} a year on those tags is already "
+                        f"committed by reminders and is not counted here."
+                        if already > 0
+                        else ""
+                    )
+                    + f" Until a budget says so the plan does not fund it, so "
+                    f"{bucket.name} is short by about "
+                    f"{(spent / per_paycheck).quantize(Decimal('0.01'))} a "
+                    f"paycheck."
                 ),
             )
         )

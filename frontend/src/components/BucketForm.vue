@@ -56,6 +56,20 @@
                 </v-col>
                 <v-col :cols="smAndDown ? 6 : 4">
                   <v-text-field
+                    v-model="buffer.value.value"
+                    variant="outlined"
+                    label="Buffer"
+                    density="compact"
+                    :error-messages="buffer.errorMessage.value"
+                    type="number"
+                    step="1.00"
+                    prefix="$"
+                    hint="Cushion to hold on its worst day"
+                    persistent-hint
+                  ></v-text-field>
+                </v-col>
+                <v-col :cols="smAndDown ? 6 : 4">
+                  <v-text-field
                     v-model="difference"
                     variant="outlined"
                     label="Difference"
@@ -310,6 +324,12 @@
 
         return true;
       },
+      buffer(value) {
+        if (value == null || value === "") return true;
+        if (parseFloat(value) < 0) return "A buffer cannot be negative.";
+
+        return true;
+      },
       minimum_per_paycheck(value) {
         if (blankIsNull(value) === null) return true;
         if (parseFloat(value) < 0) return "A minimum cannot be negative.";
@@ -362,6 +382,7 @@
   const name = useField("name");
   const contribution_per_paycheck = useField("contribution_per_paycheck");
   const minimum_per_paycheck = useField("minimum_per_paycheck");
+  const buffer = useField("buffer");
   const target_balance = useField("target_balance");
   const target_date = useField("target_date");
   const sweep = useField("sweep");
@@ -446,6 +467,7 @@
           props.passedFormData.contribution_per_paycheck;
         minimum_per_paycheck.value.value =
           props.passedFormData.minimum_per_paycheck ?? null;
+        buffer.value.value = props.passedFormData.buffer ?? "0";
         target_balance.value.value =
           props.passedFormData.target_balance ?? null;
         target_date.value.value = props.passedFormData.target_date ?? null;
@@ -467,6 +489,7 @@
     const payload = {
       ...values,
       minimum_per_paycheck: blankIsNull(values.minimum_per_paycheck),
+      buffer: values.buffer ?? 0,
       target_balance: blankIsNull(values.target_balance),
       target_date: blankIsNull(values.target_date),
       sweep: values.sweep ?? false,

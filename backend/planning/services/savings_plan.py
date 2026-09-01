@@ -1496,12 +1496,13 @@ def _line_for(
     rewards_on = rewards[0][0] if rewards else None
     rewards_expected = rewards[0][1] if rewards else Decimal("0.00")
 
-    # Solvency, nothing more: this account must not go overdrawn once its
-    # budgets and its dated obligations are both on the path. Whatever buffer it
-    # would *like* to hold is a target competing for the remainder rather than
-    # outranking someone else's mortgage.
+    # Solvency plus whatever cushion this bucket states. A floor of zero funds
+    # the account to exactly nothing on its worst day, which is fine for a
+    # bucket whose spending is all scheduled and thin for one whose spending is
+    # budgeted — a budget is an estimate, and the buffer is what the estimate
+    # being wrong costs. Zero by default, so this changes nothing until asked.
     derived, low, low_date, warning = required_rate(
-        path, Decimal("0"), paycheck_days
+        path, bucket.buffer or Decimal("0"), paycheck_days
     )
     # Up to the increment: this is a floor, and a floor rounded down is not one.
     # A stated minimum is rounded too — the user's figure is what it may not go
