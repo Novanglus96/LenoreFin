@@ -273,3 +273,42 @@ def test_accepting_a_suggestion_settles_it(
     assert [s for s in after if s.budget_name == proposed.budget_name] == [], (
         "accepting the suggestion produced another suggestion about it"
     )
+
+
+@pytest.mark.service
+@pytest.mark.django_db
+def test_a_new_budget_is_suggested_monthly_not_yearly(
+    cleared, test_savings_account, test_tag,
+):
+    """A yearly budget starting today demands the whole year's spending now.
+
+    That is the no-target-date problem in a budget's clothing, and it is not
+    theoretical: accepting these suggestions as annual figures took this
+    household's minimums from 2,770 to 9,725 a paycheck and made the plan
+    impossible, against 3,240 for the very same money spread monthly.
+    """
+    from decimal import Decimal
+
+    from planning.models import Bucket
+
+    bucket = Bucket.objects.create(
+        name="Pet",
+        contribution_per_paycheck=Decimal("60.00"),
+        account=test_savings_account,
+        active=True,
+    )
+    bucket.scope_tags.set([test_tag])
+    spent(test_tag, "-1200.00", cleared, days_ago=30)
+
+    from utils.dates import get_todays_date_timezone_adjusted
+
+    created = next(
+        s
+        for s in review_budgets(get_todays_date_timezone_adjusted()).suggestions
+        if s.kind == "create"
+    )
+
+    assert created.cadence == "Every Month"
+    assert created.suggested_amount == Decimal("100.00")
+    # The yearly total is still reported; only the figure to type changed.
+    assert created.suggested_per_year == Decimal("1200.00")

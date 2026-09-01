@@ -383,8 +383,17 @@ def _unbudgeted(
                 budgeted_per_year=Decimal("0.00"),
                 measured_per_year=spent,
                 suggested_per_year=spent,
-                suggested_amount=spent,
-                cadence="Every Year",
+                # Monthly, not yearly. A yearly budget starting today is a
+                # demand for the whole year's spending *now*: accepting these
+                # as annual figures took this household's minimums from 2,770
+                # to 9,725 a paycheck and made the plan impossible, against
+                # 3,240 for the same money spread monthly. The spending these
+                # describe is diffuse — clothes, toys, vet bills — so a twelfth
+                # a month is both the honest shape and the safe one. Seasonal
+                # spending wants a yearly budget dated to its season instead,
+                # and that is a judgement no measurement can make.
+                suggested_amount=(spent / 12).quantize(Decimal("0.01")),
+                cadence="Every Month",
                 per_paycheck_effect=(spent / per_paycheck).quantize(
                     Decimal("0.01")
                 ),
