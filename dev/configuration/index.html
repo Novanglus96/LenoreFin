@@ -1099,7 +1099,7 @@ version.
 </tbody>
 </table>
 <p><strong>Generating VAPID keys:</strong></p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
 <span class="s2">from py_vapid import Vapid</span>
 <span class="s2">from cryptography.hazmat.primitives import serialization</span>
 <span class="s2">import base64</span>
@@ -1109,19 +1109,19 @@ version.
 <span class="s2">    serialization.Encoding.DER,</span>
 <span class="s2">    serialization.PrivateFormat.PKCS8,</span>
 <span class="s2">    serialization.NoEncryption()</span>
-<span class="s2">)).rstrip(b&#39;=&#39;).decode()</span>
+<span class="s2">)).rstrip(b'=').decode()</span>
 <span class="s2">pub = base64.urlsafe_b64encode(v.private_key.public_key().public_bytes(</span>
 <span class="s2">    serialization.Encoding.X962,</span>
 <span class="s2">    serialization.PublicFormat.UncompressedPoint</span>
-<span class="s2">)).rstrip(b&#39;=&#39;).decode()</span>
-<span class="s2">print(&#39;VAPID_PRIVATE_KEY=&#39; + priv)</span>
-<span class="s2">print(&#39;VAPID_PUBLIC_KEY=&#39; + pub)</span>
-<span class="s2">&quot;</span>
+<span class="s2">)).rstrip(b'=').decode()</span>
+<span class="s2">print('VAPID_PRIVATE_KEY=' + priv)</span>
+<span class="s2">print('VAPID_PUBLIC_KEY=' + pub)</span>
+<span class="s2">"</span>
 </code></pre></div>
 <h2 id="networking">Networking</h2>
 <p>The app listens on port <code>80</code> inside the container. Map it to any host port you like:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">ports</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;8080:80&quot;</span><span class="w">   </span><span class="c1"># host:container</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"8080:80"</span><span class="w">   </span><span class="c1"># host:container</span>
 </code></pre></div>
 <p>To serve behind a reverse proxy (e.g. Nginx Proxy Manager, Traefik, Caddy), point the proxy to the container on port <code>80</code> and make sure <code>DJANGO_ALLOWED_HOSTS</code> and <code>CSRF_TRUSTED_ORIGINS</code> include the public hostname.</p>
 <h2 id="volumes">Volumes</h2>

@@ -1058,7 +1058,7 @@ TIMEZONE=America/New_York
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin_media:/home/app/web/mediafiles</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin_bkp:/backups/</span>
 <span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;8080:80&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"8080:80"</span>
 <span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">db</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis</span>
@@ -1088,7 +1088,7 @@ TIMEZONE=America/New_York
 <span class="w">  </span><span class="nt">redis</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis:7-alpine</span>
 <span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin_redis</span>
-<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;redis-server&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;--appendonly&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;yes&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"redis-server"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"--appendonly"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"yes"</span><span class="p p-Indicator">]</span>
 <span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lenorefin</span>
 <span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
@@ -1125,7 +1125,7 @@ TIMEZONE=America/New_York
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-v<span class="w"> </span>lenorefin_postgres_data:/from<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-v<span class="w"> </span>lenorefin_postgres:/to<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>alpine<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;cp -av /from/. /to/&quot;</span>
+<span class="w">  </span>alpine<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s2">"cp -av /from/. /to/"</span>
 </code></pre></div>
 <p>Repeat for <code>lenorefin_static_volume</code> → <code>lenorefin_static</code> and <code>lenorefin_media_volume</code> → <code>lenorefin_media</code>.</p>
 <p>Alternatively, restore from the backup you took in step 1 via <strong>Admin → Backup &amp; Restore</strong> after the new stack is running.</p>
