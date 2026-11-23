@@ -75,7 +75,9 @@ WORKDIR $APP_HOME
 # Python dependencies
 COPY --from=backend-builder /usr/src/app/wheels /wheels
 COPY --from=backend-builder /usr/src/app/requirements.txt .
-RUN pip install --upgrade pip && pip install --no-cache /wheels/*
+# setuptools ships with the base image at 70.3.0, which (with the jaraco.context
+# and wheel it vendors) carries fixed HIGH CVEs. Pinned like the base.
+RUN pip install --upgrade pip setuptools==84.2.1 && pip install --no-cache /wheels/*
 
 # Vue static files
 COPY --from=frontend-build /app/dist /usr/share/nginx/html

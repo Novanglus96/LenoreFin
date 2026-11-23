@@ -62,7 +62,9 @@ COPY ./logos/logov2.png APP_HOME/staticfiles/logov2.png
 RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd postgresql-client
 COPY --from=builder /usr/src/app/wheels /wheels
 COPY --from=builder /usr/src/app/requirements.txt .
-RUN pip install --upgrade pip
+# setuptools ships with the base image at 70.3.0, which (with the jaraco.context
+# and wheel it vendors) carries fixed HIGH CVEs. Pinned like the base.
+RUN pip install --upgrade pip setuptools==84.2.1
 RUN pip install --no-cache /wheels/*
 
 # copy entrypoint.sh
