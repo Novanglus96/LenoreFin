@@ -1,3 +1,4 @@
+from decimal import Decimal
 import gzip
 import json
 import pytest
@@ -71,7 +72,7 @@ def test_roundtrip_restores_all_core_models(
 ):
     from accounts.models import Account, Bank, Reward
     from administration.models import DescriptionHistory
-    from planning.models import Contribution, ContribRule, Note
+    from planning.models import Bucket, WindfallRule, Note
     from reminders.models import ReminderExclusion
 
     DescriptionHistory.objects.create(
@@ -80,15 +81,15 @@ def test_roundtrip_restores_all_core_models(
         tag=test_tag,
     )
     Reward.objects.create(reward_amount="50.00", reward_account=test_checking_account)
-    ContribRule.objects.create(rule="401k", cap="5000", order=1)
-    Contribution.objects.create(
-        contribution="HSA",
-        per_paycheck="50.00",
-        emergency_amt="0.00",
-        emergency_diff="0.00",
-        cap="3600.00",
-        active=True,
+    hsa = Bucket.objects.create(
+        name="HSA",
+        contribution_per_paycheck="50.00",
+        goal_amount="3600.00",
+        goal_date="2027-06-30",
+        account=test_savings_account,
+        reminder=test_reminder,
     )
+    WindfallRule.objects.create(rule="401k", cap="5000", cap_amount="5000", order=1, bucket=hsa)
     Note.objects.create(note_text="Check budget monthly")
     ReminderExclusion.objects.create(reminder=test_reminder, exclude_date="2025-01-01")
 
@@ -105,8 +106,13 @@ def test_roundtrip_restores_all_core_models(
     assert Reward.objects.filter(reward_amount="50.00").exists()
     assert Paycheck.objects.filter(gross=test_paycheck.gross).exists()
     assert Transaction.objects.filter(description=test_transaction.description).exists()
-    assert ContribRule.objects.filter(rule="401k").exists()
-    assert Contribution.objects.filter(contribution="HSA").exists()
+    bucket = Bucket.objects.get(name="HSA")
+    assert bucket.goal_amount == Decimal("3600.00")
+    assert str(bucket.goal_date) == "2027-06-30"
+    assert bucket.account.account_name == test_savings_account.account_name
+    assert bucket.reminder.description == test_reminder.description
+    rule = WindfallRule.objects.get(rule="401k")
+    assert rule.bucket == bucket and rule.cap_amount == Decimal("5000")
     assert Note.objects.filter(note_text="Check budget monthly").exists()
     assert ReminderExclusion.objects.filter(exclude_date="2025-01-01").exists()
 
@@ -543,3 +549,31 @@ def test_roundtrip_custom_repeat(tmp_path):
     assert restored.repeat_name == "Bi-weekly"
     assert restored.weeks == 2
     assert restored.is_system is False
+
+
+@pytest.mark.django_db
+def test_import_reads_pre_bucket_backups(tmp_path):
+    """A backup from before buckets says `contributions`; cap becomes the goal."""
+    import gzip
+    import json
+    from planning.models import Bucket, WindfallRule
+
+    path = tmp_path / "old.json.gz"
+    with gzip.open(path, "wt") as fh:
+        json.dump(
+            {
+                "contrib_rules": [{"rule": "Remainder to Vacation", "cap": "No Cap", "order": 3}],
+                "contributions": [
+                    {"contribution": "Vacation", "per_paycheck": "175.00", "emergency_amt": "150.00",
+                     "emergency_diff": "25.00", "cap": "4000.00", "active": True},
+                    {"contribution": "Pet", "per_paycheck": "60.00", "emergency_amt": "60.00",
+                     "emergency_diff": "0.00", "cap": "0.00", "active": True},
+                ],
+            },
+            fh,
+        )
+    call_command("import_user_data", str(path))
+    assert Bucket.objects.get(name="Vacation").goal_amount == Decimal("4000.00")
+    assert Bucket.objects.get(name="Pet").goal_amount is None
+    assert Bucket.objects.get(name="Pet").contribution_per_paycheck == Decimal("60.00")
+    assert WindfallRule.objects.get(rule="Remainder to Vacation").order == 3

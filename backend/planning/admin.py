@@ -1,7 +1,17 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 from core.admin import UnfoldImportExportModelAdmin
-from .models import ChristmasGift, ContribRule, Contribution, Note, CalculationRule, Budget, DetectedRecurring
+from .models import (
+    ChristmasGift,
+    WindfallRule,
+    Bucket,
+    Note,
+    CalculationRule,
+    Budget,
+    DetectedRecurring,
+    PlanAcceptance,
+    WindfallApplication,
+)
 
 
 class ChristmasGiftAdmin(UnfoldImportExportModelAdmin):
@@ -10,16 +20,26 @@ class ChristmasGiftAdmin(UnfoldImportExportModelAdmin):
     ordering = ["tag"]
 
 
-class ContribRuleAdmin(UnfoldImportExportModelAdmin):
-    list_display = ["id", "rule", "cap"]
+class WindfallRuleAdmin(UnfoldImportExportModelAdmin):
+    list_display = ["id", "order", "rule", "bucket", "cap", "cap_amount"]
     list_display_links = ["id", "rule"]
-    ordering = ["id"]
+    ordering = ["order", "id"]
 
 
-class ContributionAdmin(UnfoldImportExportModelAdmin):
-    list_display = ["id", "contribution", "per_paycheck", "emergency_amt", "emergency_diff", "cap", "active"]
-    list_display_links = ["contribution"]
-    ordering = ["id"]
+class BucketAdmin(UnfoldImportExportModelAdmin):
+    list_display = ["id", "name", "contribution_per_paycheck", "goal_amount", "goal_date", "account", "reminder", "active"]
+    list_display_links = ["name"]
+    ordering = ["name"]
+
+
+class PlanAcceptanceAdmin(ModelAdmin):
+    list_display = ["id", "accepted_on", "window_start", "window_end", "total_per_paycheck", "reverted_on"]
+    ordering = ["-accepted_on"]
+
+
+class WindfallApplicationAdmin(ModelAdmin):
+    list_display = ["id", "arrival_date", "amount", "allocated", "source_account", "reverted_on"]
+    ordering = ["-arrival_date"]
 
 
 class NoteAdmin(UnfoldImportExportModelAdmin):
@@ -47,8 +67,10 @@ class DetectedRecurringAdmin(ModelAdmin):
 
 
 admin.site.register(ChristmasGift, ChristmasGiftAdmin)
-admin.site.register(ContribRule, ContribRuleAdmin)
-admin.site.register(Contribution, ContributionAdmin)
+admin.site.register(WindfallRule, WindfallRuleAdmin)
+admin.site.register(Bucket, BucketAdmin)
+admin.site.register(PlanAcceptance, PlanAcceptanceAdmin)
+admin.site.register(WindfallApplication, WindfallApplicationAdmin)
 admin.site.register(Note, NoteAdmin)
 admin.site.register(CalculationRule, CalculationRuleAdmin)
 admin.site.register(Budget, BudgetAdmin)
