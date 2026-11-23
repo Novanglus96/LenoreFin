@@ -1,3 +1,13 @@
+## [1.7.1-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0...v1.7.1-alpha.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* accept the one scan finding that is pip's SBOM, not code ([e3e9edc](https://github.com/Novanglus96/LenoreFin/commit/e3e9edcbe1f198638b0c4492f96d32bc0cd14568))
+* clear the fixable vulnerabilities the PR scan reports ([abc20e6](https://github.com/Novanglus96/LenoreFin/commit/abc20e619a44066a907c7ffcfab5c249f7f83797))
+* scope the pip SBOM exception by package version ([0654347](https://github.com/Novanglus96/LenoreFin/commit/0654347db8ea82adedd764fae3602f9f89d5004c))
+* upgrade the setuptools the base image ships ([8358bbc](https://github.com/Novanglus96/LenoreFin/commit/8358bbc8acabcbcffc3aacb172f22b47f11787fa))
+
 # [1.7.0](https://github.com/Novanglus96/LenoreFin/compare/v1.6.2...v1.7.0) (2026-08-08)
 
 
