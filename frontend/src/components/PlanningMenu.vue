@@ -75,8 +75,8 @@
       optional: false,
     },
     {
-      title: "Contributions",
-      link: "/planning/contributions",
+      title: "Savings Plan",
+      link: "/planning/savings-plan",
       icon: "mdi-pail",
       optional: true,
     },

@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 import pytz
 import os
@@ -116,3 +117,17 @@ def get_unformatted_dates_in_range(start_interval, end_interval):
         current_date += timedelta(days=1)
 
     return date_list
+
+
+# From this month on, the forecast reaches the end of next year, so a plan for
+# next year sees every paycheck and transfer in it. Before then a rolling year
+# is enough, and keeps the caches half the size.
+FORECAST_ROLLOVER_MONTH = 10
+
+
+def forecast_horizon(today: date) -> date:
+    """The last date the reminder, card and interest caches project to."""
+    rolling = today + relativedelta(years=1)
+    if today.month >= FORECAST_ROLLOVER_MONTH:
+        return max(rolling, date(today.year + 1, 12, 31))
+    return rolling

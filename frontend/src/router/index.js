@@ -12,7 +12,7 @@ import PayeesView from "@/views/PayeesView.vue";
 import DocumentView from "@/views/DocumentView.vue";
 import CalculatorView from "@/views/CalculatorView.vue";
 import PayView from "@/views/PayView.vue";
-import ContributionsView from "@/views/ContributionsView.vue";
+import SavingsPlanView from "@/views/SavingsPlanView.vue";
 import ExpensesView from "@/views/ExpensesView.vue";
 import NotesView from "@/views/NotesView.vue";
 import RetirementView from "@/views/RetirementView.vue";
@@ -86,10 +86,11 @@ const routes = [
     component: CalculatorView,
   },
   {
-    path: "/planning/contributions",
-    name: "contributions",
-    component: ContributionsView,
+    path: "/planning/savings-plan",
+    name: "savings-plan",
+    component: SavingsPlanView,
   },
+  { path: "/planning/contributions", redirect: "/planning/savings-plan" },
   {
     path: "/planning/budgets",
     name: "budgets",

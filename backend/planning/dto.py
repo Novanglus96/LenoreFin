@@ -39,33 +39,6 @@ class DomainCalculator:
 
 
 @dataclass
-class DomainContribRule:
-    id: int
-    rule: str
-    cap: Optional[str] = None
-    order: Optional[int] = 0
-
-
-@dataclass
-class DomainContribution:
-    id: int
-    contribution: str
-    per_paycheck: Decimal
-    emergency_diff: Decimal
-    emergency_amt: Decimal
-    cap: Decimal
-    active: bool
-
-
-@dataclass
-class DomainContributionWithTotals:
-    contributions: List[DomainContribution]
-    per_paycheck_total: Decimal
-    emergency_paycheck_total: Decimal
-    total_emergency: Decimal
-
-
-@dataclass
 class DomainNote:
     id: int
     note_text: str
