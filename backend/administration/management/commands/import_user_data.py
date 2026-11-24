@@ -93,8 +93,8 @@ class Command(BaseCommand):
         from reminders.models import Reminder, ReminderExclusion, Repeat
         from tags.models import Tag, MainTag, SubTag
         from planning.models import (
-            ContribRule, Contribution, Note, ChristmasGift,
-            Budget, CalculationRule,
+            WindfallRule, Bucket, Note, ChristmasGift,
+            Budget, CalculationRule, PlanAcceptance, WindfallApplication,
         )
         from reports.models import ReportConfig
 
@@ -129,8 +129,10 @@ class Command(BaseCommand):
         Budget.objects.all().delete()
         CalculationRule.objects.all().delete()
         Note.objects.all().delete()
-        Contribution.objects.all().delete()
-        ContribRule.objects.all().delete()
+        WindfallApplication.objects.all().delete()
+        PlanAcceptance.objects.all().delete()
+        WindfallRule.objects.all().delete()
+        Bucket.objects.all().delete()
 
         self.stdout.write("Cleared existing user data.")
 
@@ -145,7 +147,10 @@ class Command(BaseCommand):
             Transaction, Paycheck, TransactionDetail,
         )
         from reminders.models import Repeat, Reminder, ReminderExclusion
-        from planning.models import ContribRule, Contribution, Note, ChristmasGift, Budget, CalculationRule
+        from planning.models import (
+            WindfallRule, Bucket, Note, ChristmasGift, Budget, CalculationRule,
+            PlanAcceptance, AcceptedBucket, WindfallApplication, WindfallAllocation,
+        )
         from reports.models import ReportConfig, ReportConfigTag
 
         # --- System lookup tables (slug → object) ---
@@ -384,24 +389,87 @@ class Command(BaseCommand):
                     exclude_date=item["exclude_date"],
                 )
 
-        # --- 14. ContribRules ---
-        for item in data.get("contrib_rules", []):
-            ContribRule.objects.create(
+        # --- 15. Buckets ---
+        # Backups made before buckets existed say `contributions`, with
+        # `contribution`/`per_paycheck` and a `cap` that meant "stop funding at
+        # this balance" — which is a goal. A cap of 0 meant no cap.
+        bucket_by_name = {}
+        for item in data.get("buckets", data.get("contributions", [])):
+            if "name" in item:
+                goal = item.get("goal_amount")
+                per_paycheck = item.get("contribution_per_paycheck", "0")
+            else:
+                cap = item.get("cap") or "0"
+                goal = cap if float(cap) > 0 else None
+                per_paycheck = item.get("per_paycheck", "0")
+            bucket = Bucket.objects.create(
+                name=item.get("name", item.get("contribution")),
+                contribution_per_paycheck=per_paycheck,
+                goal_amount=goal,
+                goal_date=item.get("goal_date"),
+                active=item.get("active", True),
+                account_id=account_name_to_pk.get(item.get("account_name")),
+                reminder=reminder_id_map.get(item.get("reminder_id")),
+            )
+            bucket_by_name[bucket.name] = bucket
+
+        # --- 14. Windfall rules (after buckets, so a rule can name one) ---
+        for item in data.get("windfall_rules", data.get("contrib_rules", [])):
+            WindfallRule.objects.create(
                 rule=item["rule"],
                 cap=item.get("cap"),
+                cap_amount=item.get("cap_amount"),
                 order=item.get("order", 0),
+                bucket=bucket_by_name.get(item.get("bucket_name")),
             )
 
-        # --- 15. Contributions ---
-        for item in data.get("contributions", []):
-            Contribution.objects.create(
-                contribution=item["contribution"],
-                per_paycheck=item["per_paycheck"],
-                emergency_amt=item["emergency_amt"],
-                emergency_diff=item["emergency_diff"],
-                cap=item["cap"],
-                active=item["active"],
+        # --- 15b. Plan acceptances: history, re-linked, not revertible ---
+        for item in data.get("plan_acceptances", []):
+            acceptance = PlanAcceptance.objects.create(
+                accepted_on=item["accepted_on"],
+                window_start=item["window_start"],
+                window_end=item["window_end"],
+                total_per_paycheck=item["total_per_paycheck"],
+                verdict=item.get("verdict", "ideal"),
+                reverted_on=item.get("reverted_on"),
+                imported=True,
             )
+            for ab in item.get("buckets", []):
+                record = AcceptedBucket.objects.create(
+                    acceptance=acceptance,
+                    bucket=bucket_by_name.get(ab["bucket_name"]),
+                    bucket_name=ab["bucket_name"],
+                    action=ab.get("action", "change"),
+                    per_paycheck=ab["per_paycheck"],
+                    previous_per_paycheck=ab.get("previous_per_paycheck", "0"),
+                )
+                record.created_reminders.set(
+                    [
+                        reminder_id_map[rid]
+                        for rid in ab.get("created_reminder_ids", [])
+                        if rid in reminder_id_map
+                    ]
+                )
+
+        # --- 15c. Windfall applications ---
+        for item in data.get("windfall_applications", []):
+            application = WindfallApplication.objects.create(
+                applied_on=item["applied_on"],
+                arrival_date=item["arrival_date"],
+                amount=item["amount"],
+                allocated=item["allocated"],
+                source_account_id=account_name_to_pk.get(item.get("source_account_name")),
+                reverted_on=item.get("reverted_on"),
+            )
+            for al in item.get("allocations", []):
+                WindfallAllocation.objects.create(
+                    application=application,
+                    bucket=bucket_by_name.get(al["bucket_name"]),
+                    bucket_name=al["bucket_name"],
+                    amount=al["amount"],
+                    suggested=al.get("suggested", "0"),
+                    transaction=transaction_id_map.get(al.get("transaction_id")),
+                )
 
         # --- 16. Notes ---
         for item in data.get("notes", []):

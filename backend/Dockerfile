@@ -3,7 +3,7 @@
 ###########
 
 # pull official base image
-FROM python:3.11.4-slim-bookworm AS builder
+FROM python:3.11.18-slim-bookworm@sha256:a83ba18aef0f865b1a4a611c2cf460fe446f2795673bbb9fe43be570439e3b39 AS builder
 
 # set work directory
 WORKDIR /usr/src/app
@@ -34,7 +34,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requir
 #########
 
 # pull official base image
-FROM python:3.11.4-slim-bookworm
+FROM python:3.11.18-slim-bookworm@sha256:a83ba18aef0f865b1a4a611c2cf460fe446f2795673bbb9fe43be570439e3b39
 
 LABEL maintainer="John Adams"
 LABEL version="1.1.0"
@@ -62,7 +62,9 @@ COPY ./logos/logov2.png APP_HOME/staticfiles/logov2.png
 RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd postgresql-client
 COPY --from=builder /usr/src/app/wheels /wheels
 COPY --from=builder /usr/src/app/requirements.txt .
-RUN pip install --upgrade pip
+# setuptools ships with the base image at 70.3.0, which (with the jaraco.context
+# and wheel it vendors) carries fixed HIGH CVEs. Pinned like the base.
+RUN pip install --upgrade pip setuptools==84.2.1
 RUN pip install --no-cache /wheels/*
 
 # copy entrypoint.sh

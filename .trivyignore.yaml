@@ -1,0 +1,15 @@
+# Accepted exceptions for the PR security scan (lenore-ci security.yml).
+# Every entry says why it does not apply and expires, so it has to be
+# re-accepted rather than outliving its reason.
+vulnerabilities:
+  - id: CVE-2025-47273
+    # Scoped to this exact version: the image pins setuptools 84.2.1, so the
+    # only 70.3.0 it contains is the one pip's SBOM lists.
+    purls:
+      - pkg:pypi/setuptools@70.3.0
+    statement: >-
+      Reported from pip's own SBOM, which lists setuptools 70.3.0 because pip
+      vendors pkg_resources from it. The CVE is in setuptools.package_index
+      (PackageIndex), which pip does not vendor. The installed setuptools is
+      84.2.1. Re-check when pip ships a newer vendored pkg_resources.
+    expired_at: 2027-03-31

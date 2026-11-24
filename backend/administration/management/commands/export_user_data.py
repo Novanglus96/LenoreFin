@@ -41,7 +41,10 @@ class Command(BaseCommand):
         from tags.models import Tag, MainTag, SubTag
         from transactions.models import Transaction, Paycheck, TransactionDetail
         from reminders.models import Reminder, ReminderExclusion
-        from planning.models import ContribRule, Contribution, Note, ChristmasGift, Budget, CalculationRule
+        from planning.models import (
+            WindfallRule, Bucket, Note, ChristmasGift, Budget, CalculationRule,
+            PlanAcceptance, WindfallApplication,
+        )
         from reports.models import ReportConfig
 
         data = {"app_version": get_version()}
@@ -258,23 +261,81 @@ class Command(BaseCommand):
             for re in ReminderExclusion.objects.all()
         ]
 
-        # 14. ContribRules
-        data["contrib_rules"] = [
-            {"rule": cr.rule, "cap": cr.cap, "order": cr.order}
-            for cr in ContribRule.objects.all()
+        # 14. Windfall rules
+        data["windfall_rules"] = [
+            {
+                "rule": r.rule,
+                "cap": r.cap,
+                "cap_amount": str(r.cap_amount) if r.cap_amount is not None else None,
+                "order": r.order,
+                "bucket_name": r.bucket.name if r.bucket_id else None,
+            }
+            for r in WindfallRule.objects.all().select_related("bucket")
         ]
 
-        # 15. Contributions
-        data["contributions"] = [
+        # 15. Buckets
+        data["buckets"] = [
             {
-                "contribution": c.contribution,
-                "per_paycheck": str(c.per_paycheck),
-                "emergency_amt": str(c.emergency_amt),
-                "emergency_diff": str(c.emergency_diff),
-                "cap": str(c.cap),
-                "active": c.active,
+                "name": b.name,
+                "contribution_per_paycheck": str(b.contribution_per_paycheck),
+                "goal_amount": str(b.goal_amount) if b.goal_amount is not None else None,
+                "goal_date": str(b.goal_date) if b.goal_date else None,
+                "active": b.active,
+                "account_name": b.account.account_name if b.account_id else None,
+                "reminder_id": b.reminder_id,
             }
-            for c in Contribution.objects.all()
+            for b in Bucket.objects.all().select_related("account")
+        ]
+
+        # 15b. Plan acceptances. The reminders each wrote are re-linked on
+        # import; the snapshots of what it displaced are not exported, because
+        # they name ids that only mean something in this database.
+        data["plan_acceptances"] = [
+            {
+                "accepted_on": str(a.accepted_on),
+                "window_start": str(a.window_start),
+                "window_end": str(a.window_end),
+                "total_per_paycheck": str(a.total_per_paycheck),
+                "verdict": a.verdict,
+                "reverted_on": str(a.reverted_on) if a.reverted_on else None,
+                "buckets": [
+                    {
+                        "bucket_name": ab.bucket_name,
+                        "action": ab.action,
+                        "per_paycheck": str(ab.per_paycheck),
+                        "previous_per_paycheck": str(ab.previous_per_paycheck),
+                        "created_reminder_ids": list(
+                            ab.created_reminders.values_list("id", flat=True)
+                        ),
+                    }
+                    for ab in a.buckets.all()
+                ],
+            }
+            for a in PlanAcceptance.objects.all()
+        ]
+
+        # 15c. Windfall applications, with the transfers they wrote.
+        data["windfall_applications"] = [
+            {
+                "applied_on": str(w.applied_on),
+                "arrival_date": str(w.arrival_date),
+                "amount": str(w.amount),
+                "allocated": str(w.allocated),
+                "source_account_name": w.source_account.account_name
+                if w.source_account_id
+                else None,
+                "reverted_on": str(w.reverted_on) if w.reverted_on else None,
+                "allocations": [
+                    {
+                        "bucket_name": al.bucket_name,
+                        "amount": str(al.amount),
+                        "suggested": str(al.suggested),
+                        "transaction_id": al.transaction_id,
+                    }
+                    for al in w.allocations.all()
+                ],
+            }
+            for w in WindfallApplication.objects.all().select_related("source_account")
         ]
 
         # 16. Notes
