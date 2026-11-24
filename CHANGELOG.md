@@ -1,3 +1,19 @@
+# [1.8.0-rc.1](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0...v1.8.0-rc.1) (2026-11-24)
+
+
+### Bug Fixes
+
+* accept the one scan finding that is pip's SBOM, not code ([e3e9edc](https://github.com/Novanglus96/LenoreFin/commit/e3e9edcbe1f198638b0c4492f96d32bc0cd14568))
+* clear the fixable vulnerabilities the PR scan reports ([abc20e6](https://github.com/Novanglus96/LenoreFin/commit/abc20e619a44066a907c7ffcfab5c249f7f83797))
+* scope the pip SBOM exception by package version ([0654347](https://github.com/Novanglus96/LenoreFin/commit/0654347db8ea82adedd764fae3602f9f89d5004c))
+* stop the sync socket spawning reconnect loops it cannot stop ([49b68af](https://github.com/Novanglus96/LenoreFin/commit/49b68afe53382ee7f9f4238069ab31b8bd6f778a))
+* upgrade the setuptools the base image ships ([8358bbc](https://github.com/Novanglus96/LenoreFin/commit/8358bbc8acabcbcffc3aacb172f22b47f11787fa))
+
+
+### Features
+
+* plan next year's savings bucket by bucket, and accept it into the transfers ([9b6bcfb](https://github.com/Novanglus96/LenoreFin/commit/9b6bcfbc7a1da3e395bb5552672b419143479bbe))
+
 # [1.8.0-beta.1](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0...v1.8.0-beta.1) (2026-11-24)
 
 
