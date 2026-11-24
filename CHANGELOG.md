@@ -1,3 +1,10 @@
+# [1.8.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.7.1-alpha.1...v1.8.0-alpha.1) (2026-11-24)
+
+
+### Features
+
+* plan next year's savings bucket by bucket, and accept it into the transfers ([9b6bcfb](https://github.com/Novanglus96/LenoreFin/commit/9b6bcfbc7a1da3e395bb5552672b419143479bbe))
+
 ## [1.7.1-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.7.0...v1.7.1-alpha.1) (2026-11-23)
 
 
