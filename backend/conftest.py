@@ -36,6 +36,23 @@ def clear_cache_between_tests():
 
 
 @pytest.fixture(autouse=True)
+def reset_transaction_signal_state():
+    """Forget accounts queued by a write that never committed.
+
+    The transaction signals batch their cache refresh and their broadcast onto
+    commit, collecting touched account ids in a thread-local until then. A
+    rolled-back test leaves ids behind — Django drops the callback but not the
+    set — and the next test's commit would flush them, refreshing an account it
+    never touched.
+    """
+    from transactions.signals import reset_pending
+
+    reset_pending()
+    yield
+    reset_pending()
+
+
+@pytest.fixture(autouse=True)
 def patch_delete_pattern():
     with patch("core.cache.helpers.delete_pattern", return_value=None), \
          patch("backend.utils.cache.delete_pattern", return_value=None), \
