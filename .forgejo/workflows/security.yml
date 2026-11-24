@@ -1,0 +1,21 @@
+name: Security Scan
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  # Scan any branch on demand — e.g. alpha itself, to see what is on it now.
+  workflow_dispatch:
+jobs:
+  scan:
+    uses: lenore/lenore-ci/.forgejo/workflows/security.yml@v1
+    with:
+      dockerfiles: Dockerfile
+      # The Vue bundle is baked into the image as minified JS, which an image
+      # scan cannot see into, so its lockfile is scanned separately.
+      lockfile_dirs: frontend
+      # BLOCKING since 2026-11-23, when a scan of alpha came back clean (#9).
+      # A fixable HIGH/CRITICAL fails the PR, and so does an unreachable
+      # vulnerability DB. Accepted exceptions live in .trivyignore.yaml, each
+      # with a reason and an expiry.
+      blocking: true
+    # No `secrets: inherit`: the scan reads none, and it builds whatever
+    # Dockerfile the PR carries, so it should not be handed any.

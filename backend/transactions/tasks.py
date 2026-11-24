@@ -57,6 +57,7 @@ import pytz
 import os
 from utils.dates import (
     get_todays_date_timezone_adjusted,
+    forecast_horizon,
 )
 from django.core.management import call_command
 from planning.models import Budget
@@ -700,116 +701,91 @@ def archive_transactions():
         return f"Error archiving transactions: {str(e)}"
 
 
-def update_reminder_cache(reminder_id):
+def _reminder_cache_rows(reminder, today, max_end_date, pending_status_id):
+    """Every occurrence of a reminder up to the forecast horizon.
+
+    A zero-delta Repeat (no recurrence) emits exactly one transaction. Guards
+    against a non-advancing date so a misconfigured Repeat cannot loop forever.
     """
-    Rebuilds the ReminderCacheTransaction entries for a single reminder, projecting
-    occurrences up to 1 year out.
+    calculated_end_date = max_end_date
+    if reminder.end_date is not None and reminder.end_date <= max_end_date:
+        calculated_end_date = reminder.end_date
+    delta = relativedelta(
+        days=reminder.repeat.days,
+        weeks=reminder.repeat.weeks,
+        months=reminder.repeat.months,
+        years=reminder.repeat.years,
+    )
+    destination_account = (
+        reminder.reminder_destination_account.id
+        if reminder.reminder_destination_account
+        else None
+    )
 
-    A zero-delta Repeat (no recurrence) emits exactly one future transaction.
-    The loop guards against a non-advancing date to prevent infinite loops when a
-    Repeat is misconfigured. After rebuild, invalidates the forecast cache for both
-    source and destination accounts.
-    """
-    try:
-        # Set up variables
-        today = get_todays_date_timezone_adjusted()
-        max_end_date = today + relativedelta(years=1)
-        calculated_end_date = max_end_date
-        transactions_to_create = []
-
-        # Delete any existing cache entries for this reminder
-        ReminderCacheTransaction.objects.filter(
-            reminder_id=reminder_id
-        ).delete()
-
-        # Get Reminder object
-        reminder = Reminder.objects.get(id=reminder_id)
-
-        # Calculate Max End date
-        if reminder.end_date is not None and reminder.end_date <= max_end_date:
-            calculated_end_date = reminder.end_date
-
-        # Loop through and create cache transactions
-        working_date = reminder.next_date
-        delta = relativedelta(
-            days=reminder.repeat.days,
-            weeks=reminder.repeat.weeks,
-            months=reminder.repeat.months,
-            years=reminder.repeat.years,
-        )
-        pending_status_id = TransactionStatus.objects.values_list('id', flat=True).get(slug='pending')
-
-        # For no repeat, just enter next transaction
-        if delta == relativedelta():
-            tags = []
-            tag_obj = CustomTag(
-                tag_name=reminder.tag.tag_name,
-                tag_amount=reminder.amount,
-                tag_id=reminder.tag.id,
-                tag_full_toggle=True,
-            )
-            tags.append(tag_obj)
-            destination_account = None
-            if reminder.reminder_destination_account:
-                destination_account = reminder.reminder_destination_account.id
-            transaction = FullReminderTransaction(
-                transaction_date=working_date,
-                total_amount=reminder.amount,
-                status_id=pending_status_id,
-                memo=reminder.memo,
-                description=reminder.description,
-                edit_date=today,
-                add_date=today,
-                transaction_type_id=reminder.transaction_type.id,
-                paycheck_id=None,
-                source_account_id=reminder.reminder_source_account.id,
-                destination_account_id=destination_account,
-                tags=tags,
-                checkNumber=None,
-                reminder_id=reminder.id,
-            )
-            transactions_to_create.append(transaction)
-        else:
-            while working_date <= calculated_end_date:
-                tags = []
-                tag_obj = CustomTag(
+    def row(when):
+        return FullReminderTransaction(
+            transaction_date=when,
+            total_amount=reminder.amount,
+            status_id=pending_status_id,
+            memo=reminder.memo,
+            description=reminder.description,
+            edit_date=today,
+            add_date=today,
+            transaction_type_id=reminder.transaction_type.id,
+            paycheck_id=None,
+            source_account_id=reminder.reminder_source_account.id,
+            destination_account_id=destination_account,
+            tags=[
+                CustomTag(
                     tag_name=reminder.tag.tag_name,
                     tag_amount=reminder.amount,
                     tag_id=reminder.tag.id,
                     tag_full_toggle=True,
                 )
-                tags.append(tag_obj)
-                destination_account = None
-                if reminder.reminder_destination_account:
-                    destination_account = (
-                        reminder.reminder_destination_account.id
-                    )
-                transaction = FullReminderTransaction(
-                    transaction_date=working_date,
-                    total_amount=reminder.amount,
-                    status_id=pending_status_id,
-                    memo=reminder.memo,
-                    description=reminder.description,
-                    edit_date=today,
-                    add_date=today,
-                    transaction_type_id=reminder.transaction_type.id,
-                    paycheck_id=None,
-                    source_account_id=reminder.reminder_source_account.id,
-                    destination_account_id=destination_account,
-                    tags=tags,
-                    checkNumber=None,
-                    reminder_id=reminder.id,
-                )
-                transactions_to_create.append(transaction)
-                prev = working_date
-                working_date += delta
+            ],
+            checkNumber=None,
+            reminder_id=reminder.id,
+        )
 
-                if working_date == prev:
-                    raise RuntimeError(
-                        "working_date did not advance — infinite loop detected"
-                    )
+    working_date = reminder.next_date
+    if delta == relativedelta():
+        return [row(working_date)]
+    rows = []
+    while working_date <= calculated_end_date:
+        rows.append(row(working_date))
+        prev = working_date
+        working_date += delta
+        if working_date == prev:
+            raise RuntimeError("working_date did not advance — infinite loop detected")
+    return rows
 
-        create_transactions(transactions_to_create, "reminder")
+
+def update_reminder_cache(reminder_id):
+    """
+    Rebuilds the ReminderCacheTransaction entries for a single reminder, out to
+    the forecast horizon, then invalidates the forecast caches of both accounts.
+
+    The rebuild runs under a lock on the reminder row. Two rebuilds of one
+    reminder can overlap — the save signal queues one on the worker while a
+    caller (accepting a savings plan) rebuilds inline — and an unlocked
+    delete-then-insert lets both inserts survive, doubling every occurrence in
+    the forecast. With the lock the second waits, then replaces the first's
+    rows rather than adding to them.
+    """
+    try:
+        today = get_todays_date_timezone_adjusted()
+        pending_status_id = TransactionStatus.objects.values_list(
+            "id", flat=True
+        ).get(slug="pending")
+        with db_transaction.atomic():
+            reminder = Reminder.objects.select_for_update().get(id=reminder_id)
+            ReminderCacheTransaction.objects.filter(reminder_id=reminder_id).delete()
+            create_transactions(
+                _reminder_cache_rows(
+                    reminder, today, forecast_horizon(today), pending_status_id
+                ),
+                "reminder",
+            )
         delete_pattern(account_all_transactions(reminder.reminder_source_account.id))
         update_cc_forecast_cache(reminder.reminder_source_account.id)
         if reminder.reminder_destination_account is not None:
@@ -898,7 +874,7 @@ def _update_parent_group_interest_forecast(parent):
             return
 
         today = get_todays_date_timezone_adjusted()
-        end_date = today + relativedelta(years=1)
+        end_date = forecast_horizon(today)
         income_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='income')
         status = TransactionStatus.objects.get(slug='pending')
 
@@ -985,7 +961,7 @@ def update_interest_forecast_cache(account_id):
 
     try:
         today = get_todays_date_timezone_adjusted()
-        end_date = today + relativedelta(years=1)
+        end_date = forecast_horizon(today)
         income_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='income')
         status = TransactionStatus.objects.get(slug='pending')
 
@@ -1069,7 +1045,7 @@ def update_cc_forecast_cache(account_id):
         payment_amount = account.payment_amount
         minimum_payment_amount = account.minimum_payment_amount
         today = get_todays_date_timezone_adjusted()
-        end_date = today + relativedelta(years=1)
+        end_date = forecast_horizon(today)
         temp_id = -10001
         status = TransactionStatus.objects.get(slug='pending')
         expense_type_id = TransactionType.objects.values_list('id', flat=True).get(slug='expense')

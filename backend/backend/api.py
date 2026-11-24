@@ -12,8 +12,8 @@ from tags.api.routers.tag_type import tag_type_router
 from tags.api.routers.main_tag import main_tag_router
 from tags.api.routers.sub_tag import sub_tag_router
 from tags.api.routers.tag import tag_router
-from planning.api.routers.contrib_rule import contrib_rule_router
-from planning.api.routers.contribution import contribution_router
+from planning.api.routers.windfall_rule import windfall_rule_router
+from planning.api.routers.bucket import bucket_router
 from transactions.api.routers.transaction_type import transaction_type_router
 from reminders.api.routers.repeat import repeat_router
 from accounts.api.routers.forecast import forecast_router
@@ -42,6 +42,7 @@ from planning.api.routers.calculator import calculator_router
 from planning.api.routers.planning_graph import planning_graph_router
 from planning.api.routers.budget import budget_router
 from planning.api.routers.retirement import retirement_router
+from planning.api.routers.savings_plan import savings_plan_router
 from planning.api.routers.detected_recurring import router as detected_recurring_router
 from administration.api.views.push_subscription import push_router
 from administration.api.routers.health import health_router
@@ -72,8 +73,8 @@ api.add_router("/tags/tag-types", tag_type_router)
 api.add_router("/tags/main-tags", main_tag_router)
 api.add_router("/tags/sub-tags", sub_tag_router)
 api.add_router("/tags", tag_router)
-api.add_router("/planning/contrib-rules", contrib_rule_router)
-api.add_router("/planning/contributions", contribution_router)
+api.add_router("/planning/windfall-rules", windfall_rule_router)
+api.add_router("/planning/buckets", bucket_router)
 api.add_router("/transactions/transaction-types", transaction_type_router)
 api.add_router("/reminders/repeat", repeat_router)
 api.add_router("/accounts/forecast", forecast_router)
@@ -98,6 +99,7 @@ api.add_router("/planning/calculator", calculator_router)
 api.add_router("/planning/graph", planning_graph_router)
 api.add_router("/planning/budget", budget_router)
 api.add_router("/planning/retirement", retirement_router)
+api.add_router("/planning/savings-plan", savings_plan_router)
 api.add_router("/planning/detected-recurring", detected_recurring_router)
 api.add_router("/administration/push", push_router)
 api.add_router("/administration/health", health_router)
