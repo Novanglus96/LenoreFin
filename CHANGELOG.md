@@ -1,3 +1,10 @@
+# [1.8.0-alpha.2](https://github.com/Novanglus96/LenoreFin/compare/v1.8.0-alpha.1...v1.8.0-alpha.2) (2026-11-24)
+
+
+### Bug Fixes
+
+* stop the sync socket spawning reconnect loops it cannot stop ([49b68af](https://github.com/Novanglus96/LenoreFin/commit/49b68afe53382ee7f9f4238069ab31b8bd6f778a))
+
 # [1.8.0-alpha.1](https://github.com/Novanglus96/LenoreFin/compare/v1.7.1-alpha.1...v1.8.0-alpha.1) (2026-11-24)
 
 
