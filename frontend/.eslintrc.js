@@ -1,6 +1,9 @@
 module.exports = {
   root: true,
-  ignorePatterns: ["dist/"],
+  // Playwright writes trace bundles and a report of minified vendor JS into
+  // these after every e2e run. Git already ignores them; without this, lint
+  // goes red with 500 errors in code nobody wrote.
+  ignorePatterns: ["dist/", "playwright-report/", "test-results/"],
   env: {
     node: true, // Enable Node.js global variables and scope
     browser: true, // Enable browser global variables

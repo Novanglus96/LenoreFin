@@ -26,7 +26,7 @@ def sample_backup_file(backup_dir):
         "payees": [], "banks": [], "main_tags": [], "sub_tags": [], "tags": [],
         "accounts": [], "description_history": [], "rewards": [], "paychecks": [],
         "transactions": [], "transaction_details": [], "reminders": [],
-        "reminder_exclusions": [], "contrib_rules": [], "contributions": [],
+        "reminder_exclusions": [], "windfall_rules": [], "buckets": [],
         "notes": [], "christmas_gifts": [], "budgets": [], "calculation_rules": [],
         "backup_config": {"backup_enabled": True, "frequency": "DAILY",
                           "backup_time": "02:00", "copies_to_keep": 2},
